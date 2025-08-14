@@ -86,7 +86,9 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
       gauge: {
         type: 'horizon',
         noFrameVisible: false,
-        faceColor: 'anthracite'
+        faceColor: 'anthracite',
+        invertPitch: false,
+        invertRoll: false
       },
       enableTimeout: false,
       dataTimeout: 5,
@@ -115,19 +117,13 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
 
     if (!this.streamsInitialized) {
       this.observeDataStream('gaugePitchPath', newValue => {
-        if (newValue.data.value == null) {
-          this.gauge.setPitchAnimated(0);
-        } else {
-          this.gauge.setPitchAnimated(newValue.data.value);
-        }
+        const v = newValue.data.value ?? 0;
+        this.gauge.setPitchAnimated(this.widgetProperties.config.gauge.invertPitch ? -v : v);
       });
 
       this.observeDataStream('gaugeRollPath', newValue => {
-        if (newValue.data.value == null) {
-          this.gauge.setRollAnimated(0);
-        } else {
-          this.gauge.setRollAnimated(newValue.data.value);
-        }
+        const v = newValue.data.value ?? 0;
+        this.gauge.setRollAnimated(this.widgetProperties.config.gauge.invertRoll ? -v : v);
       });
 
       this.streamsInitialized = true;

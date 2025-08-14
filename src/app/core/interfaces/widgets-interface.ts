@@ -151,6 +151,10 @@ export interface IWidgetSvcConfig {
     barStartPosition?: "left" | "right" | "middle";
     /** Optional. Used by Horizon steelgauge to show or hide the frame */
     noFrameVisible?: boolean;
+    /** Optional. Invert the pitch path data */
+    invertPitch?: boolean;
+    /** Optional. Invert the roll path data*/
+    invertRoll?: boolean;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
@@ -258,10 +262,8 @@ export interface IWidgetSvcConfig {
 
   /** Use by racetimer widget */
   timerLength?: number;
-
   /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/
   nextDashboard?: number;
-
   /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
   playBeeps?: boolean;
 }
