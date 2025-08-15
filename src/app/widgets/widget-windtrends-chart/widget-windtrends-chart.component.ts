@@ -285,8 +285,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         ctx.fillStyle = this.getThemeColors().chartLabel;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = `bold 22px ${def.family}`;
-        ctx.fillText('Data acquisition in progress...', x + boxW / 2, y + boxH / 2);
+        ctx.font = `bold 18px ${def.family}`;
+        ctx.fillText('Data acquisition...', x + boxW / 2, y + boxH / 2);
         ctx.restore();
       }
     }
