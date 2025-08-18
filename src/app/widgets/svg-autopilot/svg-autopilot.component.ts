@@ -32,6 +32,7 @@ export class SvgAutopilotComponent implements OnDestroy {
   private prevCompassAngle = 0;
   private prevAwaAngle = 0;
 
+  private lastRudderSigned = Number.NaN;
   protected oldRudderPrtAngle = 0;
   protected newRudderPrtAngle = 0;
   protected oldRudderStbAngle = 0;
@@ -43,13 +44,13 @@ export class SvgAutopilotComponent implements OnDestroy {
 
   protected lockedMode = computed(() => {
     const mode = this.apMode();
-      if (mode === "auto" || mode === "compass") return `Heading Hold`;
-      if (mode === "gps") return "GPS Hold";
-      if (mode === "route" || mode === "nav") return `Track`;
-      if (mode === "wind") return "Wind Hold";
-      if (mode === "wind true") return "Wind True Hold";
-      if (mode === "standby") return "Standby";
-      return "Off-line";
+    if (mode === "auto" || mode === "compass") return `Heading Hold`;
+    if (mode === "gps") return "GPS Hold";
+    if (mode === "route" || mode === "nav") return `Track`;
+    if (mode === "wind") return "Wind Hold";
+    if (mode === "wind true") return "Wind True Hold";
+    if (mode === "standby") return "Standby";
+    return "Off-line";
   });
   protected lockedHdg = computed<number | null>(() => {
     const target = this.autopilotTarget();
@@ -113,17 +114,17 @@ export class SvgAutopilotComponent implements OnDestroy {
     });
 
     effect(() => {
-  const rudderAngle = this.rudderAngle();
-  if (!Number.isFinite(rudderAngle as number)) return;
+      const rudderAngle = this.rudderAngle();
+      if (!Number.isFinite(rudderAngle as number)) return;
       untracked(() => {
         this.updateRudderAngle(-rudderAngle);
       });
     });
 
     effect(() => {
-  const state = this.apMode();
-  const awaRaw = this.appWindAngle();
-  const awa = Number.isFinite(awaRaw as number) ? this.roundDeg(awaRaw) : 0;
+      const state = this.apMode();
+      const awaRaw = this.appWindAngle();
+      const awa = Number.isFinite(awaRaw as number) ? this.roundDeg(awaRaw) : 0;
       let xteValue = this.courseXte();
 
       untracked(() => {
@@ -176,7 +177,6 @@ export class SvgAutopilotComponent implements OnDestroy {
     });
   }
 
-  private lastRudderSigned = Number.NaN;
   private updateRudderAngle(newAngle: number): void {
     if (!Number.isFinite(newAngle)) return;
     const rounded = this.roundDeg(newAngle);
@@ -185,14 +185,14 @@ export class SvgAutopilotComponent implements OnDestroy {
     const maxAngle = 30;
     const capped = Math.min(Math.abs(rounded), maxAngle) * this.DEG_TO_PX;
 
-  if (rounded <= 0) {
+    if (rounded <= 0) {
       animateRudderWidth(
         this.rudderStarboardRect().nativeElement,
         this.oldRudderStbAngle,
         capped,
         this.ANIMATION_DURATION,
-    undefined,
-    this.animationFrames,
+        undefined,
+        this.animationFrames,
         this.ngZone
       );
       animateRudderWidth(
@@ -200,8 +200,8 @@ export class SvgAutopilotComponent implements OnDestroy {
         this.oldRudderPrtAngle,
         0,
         this.ANIMATION_DURATION,
-    undefined,
-    this.animationFrames,
+        undefined,
+        this.animationFrames,
         this.ngZone
       );
       this.oldRudderStbAngle = capped;
@@ -212,8 +212,8 @@ export class SvgAutopilotComponent implements OnDestroy {
         this.oldRudderPrtAngle,
         capped,
         this.ANIMATION_DURATION,
-    undefined,
-    this.animationFrames,
+        undefined,
+        this.animationFrames,
         this.ngZone
       );
       animateRudderWidth(
@@ -221,8 +221,8 @@ export class SvgAutopilotComponent implements OnDestroy {
         this.oldRudderStbAngle,
         0,
         this.ANIMATION_DURATION,
-    undefined,
-    this.animationFrames,
+        undefined,
+        this.animationFrames,
         this.ngZone
       );
       this.oldRudderPrtAngle = capped;
@@ -232,7 +232,7 @@ export class SvgAutopilotComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     // Cancel rotation frames
-    const rotatingEls: (ElementRef<SVGGElement> | undefined)[] = [ this.rotatingDial(), this.awaIndicator(), this.rudderPortRect(), this.rudderStarboardRect() ];
+    const rotatingEls: (ElementRef<SVGGElement> | undefined)[] = [this.rotatingDial(), this.awaIndicator(), this.rudderPortRect(), this.rudderStarboardRect()];
     for (const ref of rotatingEls) {
       const el = ref?.nativeElement;
       if (!el) continue;
