@@ -11,7 +11,7 @@
           </svg>
         </mat-icon>
       </button>
-      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-engage' : 'ap-btn ap-btn-ctrlbar ap-btn-disengage'" (click)="buildAndSendCommand('standby')">
+      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-disengage' : 'ap-btn ap-btn-ctrlbar ap-btn-engage'" (click)="buildAndSendCommand('standby')">
         <mat-icon class="svg-icon-ctrlbar">
           <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
             <text xml:space="preserve"
