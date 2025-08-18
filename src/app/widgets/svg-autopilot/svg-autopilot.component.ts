@@ -1,12 +1,12 @@
 import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { animateRotation, animateRudderWidth } from '../../core/utils/svg-animate.util';
+import { TApMode } from '../../core/interfaces/signalk-autopilot-interfaces';
 
 
 @Component({
   selector: 'app-svg-autopilot',
   templateUrl: './svg-autopilot.component.svg',
   styleUrl: './svg-autopilot.component.scss',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: []
 })
@@ -16,15 +16,16 @@ export class SvgAutopilotComponent implements OnDestroy {
   private readonly rudderStarboardRect = viewChild.required<ElementRef<SVGRectElement>>('rudderStarboardRect');
   private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
-  protected readonly apMode = input<string>('off-line');
-  protected readonly targetPilotHeading = input.required<number>();
-  protected readonly targetWindAngleHeading = input.required<number>();
-  protected readonly rudderAngle = input.required<number>();
+  protected readonly apMode = input<TApMode>('off-line');
+  //protected readonly targetPilotHeading = input.required<number>();
+  protected readonly targetPilotHeadingTrue = input.required<boolean>();
+  //protected readonly targetWindAngleHeading = input.required<number>();
+  protected readonly autopilotTarget = input.required<number>();
   protected readonly courseXte = input.required<number>();
   protected readonly compassHeading = input.required<number>();
-  protected readonly appWindAngle = input.required<number>();
-  protected readonly targetPilotHeadingTrue = input.required<boolean>();
   protected readonly headingDirectionTrue = input.required<boolean>();
+  protected readonly appWindAngle = input.required<number>();
+  protected readonly rudderAngle = input.required<number>();
 
   protected compassAngle = signal<number>(0);
   protected awaAngle = signal<number>(0);
@@ -40,11 +41,6 @@ export class SvgAutopilotComponent implements OnDestroy {
   protected apModeValueAnnotation = signal<string>('');
   protected apModeValueDirection = signal<string>('');
 
-  protected apTWA = computed(() => {
-    const raw = this.targetWindAngleHeading();
-    if (raw == null) return;
-    return this.roundDeg(raw);
-  });
   protected lockedMode = computed(() => {
     const mode = this.apMode();
       if (mode === "auto" || mode === "compass") return `Heading Hold`;
@@ -56,31 +52,20 @@ export class SvgAutopilotComponent implements OnDestroy {
       return "Off-line";
   });
   protected lockedHdg = computed<number | null>(() => {
-    const h = this.targetPilotHeading();
-    const w = this.targetWindAngleHeading();
-    if (!Number.isFinite(h as number) || !Number.isFinite(w as number)) return null;
-    const lockedHdg = this.roundDeg(h as number);
-    const lockedAWA = this.roundDeg(w as number);
-    switch (this.apMode()) {
-      case "auto":
-      case "route":
-        return lockedHdg;
-      case "wind":
-        return lockedAWA;
-      default:
-        return null;
-    }
+    const target = this.autopilotTarget();
+    if (!Number.isFinite(target as number)) return null;
+    return this.roundDeg(target as number);
   });
+
   protected lockedHdgAnnotation = computed(() => {
     const state = this.apMode();
-    if (state === "route" || state === "auto") {
+    if (["route", "auto", "gps", "nav"].includes(state)) {
       return this.targetPilotHeadingTrue() ? 'True' : 'Mag';
     }
-    if (state === "wind") {
-      if (typeof this.lockedHdg() === 'number') {
-        const hdg = this.lockedHdg() as number;
-        return hdg > 0 ? 'Stbd' : 'Port';
-      }
+    if (["wind", "wind true"].includes(state)) {
+      const hdg = this.lockedHdg() ?? null;
+      if (hdg === null) return '';
+      return hdg > 0 ? 'Stbd' : 'Port';
     }
     return '';
   });
