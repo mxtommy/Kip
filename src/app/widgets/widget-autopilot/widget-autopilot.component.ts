@@ -658,7 +658,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     });
     this.observeDataStream('autopilotEngaged', newValue => {
       if (newValue.data?.value) {
-        this.apEngaged.set(newValue.data.value);
+        this.apEngaged.set(newValue.data.value as boolean);
       } else {
         this.apEngaged.set(false);
         console.warn('[Autopilot Widget] Autopilot engaged is null or not available');
