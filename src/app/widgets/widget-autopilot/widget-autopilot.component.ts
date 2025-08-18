@@ -114,7 +114,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
 
-  private apiEndpoints: IV2ApiEndpoints;;
+  private apiEndpoints: IV2ApiEndpoints;
 
   // Autopilot state Management
   protected apState = signal<string | null>(null);
@@ -856,69 +856,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         };
         this.executeRestRequest('PUT', targetCommand);
         break;
-      case 'target_heading':
-        targetCommand = {
-          path: endpoints.target,
-          value: value
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'auto':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "auto"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'compass':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "compass"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'gps':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "gps"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'wind':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "wind"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'true wind':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "true wind"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'route':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "route"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'nav':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "nav"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'standby': {
-          const targetCommand: IV2CommandDefinition = {
-            path: this.apEngaged() ? `${endpoints.disengage}` : `${endpoints.engage}`
-          };
-          this.executeRestRequest('POST', targetCommand);
-        }
-        break;
       case 'advanceWaypoint':
         targetCommand = {
           path: `${API_PATHS.V2_COURSE}/activeRoute/nextPoint`
@@ -955,6 +892,29 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             }
           });
         }
+        break;
+      case 'target_heading':
+        targetCommand = {
+          path: endpoints.target,
+          value: value
+        };
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'standby': {
+          const targetCommand: IV2CommandDefinition = {
+            path: this.apEngaged() ? `${endpoints.disengage}` : `${endpoints.engage}`
+          };
+          this.executeRestRequest('POST', targetCommand);
+        }
+        break;
+      case 'auto':
+      case 'compass':
+      case 'gps':
+      case 'wind':
+      case 'true wind':
+      case 'route':
+      case 'nav':
+        this.setModeAndEngage(cmd, endpoints);
         break;
       default:
         console.error('Unknown V2 command:', cmd);
@@ -1021,6 +981,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         data: null
       };
     }
+  }
+
+  private setModeAndEngage(mode: string, endpoints: IV2ApiEndpoints): void {
+    this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
+    this.executeRestRequest('PUT', { path: endpoints.engage, value: { value: 'enabled' } });
   }
 
   private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
