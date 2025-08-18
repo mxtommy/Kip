@@ -914,7 +914,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       case 'true wind':
       case 'route':
       case 'nav':
-        this.setModeAndEngage(cmd, endpoints);
+        await this.setModeAndEngage(cmd, endpoints);
         break;
       default:
         console.error('Unknown V2 command:', cmd);
@@ -983,9 +983,20 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  private setModeAndEngage(mode: string, endpoints: IV2ApiEndpoints): void {
-    this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
-    this.executeRestRequest('PUT', { path: endpoints.engage, value: { value: 'enabled' } });
+  private async setModeAndEngage(mode: string, endpoints: IV2ApiEndpoints): Promise<void> {
+    try {
+      const modeResp = await this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
+      if (modeResp.status !== 'success') {
+        console.error(`[Autopilot Widget] Failed to set mode '${mode}':`, modeResp.message ?? modeResp.status);
+        return; // abort engage if setting mode failed
+      }
+      const engageResp = await this.executeRestRequest('PUT', { path: endpoints.engage, value: { value: 'enabled' } });
+      if (engageResp.status !== 'success') {
+        console.error(`[Autopilot Widget] Failed to engage after mode '${mode}':`, engageResp.message ?? engageResp.status);
+      }
+    } catch (err) {
+      console.error('[Autopilot Widget] setModeAndEngage unexpected error:', err);
+    }
   }
 
   private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
