@@ -144,9 +144,9 @@ export class SvgAutopilotComponent implements OnDestroy {
             }
 
             xteValue = Math.abs(xteValue);
-            if (xteValue > 999) {
-              xte = (xteValue / 1000).toFixed(1);
-              xteAnnotation = ' km';
+            if (xteValue > 185) {
+              xte = (xteValue / 1852).toFixed(1);
+              xteAnnotation = ' nm';
             } else {
               xte = xteValue.toFixed(0);
               xteAnnotation = ' m';
