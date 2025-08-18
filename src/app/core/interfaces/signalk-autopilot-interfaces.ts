@@ -8,6 +8,8 @@
  * @see https://github.com/SignalK/specification/blob/master/schemas/groups/autopilot.json
  */
 
+export type TApMode = 'off-line' | 'auto' | 'compass' | 'gps' | 'route' | 'nav' | 'wind' | 'wind true' | 'standby';
+
 // ========================================
 // V1 API Interfaces (Legacy Plugin-based)
 // ========================================
