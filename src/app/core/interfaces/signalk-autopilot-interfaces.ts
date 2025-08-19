@@ -8,7 +8,7 @@
  * @see https://github.com/SignalK/specification/blob/master/schemas/groups/autopilot.json
  */
 
-export type TApMode = 'off-line' | 'auto' | 'compass' | 'gps' | 'route' | 'nav' | 'wind' | 'wind true' | 'standby';
+export type TApMode = 'off-line' | 'auto' | 'compass' | 'gps' | 'route' | 'nav' | 'wind' | 'true wind' | 'standby';
 
 // ========================================
 // V1 API Interfaces (Legacy Plugin-based)
@@ -53,6 +53,7 @@ export interface IV2ApiEndpoints {
   engage: string;
   disengage: string;
   mode: string;
+  state: string;
   target: string;
   tack: string;
   gybe: string;
