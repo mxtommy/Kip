@@ -46,7 +46,7 @@ export class SvgAutopilotComponent implements OnDestroy {
     if (mode === "gps") return "GPS Hold";
     if (mode === "route" || mode === "nav") return `Track`;
     if (mode === "wind") return "Wind Hold";
-    if (mode === "wind true") return "Wind True Hold";
+    if (mode === "true wind") return "Wind True Hold";
     if (mode === "standby") return "Standby";
     return "Off-line";
   });
@@ -60,7 +60,7 @@ export class SvgAutopilotComponent implements OnDestroy {
     if (["route", "auto", "gps", "nav"].includes(state)) {
       return this.targetPilotHeadingTrue() ? 'True' : 'Mag';
     }
-    if (["wind", "wind true"].includes(state)) {
+    if (["wind", "true wind"].includes(state)) {
       const hdg = this.lockedHdg() ?? null;
       if (hdg === null) return '';
       return hdg > 0 ? 'Stbd' : 'Port';

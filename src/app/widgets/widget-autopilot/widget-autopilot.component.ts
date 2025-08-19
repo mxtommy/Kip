@@ -69,6 +69,7 @@ const V2_ENDPOINT_TEMPLATES: Record<string, (instance: string) => string> = {
   BASE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}`,
   ENGAGE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/engage`,
   DISENGAGE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/disengage`,
+  STATE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/state`,
   MODE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/mode`,
   TARGET_HEADING: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/target`,
   TACK: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/tack`,
@@ -144,16 +145,24 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
+
   protected readonly apEngageBtnDisabled = computed(() => {
-    const mode = this.apMode();
+    const state = this.apState();
     const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
-    if (!apiVersion) {
-      return true;
-    } else if (apiVersion === "v1") {
-      return (mode === 'standby' || mode === 'off-line') ? true : false;
+
+    if (!apiVersion) return true;
+
+    if (apiVersion === "v1") {
+      return (['standby', 'off-line'].includes(state)) ? true : false;
     }
+
+    if (apiVersion === "v2") {
+      return (['disabled', 'off-line'].includes(state)) ? true : false;
+    }
+
     return false;
   });
+
   protected readonly apBtnDisabled = computed(() => {
     const engaged = this.apEngaged();
     const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
@@ -168,14 +177,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   });
   protected readonly adjustHdgBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( ['auto', 'compass', 'gps', 'wind', 'wind true', 'standby'].includes(mode)) {
+    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
   });
   protected readonly tackBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( ['auto', 'compass', 'gps', 'wind', 'wind true', 'standby'].includes(mode)) {
+    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
@@ -222,7 +231,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             { label: 'Close', action: 'cancel', isCancel: true }
           ];
           menuItems = this.parseMenuItems(allAPModes, mode);
-        } // else if (this.autopilotPlugin() == 'signalk-autopilot-provider') { }
+        }
       } else if (apiVersion === 'v1') {
         const allAPModes: MenuItem[] = [
           { label: 'Auto', action: 'auto' },
@@ -612,6 +621,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       engage: V2_ENDPOINT_TEMPLATES.ENGAGE(instanceId),
       disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(instanceId),
       mode: V2_ENDPOINT_TEMPLATES.MODE(instanceId),
+      state: V2_ENDPOINT_TEMPLATES.STATE(instanceId),
       target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(instanceId),
       tack: V2_ENDPOINT_TEMPLATES.TACK(instanceId),
       gybe: V2_ENDPOINT_TEMPLATES.GYBE(instanceId),
@@ -902,9 +912,10 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         break;
       case 'standby': {
           const targetCommand: IV2CommandDefinition = {
-            path: this.apEngaged() ? `${endpoints.disengage}` : `${endpoints.engage}`
+            path: `${endpoints.state}`,
+            value: { value: this.apState() ? 'disabled' : 'enabled' }
           };
-          this.executeRestRequest('POST', targetCommand);
+          this.executeRestRequest('PUT', targetCommand);
         }
         break;
       case 'auto':
@@ -914,7 +925,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       case 'true wind':
       case 'route':
       case 'nav':
-        await this.setModeAndEngage(cmd, endpoints);
+        await this.setModeAndEnable(cmd, endpoints);
         break;
       default:
         console.error('Unknown V2 command:', cmd);
@@ -983,14 +994,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
   }
 
-  private async setModeAndEngage(mode: string, endpoints: IV2ApiEndpoints): Promise<void> {
+  private async setModeAndEnable(mode: string, endpoints: IV2ApiEndpoints): Promise<void> {
     try {
       const modeResp = await this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
       if (modeResp.status !== 'success') {
         console.error(`[Autopilot Widget] Failed to set mode '${mode}':`, modeResp.message ?? modeResp.status);
         return; // abort engage if setting mode failed
       }
-      const engageResp = await this.executeRestRequest('PUT', { path: endpoints.engage, value: { value: 'enabled' } });
+      const engageResp = await this.executeRestRequest('PUT', { path: endpoints.state, value: { value: 'enabled' } });
       if (engageResp.status !== 'success') {
         console.error(`[Autopilot Widget] Failed to engage after mode '${mode}':`, engageResp.message ?? engageResp.status);
       }
