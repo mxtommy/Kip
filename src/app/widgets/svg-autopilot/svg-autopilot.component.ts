@@ -17,9 +17,7 @@ export class SvgAutopilotComponent implements OnDestroy {
   private readonly rudderPortRect = viewChild.required<ElementRef<SVGRectElement>>('rudderPortRect');
 
   protected readonly apMode = input<TApMode>('off-line');
-  //protected readonly targetPilotHeading = input.required<number>();
   protected readonly targetPilotHeadingTrue = input.required<boolean>();
-  //protected readonly targetWindAngleHeading = input.required<number>();
   protected readonly autopilotTarget = input.required<number>();
   protected readonly courseXte = input.required<number>();
   protected readonly compassHeading = input.required<number>();
@@ -57,7 +55,6 @@ export class SvgAutopilotComponent implements OnDestroy {
     if (!Number.isFinite(target as number)) return null;
     return this.roundDeg(target as number);
   });
-
   protected lockedHdgAnnotation = computed(() => {
     const state = this.apMode();
     if (["route", "auto", "gps", "nav"].includes(state)) {
