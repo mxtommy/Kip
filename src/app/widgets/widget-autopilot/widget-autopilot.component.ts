@@ -709,7 +709,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private startDataSubscription(): void {
-    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('courseXte', newValue => this.crossTrackError.set(newValue.data.value != null ? newValue.data.value : 0));
     this.observeDataStream('rudderAngle', newValue => {
         if (newValue.data.value === null) {
           this.rudder.set(null);
