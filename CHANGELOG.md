@@ -1,3 +1,8 @@
+# v 3.8.1
+## Improvements
+* Expose option to invert pitch and roll axes in Horizon gauge widget
+* Enhance memory management and lifecycle handling
+* Application dependencies updated
 # V 3.8.0
 ## New features
 * Pitch & Roll widget: Horizon-style attitude display for live pitch and roll, helping monitor vessel motion in sea state.
