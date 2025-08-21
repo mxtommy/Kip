@@ -5,6 +5,7 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
+import { CanvasService } from '../../core/services/canvas.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
@@ -35,6 +36,7 @@ interface IDataSetRow {
 export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly ngZone = inject(NgZone);
   private readonly _dataset = inject(DatasetService);
+  private readonly canvasService = inject(CanvasService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
@@ -819,7 +821,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
 
   // Push a batch of rows into 5 consecutive datasets starting at baseIndex
   private pushRowsGeneric(rows: IDatasetServiceDatapoint[], baseIndex: 0 | 5, toUnit: 'deg' | 'knots', unwrap: boolean): void {
-  const types: ('value' | 'sma' | 'avg' | 'min' | 'max')[] = ['value', 'sma', 'avg', 'min', 'max'];
+    const types: ('value' | 'sma' | 'avg' | 'min' | 'max')[] = ['value', 'sma', 'avg', 'min', 'max'];
     types.forEach((type, i) => {
       (this.chart.data.datasets[baseIndex + i].data as IDataSetRow[])
         .push(...this.transformRows(rows, type, toUnit, unwrap));
@@ -1116,5 +1118,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     this._dsSpeedSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
+    const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }

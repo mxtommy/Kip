@@ -11,10 +11,10 @@ import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
 
 @Component({
-    selector: 'widget-numeric',
-    templateUrl: './widget-numeric.component.html',
-    styleUrls: ['./widget-numeric.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MinichartComponent]
+  selector: 'widget-numeric',
+  templateUrl: './widget-numeric.component.html',
+  styleUrls: ['./widget-numeric.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MinichartComponent]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   protected miniChart = viewChild(MinichartComponent);
@@ -227,15 +227,20 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvas.clearCanvas(this.canvasMinMaxCtx, this.canvasMinMax().nativeElement.width, this.canvasMinMax().nativeElement.height);
-    this.canvas.clearCanvas(this.canvasUnitCtx, this.canvasUnit().nativeElement.width, this.canvasUnit().nativeElement.height);
+    // Remove associated mini-chart dataset if present
+    this._dataset.removeIfExists(this.widgetProperties?.uuid, true);
+    // Proactively release backing stores to free GPU/system memory
+    this.canvas.releaseCanvases([
+      this.canvasValue()?.nativeElement,
+      this.canvasMinMax()?.nativeElement,
+      this.canvasUnit()?.nativeElement
+    ], { clear: true, removeFromDom: false });
   }
 
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
-private updateCanvas(): void {
+  /* ******************************************************************************************* */
+  /*                                  Canvas                                                     */
+  /* ******************************************************************************************* */
+  private updateCanvas(): void {
     if (this.canvasValCtx) {
       this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
       this.drawValue();
@@ -270,39 +275,39 @@ private updateCanvas(): void {
 
   private getValueText(): string {
     if (this.dataValue === null) {
-        return "--";
+      return "--";
     }
 
     const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
     if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
-        return this.dataValue.toString();
+      return this.dataValue.toString();
     }
 
     return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
   }
 
   private drawUnit(): void {
-  const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-  if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
+    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
 
-  const marginX = 10 * this.canvas.scaleFactor;
-  const marginY = 5 * this.canvas.scaleFactor;
-  const canvasWidth = this.canvasUnit().nativeElement.width;
-  const canvasHeight = this.canvasUnit().nativeElement.height;
+    const marginX = 10 * this.canvas.scaleFactor;
+    const marginY = 5 * this.canvas.scaleFactor;
+    const canvasWidth = this.canvasUnit().nativeElement.width;
+    const canvasHeight = this.canvasUnit().nativeElement.height;
 
-  this.canvas.drawText(
-    this.canvasUnitCtx,
-    unit,
-    canvasWidth - marginX,    // X: right edge minus margin
-    canvasHeight - marginY,   // Y: bottom edge minus margin
-    Math.floor(canvasWidth * 0.25),
-    Math.floor(canvasHeight * 0.15),
-    'bold',
-    this.valueColor,
-    'end',        // right-aligned
-    'bottom'      // baseline at the bottom
-  );
-}
+    this.canvas.drawText(
+      this.canvasUnitCtx,
+      unit,
+      canvasWidth - marginX,    // X: right edge minus margin
+      canvasHeight - marginY,   // Y: bottom edge minus margin
+      Math.floor(canvasWidth * 0.25),
+      Math.floor(canvasHeight * 0.15),
+      'bold',
+      this.valueColor,
+      'end',        // right-aligned
+      'bottom'      // baseline at the bottom
+    );
+  }
 
   private drawMinMax(): void {
 

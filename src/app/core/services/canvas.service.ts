@@ -191,4 +191,54 @@ export class CanvasService {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, width, height);
   }
+
+  /**
+   * Proactively release a canvas backing store to reduce GPU/system memory pressure.
+   * Steps:
+   *  1. Optionally clear the current contents.
+   *  2. Reset width/height to 0 (this drops the backing store allocations in browsers).
+   *  3. Optionally remove the element from the DOM (if caller is certain it's not reused).
+   *  4. Null out any expando properties the app may have attached (defensive – caller passes keys).
+   *
+   * @param canvas The canvas element.
+   * @param opts Optional behavior flags.
+   */
+  public releaseCanvas(
+    canvas: HTMLCanvasElement | undefined | null,
+    opts: {
+      removeFromDom?: boolean; // physically detach from its parent
+      clear?: boolean;         // clear contents before resize (default true)
+      expandoKeys?: string[];  // property names to delete off the element (if any)
+    } = {}
+  ): void {
+    if (!canvas) return;
+    const { removeFromDom = false, clear = true, expandoKeys = [] } = opts;
+    try {
+      const ctx = canvas.getContext('2d');
+      if (clear && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      // Reset size to release backing store
+      canvas.width = 0;
+      canvas.height = 0;
+      // Remove expando / custom references if any
+      expandoKeys.forEach(k => {
+        try { delete (canvas as unknown as Record<string, unknown>)[k]; } catch { /* ignore */ }
+      });
+      if (removeFromDom && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
+      }
+    } catch (err) {
+      console.warn('[CanvasService] releaseCanvas failed', err);
+    }
+  }
+
+  /**
+   * Convenience helper to release multiple canvases with same options.
+  * Iterates the list and calls {@link CanvasService.releaseCanvas | releaseCanvas} for each element.
+  * @see {@link CanvasService.releaseCanvas}
+   */
+  public releaseCanvases(canvases: (HTMLCanvasElement | undefined | null)[], opts?: Parameters<CanvasService['releaseCanvas']>[1]): void {
+    canvases.forEach(c => this.releaseCanvas(c, opts));
+  }
 }

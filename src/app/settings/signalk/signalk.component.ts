@@ -21,6 +21,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
+import { CanvasService } from '../../core/services/canvas.service';
 
 
 
@@ -30,21 +31,21 @@ import 'chartjs-adapter-date-fns';
  * real-time monitoring of connection status and data stream statistics.
  */
 @Component({
-    selector: 'settings-signalk',
-    templateUrl: './signalk.component.html',
-    styleUrls: ['./signalk.component.scss'],
-    imports: [
-        FormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatError,
-        MatCheckbox,
-        MatSlideToggle,
-        MatTooltip,
-        MatButton,
-        SlicePipe
-    ],
+  selector: 'settings-signalk',
+  templateUrl: './signalk.component.html',
+  styleUrls: ['./signalk.component.scss'],
+  imports: [
+    FormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatCheckbox,
+    MatSlideToggle,
+    MatTooltip,
+    MatButton,
+    SlicePipe
+  ],
 })
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -57,6 +58,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly connectionStateMachine = inject(ConnectionStateMachine);
   protected readonly auth = inject(AuthenticationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly canvasService = inject(CanvasService);
 
 
   protected readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
@@ -92,7 +94,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this.signalKConnectionService.getServiceEndpointStatusAsO().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((status: IEndpointStatus) => {
-          this.endpointServiceStatus = status;
+      this.endpointServiceStatus = status;
     });
 
     // get Delta Service WebSocket stream status
@@ -103,7 +105,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
-   ngAfterViewInit(): void {
+  ngAfterViewInit(): void {
     this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
     this._chart?.destroy();
     this.startChart();
@@ -112,13 +114,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this.DataService.getSignalkDeltaUpdateStatistics().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((update: IDeltaUpdate) => {
-      this._chart.data.datasets[0].data.push({x: update.timestamp, y: update.value});
+      this._chart.data.datasets[0].data.push({ x: update.timestamp, y: update.value });
       if (this._chart.data.datasets[0].data.length > 60) {
         this._chart.data.datasets[0].data.shift();
       }
       this._chart?.update("none");
     });
-   }
+  }
 
   /**
    * Opens the user credential modal dialog for authentication.
@@ -136,7 +138,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     dialogRef.afterClosed().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(data => {
-      if (!data) {return} // User clicked cancel
+      if (!data) { return } // User clicked cancel
       this.connectionConfig.loginName = data.user;
       this.connectionConfig.loginPassword = data.password;
       this.connectToServer();
@@ -193,16 +195,16 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Creates a time-series chart showing data update frequency over time.
    */
   private startChart() {
-    this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'),{
+    this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'), {
       type: 'line',
       data: {
-          datasets: [
-            {
-              data: [],
-              fill: true,
-              borderColor: this.textColor
-            },
-          ]
+        datasets: [
+          {
+            data: [],
+            fill: true,
+            borderColor: this.textColor
+          },
+        ]
       },
       options: {
         maintainAspectRatio: false,
@@ -250,7 +252,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
             }
           }
         },
-        plugins:{
+        plugins: {
           legend: {
             display: false,
             labels: {
@@ -280,5 +282,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   ngOnDestroy() {
     this._chart?.destroy();
+    const canvas = this.lineGraph?.()?.nativeElement as HTMLCanvasElement | undefined;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }

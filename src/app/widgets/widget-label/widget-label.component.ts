@@ -37,7 +37,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
         this.updateCanvas();
       }
     });
-   }
+  }
 
   ngOnInit(): void {
     this.validateConfig();
@@ -54,8 +54,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
-    this.canvasEl().nativeElement.remove();
+    this.canvas.releaseCanvas(this.canvasEl()?.nativeElement, { clear: true, removeFromDom: true });
   }
 
   protected startWidget(): void {

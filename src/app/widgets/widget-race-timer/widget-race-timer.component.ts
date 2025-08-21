@@ -215,7 +215,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
     if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+      this.canvas.releaseCanvas(this.canvasEl()?.nativeElement, { clear: true, removeFromDom: true });
     }
     clearInterval(this.flashInterval);
     this.flashInterval = null;

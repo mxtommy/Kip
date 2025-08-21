@@ -9,11 +9,11 @@ import { getColors } from '../../core/utils/themeColors.utils';
 
 
 @Component({
-    selector: 'widget-text',
-    templateUrl: './widget-text.component.html',
-    styleUrls: ['./widget-text.component.css'],
-    imports: [ WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent ],
-    standalone: true
+  selector: 'widget-text',
+  templateUrl: './widget-text.component.html',
+  styleUrls: ['./widget-text.component.css'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent],
+  standalone: true
 })
 export class WidgetTextComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
@@ -87,8 +87,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvasValue().nativeElement.remove();
+    this.canvas.releaseCanvas(this.canvasValue()?.nativeElement, { clear: true, removeFromDom: true });
   }
 
   private setColors(): void {
@@ -105,7 +104,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.drawValue();
   }
 
-/* ******************************************************************************************* */
+  /* ******************************************************************************************* */
   /*                                  Canvas Drawing                                             */
   /* ******************************************************************************************* */
   drawValue() {
