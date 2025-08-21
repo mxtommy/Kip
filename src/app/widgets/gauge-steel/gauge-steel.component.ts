@@ -1,5 +1,6 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnChanges, SimpleChanges, OnInit, input, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, OnInit, OnDestroy, input, inject, ElementRef, viewChild } from '@angular/core';
+import { CanvasService } from '../../core/services/canvas.service';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
@@ -48,8 +49,10 @@ export const SteelFrameColors = {
     styleUrls: ['./gauge-steel.component.scss'],
     imports: [NgxResizeObserverModule]
 })
-export class GaugeSteelComponent implements OnInit, OnChanges {
+export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private unitsService = inject(UnitsService);
+  private readonly canvasService = inject(CanvasService);
+  protected readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('gaugeCanvas');
 
   readonly widgetUUID = input<string>(undefined);
   readonly subType = input<string>(undefined); // linear or radial
@@ -254,5 +257,16 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     if(changes.maxValue) {
       this.gauge.setMaxValue(changes.maxValue.currentValue);
     }
+  }
+
+  ngOnDestroy(): void {
+    // Steelseries draws into the canvas with id widgetUUID(). Release it to free GPU memory.
+    const id = this.widgetUUID();
+    if (id) {
+      const canvas = document.getElementById(id) as HTMLCanvasElement | null;
+      this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
+    }
+    // Null out gauge reference for GC
+    this.gauge = null;
   }
 }

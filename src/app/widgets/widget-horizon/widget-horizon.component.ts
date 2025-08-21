@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterContentInit, ChangeDetectorRef, inject } from '@angular/core';
+import { CanvasService } from '../../core/services/canvas.service';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -46,10 +47,11 @@ export const SteelFrameDesign = {
 })
 export class WidgetHorizonComponent extends BaseWidgetComponent implements OnInit, AfterContentInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
+  private readonly canvasService = inject(CanvasService);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected gaugeOptions: any = {};
-  private gauge = null;à
+  private gauge = null;
   private streamsInitialized = false;
 
   constructor() {
@@ -140,6 +142,9 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
     if (this.gauge) {
       this.gauge = null;
     }
+  // Release horizon canvas
+  const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
+  this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 
   private buildOptions() {
