@@ -1,3 +1,11 @@
+# v 3.8.2
+# Improvements
+* Faster app loading with local font and font swap support
+* Linux/RPi UI cleanup with removal of unnecessary scroll bars in multiple pages
+* Increased mobile Wake Lock support
+* Help component active page marker
+## Fixes
+* Dashboard card Drag & Drop and Long Press event collision preventing dashboard reordering in Chromium.
 # v 3.8.1
 ## Improvements
 * Expose option to invert pitch and roll axes in Horizon gauge widget
