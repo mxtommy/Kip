@@ -16,11 +16,10 @@ Key features include:
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
 
-
 Typical complementary components you may install (many are often bundled with Signal K distributions):
 
 **Navigation & Charting**
-- **Freeboard‑SK** – Multi‑station, web chart plotter tightly integrated with Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
 
 **Visual Flow / Automation**
 - **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
