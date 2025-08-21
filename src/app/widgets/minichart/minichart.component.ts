@@ -2,8 +2,9 @@ import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, in
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
+import { CanvasService } from '../../core/services/canvas.service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale} from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { ITheme } from '../../core/services/app-service';
 import { UnitsService } from '../../core/services/units.service';
@@ -11,13 +12,13 @@ import { UnitsService } from '../../core/services/units.service';
 Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale);
 
 interface IChartColors {
-    valueLine: string,
-    valueFill: string,
-    averageLine: string,
-    averageFill: string,
-    averageChartLine: string,
-    chartLabel: string,
-    chartValue: string
+  valueLine: string,
+  valueFill: string,
+  averageLine: string,
+  averageFill: string,
+  averageChartLine: string,
+  chartLabel: string,
+  chartValue: string
 }
 interface IDataSetRow {
   x: number,
@@ -46,8 +47,9 @@ export class MinichartComponent implements OnDestroy {
   protected unitsService = inject(UnitsService);
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
+  private readonly canvasService = inject(CanvasService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
-  public lineChartData: ChartData <'line', {x: number, y: number} []> = {
+  public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
   };
   public lineChartOptions: ChartConfiguration['options'] = {
@@ -56,7 +58,7 @@ export class MinichartComponent implements OnDestroy {
       line: {
         pointRadius: 0, // disable for all `'line'` datasets
         pointHoverRadius: 0, // disable for all `'line'` datasets
-        tension:  0.4,
+        tension: 0.4,
       }
     },
     animations: {
@@ -71,7 +73,7 @@ export class MinichartComponent implements OnDestroy {
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
 
-   private config = {
+  private config = {
     datasetAverageArray: 'sma',
     showAverageData: false,
     trackAgainstAverage: false,
@@ -153,7 +155,7 @@ export class MinichartComponent implements OnDestroy {
         y: {
           type: "time",
           display: false,
-            title: {
+          title: {
             display: false
           },
           time: {
@@ -188,32 +190,32 @@ export class MinichartComponent implements OnDestroy {
           type: "time",
           display: false,
           title: {
-          display: false
-        },
-        time: {
-          unit: this.datasetConfig.timeScaleFormat as TimeUnit,
-          minUnit: "second",
-          round: "second",
-          displayFormats: {
-            // eslint-disable-next-line no-useless-escape
-            hour: `k:mm\''`,
-            // eslint-disable-next-line no-useless-escape
-            minute: `mm\''`,
-            second: `ss"`,
-            millisecond: "SSS"
+            display: false
           },
-        },
-        ticks: {
-          autoSkip: false,
-          color: this.getThemeColors().averageChartLine,
-          major: {
-            enabled: true
+          time: {
+            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            minUnit: "second",
+            round: "second",
+            displayFormats: {
+              // eslint-disable-next-line no-useless-escape
+              hour: `k:mm\''`,
+              // eslint-disable-next-line no-useless-escape
+              minute: `mm\''`,
+              second: `ss"`,
+              millisecond: "SSS"
+            },
+          },
+          ticks: {
+            autoSkip: false,
+            color: this.getThemeColors().averageChartLine,
+            major: {
+              enabled: true
+            }
+          },
+          grid: {
+            display: false,
+            color: this.theme().contrastDimmer
           }
-        },
-        grid: {
-          display: false,
-          color: this.theme().contrastDimmer
-        }
         },
         y: {
           display: false,
@@ -533,5 +535,7 @@ export class MinichartComponent implements OnDestroy {
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
+    const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }

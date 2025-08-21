@@ -1,15 +1,15 @@
 import { MatIconModule } from '@angular/material/icon';
-import {AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, signal, untracked, viewChild} from '@angular/core';
-import {BaseWidgetComponent} from '../../core/utils/base-widget.component';
-import {States} from '../../core/interfaces/signalk-interfaces';
-import {WidgetHostComponent} from '../../core/components/widget-host/widget-host.component';
-import {IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
-import {NgxResizeObserverModule} from 'ngx-resize-observer';
-import {CanvasService} from '../../core/services/canvas.service';
-import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
-import {WidgetTitleComponent} from '../../core/components/widget-title/widget-title.component';
-import { MatButtonModule} from '@angular/material/button';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, signal, untracked, viewChild } from '@angular/core';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { States } from '../../core/interfaces/signalk-interfaces';
+import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { CanvasService } from '../../core/services/canvas.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
+import { MatButtonModule } from '@angular/material/button';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { DashboardService } from '../../core/services/dashboard.service';
 
@@ -322,13 +322,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   public setLineEnd(end: string): string {
-    const requestId = this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.widgetProperties.uuid);
+    const requestId = this.signalk.putRequest('navigation.racing.setStartLine', { end, position: 'bow' }, this.widgetProperties.uuid);
     return requestId;
   }
 
   public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
     const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
-      {end, delta, rotate: rotateRadians ? rotateRadians : null},
+      { end, delta, rotate: rotateRadians ? rotateRadians : null },
       this.widgetProperties.uuid);
     return requestId;
   }
@@ -340,6 +340,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
+    this.canvasService.releaseCanvas(this.dToLineElement, { clear: true, removeFromDom: true });
   }
 }

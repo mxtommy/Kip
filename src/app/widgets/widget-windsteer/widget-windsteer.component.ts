@@ -319,6 +319,10 @@ export class WidgetWindComponent extends BaseWidgetComponent implements OnInit, 
   ngOnDestroy() {
     this.destroyDataStreams();
     this.stopWindSectors();
+    if (this.scheduleRafId != null) {
+      cancelAnimationFrame(this.scheduleRafId);
+      this.scheduleRafId = null;
+    }
   }
 
   private startWindSectors() {

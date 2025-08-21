@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, DoCheck, input, output } from '@angular/core';
+import { Component, DoCheck, OnDestroy, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 
@@ -9,11 +9,11 @@ interface IDimensions {
 }
 
 @Component({
-    selector: 'app-svg-boolean-button',
-    templateUrl: './svg-boolean-button.component.svg',
-    standalone: true
+  selector: 'app-svg-boolean-button',
+  templateUrl: './svg-boolean-button.component.svg',
+  standalone: true
 })
-export class SvgBooleanButtonComponent implements DoCheck {
+export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
@@ -24,7 +24,8 @@ export class SvgBooleanButtonComponent implements DoCheck {
   private toggleOn = "0 0 180 35";
   private oldTheme: ITheme = null;
 
-  private timeoutHandler = null;
+  private holdTimeoutId: ReturnType<typeof setTimeout> | null = null; // delay before starting momentary emit
+  private emitIntervalId: ReturnType<typeof setInterval> | null = null; // repeating emit while pressed
   private pressed = false;
   private isSwiping = false;
   private pointerStartX = 0;
@@ -39,7 +40,7 @@ export class SvgBooleanButtonComponent implements DoCheck {
   ngDoCheck(): void {
     this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;
     const data = this.data();
-    if(data.color != this.ctrlColor) {
+    if (data.color != this.ctrlColor) {
       this.ctrlColor = data.color;
       this.getColors(data.color);
     }
@@ -57,7 +58,8 @@ export class SvgBooleanButtonComponent implements DoCheck {
     this.pointerStartY = event.clientY;
 
     // Wait 250ms before emitting the state
-    this.timeoutHandler = setTimeout(() => {
+    this.clearTimers();
+    this.holdTimeoutId = setTimeout(() => {
       if (!this.isSwiping) {
         // Momentary mode
         this.pressed = true;
@@ -67,7 +69,7 @@ export class SvgBooleanButtonComponent implements DoCheck {
 
         // Start emitting the state every 100ms
         this.toggleClick.emit(state);
-        this.timeoutHandler = setInterval(() => {
+        this.emitIntervalId = setInterval(() => {
           this.toggleClick.emit(state);
         }, 100);
       }
@@ -83,9 +85,9 @@ export class SvgBooleanButtonComponent implements DoCheck {
       this.isSwiping = true;
 
       // Cancel the timeout if swiping is detected
-      if (this.timeoutHandler) {
-        clearTimeout(this.timeoutHandler);
-        this.timeoutHandler = null;
+      if (this.holdTimeoutId) {
+        clearTimeout(this.holdTimeoutId);
+        this.holdTimeoutId = null;
       }
     }
   }
@@ -100,9 +102,13 @@ export class SvgBooleanButtonComponent implements DoCheck {
     this.pressed = false;
 
     // Clear the interval if it was set
-    if (this.timeoutHandler) {
-      clearInterval(this.timeoutHandler);
-      this.timeoutHandler = null;
+    if (this.emitIntervalId) {
+      clearInterval(this.emitIntervalId);
+      this.emitIntervalId = null;
+    }
+    if (this.holdTimeoutId) {
+      clearTimeout(this.holdTimeoutId);
+      this.holdTimeoutId = null;
     }
   }
 
@@ -154,5 +160,20 @@ export class SvgBooleanButtonComponent implements DoCheck {
         this.valueColor = this.theme().contrast;
         break;
     }
+  }
+
+  private clearTimers(): void {
+    if (this.holdTimeoutId) {
+      clearTimeout(this.holdTimeoutId);
+      this.holdTimeoutId = null;
+    }
+    if (this.emitIntervalId) {
+      clearInterval(this.emitIntervalId);
+      this.emitIntervalId = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimers();
   }
 }

@@ -271,9 +271,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvasService.clearCanvas(this.timeToSContext,
-      this.timeToSElement.width,
-      this.timeToSElement.height);
+    this.canvasService.releaseCanvas(this.timeToSElement, { clear: true, removeFromDom: true });
   }
 
   private updateCanvas(): void {
@@ -338,7 +336,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   public sendStartTimerCommand(command: string): string {
-    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command}, this.widgetProperties.uuid);
+    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', { command }, this.widgetProperties.uuid);
     switch (command) {
       case 'start':
         this.mode.set(0);
@@ -353,7 +351,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   public adjustStartTime(delta: number): string {
-    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', {command: 'adjust', delta}, this.widgetProperties.uuid);
+    const requestId = this.signalk.putRequest('navigation.racing.setStartTime', { command: 'adjust', delta }, this.widgetProperties.uuid);
     return requestId;
   }
 
@@ -371,7 +369,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
     this.mode.set(0);
 
     this.signalk.putRequest('navigation.racing.setStartTime',
-      {command: 'set', startTime: date.toISOString()},
+      { command: 'set', startTime: date.toISOString() },
       this.widgetProperties.uuid
     );
   }

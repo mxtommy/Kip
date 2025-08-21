@@ -112,8 +112,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy(): void {
     this.isDestroyed = true;
     this.unsubscribeDataStream();
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvasValue().nativeElement.remove();
+  this.canvas.releaseCanvas(this.canvasValue()?.nativeElement, { clear: true, removeFromDom: true });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {

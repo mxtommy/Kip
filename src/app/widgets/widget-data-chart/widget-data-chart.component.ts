@@ -5,6 +5,7 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
+import { CanvasService } from '../../core/services/canvas.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -13,13 +14,13 @@ import 'chartjs-adapter-date-fns';
 Chart.register(annotationPlugin, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
 interface IChartColors {
-    valueLine: string,
-    valueFill: string,
-    averageLine: string,
-    averageFill: string,
-    averageChartLine: string,
-    chartLabel: string,
-    chartValue: string
+  valueLine: string,
+  valueFill: string,
+  averageLine: string,
+  averageFill: string,
+  averageChartLine: string,
+  chartLabel: string,
+  chartValue: string
 }
 interface IDataSetRow {
   x: number,
@@ -35,8 +36,9 @@ interface IDataSetRow {
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dsService = inject(DatasetService);
   private readonly ngZone = inject(NgZone);
+  private readonly canvasService = inject(CanvasService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
-  public lineChartData: ChartData <'line', {x: number, y: number} []> = {
+  public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
   };
   public lineChartOptions: ChartConfiguration['options'] = {
@@ -45,7 +47,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       line: {
         pointRadius: 0, // disable for all `'line'` datasets
         pointHoverRadius: 0, // disable for all `'line'` datasets
-        tension:  0.4,
+        tension: 0.4,
       }
     },
     animations: {
@@ -98,7 +100,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         }
       }
     });
-   }
+  }
 
   ngOnInit(): void {
     this.validateConfig();
@@ -146,7 +148,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         y: {
           type: "time",
           display: this.widgetProperties.config.showTimeScale,
-          position:  this.widgetProperties.config.verticalChart ? "right" : "left",
+          position: this.widgetProperties.config.verticalChart ? "right" : "left",
           suggestedMin: "",
           suggestedMax: "",
           title: {
@@ -182,7 +184,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         x: {
           type: "linear",
           display: this.widgetProperties.config.showYScale,
-          position:  this.widgetProperties.config.verticalChart ? "top" : "bottom",
+          position: this.widgetProperties.config.verticalChart ? "top" : "bottom",
           suggestedMin: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMin,
           suggestedMax: this.widgetProperties.config.enableMinMaxScaleLimit ? null : this.widgetProperties.config.yScaleSuggestedMax,
           min: this.widgetProperties.config.enableMinMaxScaleLimit ? this.widgetProperties.config.yScaleMin : null,
@@ -301,7 +303,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         },
         color: this.getThemeColors().chartLabel
       },
-      annotation : {
+      annotation: {
         annotations: {
           minimumLine: {
             type: 'line',
@@ -649,7 +651,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
         // ... (rest of your live update logic for title, annotation, etc.)
         const trackValue: number = this.widgetProperties.config.trackAgainstAverage ? dsPointOrBatch.data.sma : dsPointOrBatch.data.value;
-        this.chart.options.plugins.title.text =  `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
+        this.chart.options.plugins.title.text = `${this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, trackValue).toFixed(this.widgetProperties.config.numDecimal)} ${this.getUnitsLabel()} `;
 
         const lastAverage = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastAverage);
         const lastMinimum = this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, dsPointOrBatch.data.lastMinimum);
@@ -715,5 +717,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     this.dsServiceSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
+    const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
@@ -42,7 +42,7 @@ export interface IConnectionConfig {
 @Injectable({
   providedIn: 'root'
 })
-export class ConnectionStateMachine {
+export class ConnectionStateMachine implements OnDestroy {
   private readonly config: IConnectionConfig = {
     httpRetryCount: 3,
     webSocketRetryCount: 5,
@@ -372,5 +372,19 @@ export class ConnectionStateMachine {
       clearTimeout(this._notificationTimeout);
       this._notificationTimeout = null;
     }
+  }
+
+  /**
+   * Ensure any scheduled retries / notifications are cancelled when the injector
+   * disposes this service (e.g. app shutdown / HMR replacement) to avoid stray
+   * callbacks retaining references.
+   */
+  ngOnDestroy(): void {
+    this.clearRetryTimer();
+    this.clearNotificationTimeout();
+    this._httpRetryCallback = null;
+    this._webSocketRetryCallback = null;
+    this._currentState$?.complete();
+    this._status$?.complete();
   }
 }

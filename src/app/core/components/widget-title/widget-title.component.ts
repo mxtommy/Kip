@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, inject, input, OnChanges, SimpleChanges, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, input, OnChanges, SimpleChanges, viewChild, OnDestroy } from '@angular/core';
 import { CanvasService } from '../../services/canvas.service';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
@@ -8,7 +8,7 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
   templateUrl: './widget-title.component.html',
   styleUrl: './widget-title.component.scss'
 })
-export class WidgetTitleComponent implements AfterViewInit, OnChanges {
+export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy {
   protected text = input.required<string>();
   protected color = input.required<string>();
   protected canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
@@ -45,5 +45,11 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges {
   protected drawTitle() {
     if (!this.isReady) return;
     this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.canvasElement.width, this.canvasElement.height);
+  }
+
+  ngOnDestroy(): void {
+    this.canvas.releaseCanvas(this.canvasElement, { clear: true, removeFromDom: true });
+    this.canvasCtx = null;
+    this.canvasElement = null;
   }
 }

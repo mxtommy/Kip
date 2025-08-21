@@ -9,11 +9,11 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
-    selector: 'widget-datetime',
-    templateUrl: './widget-datetime.component.html',
-    styleUrls: ['./widget-datetime.component.css'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent],
-    standalone: true
+  selector: 'widget-datetime',
+  templateUrl: './widget-datetime.component.html',
+  styleUrls: ['./widget-datetime.component.css'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent],
+  standalone: true
 })
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
@@ -90,25 +90,24 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvasValue().nativeElement.remove();
+    this.canvas.releaseCanvas(this.canvasValue()?.nativeElement, { clear: true, removeFromDom: true });
   }
 
   private getGMTOffset(timeZone: string): string {
     try {
-        if (timeZone === 'System Timezone -') return '';
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone,
-            timeZoneName: 'short'
-        });
-        const parts = formatter.formatToParts(new Date());
-        const timeZonePart = parts.find(part => part.type === 'timeZoneName');
-        return timeZonePart ? timeZonePart.value : 'GMT';
+      if (timeZone === 'System Timezone -') return '';
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        timeZoneName: 'short'
+      });
+      const parts = formatter.formatToParts(new Date());
+      const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+      return timeZonePart ? timeZonePart.value : 'GMT';
     } catch (error) {
-        console.error(`Error getting GMT offset for timezone "${timeZone}":`, error);
-        return 'GMT';
+      console.error(`Error getting GMT offset for timezone "${timeZone}":`, error);
+      return 'GMT';
     }
-}
+  }
 
   private setColors(): void {
     this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
@@ -124,9 +123,9 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     if (this.isDestroyed) return;
     this.drawValue();
   }
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
+  /* ******************************************************************************************* */
+  /*                                  Canvas                                                     */
+  /* ******************************************************************************************* */
   private drawValue(): void {
     if (!this.canvasCtx) return;
     let valueText: string;

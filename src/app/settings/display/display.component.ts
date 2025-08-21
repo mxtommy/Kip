@@ -39,6 +39,8 @@ export class SettingsDisplayComponent implements OnInit {
   protected autoNightMode = model<boolean>(false);
   protected isRedNightMode = model<boolean>(false);
   protected isLightTheme = model<boolean>(false);
+  // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
+  private _pluginCheckSeq = 0;
 
   readonly LIGHT_THEME_NAME = "light-theme";
   readonly RED_NIGHT_MODE_THEME_NAME = "night-theme";
@@ -73,22 +75,31 @@ export class SettingsDisplayComponent implements OnInit {
 
   protected isAutoNightModeSupported(e: MatCheckboxChange): void {
     this.displayForm().form.markAsDirty();
-    if (e.checked) {
-      this._plugins.isEnabled('derived-data').then((enabled) => {
-        if (enabled) {
-          this.autoNightMode.set(true);
-          if (this.validateAutoNightModeSupported()) {
-            this.autoNightMode.set(true);
-          } else {
-            this.autoNightMode.set(false);
-          }
-        } else {
-          this._app.sendSnackbarNotification("Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.", 0);
-        }
-      }).catch((error) => {
-        console.error('[Display Component] Error checking plugin status:', error);
-      });
+    // If user unchecked, immediately disable and abort
+    if (!e.checked) {
+      this.autoNightMode.set(false);
+      return;
     }
+    const seq = ++this._pluginCheckSeq; // capture sequence for this async request
+    this._plugins.isEnabled('derived-data')
+      .then((enabled) => {
+        if (seq !== this._pluginCheckSeq) return; // stale response; ignore
+        if (!enabled) {
+          this.autoNightMode.set(false);
+          this._app.sendSnackbarNotification(
+            "Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
+            0
+          );
+          return;
+        }
+        const supported = this.validateAutoNightModeSupported();
+        this.autoNightMode.set(supported);
+      })
+      .catch((error) => {
+        if (seq !== this._pluginCheckSeq) return;
+        console.error('[Display Component] Error checking plugin status:', error);
+        this.autoNightMode.set(false);
+      });
   }
 
   /**
