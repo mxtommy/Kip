@@ -1,5 +1,6 @@
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -37,7 +38,7 @@ export class StorageService {
 
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
-  private patch = function(arg: IPatchAction) { // http JSON Patch function
+  private patch = function (arg: IPatchAction) { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
@@ -47,37 +48,39 @@ export class StorageService {
   }
 
   constructor() {
-      const server = this.server;
-
-      this._auth.isLoggedIn$.subscribe((isLoggedIn) => {
+    const server = this.server;
+    // Subscriptions auto‑teardown via takeUntilDestroyed
+    this._auth.isLoggedIn$
+      .pipe(takeUntilDestroyed())
+      .subscribe(isLoggedIn => {
         this._isLoggedIn = isLoggedIn;
         this.isStorageServiceReady();
       });
 
-      server.serverServiceEndpoint$.subscribe((status: IEndpointStatus) => {
+    server.serverServiceEndpoint$
+      .pipe(takeUntilDestroyed())
+      .subscribe((status: IEndpointStatus) => {
         this._networkStatus = status;
         this.isStorageServiceReady();
       });
 
-      server.serverVersion$.subscribe(version => {
-      if (version) {
-        this.isAppDataSupported = compare(version, '1.27.0', ">=");
-      }
-    });
+    server.serverVersion$
+      .pipe(takeUntilDestroyed())
+      .subscribe(version => {
+        if (version) {
+          this.isAppDataSupported = compare(version, '1.27.0', ">=");
+        }
+      });
 
     // Patch request queue to insure JSON Patch requests to SK server don't run over each other and cause collisions/conflicts. SK does not handle multiple async applicationData access calls
     this.patchQueue$
-      .pipe(
-          concatMap((arg: IPatchAction) => this.patch(arg)) // insures orderly call sequencing
-        )
-      .subscribe(() => {
-        //console.log("[Storage Service] Subscription results received")
-      });
+      .pipe(concatMap((arg: IPatchAction) => this.patch(arg)), takeUntilDestroyed())
+      .subscribe(() => { /* queue item processed */ });
   }
 
   private isStorageServiceReady(): void {
     if (this._networkStatus?.httpServiceUrl) {
-      this.serverEndpoint = this._networkStatus.httpServiceUrl.substring(0,this._networkStatus.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
+      this.serverEndpoint = this._networkStatus.httpServiceUrl.substring(0, this._networkStatus.httpServiceUrl.length - 4) + "applicationData/"; // this removes 'api/' from the end;
     }
 
     if (this._networkStatus?.operation === 2 && this._isLoggedIn && this.serverEndpoint) {
@@ -124,7 +127,7 @@ export class StorageService {
 
     await lastValueFrom(this.http.get<string[]>(globalUrl))
       .then((configNames: string[]) => {
-        for(const cname of configNames) {
+        for (const cname of configNames) {
           serverConfigs.push({ scope: 'global', name: cname });
         }
         console.log(`[Storage Service] Retrieved Global config list`);
@@ -132,11 +135,11 @@ export class StorageService {
       .catch(
         error => {
           this.handleError(error);
-      });
+        });
 
     await lastValueFrom(this.http.get<string[]>(userUrl))
       .then((configNames: string[]) => {
-        for(const cname of configNames) {
+        for (const cname of configNames) {
           serverConfigs.push({ scope: 'user', name: cname });
         }
         console.log(`[Storage Service] Retrieved User config list`);
@@ -144,7 +147,7 @@ export class StorageService {
       .catch(
         error => {
           this.handleError(error);
-      });
+        });
 
     return serverConfigs;
   }
@@ -167,10 +170,10 @@ export class StorageService {
   public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
     this.ensureReady();
     let conf: IConfig = null;
-    let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/" + configName;
+    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion + "/" + configName;
 
     if (forceConfigFileVersion) {
-      url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/" + configName;
+      url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion + "/" + configName;
     }
     await lastValueFrom(this.http.get<IConfig>(url))
       .then(remoteConfig => {
@@ -181,7 +184,7 @@ export class StorageService {
         }
       })
       .catch(error => {
-          this.handleError(error);
+        this.handleError(error);
       });
     return conf;
   }
@@ -202,10 +205,10 @@ export class StorageService {
    */
   public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
     this.ensureReady();
-    let url = this.serverEndpoint + scope +"/kip/" + this.configFileVersion + "/"+ configName;
+    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion + "/" + configName;
     let response = null;
     if (forceConfigFileVersion) {
-      url = this.serverEndpoint + scope +"/kip/" + forceConfigFileVersion + "/"+ configName;
+      url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion + "/" + configName;
     }
     await lastValueFrom(this.http.post<null>(url, config))
       .then(x => {
@@ -214,7 +217,7 @@ export class StorageService {
       })
       .catch(error => {
         this.handleError(error);
-    });
+      });
 
     return response;
   }
@@ -312,7 +315,7 @@ export class StorageService {
         break;
     }
 
-    const patch: IPatchAction = {url, document};
+    const patch: IPatchAction = { url, document };
     this.patchQueue$.next(patch);
   }
 
@@ -366,7 +369,7 @@ export class StorageService {
         break;
     }
 
-    const patch: IPatchAction = {url, document};
+    const patch: IPatchAction = { url, document };
     this.patchQueue$.next(patch);
   }
 
@@ -389,13 +392,13 @@ export class StorageService {
       url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
     }
     const document =
-    [
-      {
+      [
+        {
           "op": "remove",
           "path": `/${name}`
-      }
-    ]
-    const patch: IPatchAction = {url, document};
+        }
+      ]
+    const patch: IPatchAction = { url, document };
     this.patchQueue$.next(patch);
   }
 
@@ -407,7 +410,7 @@ export class StorageService {
 
   }
 
-  public set activeConfigFileVersion(v : number) {
+  public set activeConfigFileVersion(v: number) {
     this.configFileVersion = v;
   }
 
@@ -427,5 +430,4 @@ export class StorageService {
   public get initConfig(): IConfig {
     return this.InitConfig;
   }
-
 }
