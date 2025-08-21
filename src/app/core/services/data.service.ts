@@ -1,5 +1,5 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
-import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval } from 'rxjs';
+import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -74,6 +74,7 @@ interface IPathRegistration {
   _pathState$: BehaviorSubject<TState>;
   pathDataUpdate$: BehaviorSubject<IPathUpdate>;
   pathMeta$: BehaviorSubject<ISkMetadata | null>;
+  combinedSub?: Subscription; // explicit subscription for combined$ to allow manual teardown
 }
 
 export interface IDeltaUpdate {
@@ -89,7 +90,7 @@ export class DataService implements OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
 
   // Performance stats
-  private _deltaUpdatesCounter: number = null;
+  private _deltaUpdatesCounter = 0;
   private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(60);
 
   // Full skData updates for data-browser component
@@ -114,11 +115,9 @@ export class DataService implements OnDestroy {
   constructor() {
     // Emit Delta message update counter every second (RxJS based)
     interval(1000).pipe(takeUntilDestroyed(this._destroyRef)).subscribe(() => {
-      if (this._deltaUpdatesCounter !== null) {
-        const update: IDeltaUpdate = { timestamp: Date.now(), value: this._deltaUpdatesCounter };
-        this._deltaUpdatesSubject.next(update);
-        this._deltaUpdatesCounter = 0;
-      }
+      const update: IDeltaUpdate = { timestamp: Date.now(), value: this._deltaUpdatesCounter };
+      this._deltaUpdatesSubject.next(update);
+      this._deltaUpdatesCounter = 0;
     });
 
     // Observer of Delta service data path updates
@@ -180,6 +179,7 @@ export class DataService implements OnDestroy {
       const registration = this._pathRegister[index];
 
       // Ensure all observables are completed to avoid memory leaks
+      registration.combinedSub?.unsubscribe();
       registration._pathData$?.complete();
       registration._pathState$?.complete();
       registration.pathDataUpdate$?.complete();
@@ -242,7 +242,7 @@ export class DataService implements OnDestroy {
       map(([d, s]) => ({ data: d, state: s } as IPathUpdate))
     );
 
-    combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
+    newPathSubject.combinedSub = combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
 
     this._pathRegister.push(newPathSubject);
     return newPathSubject.pathDataUpdate$;
