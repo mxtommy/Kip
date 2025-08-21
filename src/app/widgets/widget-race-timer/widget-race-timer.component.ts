@@ -11,10 +11,10 @@ import { MatButton } from '@angular/material/button';
 import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
-    selector: 'widget-racetimer',
-    templateUrl: './widget-race-timer.component.html',
-    styleUrls: ['./widget-race-timer.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
+  selector: 'widget-racetimer',
+  templateUrl: './widget-race-timer.component.html',
+  styleUrls: ['./widget-race-timer.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private TimersService = inject(TimersService);
@@ -92,21 +92,22 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         } else if (newValue > -100) {
           this.zoneState = States.Alarm;
         } else if (newValue > -300) {
-          this.zoneState =States.Warn;
+          this.zoneState = States.Warn;
         } else {
           this.zoneState = States.Normal;
         }
 
-       //start flashing if alarm
-       if (this.zoneState == States.Alarm && !this.flashInterval) {
-        this.flashInterval = setInterval(() => {
-          this.flashOn = !this.flashOn;
-          this.updateCanvas();
-        }, 500); // used to flash stuff in alarm
-      } else if (this.zoneState != States.Alarm) {
-        // stop alarming if not in alarm state
-        clearInterval(this.flashInterval);
-      }
+        //start flashing if alarm
+        if (this.zoneState == States.Alarm && !this.flashInterval) {
+          this.flashInterval = setInterval(() => {
+            this.flashOn = !this.flashOn;
+            this.updateCanvas();
+          }, 500); // used to flash stuff in alarm
+        } else if (this.zoneState != States.Alarm) {
+          // stop alarming if not in alarm state
+          clearInterval(this.flashInterval);
+          this.flashInterval = null;
+        }
         this.updateCanvas();
       }
     );
@@ -131,7 +132,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   public roundToMin() {
     let v = this.dataValue;
-    if (this.dataValue < 0) { v = v * -1} // always positive
+    if (this.dataValue < 0) { v = v * -1 } // always positive
     const seconds = v % 600;
 
     if (this.dataValue > 0) {
@@ -150,11 +151,11 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   addOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue + 600);
+    this.TimersService.setTimer(this.timeName, this.dataValue + 600);
   }
 
   remOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue - 600);
+    this.TimersService.setTimer(this.timeName, this.dataValue - 600);
   }
 
   private getColors(color: string) {
@@ -208,7 +209,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   }
 
   private unsubscribeTimer() {
-      this.timerSub?.unsubscribe();
+    this.timerSub?.unsubscribe();
   }
 
   ngOnDestroy() {
@@ -217,10 +218,11 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
     }
     clearInterval(this.flashInterval);
+    this.flashInterval = null;
     this.destroyDataStreams();
   }
 
-/* ******************************************************************************************* */
+  /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
 

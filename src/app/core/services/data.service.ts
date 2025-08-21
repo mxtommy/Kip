@@ -1,9 +1,9 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
-import { Observable , BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of } from 'rxjs';
-import { ISkPathData, IPathValueData, IPathMetaData, IMeta} from "../interfaces/app-interfaces";
+import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval } from 'rxjs';
+import { ISkPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
-import { cloneDeep,merge } from 'lodash-es';
+import { cloneDeep, merge } from 'lodash-es';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const SELFROOTDEF = "self";
@@ -91,7 +91,6 @@ export class DataService implements OnDestroy {
   // Performance stats
   private _deltaUpdatesCounter: number = null;
   private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(60);
-  private _deltaUpdatesCounterTimer = null;
 
   // Full skData updates for data-browser component
   private _isSkDataFullTreeActive = false;
@@ -113,14 +112,14 @@ export class DataService implements OnDestroy {
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
 
   constructor() {
-    // Emit Delta message update counter every second
-    this._deltaUpdatesCounterTimer = setInterval(() => {
+    // Emit Delta message update counter every second (RxJS based)
+    interval(1000).pipe(takeUntilDestroyed(this._destroyRef)).subscribe(() => {
       if (this._deltaUpdatesCounter !== null) {
-        const update: IDeltaUpdate = {timestamp: Date.now(), value: this._deltaUpdatesCounter}
+        const update: IDeltaUpdate = { timestamp: Date.now(), value: this._deltaUpdatesCounter };
         this._deltaUpdatesSubject.next(update);
         this._deltaUpdatesCounter = 0;
       }
-    }, 1000);
+    });
 
     // Observer of Delta service data path updates
     this.delta.subscribeDataPathsUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((dataPath: IPathValueData) => {
@@ -202,7 +201,7 @@ export class DataService implements OnDestroy {
     let currentTimestamp: string = null;
     let currentDateTimestamp: Date | null = null;
     let state: TState = States.Normal;
-    let pathUpdate : IPathUpdate= {
+    let pathUpdate: IPathUpdate = {
       data: {
         value: null,
         timestamp: null
@@ -230,7 +229,7 @@ export class DataService implements OnDestroy {
       metaUpdate = dataPath.meta || null;
     }
 
-    const newPathSubject: IPathRegistration  = {
+    const newPathSubject: IPathRegistration = {
       path: path,
       source: source,
       _pathData$: new BehaviorSubject<IPathData>(pathUpdate.data),
@@ -246,7 +245,7 @@ export class DataService implements OnDestroy {
     combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
 
     this._pathRegister.push(newPathSubject);
-      return newPathSubject.pathDataUpdate$;
+    return newPathSubject.pathDataUpdate$;
   }
 
   /**
@@ -278,7 +277,7 @@ export class DataService implements OnDestroy {
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
     if (!pathItem) {
-      let pathType: string = typeof(dataPath.value);
+      let pathType: string = typeof (dataPath.value);
       if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
         pathType = "Date";
       }
@@ -305,7 +304,7 @@ export class DataService implements OnDestroy {
         pathItem.defaultSource = dataPath.source;
       }
       if (pathItem.type === undefined && dataPath.value !== null) {
-        pathItem.type = typeof(dataPath.value);
+        pathItem.type = typeof (dataPath.value);
         if (pathItem.type === "string" && isRfc3339StringDate(dataPath.value)) {
           pathItem.type = "Date";
         }
@@ -376,7 +375,7 @@ export class DataService implements OnDestroy {
 
       // If full meta tree is active, push the full tree
       if (this._isSkMetaFullTreeActive) {
-        this._dataServiceMeta.push({path: metaPath, meta: pathObject.meta});
+        this._dataServiceMeta.push({ path: metaPath, meta: pathObject.meta });
         this._dataServiceMetaSubject$.next(this._dataServiceMeta);
       }
     }
@@ -387,7 +386,7 @@ export class DataService implements OnDestroy {
 
     this._dataServiceMeta = this._skData
       .filter(item => item.meta !== undefined && item.path.startsWith('self.'))
-      .map(item => ({path: item.path, meta: item.meta}));
+      .map(item => ({ path: item.path, meta: item.meta }));
 
     this._dataServiceMetaSubject$.next(this._dataServiceMeta);
     return this._dataServiceMetaSubject$;
@@ -410,7 +409,7 @@ export class DataService implements OnDestroy {
   }
 
   private setSelfUrn(value: string) {
-    if (value !== "" || value !== null) {
+    if (value !== "" && value !== null) {
       console.debug('[Signal K Data Service] Setting self to: ' + value);
       this._selfUrn = value;
     } else {
@@ -440,7 +439,7 @@ export class DataService implements OnDestroy {
       .filter(item => {
         const typeMatches = item.type === valueType;
         const selfMatches = !selfOnly || item.path.startsWith("self");
-        const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true  : true;
+        const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true : true;
         return typeMatches && selfMatches && supportsPutMatches;
       })
       .map(item => ({ path: item.path, meta: item.meta }));
@@ -474,7 +473,8 @@ export class DataService implements OnDestroy {
             value: null,
             timestamp: null
           },
-        state: States.Normal};
+          state: States.Normal
+        };
       }
 
       pathRegister.pathDataUpdate$.next(timeoutValue);
@@ -502,7 +502,7 @@ export class DataService implements OnDestroy {
    * @returns {ISkMetadata | null} The metadata object for the given path if found, otherwise null.
    */
   public getPathMeta(path: string): ISkMetadata | null {
-      return this._skData.find(item => item.path === path)?.meta || null;
+    return this._skData.find(item => item.path === path)?.meta || null;
   }
 
   public isResetService(): Observable<boolean> {
@@ -516,9 +516,5 @@ export class DataService implements OnDestroy {
     this._isReset?.complete();
     this._skDataSubject$?.complete();
     this._dataServiceMetaSubject$?.complete();
-
-    if (this._deltaUpdatesCounterTimer) {
-      clearInterval(this._deltaUpdatesCounterTimer);
-    }
   }
 }

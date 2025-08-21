@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -14,7 +14,7 @@ type IKipTimers = Record<string, IKipTimer>;
 @Injectable({
   providedIn: 'root'
 })
-export class TimersService {
+export class TimersService implements OnDestroy {
 
   kipTimers: IKipTimers = {};
 
@@ -89,6 +89,22 @@ export class TimersService {
     };
 
     return running;
+  }
+
+  /**
+   * Clear all active intervals on service destroy to prevent orphan callbacks
+   * retaining references to large graphs / widget subjects.
+   */
+  ngOnDestroy(): void {
+    Object.keys(this.kipTimers).forEach(name => {
+      if (this.kipTimers[name].timeoutID) {
+        clearInterval(this.kipTimers[name].timeoutID);
+        this.kipTimers[name].timeoutID = null;
+      }
+      // Complete any subjects to release observers
+      this.kipTimers[name].currentValue.complete();
+    });
+    this.kipTimers = {};
   }
 
 
