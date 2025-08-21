@@ -6,7 +6,7 @@
 
 .content-area {
   height: calc(100% - 63px);
-  overflow-y: scroll;
+  overflow-y: auto;
   width: 100%;
   scroll-behavior: smooth;
 }
