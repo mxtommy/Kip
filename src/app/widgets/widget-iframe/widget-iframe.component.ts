@@ -14,7 +14,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private _sanitizer = inject(DomSanitizer);
   protected _dashboard = inject(DashboardService);
-  readonly iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
+  protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
   protected widgetUrl: SafeResourceUrl | null = null;
   protected displayTransparentOverlay = signal<string>('block');
 
@@ -43,9 +43,8 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngAfterViewInit() {
-    const iframe = this.iframe();
-    if (iframe) {
-      iframe.nativeElement.onload = () => this.injectHammerJS();
+    if (this.iframe()) {
+  this.iframe().nativeElement.onload = () => this.injectHammerJS();
     }
   }
 
@@ -54,6 +53,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
   ngOnDestroy() {
     window.removeEventListener('message', this.handleIframeGesture);
+    // Clear iframe onload to release closure references
+    if (this.iframe()) {
+      this.iframe().nativeElement.onload = null;
+    }
   }
 
   private handleIframeGesture = (event: MessageEvent) => {

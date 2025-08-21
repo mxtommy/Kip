@@ -39,7 +39,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
 
   ngAfterViewInit() {
     if (this.iframe) {
-      this.iframe().nativeElement.onload = () => this.injectHammerJS();
+  this.iframe().nativeElement.onload = () => this.injectHammerJS();
     }
   }
 
@@ -245,5 +245,8 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
     window.removeEventListener('message', this.handleIframeGesture);
     this._authTokenSubscription?.unsubscribe();
     this.destroyDataStreams();
+    if (this.iframe) {
+      this.iframe().nativeElement.onload = null;
+    }
   }
 }
