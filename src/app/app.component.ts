@@ -24,7 +24,7 @@ import { DatasetService } from './core/services/data-set.service';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
@@ -60,8 +60,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           title: 'Upgrade Instructions',
           component: 'upgrade-config',
         }, true)
-        .pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe();
+          .pipe(takeUntilDestroyed(this._destroyRef))
+          .subscribe();
       }
     });
 
@@ -87,7 +87,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
               volume: 0.3
             });
           }
-            // restart sound for rapid successive notifications
+          // restart sound for rapid successive notifications
           this.notificationHowl.stop();
           this.notificationHowl.play();
         }
