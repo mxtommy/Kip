@@ -17,13 +17,18 @@ export interface LargeIconTile {
   styleUrl: './tile-large-icon.component.scss'
 })
 export class TileLargeIconComponent {
+  private static _iconSetRegistered = false;
   public svgIcon = input.required<string>();
   public iconSize = input.required<number>();
   public label = input.required<string>();
 
   constructor() {
+    // Register SVG icon set once (MatIconRegistry keeps internal map; guard avoids redundant sanitizer work)
     const iconRegistry = inject(MatIconRegistry);
     const sanitizer = inject(DomSanitizer);
-    iconRegistry.addSvgIconSet(sanitizer.bypassSecurityTrustResourceUrl('assets/svg/icons.svg'));
+    if (!TileLargeIconComponent._iconSetRegistered) {
+      iconRegistry.addSvgIconSet(sanitizer.bypassSecurityTrustResourceUrl('assets/svg/icons.svg'));
+      TileLargeIconComponent._iconSetRegistered = true;
+    }
   }
 }
