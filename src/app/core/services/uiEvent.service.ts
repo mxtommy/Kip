@@ -1,7 +1,6 @@
 import { Injectable, OnDestroy, signal } from '@angular/core';
 import screenfull from 'screenfull';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let NoSleep: any; //3rd party library
+import NoSleep from '@zakj/no-sleep';
 
 @Injectable({
   providedIn: 'root'
@@ -12,9 +11,6 @@ export class uiEventService implements OnDestroy {
   public fullscreenSupported = signal<boolean>(true);
   public noSleepStatus = signal<boolean>(false);
   public noSleepSupported = signal<boolean>(true);
-  // Lazily created NoSleep instance (avoid double construction & leaks)
-  // Minimal interface for NoSleep to satisfy typing without bringing in full types
-  // (library injected globally)
   private noSleep: { enable: () => void; disable: () => void } | null = null;
   private initialTouchX: number | null = null;
   private initialTouchY: number | null = null;
@@ -33,16 +29,25 @@ export class uiEventService implements OnDestroy {
   };
 
   constructor() {
-    if (screenfull.isEnabled) {
-      screenfull.on('change', this.fullscreenChangeHandler);
-    } else {
-      this.fullscreenSupported.set(false);
-      console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
-    }
+    // Skip side-effectful logic during unit tests to avoid reloads / timers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isTest = (window as any).__KIP_TEST__;
+    if (!isTest) {
+      if (screenfull.isEnabled) {
+        screenfull.on('change', this.fullscreenChangeHandler);
+      } else {
+        this.fullscreenSupported.set(false);
+        console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
+      }
 
-    this.checkNoSleepSupport();
-    if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
-      this.toggleNoSleep();
+      this.checkNoSleepSupport();
+      if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
+        this.toggleNoSleep();
+      }
+    } else {
+      // In tests mark features unsupported to short-circuit code paths gracefully
+      this.fullscreenSupported.set(false);
+      this.noSleepSupported.set(false);
     }
   }
 

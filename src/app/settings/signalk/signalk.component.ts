@@ -179,7 +179,11 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       }
 
       // Step 5: Reload immediately - APP_INITIALIZER will handle connection and authentication with new URL
-      location.reload();
+      // Skip during unit tests to avoid breaking Karma connection
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(window as any).__KIP_TEST__) {
+        location.reload();
+      }
 
     } catch (error: unknown) {
       // Validation failed - show error and stay on current page

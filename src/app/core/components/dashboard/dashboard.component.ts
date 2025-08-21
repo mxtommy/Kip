@@ -1,4 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+// Minimal HammerInput shape used (center coordinates). If full typings available they can replace this.
+interface HammerInput { center: { x: number; y: number }; }
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
