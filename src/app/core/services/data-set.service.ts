@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
@@ -55,7 +55,7 @@ type AngleDomain = 'scalar' | 'direction' | 'signed';
 @Injectable({
   providedIn: 'root'
 })
-export class DatasetService {
+export class DatasetService implements OnDestroy {
   private appSettings = inject(AppSettingsService);
   private data = inject(DataService);
 
@@ -569,5 +569,28 @@ export class DatasetService {
   private normalizeToSigned(rad: number): number {
     const twoPi = 2 * Math.PI;
     return this.mod(rad + Math.PI, twoPi) - Math.PI; // (-π, π]
+  }
+
+  /**
+   * Convenience: remove only if dataset exists (silently no-op otherwise).
+   */
+  public removeIfExists(uuid: string, serialize = true): boolean {
+    if (!uuid) return false;
+    if (this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
+    return this.remove(uuid, serialize);
+  }
+
+  /**
+   * On app/service teardown, stop all active data sources to release subscriptions.
+   * We purposefully do not persist changes; this is runtime-only cleanup.
+   */
+  ngOnDestroy(): void {
+    // Copy array as stop() mutates _svcDataSource
+    [...this._svcDataSource].forEach(ds => {
+      try { this.stop(ds.uuid); } catch { /* ignore */ }
+    });
+    // Complete and clear subjects/registrations without altering persisted configs
+    this._svcSubjectObserverRegistry.forEach(reg => reg.rxjsSubject.complete());
+    this._svcSubjectObserverRegistry = [];
   }
 }
