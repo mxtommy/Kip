@@ -4,8 +4,8 @@
     <div class="dashboard-card dashboard-item"
       cdkDrag
       cdkDragBoundary=".dashboard-manage"
-      (cdkDragStarted)="dragStart()" (cdkDragEnded)="dragEnd()"
-      (press)="openBottomSheet(index)"
+      (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
+      (press)="onPress(index)"
       (doubletap)="editDashboard(index)">
       <span style="display: block; width: 100%;">
         <div class="item-index">{{index + 1}}</div>

@@ -12,7 +12,7 @@
 
 .table-content-area {
   height: calc(100% - 56px - 86px);
-  overflow-y: scroll;
+  overflow-y: auto;
   width: 100%;
   scroll-behavior: smooth;
 }
