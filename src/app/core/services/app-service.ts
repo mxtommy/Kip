@@ -3,7 +3,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import * as packageInfo from '../../../../package.json';
+import packageInfo from '../../../../package.json';
 
 /**
  * Snack-bar notification message interface.

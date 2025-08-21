@@ -464,6 +464,11 @@ export class AppSettingsService {
 
   public reloadApp() {
     console.log("[AppSettings Service] Reload app");
+    // Prevent hard navigation in unit tests (breaks Karma)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).__KIP_TEST__) {
+      return; // no-op
+    }
     location.replace("./");
   }
 

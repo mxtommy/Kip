@@ -6,7 +6,24 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let steelseries: any; // 3rd party
+declare let steelseries: any; // 3rd party global
+
+// Provide minimal mock for unit tests when external script not loaded.
+if (typeof steelseries === 'undefined') {
+  (globalThis as unknown as Record<string, unknown>).steelseries = {};
+}
+// Augment missing collections (idempotent) with minimal placeholders.
+const ss = (globalThis as unknown as { steelseries: Record<string, unknown> }).steelseries as Record<string, unknown> & { ColorDef?: unknown; FrameDesign?: unknown };
+// dynamic augmentation for test shim
+(ss as Record<string, unknown>)['ColorDef'] = (ss as Record<string, unknown>)['ColorDef'] || {
+  RED: 'red', GREEN: 'green', BLUE: 'blue', ORANGE: 'orange', YELLOW: 'yellow', CYAN: 'cyan', MAGENTA: 'magenta',
+  WHITE: 'white', GRAY: 'gray', BLACK: 'black', RAITH: 'raith', GREEN_LCD: 'greenLcd', JUG_GREEN: 'jugGreen'
+};
+// dynamic augmentation for test shim
+(ss as Record<string, unknown>)['FrameDesign'] = (ss as Record<string, unknown>)['FrameDesign'] || {
+  BLACK_METAL: 'blackMetal', METAL: 'metal', SHINY_METAL: 'shinyMetal', BRASS: 'brass', STEEL: 'steel', CHROME: 'chrome',
+  GOLD: 'gold', ANTHRACITE: 'anthracite', TILTED_GRAY: 'tiltedGray', TILTED_BLACK: 'tiltedBlack', GLOSSY_METAL: 'glossyMetal'
+};
 
 export const SteelPointerColors = {
   'Red': steelseries.ColorDef.RED,

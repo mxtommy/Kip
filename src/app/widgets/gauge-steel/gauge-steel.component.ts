@@ -6,7 +6,24 @@ import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let steelseries: any; // 3rd party
+declare let steelseries: any; // 3rd party global (loaded from asset in production build)
+
+// Test/SSR safety: provide a minimal mock to avoid ReferenceError when the real script isn't loaded (e.g., unit tests)
+// Only defines the enum-like objects accessed at module evaluation time. Runtime drawing logic won't run in specs.
+if (typeof steelseries === 'undefined') {
+  (globalThis as unknown as Record<string, unknown>).steelseries = {
+    BackgroundColor: {
+      DARK_GRAY: 'darkGray', SATIN_GRAY: 'satinGray', LIGHT_GRAY: 'lightGray', WHITE: 'white', BLACK: 'black',
+      BEIGE: 'beige', BROWN: 'brown', RED: 'red', GREEN: 'green', BLUE: 'blue', ANTHRACITE: 'anthracite',
+      MUD: 'mud', PUNCHED_SHEET: 'punchedSheet', CARBON: 'carbon', STAINLESS: 'stainless', BRUSHED_METAL: 'brushedMetal',
+      BRUSHED_STAINLESS: 'brushedStainless', TURNED: 'turned'
+    },
+    FrameDesign: {
+      BLACK_METAL: 'blackMetal', METAL: 'metal', SHINY_METAL: 'shinyMetal', BRASS: 'brass', STEEL: 'steel', CHROME: 'chrome',
+      GOLD: 'gold', ANTHRACITE: 'anthracite', TILTED_GRAY: 'tiltedGray', TILTED_BLACK: 'tiltedBlack', GLOSSY_METAL: 'glossyMetal'
+    }
+  };
+}
 
 export const SteelBackgroundColors = {
   'darkGray': steelseries.BackgroundColor.DARK_GRAY,

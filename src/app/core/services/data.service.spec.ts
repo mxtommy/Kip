@@ -1,15 +1,15 @@
 import { TestBed, inject } from '@angular/core/testing';
 
-import { SignalKDataService } from './data.service';
+import { DataService } from './data.service';
 
-describe('SignalKDataService', () => {
+describe('DataService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SignalKDataService]
+      providers: [DataService]
     });
   });
 
-  it('should be created', inject([SignalKDataService], (service: SignalKDataService) => {
+  it('should be created', inject([DataService], (service: DataService) => {
     expect(service).toBeTruthy();
   }));
 });
