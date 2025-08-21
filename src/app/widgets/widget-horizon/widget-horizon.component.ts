@@ -39,11 +39,11 @@ export const SteelFrameDesign = {
 }
 
 @Component({
-    selector: 'widget-horizon',
-    templateUrl: './widget-horizon.component.html',
-    styleUrls: ['./widget-horizon.component.scss'],
-    standalone: true,
-    imports: [WidgetHostComponent, NgxResizeObserverModule]
+  selector: 'widget-horizon',
+  templateUrl: './widget-horizon.component.html',
+  styleUrls: ['./widget-horizon.component.scss'],
+  standalone: true,
+  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
 export class WidgetHorizonComponent extends BaseWidgetComponent implements OnInit, AfterContentInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
@@ -53,6 +53,9 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
   protected gaugeOptions: any = {};
   private gauge = null;
   private streamsInitialized = false;
+  private lastSizeSignature = '';
+  private resizeTimer: number | null = null;
+  private pendingStructuralRebuild = false;
 
   constructor() {
     super();
@@ -103,19 +106,27 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
 
   ngAfterContentInit(): void {
     this.cdr.detectChanges(); // Force DOM update
-  this.startWidget();
+    this.startWidget();
     // Perform an initial resize to avoid first-draw jump
-  const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
-  const container = canvas?.parentElement as HTMLElement | null;
+    const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
+    const container = canvas?.parentElement as HTMLElement | null;
     if (container) {
       const rect = container.getBoundingClientRect();
       this.onResized({ contentRect: { width: rect.width, height: rect.height } } as unknown as ResizeObserverEntry);
     }
   }
 
-  protected startWidget(): void {
+  protected startWidget(forceRebuild = false): void {
     this.buildOptions();
-    this.gauge = new steelseries.Horizon(this.widgetProperties.uuid + '-canvas', this.gaugeOptions);
+    const id = this.widgetProperties.uuid + '-canvas';
+    if (!id) return;
+
+    if (this.gauge && !forceRebuild && !this.pendingStructuralRebuild) {
+      // mutable-only update path (no direct setters beyond pitch/roll used later)
+    } else {
+      this.pendingStructuralRebuild = false;
+      this.gauge = new steelseries.Horizon(id, this.gaugeOptions);
+    }
 
     if (!this.streamsInitialized) {
       this.observeDataStream('gaugePitchPath', newValue => {
@@ -134,17 +145,8 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
-  }
-
-  ngOnDestroy() {
-    this.destroyDataStreams();
-    if (this.gauge) {
-      this.gauge = null;
-    }
-  // Release horizon canvas
-  const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
-  this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
+    this.pendingStructuralRebuild = true; // horizon face/frame toggles etc.
+    this.startWidget(true);
   }
 
   private buildOptions() {
@@ -155,12 +157,26 @@ export class WidgetHorizonComponent extends BaseWidgetComponent implements OnIni
   }
 
   onResized(event: ResizeObserverEntry) {
-    // Check if the size is too small to avoid rendering issues
-    if (event.contentRect.height < 50 || event.contentRect.width < 50) {
-      return;
-    }
+    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
     const size = Math.min(event.contentRect.height, event.contentRect.width);
+    const signature = 'horizon:' + size;
+    if (signature === this.lastSizeSignature) return;
+    this.lastSizeSignature = signature;
     this.gaugeOptions['size'] = size;
-    this.startWidget();
+    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout(() => {
+      this.startWidget(true);
+      this.resizeTimer = null;
+    }, 120);
+  }
+
+  ngOnDestroy() {
+    this.destroyDataStreams();
+    if (this.gauge) {
+      this.gauge = null;
+    }
+    // Release horizon canvas
+    const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }
