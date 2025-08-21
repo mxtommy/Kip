@@ -16,6 +16,19 @@ Key features include:
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
 
+
+Typical complementary components you may install (many are often bundled with Signal K distributions):
+
+**Navigation & Charting**
+- **Freeboard‑SK** – Multi‑station, web chart plotter tightly integrated with Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+
+**Visual Flow / Automation**
+- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
+
+**Data Storage & Analytics**
+- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
+- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
+
 KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
 
 ## Read the Help introduction How-to
