@@ -5,6 +5,10 @@ export const routes: Routes = [
   { path: 'dashboard/:id',
     component: DashboardComponent
   },
+  { path: 'home',
+    loadComponent: () => import('./core/components/home/home.component').then(m => m.HomeComponent),
+    title: 'KIP - Home'
+  },
   { path: 'settings',
     loadComponent: () => import('./settings/settings/settings.component').then(m => m.AppSettingsComponent),
     title: 'KIP - Settings'

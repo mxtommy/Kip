@@ -1,0 +1,23 @@
+<div class="actions-header-container">
+  <div class="activity-container">
+    <div class="activity-graph-container">
+      <canvas class="activity-graph" #activityGraph></canvas>
+    </div>
+    <div class="info-container">
+      <pre>KIP: {{ app.appVersion() }}
+{{ app.browserVersion() }}, {{ app.osVersion() }}<br />
+{{ endpointServiceStatus.serverDescription }}
+{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}</pre>
+    </div>
+  </div>
+  <div class="actions-buttons-container">
+    <tile-large-icon class="actions-buttons" tabindex="0" svgIcon="settings" [iconSize]="48" label="Settings" (click)="onActionItem('settings')"/>
+    <tile-large-icon class="actions-buttons" tabindex="0" svgIcon="troubleshoot" [iconSize]="48" label="Data Inspector" (click)="onActionItem('datainspector')"/>
+    <tile-large-icon class="actions-buttons" tabindex="0" svgIcon="help-center" [iconSize]="48" label="Help" (click)="onActionItem('help')"/>
+  </div>
+  <button mat-icon-button class="dialog-close-icon" (click)="closePage()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<mat-divider></mat-divider>
+<p>home works!</p>
