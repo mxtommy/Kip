@@ -143,7 +143,7 @@ export class DashboardsEditorComponent {
     this._dragActive = false;
     this._dragMoved = false;
     // Dispatch synthetic pointer end events to end any potential drag tracking
-    ['pointerup','mouseup','touchend'].forEach(type => {
+    ['pointerup', 'mouseup', 'touchend'].forEach(type => {
       document.dispatchEvent(new Event(type, { bubbles: true }));
     });
   }

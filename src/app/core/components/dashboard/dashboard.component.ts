@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, HostListener, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -62,6 +62,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
+  /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
+  private _suppressDrag = false;
   protected readonly gridOptions = signal<NgGridStackOptions>({
     margin: 4,
     minRow: 12,
@@ -268,6 +270,29 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Cancel the active pointer sequence so gridstack won't treat subsequent movement (while still holding) as a drag */
+  private cancelPointerSequence(): void {
+    if (this._suppressDrag) return;
+    this._suppressDrag = true;
+    // Temporarily set grid static so internal pointermove handlers ignore drags
+    try { this._gridstack().grid.setStatic(true); } catch { /* ignore if grid not ready */ }
+    ['pointerup', 'mouseup', 'touchend'].forEach(type => {
+      document.dispatchEvent(new Event(type, { bubbles: true }));
+    });
+  }
+
+  @HostListener('document:mouseup')
+  @HostListener('document:touchend')
+  private _onPointerRelease(): void {
+    if (this._suppressDrag) {
+      this._suppressDrag = false;
+      // Restore original static (edit) state: if dashboard not static we re-enable drag
+      if (!this.dashboard.isDashboardStatic()) {
+        try { this._gridstack().grid.setStatic(false); } catch { /* ignore if grid not ready */ }
+      }
+    }
+  }
+
   private duplicateWidget(item: GridItemHTMLElement): void {
     const ID = UUID.create();
     const source: NgGridStackWidget = item.gridstackNode;
@@ -285,7 +310,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     } as NgGridStackWidget;
 
     const _gridstack = this._gridstack();
-      if (_gridstack.grid.willItFit(newItem)) {
+    if (_gridstack.grid.willItFit(newItem)) {
       _gridstack.grid.addWidget(newItem);
     } else {
       newItem.h = 2;
