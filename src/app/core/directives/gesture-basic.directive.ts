@@ -65,6 +65,16 @@ export class GestureBasicDirective {
   constructor() {
     this.zone.runOutsideAngular(() => {
       const el = this.host.nativeElement;
+      // Disable native touch panning so vertical swipes register as pointer events (iOS Safari)
+      if (!el.style.touchAction) {
+        el.style.touchAction = 'none';
+        // Fallback legacy property for older Safari versions
+        if ('webkitTouchCallout' in el.style) {
+          // vendor prefixed property safeguard
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (el.style as any).webkitTouchCallout = 'none';
+        }
+      }
   // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
   el.addEventListener('pointerdown', this.onPointerDown, { passive: false });
       el.addEventListener('pointermove', this.onPointerMove, { passive: true });
