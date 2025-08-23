@@ -31,12 +31,20 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   private _settings = inject(AppSettingsService);
   protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
   protected readonly menuItems: MenuActionItem[]  = [
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
-    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Inspector', action: 'datainspector' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
     { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'configuration', iconSize:  48, label: 'Configurations', action: 'configurations' },
-    { svgIcon: 'settings', iconSize:  48, label: 'Settings', action: 'settings' },
-    { svgIcon: 'help-center', iconSize:  48, label: 'Help', action: 'help' }
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
   ];
 
   constructor() {
@@ -73,26 +81,14 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected onActionItem(action: string): void {
     this.actionsSidenav().close();
     switch (action) {
-      case 'help':
-      this._router.navigate(['/help']);
-        break;
-      case 'dashboards':
-        this._router.navigate(['/dashboards']);
-        break;
-      case 'datainspector':
-        this._router.navigate(['/data']);
+      case 'home':
+        this._router.navigate(['/home']);
         break;
       case 'datasets':
         this._router.navigate(['/datasets']);
         break;
-      case 'configurations':
-        this._router.navigate(['/configurations']);
-        break;
       case 'toggleFullScreen':
         this.uiEvent.toggleFullScreen();
-        break;
-      case 'settings':
-        this._router.navigate(['/settings']);
         break;
       case 'layout':
         this.dashboard.toggleStaticDashboard();

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,12 +8,13 @@ import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray } from 
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { uiEventService } from '../../services/uiEvent.service';
+import { MatRippleModule } from '@angular/material/core';
 
 
 @Component({
   selector: 'dashboards-editor',
   standalone: true,
-  imports: [MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, GestureDirective],
+  imports: [MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
@@ -23,6 +24,10 @@ export class DashboardsEditorComponent {
   protected _dashboard = inject(DashboardService);
   private _uiEvent = inject(uiEventService);
   private _dialog = inject(DialogService);
+  /** True while bottom sheet open */
+  protected _sheetOpen = false;
+  /** Suppress starting a drag after a press consumed the pointer */
+  protected suppressDrag = false;
 
   // Drag / press coordination flags
   private _dragActive = false;       // true between dragStart and dragEnd
@@ -48,6 +53,7 @@ export class DashboardsEditorComponent {
       /Firefox/.test(navigator.userAgent);
     const sheetRef = this._bottomSheet.open(DashboardsManageBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
     sheetRef.afterDismissed().subscribe((action) => {
+      this._sheetOpen = false;
       switch (action) {
         case 'delete':
           this.deleteDashboard(index);
@@ -100,6 +106,7 @@ export class DashboardsEditorComponent {
   }
 
   protected dragStart(): void {
+    if (this._sheetOpen || this.suppressDrag) return; // block drag while sheet open or suppressed
     this._uiEvent.isDragging.set(true);
     this._dragActive = true;
     this._dragMoved = false; // reset for new gesture
@@ -126,6 +133,27 @@ export class DashboardsEditorComponent {
     (e as Event).stopPropagation();
     // Suppress press if an actual drag movement occurred
     if (this._dragMoved) return;
+    // Cancel pointer sequence so moving while holding does not initiate drag
+    this.cancelPointerSequence();
     this.openBottomSheet(index);
+  }
+
+  private cancelPointerSequence(): void {
+    this.suppressDrag = true;
+    this._dragActive = false;
+    this._dragMoved = false;
+    // Dispatch synthetic pointer end events to end any potential drag tracking
+    ['pointerup','mouseup','touchend'].forEach(type => {
+      document.dispatchEvent(new Event(type, { bubbles: true }));
+    });
+  }
+
+  @HostListener('document:mouseup')
+  @HostListener('document:touchend')
+  private _onPointerRelease(): void {
+    // Allow future drags after actual release, but only if sheet not open
+    if (!this._sheetOpen) {
+      this.suppressDrag = false;
+    }
   }
 }

@@ -35,6 +35,12 @@
   border: 1px solid var(--mat-sys-surface-container-highest);
 }
 
+.dashboard-item:hover {
+  background-color: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-tertiary);
+  cursor: pointer;
+}
+
 .dashboard-item-add {
   background-color: var(--mat-sys-surface-container);
   border: 1px solid var(--mat-sys-surface-container-highest);

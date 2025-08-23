@@ -1,5 +1,31 @@
 :host {
   display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.icon-container {
+  display: block;
+  text-align: center;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  padding: 5px;
+  border-radius: 7px;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.icon-container:hover {
+  background-color: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-tertiary);
+  cursor: pointer;
+}
+
+.icon-container:focus-visible {
+  background-color: var(--mat-sys-surface-container-high);
+  outline: -webkit-focus-ring-color auto 0px;
+}
+
+.icon-container-compact {
+  display: block;
   text-align: center;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   cursor: pointer;
@@ -8,12 +34,13 @@
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
-:host(:hover) {
+.icon-container-compact:hover {
   background-color: var(--mat-sys-inverse-on-surface);
   border: 1px solid var(--mat-sys-primary);
+  cursor: pointer;
 }
 
-:host(:focus-visible) {
+.icon-container-compact:focus-visible {
   background-color: var(--mat-sys-surface-bright);
   outline: -webkit-focus-ring-color auto 0px;
 }

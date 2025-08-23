@@ -1,4 +1,6 @@
-<mat-icon [svgIcon]="svgIcon()" [style.width.px]="iconSize()" [style.height.px]="iconSize()" aria-hidden="false"></mat-icon>
-@if (!iconOnly()) {
-  <p [class]="`large-icon-tile-label${compact() ? ' compact' : ''}`">{{label()}}</p>
-}
+<div matRipple [class]="`${compact() ? 'icon-container-compact' : 'icon-container'}`">
+  <mat-icon [svgIcon]="svgIcon()" [style.width.px]="iconSize()" [style.height.px]="iconSize()" aria-hidden="false"></mat-icon>
+  @if (!iconOnly()) {
+    <p [class]="`large-icon-tile-label${compact() ? ' compact' : ''}`">{{label()}}</p>
+  }
+</div>

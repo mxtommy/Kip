@@ -1,17 +1,20 @@
 .actions-container {
-  display:grid;
-  grid-auto-flow: column;
+  display:flex;
+  flex-direction: column;
+  height: 100%;
+  width: 135px;
 }
 
 .actions-top-container {
-  position: absolute;
-  top: 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 48px;
   width: 100%;
 }
 
 .actions-bottom-container {
-  position: absolute;
-  bottom: 0px;
+  height: 48px;
   width: 100%;
 }
 
@@ -20,9 +23,15 @@
   height: 48px
 }
 
+.full-size {
+  width: 135px;
+}
+
 .menu-item-container {
-  position: absolute;
-  top: 48px;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 1px 5px 1px;
+  gap: 5px;
   width: 135px;
   overflow-y: auto;
   scrollbar-width: none;
