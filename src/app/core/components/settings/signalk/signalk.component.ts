@@ -113,7 +113,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({ x: update.timestamp, y: update.value });
-      if (this._chart.data.datasets[0].data.length > 60) {
+      if (this._chart.data.datasets[0].data.length > 10) {
         this._chart.data.datasets[0].data.shift();
       }
       this._chart?.update("none");

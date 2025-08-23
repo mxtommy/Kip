@@ -49,7 +49,11 @@ export class AppHelpComponent {
     this.selectedFile.set(file);
   }
 
-  protected closePage(): void {
+  protected backPage() {
     this._router.navigate(['/home']);
+  }
+
+  protected closePage(): void {
+    this._router.navigate(['/dashboard']);
   }
 }

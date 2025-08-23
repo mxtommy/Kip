@@ -1,9 +1,9 @@
 # Configuration Management
 
-KIP provides a "Login to Server" option that determines where your configuration is stored. It is **strongly recommended** to enable server login in the **Settings** under the **Connectivity** tab. This ensures your configurations are stored remotely on the Signal K server. See the "Creating a Signal K user" section below for details.
+KIP provides a "Login to Server" option that determines where your configuration is stored. It is **strongly recommended** to enable server login in the **Settings** under the **Connectivity** tab. This ensures your configurations are stored remotely on the Signal K server and allows automatic loading of configuration from any device. See the "Creating a Signal K user" section below for information on how to create a user.
 
-- **Login to Server Enabled** (recommended setting): Configuration is stored remotely on the Signal K server.
-- **Login to Server Disabled** (default value): Configuration is saved locally in the browser's private storage.
+- **Login to Server Enabled** (recommended setting): Configuration is stored remotely on the Signal K server. This mode allow automatic loading of your configuration from any device (also known as configuration sharing).
+- **Login to Server Disabled** (default value): Configuration is saved on your computer/device, in the browser's private storage. In this mode, the configuration is per browser.
 
 You can manage your configurations using the **Configurations** page, accessible from the right menu. Depending on your login mode, different management options are available.
 
@@ -54,4 +54,4 @@ Use advanced operations with caution. All changes affect your active configurati
 
 KIP separates configuration into two parts:
 1. **Server Connection**: This configuration is always stored locally in your browser and is never shared. It is used in the **Connectivity** tab of the **Settings** page.
-2. **Application Settings**: This includes the configuration you can back up, delete, and restore on the **Configurations** page.
+2. **Application Settings**: This includes the configuration settings you can back up, delete, and restore with the **Configurations** page. It contains all dashboards, widgets and other configuration settings.

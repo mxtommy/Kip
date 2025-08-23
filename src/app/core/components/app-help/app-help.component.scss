@@ -1,7 +1,7 @@
 .fullpage-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
 }
 
 .fullpage-header-title {
@@ -16,12 +16,8 @@
   letter-spacing: var(--mat-dialog-subhead-tracking, var(--mat-sys-headline-small-tracking, 0.03125em));
 }
 
-.dialog-close-icon {
-margin-right: 15px;
-}
-
 .mat-mdc-dialog-content {
-max-height: max-content;
+  max-height: max-content;
 }
 
 .markdown-content {
@@ -30,4 +26,12 @@ max-height: max-content;
   width: 100%;
   overflow-x: scroll;
   padding: 25px;
+}
+
+.dialog-close-icon {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 5px;
+  padding-right: 15px;
 }

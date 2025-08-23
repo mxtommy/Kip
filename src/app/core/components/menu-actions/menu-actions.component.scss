@@ -30,14 +30,14 @@
 .menu-item-container {
   display: flex;
   flex-direction: column;
-  padding: 5px 1px 5px 1px;
+  padding: 3px 1px 3px 1px;
   gap: 5px;
   width: 135px;
   overflow-y: auto;
   scrollbar-width: none;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  // -webkit-overflow-scrolling: touch;
-  height: calc(100% - 96px);
+  flex: 1 1 auto;           // take remaining space
+  min-height: 0;
 }
 

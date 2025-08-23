@@ -8,14 +8,14 @@
   display: block;
   text-align: center;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
-  padding: 5px;
+  padding: 10px 5px 15px 5px;
   border-radius: 7px;
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
 .icon-container:hover {
   background-color: var(--mat-sys-surface-container-high);
-  border: 1px solid var(--mat-sys-tertiary);
+  border: 1px solid var(--mat-sys-tertiary-container);
   cursor: pointer;
 }
 
@@ -48,6 +48,8 @@
 .large-icon-tile-label {
   cursor: pointer;
   color: var(--mat-sys-outline);
+  font-size: 1.10em;
+  margin: 0px 0px 0px 0px;
 }
 
 .compact {

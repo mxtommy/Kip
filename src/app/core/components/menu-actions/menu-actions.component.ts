@@ -31,20 +31,20 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   private _settings = inject(AppSettingsService);
   protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
   protected readonly menuItems: MenuActionItem[]  = [
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Home', action: 'home' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Refrigeration', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Motoring', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Electrical', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Weather Forecast', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'United-States-of-America', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Datasets', action: 'datasets' },
+    { svgIcon: 'dashboard', iconSize: 60, label: 'Home', action: 'home' },
+    { svgIcon: 'dataset', iconSize: 60, label: 'Datasets', action: 'datasets' },
   ];
 
   constructor() {
