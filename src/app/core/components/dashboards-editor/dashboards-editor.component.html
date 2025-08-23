@@ -1,7 +1,7 @@
 <page-header [pageTitle]="pageTitle" />
 <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
   @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
-    <div class="dashboard-card dashboard-item"
+  <div class="dashboard-card dashboard-item" kipGestures
       cdkDrag
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"

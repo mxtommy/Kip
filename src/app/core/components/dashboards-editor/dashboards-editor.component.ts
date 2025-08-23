@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { GestureBasicDirective } from '../../directives/gesture-basic.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +14,7 @@ import { uiEventService } from '../../services/uiEvent.service';
 @Component({
   selector: 'dashboards-editor',
   standalone: true,
-  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag ],
+  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, GestureBasicDirective ],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })

@@ -1,5 +1,6 @@
 import { Component, inject, input, model } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { GestureBasicDirective } from '../../directives/gesture-basic.directive';
 import { DialogService } from '../../services/dialog.service';
 import { IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import { DashboardService } from '../../services/dashboard.service';
@@ -9,7 +10,7 @@ import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widg
 @Component({
   selector: 'widget-host',
   standalone: true,
-  imports: [ MatCardModule, MatBottomSheetModule ],
+  imports: [ MatCardModule, MatBottomSheetModule, GestureBasicDirective ],
   templateUrl: './widget-host.component.html',
   styleUrl: './widget-host.component.scss'
 })
