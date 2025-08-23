@@ -4,7 +4,8 @@ import { SettingsNotificationsComponent } from '../notifications/notifications.c
 import { SettingsSignalkComponent } from '../signalk/signalk.component';
 import { SettingsDisplayComponent } from '../display/display.component';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
-import { PageHeaderComponent } from '../../core/components/page-header/page-header.component';
+import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
+import { SettingsConfigComponent } from '../configuration/config.component';
 
 
 @Component({
@@ -19,6 +20,7 @@ import { PageHeaderComponent } from '../../core/components/page-header/page-head
       SettingsUnitsComponent,
       SettingsDisplayComponent,
       SettingsNotificationsComponent,
+      SettingsConfigComponent,
       PageHeaderComponent
   ]
 })

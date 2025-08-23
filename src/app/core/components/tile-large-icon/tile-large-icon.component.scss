@@ -3,11 +3,14 @@
   text-align: center;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   cursor: pointer;
-  padding: 10px;
+  padding: 5px;
+  border-radius: 7px;
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
 :host(:hover) {
   background-color: var(--mat-sys-inverse-on-surface);
+  border: 1px solid var(--mat-sys-primary);
 }
 
 :host(:focus-visible) {
@@ -18,4 +21,9 @@
 .large-icon-tile-label {
   cursor: pointer;
   color: var(--mat-sys-outline);
+}
+
+.compact {
+  font-size: 12px;
+  margin: 0px;
 }

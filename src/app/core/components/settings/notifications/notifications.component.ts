@@ -1,8 +1,8 @@
 import { Component, viewChild, inject, Signal } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
-import { INotificationConfig } from '../../core/interfaces/app-settings.interfaces';
-import { AppService } from '../../core/services/app-service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { INotificationConfig } from '../../../interfaces/app-settings.interfaces';
+import { AppService } from '../../../services/app-service';
+import { AppSettingsService } from '../../../services/app-settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';

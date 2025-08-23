@@ -15,6 +15,6 @@ export class PageHeaderComponent {
   private _router = inject(Router);
 
   protected closePage() {
-    this._router.navigate(['/dashboard']);
+    this._router.navigate(['/home']);
   }
 }

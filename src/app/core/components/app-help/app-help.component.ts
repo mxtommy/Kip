@@ -50,6 +50,6 @@ export class AppHelpComponent {
   }
 
   protected closePage(): void {
-    this._router.navigate(['/dashboard']);
+    this._router.navigate(['/home']);
   }
 }
