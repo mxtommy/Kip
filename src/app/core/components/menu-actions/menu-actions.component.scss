@@ -8,8 +8,7 @@
 .actions-top-container {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
-  height: 48px;
+  flex-wrap: wrap;
   width: 100%;
 }
 
@@ -20,7 +19,10 @@
 
 .action-button {
   border-radius: 0px;
-  height: 48px
+  height: 48px;
+  flex: 1 1 48px;           // take remaining space
+  min-height: 0;            // IMPORTANT: allow shrinking so no overflow
+  overflow: hidden;
 }
 
 .full-size {

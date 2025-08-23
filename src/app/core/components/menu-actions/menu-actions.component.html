@@ -2,11 +2,11 @@
   <div class="actions-top-container">
     @if (uiEvent.fullscreenSupported()) {
       @if (!uiEvent.fullscreenStatus()) {
-        <button mat-flat-button class="action-button half-size" tabindex="0" (click)="onActionItem('toggleFullScreen')">
+        <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
           <span class="material-icons">fullscreen</span>
         </button>
       } @else {
-      <button mat-flat-button class="action-button half-size" tabindex="0" (click)="onActionItem('toggleFullScreen')">
+      <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
           <span class="material-icons">close_fullscreen</span>
         </button>
       }
@@ -22,6 +22,9 @@
         </button>
       }
     }
+    <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('home')">
+      <span class="material-icons">dashboard</span>
+    </button>
   </div>
   <div class="menu-item-container">
     @for (item of menuItems; track $index) {
