@@ -1,6 +1,15 @@
 
 @motamman
 
+# ⚠️ Experimental Fork Notice
+
+**This is an experimental fork of the original KIP project for research and development purposes.**
+
+This branch focuses on ingesting history Signalk data into KIP's marine instrumentation with data visualization of RESTful feed of data from the https://github.com/motamman/signalk-parquet/tree/badchop branch. 
+
+This fork DOES contain unstable features and is intended for development and testing. For production use, please refer to the original KIP project at [https://github.com/mxtommy/Kip](https://github.com/mxtommy/Kip).
+
+---
 
 # About KIP
 
