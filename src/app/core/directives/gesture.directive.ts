@@ -1,7 +1,7 @@
 import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
 
 /**
- * GestureBasicDirective
+ * GestureDirective
  * Standalone lightweight replacement for Hammer.js providing:
  *  - swipeleft / swiperight / swipeup / swipedown
  *  - press (long press)
@@ -12,7 +12,7 @@ import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from
 @Directive({
   selector: '[kipGestures]'
 })
-export class GestureBasicDirective {
+export class GestureDirective {
   // Config inputs (can be overridden via property binding)
   swipeMinDistance = input(30);      // px
   swipeMaxDuration = input(600);     // ms
@@ -102,8 +102,8 @@ export class GestureBasicDirective {
   };
 
   private debug(...args: unknown[]) {
-    if ((this.constructor as typeof GestureBasicDirective).DEBUG) {
-      console.debug('[GestureBasicDirective]', ...args);
+    if ((this.constructor as typeof GestureDirective).DEBUG) {
+      console.debug('[GestureDirective]', ...args);
     }
   }
 

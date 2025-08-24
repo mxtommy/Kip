@@ -12,7 +12,7 @@ import { MenuNotificationsComponent } from './core/components/menu-notifications
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { GestureBasicDirective } from './core/directives/gesture-basic.directive';
+import { GestureDirective } from './core/directives/gesture.directive';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
@@ -25,7 +25,7 @@ import { DatasetService } from './core/services/data-set.service';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureBasicDirective]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);

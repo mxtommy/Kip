@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
-import { GestureBasicDirective } from '../../../core/directives/gesture-basic.directive';
+import { GestureDirective } from '../../directives/gesture.directive';
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -47,7 +47,7 @@ import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-h
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent, GestureBasicDirective],
+  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
