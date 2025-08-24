@@ -1,0 +1,49 @@
+mat-card {
+  margin-bottom: 16px;
+}
+
+mat-form-field {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.duration-controls {
+  display: flex;
+  gap: 16px;
+  
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+.scale-group {
+  display: flex;
+  gap: 16px;
+  
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+.refresh-section {
+  margin: 16px 0;
+  
+  mat-checkbox {
+    margin-bottom: 16px;
+  }
+}
+
+mat-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0;
+  
+  mat-radio-button {
+    margin-bottom: 8px;
+  }
+}
+
+mat-checkbox {
+  margin-bottom: 8px;
+  display: block;
+}

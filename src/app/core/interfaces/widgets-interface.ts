@@ -266,6 +266,38 @@ export interface IWidgetSvcConfig {
   nextDashboard?: number;
   /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
   playBeeps?: boolean;
+
+  /** Used by history chart widget: URL of the history API endpoint */
+  historyApiUrl?: string;
+  /** Used by history chart widget: Array of Signal K paths to chart */
+  historyPaths?: string[];
+  /** Used by history chart widget: Array of aggregation methods to use */
+  aggregationMethods?: string[];
+  /** Used by history chart widget: Time selection mode ('range' | 'duration') */
+  timeMode?: string;
+  /** Used by history chart widget: Start time (ISO string or 'now') */
+  startTime?: string;
+  /** Used by history chart widget: End time (ISO string) */
+  endTime?: string;
+  /** Used by history chart widget: Duration value for duration mode */
+  duration?: number;
+  /** Used by history chart widget: Duration unit ('s', 'm', 'h', 'd') */
+  durationUnit?: string;
+  /** Used by history chart widget: Enable auto-refresh */
+  refreshEnabled?: boolean;
+  /** Used by history chart widget: Refresh interval in seconds */
+  refreshInterval?: number;
+  /** Used by history chart widget: Time resolution in milliseconds */
+  resolution?: number;
+  /** Used by history chart widget: Use UTC timezone */
+  useUTC?: boolean;
+
+  /** Used by data chart widget: Data source type ('dataset' | 'stream') */
+  dataSource?: string;
+  /** Used by data chart widget: Selected stream ID for stream data source */
+  selectedStreamId?: string;
+  /** Used by data chart widget: Auto-start stream when widget loads */
+  streamAutoStart?: boolean;
 }
 
 export interface IAutopilotConfig {

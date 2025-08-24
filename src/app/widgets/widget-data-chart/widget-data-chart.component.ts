@@ -4,6 +4,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
+import { StreamChartBridgeService, StreamInfo } from '../../core/services/stream-chart-bridge.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
 
@@ -35,6 +36,7 @@ interface IDataSetRow {
 })
 export class WidgetDataChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dsService = inject(DatasetService);
+  private readonly streamBridge = inject(StreamChartBridgeService);
   private readonly ngZone = inject(NgZone);
   private readonly canvasService = inject(CanvasService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
@@ -59,8 +61,10 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   public lineChartType: ChartType = 'line';
   private chart;
   private dsServiceSub: Subscription = null;
+  private streamSub: Subscription = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
+  public availableStreams: StreamInfo[] = [];
 
   constructor() {
     super();
@@ -90,6 +94,10 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       yScaleMax: null,
       numDecimal: 1,
       color: 'contrast',
+      // New stream-related config options
+      dataSource: 'dataset', // 'dataset' or 'stream'
+      selectedStreamId: null,
+      streamAutoStart: true,
     };
 
     effect(() => {
@@ -104,6 +112,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
 
   ngOnInit(): void {
     this.validateConfig();
+    this.loadAvailableStreams();
   }
 
   ngAfterViewInit(): void {
@@ -111,24 +120,29 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   protected startWidget(): void {
-    this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
+    if (this.widgetProperties.config.dataSource === 'stream' && this.widgetProperties.config.selectedStreamId) {
+      this.setupStreamData();
+    } else {
+      // Original dataset logic
+      this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
+      this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
 
-    if (this.datasetConfig) {
-      this.createDatasets();
-      this.setChartOptions();
+      if (this.datasetConfig) {
+        this.createDatasets();
+        this.setChartOptions();
 
-      if (!this.chart) {
-        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
-          type: this.lineChartType,
-          data: this.lineChartData,
-          options: this.lineChartOptions
-        });
-      } else {
-        this.chart.update();
+        if (!this.chart) {
+          this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+            type: this.lineChartType,
+            data: this.lineChartData,
+            options: this.lineChartOptions
+          });
+        } else {
+          this.chart.update();
+        }
+
+        this.startStreaming();
       }
-
-      this.startStreaming();
     }
   }
 
@@ -712,9 +726,161 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     });
   }
 
+  private loadAvailableStreams(): void {
+    this.streamBridge.getAvailableStreams().subscribe(streams => {
+      this.availableStreams = streams;
+    });
+  }
+
+  private setupStreamData(): void {
+    const streamId = this.widgetProperties.config.selectedStreamId;
+    
+    // Ingest existing stream first
+    this.streamBridge.ingestExistingStream(streamId).subscribe(result => {
+      if (result.success) {
+        // Create simplified chart setup for stream data
+        this.createStreamChart();
+        
+        if (this.widgetProperties.config.streamAutoStart) {
+          this.startStreamForChart(streamId);
+        }
+        
+        // Subscribe to stream updates
+        this.streamSub = this.streamBridge.getStreamUpdates(streamId).subscribe(dataset => {
+          if (dataset) {
+            this.updateChartWithStreamData(dataset);
+          }
+        });
+      }
+    });
+  }
+
+  private createStreamChart(): void {
+    // Create simplified datasets for stream data (no averaging for now)
+    this.lineChartData.datasets = [{
+      label: 'Stream Data',
+      data: [],
+      parsing: false,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      pointHitRadius: 0,
+      borderWidth: 2,
+      fill: false,
+      borderColor: this.getThemeColors().valueLine,
+      backgroundColor: this.getThemeColors().valueFill,
+    }];
+
+    // Set stream-appropriate chart options
+    this.setStreamChartOptions();
+
+    if (!this.chart) {
+      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+        type: this.lineChartType,
+        data: this.lineChartData,
+        options: this.lineChartOptions
+      });
+    } else {
+      this.chart.update();
+    }
+  }
+
+  private setStreamChartOptions(): void {
+    this.lineChartOptions.maintainAspectRatio = false;
+    this.lineChartOptions.animation = false;
+
+    // Simplified options for stream data
+    this.lineChartOptions.scales = {
+      x: {
+        type: "time",
+        display: this.widgetProperties.config.showTimeScale,
+        title: {
+          display: true,
+          text: "Time",
+          align: "center"
+        },
+        ticks: {
+          color: this.getThemeColors().averageChartLine,
+        },
+        grid: {
+          display: true,
+          color: this.theme().contrastDimmer
+        }
+      },
+      y: {
+        display: this.widgetProperties.config.showYScale,
+        position: "right",
+        beginAtZero: this.widgetProperties.config.startScaleAtZero,
+        reverse: this.widgetProperties.config.inverseYAxis,
+        ticks: {
+          maxTicksLimit: 8,
+          precision: this.widgetProperties.config.numDecimal,
+          color: this.getThemeColors().averageChartLine,
+        },
+        grid: {
+          display: true,
+          color: this.theme().contrastDimmer,
+        }
+      }
+    };
+
+    this.lineChartOptions.plugins = {
+      title: {
+        display: true,
+        align: "end",
+        text: "",
+        font: { size: 32 },
+        color: this.getThemeColors().chartValue
+      },
+      subtitle: {
+        display: this.widgetProperties.config.showLabel,
+        align: "start",
+        padding: { top: -35, bottom: 20 },
+        text: `  ${this.widgetProperties.config.displayName}`,
+        font: { size: 22 },
+        color: this.getThemeColors().chartLabel
+      },
+      legend: { display: false }
+    };
+  }
+
+  private startStreamForChart(streamId: string): void {
+    this.streamBridge.startStreamForChart(streamId).subscribe(result => {
+      if (!result.success) {
+        console.error('Failed to start stream:', result.error);
+      }
+    });
+  }
+
+  private updateChartWithStreamData(dataset: any): void {
+    if (!dataset.data || dataset.data.length === 0) {
+      return;
+    }
+
+    // Convert stream dataset to chart format
+    const chartData = dataset.data.map((point: any) => ({
+      x: new Date(point[0]).getTime(),
+      y: point[1]
+    }));
+
+    // Update chart data
+    this.chart.data.datasets[0].data = chartData;
+
+    // Update title with latest value
+    const latestValue = chartData[chartData.length - 1]?.y;
+    if (latestValue !== undefined) {
+      this.chart.options.plugins.title.text = `${latestValue.toFixed(this.widgetProperties.config.numDecimal)}`;
+    }
+
+    this.ngZone.runOutsideAngular(() => {
+      this.chart?.update('none');
+    });
+  }
+
   ngOnDestroy(): void {
     this.destroyDataStreams();
     this.dsServiceSub?.unsubscribe();
+    this.streamSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
     const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;

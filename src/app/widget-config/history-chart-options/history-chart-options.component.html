@@ -1,0 +1,179 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>History Chart Configuration</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    
+    <!-- Display Name -->
+    <mat-form-field>
+      <mat-label>Display Name</mat-label>
+      <input matInput [formControl]="displayName()" placeholder="Chart Title">
+    </mat-form-field>
+
+    <!-- History API URL - Hidden but kept for advanced configuration -->
+    <!-- The widget will automatically use the local SignalK server's history API -->
+    <input type="hidden" [formControl]="historyApiUrl()">
+
+    <!-- Data Paths Selection -->
+    <mat-form-field>
+      <mat-label>Data Paths</mat-label>
+      <mat-select [formControl]="historyPaths()" multiple>
+        @for (path of availablePaths$ | async; track path) {
+          <mat-option [value]="path">{{ path }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Aggregation Methods -->
+    <mat-form-field>
+      <mat-label>Aggregation Methods</mat-label>
+      <mat-select [formControl]="aggregationMethods()" multiple>
+        @for (method of aggregationOptions; track method.value) {
+          <mat-option [value]="method.value">{{ method.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Time Configuration</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+
+    <!-- Time Mode Selection -->
+    <mat-radio-group [formControl]="timeMode()" (change)="onTimeModeChange($event.value)">
+      <mat-radio-button value="range">Date/Time Range</mat-radio-button>
+      <mat-radio-button value="duration">Duration from Start Time</mat-radio-button>
+    </mat-radio-group>
+
+    <!-- Start Time -->
+    <mat-form-field>
+      <mat-label>Start Time</mat-label>
+      <input matInput [formControl]="startTime()" 
+             placeholder="YYYY-MM-DDTHH:MM:SS or 'now'">
+    </mat-form-field>
+
+    <!-- End Time (only for range mode) -->
+    <mat-form-field>
+      <mat-label>End Time</mat-label>
+      <input matInput [formControl]="endTime()" 
+             placeholder="YYYY-MM-DDTHH:MM:SS">
+    </mat-form-field>
+
+    <!-- Duration (only for duration mode) -->
+    <div class="duration-controls">
+      <mat-form-field>
+        <mat-label>Duration</mat-label>
+        <input matInput [formControl]="duration()" type="number" min="1">
+      </mat-form-field>
+      
+      <mat-form-field>
+        <mat-label>Unit</mat-label>
+        <mat-select [formControl]="durationUnit()">
+          @for (unit of durationUnits; track unit.value) {
+            <mat-option [value]="unit.value">{{ unit.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- UTC Option -->
+    <mat-checkbox [formControl]="useUTC()">Use UTC Time</mat-checkbox>
+
+    <!-- Refresh Settings - Only show when start time is 'now' -->
+    @if (startTime()?.value === 'now') {
+      <div class="refresh-section">
+        <mat-checkbox [formControl]="refreshEnabled()" 
+                      (change)="onRefreshEnabledChange($event.checked)">
+          Enable Auto-Refresh (Live Updates)
+        </mat-checkbox>
+        
+        @if (refreshEnabled()?.value) {
+          <mat-form-field>
+            <mat-label>Refresh Interval (seconds)</mat-label>
+            <input matInput [formControl]="refreshInterval()" type="number" min="5" max="300" 
+                   placeholder="30">
+            <mat-hint>How often to fetch new data (5-300 seconds)</mat-hint>
+          </mat-form-field>
+        }
+      </div>
+    }
+
+    <!-- Resolution -->
+    <mat-form-field>
+      <mat-label>Time Resolution (ms)</mat-label>
+      <input matInput [formControl]="resolution()" type="number" min="1000"
+             placeholder="Auto-calculated if empty">
+    </mat-form-field>
+
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Chart Display Options</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+
+    <!-- Chart Orientation -->
+    <mat-checkbox [formControl]="verticalChart()">Vertical Chart</mat-checkbox>
+    <mat-checkbox [formControl]="inverseYAxis()">Inverse Y-Axis</mat-checkbox>
+    
+    <!-- Scale Options -->
+    <mat-checkbox [formControl]="showTimeScale()">Show Time Scale</mat-checkbox>
+    <mat-checkbox [formControl]="showYScale()">Show Y-Scale</mat-checkbox>
+    <mat-checkbox [formControl]="startScaleAtZero()">Start Scale at Zero</mat-checkbox>
+
+    <!-- Y-Scale Configuration -->
+    <mat-radio-group [formControl]="enableMinMaxScaleLimit()" 
+                     (change)="setScaleControls($event)">
+      <mat-radio-button [value]="false">Suggested Scale Limits</mat-radio-button>
+      <mat-radio-button [value]="true">Fixed Scale Limits</mat-radio-button>
+    </mat-radio-group>
+
+    <!-- Suggested Scale Limits -->
+    <div class="scale-group">
+      <mat-form-field>
+        <mat-label>Suggested Min</mat-label>
+        <input matInput [formControl]="yScaleSuggestedMin()" type="number">
+      </mat-form-field>
+      
+      <mat-form-field>
+        <mat-label>Suggested Max</mat-label>
+        <input matInput [formControl]="yScaleSuggestedMax()" type="number">
+      </mat-form-field>
+    </div>
+
+    <!-- Fixed Scale Limits -->
+    <div class="scale-group">
+      <mat-form-field>
+        <mat-label>Fixed Min</mat-label>
+        <input matInput [formControl]="yScaleMin()" type="number">
+      </mat-form-field>
+      
+      <mat-form-field>
+        <mat-label>Fixed Max</mat-label>
+        <input matInput [formControl]="yScaleMax()" type="number">
+      </mat-form-field>
+    </div>
+
+    <!-- Display Options -->
+    <mat-form-field>
+      <mat-label>Decimal Places</mat-label>
+      <input matInput [formControl]="numDecimal()" type="number" min="0" max="10">
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Color</mat-label>
+      <mat-select [formControl]="color()">
+        @for (color of colors; track color.value) {
+          <mat-option [value]="color.value">{{ color.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+  </mat-card-content>
+</mat-card>

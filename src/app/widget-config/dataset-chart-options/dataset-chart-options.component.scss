@@ -5,3 +5,16 @@
   padding-top: 15px;
   padding-bottom: 10px;
 }
+
+.radio-group-horizontal {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.options-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: rgba(0, 0, 0, 0.6);
+}

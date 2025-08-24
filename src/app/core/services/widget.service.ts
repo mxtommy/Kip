@@ -367,7 +367,7 @@ export class WidgetService {
     },
     {
       name: 'Wind Trends',
-      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
+      description: 'Real-time True Wind trends with dual top axes for direction (degrees) and speed (knots). Displays live values and SMA over the current period average.',
       icon: 'windtrendsWidget',
       minWidth: 5,
       minHeight: 4,
@@ -377,6 +377,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-windtrends-chart',
       componentClassName: 'WidgetWindTrendsChartComponent'
+    },
+    {
+      name: 'History Chart',
+      description: 'A flexible historical data charting widget that leverages the SignalK Parquet history API. Supports all aggregation types, flexible time boundaries, and comprehensive configuration options.',
+      icon: 'datachartWidget',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 3,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-history-chart',
+      componentClassName: 'WidgetHistoryChartComponent'
     },
     {
       name: 'Countdown Timer',

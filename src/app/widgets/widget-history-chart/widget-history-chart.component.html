@@ -1,0 +1,11 @@
+<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  <div class="chart-container">
+    <canvas #historyChart></canvas>
+  </div>
+  
+  @if (lastDataFetch) {
+    <div class="chart-status">
+      <small>Last updated: {{ lastDataFetch.toLocaleString() }}</small>
+    </div>
+  }
+</widget-host>
