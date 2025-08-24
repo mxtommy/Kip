@@ -1,5 +1,4 @@
-import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output, effect } from '@angular/core';
-import { uiEventService } from '../services/uiEvent.service';
+import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
 
 /**
  * GestureBasicDirective
@@ -34,7 +33,7 @@ export class GestureBasicDirective {
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly uiEvent = inject(uiEventService);
+  // No external drag state
 
   private pointerId: number | null = null;
   private startX = 0;
@@ -43,13 +42,8 @@ export class GestureBasicDirective {
   private tracking = false;
   private longPressTimer: number | null = null;
   private pressFired = false;
-  private suppressionActive = false; // blocks post-press pointer moves initiating drags
-  private docPointerMoveSuppress?: (e: Event) => void;
-  private docPointerDownSuppress?: (e: Event) => void;
-  private docTouchMoveSuppress?: (e: Event) => void;
-  private docTouchStartSuppress?: (e: Event) => void;
-  private docMouseMoveSuppress?: (e: Event) => void;
-  private docMouseDownSuppress?: (e: Event) => void;
+  // Robust cancellation listeners
+  private cancelLongpressHandlers: { type: string, handler: EventListenerOrEventListenerObject, opts?: unknown }[] = [];
 
   private lastTapTime = 0;
   private lastTapX = 0;
@@ -60,7 +54,6 @@ export class GestureBasicDirective {
   private lastTapUpY = 0;
   private potentialDoubleTap = false; // set on pointerdown if within interval+slop of last tap up
 
-  private dragEndedAt = 0;
 
   constructor() {
     this.zone.runOutsideAngular(() => {
@@ -75,14 +68,14 @@ export class GestureBasicDirective {
           (el.style as any).webkitTouchCallout = 'none';
         }
       }
-  // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
-  el.addEventListener('pointerdown', this.onPointerDown, { passive: false });
+      // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
+      el.addEventListener('pointerdown', this.onPointerDown, { passive: false });
       el.addEventListener('pointermove', this.onPointerMove, { passive: true });
       el.addEventListener('pointerup', this.onPointerUp, { passive: true });
       el.addEventListener('pointercancel', this.onPointerCancel, { passive: true });
       el.addEventListener('lostpointercapture', this.onPointerCancel, { passive: true });
-  // Native mouse dblclick fallback (improves reliability after drag interactions)
-  el.addEventListener('dblclick', this.onNativeDblClick, { passive: true });
+      // Native mouse dblclick fallback (improves reliability after drag interactions)
+      el.addEventListener('dblclick', this.onNativeDblClick, { passive: true });
 
       this.destroyRef.onDestroy(() => {
         el.removeEventListener('pointerdown', this.onPointerDown);
@@ -92,17 +85,11 @@ export class GestureBasicDirective {
         el.removeEventListener('lostpointercapture', this.onPointerCancel);
         el.removeEventListener('dblclick', this.onNativeDblClick);
         if (this.longPressTimer) window.clearTimeout(this.longPressTimer);
-  this.removeSuppression();
       });
     });
 
     // Track drag end time (flag flips true->false). If isDragging flips often we simply overwrite.
-    effect(() => {
-      const dragging = this.uiEvent.isDragging();
-      if (!dragging) {
-        this.dragEndedAt = performance.now();
-      }
-    });
+    // No external drag tracking needed
   }
 
   private onNativeDblClick = (ev: MouseEvent) => {
@@ -112,60 +99,73 @@ export class GestureBasicDirective {
     this.lastTapTime = 0; // reset sequence to avoid immediate re-trigger from pointer logic
   };
 
+  // Debug flag: set to true to enable gesture debug logging
+  private static readonly DEBUG = false;
+
+  private debug(...args: unknown[]) {
+    if ((this.constructor as typeof GestureBasicDirective).DEBUG) {
+      console.debug('[GestureBasicDirective]', ...args);
+    }
+  }
+
   private onPointerDown = (ev: PointerEvent) => {
+    this.debug('pointerdown', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId, pointerType: ev.pointerType });
     if (this.pointerId !== null) return; // single pointer only
     this.pointerId = ev.pointerId;
     this.tracking = true;
     this.pressFired = false;
-  this.currentPointerType = ev.pointerType || null;
-  // Determine if this pointerdown is the 2nd tap of a double tap sequence (used to suppress long press)
-  const now = performance.now();
-  const dtFromLastUp = now - this.lastTapUpTime;
-  const distFromLastUp = Math.hypot(ev.clientX - this.lastTapUpX, ev.clientY - this.lastTapUpY);
-  this.potentialDoubleTap = dtFromLastUp <= this.doubleTapInterval() && distFromLastUp <= this.tapSlop();
-  // We no longer hard-abort when isDragging() is true, because the flag can linger briefly after a drag.
-  // Instead we simply avoid scheduling a long press while active drag is flagged.
+    this.currentPointerType = ev.pointerType || null;
+    // Double tap logic
+    const now = performance.now();
+    const dtFromLastUp = now - this.lastTapUpTime;
+    const distFromLastUp = Math.hypot(ev.clientX - this.lastTapUpX, ev.clientY - this.lastTapUpY);
+    this.potentialDoubleTap = dtFromLastUp <= this.doubleTapInterval() && distFromLastUp <= this.tapSlop();
     this.startX = ev.clientX;
     this.startY = ev.clientY;
-  this.startTime = performance.now();
-  // Pointer capture to consolidate move/up events (important on iOS inside transformed elements)
-  try { (ev.target as HTMLElement).setPointerCapture(ev.pointerId); } catch { /* ignore */ }
-
-  if (this.longPressTimer) window.clearTimeout(this.longPressTimer);
-  // Schedule long press only if drag not active at scheduling time; if a drag starts (movement), pointermove cancels it.
-  if (!this.uiEvent.isDragging() && !this.potentialDoubleTap) {
+    this.startTime = performance.now();
+    try { (ev.target as HTMLElement).setPointerCapture(ev.pointerId); } catch { /* ignore */ }
+    if (this.longPressTimer) {
+      this.debug('longpress timer cleared on pointerdown');
+      window.clearTimeout(this.longPressTimer);
+    }
+    if (!this.potentialDoubleTap) {
+      // Add robust cancellation listeners
+      this.addLongpressCancelListeners();
+      this.debug('longpress timer scheduled');
       this.longPressTimer = window.setTimeout(() => {
-    if (!this.tracking || this.uiEvent.isDragging()) return; // guard re-check
+        this.debug('longpress timer fired', { tracking: this.tracking });
+        if (!this.tracking) {
+          this.debug('longpress cancelled: not tracking');
+          return;
+        }
         const dx = ev.clientX - this.startX;
         const dy = ev.clientY - this.startY;
-        const sinceDrag = performance.now() - this.dragEndedAt;
-        const extraSlop = (sinceDrag < 350 && this.currentPointerType === 'touch') ? 15 : 0;
-        if (Math.abs(dx) <= (this.pressMoveSlop() + extraSlop) && Math.abs(dy) <= (this.pressMoveSlop() + extraSlop)) {
+        if (Math.abs(dx) <= this.pressMoveSlop() && Math.abs(dy) <= this.pressMoveSlop()) {
+          this.debug('longpress recognized', { x: this.startX, y: this.startY });
           this.pressFired = true;
           const evt = new CustomEvent('press', { detail: { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } } });
           this.zone.run(() => this.press.emit(evt));
-          // After a long press triggers UI (bottom sheet), suppress further pointer movement
-          this.addSuppression(ev);
         }
+        this.removeLongpressCancelListeners();
       }, this.longPressMs());
     }
   };
 
   private onPointerMove = (ev: PointerEvent) => {
+    this.debug('pointermove', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
     if (!this.tracking || ev.pointerId !== this.pointerId) return;
-    if (!this.pressFired) {
-      const dx = ev.clientX - this.startX;
-      const dy = ev.clientY - this.startY;
-      const sinceDrag = performance.now() - this.dragEndedAt;
-      const extraSlop = (sinceDrag < 350 && this.currentPointerType === 'touch') ? 15 : 0;
-      const moveSlop = this.pressMoveSlop() + extraSlop;
-      if (this.uiEvent.isDragging() || Math.abs(dx) > moveSlop || Math.abs(dy) > moveSlop) {
-        if (this.longPressTimer) { window.clearTimeout(this.longPressTimer); this.longPressTimer = null; }
-      }
+    if (this.pressFired) return; // Suppress drag after longpress
+    // Cancel longpress on the very first pointermove event, regardless of movement
+    if (this.longPressTimer) {
+      this.debug('longpress cancelled by pointermove');
+      window.clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+      this.removeLongpressCancelListeners();
     }
   };
 
   private onPointerUp = (ev: PointerEvent) => {
+    this.debug('pointerup', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
     if (!this.tracking || ev.pointerId !== this.pointerId) return;
     const endTime = performance.now();
     const duration = endTime - this.startTime;
@@ -174,7 +174,11 @@ export class GestureBasicDirective {
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
-    if (this.longPressTimer) { window.clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+    if (this.longPressTimer) {
+      this.debug('longpress cancelled by pointerup');
+      window.clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
 
     if (!this.pressFired) {
       // Swipe detection
@@ -186,7 +190,7 @@ export class GestureBasicDirective {
         }
       }
       // Double tap detection
-  if (this.currentPointerType !== 'mouse' && absDx <= this.tapSlop() && absDy <= this.tapSlop() && duration < this.longPressMs()) {
+      if (this.currentPointerType !== 'mouse' && absDx <= this.tapSlop() && absDy <= this.tapSlop() && duration < this.longPressMs()) {
         const now = endTime;
         const dt = now - this.lastTapTime;
         const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
@@ -216,148 +220,63 @@ export class GestureBasicDirective {
   };
 
   private onPointerCancel = (ev: PointerEvent) => {
+    this.debug('pointercancel', { pointerId: ev.pointerId });
     if (ev.pointerId === this.pointerId) {
-      if (this.longPressTimer) { window.clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+      if (this.longPressTimer) {
+        this.debug('longpress cancelled by pointercancel');
+        window.clearTimeout(this.longPressTimer);
+        this.longPressTimer = null;
+        this.removeLongpressCancelListeners();
+      }
       this.reset();
     }
   };
 
+  private addLongpressCancelListeners() {
+    this.debug('addLongpressCancelListeners');
+    // Cancel longpress on pointermove, pointerleave, pointerout, lostpointercapture, blur
+    const cancel = (ev?: Event) => {
+      this.debug('longpress cancelled by event', ev?.type);
+      if (this.longPressTimer) {
+        window.clearTimeout(this.longPressTimer);
+        this.longPressTimer = null;
+      }
+      this.removeLongpressCancelListeners();
+    };
+    const el = this.host.nativeElement;
+    const doc = document;
+    this.cancelLongpressHandlers = [
+      { type: 'pointermove', handler: cancel, opts: true },
+      { type: 'pointerleave', handler: cancel, opts: true },
+      { type: 'pointerout', handler: cancel, opts: true },
+      { type: 'lostpointercapture', handler: cancel, opts: true },
+      { type: 'blur', handler: cancel, opts: true },
+    ];
+    for (const { type, handler, opts } of this.cancelLongpressHandlers) {
+      el.addEventListener(type, handler, opts);
+      doc.addEventListener(type, handler, opts);
+    }
+  }
+
+  private removeLongpressCancelListeners() {
+    this.debug('removeLongpressCancelListeners');
+    const el = this.host.nativeElement;
+    const doc = document;
+    for (const { type, handler, opts } of this.cancelLongpressHandlers) {
+      el.removeEventListener(type, handler, opts);
+      doc.removeEventListener(type, handler, opts);
+    }
+    this.cancelLongpressHandlers = [];
+  }
+
   private reset() {
+    this.debug('reset gesture state');
     this.pointerId = null;
     this.tracking = false;
     this.pressFired = false;
-  this.currentPointerType = null;
-  // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
+    this.currentPointerType = null;
+    this.removeLongpressCancelListeners();
+    // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
     // Do not call removeSuppression() here – we only clear suppression on real pointer up/cancel
-  }
-
-  /** Prevent subsequent drag initiation after a long press opened UI. */
-  private addSuppression(originalEv: PointerEvent) {
-    if (this.suppressionActive) return;
-    this.suppressionActive = true;
-    // Capture-phase suppressors on document so movement outside host is also blocked
-    this.docPointerMoveSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        // Prevent default to avoid scrolling during suppression
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    this.docPointerDownSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    this.docTouchMoveSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    this.docTouchStartSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    this.docMouseMoveSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    this.docMouseDownSuppress = (e: Event) => {
-      if (this.suppressionActive) {
-        e.stopImmediatePropagation();
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    document.addEventListener('pointermove', this.docPointerMoveSuppress, { capture: true, passive: false });
-    document.addEventListener('pointerdown', this.docPointerDownSuppress, { capture: true, passive: false });
-    document.addEventListener('touchmove', this.docTouchMoveSuppress, { capture: true, passive: false });
-  document.addEventListener('touchstart', this.docTouchStartSuppress, { capture: true, passive: false });
-    document.addEventListener('mousemove', this.docMouseMoveSuppress, { capture: true, passive: false });
-    document.addEventListener('mousedown', this.docMouseDownSuppress, { capture: true, passive: false });
-
-    // Dispatch synthetic end/cancel to release drag libs. For touch on iOS, prefer pointercancel to avoid Gridstack e.screenX errors.
-    try {
-      const src = originalEv as PointerEvent & { screenX?: number; screenY?: number };
-      const sx = (typeof src.screenX === 'number') ? src.screenX : originalEv.clientX;
-      const sy = (typeof src.screenY === 'number') ? src.screenY : originalEv.clientY;
-      if (originalEv.pointerType === 'mouse') {
-        const upEv = new PointerEvent('pointerup', {
-          bubbles: true,
-          cancelable: true,
-          pointerId: originalEv.pointerId,
-          pointerType: originalEv.pointerType,
-          clientX: originalEv.clientX,
-          clientY: originalEv.clientY,
-          screenX: sx,
-          screenY: sy,
-        });
-        (originalEv.target as HTMLElement).dispatchEvent(upEv);
-        const mouseUp = new MouseEvent('mouseup', {
-          bubbles: true,
-          cancelable: true,
-          clientX: originalEv.clientX,
-          clientY: originalEv.clientY,
-          screenX: sx,
-          screenY: sy,
-          button: 0
-        });
-        (originalEv.target as HTMLElement).dispatchEvent(mouseUp);
-      } else if (originalEv.pointerType === 'touch') {
-        // Use pointercancel instead of pointerup, provide screen coords to satisfy libs expecting them.
-        const cancelEv = new PointerEvent('pointercancel', {
-          bubbles: true,
-          cancelable: true,
-          pointerId: originalEv.pointerId,
-          pointerType: originalEv.pointerType,
-          clientX: originalEv.clientX,
-          clientY: originalEv.clientY,
-          screenX: sx,
-          screenY: sy,
-        });
-        (originalEv.target as HTMLElement).dispatchEvent(cancelEv);
-        // Optionally fire touchcancel (ignore if construction restricted)
-        try {
-          const touchCancel = new TouchEvent('touchcancel', { bubbles: true, cancelable: true });
-          (originalEv.target as HTMLElement).dispatchEvent(touchCancel);
-        } catch { /* ignore */ }
-      }
-    } catch { /* ignore synthetic dispatch errors */ }
-
-    // Remove suppression on the next real pointerup/cancel (user releases)
-    const clear = (e: Event) => {
-      // Ensure same pointer (where possible)
-      if (e instanceof PointerEvent && this.pointerId !== null && e.pointerId !== this.pointerId) return;
-      this.removeSuppression();
-      document.removeEventListener('pointerup', clear, true);
-      document.removeEventListener('pointercancel', clear, true);
-      document.removeEventListener('touchend', clear, true);
-      document.removeEventListener('touchcancel', clear, true);
-    };
-    document.addEventListener('pointerup', clear, true);
-    document.addEventListener('pointercancel', clear, true);
-    document.addEventListener('touchend', clear, true);
-    document.addEventListener('touchcancel', clear, true);
-  }
-
-  private removeSuppression() {
-    if (!this.suppressionActive) return;
-    this.suppressionActive = false;
-    if (this.docPointerMoveSuppress) document.removeEventListener('pointermove', this.docPointerMoveSuppress, true);
-    if (this.docPointerDownSuppress) document.removeEventListener('pointerdown', this.docPointerDownSuppress, true);
-    if (this.docTouchMoveSuppress) document.removeEventListener('touchmove', this.docTouchMoveSuppress, true);
-  if (this.docTouchStartSuppress) document.removeEventListener('touchstart', this.docTouchStartSuppress, true);
-  if (this.docMouseMoveSuppress) document.removeEventListener('mousemove', this.docMouseMoveSuppress, true);
-  if (this.docMouseDownSuppress) document.removeEventListener('mousedown', this.docMouseDownSuppress, true);
-    this.docPointerMoveSuppress = undefined;
-    this.docPointerDownSuppress = undefined;
-    this.docTouchMoveSuppress = undefined;
-  this.docTouchStartSuppress = undefined;
-  this.docMouseMoveSuppress = undefined;
-  this.docMouseDownSuppress = undefined;
   }
 }
