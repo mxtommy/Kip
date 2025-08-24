@@ -1,26 +1,34 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, OnInit, input, inject } from '@angular/core';
-import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
+import { ReactiveFormsModule, UntypedFormControl, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
+import { StreamChartBridgeService, StreamInfo } from '../../core/services/stream-chart-bridge.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
   selector: 'config-dataset-chart-options',
   standalone: true,
-  imports: [ MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
+  imports: [ MatFormFieldModule, MatSelectModule, MatRadioModule, MatCheckboxModule, ReactiveFormsModule],
   templateUrl: './dataset-chart-options.component.html',
   styleUrl: './dataset-chart-options.component.scss'
 })
 export class DatasetChartOptionsComponent implements OnInit {
   private datasetService = inject(DatasetService);
+  private streamBridge = inject(StreamChartBridgeService);
   private units = inject(UnitsService);
 
   readonly datasetUUID = input.required<UntypedFormControl>();
   readonly convertUnitTo = input.required<UntypedFormControl>();
+  readonly dataSource = input.required<UntypedFormControl>();
+  readonly selectedStreamId = input.required<UntypedFormControl>();
+  readonly streamAutoStart = input.required<UntypedFormControl>();
 
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
+  public availableStreams: StreamInfo[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
   ngOnInit(): void {
@@ -29,6 +37,11 @@ export class DatasetChartOptionsComponent implements OnInit {
     if (datasetUUID.value) {
       this.setPathUnits(datasetUUID.value);
     }
+
+    // Load available streams
+    this.streamBridge.getAvailableStreams().subscribe(streams => {
+      this.availableStreams = streams;
+    });
   }
 
   private setPathUnits(uuid: string): boolean {
@@ -46,5 +59,54 @@ export class DatasetChartOptionsComponent implements OnInit {
 
   public datasetChanged(e: MatSelectChange): void {
     this.setPathUnits(e.value);
+  }
+
+  public dataSourceChanged(value: string): void {
+    this.dataSource().setValue(value);
+    
+    // Update validation and reset selections when switching data source
+    if (value === 'dataset') {
+      this.selectedStreamId().setValue(null);
+      this.selectedStreamId().clearValidators();
+      this.datasetUUID().setValidators([Validators.required]);
+    } else if (value === 'stream') {
+      this.datasetUUID().setValue(null);
+      this.datasetUUID().clearValidators();
+      this.selectedStreamId().setValidators([Validators.required]);
+    }
+    
+    // Update validity after changing validators
+    this.datasetUUID().updateValueAndValidity();
+    this.selectedStreamId().updateValueAndValidity();
+  }
+
+  public streamChanged(e: MatSelectChange): void {
+    this.selectedStreamId().setValue(e.value);
+    
+    // Find the selected stream and set units based on its path
+    const selectedStream = this.availableStreams.find(stream => stream.id === e.value);
+    if (selectedStream && selectedStream.path) {
+      this.setStreamPathUnits(selectedStream.path);
+    }
+  }
+
+  private setStreamPathUnits(path: string): boolean {
+    if (path) {
+      this.unitList = this.units.getConversionsForPath(path);
+      this.convertUnitTo()?.enable();
+      return true;
+    } else {
+      this.unitList = this.units.getConversionsForPath('');
+      this.convertUnitTo()?.disable();
+      return false;
+    }
+  }
+
+  public isDatasetMode(): boolean {
+    return this.dataSource().value === 'dataset';
+  }
+
+  public isStreamMode(): boolean {
+    return this.dataSource().value === 'stream';
   }
 }
