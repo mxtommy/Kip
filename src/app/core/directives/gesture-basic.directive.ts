@@ -10,8 +10,7 @@ import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from
  * Uses Pointer Events; runs tracking outside Angular and re-enters only on emit.
  */
 @Directive({
-  selector: '[kipGestures]',
-  standalone: true
+  selector: '[kipGestures]'
 })
 export class GestureBasicDirective {
   // Config inputs (can be overridden via property binding)
@@ -34,6 +33,9 @@ export class GestureBasicDirective {
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
   // No external drag state
+
+  // Debug flag: set to true to enable gesture debug logging
+  private static readonly DEBUG = true;
 
   private pointerId: number | null = null;
   private startX = 0;
@@ -98,9 +100,6 @@ export class GestureBasicDirective {
     this.zone.run(() => this.doubletap.emit(evt));
     this.lastTapTime = 0; // reset sequence to avoid immediate re-trigger from pointer logic
   };
-
-  // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = false;
 
   private debug(...args: unknown[]) {
     if ((this.constructor as typeof GestureBasicDirective).DEBUG) {
