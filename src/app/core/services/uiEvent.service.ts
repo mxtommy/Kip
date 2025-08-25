@@ -108,8 +108,8 @@ export class uiEventService implements OnDestroy {
   }
 
   public addGestureListeners(
-    onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void
+    onSwipeLeft: (e: Event | CustomEvent) => void,
+    onSwipeRight: (e: Event | CustomEvent) => void
   ): void {
     if (!this.boundPreventGestures) {
       this.boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
@@ -123,8 +123,8 @@ export class uiEventService implements OnDestroy {
   }
 
   public removeGestureListeners(
-    onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void
+    onSwipeLeft: (e: Event | CustomEvent) => void,
+    onSwipeRight: (e: Event | CustomEvent) => void
   ): void {
     document.removeEventListener('openLeftSidenav', onSwipeLeft);
     document.removeEventListener('openRightSidenav', onSwipeRight);

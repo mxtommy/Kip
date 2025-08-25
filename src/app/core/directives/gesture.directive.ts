@@ -1,29 +1,77 @@
+/**
+ * GestureDirective — design notes
+ *
+ * Lightweight, standalone gesture recognizer using the Pointer Events API.
+ * This section documents the implementation and design goals for maintainers.
+ *
+ * - Runs pointer tracking outside Angular's zone for low-overhead move handling.
+ * - Emits high-level gestures via typed DOM CustomEvents so templates and consumers
+ *   can read strongly-typed payloads from `event.detail`.
+ * - Focuses on single-pointer tracking for dashboard widgets (no multi-touch mix).
+ * - Robust long-press cancellation and cleanup to avoid leaked handlers or pointer capture.
+ *
+ * Supported gestures (emitted events): swipeleft, swiperight, swipeup, swipedown, press, doubletap.
+ */
 import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
 
+// Cancel handler metadata used for long-press cancellation listeners.
+type CancelTarget = 'el' | 'doc' | 'window';
+interface CancelHandlerEntry {
+  type: string;
+  handler: EventListenerOrEventListenerObject;
+  opts?: AddEventListenerOptions;
+  targets?: CancelTarget[];
+}
+
 /**
- * GestureDirective
- * Standalone lightweight gesture providing:
- *  - swipeleft / swiperight / swipeup / swipedown
- *  - press (long press)
- *  - doubletap
+ * Gesture recognizer (emitted events): swipeleft, swiperight, swipeup, swipedown,
+ * press, doubletap.
  *
- * Uses Pointer Events; runs tracking outside Angular and re-enters only on emit.
+ * Notes for users:
+ *  - The directive sets `touch-action: none` on the host element to reduce native
+ *    browser gesture interference. If your layout relies on native scrolling, attach
+ *    the directive to an overlay element instead.
+ *  - All configuration properties are Angular signals (`input(...)`) and can be bound from templates.
+ *
+ * Optional Inputs to adjust recognition. Uses optimal setting per pointer type if not specified:
+ *  - `swipeMinDistance` (number) - minimum primary-axis movement in pixels to consider a swipe. Default: 30.
+ *  - `swipeMaxDuration` (number) - maximum duration in ms for a swipe. Default: 600.
+ *  - `longPressMs` (number) - milliseconds required to trigger a long press. Default: 500.
+ *  - `doubleTapInterval` (number) - maximum ms between taps to consider a double tap. Default: 300.
+ *  - `tapSlop` (number) - movement tolerance in pixels for taps/double taps. Default: 20.
+ *  - `pressMoveSlop` (number) - movement allowance in pixels while still considering a long press valid. Default: 10.
+ *
+ *
+ * Usage:
+ * @example
+ *  <div
+ *    kipGestures
+ *    [longPressMs]="500"
+ *    (press)="onPress($event)">
+ *  </div>
  */
-@Directive({
-  selector: '[kipGestures]'
-})
+@Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
+  // Debug flag: set to true to enable gesture debug logging
+  private static readonly DEBUG = false;
   // Static counter for instance IDs (debugging)
   private static _instanceCounter = 0;
   private readonly _instanceId: number;
+
   // Config inputs (can be overridden via property binding)
   // Default values for touch; will be dynamically adjusted per pointer type
-  swipeMinDistance = input(30);      // px
-  swipeMaxDuration = input(600);     // ms
-  longPressMs = input(500);          // ms (matches prior Hammer config)
-  doubleTapInterval = input(300);    // ms
-  tapSlop = input(20);               // px radius for tap/double tap
-  pressMoveSlop = input(10);         // px allowed before cancelling press
+  /** Minimum primary-axis distance (px) required to consider a gesture a swipe. */
+  swipeMinDistance = input(30);
+  /** Maximum duration (ms) for a swipe gesture to be valid. */
+  swipeMaxDuration = input(600);
+  /** Long-press duration (ms) threshold. */
+  longPressMs = input(500);
+  /** Maximum ms between taps to consider a double-tap. */
+  doubleTapInterval = input(300);
+  /** Movement tolerance (px) for taps/double taps. */
+  tapSlop = input(20);
+  /** Movement allowance (px) while still considering a long press valid. */
+  pressMoveSlop = input(10);
 
   // Dynamically adjusted gesture thresholds (set on pointerdown)
   private _swipeMinDistance = 30;
@@ -34,20 +82,22 @@ export class GestureDirective {
   private _pressMoveSlop = 10;
 
   // Outputs (signal-based)
-  swipeleft = output<Event>();
-  swiperight = output<Event>();
-  swipeup = output<Event>();
-  swipedown = output<Event>();
-  press = output<Event>();
-  doubletap = output<Event>();
+  /** Emitted when a leftward horizontal swipe is detected. Event.detail contains { dx, dy, duration }. */
+  swipeleft = output<CustomEvent<{ dx: number; dy: number; duration: number }>>();
+  /** Emitted when a rightward horizontal swipe is detected. Event.detail contains { dx, dy, duration }. */
+  swiperight = output<CustomEvent<{ dx: number; dy: number; duration: number }>>();
+  /** Emitted when an upward vertical swipe is detected. Event.detail contains { dx, dy, duration }. */
+  swipeup = output<CustomEvent<{ dx: number; dy: number; duration: number }>>();
+  /** Emitted when a downward vertical swipe is detected. Event.detail contains { dx, dy, duration }. */
+  swipedown = output<CustomEvent<{ dx: number; dy: number; duration: number }>>();
+  /** Emitted for a long press. Event.detail contains { x, y, center }. */
+  press = output<CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>>();
+  /** Emitted on a double-tap. Event.detail contains { x, y, dt }. */
+  doubletap = output<CustomEvent<{ x: number; y: number; dt: number }>>();
 
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
-  // No external drag state
-
-  // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = true;
 
   private pointerId: number | null = null;
   private startX = 0;
@@ -56,8 +106,8 @@ export class GestureDirective {
   private tracking = false;
   private longPressTimer: number | null = null;
   private pressFired = false;
-  // Robust cancellation listeners
-  private cancelLongpressHandlers: { type: string, handler: EventListenerOrEventListenerObject, opts?: unknown }[] = [];
+
+  private cancelLongpressHandlers: CancelHandlerEntry[] = [];
 
   private lastTapTime = 0;
   private lastTapX = 0;
@@ -100,26 +150,34 @@ export class GestureDirective {
         el.removeEventListener('pointercancel', this.onPointerCancel);
         el.removeEventListener('lostpointercapture', this.onPointerCancel);
         el.removeEventListener('dblclick', this.onNativeDblClick);
-        if (this.longPressTimer) window.clearTimeout(this.longPressTimer);
+        if (this.longPressTimer) {
+          window.clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        // Ensure any ad-hoc cancel listeners attached to document/element are removed
+        this.removeLongpressCancelListeners();
+
+        // Release pointer capture if it was set
+        try {
+          if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
+            el.releasePointerCapture(this.pointerId);
+          }
+        } catch {
+          /* ignore release errors */
+        }
+        this.pointerId = null;
+        this.tracking = false;
       });
     });
-
-    // Track drag end time (flag flips true->false). If isDragging flips often we simply overwrite.
-    // No external drag tracking needed
   }
 
   private onNativeDblClick = (ev: MouseEvent) => {
     // Emit a synthetic doubletap (mouse scenario) unless a touch doubletap already emitted recently
-    const evt = new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, native: true } });
+    const evt = new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt: 0 } });
     this.zone.run(() => this.doubletap.emit(evt));
     this.lastTapTime = 0; // reset sequence to avoid immediate re-trigger from pointer logic
   };
-
-  private debug(...args: unknown[]) {
-    if ((this.constructor as typeof GestureDirective).DEBUG) {
-      console.debug(`[GestureDirective][#${this._instanceId}]`, ...args);
-    }
-  }
 
   private onPointerDown = (ev: PointerEvent) => {
     this.debug('pointerdown', {
@@ -229,7 +287,7 @@ export class GestureDirective {
       this.longPressTimer = null;
     }
 
-    // If longpress was recognized, do NOT reset state here; let the menu/component handle closing.
+    // If longpress was recognized, do NOT reset state here; let the component handle closing.
     if (this.pressFired) {
       this.debug('pointerup after longpress: not resetting gesture state');
       return;
@@ -323,16 +381,22 @@ export class GestureDirective {
     };
     const el = this.host.nativeElement;
     const doc = document;
+    const captureOpts: AddEventListenerOptions = { capture: true };
+    // store targets explicitly so removal can be precise
+    // handlers added to element and document
     this.cancelLongpressHandlers = [
-      { type: 'pointermove', handler: cancel, opts: true },
-      { type: 'pointerleave', handler: cancel, opts: true },
-      { type: 'pointerout', handler: cancel, opts: true },
-      { type: 'lostpointercapture', handler: cancel, opts: true },
-      { type: 'blur', handler: cancel, opts: true },
+      { type: 'pointermove', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      { type: 'pointerleave', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      { type: 'pointerout', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      { type: 'lostpointercapture', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      // blur should be attached to window for cross-browser coverage
+      { type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] },
     ];
-    for (const { type, handler, opts } of this.cancelLongpressHandlers) {
-      el.addEventListener(type, handler, opts);
-      doc.addEventListener(type, handler, opts);
+    for (const entry of this.cancelLongpressHandlers) {
+      const { type, handler, opts, targets } = entry as CancelHandlerEntry;
+      if (targets && targets.includes('el')) el.addEventListener(type, handler, opts as AddEventListenerOptions);
+      if (targets && targets.includes('doc')) doc.addEventListener(type, handler, opts as AddEventListenerOptions);
+      if (targets && targets.includes('window')) window.addEventListener(type, handler, opts as AddEventListenerOptions);
     }
   }
 
@@ -340,15 +404,27 @@ export class GestureDirective {
     this.debug('removeLongpressCancelListeners');
     const el = this.host.nativeElement;
     const doc = document;
-    for (const { type, handler, opts } of this.cancelLongpressHandlers) {
-      el.removeEventListener(type, handler, opts);
-      doc.removeEventListener(type, handler, opts);
+    for (const entry of this.cancelLongpressHandlers) {
+      const { type, handler, opts, targets } = entry as CancelHandlerEntry;
+      if (targets && targets.includes('el')) el.removeEventListener(type, handler, opts as AddEventListenerOptions);
+      if (targets && targets.includes('doc')) doc.removeEventListener(type, handler, opts as AddEventListenerOptions);
+      if (targets && targets.includes('window')) window.removeEventListener(type, handler, opts as AddEventListenerOptions);
     }
     this.cancelLongpressHandlers = [];
   }
 
   private reset() {
     this.debug('reset gesture state');
+    // Release pointer capture if still held before clearing pointerId
+    try {
+      const el = this.host.nativeElement;
+      if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
+        el.releasePointerCapture(this.pointerId);
+      }
+    } catch {
+      /* ignore release errors */
+    }
+
     this.pointerId = null;
     this.tracking = false;
     this.pressFired = false;
@@ -356,5 +432,11 @@ export class GestureDirective {
     this.removeLongpressCancelListeners();
     // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
     // Do not call removeSuppression() here – we only clear suppression on real pointer up/cancel
+  }
+
+  private debug(...args: unknown[]) {
+    if ((this.constructor as typeof GestureDirective).DEBUG) {
+      console.debug(`[GestureDirective][#${this._instanceId}]`, ...args);
+    }
   }
 }

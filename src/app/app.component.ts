@@ -49,8 +49,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected isPhonePortrait: Signal<BreakpointState>;
 
   // Stable handler refs (prevent leak from rebinding)
-  private readonly _swipeLeftHandler = (e: Event) => this.onSwipeLeft(e);
-  private readonly _swipeRightHandler = (e: Event) => this.onSwipeRight(e);
+  private readonly _swipeLeftHandler = (e: Event | CustomEvent) => this.onSwipeLeft(e);
+  private readonly _swipeRightHandler = (e: Event | CustomEvent) => this.onSwipeRight(e);
   private readonly _hotkeyHandler = (key: string, event: KeyboardEvent) => this.handleKeyDown(key, event);
 
   constructor() {
@@ -152,9 +152,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected onSwipeRight(e: Event): void {
+  protected onSwipeRight(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.actionsSidenavOpened.set(false);
         this.notificationsSidenavOpened.set(true);
@@ -170,9 +170,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.actionsSidenavOpened.update(o => o ? !o : false);
   }
 
-  protected onSwipeLeft(e: Event): void {
+  protected onSwipeLeft(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.notificationsSidenavOpened.set(false);
         this.actionsSidenavOpened.set(true);

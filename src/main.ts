@@ -40,7 +40,6 @@ bootstrapApplication(AppComponent, {
       useClass: AuthenticationInterceptor,
       multi: true,
     },
-  // Removed HAMMER_GESTURE_CONFIG provider.
     // MatDialog App wide default config
     {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,

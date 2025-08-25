@@ -228,9 +228,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.setStaticDashboard(true);
   }
 
-  protected addNewWidget(e: Event): void {
-    if (!this.dashboard.isDashboardStatic() && e instanceof CustomEvent) {
-      const detail = (e.detail || {}) as PressGestureDetail;
+  protected addNewWidget(e: Event | CustomEvent): void {
+    if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
+      const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
       const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
@@ -318,15 +318,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     }
   }
 
-  protected nextDashboard(e: Event): void {
-    e.preventDefault();
+  protected nextDashboard(e: Event | CustomEvent): void {
+    (e as Event).preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToNextDashboard();
     }
   }
 
-  protected previousDashboard(e: Event): void {
-    e.preventDefault();
+  protected previousDashboard(e: Event | CustomEvent): void {
+    (e as Event).preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToPreviousDashboard();
     }

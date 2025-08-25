@@ -24,8 +24,8 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  public openWidgetOptions(e: Event): void {
-    e.stopPropagation();
+  public openWidgetOptions(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
       // Prevent opening Options Dialogue if the widget has no config property
       if (!this.config()) return;
@@ -42,8 +42,8 @@ export class WidgetHostComponent {
     }
   }
 
-  public openBottomSheet(e: Event): void {
-    e.stopPropagation()
+  public openBottomSheet(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
       // Detect Linux Firefox for workaround
       const isLinuxFirefox = typeof navigator !== 'undefined' &&

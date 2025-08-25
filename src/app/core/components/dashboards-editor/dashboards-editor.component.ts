@@ -5,7 +5,7 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
-import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray} from '@angular/cdk/drag-drop';
+import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { uiEventService } from '../../services/uiEvent.service';
@@ -14,7 +14,7 @@ import { uiEventService } from '../../services/uiEvent.service';
 @Component({
   selector: 'dashboards-editor',
   standalone: true,
-  imports: [ MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, GestureDirective ],
+  imports: [MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
@@ -37,7 +37,7 @@ export class DashboardsEditorComponent {
       confirmBtnText: 'Create',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
-      if (!data) {return} //clicked cancel
+      if (!data) { return } //clicked cancel
       this._dashboard.add(data.name, []);
     });
   }
@@ -71,12 +71,12 @@ export class DashboardsEditorComponent {
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
-      if (!data) {return} //clicked cancel
+      if (!data) { return } //clicked cancel
       this._dashboard.update(itemIndex, data.name);
     });
   }
 
-  protected deleteDashboard(index: number):void {
+  protected deleteDashboard(index: number): void {
     this._dashboard.delete(index);
   }
 
@@ -87,7 +87,7 @@ export class DashboardsEditorComponent {
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
-      if (!data) {return} //clicked cancel
+      if (!data) { return } //clicked cancel
       this._dashboard.duplicate(itemIndex, data.name);
     });
   }
@@ -109,9 +109,9 @@ export class DashboardsEditorComponent {
   protected dragEnd(): void {
     this._uiEvent.isDragging.set(false);
     this._dragActive = false;
-  // Reset movement flag shortly after drag end so future presses work.
-  // Timeout lets Hammer finish any internal gesture state before we allow a new press.
-  setTimeout(() => { this._dragMoved = false; }, 60);
+    // Reset movement flag shortly after drag end so future presses work.
+    // Timeout lets finish any internal gesture state before we allow a new press.
+    setTimeout(() => { this._dragMoved = false; }, 60);
   }
 
   protected onDragMoved(ev: CdkDragMove<unknown>): void {
@@ -122,21 +122,11 @@ export class DashboardsEditorComponent {
     }
   }
 
-  protected onPress(index: number, e: Event): void {
-    e.stopImmediatePropagation();
-    e.stopPropagation()
+  protected onPress(index: number, e: Event | CustomEvent): void {
+    (e as Event).preventDefault();
+    (e as Event).stopPropagation();
     // Suppress press if an actual drag movement occurred
-
-
-
-    e.preventDefault();
-    e.stopPropagation();
     if (this._dragMoved) return;
-
-    setTimeout(() => {
-      this.openBottomSheet(index);
-    }, 0);
-}
-
-
+    this.openBottomSheet(index);
+  }
 }
