@@ -207,6 +207,16 @@ html {
 html,
 body {
   height: 100%;
+  overscroll-behavior-y: none; /* block vertical "overscroll" gestures */
+  user-select: none; /* prevent text selection */
+  -webkit-user-select: none; /* Safari/iOS */
+  -ms-user-select: none;     /* old Edge */
+}
+
+/* Allow selection inside input/textarea and editable areas */
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 body {

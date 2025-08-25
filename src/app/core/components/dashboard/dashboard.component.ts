@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
-// Minimal HammerInput shape used (center coordinates). If full typings available they can replace this.
-interface HammerInput { center: { x: number; y: number }; }
+import { GestureDirective } from '../../directives/gesture.directive';
+interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -47,7 +47,7 @@ import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-h
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent],
+  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -110,6 +110,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       this._boundHandleKeyDown,
       { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
     );
+
+    // Hook Gridstack drag lifecycle early to suppress long-press during slow drags
+    try {
+      const grid = this._gridstack().grid as unknown as { on: (event: string, cb: (...args: unknown[]) => void) => void };
+      if (grid && typeof grid.on === 'function') {
+        grid.on('dragstart', () => {
+          this._uiEvent.isDragging.set(true);
+        });
+        grid.on('dragstop', () => {
+          // Slight delay ensures any pending pointerup has processed before clearing flag
+          setTimeout(() => this._uiEvent.isDragging.set(false), 0);
+        });
+        // Also handle resize interactions
+        grid.on('resizestart', () => {
+          this._uiEvent.isDragging.set(true);
+        });
+        grid.on('resizestop', () => {
+          setTimeout(() => this._uiEvent.isDragging.set(false), 0);
+        });
+      }
+    } catch { /* ignore grid hook errors */ }
 
     this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
       if (isStatic) {
@@ -207,10 +228,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     this.dashboard.setStaticDashboard(true);
   }
 
-  protected addNewWidget(e: unknown): void {
-    if (!this.dashboard.isDashboardStatic()) {
-      const inputX = (e as HammerInput).center.x;
-      const inputY = (e as HammerInput).center.y;
+  protected addNewWidget(e: Event | CustomEvent): void {
+    if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
+      const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
+      const inputX = detail.center?.x ?? detail.x ?? 0;
+      const inputY = detail.center?.y ?? detail.y ?? 0;
       const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
       const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
 
@@ -296,15 +318,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     }
   }
 
-  protected nextDashboard(e: Event): void {
-    e.preventDefault();
+  protected nextDashboard(e: Event | CustomEvent): void {
+    (e as Event).preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToNextDashboard();
     }
   }
 
-  protected previousDashboard(e: Event): void {
-    e.preventDefault();
+  protected previousDashboard(e: Event | CustomEvent): void {
+    (e as Event).preventDefault();
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToPreviousDashboard();
     }

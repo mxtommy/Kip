@@ -2,10 +2,11 @@
 <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
   @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
     <div class="dashboard-card dashboard-item"
+      kipGestures
       cdkDrag
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
-      (press)="onPress(index)"
+      (press)="onPress(index, $event)"
       (doubletap)="editDashboard(index)">
       <span style="display: block; width: 100%;">
         <div class="item-index">{{index + 1}}</div>

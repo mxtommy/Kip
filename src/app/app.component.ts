@@ -12,6 +12,7 @@ import { MenuNotificationsComponent } from './core/components/menu-notifications
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { GestureDirective } from './core/directives/gesture.directive';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
@@ -24,7 +25,7 @@ import { DatasetService } from './core/services/data-set.service';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
@@ -48,8 +49,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected isPhonePortrait: Signal<BreakpointState>;
 
   // Stable handler refs (prevent leak from rebinding)
-  private readonly _swipeLeftHandler = (e: Event) => this.onSwipeLeft(e);
-  private readonly _swipeRightHandler = (e: Event) => this.onSwipeRight(e);
+  private readonly _swipeLeftHandler = (e: Event | CustomEvent) => this.onSwipeLeft(e);
+  private readonly _swipeRightHandler = (e: Event | CustomEvent) => this.onSwipeRight(e);
   private readonly _hotkeyHandler = (key: string, event: KeyboardEvent) => this.handleKeyDown(key, event);
 
   constructor() {
@@ -151,9 +152,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected onSwipeRight(e: Event): void {
+  protected onSwipeRight(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.actionsSidenavOpened.set(false);
         this.notificationsSidenavOpened.set(true);
@@ -169,9 +170,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.actionsSidenavOpened.update(o => o ? !o : false);
   }
 
-  protected onSwipeLeft(e: Event): void {
+  protected onSwipeLeft(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.notificationsSidenavOpened.set(false);
         this.actionsSidenavOpened.set(true);

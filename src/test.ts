@@ -27,7 +27,12 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UnitsService } from './app/core/services/units.service';
+import { HttpClient } from '@angular/common/http';
+import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
+import { AuthenticationService } from './app/core/services/authentication.service';
+import { ActivatedRoute } from '@angular/router';
 // Global provider setup (HttpClient, RouterTestingModule, animation & material stubs, etc.)
 import { getTestBed } from '@angular/core/testing';
 import {
@@ -40,15 +45,36 @@ const testBed = getTestBed();
 testBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 class MatBottomSheetRefStub { dismiss(): void { /* noop */ } }
 class MatDialogRefStub { close(): void { /* noop */ } }
+class AppNetworkInitServiceStub { /* noop for tests */ }
+const HttpClientStub: Partial<HttpClient> = {};
+class AuthenticationServiceStub {
+  // Minimal stub surface for tests that inject AuthenticationService
+  // Minimal observable-like stub used in many specs. Keep shape small and typed to avoid lint.
+  public isLoggedIn$ = { subscribe: () => ({ unsubscribe: () => void 0 }) };
+  login = async () => {};
+  logout = async () => {};
+}
+const ActivatedRouteStub = { snapshot: {}, params: {}, queryParams: {} } as Partial<ActivatedRoute>;
+// Consolidated global TestBed configuration to avoid ordering surprises and make
+// global providers explicit in one place.
 testBed.configureTestingModule({
   imports: [RouterTestingModule],
   providers: [
+    // HTTP helpers: testing provider is preferred for specs; keep interceptor wiring if some tests rely on it
     provideHttpClient(withInterceptorsFromDi()),
     provideHttpClientTesting(),
+    // Animation & utility services
     provideNoopAnimations(),
     UnitsService,
+    // Material stubs and tokens
+    { provide: MAT_DIALOG_DATA, useValue: {} },
     { provide: MatBottomSheetRef, useClass: MatBottomSheetRefStub },
-    { provide: MatDialogRef, useClass: MatDialogRefStub }
+    { provide: MatDialogRef, useClass: MatDialogRefStub },
+    // Common DI stubs used by many suites
+    { provide: HttpClient, useValue: HttpClientStub },
+    { provide: AppNetworkInitService, useClass: AppNetworkInitServiceStub },
+    { provide: AuthenticationService, useClass: AuthenticationServiceStub },
+    { provide: ActivatedRoute, useValue: ActivatedRouteStub }
   ]
 });
 
