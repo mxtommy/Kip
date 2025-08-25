@@ -45,7 +45,11 @@ export class WidgetHostComponent {
   public openBottomSheet(e: Event): void {
     e.stopPropagation()
     if (!this._dashboard.isDashboardStatic()) {
-      const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent);
+      // Detect Linux Firefox for workaround
+      const isLinuxFirefox = typeof navigator !== 'undefined' &&
+        /Linux/.test(navigator.platform) &&
+        /Firefox/.test(navigator.userAgent);
+      const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
       sheetRef.afterDismissed().subscribe((action) => {
         switch (action) {
           case 'delete':

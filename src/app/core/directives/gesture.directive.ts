@@ -2,7 +2,7 @@ import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from
 
 /**
  * GestureDirective
- * Standalone lightweight replacement for Hammer.js providing:
+ * Standalone lightweight gesture providing:
  *  - swipeleft / swiperight / swipeup / swipedown
  *  - press (long press)
  *  - doubletap
@@ -229,43 +229,47 @@ export class GestureDirective {
       this.longPressTimer = null;
     }
 
-    if (!this.pressFired) {
-      // Swipe detection
-      if (duration <= this._swipeMaxDuration) {
-        if (absDx >= this._swipeMinDistance && absDx >= absDy) {
-          this.debug('swipe detected', { direction: dx > 0 ? 'right' : 'left', dx, dy, duration });
-          this.zone.run(() => {
-            if (dx > 0) {
-              this.swiperight.emit(new CustomEvent('swiperight', { detail: { dx, dy, duration } }));
-            } else {
-              this.swipeleft.emit(new CustomEvent('swipeleft', { detail: { dx, dy, duration } }));
-            }
-          });
-        } else if (absDy >= this._swipeMinDistance && absDy > absDx) {
-          this.debug('swipe detected', { direction: dy > 0 ? 'down' : 'up', dx, dy, duration });
-          this.zone.run(() => {
-            if (dy > 0) {
-              this.swipedown.emit(new CustomEvent('swipedown', { detail: { dx, dy, duration } }));
-            } else {
-              this.swipeup.emit(new CustomEvent('swipeup', { detail: { dx, dy, duration } }));
-            }
-          });
-        }
+    // If longpress was recognized, do NOT reset state here; let the menu/component handle closing.
+    if (this.pressFired) {
+      this.debug('pointerup after longpress: not resetting gesture state');
+      return;
+    }
+
+    // Swipe detection
+    if (duration <= this._swipeMaxDuration) {
+      if (absDx >= this._swipeMinDistance && absDx >= absDy) {
+        this.debug('swipe detected', { direction: dx > 0 ? 'right' : 'left', dx, dy, duration });
+        this.zone.run(() => {
+          if (dx > 0) {
+            this.swiperight.emit(new CustomEvent('swiperight', { detail: { dx, dy, duration } }));
+          } else {
+            this.swipeleft.emit(new CustomEvent('swipeleft', { detail: { dx, dy, duration } }));
+          }
+        });
+      } else if (absDy >= this._swipeMinDistance && absDy > absDx) {
+        this.debug('swipe detected', { direction: dy > 0 ? 'down' : 'up', dx, dy, duration });
+        this.zone.run(() => {
+          if (dy > 0) {
+            this.swipedown.emit(new CustomEvent('swipedown', { detail: { dx, dy, duration } }));
+          } else {
+            this.swipeup.emit(new CustomEvent('swipeup', { detail: { dx, dy, duration } }));
+          }
+        });
       }
-      // Double tap detection
-      if (this.currentPointerType !== 'mouse' && absDx <= this._tapSlop && absDy <= this._tapSlop && duration < this._longPressMs) {
-        const now = endTime;
-        const dt = now - this.lastTapTime;
-        const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
-        if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
-          this.zone.run(() => this.doubletap.emit(new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt } })));
-          this.lastTapTime = 0;
-          this.potentialDoubleTap = false; // completed
-        } else {
-          this.lastTapTime = now;
-          this.lastTapX = ev.clientX;
-          this.lastTapY = ev.clientY;
-        }
+    }
+    // Double tap detection
+    if (this.currentPointerType !== 'mouse' && absDx <= this._tapSlop && absDy <= this._tapSlop && duration < this._longPressMs) {
+      const now = endTime;
+      const dt = now - this.lastTapTime;
+      const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
+      if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
+        this.zone.run(() => this.doubletap.emit(new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt } })));
+        this.lastTapTime = 0;
+        this.potentialDoubleTap = false; // completed
+      } else {
+        this.lastTapTime = now;
+        this.lastTapX = ev.clientX;
+        this.lastTapY = ev.clientY;
       }
     }
 

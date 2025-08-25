@@ -43,7 +43,11 @@ export class DashboardsEditorComponent {
   }
 
   protected openBottomSheet(index: number): void {
-    const sheetRef = this._bottomSheet.open(DashboardsManageBottomSheetComponent);
+    // Detect Linux Firefox for workaround
+    const isLinuxFirefox = typeof navigator !== 'undefined' &&
+      /Linux/.test(navigator.platform) &&
+      /Firefox/.test(navigator.userAgent);
+    const sheetRef = this._bottomSheet.open(DashboardsManageBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
     sheetRef.afterDismissed().subscribe((action) => {
       switch (action) {
         case 'delete':
@@ -118,9 +122,21 @@ export class DashboardsEditorComponent {
     }
   }
 
-  protected onPress(index: number): void {
+  protected onPress(index: number, e: Event): void {
+    e.stopImmediatePropagation();
+    e.stopPropagation()
     // Suppress press if an actual drag movement occurred
+
+
+
+    e.preventDefault();
+    e.stopPropagation();
     if (this._dragMoved) return;
-    this.openBottomSheet(index);
-  }
+
+    setTimeout(() => {
+      this.openBottomSheet(index);
+    }, 0);
+}
+
+
 }

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -13,6 +13,8 @@ import { MatIconModule } from '@angular/material/icon';
 export class WidgetHostBottomSheetComponent {
   private _bottomSheetRef =
     inject<MatBottomSheetRef<WidgetHostBottomSheetComponent>>(MatBottomSheetRef);
+  public data: { showCancel?: boolean } = inject<{ showCancel?: boolean }>(MAT_BOTTOM_SHEET_DATA);
+  showCancel = !!(this.data && this.data.showCancel);
 
   clickAction(action: string) {
     this._bottomSheetRef.dismiss(action);

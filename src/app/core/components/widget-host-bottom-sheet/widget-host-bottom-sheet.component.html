@@ -7,4 +7,10 @@
     <mat-icon matListItemIcon>delete_forever</mat-icon>
     <span>Delete</span>
   </button>
+  @if (showCancel) {
+    <button mat-list-item (click)="clickAction('cancel')">
+      <mat-icon matListItemIcon>close</mat-icon>
+      <span>Close</span>
+    </button>
+  }
 </mat-action-list>

@@ -24,16 +24,6 @@ import { AppNetworkInitService } from './app/core/services/app-initNetwork.servi
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
-// Hammer.js removed: using custom Pointer Events directive (GestureDirective)
-
-/**
- * Injectable class that override Hammerjs default gesture configuration.
- *
- * @export
- * @class kipHammerConfig
- * @extends {HammerGestureConfig}
- */
-// Removed kipHammerConfig (HammerGestureConfig) – not needed.
 
 if (environment.production) {
   enableProdMode();

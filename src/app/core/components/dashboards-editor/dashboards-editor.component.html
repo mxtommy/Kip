@@ -5,7 +5,7 @@
       cdkDrag
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
-      (press)="onPress(index)"
+      (press)="onPress(index, $event)"
       (doubletap)="editDashboard(index)">
       <span style="display: block; width: 100%;">
         <div class="item-index">{{index + 1}}</div>
