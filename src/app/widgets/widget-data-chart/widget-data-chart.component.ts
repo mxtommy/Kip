@@ -124,6 +124,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       this.setupStreamData();
     } else {
       // Original dataset logic
+      console.log(`[Chart Widget] Using dataset UUID: ${this.widgetProperties.config.datasetUUID}`);
       this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
       this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
 
