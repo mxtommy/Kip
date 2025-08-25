@@ -24,7 +24,8 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  public openWidgetOptions(): void {
+  public openWidgetOptions(e: Event): void {
+    e.stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
       // Prevent opening Options Dialogue if the widget has no config property
       if (!this.config()) return;
@@ -41,7 +42,8 @@ export class WidgetHostComponent {
     }
   }
 
-  public openBottomSheet(): void {
+  public openBottomSheet(e: Event): void {
+    e.stopPropagation()
     if (!this._dashboard.isDashboardStatic()) {
       const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent);
       sheetRef.afterDismissed().subscribe((action) => {

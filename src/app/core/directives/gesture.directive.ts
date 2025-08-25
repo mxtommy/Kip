@@ -13,13 +13,25 @@ import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from
   selector: '[kipGestures]'
 })
 export class GestureDirective {
+  // Static counter for instance IDs (debugging)
+  private static _instanceCounter = 0;
+  private readonly _instanceId: number;
   // Config inputs (can be overridden via property binding)
+  // Default values for touch; will be dynamically adjusted per pointer type
   swipeMinDistance = input(30);      // px
   swipeMaxDuration = input(600);     // ms
   longPressMs = input(500);          // ms (matches prior Hammer config)
   doubleTapInterval = input(300);    // ms
   tapSlop = input(20);               // px radius for tap/double tap
   pressMoveSlop = input(10);         // px allowed before cancelling press
+
+  // Dynamically adjusted gesture thresholds (set on pointerdown)
+  private _swipeMinDistance = 30;
+  private _swipeMaxDuration = 600;
+  private _longPressMs = 500;
+  private _doubleTapInterval = 300;
+  private _tapSlop = 20;
+  private _pressMoveSlop = 10;
 
   // Outputs (signal-based)
   swipeleft = output<Event>();
@@ -58,6 +70,8 @@ export class GestureDirective {
 
 
   constructor() {
+    this._instanceId = ++GestureDirective._instanceCounter;
+    this.debug('GestureDirective instance created', { instanceId: this._instanceId });
     this.zone.runOutsideAngular(() => {
       const el = this.host.nativeElement;
       // Disable native touch panning so vertical swipes register as pointer events (iOS Safari)
@@ -103,22 +117,58 @@ export class GestureDirective {
 
   private debug(...args: unknown[]) {
     if ((this.constructor as typeof GestureDirective).DEBUG) {
-      console.debug('[GestureDirective]', ...args);
+      console.debug(`[GestureDirective][#${this._instanceId}]`, ...args);
     }
   }
 
   private onPointerDown = (ev: PointerEvent) => {
-    this.debug('pointerdown', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId, pointerType: ev.pointerType });
+    this.debug('pointerdown', {
+      x: ev.clientX,
+      y: ev.clientY,
+      pointerId: ev.pointerId,
+      pointerType: ev.pointerType,
+      sourceElement: ev.target instanceof Element ? ev.target.outerHTML : String(ev.target)
+    });
     if (this.pointerId !== null) return; // single pointer only
     this.pointerId = ev.pointerId;
     this.tracking = true;
     this.pressFired = false;
     this.currentPointerType = ev.pointerType || null;
+
+    // Dynamically adjust gesture thresholds based on pointer type
+    switch (ev.pointerType) {
+      case 'touch':
+        this._swipeMinDistance = this.swipeMinDistance(); // 30px
+        this._swipeMaxDuration = this.swipeMaxDuration(); // 600ms
+        this._longPressMs = this.longPressMs();           // 500ms
+        this._doubleTapInterval = this.doubleTapInterval(); // 300ms
+        this._tapSlop = this.tapSlop();                   // 20px
+        this._pressMoveSlop = this.pressMoveSlop();       // 10px
+        break;
+      case 'pen':
+        this._swipeMinDistance = 20;
+        this._swipeMaxDuration = 500;
+        this._longPressMs = 400;
+        this._doubleTapInterval = 250;
+        this._tapSlop = 10;
+        this._pressMoveSlop = 8;
+        break;
+      case 'mouse':
+      default:
+        this._swipeMinDistance = 15;
+        this._swipeMaxDuration = 400;
+        this._longPressMs = 350;
+        this._doubleTapInterval = 250;
+        this._tapSlop = 8;
+        this._pressMoveSlop = 6;
+        break;
+    }
+
     // Double tap logic
     const now = performance.now();
     const dtFromLastUp = now - this.lastTapUpTime;
     const distFromLastUp = Math.hypot(ev.clientX - this.lastTapUpX, ev.clientY - this.lastTapUpY);
-    this.potentialDoubleTap = dtFromLastUp <= this.doubleTapInterval() && distFromLastUp <= this.tapSlop();
+    this.potentialDoubleTap = dtFromLastUp <= this._doubleTapInterval && distFromLastUp <= this._tapSlop;
     this.startX = ev.clientX;
     this.startY = ev.clientY;
     this.startTime = performance.now();
@@ -139,19 +189,19 @@ export class GestureDirective {
         }
         const dx = ev.clientX - this.startX;
         const dy = ev.clientY - this.startY;
-        if (Math.abs(dx) <= this.pressMoveSlop() && Math.abs(dy) <= this.pressMoveSlop()) {
+        if (Math.abs(dx) <= this._pressMoveSlop && Math.abs(dy) <= this._pressMoveSlop) {
           this.debug('longpress recognized', { x: this.startX, y: this.startY });
           this.pressFired = true;
           const evt = new CustomEvent('press', { detail: { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } } });
           this.zone.run(() => this.press.emit(evt));
         }
         this.removeLongpressCancelListeners();
-      }, this.longPressMs());
+      }, this._longPressMs);
     }
   };
 
   private onPointerMove = (ev: PointerEvent) => {
-    this.debug('pointermove', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
+    //this.debug('pointermove', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
     if (!this.tracking || ev.pointerId !== this.pointerId) return;
     if (this.pressFired) return; // Suppress drag after longpress
     // Cancel longpress on the very first pointermove event, regardless of movement
@@ -181,19 +231,33 @@ export class GestureDirective {
 
     if (!this.pressFired) {
       // Swipe detection
-      if (duration <= this.swipeMaxDuration()) {
-        if (absDx >= this.swipeMinDistance() && absDx >= absDy) {
-          this.zone.run(() => (dx > 0 ? this.swiperight.emit(new CustomEvent('swiperight', { detail: { dx, dy, duration } })) : this.swipeleft.emit(new CustomEvent('swipeleft', { detail: { dx, dy, duration } }))));
-        } else if (absDy >= this.swipeMinDistance() && absDy > absDx) {
-          this.zone.run(() => (dy > 0 ? this.swipedown.emit(new CustomEvent('swipedown', { detail: { dx, dy, duration } })) : this.swipeup.emit(new CustomEvent('swipeup', { detail: { dx, dy, duration } }))));
+      if (duration <= this._swipeMaxDuration) {
+        if (absDx >= this._swipeMinDistance && absDx >= absDy) {
+          this.debug('swipe detected', { direction: dx > 0 ? 'right' : 'left', dx, dy, duration });
+          this.zone.run(() => {
+            if (dx > 0) {
+              this.swiperight.emit(new CustomEvent('swiperight', { detail: { dx, dy, duration } }));
+            } else {
+              this.swipeleft.emit(new CustomEvent('swipeleft', { detail: { dx, dy, duration } }));
+            }
+          });
+        } else if (absDy >= this._swipeMinDistance && absDy > absDx) {
+          this.debug('swipe detected', { direction: dy > 0 ? 'down' : 'up', dx, dy, duration });
+          this.zone.run(() => {
+            if (dy > 0) {
+              this.swipedown.emit(new CustomEvent('swipedown', { detail: { dx, dy, duration } }));
+            } else {
+              this.swipeup.emit(new CustomEvent('swipeup', { detail: { dx, dy, duration } }));
+            }
+          });
         }
       }
       // Double tap detection
-      if (this.currentPointerType !== 'mouse' && absDx <= this.tapSlop() && absDy <= this.tapSlop() && duration < this.longPressMs()) {
+      if (this.currentPointerType !== 'mouse' && absDx <= this._tapSlop && absDy <= this._tapSlop && duration < this._longPressMs) {
         const now = endTime;
         const dt = now - this.lastTapTime;
         const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
-        if (dt <= this.doubleTapInterval() && dist <= this.tapSlop()) {
+        if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
           this.zone.run(() => this.doubletap.emit(new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt } })));
           this.lastTapTime = 0;
           this.potentialDoubleTap = false; // completed
@@ -206,7 +270,7 @@ export class GestureDirective {
     }
 
     // If it was a tap (not long press) record data for next pointerdown's potentialDoubleTap evaluation
-    if (!this.pressFired && absDx <= this.tapSlop() && absDy <= this.tapSlop() && duration < this.longPressMs()) {
+    if (!this.pressFired && absDx <= this._tapSlop && absDy <= this._tapSlop && duration < this._longPressMs) {
       this.lastTapUpTime = endTime;
       this.lastTapUpX = ev.clientX;
       this.lastTapUpY = ev.clientY;
@@ -219,7 +283,18 @@ export class GestureDirective {
   };
 
   private onPointerCancel = (ev: PointerEvent) => {
-    this.debug('pointercancel', { pointerId: ev.pointerId });
+    // Diagnostic logging for pointercancel
+    const el = this.host.nativeElement;
+    this.debug('pointercancel', {
+      pointerId: ev.pointerId,
+      pointerType: ev.pointerType,
+      event: ev,
+      documentActiveElement: document.activeElement,
+      elementIsConnected: el.isConnected,
+      elementVisibility: el.offsetParent !== null,
+      hasPointerCapture: typeof el.hasPointerCapture === 'function' ? el.hasPointerCapture(ev.pointerId) : undefined,
+      documentHidden: document.hidden
+    });
     if (ev.pointerId === this.pointerId) {
       if (this.longPressTimer) {
         this.debug('longpress cancelled by pointercancel');
