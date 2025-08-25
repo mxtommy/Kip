@@ -399,7 +399,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         data: [],
         order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
         parsing: false,
-        tension: 0,
+        tension: 0.2,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
