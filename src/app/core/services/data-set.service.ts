@@ -225,7 +225,6 @@ export class DatasetService {
     // Fetch historical data from REST feed to populate the dataset
     this.fetchHistoryData(uuid).subscribe(success => {
       if (success) {
-        console.log(`[Dataset Service] Successfully loaded historical data for ${configuration.path}`);
       } else {
         console.warn(`[Dataset Service] Failed to load historical data for ${configuration.path}, continuing with real-time data only`);
       }
@@ -619,8 +618,6 @@ export class DatasetService {
     // Normalize path to remove context prefixes
     const cleanPath = this.normalizePathKey(config.path);
     
-    console.log(`[Dataset Service] Dataset ${uuid}: Original path: ${config.path}, Clean path: ${cleanPath}`);
-    
     const params = new URLSearchParams({
       context: 'vessels.self',
       from: startTime.toISOString(),
@@ -629,8 +626,6 @@ export class DatasetService {
     });
 
     const url = `${baseUrl}/values?${params.toString()}`;
-    
-    console.log(`[Dataset Service] Fetching history data from: ${url}`);
 
     return this.http.get<IHistoryFeedResponse>(url).pipe(
       catchError(error => {
@@ -639,16 +634,13 @@ export class DatasetService {
       })
     ).pipe(
       switchMap(response => {
-        console.log(`[Dataset Service] Response received for ${config.path}:`, response);
-        console.log(`[Dataset Service] First 3 data points for ${config.path}:`, response.data.slice(0, 3));
-        console.log(`[Dataset Service] Last 3 data points for ${config.path}:`, response.data.slice(-3));
+        console.log(`[Dataset Service] Response received:`, response);
         
         if (!response || !response.data || response.data.length === 0) {
           console.warn(`[Dataset Service] No history data received for ${uuid}`, response);
           return of(false);
         }
 
-        console.log(`[Dataset Service] Processing ${response.data.length} history points for ${uuid}`);
 
         // Process each data point and add to historical data
         response.data.forEach((row, index) => {
@@ -677,7 +669,6 @@ export class DatasetService {
           }
         });
 
-        console.log(`[Dataset Service] Successfully populated ${dataSource.historicalData.length} historical points for ${uuid} (path: ${config.path})`);
         return of(true);
       })
     );
