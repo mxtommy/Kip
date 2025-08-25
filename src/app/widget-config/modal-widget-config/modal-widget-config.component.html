@@ -29,34 +29,6 @@
             [verticalChart]="verticalChartToControl"
             [inverseYAxis]="inverseYAxisToControl"
             [color]="colorToControl" />
-        } @else if (widgetConfig?.historyApiUrl !== undefined) {
-          <config-history-chart-options
-            class="tab-content"
-            [displayName]="displayNameToControl"
-            [historyApiUrl]="historyApiUrlToControl"
-            [historyPaths]="historyPathsToControl"
-            [aggregationMethods]="aggregationMethodsToControl"
-            [timeMode]="timeModeToControl"
-            [startTime]="startTimeToControl"
-            [endTime]="endTimeToControl"
-            [duration]="durationToControl"
-            [durationUnit]="durationUnitToControl"
-            [refreshEnabled]="refreshEnabledToControl"
-            [refreshInterval]="refreshIntervalToControl"
-            [resolution]="resolutionToControl"
-            [useUTC]="useUTCToControl"
-            [showTimeScale]="showTimeScaleToControl"
-            [showYScale]="showYScaleToControl"
-            [startScaleAtZero]="startScaleAtZeroToControl"
-            [yScaleSuggestedMin]="yScaleSuggestedMinToControl"
-            [yScaleSuggestedMax]="yScaleSuggestedMaxToControl"
-            [enableMinMaxScaleLimit]="enableMinMaxScaleLimitToControl"
-            [yScaleMin]="yScaleMinToControl"
-            [yScaleMax]="yScaleMaxToControl"
-            [inverseYAxis]="inverseYAxisToControl"
-            [verticalChart]="verticalChartToControl"
-            [numDecimal]="numDecimalToControl"
-            [color]="colorToControl" />
         } @else if (widgetConfig?.autopilot) {
           <select-autopilot formGroupName="autopilot" class="tab-content" />
         } @else {

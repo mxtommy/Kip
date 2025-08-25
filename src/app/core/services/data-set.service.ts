@@ -619,6 +619,8 @@ export class DatasetService {
     // Normalize path to remove context prefixes
     const cleanPath = this.normalizePathKey(config.path);
     
+    console.log(`[Dataset Service] Dataset ${uuid}: Original path: ${config.path}, Clean path: ${cleanPath}`);
+    
     const params = new URLSearchParams({
       context: 'vessels.self',
       from: startTime.toISOString(),
@@ -637,7 +639,9 @@ export class DatasetService {
       })
     ).pipe(
       switchMap(response => {
-        console.log(`[Dataset Service] Response received:`, response);
+        console.log(`[Dataset Service] Response received for ${config.path}:`, response);
+        console.log(`[Dataset Service] First 3 data points for ${config.path}:`, response.data.slice(0, 3));
+        console.log(`[Dataset Service] Last 3 data points for ${config.path}:`, response.data.slice(-3));
         
         if (!response || !response.data || response.data.length === 0) {
           console.warn(`[Dataset Service] No history data received for ${uuid}`, response);
