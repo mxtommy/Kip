@@ -43,7 +43,6 @@ import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widg
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
-import { WidgetHistoryChartComponent } from '../../../widgets/widget-history-chart/widget-history-chart.component';
 
 @Component({
   selector: 'dashboard',
@@ -101,8 +100,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       WidgetLabelComponent,
       WidgetSliderComponent,
       WidgetWindTrendsChartComponent,
-      WidgetHorizonComponent,
-      WidgetHistoryChartComponent
+      WidgetHorizonComponent
     ]);
   }
 

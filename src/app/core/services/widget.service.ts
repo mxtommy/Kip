@@ -379,19 +379,6 @@ export class WidgetService {
       componentClassName: 'WidgetWindTrendsChartComponent'
     },
     {
-      name: 'History Chart',
-      description: 'A flexible historical data charting widget that leverages the SignalK Parquet history API. Supports all aggregation types, flexible time boundaries, and comprehensive configuration options.',
-      icon: 'datachartWidget',
-      minWidth: 2,
-      minHeight: 2,
-      defaultWidth: 4,
-      defaultHeight: 3,
-      category: 'Component',
-      requiredPlugins: [],
-      selector: 'widget-history-chart',
-      componentClassName: 'WidgetHistoryChartComponent'
-    },
-    {
       name: 'Countdown Timer',
       description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
       icon: 'racetimerWidget',

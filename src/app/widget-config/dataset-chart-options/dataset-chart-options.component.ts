@@ -6,7 +6,6 @@ import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
-import { StreamChartBridgeService, StreamInfo } from '../../core/services/stream-chart-bridge.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
@@ -18,7 +17,6 @@ import { IUnitGroup } from '../../core/services/units.service';
 })
 export class DatasetChartOptionsComponent implements OnInit {
   private datasetService = inject(DatasetService);
-  private streamBridge = inject(StreamChartBridgeService);
   private units = inject(UnitsService);
 
   readonly datasetUUID = input.required<UntypedFormControl>();
@@ -28,7 +26,6 @@ export class DatasetChartOptionsComponent implements OnInit {
   readonly streamAutoStart = input.required<UntypedFormControl>();
 
   public availableDataSets: IDatasetServiceDatasetConfig[] = [];
-  public availableStreams: StreamInfo[] = [];
   public unitList: {default?: string, conversions?: IUnitGroup[] } = {};
 
   ngOnInit(): void {
@@ -38,10 +35,6 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.setPathUnits(datasetUUID.value);
     }
 
-    // Load available streams
-    this.streamBridge.getAvailableStreams().subscribe(streams => {
-      this.availableStreams = streams;
-    });
   }
 
   private setPathUnits(uuid: string): boolean {
@@ -80,27 +73,6 @@ export class DatasetChartOptionsComponent implements OnInit {
     this.selectedStreamId().updateValueAndValidity();
   }
 
-  public streamChanged(e: MatSelectChange): void {
-    this.selectedStreamId().setValue(e.value);
-    
-    // Find the selected stream and set units based on its path
-    const selectedStream = this.availableStreams.find(stream => stream.id === e.value);
-    if (selectedStream && selectedStream.path) {
-      this.setStreamPathUnits(selectedStream.path);
-    }
-  }
-
-  private setStreamPathUnits(path: string): boolean {
-    if (path) {
-      this.unitList = this.units.getConversionsForPath(path);
-      this.convertUnitTo()?.enable();
-      return true;
-    } else {
-      this.unitList = this.units.getConversionsForPath('');
-      this.convertUnitTo()?.disable();
-      return false;
-    }
-  }
 
   public isDatasetMode(): boolean {
     return this.dataSource().value === 'dataset';
