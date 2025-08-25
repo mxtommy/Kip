@@ -12,7 +12,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { BooleanMultiControlOptionsComponent, IAddNewPathObject } from '../boolean-multicontrol-options/boolean-multicontrol-options.component';
 import { DisplayChartOptionsComponent } from '../display-chart-options/display-chart-options.component';
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
-import { HistoryChartOptionsComponent } from '../history-chart-options/history-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { AppService } from '../../core/services/app-service';
 import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
@@ -27,7 +26,7 @@ import { MatTabsModule } from '@angular/material/tabs';
     selector: 'modal-widget-config',
     templateUrl: './modal-widget-config.component.html',
     styleUrls: ['./modal-widget-config.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, HistoryChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent]
+    imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   // Property name constants to avoid magic strings

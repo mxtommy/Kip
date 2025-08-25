@@ -1,62 +1,24 @@
 <div class="display-content tab-content">
   <div class="widget-options-grid">
 
-    <!-- Data Source Selection -->
-    <div class="options-grid-span2">
-      <label class="options-label">Data Source</label>
-      <mat-radio-group 
-        [formControl]="dataSource()" 
-        (change)="dataSourceChanged($event.value)"
-        class="radio-group-horizontal">
-        <mat-radio-button value="dataset">Dataset</mat-radio-button>
-        <mat-radio-button value="stream">Stream</mat-radio-button>
-      </mat-radio-group>
-    </div>
 
-    <!-- Dataset Selection (shown when dataset mode is selected) -->
-    @if (isDatasetMode()) {
-      <mat-form-field class="options-grid-span2">
-        <mat-label>Dataset</mat-label>
-        <mat-select
-          placeholder="Select dataset..."
-          [formControl]="datasetUUID()"
-          name="datasetUUID"
-          (selectionChange)="datasetChanged($event)"
-          required>
-          @for (ds of availableDataSets; track ds.uuid) {
-            <mat-option [value]="ds.uuid">
-              {{ds.label}}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
+    <!-- Dataset Selection -->
+    <mat-form-field class="options-grid-span2">
+      <mat-label>Dataset</mat-label>
+      <mat-select
+        placeholder="Select dataset..."
+        [formControl]="datasetUUID()"
+        name="datasetUUID"
+        (selectionChange)="datasetChanged($event)"
+        required>
+        @for (ds of availableDataSets; track ds.uuid) {
+          <mat-option [value]="ds.uuid">
+            {{ds.label}}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
-    <!-- Stream Selection (shown when stream mode is selected) -->
-    @if (isStreamMode()) {
-      <mat-form-field class="options-grid-span2">
-        <mat-label>Stream</mat-label>
-        <mat-select
-          placeholder="Select stream..."
-          [formControl]="selectedStreamId()"
-          name="selectedStreamId"
-          (selectionChange)="streamChanged($event)"
-          required>
-          @for (stream of availableStreams; track stream.id) {
-            <mat-option [value]="stream.id">
-              {{stream.name}} ({{stream.path}}) - {{stream.status}}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <!-- Stream Auto-Start Option -->
-      <div class="options-grid-span2">
-        <mat-checkbox [formControl]="streamAutoStart()">
-          Auto-start stream when widget loads
-        </mat-checkbox>
-      </div>
-    }
 
     <!-- Display Format (shown for both modes) -->
     <mat-form-field class="options-grid-span2">
