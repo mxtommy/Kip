@@ -24,6 +24,8 @@ import { AppNetworkInitService } from './app/core/services/app-initNetwork.servi
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { AppOverlayContainer } from './app/core/utils/app-overlay-container';
 
 if (environment.production) {
   enableProdMode();
@@ -82,6 +84,12 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
     provideAnimations(),
+    // Ensure CDK Overlay container is created inside the application root so
+    // overlays share the same stacking context as the app elements (sidenavs, etc.)
+    {
+      provide: OverlayContainer,
+      useClass: AppOverlayContainer,
+    },
     /**
      * Bootstrap function that starts network, authentication and storage service
      * and gets the configuration from Signal K before app.component is started.
