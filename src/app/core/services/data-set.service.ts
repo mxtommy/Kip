@@ -22,6 +22,7 @@ export interface IDatasetServiceDatapoint {
 }
 
 export type TimeScaleFormat = "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
+export type DataSourceType = "live" | "history" | "combo";
 
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
@@ -32,6 +33,7 @@ export interface IDatasetServiceDatasetConfig {
   period: number;           // Number of datapoints to capture.
   label:  string;           // label of the historicalData
   editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
+  dataSourceType?: DataSourceType; // Type of data source: live, history, or combo
 };
 
 export interface IDatasetServiceDataSourceInfo {
@@ -178,8 +180,8 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
-   * Starts the recording process of a Data Source. Branches between live data and history data
-   * based on dataset configuration.
+   * Starts the recording process of a Data Source. Branches between live data, history data,
+   * or combo based on dataset configuration.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
@@ -193,13 +195,45 @@ export class DatasetService implements OnDestroy {
       return;
     }
 
+    // Common code: setup configuration and registry
     const newDataSourceConfig: IDatasetServiceDataSource = this.createDataSourceConfiguration(configuration);
     this.setupServiceSubjectRegistry(newDataSourceConfig.uuid, newDataSourceConfig.maxDataPoints);
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
-    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
+    // Default to combo if no dataSourceType specified (backward compatibility)
+    const dataSourceType = configuration.dataSourceType || 'combo';
+    
+    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Type: ${dataSourceType}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
-    // Fetch historical data from HistoryService to populate the dataset
+    // Branch based on dataset type
+    switch (dataSourceType) {
+      case 'history':
+        // History-only: good for analysis of past trends
+        this.startHistoryDataStream(dataSource, configuration);
+        break;
+        
+      case 'live':
+        // Live-only: good for real-time monitoring
+        this.startLiveDataStream(dataSource, configuration);
+        break;
+        
+      case 'combo':
+        // Best of both: history for context + live for updates
+        this.startComboDataStream(dataSource, configuration);
+        break;
+        
+      default:
+        console.warn(`[Dataset Service] Unknown dataSourceType: ${dataSourceType}, defaulting to combo`);
+        this.startComboDataStream(dataSource, configuration);
+        break;
+    }
+  }
+
+  /**
+   * Starts combo data stream (history + live)
+   */
+  private startComboDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
+    // Fetch historical data first to populate the dataset
     this.startHistoryDataStream(dataSource, configuration);
 
     // Start live data stream for real-time updates
@@ -330,10 +364,11 @@ export class DatasetService implements OnDestroy {
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
    * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
+   * @param {DataSourceType} [dataSourceType] Type of data source: 'live', 'history', or 'combo'. Defaults to 'combo'.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string ): string | null {
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string, dataSourceType: DataSourceType = 'combo' ): string | null {
     if (!path || !source || !timeScaleFormat || !period || !label) return null;
     const uuid = forced_id || UUID.create();
 
@@ -345,7 +380,8 @@ export class DatasetService implements OnDestroy {
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
-      editable: editable
+      editable: editable,
+      dataSourceType: dataSourceType
     };
 
     console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
