@@ -79,14 +79,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-  // Sequencing: only open overlay when notifications sidenav is closed.
-  // Also ensure overlay is closed if the sidenav opens.
-  // Use effects to react to relevant signals in an injection context.
-  // Effect: open/close overlay based on dashboard static state and notificationsInfo,
-  // but only when the notifications sidenav is closed.
-  // We'll delay opening the overlay until after the sidenav close animation completes
-  // to avoid visual overlap during the closing transition. If the sidenav re-opens
-  // before the delay expires, cancel the scheduled open.
+    // Sequencing: only open overlay when notifications sidenav is closed.
+    // Also ensure overlay is closed if the sidenav opens.
+    // Use effects to react to relevant signals in an injection context.
+    // Effect: open/close overlay based on dashboard static state and notificationsInfo,
+    // but only when the notifications sidenav is closed.
+    // We'll delay opening the overlay until after the sidenav close animation completes
+    // to avoid visual overlap during the closing transition. If the sidenav re-opens
+    // before the delay expires, cancel the scheduled open.
 
     // initialize dashboardVisible from current URL
     try {
@@ -103,8 +103,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     effect(() => {
-  const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
-  const sidenavOpen = this.notificationsSidenavOpened();
+      const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const sidenavOpen = this.notificationsSidenavOpened();
 
       // If sidenav is open, immediately close overlay and cancel any scheduled open
       if (sidenavOpen) {
