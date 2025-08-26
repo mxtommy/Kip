@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
-interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
@@ -10,8 +9,6 @@ import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
-import { NotificationBadgeComponent } from "../notification-badge/notification-badge.component";
-import { NotificationsService } from '../../services/notifications.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
@@ -44,24 +41,24 @@ import { DatasetService } from '../../services/data-set.service';
 import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
 
+interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
+
 @Component({
   selector: 'dashboard',
   standalone: true,
-  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, NotificationBadgeComponent, GestureDirective],
+  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements AfterViewInit, OnDestroy{
+export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly _app = inject(AppService);
   private readonly _dialog = inject(DialogService);
   protected readonly dashboard = inject(DashboardService);
-  private readonly _notifications = inject(NotificationsService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
-  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
@@ -71,7 +68,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     maxRow: 12,
     float: true,
     acceptWidgets: false,
-    resizable: {handles: 'all'},
+    resizable: { handles: 'all' },
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
 
@@ -166,7 +163,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
 
     this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const id = params['id'];
-      let pageIdParam : number | null = null;
+      let pageIdParam: number | null = null;
       if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
         pageIdParam = Number(id);
       }
@@ -233,15 +230,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
       const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
-      const gridCell = this._gridstack().grid.getCellFromPixel({left: inputX, top: inputY});
+      const gridCell = this._gridstack().grid.getCellFromPixel({ left: inputX, top: inputY });
       const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
 
       if (isCellEmpty) {
-        if (this._gridstack().grid.willItFit({x: gridCell.x, y: gridCell.y, w: 2, h: 3})) {
+        if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 2, h: 3 })) {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe( data => {
+          }, true).subscribe(data => {
             if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
             const ID = UUID.create();
             const widget = data as WidgetDescription;
@@ -288,15 +285,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy{
     } as NgGridStackWidget;
 
     const _gridstack = this._gridstack();
-    if(_gridstack.grid.willItFit(newItem)) {
+      if (_gridstack.grid.willItFit(newItem)) {
       _gridstack.grid.addWidget(newItem);
     } else {
       newItem.h = 2;
       newItem.w = 2;
-      if(_gridstack.grid.willItFit(newItem)) {
+      if (_gridstack.grid.willItFit(newItem)) {
         _gridstack.grid.addWidget(newItem);
       } else {
-       this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+        this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
       }
     }
   }

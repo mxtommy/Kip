@@ -1,4 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { SignalKDeltaService } from './core/services/signalk-delta.service';
@@ -9,6 +11,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
+import { NotificationOverlayService } from './core/services/notification-overlay.service';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -18,6 +22,7 @@ import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
 import { DialogService } from './core/services/dialog.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { DatasetService } from './core/services/data-set.service';
 
@@ -25,7 +30,7 @@ import { DatasetService } from './core/services/data-set.service';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
@@ -33,6 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _app = inject(AppService);
   private readonly _dashboard = inject(DashboardService);
+  private readonly _notifications = inject(NotificationsService);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
   public readonly appSettingsService = inject(AppSettingsService);
@@ -40,13 +46,20 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _dataSet = inject(DatasetService); // force init
   private readonly _responsive = inject(BreakpointObserver);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _notificationOverlay = inject(NotificationOverlayService);
+  private readonly _router = inject(Router);
 
   private notificationHowl?: Howl;
   private _upgradeShown = false;
 
   protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
+  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly isDashboardStatic = toSignal(this._dashboard.isDashboardStatic$);
+  protected dashboardVisible = signal<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
+  private scheduledOpen: number | null = null;
+  private readonly OPEN_DELAY_MS = 300; // should match/ exceed sidenav close animation time
 
   // Stable handler refs (prevent leak from rebinding)
   private readonly _swipeLeftHandler = (e: Event | CustomEvent) => this.onSwipeLeft(e);
@@ -63,6 +76,75 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         }, true)
           .pipe(takeUntilDestroyed(this._destroyRef))
           .subscribe();
+      }
+    });
+
+  // Sequencing: only open overlay when notifications sidenav is closed.
+  // Also ensure overlay is closed if the sidenav opens.
+  // Use effects to react to relevant signals in an injection context.
+  // Effect: open/close overlay based on dashboard static state and notificationsInfo,
+  // but only when the notifications sidenav is closed.
+  // We'll delay opening the overlay until after the sidenav close animation completes
+  // to avoid visual overlap during the closing transition. If the sidenav re-opens
+  // before the delay expires, cancel the scheduled open.
+
+    // initialize dashboardVisible from current URL
+    try {
+      this.dashboardVisible.set(this.isUrlDashboard(this._router.url));
+    } catch { /* ignore */ }
+
+    // update dashboardVisible on navigation (auto-unsubscribes via DestroyRef)
+    this._router.events
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed(this._destroyRef))
+      .subscribe((e: NavigationEnd) => {
+        try {
+          this.dashboardVisible.set(this.isUrlDashboard((e as NavigationEnd).urlAfterRedirects || (e as NavigationEnd).url));
+        } catch { /* ignore */ }
+      });
+
+    effect(() => {
+  const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+  const sidenavOpen = this.notificationsSidenavOpened();
+
+      // If sidenav is open, immediately close overlay and cancel any scheduled open
+      if (sidenavOpen) {
+        if (this.scheduledOpen) {
+          clearTimeout(this.scheduledOpen as unknown as number);
+          this.scheduledOpen = null;
+        }
+        try { this._notificationOverlay.close(); } catch { /* ignore */ }
+        return;
+      }
+
+      // Sidenav is closed: if we need to show the badge, schedule an open after delay
+      if (shouldShowBadge) {
+        if (this.scheduledOpen) {
+          // already scheduled
+          return;
+        }
+        this.scheduledOpen = window.setTimeout(() => {
+          this.scheduledOpen = null;
+          try { this._notificationOverlay.open(); } catch { /* ignore */ }
+        }, this.OPEN_DELAY_MS);
+      } else {
+        // Nothing to show: ensure no scheduled open is pending and overlay closed
+        if (this.scheduledOpen) {
+          clearTimeout(this.scheduledOpen as unknown as number);
+          this.scheduledOpen = null;
+        }
+        try { this._notificationOverlay.close(); } catch { /* ignore */ }
+      }
+    });
+
+    // Ensure immediate closure if user programmatically opens the sidenav elsewhere.
+    effect(() => {
+      const sidenavOpen = this.notificationsSidenavOpened();
+      if (sidenavOpen) {
+        try {
+          this._notificationOverlay.close();
+        } catch {
+          // ignore
+        }
       }
     });
 
@@ -93,6 +175,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           this.notificationHowl.play();
         }
       });
+  }
+
+  private isUrlDashboard(url: string | null | undefined): boolean {
+    if (!url) return false;
+    // Normalize trailing slash
+    const path = url.split('?')[0].replace(/\/+$/, '');
+    // Matches /dashboard and /dashboard/<id>
+    return path === '/dashboard' || /^\/dashboard(\/\d+)?$/.test(path) || path === '/';
   }
 
   ngOnInit() {
@@ -191,5 +281,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this._uiEvent.removeHotkeyListener(this._hotkeyHandler);
     this.notificationHowl?.unload();
     this.notificationHowl = undefined;
+    // clear any pending scheduled open to avoid orphaned timer running after destroy
+    if (this.scheduledOpen) {
+      clearTimeout(this.scheduledOpen as unknown as number);
+      this.scheduledOpen = null;
+    }
   }
 }

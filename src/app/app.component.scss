@@ -5,8 +5,10 @@
 
 mat-sidenav.sidenav-notifications {
   width: 230px;
+  z-index: 1200; // ensure sidenav sits above the notification overlay panel
 }
 
 mat-sidenav.sidenav-actions {
   width: 135px;
+  z-index: 1200; // ensure actions sidenav stacks above overlay
 }

@@ -231,6 +231,8 @@ body {
   filter: brightness(var(--kip-nightModeBrightness)) var(--kip-nightModeFilters);
   backdrop-filter: brightness(var(--kip-nightModeBrightness));
   transition: filter 0.3s ease;
+  position: relative; /* ensure z-index takes effect on this stacking context */
+  z-index: 1300;      /* sits above overlay (1100) so sidenav will cover the FAB */
 }
 
 .dialogBackdrop {
@@ -336,6 +338,19 @@ body {
 #loader .dot:nth-child(7n+1)::before {
   animation: 0.8s linear 0.1s normal none infinite running load;
   background: #e5ab13 none repeat scroll 0 0;
+}
+
+.notification-overlay-panel {
+  position: fixed;              /* ensure it lives in the viewport, not in ancestor stacking contexts */
+  bottom: 20px;
+  left: 20px;
+  z-index: 1100 !important;
+  pointer-events: auto;
+}
+
+/* More specific rule to avoid being overridden by library rules */
+.cdk-overlay-container .cdk-overlay-pane.notification-overlay-panel {
+  z-index: 1100 !important;
 }
 
 #loader .dot:nth-child(7n+2) {
