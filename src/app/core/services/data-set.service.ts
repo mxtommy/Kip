@@ -173,7 +173,6 @@ export class DatasetService implements OnDestroy {
    * @memberof DataSetService
    */
   private startAll(): void {
-    console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (const config of this._svcDatasetConfigs) {
       this.start(config.uuid);
     }
@@ -201,10 +200,8 @@ export class DatasetService implements OnDestroy {
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
     // Default to combo if no dataSourceType specified (backward compatibility)
-    const dataSourceType = configuration.dataSourceType || 'combo';
+    const dataSourceType = configuration.dataSourceType ?? 'combo';
     
-    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Type: ${dataSourceType}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
-
     // Branch based on dataset type
     switch (dataSourceType) {
       case 'history':
@@ -234,10 +231,18 @@ export class DatasetService implements OnDestroy {
    */
   private startComboDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
     // Fetch historical data first to populate the dataset
-    this.startHistoryDataStream(dataSource, configuration);
+    try {
+      this.startHistoryDataStream(dataSource, configuration);
+    } catch (error) {
+      // Error starting history stream - continue with live data
+    }
 
     // Start live data stream for real-time updates
-    this.startLiveDataStream(dataSource, configuration);
+    try {
+      this.startLiveDataStream(dataSource, configuration);
+    } catch (error) {
+      // Error starting live stream
+    }
   }
 
   /**
@@ -278,8 +283,6 @@ export class DatasetService implements OnDestroy {
     // Fetch historical data and populate the dataset
     this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe(historicalDatapoints => {
       if (historicalDatapoints.length > 0) {
-        console.log(`[Dataset Service] Loaded ${historicalDatapoints.length} historical datapoints for ${configuration.path}`);
-        
         // Process each historical datapoint
         historicalDatapoints.forEach(datapoint => {
           // Add to historical data array for statistics calculation
@@ -299,8 +302,6 @@ export class DatasetService implements OnDestroy {
             subjectEntry.rxjsSubject.next(updatedDatapoint);
           }
         });
-      } else {
-        console.warn(`[Dataset Service] No historical data received for ${configuration.path}`);
       }
     });
   }
@@ -316,7 +317,6 @@ export class DatasetService implements OnDestroy {
    */
   private stop(uuid: string) {
     const dsIndex = this._svcDataSource.findIndex(d => d.uuid == uuid);
-    console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
     this._svcDataSource[dsIndex].pathObserverSubscription.unsubscribe();
     this._svcDataSource.splice(dsIndex, 1);
   }
@@ -384,8 +384,6 @@ export class DatasetService implements OnDestroy {
       dataSourceType: dataSourceType
     };
 
-    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
-
     this._svcDatasetConfigs.push(newSvcDataset);
 
     this.start(uuid);
@@ -412,12 +410,10 @@ export class DatasetService implements OnDestroy {
       return false; // Dataset not found
     }
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
-      console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
       return false; // Avoid unnecessary stop/start
     }
 
     this.stop(datasetConfig.uuid);
-    console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
     datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
@@ -443,7 +439,6 @@ export class DatasetService implements OnDestroy {
    if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
 
     this.stop(uuid);
-    console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     // stop Subject Observers
