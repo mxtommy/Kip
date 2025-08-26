@@ -1,10 +1,8 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
+import { HistoryService } from './history.service';
 import { UUID } from'../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
 
@@ -55,19 +53,6 @@ interface IDatasetServiceObserverRegistration {
 // How to interpret angular (radian) data
 type AngleDomain = 'scalar' | 'direction' | 'signed';
 
-// Interface for REST history feed response
-interface IHistoryFeedResponse {
-  context: string;
-  range: {
-    from: string;
-    to: string;
-  };
-  values: {
-    path: string;
-    method: string;
-  }[];
-  data: [string, ...unknown[]][];
-}
 
 @Injectable({
   providedIn: 'root'
@@ -75,7 +60,7 @@ interface IHistoryFeedResponse {
 export class DatasetService implements OnDestroy {
   private appSettings = inject(AppSettingsService);
   private data = inject(DataService);
-  private http = inject(HttpClient);
+  private history = inject(HistoryService);
 
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
@@ -193,16 +178,8 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
-   * Starts the recording process of a Data Source. It firsts reads the historicalData configuration,
-   * then starts building the historicalData values, and pushes them to the Subject.
-   *
-   * This method handles the process that takes SK data and feeds the Subject. Clients/Observers,
-   * (widgets mostly), will use the getDatasetObservable() method to receive data from the Subject.
-   *
-   * Concept: SK_path_values -> datasource -> (ReplaySubject) <- Widget observers
-   *
-   * Once a datasource is started, subscribers will receive historical data (equal to the
-   * length of the dataset)pushed to the Subject, as as future data.
+   * Starts the recording process of a Data Source. Branches between live data and history data
+   * based on dataset configuration.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
@@ -222,24 +199,27 @@ export class DatasetService implements OnDestroy {
 
     console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
 
-    // Fetch historical data from REST feed to populate the dataset
-    this.fetchHistoryData(uuid).subscribe(success => {
-      if (success) {
-      } else {
-        console.warn(`[Dataset Service] Failed to load historical data for ${configuration.path}, continuing with real-time data only`);
-      }
-    });
+    // Fetch historical data from HistoryService to populate the dataset
+    this.startHistoryDataStream(dataSource, configuration);
 
+    // Start live data stream for real-time updates
+    this.startLiveDataStream(dataSource, configuration);
+  }
+
+  /**
+   * Starts live data stream from Signal K
+   */
+  private startLiveDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
     function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-  // Decide how to interpret the dataset values (scalar vs radian domains)
-  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    // Decide how to interpret the dataset values (scalar vs radian domains)
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
-  // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+    // Subscribe to path data, update historicalData/stats and sends new values to Observers
+    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(dataSource.sampleTime)).subscribe(
       (newValue: IPathUpdate) => {
         if (newValue.data.value === null) return; // we don't need null values
 
@@ -250,11 +230,45 @@ export class DatasetService implements OnDestroy {
         dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
-  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
     );
+  }
+
+  /**
+   * Starts history data stream using the HistoryService
+   */
+  private startHistoryDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
+    // Fetch historical data and populate the dataset
+    this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe(historicalDatapoints => {
+      if (historicalDatapoints.length > 0) {
+        console.log(`[Dataset Service] Loaded ${historicalDatapoints.length} historical datapoints for ${configuration.path}`);
+        
+        // Process each historical datapoint
+        historicalDatapoints.forEach(datapoint => {
+          // Add to historical data array for statistics calculation
+          if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
+            dataSource.historicalData.shift();
+          }
+          dataSource.historicalData.push(datapoint.data.value);
+
+          // Update statistics and send to subscribers
+          const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+          const updatedDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+          // Preserve the original timestamp from history
+          updatedDatapoint.timestamp = datapoint.timestamp;
+          
+          const subjectEntry = this._svcSubjectObserverRegistry.find(entry => entry.datasetUuid === dataSource.uuid);
+          if (subjectEntry) {
+            subjectEntry.rxjsSubject.next(updatedDatapoint);
+          }
+        });
+      } else {
+        console.warn(`[Dataset Service] No historical data received for ${configuration.path}`);
+      }
+    });
   }
 
   /**
@@ -575,10 +589,8 @@ export class DatasetService implements OnDestroy {
   private resolveAngleDomain(path: string, unit: string): AngleDomain {
     if (unit !== 'rad') return 'scalar';
     const incoming = this.normalizePathKey(path);
-    for (const candidate of this.signedAnglePaths) {
-      if (incoming === this.normalizePathKey(candidate)) {
-        return 'signed';
-      }
+    if (this.signedAnglePaths.has(incoming)) {
+      return 'signed';
     }
     return 'direction';
   }
@@ -597,81 +609,6 @@ export class DatasetService implements OnDestroy {
     return this.mod(rad + Math.PI, twoPi) - Math.PI; // (-π, π]
   }
 
-  /**
-   * Fetch historical data from REST feed and populate dataset
-   * Based on PR #781 concept, adapted for your REST history feed
-   */
-  public fetchHistoryData(uuid: string, historyApiUrl?: string): Observable<boolean> {
-    const dataSource = this._svcDataSource.find(ds => ds.uuid === uuid);
-    const config = this._svcDatasetConfigs.find(cfg => cfg.uuid === uuid);
-    
-    if (!dataSource || !config) {
-      console.warn(`[Dataset Service] fetchHistoryData: Dataset ${uuid} not found`);
-      return of(false);
-    }
-
-    // Use provided URL or default to localhost:3000
-    const baseUrl = historyApiUrl || `http://localhost:3000/signalk/v1/history`;
-    const endTime = new Date();
-    const startTime = new Date(endTime.getTime() - (30 * 60 * 1000)); // 30 minutes ago
-    
-    // Normalize path to remove context prefixes
-    const cleanPath = this.normalizePathKey(config.path);
-    
-    const params = new URLSearchParams({
-      context: 'vessels.self',
-      from: startTime.toISOString(),
-      to: endTime.toISOString(),
-      paths: `${cleanPath}:max`
-    });
-
-    const url = `${baseUrl}/values?${params.toString()}`;
-
-    return this.http.get<IHistoryFeedResponse>(url).pipe(
-      catchError(error => {
-        console.error(`[Dataset Service] Failed to fetch history data for ${uuid}:`, error);
-        return of(null);
-      })
-    ).pipe(
-      switchMap(response => {
-        console.log(`[Dataset Service] Response received:`, response);
-        
-        if (!response || !response.data || response.data.length === 0) {
-          console.warn(`[Dataset Service] No history data received for ${uuid}`, response);
-          return of(false);
-        }
-
-        // Process each data point and add to historical data
-        response.data.forEach((row, index) => {
-          if (row.length >= 2) {
-            const timestamp = new Date(row[0] as string).getTime();
-            const value = row[1] as number;
-            
-            if (typeof value === 'number' && !isNaN(value)) {
-              // Add to historical data (maintain size limit)
-              if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
-                dataSource.historicalData.shift();
-              }
-              dataSource.historicalData.push(value);
-
-              // Create and push ALL historical datapoints to subscribers so chart can see them
-              const unit = this.data.getPathUnitType(config.path) || 'unitless';
-              const domain = this.resolveAngleDomain(config.path, unit);
-              const datapoint = this.updateDataset(dataSource, unit, domain);
-              datapoint.timestamp = timestamp;
-              
-              const subjectEntry = this._svcSubjectObserverRegistry.find(entry => entry.datasetUuid === uuid);
-              if (subjectEntry) {
-                subjectEntry.rxjsSubject.next(datapoint);
-              }
-            }
-          }
-        });
-
-        return of(true);
-      })
-    );
-  }
 
   /**
    * Convenience: remove only if dataset exists (silently no-op otherwise).
