@@ -230,19 +230,30 @@ export class DatasetService implements OnDestroy {
    * Starts combo data stream (history + live)
    */
   private startComboDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
-    // Fetch historical data first to populate the dataset
-    try {
-      this.startHistoryDataStream(dataSource, configuration);
-    } catch (error) {
-      // Error starting history stream - continue with live data
-    }
-
-    // Start live data stream for real-time updates
-    try {
-      this.startLiveDataStream(dataSource, configuration);
-    } catch (error) {
-      // Error starting live stream
-    }
+    // Fetch historical data first, then start live data to ensure continuity
+    this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe({
+      next: (historicalDatapoints) => {
+        if (historicalDatapoints.length > 0) {
+          this.processHistoricalDatapoints(dataSource, configuration, historicalDatapoints);
+        }
+        
+        // After historical data is processed, start live data stream
+        // This ensures moving averages continue seamlessly from history to live
+        try {
+          this.startLiveDataStream(dataSource, configuration);
+        } catch (error) {
+          // Error starting live stream
+        }
+      },
+      error: (error) => {
+        // No historical data available, start with live data only
+        try {
+          this.startLiveDataStream(dataSource, configuration);
+        } catch (liveError) {
+          // Error starting live stream
+        }
+      }
+    });
   }
 
   /**
@@ -283,27 +294,50 @@ export class DatasetService implements OnDestroy {
     // Fetch historical data and populate the dataset
     this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe(historicalDatapoints => {
       if (historicalDatapoints.length > 0) {
-        // Process each historical datapoint
-        historicalDatapoints.forEach(datapoint => {
-          // Add to historical data array for statistics calculation
-          if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
-            dataSource.historicalData.shift();
-          }
-          dataSource.historicalData.push(datapoint.data.value);
-
-          // Update statistics and send to subscribers
-          const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
-          const updatedDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
-          // Preserve the original timestamp from history
-          updatedDatapoint.timestamp = datapoint.timestamp;
-          
-          const subjectEntry = this._svcSubjectObserverRegistry.find(entry => entry.datasetUuid === dataSource.uuid);
-          if (subjectEntry) {
-            subjectEntry.rxjsSubject.next(updatedDatapoint);
-          }
-        });
+        this.processHistoricalDatapoints(dataSource, configuration, historicalDatapoints);
       }
     });
+  }
+
+  /**
+   * Process historical datapoints with progressive moving averages
+   */
+  private processHistoricalDatapoints(
+    dataSource: IDatasetServiceDataSource, 
+    configuration: IDatasetServiceDatasetConfig, 
+    historicalDatapoints: IDatasetServiceDatapoint[]
+  ): void {
+    // Process historical datapoints progressively to calculate proper moving averages
+    const tempHistoricalData: number[] = [];
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    
+    historicalDatapoints.forEach(datapoint => {
+      // Build up the historical data array progressively
+      if (dataSource.maxDataPoints > 0 && tempHistoricalData.length >= dataSource.maxDataPoints) {
+        tempHistoricalData.shift();
+      }
+      tempHistoricalData.push(datapoint.data.value);
+
+      // Calculate moving averages based on the data available at this point in time
+      const progressiveDatapoint = this.updateDatasetProgressive(
+        tempHistoricalData, 
+        dataSource.smoothingPeriod,
+        configuration.baseUnit, 
+        angleDomain
+      );
+      
+      // Preserve the original timestamp from history and the original value
+      progressiveDatapoint.timestamp = datapoint.timestamp;
+      
+      const subjectEntry = this._svcSubjectObserverRegistry.find(entry => entry.datasetUuid === dataSource.uuid);
+      if (subjectEntry) {
+        subjectEntry.rxjsSubject.next(progressiveDatapoint);
+      }
+    });
+    
+    // Update the main historical data array with the final state
+    // This ensures live data continues with proper moving averages
+    dataSource.historicalData = tempHistoricalData;
   }
 
   /**
@@ -502,6 +536,87 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
+   * Creates a datapoint with progressive moving averages for historical data processing
+   * @private
+   */
+  private updateDatasetProgressive(
+    historicalData: number[], 
+    smoothingPeriod: number,
+    unit: string, 
+    domain: AngleDomain = 'scalar'
+  ): IDatasetServiceDatapoint {
+    let avgCalc: number = null;
+    let smaCalc: number = null;
+    let minCalc: number = null;
+    let maxCalc: number = null;
+
+    if (unit === "rad") {
+      // Circular statistics for angles
+      avgCalc = this.circularMeanRad(historicalData);
+      const window = historicalData.slice(-smoothingPeriod);
+      smaCalc = this.circularMeanRad(window);
+      const { min, max } = this.circularMinMaxRad(historicalData);
+
+      // Normalize outputs to requested domain
+      if (domain === 'direction') {
+        avgCalc = this.normalizeToDirection(avgCalc);
+        smaCalc = this.normalizeToDirection(smaCalc);
+        minCalc = this.normalizeToDirection(min);
+        maxCalc = this.normalizeToDirection(max);
+      } else if (domain === 'signed') {
+        avgCalc = this.normalizeToSigned(avgCalc);
+        smaCalc = this.normalizeToSigned(smaCalc);
+        minCalc = this.normalizeToSigned(min);
+        maxCalc = this.normalizeToSigned(max);
+      } else {
+        // Fallback: treat as scalar (shouldn't happen for unit==='rad')
+        minCalc = min;
+        maxCalc = max;
+      }
+    } else {
+      // Arithmetic statistics for scalars
+      avgCalc = calculateAverage(historicalData);
+      smaCalc = calculateSMA(historicalData, smoothingPeriod);
+      minCalc = Math.min(...historicalData);
+      maxCalc = Math.max(...historicalData);
+    }
+
+    const newDatapoint: IDatasetServiceDatapoint = {
+      timestamp: Date.now(), // Will be overridden with historical timestamp
+      data: {
+        value: unit === 'rad'
+          ? (domain === 'signed'
+              ? this.normalizeToSigned(historicalData[historicalData.length - 1])
+              : this.normalizeToDirection(historicalData[historicalData.length - 1]))
+          : historicalData[historicalData.length - 1],
+        sma: smaCalc,
+        ema: null,
+        doubleEma: null,
+        lastAverage: avgCalc,
+        lastMinimum: minCalc,
+        lastMaximum: maxCalc
+      }
+    };
+
+    return newDatapoint;
+
+    function calculateAverage(arr: number[]): number | null {
+      if (arr.length === 0) return null;
+      const sum = arr.reduce((acc, val) => acc + val, 0);
+      return sum / arr.length;
+    }
+
+    function calculateSMA(values: number[], windowSize: number): number {
+      if (values.length < windowSize) windowSize = values.length;
+      let sum = 0;
+      for (let i = values.length - windowSize; i < values.length; i++) {
+        sum += values[i];
+      }
+      return sum / windowSize;
+    }
+  }
+
+  /**
    * Returns a new historicalData object created from the provided value. The returned
    * object will contain all information: timestamp, value, simple moving average
    * and statistics, etc.
@@ -510,9 +625,6 @@ export class DatasetService implements OnDestroy {
    * part of the historicalData.
    *
    * @private
-   * @param {number} smoothingPeriod The amount of previous historicalData rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (smoothingPeriod - 1)) value the average of the value and x number of previous values
-   * @param {IDatasetServiceDatapoint[]} ds The historicalData object to update
-   * @param {number} value The value to add to the historicalData
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
    * @memberof DatasetService
    */
