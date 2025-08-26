@@ -14,7 +14,7 @@ import { MatRippleModule } from '@angular/material/core';
 @Component({
   selector: 'dashboards-editor',
   standalone: true,
-  imports: [MatBottomSheetModule, MatButtonModule, PageHeaderComponent, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
+  imports: [MatBottomSheetModule, MatButtonModule, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
