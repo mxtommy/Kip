@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export interface Dashboard {
   id: string
   name?: string;
+  icon?: string;
   configuration?: NgGridStackWidget[] | [];
 }
 
@@ -32,7 +33,7 @@ export class DashboardService {
   private _isDashboardStatic = new BehaviorSubject<boolean>(true);
   public isDashboardStatic$ = this._isDashboardStatic.asObservable();
   public readonly isDashboardStatic = toSignal(this.isDashboardStatic$);
-  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: [
+  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', icon: 'dashboard', configuration: [
     {
       "w": 12,
       "h": 12,
@@ -87,13 +88,14 @@ export class DashboardService {
   }
 
   /**
-   * Updates the name of a dashboard at the specified index.
+   * Updates the name and icon of a dashboard at the specified index.
    * @param itemIndex The index of the dashboard to update.
    * @param name The new name for the dashboard.
+   * @param icon The new icon for the dashboard (defaults to "dashboard").
    */
-  public update(itemIndex: number, name: string): void {
+  public update(itemIndex: number, name: string, icon = "dashboard"): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex ? { ...dashboard, name: name } : dashboard));
+      i === itemIndex ? { ...dashboard, name: name, icon: icon } : dashboard));
   }
 
   /**

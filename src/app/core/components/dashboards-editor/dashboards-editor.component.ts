@@ -70,8 +70,8 @@ export class DashboardsEditorComponent {
   }
 
   protected editDashboard(itemIndex: number): void {
-    this._dialog.openNameDialog({
-      title: 'Rename Dashboard',
+    this._dialog.openDashboardPageEditorDialog({
+      title: 'Dashboard Details',
       name: this._dashboard.dashboards()[itemIndex].name,
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'

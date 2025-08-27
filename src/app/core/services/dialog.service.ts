@@ -8,6 +8,7 @@ import { DialogNameComponent } from '../components/dialog-name/dialog-name.compo
 import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
+import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
 
 @Injectable({
   providedIn: 'root'
@@ -53,7 +54,18 @@ export class DialogService {
         data: data,
         minWidth: "20vw",
         minHeight: "20vh",
-        disableClose: true,
+        disableClose: false,
+      }
+    );
+  }
+
+  public openDashboardPageEditorDialog(data: DialogNameData): MatDialogRef<DialogDashboardPageEditorComponent> {
+    return this.dialog.open(DialogDashboardPageEditorComponent,
+      {
+        data: data,
+        minWidth: "20vw",
+        minHeight: "20vh",
+        disableClose: false,
       }
     );
   }
