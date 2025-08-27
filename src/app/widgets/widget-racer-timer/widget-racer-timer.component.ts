@@ -7,7 +7,6 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { MatButtonModule } from '@angular/material/button';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,14 +18,20 @@ import { Router } from '@angular/router';
   selector: 'widget-racer-timer',
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule, FormsModule]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MatButtonModule, MatIconModule, FormsModule]
 })
 export class WidgetRacerTimerComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly signalk = inject(SignalkRequestsService);
   private readonly router = inject(Router);
-  protected dashboard = inject(DashboardService);
-  private timeToSCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('timeToSCanvas');
-  private canvasService = inject(CanvasService);
+  protected readonly dashboard = inject(DashboardService);
+  private readonly canvas = inject(CanvasService);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private titleBitmap: HTMLCanvasElement | null = null;
+  private titleBitmapText: string | null = null;
   private ttsValue: number = null;
   private dtsValue: number = null;
   protected labelColor = signal<string>(undefined);
@@ -39,8 +44,6 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   private isDestroyed = false; // guard against callbacks after destroyed
   protected mode = signal<number>(1);
 
-  protected timeToSContext: CanvasRenderingContext2D;
-  protected timeToSElement: HTMLCanvasElement;
   private readonly destroyRef = inject(DestroyRef);
   protected startAtTime = signal<string>('00:00:00');
   protected startAtTimeEdit = model<string>('');
@@ -100,7 +103,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         untracked(() => {
           this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
           this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
-          this.updateCanvas();
+          this.drawWidget();
         });
       }
     });
@@ -111,20 +114,25 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   }
 
   ngAfterViewInit(): void {
-    this.initCanvases();
-    if (this.isDestroyed) {
-      return;
-    }
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
+        this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
+        this.drawWidget();
+      },
+    });
+    if (this.isDestroyed) return;
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
+    this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
     this.startWidget();
-    this.updateCanvas();
-  }
-
-  private initCanvases() {
-    this.timeToSElement = this.timeToSCanvas().nativeElement;
-    this.canvasService.setHighDPISize(this.timeToSElement, this.timeToSElement.parentElement.getBoundingClientRect());
-    this.timeToSContext = this.timeToSElement.getContext('2d');
-    this.maxValueTextWidth = Math.floor(this.timeToSElement.width * 0.95);
-    this.maxValueTextHeight = Math.floor(this.timeToSElement.height * 0.95);
+    this.drawWidget();
   }
 
   protected beep(frequency = 440, duration = 100) {
@@ -190,7 +198,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       } else if (this.mode() === 1 && this.isStartTimerRunning()) {
         this.mode.set(2);
       }
-      this.updateCanvas();
+      this.drawWidget();
       if (this.startAtTime() !== null && this.startAtTime() !== 'HH:MM:SS' && lastTtsValue !== 0) {
         if (this.ttsValue === 0) {
           this.beep(500, 1000);
@@ -224,7 +232,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         }));
         this.startAtTime.set(this.startAtTimeEdit());
       }
-      this.updateCanvas();
+      this.drawWidget();
     });
 
     this.observeDataStream('dtsPath', newValue => {
@@ -249,19 +257,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.updateCanvas();
-  }
-
-  protected onResized(e: ResizeObserverEntry) {
-    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
-      return;
-    }
-
-    this.initCanvases();
-    if (this.isDestroyed) {
-      return;
-    }
-    this.updateCanvas();
+    this.drawWidget();
   }
 
   ngOnDestroy() {
@@ -271,30 +267,45 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvasService.releaseCanvas(this.timeToSElement, { clear: true, removeFromDom: true });
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
   }
 
-  private updateCanvas(): void {
-    this.drawTimeToStart();
-  }
+  private drawWidget(): void {
+    if (!this.canvasCtx) return;
 
-  private drawTimeToStart(): void {
-    if (this.timeToSContext) {
-      this.canvasService.clearCanvas(this.timeToSContext,
-        this.timeToSElement.width,
-        this.timeToSElement.height);
-      const valueText = this.getValueText();
-      this.canvasService.drawText(
-        this.timeToSContext,
-        valueText,
-        Math.floor(this.timeToSElement.width / 2),
-        Math.floor((this.timeToSElement.height / 2) * 1.3),
-        this.maxValueTextWidth,
-        this.maxValueTextHeight,
-        'bold',
-        this.valueStateColor
+    if (!this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== this.widgetProperties.config.displayName
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(
+        this.widgetProperties.config.displayName,
+        this.labelColor(),
+        'normal',
+        this.cssWidth,
+        this.cssHeight
       );
+      this.titleBitmapText = this.widgetProperties.config.displayName;
     }
+
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+
+    if (this.titleBitmap) {
+      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
+
+    const valueText = this.getValueText();
+    this.canvas.drawText(
+      this.canvasCtx,
+      valueText,
+      Math.floor(this.cssWidth / 2),
+      Math.floor((this.cssHeight / 2) * 1.3),
+      this.maxValueTextWidth,
+      this.maxValueTextHeight,
+      'bold',
+      this.valueStateColor
+    );
   }
 
   private getValueText(): string {
@@ -332,7 +343,7 @@ export class WidgetRacerTimerComponent extends BaseWidgetComponent implements Af
         break;
       default:
     }
-    this.updateCanvas();
+    this.drawWidget();
   }
 
   public sendStartTimerCommand(command: string): string {

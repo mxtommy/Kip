@@ -2,20 +2,21 @@ import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 
 @Component({
   selector: 'widget-label',
-  standalone: true,
-  imports: [WidgetHostComponent, NgxResizeObserverModule],
+  imports: [WidgetHostComponent],
   templateUrl: './widget-label.component.html',
   styleUrl: './widget-label.component.scss'
 })
 export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
   private canvas = inject(CanvasService);
-  private canvasCtx: CanvasRenderingContext2D = null;
+  private cssWidth = 0;
+  private cssHeight = 0;
   private isDestroyed = false; // guard against callbacks after destroyed
   private maxTextWidth = 0;
   private maxTextHeight = 0;
@@ -34,7 +35,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     effect(() => {
       if (this.theme()) {
         this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
+        this.drawWidget();
       }
     });
   }
@@ -44,17 +45,30 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   }
 
   ngAfterViewInit(): void {
-    this.canvas.setHighDPISize(this.canvasEl().nativeElement, this.canvasEl().nativeElement.parentElement.getBoundingClientRect());
-    this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
-    this.maxTextWidth = this.canvasEl().nativeElement.width - 40;
-    this.maxTextHeight = this.canvasEl().nativeElement.height - 40;
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxTextWidth = this.cssWidth - 40;
+        this.maxTextHeight = this.cssHeight - 40;
+        this.drawWidget();
+      }
+    });
     if (this.isDestroyed) return;
-    this.updateCanvas();
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.maxTextWidth = this.canvasElement.width - 40;
+    this.maxTextHeight = this.canvasElement.height - 40;
+    this.startWidget();
   }
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.canvas.releaseCanvas(this.canvasEl()?.nativeElement, { clear: true, removeFromDom: true });
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
   }
 
   protected startWidget(): void {
@@ -67,14 +81,7 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
     } else {
       this.widgetProperties.config.displayName = "";
     }
-    this.updateCanvas();
-  }
-
-  protected onResized(e: ResizeObserverEntry) {
-    this.canvas.setHighDPISize(this.canvasEl().nativeElement, e.contentRect);
-    this.maxTextWidth = Math.floor(this.canvasEl().nativeElement.width - 40);
-    this.maxTextHeight = Math.floor(this.canvasEl().nativeElement.height - 40);
-    this.updateCanvas();
+    this.drawWidget();
   }
 
   private getColors(colorName: string): string {
@@ -103,23 +110,19 @@ export class WidgetLabelComponent extends BaseWidgetComponent implements OnInit,
   /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
-  private updateCanvas(): void {
+  private drawWidget(): void {
     if (!this.canvasCtx) return;
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
 
     if (!this.widgetProperties.config.noBgColor) {
-      this.canvas.drawRectangle(this.canvasCtx, 0, 0, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height, this.getColors(this.widgetProperties.config.bgColor));
+      this.canvas.drawRectangle(this.canvasCtx, 0, 0, this.canvasElement.width, this.canvasElement.height, this.getColors(this.widgetProperties.config.bgColor));
     }
 
-    this.drawValue();
-  }
-
-  private drawValue(): void {
     this.canvas.drawText(
       this.canvasCtx,
       this.widgetProperties.config.displayName,
-      Math.floor(this.canvasEl().nativeElement.width / 2,),
-      Math.floor(this.canvasEl().nativeElement.height / 2 + 10),
+      Math.floor(this.cssWidth / 2),
+      Math.floor(this.cssHeight / 2 + 10),
       this.maxTextWidth,
       this.maxTextHeight,
       'bold',

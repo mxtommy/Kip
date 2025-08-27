@@ -1,113 +1,114 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="text-generic-wrapper" (onResize)="onResized($event)">
-    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
-    <div class="filler">
-      <canvas #dToLineCanvas class="canvas"></canvas>
-    </div>
-    <div class="buttons-container">
-      <button mat-flat-button class="button select-button" (click)="toggleMode()">
-        <mat-icon class="buttons-svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-            <text xml:space="preserve" x="50" y="9">&vellip;</text>
+<widget-host class="line-wrapper"
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+>
+  <div class="filler">
+    <canvas #canvasMainRef class="line-canvas"></canvas>
+  </div>
+  <div class="buttons-container">
+    <button mat-flat-button class="button select-button" (click)="toggleMode()">
+      <mat-icon class="buttons-svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+          <text xml:space="preserve" x="50" y="9">&vellip;</text>
+        </svg>
+      </mat-icon>
+    </button>
+    @switch(mode) {
+      @case(0) {
+        <div class="pin-container">
+          <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content pin">
+            <text xml:space="preserve" x="33" y="14">{{ portBiasValue() }}</text>
           </svg>
-        </mat-icon>
-      </button>
-      @switch(mode) {
-        @case(0) {
-          <div class="pin-container">
-            <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content pin">
-              <text xml:space="preserve" x="33" y="14">{{ portBiasValue() }}</text>
-            </svg>
-          </div>
-          <div class="len-bias-container">
-            <svg width="100%" height="100%" viewBox="0 0 90 12" preserveAspectRatio="xMidYMid meet" class="svg-content len-bias">
-              <text xml:space="preserve" x="45" y="9"><tspan class="pin">⚑</tspan>{{ lineLengthValue() }}<tspan class="boat">⚑</tspan></text>
-            </svg>
-          </div>
-          <div class="boat-container">
-            <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content boat">
-              <text xml:space="preserve" x="33" y="14">{{ stbBiasValue() }}</text>
-            </svg>
-          </div>
-        }
-        @case(1) {
-          <button mat-flat-button class="button port-button" (click)="setLineEnd('port')">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="11">Port End</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button starboard-button" (click)="setLineEnd('stb')">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="11">Stbd End</text>
-              </svg>
-            </mat-icon>
-          </button>
-        }
-        @case (2) {
-          <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 5, 0)">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">+5m</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', -5, 0)">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">-5m</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 5, 0)">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">-5m</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', -5, 0)">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">+5m</text>
-              </svg>
-            </mat-icon>
-          </button>
-        }
-        @case (3) {
-          <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 0, toRadians(1))">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 0, toRadians(-1))">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(1))">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
-              </svg>
-            </mat-icon>
-          </button>
-          <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(-1))">
-            <mat-icon class="buttons-svg-icon">
-              <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-                <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
-              </svg>
-            </mat-icon>
-          </button>
-        }
+        </div>
+        <div class="len-bias-container">
+          <svg width="100%" height="100%" viewBox="0 0 90 12" preserveAspectRatio="xMidYMid meet" class="svg-content len-bias">
+            <text xml:space="preserve" x="45" y="9"><tspan class="pin">⚑</tspan>{{ lineLengthValue() }}<tspan class="boat">⚑</tspan></text>
+          </svg>
+        </div>
+        <div class="boat-container">
+          <svg width="100%" height="100%" viewBox="0 0 70 18" preserveAspectRatio="xMidYMid meet" class="svg-content boat">
+            <text xml:space="preserve" x="33" y="14">{{ stbBiasValue() }}</text>
+          </svg>
+        </div>
       }
-    </div>
+      @case(1) {
+        <button mat-flat-button class="button port-button" (click)="setLineEnd('port')">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="11">Port End</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button starboard-button" (click)="setLineEnd('stb')">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="11">Stbd End</text>
+            </svg>
+          </mat-icon>
+        </button>
+      }
+      @case (2) {
+        <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 5, 0)">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">+5m</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', -5, 0)">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">-5m</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 5, 0)">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">-5m</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', -5, 0)">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">+5m</text>
+            </svg>
+          </mat-icon>
+        </button>
+      }
+      @case (3) {
+        <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 0, toRadians(1))">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button port-small-button" (click)="adjustLineEnd('port', 0, toRadians(-1))">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(1))">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
+            </svg>
+          </mat-icon>
+        </button>
+        <button mat-flat-button class="button starboard-small-button" (click)="adjustLineEnd('stb', 0, toRadians(-1))">
+          <mat-icon class="buttons-svg-icon">
+            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
+            </svg>
+          </mat-icon>
+        </button>
+      }
+    }
   </div>
   @if (!dashboard.isDashboardStatic()) {
     <div class="widgetOverlay">

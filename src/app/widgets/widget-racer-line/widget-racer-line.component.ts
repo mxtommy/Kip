@@ -7,7 +7,6 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { MatButtonModule } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
@@ -17,15 +16,19 @@ import { DashboardService } from '../../core/services/dashboard.service';
   selector: 'widget-racer-line',
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent, MatButtonModule, MatIconModule]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MatButtonModule, MatIconModule]
 })
 export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private signalk = inject(SignalkRequestsService);
   protected readonly dashboard = inject(DashboardService);
-  private dToLineCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('dToLineCanvas');
-  protected dToLineContext: CanvasRenderingContext2D;
-  protected dToLineElement: HTMLCanvasElement;
-  private canvasService = inject(CanvasService);
+  private readonly canvas = inject(CanvasService);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private titleBitmap: HTMLCanvasElement | null = null;
+  private titleBitmapText: string | null = null;
   private dtsValue: number = null;
   private lengthValue: number = null;
   private biasValue: number = null;
@@ -106,7 +109,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
         untracked(() => {
           this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
           this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
-          this.updateCanvas();
+          this.drawWidget();
         });
       }
     });
@@ -120,19 +123,25 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   ngAfterViewInit(): void {
     this.initCompleted = true;
-    this.initCanvasContexts();
-    if (this.isDestroyed) {
-      return;
-    }
-    this.startWidget();
-  }
 
-  private initCanvasContexts() {
-    this.dToLineElement = this.dToLineCanvas().nativeElement;
-    this.canvasService.setHighDPISize(this.dToLineElement, this.dToLineElement.parentElement.getBoundingClientRect());
-    this.dToLineContext = this.dToLineElement.getContext('2d');
-    this.maxValueTextWidth = Math.floor(this.dToLineElement.width * 0.95);
-    this.maxValueTextHeight = Math.floor(this.dToLineElement.height * 0.95);
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
+        this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
+        this.drawWidget();
+      },
+    });
+    if (this.isDestroyed) return;
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
+    this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
+    this.startWidget();
   }
 
   protected startWidget(): void {
@@ -175,12 +184,12 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
             break;
         }
       }
-      this.updateCanvas()
+      this.drawWidget()
     });
 
     this.observeDataStream('lineLengthPath', newValue => {
       this.lengthValue = newValue.data.value;
-      this.updateCanvas()
+      this.drawWidget()
     });
 
     this.observeDataStream('lineBiasPath', newValue => {
@@ -204,20 +213,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     this.startWidget();
   }
 
-  protected onResized(e: ResizeObserverEntry) {
-    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) {
-      return;
-    }
-
-    this.infoFontSize = Math.floor(e.contentRect.width * 0.05) + 'px';
-
-    this.initCanvasContexts();
-    if (this.isDestroyed) {
-      return;
-    }
-    this.updateCanvas();
-  }
-
   protected beep(frequency = 440, duration = 100) {
     if (this.widgetProperties.config.playBeeps) {
       const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -236,27 +231,46 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
     }
   }
 
-  private updateCanvas(): void {
+  private drawWidget(): void {
+    if (!this.canvasCtx) return;
+
+    if (!this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== this.widgetProperties.config.displayName
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(
+        this.widgetProperties.config.displayName,
+        this.labelColor(),
+        'normal',
+        this.cssWidth,
+        this.cssHeight
+      );
+      this.titleBitmapText = this.widgetProperties.config.displayName;
+    }
+
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+
+    if (this.titleBitmap) {
+      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
     this.drawDToLine();
     this.drawLenBias();
     this.drawUnit();
   }
 
   private drawDToLine(): void {
-    if (this.dToLineCanvas) {
-      this.canvasService.clearCanvas(this.dToLineContext, this.dToLineElement.width, this.dToLineElement.height);
-      const valueText = this.getValueText();
-      this.canvasService.drawText(
-        this.dToLineContext,
-        valueText,
-        Math.floor(this.dToLineElement.width / 2),
-        Math.floor((this.dToLineElement.height / 2) * 1.3),
-        this.maxValueTextWidth,
-        this.maxValueTextHeight,
-        'bold',
-        this.dtsColor
-      );
-    }
+    const valueText = this.getValueText();
+    this.canvas.drawText(
+      this.canvasCtx,
+      valueText,
+      Math.floor(this.cssWidth / 2),
+      Math.floor((this.cssHeight / 2) * 1.3),
+      this.maxValueTextWidth,
+      this.maxValueTextHeight,
+      'bold',
+      this.dtsColor
+    );
   }
 
   private getValueText(): string {
@@ -268,13 +282,13 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   private drawUnit(): void {
     const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
-    this.canvasService.drawText(
-      this.dToLineContext,
+    this.canvas.drawText(
+      this.canvasCtx,
       unit,
-      Math.floor(this.dToLineElement.width - 10 * this.canvasService.scaleFactor),
-      Math.floor(this.dToLineElement.height - 7 * this.canvasService.scaleFactor),
-      Math.floor(this.dToLineElement.width * 0.25),
-      Math.floor(this.dToLineElement.height * 0.15),
+      Math.floor(this.cssWidth - 10 * this.canvas.scaleFactor),
+      Math.floor(this.cssHeight - 7 * this.canvas.scaleFactor),
+      Math.floor(this.cssWidth * 0.25),
+      Math.floor(this.cssHeight * 0.15),
       'bold',
       this.dtsColor,
       'end',
@@ -318,7 +332,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
 
   public toggleMode(): void {
     this.mode = (this.mode + 1) % 4;
-    this.updateCanvas();
+    this.drawWidget();
   }
 
   public setLineEnd(end: string): string {
@@ -340,6 +354,6 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvasService.releaseCanvas(this.dToLineElement, { clear: true, removeFromDom: true });
+    this.canvas.releaseCanvas(this.canvasElement, { clear: true, removeFromDom: true });
   }
 }
