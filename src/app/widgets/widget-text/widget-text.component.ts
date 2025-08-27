@@ -110,11 +110,6 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   drawWidget() {
     if (!this.canvasCtx) return;
     const titleHeight = Math.floor(this.cssHeight * 0.1);
-
-    // Only recreate the title bitmap if the title text or full canvas size changes.
-    // Note: the offscreen bitmap returned by createTitleBitmap is backed by
-    // device pixels (width/height === css * devicePixelRatio), so compare
-    // against the full canvas device-pixel dimensions.
     if (!this.titleBitmap ||
       this.titleBitmap.width !== this.canvasElement.width ||
       this.titleBitmap.height !== this.canvasElement.height ||
@@ -131,15 +126,11 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
-
-    // Draw the title bitmap at the top. Request an explicit target size in
-    // CSS pixels to avoid any ambiguity with device-pixel intrinsic sizes.
     if (this.titleBitmap) {
       this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
 
     const valueText = this.dataValue === null ? '--' : this.dataValue;
-    // Compute available area below the title in CSS pixels and subtract edge buffers.
     const edge = this.canvas.EDGE_BUFFER || 10;
     const availableHeight = Math.max(0, this.cssHeight - titleHeight - 2 * edge);
     const maxWidth = Math.max(0, Math.floor(this.cssWidth - 2 * edge));

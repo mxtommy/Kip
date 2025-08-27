@@ -47,8 +47,7 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
 
   protected drawTitle() {
     if (!this.isReady) return;
-  // Pass CSS pixel dimensions (service expects CSS units).
-  this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.cssWidth, this.cssHeight);
+    this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.cssWidth, this.cssHeight);
   }
 
   ngOnDestroy(): void {

@@ -11,8 +11,7 @@ import { getColors } from '../../core/utils/themeColors.utils';
   selector: 'widget-datetime',
   templateUrl: './widget-datetime.component.html',
   styleUrls: ['./widget-datetime.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule],
-  standalone: true
+  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
