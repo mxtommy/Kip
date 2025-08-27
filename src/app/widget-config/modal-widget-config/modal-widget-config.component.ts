@@ -149,22 +149,9 @@ export class ModalWidgetConfigComponent implements OnInit {
             break;
 
             case "datasetUUID": 
-              // Only require datasetUUID if dataSource is 'dataset' or not specified (default)
-              const isDatasetRequired = !this.widgetConfig.dataSource || this.widgetConfig.dataSource === 'dataset';
-              groups.addControl(key, new UntypedFormControl(value, isDatasetRequired ? Validators.required : null));
+              groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
 
-            case "dataSource": groups.addControl(key, new UntypedFormControl(value));
-            break;
-
-            case "selectedStreamId": 
-              // Only require selectedStreamId if dataSource is 'stream'
-              const isStreamRequired = this.widgetConfig.dataSource === 'stream';
-              groups.addControl(key, new UntypedFormControl(value, isStreamRequired ? Validators.required : null));
-            break;
-
-            case "streamAutoStart": groups.addControl(key, new UntypedFormControl(value));
-            break;
 
             case "dataTimeout": groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
@@ -262,17 +249,6 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('datasetUUID') as UntypedFormControl;
   }
 
-  get dataSourceControl(): UntypedFormControl {
-    return this.formMaster.get('dataSource') as UntypedFormControl;
-  }
-
-  get selectedStreamIdControl(): UntypedFormControl {
-    return this.formMaster.get('selectedStreamId') as UntypedFormControl;
-  }
-
-  get streamAutoStartControl(): UntypedFormControl {
-    return this.formMaster.get('streamAutoStart') as UntypedFormControl;
-  }
 
   get filterSelfPathsToControl(): UntypedFormControl {
     return this.formMaster.get('filterSelfPaths') as UntypedFormControl;
