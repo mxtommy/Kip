@@ -157,7 +157,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
     // Draw the title bitmap at the top. Request an explicit target size in
     // CSS pixels to avoid any ambiguity with device-pixel intrinsic sizes.
-    if (this.titleBitmap) {
+    if (this.titleBitmap && this.titleBitmap.width > 0 && this.titleBitmap.height > 0) {
       this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
 
