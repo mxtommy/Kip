@@ -26,13 +26,20 @@
       <span class="material-icons">dashboard</span>
     </button>
   </div>
-  <div class="menu-item-container">
-    @for (item of menuItems; track $index) {
-      <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onActionItem(item.action)"/>
+  <div class="menu-item-container" #tileContainer>
+    @for (item of menuItems(); let i = $index; track $index) {
+      <tile-large-icon
+        #tile
+        [active]="item.active"
+        [svgIcon]="item.svgIcon"
+        [iconSize]="item.iconSize"
+        [label]="item.label"
+        (click)="navigateToDashboard(i)"
+      />
     }
   </div>
   <div class="actions-bottom-container">
-    <button mat-flat-button class="action-button" style="width: 135px;" (click)="onActionItem('layout')">
+    <button mat-flat-button class="action-button" style="width: 135px;" (click)="onActionItem('layout')" [disabled]="!isOnDashboardPage()">
       <span class="material-icons">lock_open</span>
     </button>
   </div>

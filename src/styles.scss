@@ -211,6 +211,7 @@ body {
   user-select: none; /* prevent text selection */
   -webkit-user-select: none; /* Safari/iOS */
   -ms-user-select: none;     /* old Edge */
+  overflow-x: hidden;
 }
 
 /* Allow selection inside input/textarea and editable areas */

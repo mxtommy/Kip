@@ -32,6 +32,7 @@
 .menu-item-container {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   padding: 3px 1px 3px 1px;
   gap: 5px;
   width: 135px;

@@ -101,6 +101,19 @@ export class DashboardsEditorComponent {
     this._dashboard.dashboards.update(dashboards => {
       const updatedDashboards = [...dashboards];
       moveItemInArray(updatedDashboards, event.previousIndex, event.currentIndex);
+
+      // Update active dashboard index if it was affected by the move
+      const currentActive = this._dashboard.activeDashboard();
+      if (currentActive === event.previousIndex) {
+        // Active item was moved to new position
+        this._dashboard.activeDashboard.set(event.currentIndex);
+      } else if (currentActive > event.previousIndex && currentActive <= event.currentIndex) {
+        // Active item shifted down due to move
+        this._dashboard.activeDashboard.set(currentActive - 1);
+      } else if (currentActive < event.previousIndex && currentActive >= event.currentIndex) {
+        // Active item shifted up due to move
+        this._dashboard.activeDashboard.set(currentActive + 1);
+      }
       return updatedDashboards;
     });
   }

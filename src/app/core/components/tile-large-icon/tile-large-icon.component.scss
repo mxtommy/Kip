@@ -1,7 +1,6 @@
 :host {
   display: block;
   width: 100%;
-  height: 100%;
 }
 
 .icon-container {
@@ -15,7 +14,7 @@
 
 .icon-container:hover {
   background-color: var(--mat-sys-surface-container-high);
-  border: 1px solid var(--mat-sys-tertiary-container);
+  border: 1px solid var(--mat-sys-outline);
   cursor: pointer;
 }
 
@@ -46,7 +45,6 @@
 }
 
 .large-icon-tile-label {
-  cursor: pointer;
   color: var(--mat-sys-outline);
   font-size: 1.10em;
   margin: 0px 0px 0px 0px;
@@ -56,3 +54,22 @@
   font-size: 12px;
   margin: 0px;
 }
+
+.active-container-accent {
+  border: 1px solid var(--mat-sys-tertiary-container);
+  pointer-events: none;
+  background-color: var(--mat-sys-on-tertiary);
+  .large-icon-tile-label {
+    font-weight: bold;
+  }
+}
+
+.active-accent-bar {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0;
+    width: 7px;
+    background: var(--mat-sys-tertiary);
+    box-shadow: 0 0 10px 0 var(--mat-sys-tertiary);
+  }

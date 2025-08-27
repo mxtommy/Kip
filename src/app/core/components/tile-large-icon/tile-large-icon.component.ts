@@ -24,6 +24,7 @@ export class TileLargeIconComponent {
   public label = input.required<string>();
   public iconOnly = input<boolean>(false);
   public compact = input<boolean>(false);
+  public active = input<boolean>(false);
 
   constructor() {
     // Register SVG icon set once (MatIconRegistry keeps internal map; guard avoids redundant sanitizer work)
