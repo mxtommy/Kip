@@ -42,9 +42,13 @@ export class CanvasService {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
 
-    // Store the callback for this canvas (if provided)
+    // Store the callback for this canvas (if provided), wrapping to ignore zero-size
     if (opts.onResize) {
-      this.resizeCallbacks.set(canvas, opts.onResize);
+      const filteredResize = (w: number, h: number) => {
+        if (w === 0 || h === 0) return;
+        opts.onResize(w, h);
+      };
+      this.resizeCallbacks.set(canvas, filteredResize);
     }
 
     if (!this.sharedResizeObserver) {

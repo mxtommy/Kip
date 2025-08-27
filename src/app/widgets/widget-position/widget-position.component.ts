@@ -168,7 +168,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
 
-    if (this.titleBitmap) {
+    if (this.titleBitmap && this.titleBitmap.width > 0 && this.titleBitmap.height > 0) {
       this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
     this.canvas.drawText(

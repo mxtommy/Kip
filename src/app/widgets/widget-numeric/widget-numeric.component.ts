@@ -271,7 +271,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
 
-    if (this.backgroundBitmap) {
+    if (
+      this.backgroundBitmap &&
+      this.backgroundBitmap.width > 0 &&
+      this.backgroundBitmap.height > 0
+    ) {
       this.canvasCtx.drawImage(this.backgroundBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
     this.drawValue();
