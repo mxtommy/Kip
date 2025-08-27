@@ -5,23 +5,26 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
   selector: 'widget-datetime',
   templateUrl: './widget-datetime.component.html',
-  styleUrls: ['./widget-datetime.component.css'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent],
-  standalone: true
+  styleUrls: ['./widget-datetime.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
 export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private titleBitmap: HTMLCanvasElement | null = null;
+  private titleBitmapText: string | null = null;
   private canvas = inject(CanvasService);
+  private cssWidth = 0;
+  private cssHeight = 0;
   protected dataValue: string | null = null;
   private _timeZoneGTM = "";
   private isDestroyed = false; // guard against callbacks after destroyed
-  private canvasCtx: CanvasRenderingContext2D;
   protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private maxTextWidth = 0;
@@ -53,7 +56,7 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     effect(() => {
       if (this.theme()) {
         this.setColors();
-        this.drawValue();
+        this.drawWidget();
       }
     });
   }
@@ -63,11 +66,23 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   }
 
   ngAfterViewInit(): void {
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, this.canvasValue().nativeElement.parentElement.getBoundingClientRect());
-    this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxTextWidth = Math.floor(this.cssWidth * 0.85);
+        this.maxTextHeight = Math.floor(this.cssHeight * 0.70);
+        this.drawWidget();
+      }
+    });
     if (this.isDestroyed) return;
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.maxTextWidth = Math.floor(this.canvasElement.width * 0.85);
+    this.maxTextHeight = Math.floor(this.canvasElement.height * 0.70);
     this.startWidget();
   }
 
@@ -77,20 +92,21 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.setColors();
     this.observeDataStream('gaugePath', newValue => {
       this.dataValue = newValue.data.value;
-      this.drawValue();
+      this.drawWidget();
     });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.drawValue();
+    this.drawWidget();
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
     this.destroyDataStreams();
-    this.canvas.releaseCanvas(this.canvasValue()?.nativeElement, { clear: true, removeFromDom: true });
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
   }
 
   private getGMTOffset(timeZone: string): string {
@@ -113,23 +129,39 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
     this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
-
-  protected onResized(e: ResizeObserverEntry): void {
-    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) return;
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
-    this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    if (this.isDestroyed) return;
-    this.drawValue();
-  }
   /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
-  private drawValue(): void {
+  private drawWidget(): void {
     if (!this.canvasCtx) return;
+    // Only recreate the title bitmap if the title text or full canvas size changes.
+    // Note: the offscreen bitmap returned by createTitleBitmap is backed by
+    // device pixels (width/height === css * devicePixelRatio), so compare
+    // against the full canvas device-pixel dimensions.
+    if (!this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== this.widgetProperties.config.displayName
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(
+        this.widgetProperties.config.displayName,
+        this.labelColor(),
+        'normal',
+        this.cssWidth,
+        this.cssHeight
+      );
+      this.titleBitmapText = this.widgetProperties.config.displayName;
+    }
+
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+
+    // Draw the title bitmap at the top. Request an explicit target size in
+    // CSS pixels to avoid any ambiguity with device-pixel intrinsic sizes.
+    if (this.titleBitmap) {
+      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
+
     let valueText: string;
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
 
     if (isNaN(Date.parse(this.dataValue))) {
       valueText = '--';
@@ -145,8 +177,8 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     this.canvas.drawText(
       this.canvasCtx,
       valueText,
-      Math.floor(this.canvasValue().nativeElement.width / 2),
-      Math.floor(this.canvasValue().nativeElement.height / 2 * 1.15),
+      Math.floor(this.cssWidth / 2),
+      Math.floor(this.cssHeight / 2 * 1.15),
       this.maxTextWidth,
       this.maxTextHeight,
       'bold',

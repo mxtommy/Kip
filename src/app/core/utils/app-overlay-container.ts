@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import { OverlayContainer } from '@angular/cdk/overlay';
 
 /**
@@ -5,6 +6,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
  * a chosen host element (for example `#app-filter-wrapper`) so overlays
  * live in the same stacking context as the app (and sidenavs).
  */
+@Injectable()
 export class AppOverlayContainer extends OverlayContainer {
   protected override _createContainer(): void {
     const container = document.createElement('div');

@@ -107,10 +107,7 @@ export class uiEventService implements OnDestroy {
     }
   }
 
-  public addGestureListeners(
-    onSwipeLeft: (e: Event | CustomEvent) => void,
-    onSwipeRight: (e: Event | CustomEvent) => void
-  ): void {
+  public addGestureListeners(onSwipeLeft: (e: Event | CustomEvent) => void, onSwipeRight: (e: Event | CustomEvent) => void): void {
     if (!this.boundPreventGestures) {
       this.boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
     }
@@ -122,10 +119,7 @@ export class uiEventService implements OnDestroy {
     document.addEventListener('touchcancel', this.boundPreventGestures);
   }
 
-  public removeGestureListeners(
-    onSwipeLeft: (e: Event | CustomEvent) => void,
-    onSwipeRight: (e: Event | CustomEvent) => void
-  ): void {
+  public removeGestureListeners(onSwipeLeft: (e: Event | CustomEvent) => void, onSwipeRight: (e: Event | CustomEvent) => void): void {
     document.removeEventListener('openLeftSidenav', onSwipeLeft);
     document.removeEventListener('openRightSidenav', onSwipeRight);
     if (this.boundPreventGestures) {
@@ -137,6 +131,7 @@ export class uiEventService implements OnDestroy {
   }
 
   public preventBrowserHistorySwipeGestures(e: TouchEvent): void {
+    if (!(e instanceof TouchEvent)) return;
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const edgeThreshold = 30; // More reliable threshold

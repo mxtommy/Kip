@@ -1,6 +1,6 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="textGenericWrapper" (onResize)="onResized($event)">
-    <canvas #canvasValue style="z-index: inherit;"></canvas>
-    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
-  </div>
+<widget-host class="text-wrapper"
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)">
+  <canvas class="text-canvas" #canvasMainRef></canvas>
 </widget-host>

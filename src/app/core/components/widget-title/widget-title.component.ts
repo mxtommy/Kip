@@ -16,17 +16,25 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private isReady = false;
+  private cssWidth = 0;
+  private cssHeight = 0;
 
   constructor() {
   }
 
   ngAfterViewInit() {
     this.canvasElement = this.canvasRef().nativeElement;
-    if (this.canvasElement) {
-      this.canvasCtx = this.canvasElement.getContext('2d');
-      // Set the initial canvas size based on its parent container
-      this.canvas.setHighDPISize(this.canvasElement, this.canvasElement.parentElement.getBoundingClientRect());
-    }
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.drawTitle();
+      }
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.isReady = true;
     this.drawTitle();
   }
@@ -37,18 +45,14 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
     }
   }
 
-  protected onResized(e: ResizeObserverEntry) {
-    this.canvas.setHighDPISize(this.canvasElement, e.contentRect);
-    this.drawTitle();
-  }
-
   protected drawTitle() {
     if (!this.isReady) return;
-    this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.canvasElement.width, this.canvasElement.height);
+    this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.cssWidth, this.cssHeight);
   }
 
   ngOnDestroy(): void {
-    this.canvas.releaseCanvas(this.canvasElement, { clear: true, removeFromDom: true });
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
     this.canvasCtx = null;
     this.canvasElement = null;
   }

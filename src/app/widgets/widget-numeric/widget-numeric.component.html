@@ -1,13 +1,8 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="textGenericWrapper" (onResize)="onResized($event)">
-    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
-    @if (showMiniChart()) {
-      <minichart
-        [theme]="this.theme()"
-        />
-    }
-    <canvas #canvasUnit class="canvas"></canvas>
-    <canvas #canvasValue class="canvas"></canvas>
-    <canvas #canvasMinMax class="canvas"></canvas>
-  </div>
+<widget-host class="numeric-wrapper"  [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+  @if (showMiniChart()) {
+    <minichart
+      [theme]="this.theme()"
+      />
+  }
+  <canvas #canvasMainRef class="numeric-canvas"></canvas>
 </widget-host>
