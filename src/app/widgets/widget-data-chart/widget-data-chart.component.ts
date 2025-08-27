@@ -90,10 +90,6 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       yScaleMax: null,
       numDecimal: 1,
       color: 'contrast',
-      // New stream-related config options
-      dataSource: 'dataset', // 'dataset' or 'stream'
-      selectedStreamId: null,
-      streamAutoStart: true,
     };
 
     effect(() => {
@@ -683,7 +679,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     });
   }
 
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string | number): IDataSetRow[] {
     const convert = (v: number) =>
       this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, v);
     const verticalChart = this.widgetProperties.config.verticalChart;

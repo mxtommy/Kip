@@ -732,16 +732,13 @@
       @if ((widgetConfig?.datasetUUID !== undefined)) {
         <mat-tab label="Dataset">
           <ng-template mat-tab-label>
-            @if (!formMaster.controls.datasetUUID.valid && formMaster.controls.dataSource?.value !== 'stream') {
+            @if (!formMaster.controls.datasetUUID.valid) {
             <span class="warning fa fa-exclamation-circle"></span>
             } Dataset
           </ng-template>
           <config-dataset-chart-options
             [datasetUUID]="datasetUUIDToControl"
             [convertUnitTo]="convertUnitToControl"
-            [dataSource]="dataSourceControl"
-            [selectedStreamId]="selectedStreamIdControl"
-            [streamAutoStart]="streamAutoStartControl"
           >
           </config-dataset-chart-options>
         </mat-tab>

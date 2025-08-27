@@ -292,12 +292,6 @@ export interface IWidgetSvcConfig {
   /** Used by history chart widget: Use UTC timezone */
   useUTC?: boolean;
 
-  /** Used by data chart widget: Data source type ('dataset' | 'stream') */
-  dataSource?: string;
-  /** Used by data chart widget: Selected stream ID for stream data source */
-  selectedStreamId?: string;
-  /** Used by data chart widget: Auto-start stream when widget loads */
-  streamAutoStart?: boolean;
 }
 
 export interface IAutopilotConfig {
