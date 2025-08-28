@@ -356,7 +356,7 @@ export class GestureDirective {
   };
 
   private onPointerCancel = (ev: PointerEvent) => {
-    const el = this.host.nativeElement
+    const el = this.host.nativeElement;
     this.debug('pointercancel', {
       pointerId: ev.pointerId,
       pointerType: ev.pointerType,
