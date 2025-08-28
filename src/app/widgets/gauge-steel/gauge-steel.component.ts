@@ -307,6 +307,13 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Stop any running animations before cleanup
+    if (this.gauge && this.gauge.setValue) {
+      // Call setValue to stop any running setValueAnimated animations
+      const currentValue = this.gauge.getValue ? this.gauge.getValue() : this.value();
+      this.gauge.setValue(currentValue);
+    }
+
     // Steelseries draws into the canvas with id widgetUUID(). Release it to free GPU memory.
     const id = this.widgetUUID();
     if (id) {
