@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
+import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogDashboardPageEditorData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
@@ -59,12 +59,13 @@ export class DialogService {
     );
   }
 
-  public openDashboardPageEditorDialog(data: DialogNameData): MatDialogRef<DialogDashboardPageEditorComponent> {
+  public openDashboardPageEditorDialog(data: DialogDashboardPageEditorData): MatDialogRef<DialogDashboardPageEditorComponent> {
     return this.dialog.open(DialogDashboardPageEditorComponent,
       {
         data: data,
-        minWidth: "20vw",
-        minHeight: "20vh",
+        minWidth: "60vw",
+        maxWidth: "90vw",
+        maxHeight: "95vh",
         disableClose: false,
       }
     );

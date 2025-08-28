@@ -23,6 +23,7 @@
   flex: 1 1 48px;           // take remaining space
   min-height: 0;            // IMPORTANT: allow shrinking so no overflow
   overflow: hidden;
+  border: 1px solid var(--mat-sidenav-container-background-color, var(--mat-sys-surface));
 }
 
 .full-size {

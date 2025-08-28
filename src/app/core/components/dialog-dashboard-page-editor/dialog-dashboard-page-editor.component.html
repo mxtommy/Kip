@@ -1,4 +1,4 @@
-<form name="name" (ngSubmit)="saveName()" #name="ngForm">
+<form name="name" (ngSubmit)="save()" #name="ngForm">
   <div class="dialogue-header">
     <h5 mat-dialog-title>{{data.title}}</h5>
     <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
@@ -13,6 +13,10 @@
         A name is required
       </mat-error>
     </mat-form-field>
+    <div class="field-margin icon-section">
+      <span style="font-size: 1.2em;">Icon</span>
+      <select-icon [iconFile]="'assets/svg/icons.svg'" [currentIcon]="data.icon" (selectedIcon)="onIconSelected($event)"></select-icon>
+    </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-flat-button [mat-dialog-close]="false">{{data.cancelBtnText}}</button>

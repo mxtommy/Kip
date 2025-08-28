@@ -104,6 +104,15 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
 
+### Dashboards
+- Dashboards are managed via `DashboardService` and support custom names and icons for easy identification
+- Use `DashboardService.add(name, configuration, icon?)` to create dashboards with optional icons
+- Use `DashboardService.update(index, name, icon?)` to modify existing dashboards
+- Use `DashboardService.duplicate(index, newName, newIcon?)` to duplicate dashboards with optional icon override
+- Icons are Material Icons (e.g., 'dashboard', 'navigation') and can be selected via the `select-icon` component
+- The `select-icon` component loads SVG icons from configurable files (default: 'assets/svg/icons.svg'), displays them in a grid, and outputs the selected icon name
+- Integrate icon selection in dialogs by including `<select-icon [iconFile]="'assets/svg/icons.svg'" (selectedIcon)="onIconSelected($event)"></select-icon>`
+
 ---
 
 ## Cross-Reference Instructions

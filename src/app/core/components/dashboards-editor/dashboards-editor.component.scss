@@ -28,16 +28,15 @@
   padding: 10px;
   align-content: center;
   text-align: center;
+  border: 2px solid transparent;
 }
 
 .dashboard-item {
-  background-color: var(--kip-widget-card-background-color);
-  border: 1px solid var(--mat-sys-surface-container-highest);
+  background-color: var(--mat-sys-surface-container-highest);
 }
 
 .dashboard-item:hover {
-  background-color: var(--mat-sys-surface-container-high);
-  border: 1px solid var(--mat-sys-tertiary-container);
+  border: 2px solid var(--mat-sys-outline);
   cursor: pointer;
 }
 
@@ -53,6 +52,9 @@
 }
 
 .item-index {
+  position: absolute;
+  top: 20px;
+  left: 20px;
   display: inline-flex;
   flex-wrap: wrap;
   height: 42px;
@@ -64,6 +66,18 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 1.25em;
+  z-index: 1;
+}
+
+.dashboard-icon {
+  opacity: 0.5;
+}
+
+.dashboard-name {
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-size: 1.1em;
 }
 
 .cdk-drag-preview {

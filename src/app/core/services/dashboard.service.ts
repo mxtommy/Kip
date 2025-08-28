@@ -77,13 +77,14 @@ export class DashboardService {
   }
 
   /**
-   * Adds a new dashboard with the given name and widget configuration.
+   * Adds a new dashboard with the given name, widget configuration, and optional icon.
    * @param name The name of the new dashboard.
    * @param configuration The widget configuration array.
+   * @param icon The optional icon for the dashboard.
    */
-  public add(name: string, configuration: NgGridStackWidget[]): void {
+  public add(name: string, configuration: NgGridStackWidget[], icon?: string): void {
     this.dashboards.update(dashboards =>
-      [ ...dashboards, {id: UUID.create(), name: name, configuration: configuration} ]
+      [ ...dashboards, {id: UUID.create(), name: name, icon: icon, configuration: configuration} ]
     );
   }
 
@@ -115,12 +116,13 @@ export class DashboardService {
   }
 
   /**
-   * Duplicates the dashboard at the specified index with a new name.
+   * Duplicates the dashboard at the specified index with a new name and optional icon.
    * All widget and dashboard IDs are regenerated.
    * @param itemIndex The index of the dashboard to duplicate.
    * @param newName The name for the duplicated dashboard.
+   * @param newIcon The optional icon for the duplicated dashboard.
    */
-  public duplicate(itemIndex: number, newName: string): void {
+  public duplicate(itemIndex: number, newName: string, newIcon?: string): void {
     if (itemIndex < 0 || itemIndex >= this.dashboards().length) {
         console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
         return;
@@ -131,6 +133,7 @@ export class DashboardService {
 
     newDashboard.id = UUID.create();
     newDashboard.name = newName;
+    newDashboard.icon = newIcon || originalDashboard.icon || 'dashboard';
 
     if (Array.isArray(newDashboard.configuration)) {
         newDashboard.configuration.forEach((widget: NgGridStackWidget) => {

@@ -6,6 +6,7 @@ import { SettingsDisplayComponent } from '../display/display.component';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
 import { SettingsConfigComponent } from '../configuration/config.component';
+import { SettingsDatasetsComponent } from '../../datasets/datasets.component';
 
 
 @Component({
@@ -21,7 +22,8 @@ import { SettingsConfigComponent } from '../configuration/config.component';
       SettingsDisplayComponent,
       SettingsNotificationsComponent,
       SettingsConfigComponent,
-      PageHeaderComponent
+      PageHeaderComponent,
+      SettingsDatasetsComponent
   ]
 })
 export class AppSettingsComponent {

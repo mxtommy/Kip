@@ -16,3 +16,13 @@ max-height: max-content;
   margin-left: 15px;
   margin-bottom: 15px;
 }
+
+.icon-section {
+  .mat-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--mat-sys-on-surface);
+    font-size: 14px;
+    font-weight: 400;
+  }
+}

@@ -67,14 +67,16 @@ tr {
 .activity-container {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
-  width: 25%;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  gap:10px
 }
 
 .activity-graph-container {
   height: 100px;
   width: 230px;
-  padding: 23px 10px 0px 15px;
+  padding: 23px 0px 0px 15px;
 }
 
 .activity-graph {

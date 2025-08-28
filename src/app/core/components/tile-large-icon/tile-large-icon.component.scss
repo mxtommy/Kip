@@ -9,12 +9,13 @@
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   padding: 10px 5px 15px 5px;
   border-radius: 7px;
-  border: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--mat-sys-surface-container);
+  border-color: 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .icon-container:hover {
-  background-color: var(--mat-sys-surface-container-high);
-  border: 1px solid var(--mat-sys-outline);
+  border: 2px solid var(--mat-sys-outline-variant);
   cursor: pointer;
 }
 
@@ -56,7 +57,7 @@
 }
 
 .active-container-accent {
-  border: 1px solid var(--mat-sys-tertiary-container);
+  border: 1px solid var(--mat-sys-tertiary);
   pointer-events: none;
   background-color: var(--mat-sys-on-tertiary);
   .large-icon-tile-label {

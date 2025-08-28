@@ -1,14 +1,15 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
 import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { uiEventService } from '../../services/uiEvent.service';
 import { MatRippleModule } from '@angular/material/core';
+import { DomSanitizer } from '@angular/platform-browser';
 
 
 @Component({
@@ -18,12 +19,14 @@ import { MatRippleModule } from '@angular/material/core';
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
-export class DashboardsEditorComponent {
+export class DashboardsEditorComponent implements OnInit {
   protected readonly pageTitle = 'Dashboards';
   private _bottomSheet = inject(MatBottomSheet);
   protected _dashboard = inject(DashboardService);
   private _uiEvent = inject(uiEventService);
   private _dialog = inject(DialogService);
+  private _iconRegistry = inject(MatIconRegistry);
+  private _sanitizer = inject(DomSanitizer);
   /** True while bottom sheet open */
   protected _sheetOpen = false;
   /** Suppress starting a drag after a press consumed the pointer */
@@ -34,15 +37,27 @@ export class DashboardsEditorComponent {
   private _dragMoved = false;        // becomes true once movement surpasses threshold
   private readonly _dragSuppressThresholdPx = 4; // movement to treat as a real drag
 
+  ngOnInit() {
+    this.registerIconSet();
+  }
+
+  private registerIconSet() {
+    // Register SVG icon set for dashboard icons (same as select-icon component)
+    this._iconRegistry.addSvgIconSet(
+      this._sanitizer.bypassSecurityTrustResourceUrl('assets/svg/icons.svg')
+    );
+  }
+
   protected addDashboard(): void {
-    this._dialog.openNameDialog({
+    this._dialog.openDashboardPageEditorDialog({
       title: 'New Dashboard',
       name: `Dashboard ${this._dashboard.dashboards().length + 1}`,
+      icon: 'dashboard',
       confirmBtnText: 'Create',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.add(data.name, []);
+      this._dashboard.add(data.name, [], data.icon);
     });
   }
 
@@ -70,14 +85,16 @@ export class DashboardsEditorComponent {
   }
 
   protected editDashboard(itemIndex: number): void {
+    const dashboard = this._dashboard.dashboards()[itemIndex];
     this._dialog.openDashboardPageEditorDialog({
       title: 'Dashboard Details',
-      name: this._dashboard.dashboards()[itemIndex].name,
+      name: dashboard.name,
+      icon: dashboard.icon || 'dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.update(itemIndex, data.name);
+      this._dashboard.update(itemIndex, data.name, data.icon);
     });
   }
 
@@ -86,14 +103,16 @@ export class DashboardsEditorComponent {
   }
 
   protected duplicateDashboard(itemIndex: number, currentName: string): void {
-    this._dialog.openNameDialog({
+    const originalDashboard = this._dashboard.dashboards()[itemIndex];
+    this._dialog.openDashboardPageEditorDialog({
       title: 'Duplicate Dashboard',
       name: `${currentName} copy`,
+      icon: originalDashboard.icon || 'dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.duplicate(itemIndex, data.name);
+      this._dashboard.duplicate(itemIndex, data.name, data.icon);
     });
   }
 
