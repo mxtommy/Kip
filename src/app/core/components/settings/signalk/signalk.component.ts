@@ -1,17 +1,16 @@
 import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AppService } from '../../core/services/app-service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
-import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
-import { SignalKConnectionService, IEndpointStatus } from '../../core/services/signalk-connection.service';
-import { IDeltaUpdate, DataService } from '../../core/services/data.service';
-import { SignalKDeltaService, IStreamStatus } from '../../core/services/signalk-delta.service';
-import { AuthenticationService, IAuthorizationToken } from '../../core/services/authentication.service';
-import { ConnectionStateMachine } from '../../core/services/connection-state-machine.service';
-import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
+import { AppService } from '../../../services/app-service';
+import { AppSettingsService } from '../../../services/app-settings.service';
+import { IConnectionConfig } from "../../../interfaces/app-settings.interfaces";
+import { SignalKConnectionService, IEndpointStatus } from '../../../services/signalk-connection.service';
+import { IDeltaUpdate, DataService } from '../../../services/data.service';
+import { SignalKDeltaService, IStreamStatus } from '../../../services/signalk-delta.service';
+import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
+import { ConnectionStateMachine } from '../../../services/connection-state-machine.service';
+import { ModalUserCredentialComponent } from '../../../components/modal-user-credential/modal-user-credential.component';
 import { compare } from 'compare-versions';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { SlicePipe } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatSlideToggle, MatSlideToggleChange } from '@angular/material/slide-toggle';
@@ -21,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
-import { CanvasService } from '../../core/services/canvas.service';
+import { CanvasService } from '../../../services/canvas.service';
 
 
 
@@ -43,15 +42,14 @@ import { CanvasService } from '../../core/services/canvas.service';
     MatCheckbox,
     MatSlideToggle,
     MatTooltip,
-    MatButton,
-    SlicePipe
-  ],
+    MatButton
+  ]
 })
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly appSettingsService = inject(AppSettingsService);
-  protected readonly appService = inject(AppService);
+  protected readonly app = inject(AppService);
   private readonly DataService = inject(DataService);
   private readonly signalKConnectionService = inject(SignalKConnectionService);
   private readonly deltaService = inject(SignalKDeltaService);
@@ -61,7 +59,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly canvasService = inject(CanvasService);
 
 
-  protected readonly lineGraph = viewChild<ElementRef<HTMLCanvasElement>>('lineGraph');
+  protected readonly activityGraph = viewChild<ElementRef<HTMLCanvasElement>>('activityGraph');
 
   public connectionConfig: IConnectionConfig;
   public isConnecting = false; // Loading state for connect button
@@ -106,7 +104,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   ngAfterViewInit(): void {
-    this.textColor = window.getComputedStyle(this.lineGraph().nativeElement).color;
+    this.textColor = window.getComputedStyle(this.activityGraph().nativeElement).color;
     this._chart?.destroy();
     this.startChart();
 
@@ -115,7 +113,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((update: IDeltaUpdate) => {
       this._chart.data.datasets[0].data.push({ x: update.timestamp, y: update.value });
-      if (this._chart.data.datasets[0].data.length > 60) {
+      if (this._chart.data.datasets[0].data.length > 10) {
         this._chart.data.datasets[0].data.shift();
       }
       this._chart?.update("none");
@@ -190,7 +188,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       this.isConnecting = false;
       const errorMessage = (error as Error)?.message || 'Unknown validation error';
       console.error('[Settings-SignalK] Server validation failed:', errorMessage);
-      this.appService.sendSnackbarNotification(`Connection failed: ${errorMessage}`, 8000, false);
+      this.app.sendSnackbarNotification(`Connection failed: ${errorMessage}`, 8000, false);
     }
   }
 
@@ -199,7 +197,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Creates a time-series chart showing data update frequency over time.
    */
   private startChart() {
-    this._chart = new Chart(this.lineGraph().nativeElement.getContext('2d'), {
+    this._chart = new Chart(this.activityGraph().nativeElement.getContext('2d'), {
       type: 'line',
       data: {
         datasets: [
@@ -217,6 +215,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
         scales: {
           x: {
             type: "time",
+            display: true,
             time: {
               unit: "minute",
               minUnit: "second",
@@ -233,17 +232,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
             position: 'bottom',
             ticks: {
               display: false,
-              major: {
-                enabled: true
-              },
-              autoSkip: false
-            },
-            title: {
-              text: "1 Minute",
-              display: true
             },
             grid: {
-              display: false
+              display: true
             }
           },
           y: {
@@ -276,7 +267,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     if (e.checked) {
       const version: string = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
-        this.appService.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better", 0);
+        this.app.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better", 0);
         this.connectionConfig.useSharedConfig = false;
         return;
       }
@@ -286,7 +277,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   ngOnDestroy() {
     this._chart?.destroy();
-    const canvas = this.lineGraph?.()?.nativeElement as HTMLCanvasElement | undefined;
+    const canvas = this.activityGraph?.()?.nativeElement as HTMLCanvasElement | undefined;
     this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }
 }

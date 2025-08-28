@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
-import { AuthenticationService, IAuthorizationToken } from '../../services/authentication.service';
-import { AppService } from '../../services/app-service';
-import { AppSettingsService } from '../../services/app-settings.service';
-import { IConfig } from '../../interfaces/app-settings.interfaces';
-import { StorageService } from '../../services/storage.service';
+import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
+import { AppService } from '../../../services/app-service';
+import { AppSettingsService } from '../../../services/app-settings.service';
+import { IConfig } from '../../../interfaces/app-settings.interfaces';
+import { StorageService } from '../../../services/storage.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatInput, MatInputModule } from '@angular/material/input';
 import { MatOption } from '@angular/material/core';
@@ -16,7 +16,6 @@ import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 
 import { RouterLink } from '@angular/router';
-import { PageHeaderComponent } from '../page-header/page-header.component';
 
 
 interface IRemoteConfig {
@@ -28,7 +27,7 @@ interface IRemoteConfig {
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
-    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, PageHeaderComponent, MatInputModule]
+    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {
   private appSettingsService = inject(AppSettingsService);

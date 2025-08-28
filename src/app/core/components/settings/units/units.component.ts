@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
-import { AppSettingsService } from '../../core/services/app-settings.service';
-import { AppService } from '../../core/services/app-service';
-import { IUnitDefaults, UnitsService, IUnit } from '../../core/services/units.service';
+import { AppSettingsService } from '../../../services/app-settings.service';
+import { AppService } from '../../../services/app-service';
+import { IUnitDefaults, UnitsService, IUnit } from '../../../services/units.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatOption } from '@angular/material/core';

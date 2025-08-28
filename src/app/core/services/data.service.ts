@@ -91,7 +91,7 @@ export class DataService implements OnDestroy {
 
   // Performance stats
   private _deltaUpdatesCounter = 0;
-  private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(60);
+  private _deltaUpdatesSubject = new ReplaySubject<IDeltaUpdate>(10);
 
   // Full skData updates for data-browser component
   private _isSkDataFullTreeActive = false;

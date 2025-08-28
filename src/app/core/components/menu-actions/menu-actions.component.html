@@ -1,34 +1,46 @@
-<div class="actions-container actions-top-container">
-  @if (uiEvent.fullscreenSupported()) {
-    @if (!uiEvent.fullscreenStatus()) {
+<div class="actions-container">
+  <div class="actions-top-container">
+    @if (uiEvent.fullscreenSupported()) {
+      @if (!uiEvent.fullscreenStatus()) {
+        <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
+          <span class="material-icons">fullscreen</span>
+        </button>
+      } @else {
       <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
-        <span class="material-icons">fullscreen</span>
-      </button>
-    } @else {
-    <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
-        <span class="material-icons">close_fullscreen</span>
-      </button>
+          <span class="material-icons">close_fullscreen</span>
+        </button>
+      }
     }
-  }
-  @if (!isAutoNightMode()) {
-    @if (!app.isNightMode()) {
-      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-        <span class="material-icons">mode_night</span>
-      </button>
-    } @else {
-      <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
-        <span class="material-icons">light_mode</span>
-      </button>
+    @if (!isAutoNightMode()) {
+      @if (!app.isNightMode()) {
+        <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+          <span class="material-icons">mode_night</span>
+        </button>
+      } @else {
+        <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+          <span class="material-icons">light_mode</span>
+        </button>
+      }
     }
-  }
-</div>
-<div class="menu-item-container">
-  @for (item of menuItems; track $index) {
-    <tile-large-icon tabindex="0" [svgIcon]="item.svgIcon" [iconSize]="item.iconSize" [label]="item.label" (click)="onActionItem(item.action)"/>
-  }
-</div>
-<div class="actions-container actions-bottom-container">
-  <button mat-flat-button class="action-button" (click)="onActionItem('layout')">
-    <span class="material-icons">lock_open</span>
-  </button>
+    <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('home')">
+      <span class="material-icons">dashboard</span>
+    </button>
+  </div>
+  <div class="menu-item-container" #tileContainer>
+    @for (item of menuItems(); let i = $index; track $index) {
+      <tile-large-icon
+        #tile
+        [active]="item.active"
+        [svgIcon]="item.svgIcon"
+        [iconSize]="item.iconSize"
+        [label]="item.label"
+        (click)="navigateToDashboard(i)"
+      />
+    }
+  </div>
+  <div class="actions-bottom-container">
+    <button mat-flat-button class="action-button" style="width: 135px;" (click)="onActionItem('layout')" [disabled]="!isOnDashboardPage()">
+      <span class="material-icons">lock_open</span>
+    </button>
+  </div>
 </div>

@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
+import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogDashboardPageEditorData, DialogWidgetOptionsData } from '../interfaces/dialog-data';
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
 import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
+import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
 
 @Injectable({
   providedIn: 'root'
@@ -53,7 +54,19 @@ export class DialogService {
         data: data,
         minWidth: "20vw",
         minHeight: "20vh",
-        disableClose: true,
+        disableClose: false,
+      }
+    );
+  }
+
+  public openDashboardPageEditorDialog(data: DialogDashboardPageEditorData): MatDialogRef<DialogDashboardPageEditorComponent> {
+    return this.dialog.open(DialogDashboardPageEditorComponent,
+      {
+        data: data,
+        minWidth: "60vw",
+        maxWidth: "90vw",
+        maxHeight: "95vh",
+        disableClose: false,
       }
     );
   }

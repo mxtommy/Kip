@@ -3,6 +3,11 @@
   width: 100%;
 }
 
+mat-sidenav-content {
+ overflow-y: hidden;
+ overflow-x: hidden;
+}
+
 mat-sidenav.sidenav-notifications {
   width: 230px;
   z-index: 1200; // ensure sidenav sits above the notification overlay panel
@@ -11,4 +16,5 @@ mat-sidenav.sidenav-notifications {
 mat-sidenav.sidenav-actions {
   width: 135px;
   z-index: 1200; // ensure actions sidenav stacks above overlay
+  overflow-x: hidden; // Ensure action sidenav content doesn't overflow horizontally
 }

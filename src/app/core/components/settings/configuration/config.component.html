@@ -1,4 +1,3 @@
-<page-header [pageTitle]="pageTitle" />
 <div class="page-content">
   <p>
     Recommended Reading: To understand configuration management and storage
@@ -155,7 +154,10 @@
       <h2>Advanced</h2>
       <div class="config-operation-container" style="margin-top: 20px">
         <div class="download-txt">
-          <p>Download the active configuration to a file.</p>
+          <p>To reuse your configuration on different devices, simply login using the same credential
+            from any device (See <a routerLink="/help">Login & Configurations Help documentation</a> for more information). If
+            you need to move your configuration between different Signal K servers, you can use Download
+            to obtain a copy of the active configuration to a file.</p>
         </div>
         <div class="download-btn btn-div">
           <button
@@ -171,6 +173,7 @@
           <p>
             Select a configuration file to upload. The file must be a valid KIP
             configuration file of JSON format.
+            <br /><strong>WARNING: This will permanently overwrite active configuration.</strong>
           </p>
         </div>
         <div class="upload-btn btn-div">
@@ -190,7 +193,8 @@
         <div class="demo-txt">
           <p>
             Load the demonstration configuration and connection to Signal K demo
-            server. WARNING: This will completely reset all your settings.
+            server.
+            <br /><strong>WARNING: This will permanently reset your active configuration.</strong>
           </p>
         </div>
         <div class="demo-btn btn-div">
@@ -208,6 +212,7 @@
             Reset all your settings to default. The default configuration has a
             single Getting Started instruction widget. Your Signal K server
             connection settings will remain.
+            <br /><strong>WARNING: This will permanently reset your active configuration.</strong>
           </p>
         </div>
         <div class="reset-btn btn-div">
@@ -223,7 +228,7 @@
         <div class="config-txt">
           <p>
             Clear the current connection configuration. This only affects
-            Connectivity tab settings.
+            Connectivity settings tab.
           </p>
         </div>
         <div class="config-btn btn-div">

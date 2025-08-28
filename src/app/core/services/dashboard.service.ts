@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export interface Dashboard {
   id: string
   name?: string;
+  icon?: string;
   configuration?: NgGridStackWidget[] | [];
 }
 
@@ -32,7 +33,7 @@ export class DashboardService {
   private _isDashboardStatic = new BehaviorSubject<boolean>(true);
   public isDashboardStatic$ = this._isDashboardStatic.asObservable();
   public readonly isDashboardStatic = toSignal(this.isDashboardStatic$);
-  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', configuration: [
+  public readonly blankDashboard: Dashboard[] = [ {id: null, name: 'Dashboard 1', icon: 'dashboard', configuration: [
     {
       "w": 12,
       "h": 12,
@@ -76,24 +77,26 @@ export class DashboardService {
   }
 
   /**
-   * Adds a new dashboard with the given name and widget configuration.
+   * Adds a new dashboard with the given name, widget configuration, and optional icon.
    * @param name The name of the new dashboard.
    * @param configuration The widget configuration array.
+   * @param icon The optional icon for the dashboard.
    */
-  public add(name: string, configuration: NgGridStackWidget[]): void {
+  public add(name: string, configuration: NgGridStackWidget[], icon?: string): void {
     this.dashboards.update(dashboards =>
-      [ ...dashboards, {id: UUID.create(), name: name, configuration: configuration} ]
+      [ ...dashboards, {id: UUID.create(), name: name, icon: icon, configuration: configuration} ]
     );
   }
 
   /**
-   * Updates the name of a dashboard at the specified index.
+   * Updates the name and icon of a dashboard at the specified index.
    * @param itemIndex The index of the dashboard to update.
    * @param name The new name for the dashboard.
+   * @param icon The new icon for the dashboard (defaults to "dashboard").
    */
-  public update(itemIndex: number, name: string): void {
+  public update(itemIndex: number, name: string, icon = "dashboard"): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex ? { ...dashboard, name: name } : dashboard));
+      i === itemIndex ? { ...dashboard, name: name, icon: icon } : dashboard));
   }
 
   /**
@@ -113,12 +116,13 @@ export class DashboardService {
   }
 
   /**
-   * Duplicates the dashboard at the specified index with a new name.
+   * Duplicates the dashboard at the specified index with a new name and optional icon.
    * All widget and dashboard IDs are regenerated.
    * @param itemIndex The index of the dashboard to duplicate.
    * @param newName The name for the duplicated dashboard.
+   * @param newIcon The optional icon for the duplicated dashboard.
    */
-  public duplicate(itemIndex: number, newName: string): void {
+  public duplicate(itemIndex: number, newName: string, newIcon?: string): void {
     if (itemIndex < 0 || itemIndex >= this.dashboards().length) {
         console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
         return;
@@ -129,6 +133,7 @@ export class DashboardService {
 
     newDashboard.id = UUID.create();
     newDashboard.name = newName;
+    newDashboard.icon = newIcon || originalDashboard.icon || 'dashboard';
 
     if (Array.isArray(newDashboard.configuration)) {
         newDashboard.configuration.forEach((widget: NgGridStackWidget) => {

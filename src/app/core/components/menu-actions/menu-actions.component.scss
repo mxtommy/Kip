@@ -1,34 +1,47 @@
 .actions-container {
-  display:grid;
-  grid-auto-flow: column;
+  display:flex;
+  flex-direction: column;
+  height: 100%;
+  width: 135px;
 }
 
 .actions-top-container {
-  position: absolute;
-  top: 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   width: 100%;
 }
 
 .actions-bottom-container {
-  position: absolute;
-  bottom: 0px;
+  height: 48px;
   width: 100%;
 }
 
 .action-button {
   border-radius: 0px;
-  height: 48px
+  height: 48px;
+  flex: 1 1 48px;           // take remaining space
+  min-height: 0;            // IMPORTANT: allow shrinking so no overflow
+  overflow: hidden;
+  border: 1px solid var(--mat-sidenav-container-background-color, var(--mat-sys-surface));
+}
+
+.full-size {
+  width: 135px;
 }
 
 .menu-item-container {
-  position: absolute;
-  top: 48px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  padding: 3px 1px 3px 1px;
+  gap: 5px;
   width: 135px;
   overflow-y: auto;
   scrollbar-width: none;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  // -webkit-overflow-scrolling: touch;
-  height: calc(100% - 96px);
+  flex: 1 1 auto;           // take remaining space
+  min-height: 0;
 }
 

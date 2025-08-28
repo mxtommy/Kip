@@ -20,14 +20,13 @@ import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
-import { PageHeaderComponent } from '../page-header/page-header.component';
 
 
 @Component({
     selector: 'settings-datasets',
     templateUrl: './datasets.component.html',
     styleUrls: ['./datasets.component.scss'],
-    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider, PageHeaderComponent]
+    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 

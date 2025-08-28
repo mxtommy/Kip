@@ -43,60 +43,14 @@
   </table>
 </form>
 
-<div class="server-status">
-  <p class="mat-card-subtitle" style="margin: 0px;">
-    <strong>Connection Status</strong>
-  </p>
-  <div class="flex-container">
-    <div class="flex-item-detail">
-      <table class="fit">
-        <tr>
-          <td class="tableCellLabel">
-            Version:
-          </td>
-          <td class="tableCellData">
-            {{ endpointServiceStatus.serverDescription }}
-          </td>
-        </tr>
-        <tr>
-          <td class="tableCellLabel">
-            Authorization:
-          </td>
-          <td class="tableCellData">
-            @if (authToken) {
-              @if (authToken.isDeviceAccessToken) {
-                Device Access Token
-              } @else {
-                Session Token
-              }
-              Token: {{authToken.token| slice : 0 : 20}}...
-            }
-            @if (!authToken) {
-              No Authorization Token
-            }
-          </td>
-        </tr>
-        <tr>
-          <td class="tableCellLabel">
-            API Endpoint:
-          </td>
-          <td class="tableCellData">
-            {{ endpointServiceStatus.message }}
-          </td>
-        </tr>
-        <tr>
-          <td class="tableCellLabel">
-            Data Stream:
-          </td>
-          <td class="tableCellData">
-            {{ streamStatus.message }} - Token: {{ streamStatus.hasToken }}
-          </td>
-        </tr>
-      </table>
+  <div class="activity-container">
+    <div class="activity-graph-container">
+      <canvas class="activity-graph" #activityGraph></canvas>
     </div>
-    <div class="flex-item-chart">
-      <canvas style="z-index: inherit;" #lineGraph></canvas>
+    <div class="info-container">
+      <pre>KIP: {{ app.appVersion() }}
+{{ app.browserVersion() }}, {{ app.osVersion() }}<br />
+{{ endpointServiceStatus.serverDescription }}
+{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}</pre>
     </div>
   </div>
-</div>
-<pre style="text-align: center;">{{ appService.appVersion() }}, {{ appService.browserVersion() }}, {{ appService.osVersion() }}</pre>

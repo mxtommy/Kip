@@ -1,17 +1,24 @@
-<page-header [pageTitle]="pageTitle" />
 <div class="dashboard-manage" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
   @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
     <div class="dashboard-card dashboard-item"
       kipGestures
+      matRipple
       cdkDrag
+      [cdkDragDisabled]="_sheetOpen || suppressDrag"
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
       (press)="onPress(index, $event)"
       (doubletap)="editDashboard(index)">
-      <span style="display: block; width: 100%;">
-        <div class="item-index">{{index + 1}}</div>
-      </span>
-      <p class="mat-title-large" style="margin-top: 25px;">{{dashboard.name}}</p>
+      <div class="item-index">{{index + 1}}</div>
+      <div >
+        <mat-icon class="dashboard-icon"
+          [svgIcon]="dashboard.icon || 'dashboard'"
+          [style.width.px]="72"
+          [style.height.px]="72"
+          aria-hidden="false"
+        ></mat-icon>
+      </div>
+      <p class="dashboard-name">{{dashboard.name}}</p>
     </div>
   }
   <div class="dashboard-card dashboard-item-add dashboard-add-btn">

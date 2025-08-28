@@ -1,0 +1,28 @@
+.dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dialog-close-icon {
+margin-right: 15px;
+}
+
+.mat-mdc-dialog-content {
+max-height: max-content;
+}
+
+.field-margin {
+  margin-left: 15px;
+  margin-bottom: 15px;
+}
+
+.icon-section {
+  .mat-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--mat-sys-on-surface);
+    font-size: 14px;
+    font-weight: 400;
+  }
+}

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, viewChild, signal, Signal, model } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
-import { AppService } from '../../core/services/app-service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { AppService } from '../../../services/app-service';
+import { AppSettingsService } from '../../../services/app-settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
@@ -9,8 +9,8 @@ import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
-import { DataService } from '../../core/services/data.service';
+import { SignalkPluginsService } from '../../../services/signalk-plugins.service';
+import { DataService } from '../../../services/data.service';
 
 
 @Component({

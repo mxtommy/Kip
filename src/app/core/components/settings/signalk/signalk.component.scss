@@ -63,3 +63,29 @@ tr {
   margin: 0px !important;
   padding: 5px;
 }
+
+.activity-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  gap:10px
+}
+
+.activity-graph-container {
+  height: 100px;
+  width: 230px;
+  padding: 23px 0px 0px 15px;
+}
+
+.activity-graph {
+  border: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--mat-sys-background);
+}
+
+.info-container {
+  height: 123px;
+  align-content: center;
+  font-size: 11px;
+}

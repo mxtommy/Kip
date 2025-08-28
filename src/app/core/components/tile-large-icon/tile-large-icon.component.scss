@@ -1,21 +1,76 @@
 :host {
   display: block;
+  width: 100%;
+}
+
+.icon-container {
+  display: block;
+  text-align: center;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  padding: 10px 5px 15px 5px;
+  border-radius: 7px;
+  background-color: var(--mat-sys-surface-container);
+  border-color: 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.icon-container:hover {
+  border: 2px solid var(--mat-sys-outline-variant);
+  cursor: pointer;
+}
+
+.icon-container:focus-visible {
+  background-color: var(--mat-sys-surface-container-high);
+  outline: -webkit-focus-ring-color auto 0px;
+}
+
+.icon-container-compact {
+  display: block;
   text-align: center;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   cursor: pointer;
-  padding: 10px;
+  padding: 5px;
+  border-radius: 7px;
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
-:host(:hover) {
+.icon-container-compact:hover {
   background-color: var(--mat-sys-inverse-on-surface);
+  border: 1px solid var(--mat-sys-primary);
+  cursor: pointer;
 }
 
-:host(:focus-visible) {
+.icon-container-compact:focus-visible {
   background-color: var(--mat-sys-surface-bright);
   outline: -webkit-focus-ring-color auto 0px;
 }
 
 .large-icon-tile-label {
-  cursor: pointer;
   color: var(--mat-sys-outline);
+  font-size: 1.10em;
+  margin: 0px 0px 0px 0px;
 }
+
+.compact {
+  font-size: 12px;
+  margin: 0px;
+}
+
+.active-container-accent {
+  border: 1px solid var(--mat-sys-tertiary);
+  pointer-events: none;
+  background-color: var(--mat-sys-on-tertiary);
+  .large-icon-tile-label {
+    font-weight: bold;
+  }
+}
+
+.active-accent-bar {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0;
+    width: 7px;
+    background: var(--mat-sys-tertiary);
+    box-shadow: 0 0 10px 0 var(--mat-sys-tertiary);
+  }

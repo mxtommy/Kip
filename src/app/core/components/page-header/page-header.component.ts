@@ -14,6 +14,10 @@ export class PageHeaderComponent {
   protected readonly pageTitle = input<string>();
   private _router = inject(Router);
 
+  protected backPage() {
+    this._router.navigate(['/home']);
+  }
+
   protected closePage() {
     this._router.navigate(['/dashboard']);
   }

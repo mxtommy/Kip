@@ -54,6 +54,10 @@ https://angular.dev/essentials/components
 https://angular.dev/essentials/signals
 https://angular.dev/essentials/templates
 https://angular.dev/essentials/dependency-injection
+https://angular.dev/guide/components/queries
+
+viewChild('tileContainer', { static: false }) tileContainer!: ElementRef<HTMLDivElement>;
+  viewChildren('tile', { read: ElementRef }) tiles!: QueryList<ElementRef<HTMLElement>>;
 
 ## Best practices & Style guide
 Here are the best practices and the style guide information.
@@ -100,6 +104,15 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
 
+### Dashboards
+- Dashboards are managed via `DashboardService` and support custom names and icons for easy identification
+- Use `DashboardService.add(name, configuration, icon?)` to create dashboards with optional icons
+- Use `DashboardService.update(index, name, icon?)` to modify existing dashboards
+- Use `DashboardService.duplicate(index, newName, newIcon?)` to duplicate dashboards with optional icon override
+- Icons are Material Icons (e.g., 'dashboard', 'navigation') and can be selected via the `select-icon` component
+- The `select-icon` component loads SVG icons from configurable files (default: 'assets/svg/icons.svg'), displays them in a grid, and outputs the selected icon name
+- Integrate icon selection in dialogs by including `<select-icon [iconFile]="'assets/svg/icons.svg'" (selectedIcon)="onIconSelected($event)"></select-icon>`
+
 ---
 
 ## Cross-Reference Instructions
@@ -118,3 +131,36 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Use signals, standalone components, and modern control flow from this file within the KIP architecture from `COPILOT.md`
 - For theming and colors, always use the KIP theme system described in `COPILOT.md`, not generic CSS approaches
 - All services should follow both the Angular DI patterns here AND the KIP service architecture in `COPILOT.md`
+
+## Referencing component children with queries (Angular 17+)
+
+Use the modern signal-based query API for referencing elements, components, or directives in your template:
+
+- Use `viewChild()` and `viewChildren()` from `@angular/core` (not the old decorators).
+- These return signals or arrays, not QueryList.
+- Example usage:
+
+```typescript
+import { viewChild, viewChildren, ElementRef } from '@angular/core';
+
+// In your component class:
+tileContainer = viewChild('tileContainer')();
+tiles = viewChildren('tile', { read: ElementRef });
+```
+
+- In your template, add template reference variables:
+
+```html
+<div #tileContainer>
+  @for (item of items; let i = $index) {
+    <tile-large-icon #tile ...></tile-large-icon>
+  }
+</div>
+```
+
+- Access the element/component directly via the property (e.g., `this.tileContainer`, `this.tiles[0]`).
+- `viewChildren()` returns a readonly array that updates automatically as the view changes.
+- No need for `ngAfterViewInit` to access queries; they are available as soon as the view is rendered.
+
+**Summary:**
+Use `viewChild()` and `viewChildren()` for modern, reactive, and type-safe access to elements/components in your template. Avoid the legacy `@ViewChild`/`@ViewChildren` decorators and `QueryList` in new code.

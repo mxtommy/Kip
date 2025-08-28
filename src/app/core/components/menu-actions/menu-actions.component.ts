@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, input, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, inject, input, OnDestroy, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -11,7 +11,12 @@ import { AppSettingsService } from '../../services/app-settings.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 interface MenuActionItem extends LargeIconTile {
-  action: string;
+  id: number;
+  active: boolean;
+  pinned: boolean;
+  svgIcon: string;
+  iconSize: number;
+  label: string;
 }
 
 @Component({
@@ -26,21 +31,22 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected actionsSidenav = input.required<MatSidenav>();
   private _router = inject(Router);
   protected uiEvent = inject(uiEventService);
-  private dashboard = inject(DashboardService);
+  protected dashboard = inject(DashboardService);
   protected app = inject(AppService);
   private _settings = inject(AppSettingsService);
   protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
-  protected readonly menuItems: MenuActionItem[]  = [
-    { svgIcon: 'dashboard', iconSize: 48, label: 'Dashboards', action: 'dashboards' },
-    { svgIcon: 'troubleshoot', iconSize:  48, label: 'Data Inspector', action: 'datainspector' },
-    { svgIcon: 'dataset', iconSize: 48, label: 'Datasets', action: 'datasets' },
-    { svgIcon: 'configuration', iconSize:  48, label: 'Configurations', action: 'configurations' },
-    { svgIcon: 'settings', iconSize:  48, label: 'Settings', action: 'settings' },
-    { svgIcon: 'help-center', iconSize:  48, label: 'Help', action: 'help' }
-  ];
-
-  constructor() {
-  }
+  protected readonly menuItems = computed<MenuActionItem[]>(() => {
+    const dashboards = this.dashboard.dashboards();
+    const activeIdx = this.dashboard.activeDashboard();
+    return dashboards.map((d, i) => ({
+      id: Number(d.id),
+      active: i === activeIdx,
+      pinned: false, // or your own logic
+      svgIcon: d.icon || 'dashboard', // or use d.icon if available
+      iconSize: 60,
+      label: d.name || `Dashboard ${i + 1}`
+    }));
+  });
 
   ngAfterViewInit(): void {
     this.uiEvent.addHotkeyListener(
@@ -73,36 +79,31 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected onActionItem(action: string): void {
     this.actionsSidenav().close();
     switch (action) {
-      case 'help':
-      this._router.navigate(['/help']);
-        break;
-      case 'dashboards':
-        this._router.navigate(['/dashboards']);
-        break;
-      case 'datainspector':
-        this._router.navigate(['/data']);
-        break;
-      case 'datasets':
-        this._router.navigate(['/datasets']);
-        break;
-      case 'configurations':
-        this._router.navigate(['/configurations']);
-        break;
       case 'toggleFullScreen':
         this.uiEvent.toggleFullScreen();
         break;
-      case 'settings':
-        this._router.navigate(['/settings']);
+      case 'home':
+        this._router.navigate([`home`]);
         break;
       case 'layout':
         this.dashboard.toggleStaticDashboard();
-        break;
-      case 'nightMode':
-        this.app.isNightMode.set(!this.app.isNightMode());
-        this.app.toggleDayNightMode();
-        break;
-      default:
-        break;
+      break;
+    case 'nightMode':
+      this.app.isNightMode.set(!this.app.isNightMode());
+      this.app.toggleDayNightMode();
+      break;
+    default:
+      break;
     }
+  }
+
+  protected navigateToDashboard(dashboardId: number): void {
+    this.actionsSidenav().close();
+    this._router.navigate([`dashboard/${dashboardId}`]);
+  }
+
+  protected isOnDashboardPage(): boolean {
+    const url = this._router.url;
+    return url.startsWith('/dashboard');
   }
 }

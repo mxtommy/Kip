@@ -211,12 +211,23 @@ body {
   user-select: none; /* prevent text selection */
   -webkit-user-select: none; /* Safari/iOS */
   -ms-user-select: none;     /* old Edge */
+  overflow-x: hidden;
 }
 
 /* Allow selection inside input/textarea and editable areas */
 input, textarea, [contenteditable="true"] {
   user-select: text;
   -webkit-user-select: text;
+  margin: 0;
+  overscroll-behavior-y: none;
+}
+
+/* Make an internal scroller instead of window */
+.app-shell {
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 body {

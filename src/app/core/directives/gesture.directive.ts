@@ -14,6 +14,7 @@
  */
 import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
 
+
 // Cancel handler metadata used for long-press cancellation listeners.
 type CancelTarget = 'el' | 'doc' | 'window';
 interface CancelHandlerEntry {
@@ -52,6 +53,8 @@ interface CancelHandlerEntry {
  */
 @Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
+  // Service-level Chrome/macOS detection
+  private readonly isChromeOnMac: boolean;
   // Debug flag: set to true to enable gesture debug logging
   private static readonly DEBUG = false;
   // Static counter for instance IDs (debugging)
@@ -120,6 +123,14 @@ export class GestureDirective {
 
 
   constructor() {
+    // is running in Chrome on macOS?
+    this.isChromeOnMac = (() => {
+      const ua = navigator.userAgent;
+      const platform = navigator.platform;
+      // Chrome on Mac: userAgent includes 'Chrome' and 'Macintosh', platform includes 'Mac'
+      return /Chrome\//.test(ua) && /Mac/.test(platform) && !/Edg\//.test(ua) && !/OPR\//.test(ua);
+    })();
+
     this._instanceId = ++GestureDirective._instanceCounter;
     this.debug('GestureDirective instance created', { instanceId: this._instanceId });
     this.zone.runOutsideAngular(() => {
@@ -345,7 +356,6 @@ export class GestureDirective {
   };
 
   private onPointerCancel = (ev: PointerEvent) => {
-    // Diagnostic logging for pointercancel
     const el = this.host.nativeElement;
     this.debug('pointercancel', {
       pointerId: ev.pointerId,
@@ -357,6 +367,18 @@ export class GestureDirective {
       hasPointerCapture: typeof el.hasPointerCapture === 'function' ? el.hasPointerCapture(ev.pointerId) : undefined,
       documentHidden: document.hidden
     });
+    // Chrome/macOS workaround: ignore pointercancel for mouse if button is still pressed
+    const evWithButtons = ev as PointerEvent & { buttons?: number };
+    if (
+      this.isChromeOnMac &&
+      ev.pointerType === 'mouse' &&
+      ev.pointerId === this.pointerId &&
+      typeof evWithButtons.buttons === 'number' &&
+      evWithButtons.buttons !== 0
+    ) {
+      this.debug('pointercancel ignored on Chrome/macOS: mouse button still pressed');
+      return;
+    }
     if (ev.pointerId === this.pointerId) {
       if (this.longPressTimer) {
         this.debug('longpress cancelled by pointercancel');

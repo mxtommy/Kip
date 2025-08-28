@@ -1,0 +1,51 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.actions-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  padding: 5px 0px 5px 10px;
+}
+
+.with-label {
+  height: 80px;
+  width: 90px;
+}
+
+.no-label {
+  height: 58px;
+  width: 63px;
+}
+
+.dashboard-editor {
+  flex: 1 1 auto;           // take remaining space
+  min-height: 0;            // IMPORTANT: allow shrinking so no overflow
+  overflow: auto;
+}
+
+.actions-buttons-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.dialog-close-icon {
+  margin-right: 15px;
+  margin-top: 6px;
+}
+
+.mat-mdc-dialog-content {
+  max-height: max-content;
+}

@@ -1,0 +1,13 @@
+<div class="home-container">
+  <div class="actions-header-container">
+    <div class="actions-buttons-container">
+      <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="settings" [iconSize]="48" label="Settings" (click)="onActionItem('settings')"/>
+      <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="troubleshoot" [iconSize]="48" label="Data Inspector" (click)="onActionItem('datainspector')"/>
+      <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="help-center" [iconSize]="48" label="Help" (click)="onActionItem('help')"/>
+    </div>
+    <button mat-icon-button class="dialog-close-icon" (click)="closePage()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <dashboards-editor class="dashboards-editor" />
+</div>
