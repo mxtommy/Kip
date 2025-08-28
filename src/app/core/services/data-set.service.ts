@@ -209,27 +209,59 @@ export class DatasetService implements OnDestroy {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-  // Decide how to interpret the dataset values (scalar vs radian domains)
-  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    // Decide how to interpret the dataset values (scalar vs radian domains)
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
-  // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
-      (newValue: IPathUpdate) => {
-        if (newValue.data.value === null) return; // we don't need null values
+    //TODO replace hardcoded 10 minutes with seconds calculated from configuration
+    this.fetchHistoryData(configuration, 60 * 30, dataSource, angleDomain).then(() => {
+      // Subscribe to path data, update historicalData/stats and sends new values to Observers
+      dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+        (newValue: IPathUpdate) => {
+          if (newValue.data.value === null) return; // we don't need null values
 
-        // Keep the array to specified size before adding new value
-        if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
-          dataSource.historicalData.shift();
+          // Keep the array to specified size before adding new value
+          if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
+            dataSource.historicalData.shift();
+          }
+          dataSource.historicalData.push(newValue.data.value);
+
+          // Add new datapoint to historicalData
+          const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+          // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
+          this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
         }
-        dataSource.historicalData.push(newValue.data.value);
+      );
+    })
+  }
 
-        // Add new datapoint to historicalData
-  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+  private async fetchHistoryData(configuration: IDatasetServiceDatasetConfig, historyLength: number, dataSource: IDatasetServiceDataSource, angleDomain: AngleDomain): Promise<void> {
+    const { path } = configuration;
+    try {
+      const endTime = new Date().toISOString();
+      const startTime = new Date(Date.now() - historyLength * 1000).toISOString();
+
+      const historyUrl = `${window.location.origin}/signalk/v1/history/values?from=${startTime}&to=${endTime}&paths=${encodeURIComponent(path.substring('self.'.length))}`;
+      console.log(`Fetching history from: ${historyUrl}`);
+
+      const response = await fetch(historyUrl);
+      if (!response.ok) {
+        throw new Error(`History API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      result.data.forEach(item => {
+        const timestamp = new Date(item[0]).getTime();
+        dataSource.historicalData.push(item[1])
+        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain, timestamp);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
-      }
-    );
-  }
+      });
+    } catch (error) {
+      console.error('Failed to fetch historical data:', error);
+    }
+  };
+
 
   /**
    * Stops the recording process of a DataSource (unsubscribes from the Subject). This will stop
@@ -445,7 +477,7 @@ export class DatasetService implements OnDestroy {
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
    * @memberof DatasetService
    */
-  private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar'): IDatasetServiceDatapoint {
+  private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar', timestamp?: number): IDatasetServiceDatapoint {
     let avgCalc: number = null;
     let smaCalc: number = null;
     let minCalc: number = null;
@@ -483,7 +515,7 @@ export class DatasetService implements OnDestroy {
     }
 
     const newDatapoint: IDatasetServiceDatapoint = {
-      timestamp: Date.now(),
+      timestamp: timestamp !== undefined ? timestamp : Date.now(),
       data: {
         value: unit === 'rad'
           ? (domain === 'signed'
