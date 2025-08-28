@@ -136,6 +136,19 @@ Typical complementary components you may install (many are often bundled with Si
 - **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
 - **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
 
+## Complementary Components
+Typical complementary components you may install (many are often bundled with Signal K distributions):
+
+**Navigation & Charting**
+- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+
+**Visual Flow / Automation**
+- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
+
+**Data Storage & Analytics**
+- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
+- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
+
 # Connect, Share, and Support
 KIP has its own Discord Signal K channel for getting in touch. Join us at https://discord.gg/AMDYT2DQga
 
