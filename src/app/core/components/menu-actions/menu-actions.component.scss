@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 .actions-container {
   display:flex;
   flex-direction: column;
@@ -24,6 +26,24 @@
   min-height: 0;            // IMPORTANT: allow shrinking so no overflow
   overflow: hidden;
   border: 1px solid var(--mat-sidenav-container-background-color, var(--mat-sys-surface));
+}
+
+.home-btn {
+  @include mat.icon-button-overrides((
+    icon-size: 24px,
+  ));
+
+  @include mat.button-overrides((
+    filled-icon-offset: 0px,
+    filled-icon-spacing: 0px,
+    filled-label-text-size: 0px,
+  ));
+}
+
+.home-icon {
+  .mat-mdc-unelevated-button>.mat-icon {
+    font-size: 0px;
+  }
 }
 
 .full-size {

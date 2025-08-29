@@ -22,7 +22,7 @@ export class DialogDashboardPageEditorComponent {
   constructor() {
     // Set default icon if not provided
     if (!this.data.icon) {
-      this.data.icon = 'dashboard';
+      this.data.icon = 'dashboard-dashboard';
     }
   }
 

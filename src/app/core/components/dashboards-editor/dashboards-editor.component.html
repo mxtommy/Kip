@@ -21,8 +21,8 @@
       <p class="dashboard-name">{{dashboard.name}}</p>
     </div>
   }
-  <div class="dashboard-card dashboard-item-add dashboard-add-btn">
-    <button mat-fab (click)="addDashboard()">
+  <div class="dashboard-card dashboard-item-add dashboard-add-btn" (click)="addDashboard()" (keydown)="addDashboard()" tabindex="0">
+    <button mat-fab >
       <mat-icon>add_box</mat-icon>
     </button>
     <p style="margin-top: 10px;"><i>Add Dashboard</i></p>

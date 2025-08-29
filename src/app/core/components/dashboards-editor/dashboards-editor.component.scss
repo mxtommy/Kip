@@ -31,18 +31,32 @@
   border: 2px solid transparent;
 }
 
+@media (max-width: 600px) and (orientation: portrait) {
+  .dashboard-manage {
+    padding: 0px 70px;
+  }
+
+  .dashboard-card {
+    height: 175px;
+  }
+}
+
 .dashboard-item {
   background-color: var(--mat-sys-surface-container-highest);
+  cursor: pointer;
 }
 
 .dashboard-item:hover {
   border: 2px solid var(--mat-sys-outline);
-  cursor: pointer;
 }
 
 .dashboard-item-add {
   background-color: var(--mat-sys-surface-container);
-  border: 1px solid var(--mat-sys-surface-container-highest);
+  cursor: pointer;
+}
+
+.dashboard-item-add:hover {
+  border: 2px solid var(--mat-sys-outline);
 }
 
 .dashboard-add-btn {
@@ -59,7 +73,7 @@
   flex-wrap: wrap;
   height: 42px;
   width: 42px;
-  background-color: var(--kip-contrast-color);
+  background-color: var(--kip-contrast-dim-color);
   color: var(--mat-sys-surface-bright);
   border-radius: 25%;
   align-content: center;
