@@ -4,15 +4,15 @@ import { SettingsNotificationsComponent } from '../notifications/notifications.c
 import { SettingsSignalkComponent } from '../signalk/signalk.component';
 import { SettingsDisplayComponent } from '../display/display.component';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
-import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
+import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { SettingsConfigComponent } from '../configuration/config.component';
 import { SettingsDatasetsComponent } from '../../datasets/datasets.component';
 
 
 @Component({
-    selector: 'settings',
-    templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss'],
+    selector: 'tabs',
+    templateUrl: './tabs.component.html',
+    styleUrls: ['./tabs.component.scss'],
     imports: [
       MatTabGroup,
       MatTab,
@@ -26,7 +26,7 @@ import { SettingsDatasetsComponent } from '../../datasets/datasets.component';
       SettingsDatasetsComponent
   ]
 })
-export class AppSettingsComponent {
+export class TabsComponent {
   protected readonly pageTitle: string = "Settings";
   constructor() { }
 }

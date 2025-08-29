@@ -10,12 +10,12 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'home',
+  selector: 'settings',
   imports: [MatIconModule, MatButtonModule, TileLargeIconComponent, MatDividerModule, DashboardsEditorComponent, DashboardsEditorComponent],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+  templateUrl: './settings.component.html',
+  styleUrl: './settings.component.scss'
 })
-export class HomeComponent {
+export class SettingsComponent {
   private readonly _router = inject(Router);
   protected readonly app = inject(AppService);
   private readonly _responsive = inject(BreakpointObserver);
@@ -36,11 +36,8 @@ export class HomeComponent {
       case 'datainspector':
         this._router.navigate(['/data']);
         break;
-      case 'datasets':
-        this._router.navigate(['/datasets']);
-        break;
-      case 'settings':
-        this._router.navigate(['/settings']);
+      case 'options':
+        this._router.navigate(['/options']);
         break;
       default:
         break;

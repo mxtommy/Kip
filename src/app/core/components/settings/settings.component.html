@@ -1,7 +1,7 @@
 <div class="home-container">
   <div class="actions-header-container">
     <div class="actions-buttons-container">
-      <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="settings" [iconSize]="48" label="Settings" (click)="onActionItem('settings')"/>
+      <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="settings" [iconSize]="48" label="Options" (click)="onActionItem('options')"/>
       <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="troubleshoot" [iconSize]="48" label="Data Inspector" (click)="onActionItem('datainspector')"/>
       <tile-large-icon [class]="`${isPhoneLandscape() ? 'no-label' : 'with-label'}`" tabindex="0" [iconOnly]="isPhoneLandscape()" [compact]="true" svgIcon="help-center" [iconSize]="48" label="Help" (click)="onActionItem('help')"/>
     </div>
