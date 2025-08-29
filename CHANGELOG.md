@@ -9,6 +9,7 @@
 * Added canvas bitmap blitting for better rendering speed and visual performance.
 * Replaced HammerJS with native gesture support for improved responsiveness.
 * Updated CSS to help prevent accidental page reloads and unwanted text selection on mobile devices.
+* Enabled Notification audio on mobile.
 # v 3.8.2
 # Improvements
 * Faster app loading with local font and font swap support
