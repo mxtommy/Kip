@@ -82,8 +82,8 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
       case 'toggleFullScreen':
         this.uiEvent.toggleFullScreen();
         break;
-      case 'home':
-        this._router.navigate([`home`]);
+      case 'settings':
+        this._router.navigate([`settings`]);
         break;
       case 'layout':
         this.dashboard.toggleStaticDashboard();
