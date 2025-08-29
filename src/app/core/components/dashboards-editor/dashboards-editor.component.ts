@@ -39,7 +39,7 @@ export class DashboardsEditorComponent {
     this._dialog.openDashboardPageEditorDialog({
       title: 'New Dashboard',
       name: `Dashboard ${this._dashboard.dashboards().length + 1}`,
-      icon: 'dashboard',
+      icon: 'dashboard-dashboard',
       confirmBtnText: 'Create',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
@@ -76,7 +76,7 @@ export class DashboardsEditorComponent {
     this._dialog.openDashboardPageEditorDialog({
       title: 'Dashboard Details',
       name: dashboard.name,
-      icon: dashboard.icon || 'dashboard',
+      icon: dashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
@@ -94,7 +94,7 @@ export class DashboardsEditorComponent {
     this._dialog.openDashboardPageEditorDialog({
       title: 'Duplicate Dashboard',
       name: `${currentName} copy`,
-      icon: originalDashboard.icon || 'dashboard',
+      icon: originalDashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {

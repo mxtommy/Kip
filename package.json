@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "3.9.0-beta.15",
+  "version": "3.9.0",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -95,7 +95,7 @@
     "ngx-markdown": "^20.0.0",
     "ngx-resize-observer": "^3.1.0",
     "protractor": "~7.0.0",
-    "pwa-asset-generator": "^8.0.4",
+    "pwa-asset-generator": "^8.1.1",
     "rxjs": "^7.8.2",
     "sass": "^1.49.9",
     "screenfull": "^6.0.2",

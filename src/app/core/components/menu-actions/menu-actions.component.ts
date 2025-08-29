@@ -42,7 +42,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
       id: Number(d.id),
       active: i === activeIdx,
       pinned: false, // or your own logic
-      svgIcon: d.icon || 'dashboard', // or use d.icon if available
+      svgIcon: d.icon || 'dashboard-dashboard', // or use d.icon if available
       iconSize: 60,
       label: d.name || `Dashboard ${i + 1}`
     }));

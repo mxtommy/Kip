@@ -17,15 +17,20 @@ _Note that the words Touch and Tap are synonymous with mouse click._
 <img src="../../assets/help-docs/img/general-layout.png" alt="Sidebar Menus" title="Sidebar Menus" width="100%">
 
 1. Actions menu
-2. Fullscreen toggle button
-3. Night Mode toggle button
-4. Actions button
-5. Unlock dashboard
-6. Notifications menu
-7. Notification message
-8. Silence notification
-9. Resolve notification
-10. Mute audio toggle button
+2. *Fullscreen toggle button
+3. **Night Mode toggle button
+4. Settings button
+5. Select dashboard buttons
+6. Unlock dashboard edit mode
+7. Notifications menu
+8. Notification message
+9. Silence notification
+10. Resolve notification
+11. Mute audio toggle button
+
+*Only visible if mode is supported
+
+**Only if visible if automatic day and night is not enabled. See <Home / Settings / Display>.
 
 ## Loading KIP on Phones, Tablets, Raspberry Pi, and Computers
 Simply navigate to `http://<Signal K Server URL>:<port>/@mxtommy/kip/` to load KIP and enjoy its features remotely on any device.
