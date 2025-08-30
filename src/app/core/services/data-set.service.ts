@@ -2,6 +2,7 @@ import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
+import { HistoryService } from './history.service';
 import { UUID } from'../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
 
@@ -21,6 +22,7 @@ export interface IDatasetServiceDatapoint {
 }
 
 export type TimeScaleFormat = "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
+export type DataSourceType = "live" | "history" | "combo";
 
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
@@ -31,6 +33,7 @@ export interface IDatasetServiceDatasetConfig {
   period: number;           // Number of datapoints to capture.
   label:  string;           // label of the historicalData
   editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
+  dataSourceType?: DataSourceType; // Type of data source: live, history, or combo
 };
 
 export interface IDatasetServiceDataSourceInfo {
@@ -52,12 +55,14 @@ interface IDatasetServiceObserverRegistration {
 // How to interpret angular (radian) data
 type AngleDomain = 'scalar' | 'direction' | 'signed';
 
+
 @Injectable({
   providedIn: 'root'
 })
 export class DatasetService implements OnDestroy {
   private appSettings = inject(AppSettingsService);
   private data = inject(DataService);
+  private history = inject(HistoryService);
 
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
@@ -168,23 +173,14 @@ export class DatasetService implements OnDestroy {
    * @memberof DataSetService
    */
   private startAll(): void {
-    console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (const config of this._svcDatasetConfigs) {
       this.start(config.uuid);
     }
   }
 
   /**
-   * Starts the recording process of a Data Source. It firsts reads the historicalData configuration,
-   * then starts building the historicalData values, and pushes them to the Subject.
-   *
-   * This method handles the process that takes SK data and feeds the Subject. Clients/Observers,
-   * (widgets mostly), will use the getDatasetObservable() method to receive data from the Subject.
-   *
-   * Concept: SK_path_values -> datasource -> (ReplaySubject) <- Widget observers
-   *
-   * Once a datasource is started, subscribers will receive historical data (equal to the
-   * length of the dataset)pushed to the Subject, as as future data.
+   * Starts the recording process of a Data Source. Branches between live data, history data,
+   * or combo based on dataset configuration.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
@@ -198,22 +194,82 @@ export class DatasetService implements OnDestroy {
       return;
     }
 
+    // Common code: setup configuration and registry
     const newDataSourceConfig: IDatasetServiceDataSource = this.createDataSourceConfiguration(configuration);
     this.setupServiceSubjectRegistry(newDataSourceConfig.uuid, newDataSourceConfig.maxDataPoints);
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
-    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
+    // Default to combo if no dataSourceType specified (backward compatibility)
+    const dataSourceType = configuration.dataSourceType ?? 'combo';
+    
+    // Branch based on dataset type
+    switch (dataSourceType) {
+      case 'history':
+        // History-only: good for analysis of past trends
+        this.startHistoryDataStream(dataSource, configuration);
+        break;
+        
+      case 'live':
+        // Live-only: good for real-time monitoring
+        this.startLiveDataStream(dataSource, configuration);
+        break;
+        
+      case 'combo':
+        // Best of both: history for context + live for updates
+        this.startComboDataStream(dataSource, configuration);
+        break;
+        
+      default:
+        console.warn(`[Dataset Service] Unknown dataSourceType: ${dataSourceType}, defaulting to combo`);
+        this.startComboDataStream(dataSource, configuration);
+        break;
+    }
+  }
 
+  /**
+   * Starts combo data stream (history + live)
+   */
+  private startComboDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
+    // Fetch historical data first, then start live data to ensure continuity
+    this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe({
+      next: (historicalDatapoints) => {
+        if (historicalDatapoints.length > 0) {
+          this.processHistoricalDatapoints(dataSource, configuration, historicalDatapoints);
+        }
+        
+        // After historical data is processed, start live data stream
+        // This ensures moving averages continue seamlessly from history to live
+        try {
+          this.startLiveDataStream(dataSource, configuration);
+        } catch (error) {
+          // Error starting live stream
+        }
+      },
+      error: (error) => {
+        // No historical data available, start with live data only
+        try {
+          this.startLiveDataStream(dataSource, configuration);
+        } catch (liveError) {
+          // Error starting live stream
+        }
+      }
+    });
+  }
+
+  /**
+   * Starts live data stream from Signal K
+   */
+  private startLiveDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
     // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
     function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-  // Decide how to interpret the dataset values (scalar vs radian domains)
-  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    // Decide how to interpret the dataset values (scalar vs radian domains)
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
-  // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
+    // Subscribe to path data, update historicalData/stats and sends new values to Observers
+    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(dataSource.sampleTime)).subscribe(
       (newValue: IPathUpdate) => {
         if (newValue.data.value === null) return; // we don't need null values
 
@@ -224,11 +280,64 @@ export class DatasetService implements OnDestroy {
         dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
-  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
     );
+  }
+
+  /**
+   * Starts history data stream using the HistoryService
+   */
+  private startHistoryDataStream(dataSource: IDatasetServiceDataSource, configuration: IDatasetServiceDatasetConfig): void {
+    // Fetch historical data and populate the dataset
+    this.history.fetchHistoryData(configuration, dataSource.maxDataPoints).subscribe(historicalDatapoints => {
+      if (historicalDatapoints.length > 0) {
+        this.processHistoricalDatapoints(dataSource, configuration, historicalDatapoints);
+      }
+    });
+  }
+
+  /**
+   * Process historical datapoints with progressive moving averages
+   */
+  private processHistoricalDatapoints(
+    dataSource: IDatasetServiceDataSource, 
+    configuration: IDatasetServiceDatasetConfig, 
+    historicalDatapoints: IDatasetServiceDatapoint[]
+  ): void {
+    // Process historical datapoints progressively to calculate proper moving averages
+    const tempHistoricalData: number[] = [];
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    
+    historicalDatapoints.forEach(datapoint => {
+      // Build up the historical data array progressively
+      if (dataSource.maxDataPoints > 0 && tempHistoricalData.length >= dataSource.maxDataPoints) {
+        tempHistoricalData.shift();
+      }
+      tempHistoricalData.push(datapoint.data.value);
+
+      // Calculate moving averages based on the data available at this point in time
+      const progressiveDatapoint = this.updateDatasetProgressive(
+        tempHistoricalData, 
+        dataSource.smoothingPeriod,
+        configuration.baseUnit, 
+        angleDomain
+      );
+      
+      // Preserve the original timestamp from history and the original value
+      progressiveDatapoint.timestamp = datapoint.timestamp;
+      
+      const subjectEntry = this._svcSubjectObserverRegistry.find(entry => entry.datasetUuid === dataSource.uuid);
+      if (subjectEntry) {
+        subjectEntry.rxjsSubject.next(progressiveDatapoint);
+      }
+    });
+    
+    // Update the main historical data array with the final state
+    // This ensures live data continues with proper moving averages
+    dataSource.historicalData = tempHistoricalData;
   }
 
   /**
@@ -242,7 +351,6 @@ export class DatasetService implements OnDestroy {
    */
   private stop(uuid: string) {
     const dsIndex = this._svcDataSource.findIndex(d => d.uuid == uuid);
-    console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
     this._svcDataSource[dsIndex].pathObserverSubscription.unsubscribe();
     this._svcDataSource.splice(dsIndex, 1);
   }
@@ -290,10 +398,11 @@ export class DatasetService implements OnDestroy {
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
    * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
+   * @param {DataSourceType} [dataSourceType] Type of data source: 'live', 'history', or 'combo'. Defaults to 'combo'.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string ): string | null {
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string, dataSourceType: DataSourceType = 'combo' ): string | null {
     if (!path || !source || !timeScaleFormat || !period || !label) return null;
     const uuid = forced_id || UUID.create();
 
@@ -305,10 +414,9 @@ export class DatasetService implements OnDestroy {
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
-      editable: editable
+      editable: editable,
+      dataSourceType: dataSourceType
     };
-
-    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
@@ -336,12 +444,10 @@ export class DatasetService implements OnDestroy {
       return false; // Dataset not found
     }
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
-      console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
       return false; // Avoid unnecessary stop/start
     }
 
     this.stop(datasetConfig.uuid);
-    console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
     datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
@@ -367,7 +473,6 @@ export class DatasetService implements OnDestroy {
    if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
 
     this.stop(uuid);
-    console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
     // stop Subject Observers
@@ -431,6 +536,87 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
+   * Creates a datapoint with progressive moving averages for historical data processing
+   * @private
+   */
+  private updateDatasetProgressive(
+    historicalData: number[], 
+    smoothingPeriod: number,
+    unit: string, 
+    domain: AngleDomain = 'scalar'
+  ): IDatasetServiceDatapoint {
+    let avgCalc: number = null;
+    let smaCalc: number = null;
+    let minCalc: number = null;
+    let maxCalc: number = null;
+
+    if (unit === "rad") {
+      // Circular statistics for angles
+      avgCalc = this.circularMeanRad(historicalData);
+      const window = historicalData.slice(-smoothingPeriod);
+      smaCalc = this.circularMeanRad(window);
+      const { min, max } = this.circularMinMaxRad(historicalData);
+
+      // Normalize outputs to requested domain
+      if (domain === 'direction') {
+        avgCalc = this.normalizeToDirection(avgCalc);
+        smaCalc = this.normalizeToDirection(smaCalc);
+        minCalc = this.normalizeToDirection(min);
+        maxCalc = this.normalizeToDirection(max);
+      } else if (domain === 'signed') {
+        avgCalc = this.normalizeToSigned(avgCalc);
+        smaCalc = this.normalizeToSigned(smaCalc);
+        minCalc = this.normalizeToSigned(min);
+        maxCalc = this.normalizeToSigned(max);
+      } else {
+        // Fallback: treat as scalar (shouldn't happen for unit==='rad')
+        minCalc = min;
+        maxCalc = max;
+      }
+    } else {
+      // Arithmetic statistics for scalars
+      avgCalc = calculateAverage(historicalData);
+      smaCalc = calculateSMA(historicalData, smoothingPeriod);
+      minCalc = Math.min(...historicalData);
+      maxCalc = Math.max(...historicalData);
+    }
+
+    const newDatapoint: IDatasetServiceDatapoint = {
+      timestamp: Date.now(), // Will be overridden with historical timestamp
+      data: {
+        value: unit === 'rad'
+          ? (domain === 'signed'
+              ? this.normalizeToSigned(historicalData[historicalData.length - 1])
+              : this.normalizeToDirection(historicalData[historicalData.length - 1]))
+          : historicalData[historicalData.length - 1],
+        sma: smaCalc,
+        ema: null,
+        doubleEma: null,
+        lastAverage: avgCalc,
+        lastMinimum: minCalc,
+        lastMaximum: maxCalc
+      }
+    };
+
+    return newDatapoint;
+
+    function calculateAverage(arr: number[]): number | null {
+      if (arr.length === 0) return null;
+      const sum = arr.reduce((acc, val) => acc + val, 0);
+      return sum / arr.length;
+    }
+
+    function calculateSMA(values: number[], windowSize: number): number {
+      if (values.length < windowSize) windowSize = values.length;
+      let sum = 0;
+      for (let i = values.length - windowSize; i < values.length; i++) {
+        sum += values[i];
+      }
+      return sum / windowSize;
+    }
+  }
+
+  /**
    * Returns a new historicalData object created from the provided value. The returned
    * object will contain all information: timestamp, value, simple moving average
    * and statistics, etc.
@@ -439,9 +625,6 @@ export class DatasetService implements OnDestroy {
    * part of the historicalData.
    *
    * @private
-   * @param {number} smoothingPeriod The amount of previous historicalData rows used to calculate the doubleEma (Simple Moving Average). The doubleEma is the average of (current + (smoothingPeriod - 1)) value the average of the value and x number of previous values
-   * @param {IDatasetServiceDatapoint[]} ds The historicalData object to update
-   * @param {number} value The value to add to the historicalData
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
    * @memberof DatasetService
    */
@@ -549,10 +732,8 @@ export class DatasetService implements OnDestroy {
   private resolveAngleDomain(path: string, unit: string): AngleDomain {
     if (unit !== 'rad') return 'scalar';
     const incoming = this.normalizePathKey(path);
-    for (const candidate of this.signedAnglePaths) {
-      if (incoming === this.normalizePathKey(candidate)) {
-        return 'signed';
-      }
+    if (this.signedAnglePaths.has(incoming)) {
+      return 'signed';
     }
     return 'direction';
   }
@@ -570,6 +751,7 @@ export class DatasetService implements OnDestroy {
     const twoPi = 2 * Math.PI;
     return this.mod(rad + Math.PI, twoPi) - Math.PI; // (-π, π]
   }
+
 
   /**
    * Convenience: remove only if dataset exists (silently no-op otherwise).

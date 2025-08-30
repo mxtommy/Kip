@@ -3,13 +3,15 @@ import { Component, OnInit, input, inject } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DatasetService, IDatasetServiceDatasetConfig } from './../../core/services/data-set.service';
 import { IUnitGroup } from '../../core/services/units.service';
 
 @Component({
   selector: 'config-dataset-chart-options',
   standalone: true,
-  imports: [ MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
+  imports: [ MatFormFieldModule, MatSelectModule, MatRadioModule, MatCheckboxModule, ReactiveFormsModule],
   templateUrl: './dataset-chart-options.component.html',
   styleUrl: './dataset-chart-options.component.scss'
 })
@@ -29,6 +31,7 @@ export class DatasetChartOptionsComponent implements OnInit {
     if (datasetUUID.value) {
       this.setPathUnits(datasetUUID.value);
     }
+
   }
 
   private setPathUnits(uuid: string): boolean {
@@ -47,4 +50,5 @@ export class DatasetChartOptionsComponent implements OnInit {
   public datasetChanged(e: MatSelectChange): void {
     this.setPathUnits(e.value);
   }
+
 }

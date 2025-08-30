@@ -124,6 +124,9 @@ export class ModalWidgetConfigComponent implements OnInit {
             });
             groups.addControl(key, pathsGroup);
           }
+        } else if (key === 'historyPaths' || key === 'aggregationMethods') {
+          // Handle history chart array fields
+          groups.addControl(key, new UntypedFormControl(value));
         }
 
   if (parent === ModalWidgetConfigComponent.KEY_PATHS) {
@@ -145,8 +148,10 @@ export class ModalWidgetConfigComponent implements OnInit {
             case "path": groups.addControl(key, new UntypedFormControl(value));
             break;
 
-            case "datasetUUID": groups.addControl(key, new UntypedFormControl(value, Validators.required));
+            case "datasetUUID": 
+              groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
+
 
             case "dataTimeout": groups.addControl(key, new UntypedFormControl(value, Validators.required));
             break;
@@ -243,6 +248,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   get datasetUUIDToControl(): UntypedFormControl {
     return this.formMaster.get('datasetUUID') as UntypedFormControl;
   }
+
 
   get filterSelfPathsToControl(): UntypedFormControl {
     return this.formMaster.get('filterSelfPaths') as UntypedFormControl;
@@ -349,6 +355,55 @@ export class ModalWidgetConfigComponent implements OnInit {
 
   get multiChildCtrlsToControl(): UntypedFormArray {
     return this.formMaster.get('multiChildCtrls') as UntypedFormArray;
+  }
+
+  // History Chart Controls
+  get historyApiUrlToControl(): UntypedFormControl {
+    return this.formMaster.get('historyApiUrl') as UntypedFormControl;
+  }
+
+  get historyPathsToControl(): UntypedFormControl {
+    return this.formMaster.get('historyPaths') as UntypedFormControl;
+  }
+
+  get aggregationMethodsToControl(): UntypedFormControl {
+    return this.formMaster.get('aggregationMethods') as UntypedFormControl;
+  }
+
+  get timeModeToControl(): UntypedFormControl {
+    return this.formMaster.get('timeMode') as UntypedFormControl;
+  }
+
+  get startTimeToControl(): UntypedFormControl {
+    return this.formMaster.get('startTime') as UntypedFormControl;
+  }
+
+  get endTimeToControl(): UntypedFormControl {
+    return this.formMaster.get('endTime') as UntypedFormControl;
+  }
+
+  get durationToControl(): UntypedFormControl {
+    return this.formMaster.get('duration') as UntypedFormControl;
+  }
+
+  get durationUnitToControl(): UntypedFormControl {
+    return this.formMaster.get('durationUnit') as UntypedFormControl;
+  }
+
+  get refreshEnabledToControl(): UntypedFormControl {
+    return this.formMaster.get('refreshEnabled') as UntypedFormControl;
+  }
+
+  get refreshIntervalToControl(): UntypedFormControl {
+    return this.formMaster.get('refreshInterval') as UntypedFormControl;
+  }
+
+  get resolutionToControl(): UntypedFormControl {
+    return this.formMaster.get('resolution') as UntypedFormControl;
+  }
+
+  get useUTCToControl(): UntypedFormControl {
+    return this.formMaster.get('useUTC') as UntypedFormControl;
   }
 
   submitConfig() {

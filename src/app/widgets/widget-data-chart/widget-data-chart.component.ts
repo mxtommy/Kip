@@ -111,6 +111,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
   }
 
   protected startWidget(): void {
+    // Dataset logic with history integration
+    console.log(`[Chart Widget] Using dataset UUID: ${this.widgetProperties.config.datasetUUID}`);
     this.datasetConfig = this.dsService.getDatasetConfig(this.widgetProperties.config.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.widgetProperties.config.datasetUUID);
 
@@ -384,7 +386,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
         data: [],
         order: this.widgetProperties.config.trackAgainstAverage ? 1 : 0,
         parsing: false,
-        tension: 0,
+        tension: 0.2,
         pointRadius: 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
@@ -677,7 +679,7 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
     });
   }
 
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: string | number): IDataSetRow[] {
     const convert = (v: number) =>
       this.unitsService.convertToUnit(this.widgetProperties.config.convertUnitTo, v);
     const verticalChart = this.widgetProperties.config.verticalChart;
@@ -711,6 +713,8 @@ export class WidgetDataChartComponent extends BaseWidgetComponent implements OnI
       }
     });
   }
+
+
 
   ngOnDestroy(): void {
     this.destroyDataStreams();
