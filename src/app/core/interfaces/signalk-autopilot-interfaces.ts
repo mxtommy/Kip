@@ -65,9 +65,9 @@ export interface IV2ApiEndpoints {
  * Response format for V2 API command execution
  */
 export interface IV2CommandResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: unknown;
+  statusCode: number;
+  message: string;
+  state: unknown;
 }
 
 /**

@@ -148,6 +148,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   protected readonly apEngageBtnDisabled = computed(() => {
     const state = this.apState();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const engaged = this.apEngaged();
     const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
 
     if (!apiVersion) return true;
@@ -157,10 +159,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
 
     if (apiVersion === "v2") {
-      return (['disabled', 'off-line'].includes(state)) ? true : false;
+      return false;
     }
-
-    return false;
+    return true;
   });
 
   protected readonly apBtnDisabled = computed(() => {
@@ -667,7 +668,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
     });
     this.observeDataStream('autopilotEngaged', newValue => {
-      if (newValue.data?.value) {
+      if (newValue.data?.value != null) {
         this.apEngaged.set(newValue.data.value as boolean);
       } else {
         this.apEngaged.set(false);
@@ -891,13 +892,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
         if (this.dodgeModeActive()) {
           this.executeRestRequest('DELETE', targetCommand).then(response => {
-            if (response.status === 'success') {
+            if (response.statusCode !== 200) {
               this.dodgeModeActive.set(false);
             }
           });
         } else {
           this.executeRestRequest('POST', targetCommand).then(response => {
-            if (response.status === 'success') {
+            if (response.statusCode !== 200) {
               this.dodgeModeActive.set(true);
             }
           });
@@ -912,10 +913,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         break;
       case 'standby': {
           const targetCommand: IV2CommandDefinition = {
-            path: `${endpoints.state}`,
-            value: { value: this.apState() ? 'disabled' : 'enabled' }
+            path: `${this.apEngaged() ? endpoints.disengage : endpoints.engage}`
           };
-          this.executeRestRequest('PUT', targetCommand);
+          this.executeRestRequest('POST', targetCommand);
         }
         break;
       case 'auto':
@@ -968,12 +968,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           console.error('[Autopilot Widget] Unsupported REST method:', method);
       }
 
-      if (response && response.status === 'success') {
+      if (response && response.statusCode === 200) {
         // console.log('[Autopilot Widget] V2 Command executed successfully:', cmd.path);
         return response;
       } else {
         console.warn('[Autopilot Widget] V2 Command completed with non-success status:', JSON.stringify(response));
-        return response || { status: 'error', message: 'Invalid response format', data: null };
+        return response || { statusCode: 0, message: 'Unavailable', state: 'not provided' };
       }
     } catch (error) {
       console.error('[Autopilot Widget] REST operation failed:', error);
@@ -987,9 +987,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       } as skRequest);
 
       return {
-        status: 'error',
+        statusCode: 0,
         message: error instanceof Error ? error.message : 'REST operation failed',
-        data: null
+        state: null
       };
     }
   }
@@ -997,13 +997,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   private async setModeAndEnable(mode: string, endpoints: IV2ApiEndpoints): Promise<void> {
     try {
       const modeResp = await this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
-      if (modeResp.status !== 'success') {
-        console.error(`[Autopilot Widget] Failed to set mode '${mode}':`, modeResp.message ?? modeResp.status);
+      if (modeResp.statusCode !== 200) {
+        console.error(`[Autopilot Widget] Failed to set mode '${mode}':`, modeResp);
         return; // abort engage if setting mode failed
       }
       const engageResp = await this.executeRestRequest('PUT', { path: endpoints.state, value: { value: 'enabled' } });
-      if (engageResp.status !== 'success') {
-        console.error(`[Autopilot Widget] Failed to engage after mode '${mode}':`, engageResp.message ?? engageResp.status);
+      if (engageResp.statusCode !== 200) {
+        console.error(`[Autopilot Widget] Failed to engage after mode '${mode}':`, engageResp);
       }
     } catch (err) {
       console.error('[Autopilot Widget] setModeAndEngage unexpected error:', err);
