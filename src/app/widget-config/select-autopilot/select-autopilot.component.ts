@@ -136,7 +136,6 @@ ngOnInit(): void {
           this.pluginId.set(Object.values(this.availableAutopilots())[0]?.provider ?? null);
           this.autopilotFormGroup.get('pluginId')?.setValue(this.pluginId(), { emitEvent: false });
           this.discoveryInProgress.set(false);
-          console.log('[Autopilot Options] V2 API autopilot provider set to:', this.pluginId());
           return;
         } else {
           console.warn('[Autopilot Options] No V2 autopilot provider found');
