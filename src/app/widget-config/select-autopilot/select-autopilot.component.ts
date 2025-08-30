@@ -130,16 +130,15 @@ ngOnInit(): void {
       if (v2Available) {
         this.apiVersion.set('v2');
         this.autopilotFormGroup.get('apiVersion')?.setValue('v2', { emitEvent: false });
-        await this.discoverV2Autopilots();
 
-        // Check if there is at least one autopilot instance
+        // Check if there is at least one autopilot provider
         if (this.availableAutopilots() && Object.keys(this.availableAutopilots()).length > 0) {
-          this.pluginId.set(this.autopilotPlugin());
-          this.autopilotFormGroup.get('pluginId')?.setValue(this.autopilotPlugin(), { emitEvent: false });
+          this.pluginId.set(Object.values(this.availableAutopilots())[0]?.provider ?? null);
+          this.autopilotFormGroup.get('pluginId')?.setValue(this.pluginId(), { emitEvent: false });
           this.discoveryInProgress.set(false);
           return;
         } else {
-          console.warn('[Autopilot Options] No V2 autopilot plugin found');
+          console.warn('[Autopilot Options] No V2 autopilot provider found');
         }
       }
     } catch (error) {
@@ -173,12 +172,17 @@ ngOnInit(): void {
     try {
       const response = await firstValueFrom(
         this.makeHttpRequest(
-          this.http.get(API_PATHS.V2_AUTOPILOTS, {
-            observe: 'response',
-            responseType: 'json'
-          })
+          this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS, {observe: 'response', responseType: 'json'})
         )
       );
+      // Check if there is at least one autopilot provider
+      if (response && response.body && Object.keys(response.body).length > 0) {
+        this.availableAutopilots.set(response.body);
+        console.log('[Autopilot Options] Discovered V2 API autopilot providers:', JSON.stringify(response.body));
+      } else {
+        this.availableAutopilots.set({});
+        console.warn('[Autopilot Options] No V2 autopilot provider plugin found.');
+      }
       return response?.status === 200;
     } catch (error) {
       // Differentiate between network errors and 404s
@@ -189,35 +193,12 @@ ngOnInit(): void {
         } else if (httpError.status >= 500) {
           console.warn('[Autopilot Options] V2 API server error:', httpError.status, httpError.statusText);
         } else {
-          console.log('[Autopilot Options] V2 API error:', httpError.status, httpError.statusText);
+          console.log('[Autopilot Options] V2 API call to discover Autopilot Providers failed:', httpError.status, httpError.statusText);
         }
       } else {
         console.log('[Autopilot Options] V2 API network error:', error);
       }
       return false;
-    }
-  }
-
-  private async discoverV2Autopilots(): Promise<void> {
-    try {
-      const response = await firstValueFrom(
-        this.makeHttpRequest(
-          this.http.get<IV2AutopilotProvider>(API_PATHS.V2_AUTOPILOTS)
-        )
-      );
-
-      // Check if there is at least one autopilot instance
-      if (response && Object.keys(response).length > 0) {
-        this.availableAutopilots.set(response);
-        console.log('[Autopilot Options] Discovered V2 autopilot instances:', JSON.stringify(response));
-      } else {
-        this.availableAutopilots.set({});
-        console.warn('[Autopilot Options] No V2 autopilot plugin found in response.');
-      }
-    } catch (error) {
-      console.error('[Autopilot Options] Failed to discover V2 autopilots:', error);
-      this.availableAutopilots.set({});
-      this.apiDetectionError.set(`Failed to discover autopilots: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -231,7 +212,7 @@ ngOnInit(): void {
         response = await firstValueFrom(
           this.makeHttpRequest(
             this.http.get<IV2AutopilotOptionsResponse>(
-              `API_PATHS.V2_AUTOPILOTS/${targetInstance}`
+              `${API_PATHS.V2_AUTOPILOTS}/${targetInstance}`
             )
           )
         );

@@ -22,8 +22,7 @@
  *
  * @requires HttpClient, Angular Signals
  */
-
-import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -41,13 +40,13 @@ import { SignalkRequestsService, skRequest } from '../../core/services/signalk-r
 import { isEqual } from 'lodash-es';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable, finalize } from 'rxjs';
-import { AppService } from '../../core/services/app-service';
 import {
   IV2CommandDefinition,
   IV2CommandResponse,
   IV1CommandDefinition,
   V1CommandsMap,
-  IV2ApiEndpoints
+  IV2ApiEndpoints,
+  TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
 
 interface MenuItem {
@@ -70,6 +69,7 @@ const V2_ENDPOINT_TEMPLATES: Record<string, (instance: string) => string> = {
   BASE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}`,
   ENGAGE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/engage`,
   DISENGAGE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/disengage`,
+  STATE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/state`,
   MODE: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/mode`,
   TARGET_HEADING: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/target`,
   TACK: (instance: string) => `${API_PATHS.V2_AUTOPILOTS}/${instance}/tack`,
@@ -110,42 +110,60 @@ const DEFAULTS = {
     imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
-  private readonly signalkRequestsService = inject(SignalkRequestsService);
+  private readonly _requests = inject(SignalkRequestsService);
   private readonly http = inject(HttpClient);
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
-  protected readonly _app = inject(AppService);
 
-  private apiEndpoints: IV2ApiEndpoints;;
+  private apiEndpoints: IV2ApiEndpoints;
 
   // Autopilot state Management
   protected apState = signal<string | null>(null);
   protected apEngaged = signal<boolean | null>(null);
-  protected apMode = signal<string | null>(null);
+  protected apMode = signal<TApMode | null>(null);
   protected dodgeModeActive = signal<boolean>(false);
-  protected autopilotTargetHeading = 0;
-  protected autopilotTargetWindHeading = 0;
-  protected courseTargetHeading = 0;
-  protected heading = 0;
-  protected crossTrackError = 0;
-  protected windAngleApparent = 0;
-  protected rudder = 0;
+  protected autopilotTargetHeading = signal<number | null>(null);
+  protected autopilotTargetWindHeading = signal<number | null>(null);
+  protected heading = signal<number | null>(null);
+  protected crossTrackError = signal<number | null>(null);
+  protected windAngleApparent = signal<number | null>(null);
+  protected rudder = signal<number | null>(null);
+
+  protected autopilotTarget = linkedSignal<number | null>(() => {
+    const v1Heading = this.autopilotTargetHeading();
+    const v1Wind = this.autopilotTargetWindHeading();
+
+    if (this.apMode() === 'wind') {
+      return v1Wind ?? null;
+    }
+
+    return v1Heading ?? null;
+  });
 
   // Request management
   private currentRequests = new Set<Observable<unknown>>();
 
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
+
   protected readonly apEngageBtnDisabled = computed(() => {
-    const mode = this.apMode();
+    const state = this.apState();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const engaged = this.apEngaged();
     const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
-    if (!apiVersion) {
-      return true;
-    } else if (apiVersion === "v1") {
-      return (mode === 'standby' || mode === 'off-line') ? true : false;
+
+    if (!apiVersion) return true;
+
+    if (apiVersion === "v1") {
+      return (['standby', 'off-line'].includes(state)) ? true : false;
     }
-    return false;
+
+    if (apiVersion === "v2") {
+      return false;
+    }
+    return true;
   });
+
   protected readonly apBtnDisabled = computed(() => {
     const engaged = this.apEngaged();
     const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
@@ -160,14 +178,14 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   });
   protected readonly adjustHdgBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( mode === 'auto' ||  mode === 'compass' ||  mode === 'gps' || mode === 'wind' || mode === 'true wind' || mode === 'standby') {
+    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
   });
   protected readonly tackBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( mode === 'auto' ||  mode === 'compass' ||  mode === 'gps' || mode === 'wind' || mode === 'true wind' || mode === 'standby') {
+    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
@@ -214,7 +232,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
             { label: 'Close', action: 'cancel', isCancel: true }
           ];
           menuItems = this.parseMenuItems(allAPModes, mode);
-        } // else if (this.autopilotPlugin() == 'signalk-autopilot-provider') { }
+        }
       } else if (apiVersion === 'v1') {
         const allAPModes: MenuItem[] = [
           { label: 'Auto', action: 'auto' },
@@ -418,6 +436,17 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           convertUnitTo: "",
           sampleTime: 500
         },
+        "autopilotV2Target": {
+          description: "Autopilot API v2 Target",
+          path: 'self.steering.autopilot.target',
+          source: 'default',
+          pathType: "number",
+          convertUnitTo: "deg",
+          isPathConfigurable: false,
+          showPathSkUnitsFilter: false,
+          pathSkUnitsFilter: 'rad',
+          sampleTime: 500
+        },
         "autopilotTargetHeading": {
           description: "Autopilot Target Magnetic Heading",
           path: 'self.steering.autopilot.target.headingMagnetic',
@@ -440,28 +469,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           pathSkUnitsFilter: 'rad',
           sampleTime: 500
         },
-        // "courseTargetHeadingTrue": {
-        //   description: "Course Bearing True",
-        //   path: 'self.navigation.course.calcValues.bearingTrue',
-        //   source: 'default',
-        //   pathType: "number",
-        //   convertUnitTo: "deg",
-        //   isPathConfigurable: false,
-        //   showPathSkUnitsFilter: false,
-        //   pathSkUnitsFilter: 'rad',
-        //   sampleTime: 500
-        // },
-        // "courseTargetHeadingMag": {
-        //   description: "Course Bearing Magnetic",
-        //   path: 'self.navigation.course.calcValues.bearingMagnetic',
-        //   source: 'default',
-        //   pathType: "number",
-        //   convertUnitTo: "deg",
-        //   isPathConfigurable: false,
-        //   showPathSkUnitsFilter: false,
-        //   pathSkUnitsFilter: 'rad',
-        //   sampleTime: 500
-        // },
         "rudderAngle": {
           description: "Rudder Angle",
           path: 'self.steering.rudderAngle',
@@ -615,6 +622,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       engage: V2_ENDPOINT_TEMPLATES.ENGAGE(instanceId),
       disengage: V2_ENDPOINT_TEMPLATES.DISENGAGE(instanceId),
       mode: V2_ENDPOINT_TEMPLATES.MODE(instanceId),
+      state: V2_ENDPOINT_TEMPLATES.STATE(instanceId),
       target: V2_ENDPOINT_TEMPLATES.TARGET_HEADING(instanceId),
       tack: V2_ENDPOINT_TEMPLATES.TACK(instanceId),
       gybe: V2_ENDPOINT_TEMPLATES.GYBE(instanceId),
@@ -660,11 +668,19 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       }
     });
     this.observeDataStream('autopilotEngaged', newValue => {
-      if (newValue.data?.value) {
-        this.apEngaged.set(newValue.data.value);
+      if (newValue.data?.value != null) {
+        this.apEngaged.set(newValue.data.value as boolean);
       } else {
         this.apEngaged.set(false);
         console.warn('[Autopilot Widget] Autopilot engaged is null or not available');
+      }
+    });
+    this.observeDataStream('autopilotV2Target', newValue => {
+      if (newValue.data?.value) {
+        this.autopilotTarget.set(newValue.data.value);
+      } else {
+        this.autopilotTarget.set(null);
+        console.warn('[Autopilot Widget] Autopilot V2 target is null or not available');
       }
     });
 
@@ -682,6 +698,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot V1 mode state is null or not available');
       }
     });
+    this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading.set(newValue.data.value != null ? newValue.data.value : 0));
+    this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading.set(newValue.data.value != null ? newValue.data.value : 0));
+
     this.startDataSubscription();
 
     // Subscribe to V1 autopilot PUT state changes
@@ -691,27 +710,27 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private startDataSubscription(): void {
-    this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading = newValue.data.value != null ? newValue.data.value : 0);
-    this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading = newValue.data.value != null ? newValue.data.value : 0);
-    this.observeDataStream('courseXte', newValue => this.crossTrackError = newValue.data.value != null ? newValue.data.value : 0);
+    this.observeDataStream('courseXte', newValue => this.crossTrackError.set(newValue.data.value != null ? newValue.data.value : 0));
     this.observeDataStream('rudderAngle', newValue => {
         if (newValue.data.value === null) {
-          this.rudder = 0;
+          this.rudder.set(null);
         } else {
-          this.rudder = this.widgetProperties.config.autopilot.invertRudder ? -newValue.data.value : newValue.data.value;
+          this.rudder.set(this.widgetProperties.config.autopilot.invertRudder ? -newValue.data.value : newValue.data.value);
         }
       }
     );
+
     if (this.widgetProperties.config.autopilot.headingDirectionTrue) {
-      this.observeDataStream('headingTrue', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
+      this.observeDataStream('headingTrue', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
     } else {
-      this.observeDataStream('headingMag', newValue => this.heading = newValue.data.value != null ? newValue.data.value : 0);
+      this.observeDataStream('headingMag', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
     }
-    this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent = newValue.data.value != null ? newValue.data.value : 0);
+
+    this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent.set(newValue.data.value != null ? newValue.data.value : 0));
   }
 
   private subscribePutResponse(): void {
-    this.signalkRequestsService.subscribeRequest().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(requestResult => {
+    this._requests.subscribeRequest().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(requestResult => {
       if (requestResult.widgetUUID == this.widgetProperties.uuid) {
         this.commandReceived(requestResult);
       }
@@ -793,7 +812,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private sendV1Command(cmdAction: IV1CommandDefinition): void {
-    this.signalkRequestsService.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
+    this._requests.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
   }
 
@@ -848,69 +867,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         };
         this.executeRestRequest('PUT', targetCommand);
         break;
-      case 'target_heading':
-        targetCommand = {
-          path: endpoints.target,
-          value: value
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'auto':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "auto"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'compass':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "compass"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'gps':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "gps"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'wind':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "wind"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'true wind':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "true wind"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'route':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "route"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'nav':
-        targetCommand = {
-          path: endpoints.mode,
-          value: {value: "nav"}
-        };
-        this.executeRestRequest('PUT', targetCommand);
-        break;
-      case 'standby': {
-          const targetCommand: IV2CommandDefinition = {
-            path: this.apEngaged() ? `${endpoints.disengage}` : `${endpoints.engage}`
-          };
-          this.executeRestRequest('POST', targetCommand);
-        }
-        break;
       case 'advanceWaypoint':
         targetCommand = {
           path: `${API_PATHS.V2_COURSE}/activeRoute/nextPoint`
@@ -936,17 +892,40 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
         if (this.dodgeModeActive()) {
           this.executeRestRequest('DELETE', targetCommand).then(response => {
-            if (response.status === 'success') {
+            if (response.statusCode !== 200) {
               this.dodgeModeActive.set(false);
             }
           });
         } else {
           this.executeRestRequest('POST', targetCommand).then(response => {
-            if (response.status === 'success') {
+            if (response.statusCode !== 200) {
               this.dodgeModeActive.set(true);
             }
           });
         }
+        break;
+      case 'target_heading':
+        targetCommand = {
+          path: endpoints.target,
+          value: value
+        };
+        this.executeRestRequest('PUT', targetCommand);
+        break;
+      case 'standby': {
+          const targetCommand: IV2CommandDefinition = {
+            path: `${this.apEngaged() ? endpoints.disengage : endpoints.engage}`
+          };
+          this.executeRestRequest('POST', targetCommand);
+        }
+        break;
+      case 'auto':
+      case 'compass':
+      case 'gps':
+      case 'wind':
+      case 'true wind':
+      case 'route':
+      case 'nav':
+        await this.setModeAndEnable(cmd, endpoints);
         break;
       default:
         console.error('Unknown V2 command:', cmd);
@@ -989,12 +968,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           console.error('[Autopilot Widget] Unsupported REST method:', method);
       }
 
-      if (response && response.status === 'success') {
+      if (response && response.statusCode === 200) {
         // console.log('[Autopilot Widget] V2 Command executed successfully:', cmd.path);
         return response;
       } else {
         console.warn('[Autopilot Widget] V2 Command completed with non-success status:', JSON.stringify(response));
-        return response || { status: 'error', message: 'Invalid response format', data: null };
+        return response || { statusCode: 0, message: 'Unavailable', state: 'not provided' };
       }
     } catch (error) {
       console.error('[Autopilot Widget] REST operation failed:', error);
@@ -1008,10 +987,26 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       } as skRequest);
 
       return {
-        status: 'error',
+        statusCode: 0,
         message: error instanceof Error ? error.message : 'REST operation failed',
-        data: null
+        state: null
       };
+    }
+  }
+
+  private async setModeAndEnable(mode: string, endpoints: IV2ApiEndpoints): Promise<void> {
+    try {
+      const modeResp = await this.executeRestRequest('PUT', { path: endpoints.mode, value: { value: mode } });
+      if (modeResp.statusCode !== 200) {
+        console.error(`[Autopilot Widget] Failed to set mode '${mode}':`, modeResp);
+        return; // abort engage if setting mode failed
+      }
+      const engageResp = await this.executeRestRequest('PUT', { path: endpoints.state, value: { value: 'enabled' } });
+      if (engageResp.statusCode !== 200) {
+        console.error(`[Autopilot Widget] Failed to engage after mode '${mode}':`, engageResp);
+      }
+    } catch (err) {
+      console.error('[Autopilot Widget] setModeAndEngage unexpected error:', err);
     }
   }
 
@@ -1023,7 +1018,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       if (operation !== 'tack') return;
       // console.log(`[Autopilot Widget] Executing V1 tack to ${direction}`);
       const cmdAction = COMMANDS[direction === 'port' ? 'tackToPort' : 'tackToStarboard'];
-      this.signalkRequestsService.putRequest(cmdAction.path, cmdAction.value, this.widgetProperties.uuid);
+      this._requests.putRequest(cmdAction.path, cmdAction.value, this.widgetProperties.uuid);
     }
   }
 

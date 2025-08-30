@@ -16,20 +16,9 @@ Key features include:
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
 
-Typical complementary components you may install (many are often bundled with Signal K distributions):
-
-**Navigation & Charting**
-- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
-
-**Visual Flow / Automation**
-- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
-
-**Data Storage & Analytics**
-- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
-- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
-
 KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
 
+## Read the Help introduction How-to
 ## Read the Help introduction How-to
 Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
 
@@ -134,6 +123,32 @@ For example, Signal K will notify KIP when a water depth or temperature sensor r
 ## Multiple User Profiles
 If you have different roles on board: captain, skipper, tactician, navigator, engineer—or simply different people with different needs, each can tailor KIP as they wish. The use of profiles also allows you to tie specific configuration arrangements to use cases or device form factors.
 
+## Complementary Components
+Typical complementary components you may install (many are often bundled with Signal K distributions):
+
+**Navigation & Charting**
+- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+
+**Visual Flow / Automation**
+- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
+
+**Data Storage & Analytics**
+- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
+- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
+
+## Complementary Components
+Typical complementary components you may install (many are often bundled with Signal K distributions):
+
+**Navigation & Charting**
+- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+
+**Visual Flow / Automation**
+- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
+
+**Data Storage & Analytics**
+- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
+- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
+
 # Connect, Share, and Support
 KIP has its own Discord Signal K channel for getting in touch. Join us at https://discord.gg/AMDYT2DQga
 
@@ -143,6 +158,28 @@ https://github.com/mxtommy/Kip/issues
 
 # How To Contribute
 KIP is under the MIT license and is built with Node and Angular using various open-source assets. All free!
+
+## Project Scope
+What KIP IS about:
+- Real‑time presentation of vessel & environment data (navigation, performance, systems) pulled from Signal K.
+- Fast, legible, touchscreen‑friendly dashboards for underway decision making.
+- Configurable widgets (gauges, charts, timers, controls) tuned for sailing operations.
+
+What KIP deliberately IS NOT trying to become:
+- A full data lake / long‑term time‑series historian.
+- A general purpose automation / rules / orchestration engine.
+- A universal external web‑app embedding or mash‑up framework.
+- A low‑code integration hub for arbitrarily wiring protocols and services.
+
+Those domains already have excellent, specialized open‑source tools. Instead of re‑implementing them, KIP plays nicely alongside them within a Signal K based onboard stack.
+
+**Processing & Extensions**
+- **Signal K Plugins** – Domain‑specific enrichment (polars, performance calculations, derived environmental data, routing aids) published directly into the Signal K data model that KIP can then display.
+
+**Why this separation matters**
+Keeping KIP focused preserves responsiveness (lower CPU / memory), reduces UI clutter, and accelerates iteration on core sailing UX. Heavy analytics, complex workflow logic, and broad third‑party embedding stay where they are strongest—outside—but still feed KIP through the common Signal K data fabric.
+
+In short: use KIP to see & act on live sailing information; use the complementary tools to store it long‑term, analyze it deeply, automate decisions, or build advanced integrations.
 
 ## Project Scope
 What KIP IS about:
