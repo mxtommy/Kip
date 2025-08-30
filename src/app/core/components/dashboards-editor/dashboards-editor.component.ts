@@ -1,8 +1,8 @@
-import { Component, HostListener, inject, OnInit } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
 import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
@@ -14,18 +14,16 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'dashboards-editor',
-  standalone: true,
   imports: [MatBottomSheetModule, MatButtonModule, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss'
 })
-export class DashboardsEditorComponent implements OnInit {
+export class DashboardsEditorComponent {
   protected readonly pageTitle = 'Dashboards';
   private _bottomSheet = inject(MatBottomSheet);
   protected _dashboard = inject(DashboardService);
   private _uiEvent = inject(uiEventService);
   private _dialog = inject(DialogService);
-  private _iconRegistry = inject(MatIconRegistry);
   private _sanitizer = inject(DomSanitizer);
   /** True while bottom sheet open */
   protected _sheetOpen = false;
@@ -37,22 +35,11 @@ export class DashboardsEditorComponent implements OnInit {
   private _dragMoved = false;        // becomes true once movement surpasses threshold
   private readonly _dragSuppressThresholdPx = 4; // movement to treat as a real drag
 
-  ngOnInit() {
-    this.registerIconSet();
-  }
-
-  private registerIconSet() {
-    // Register SVG icon set for dashboard icons (same as select-icon component)
-    this._iconRegistry.addSvgIconSet(
-      this._sanitizer.bypassSecurityTrustResourceUrl('assets/svg/icons.svg')
-    );
-  }
-
   protected addDashboard(): void {
     this._dialog.openDashboardPageEditorDialog({
       title: 'New Dashboard',
       name: `Dashboard ${this._dashboard.dashboards().length + 1}`,
-      icon: 'dashboard',
+      icon: 'dashboard-dashboard',
       confirmBtnText: 'Create',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
@@ -89,7 +76,7 @@ export class DashboardsEditorComponent implements OnInit {
     this._dialog.openDashboardPageEditorDialog({
       title: 'Dashboard Details',
       name: dashboard.name,
-      icon: dashboard.icon || 'dashboard',
+      icon: dashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
@@ -107,7 +94,7 @@ export class DashboardsEditorComponent implements OnInit {
     this._dialog.openDashboardPageEditorDialog({
       title: 'Duplicate Dashboard',
       name: `${currentName} copy`,
-      icon: originalDashboard.icon || 'dashboard',
+      icon: originalDashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {

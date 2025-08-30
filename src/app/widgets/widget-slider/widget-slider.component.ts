@@ -8,7 +8,6 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 @Component({
@@ -19,7 +18,6 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 })
 export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private svgElement = viewChild.required<ElementRef<SVGElement>>('svgSlider');
-  private canvas = inject(CanvasService);
   protected dashboard = inject(DashboardService);
   private signalkRequestsService = inject(SignalkRequestsService);
   private appService = inject(AppService);
@@ -165,7 +163,7 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
     });
   }
 
-  public sendValue(value): void {
+  public sendValue(value: unknown): void {
     const path = this.widgetProperties.config.paths['gaugePath'].path;
     this.signalkRequestsService.putRequest(
       path,

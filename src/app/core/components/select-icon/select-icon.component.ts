@@ -1,7 +1,6 @@
-import { Component, input, output, signal, inject, effect, untracked } from '@angular/core';
+import { Component, input, output, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer } from '@angular/platform-browser';
+import { MatIconModule } from '@angular/material/icon';
 
 interface IconData {
   id: string;
@@ -14,10 +13,6 @@ interface IconData {
   styleUrl: './select-icon.component.scss'
 })
 export class SelectIconComponent {
-  private static _iconSetRegistered = false;
-  private iconRegistry = inject(MatIconRegistry);
-  private sanitizer = inject(DomSanitizer);
-
   iconFile = input<string>('assets/svg/icons.svg');
   currentIcon = input<string>('');
   selectedIcon = output<string>();
@@ -26,7 +21,6 @@ export class SelectIconComponent {
   selected = signal<string>('');
 
   constructor() {
-    this.registerIconSet();
     this.loadIcons();
     // Watch for changes to currentIcon and update selection
     effect(() => {
@@ -37,14 +31,6 @@ export class SelectIconComponent {
         }
       });
     });
-  }
-
-  private registerIconSet() {
-    // Register SVG icon set once (same pattern as widget-list-card)
-    if (!SelectIconComponent._iconSetRegistered) {
-      this.iconRegistry.addSvgIconSet(this.sanitizer.bypassSecurityTrustResourceUrl(this.iconFile()));
-      SelectIconComponent._iconSetRegistered = true;
-    }
   }
 
   private async loadIcons() {
@@ -61,7 +47,7 @@ export class SelectIconComponent {
       const icons: IconData[] = [];
       iconElements.forEach(el => {
         const id = el.getAttribute('id');
-        if (id) {
+        if (id && id.startsWith('dashboard-')) {
           icons.push({ id });
         }
       });

@@ -22,8 +22,11 @@
         </button>
       }
     }
-    <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('home')">
-      <span class="material-icons">dashboard</span>
+    <button mat-flat-button class="action-button home-btn" tabindex="0" (click)="onActionItem('settings')">
+      <mat-icon height="24px" width="24px" style="height: 24px; width: 24px;" class="home-icon"
+          svgIcon="kip"
+          aria-hidden="false"
+        ></mat-icon>
     </button>
   </div>
   <div class="menu-item-container" #tileContainer>

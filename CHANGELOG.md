@@ -1,3 +1,15 @@
+# v 3.9.0
+# New Feature
+* A new dashboard navigation experience. Introducing our all-new Dashboard sidenav designed for speed. Effortlessly jump between dashboards with a single tap, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
+* Discover the brand new Settings button at the top of the sidenav. Instantly access tools to manage your dashboards, plus quick links to Options, Data Inspector, and Help—all in one place.
+* Personalize your dashboards with style: double-click any dashboard to open the new icon gallery and give each page a unique visual identity.
+* All configuration controls are now streamlined as tabs within the Options page, making customization faster and more enjoyable than ever.
+# Improvements
+* Reduced GPU memory usage to improve performance and stability, especially on low-end hardware such as the RPi Zero 2.
+* Added canvas bitmap blitting for better rendering speed and visual performance.
+* Replaced HammerJS with native gesture support for improved responsiveness.
+* Updated CSS to help prevent accidental page reloads and unwanted text selection on mobile devices.
+* Enabled Notification audio on mobile.
 # v 3.8.2
 # Improvements
 * Faster app loading with local font and font swap support

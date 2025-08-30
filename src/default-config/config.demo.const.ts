@@ -69,6 +69,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
   {
     "id": "3e0825ee-95fd-4ad4-8802-e0507845b668",
     "name": "Sailing",
+    "icon": "dashboard-sailing",
     "configuration": [
       {
         "w": 3,
@@ -491,6 +492,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
   {
     "id": "7c67c8c5-dc55-4e1d-9fc5-3dd95fd41bea",
     "name": "Charting",
+    "icon": "dashboard-map",
     "configuration": [
       {
         "x": 0,

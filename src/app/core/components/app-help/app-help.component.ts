@@ -50,7 +50,7 @@ export class AppHelpComponent {
   }
 
   protected backPage() {
-    this._router.navigate(['/home']);
+    this._router.navigate(['/settings']);
   }
 
   protected closePage(): void {
