@@ -89,7 +89,7 @@
           </mat-icon>
         </button>
       } @case (4) {
-        <input matInput class="set-start-at" type="time" step="1" [(ngModel)]="startAtTimeEdit" (keyup.enter)="setStartTime()">
+        <input matInput class="set-start-at" type="time" step="1" [(ngModel)]="startAtTimeEdit" (change)="setStartTime()">
       }
     }
   </div>
