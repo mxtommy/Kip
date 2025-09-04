@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, HostListener, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -48,7 +48,11 @@ interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: 
   standalone: true,
   imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
+    host: {
+    '(document:mouseup)': '_onPointerRelease()',
+    '(document:touchend)': '_onPointerRelease()'
+  }
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -281,8 +285,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  @HostListener('document:mouseup')
-  @HostListener('document:touchend')
   private _onPointerRelease(): void {
     if (this._suppressDrag) {
       this._suppressDrag = false;
