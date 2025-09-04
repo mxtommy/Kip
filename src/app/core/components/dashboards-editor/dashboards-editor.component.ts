@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +16,11 @@ import { DomSanitizer } from '@angular/platform-browser';
   selector: 'dashboards-editor',
   imports: [MatBottomSheetModule, MatButtonModule, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
-  styleUrl: './dashboards-editor.component.scss'
+  styleUrl: './dashboards-editor.component.scss',
+  host: {
+    '(document:mouseup)': '_onPointerRelease()',
+    '(document:touchend)': '_onPointerRelease()'
+  }
 })
 export class DashboardsEditorComponent {
   protected readonly pageTitle = 'Dashboards';
@@ -167,8 +171,6 @@ export class DashboardsEditorComponent {
     });
   }
 
-  @HostListener('document:mouseup')
-  @HostListener('document:touchend')
   private _onPointerRelease(): void {
     // Allow future drags after actual release, but only if sheet not open
     if (!this._sheetOpen) {
