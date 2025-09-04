@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject, effect, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -14,12 +13,19 @@ import { CanvasService } from '../../core/services/canvas.service';
   selector: 'widget-racetimer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
+  imports: [WidgetHostComponent, MatButton]
 })
-export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly canvas = inject(CanvasService);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private maxTextWidth = 0;
+  private maxTextHeight = 0;
+
   private TimersService = inject(TimersService);
-  private canvas = inject(CanvasService);
-  readonly canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   protected dataValue: number = null;
   private zoneState: string = null;
   private currentValueLength = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -34,8 +40,6 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   timerSub: Subscription = null;
 
-  private canvasCtx: CanvasRenderingContext2D = null;
-
   constructor() {
     super();
 
@@ -47,7 +51,7 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     effect(() => {
       if (this.theme()) {
         this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
+        this.drawWidget();
       }
     });
   }
@@ -55,29 +59,34 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.validateConfig();
     this.subscribeTimer();
+  }
+
+  ngAfterViewInit(): void {
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxTextWidth = Math.floor(this.cssWidth * 0.95);
+        this.maxTextHeight = Math.floor(this.cssHeight);
+        this.drawWidget();
+      },
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.startWidget();
   }
 
   protected startWidget(): void {
     this.getColors(this.widgetProperties.config.color);
-    this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.updateCanvas();
-  }
-
-  onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50) { return; }
-    if (event.contentRect.width < 50) { return; }
-    if ((this.canvasEl().nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl().nativeElement.height != Math.floor(event.contentRect.height))) {
-      this.canvasEl().nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl().nativeElement.height = Math.floor(event.contentRect.height / 2);
-      this.currentValueLength = 0; //will force resetting the font size
-      this.updateCanvas();
-    }
+    this.drawWidget();
   }
 
   private subscribeTimer() {
@@ -101,14 +110,14 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         if (this.zoneState == States.Alarm && !this.flashInterval) {
           this.flashInterval = setInterval(() => {
             this.flashOn = !this.flashOn;
-            this.updateCanvas();
+            this.drawWidget();
           }, 500); // used to flash stuff in alarm
         } else if (this.zoneState != States.Alarm) {
           // stop alarming if not in alarm state
           clearInterval(this.flashInterval);
           this.flashInterval = null;
         }
-        this.updateCanvas();
+        this.drawWidget();
       }
     );
   }
@@ -214,9 +223,8 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
-    if (this.canvasCtx) {
-      this.canvas.releaseCanvas(this.canvasEl()?.nativeElement, { clear: true, removeFromDom: true });
-    }
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
     clearInterval(this.flashInterval);
     this.flashInterval = null;
     this.destroyDataStreams();
@@ -226,17 +234,10 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
 
-  updateCanvas() {
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
-      this.drawValue();
-    }
-  }
+  drawWidget() {
+    if (!this.canvasCtx) return;
 
-  drawValue() {
-    const canvasEl = this.canvasEl().nativeElement;
-    const maxTextWidth = Math.floor(canvasEl.width * 0.95);
-    const maxTextHeight = Math.floor(canvasEl.height);
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
     let valueText: string;
 
     if (this.dataValue != null) {
@@ -259,8 +260,8 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.valueFontSize = this.canvas.calculateOptimalFontSize(
         this.canvasCtx,
         valueText,
-        maxTextWidth,
-        maxTextHeight,
+        this.maxTextWidth,
+        this.maxTextHeight,
         'bold'
       );
     }
@@ -271,7 +272,13 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         if (this.flashOn) {
           this.canvasCtx.fillStyle = this.textColor;
         } else {
-          this.canvas.drawRectangle(this.canvasCtx, 0, 0, canvasEl.width, canvasEl.height, this.warnColor);
+          this.canvas.drawRectangle(
+            this.canvasCtx,
+            0,
+            0,
+            this.cssWidth,
+            this.cssHeight,
+            this.warnColor);
           this.canvasCtx.fillStyle = this.textColor;
         }
         break;
@@ -286,10 +293,10 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     this.canvas.drawText(
       this.canvasCtx,
       valueText,
-      canvasEl.width / 2,
-      canvasEl.height / 2,
-      maxTextWidth,
-      maxTextHeight,
+      this.cssWidth / 2,
+      this.cssHeight / 2,
+      this.maxTextWidth,
+      this.maxTextHeight,
       'bold',
       this.canvasCtx.fillStyle,
       'center',
