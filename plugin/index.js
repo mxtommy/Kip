@@ -1,55 +1,50 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = default_1;
-function default_1(app) {
-    const error = app.error;
-    const debug = app.debug;
-    function handler(context, path, value, callback) {
-        const timestamp = new Date().toISOString();
-        const delta = {
-            context: context,
-            updates: [
-                {
-                    source: { label: 'kip-commander' },
-                    timestamp: timestamp,
-                    values: [{ path: path, value: value }]
-                }
-            ]
-        };
-        app.debug('Sending delta:', JSON.stringify(delta));
-        app.handleMessage(context, delta);
-        return { state: 'COMPLETED', statusCode: 200 };
+exports.default = (app) => {
+    const displaysPath = 'displays.134-12341-1234-1234.activeScreen';
+    const context = 'vessels.self';
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function displayPutHandler(context, path, value, callback) {
+        app.debug(`PUT handler called for context ${context}, path ${path}, value ${value}`);
+        try {
+            const delta = {
+                updates: [
+                    {
+                        values: [
+                            {
+                                path: path,
+                                value: value
+                            }
+                        ]
+                    }
+                ]
+            };
+            app.debug(`Sending message: `, JSON.stringify(delta));
+            app.handleMessage(plugin.id, delta);
+            return { state: "COMPLETED", statusCode: 200 };
+        }
+        catch (error) {
+            app.error(`Error in PUT handler: ${error}`);
+            return { state: "COMPLETED", statusCode: 400, message: error.message };
+        }
     }
     const plugin = {
-        start: function (properties) {
-            const logging = {
-                info: (msg) => {
-                    app.debug(msg);
-                },
-                error: (msg) => {
-                    app.error(msg);
-                }
-            };
-            app.registerPutHandler('vessels.self', 'plugins.displays.activeScreen', handler, 'kip-plugin');
-            app.registerPutHandler('vessels.self', 'plugins.displays.screens', handler, 'kip-plugin');
+        id: 'kip',
+        name: 'KIP',
+        description: 'KIP server plugin',
+        start: (settings) => {
+            app.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+            app.registerPutHandler(context, displaysPath, displayPutHandler);
         },
-        stop: function () {
+        stop: () => {
+            app.debug(`Stopping plugin`);
         },
-        id: 'kip-commander',
-        name: 'KIP Commander',
-        description: 'Signal K Plugin For Changing KIP Dashboards remotely',
         schema: () => {
-            const schema = {};
-            return schema;
-        },
-        uiSchema: () => {
-            const uiSchema = {
-                authInfo: {
-                    'ui:widget': 'textarea'
-                }
+            return {
+                type: "object",
+                properties: {}
             };
-            return uiSchema;
         }
     };
     return plugin;
-}
+};

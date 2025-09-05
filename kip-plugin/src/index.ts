@@ -1,76 +1,53 @@
-export default function (app: any) {
-  const error = app.error
-  const debug = app.debug
+import { Delta, Path, Plugin, ServerAPI, Value } from '@signalk/server-api'
 
+export default (app: ServerAPI): Plugin => {
+  const displaysPath = 'displays.134-12341-1234-1234.activeScreen';
+  const context = 'vessels.self';
 
-  function handler(context: string, path: string, value: number, callback: any) {
-      const timestamp = new Date().toISOString();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function displayPutHandler(context: string, path: string, value: Value, callback?: unknown): { state: 'COMPLETED'; statusCode: number; message?: string } {
+    app.debug(`PUT handler called for context ${context}, path ${path}, value ${value}`);
+    try {
+      const delta: Delta = {
+        updates: [
+          {
+            values: [
+              {
+                path: path as Path,
+                value: value
+              }
+            ]
+          }
+        ]
+      };
+      app.debug(`Sending message: `, JSON.stringify(delta));
+      app.handleMessage(plugin.id, delta);
+      return { state: "COMPLETED" as const, statusCode: 200 };
 
-    const delta = {
-      context: context,
-      updates: [
-      {
-        source: {label: 'kip-commander'},
-        timestamp: timestamp,
-        values: [{ path: path, value: value}]
-      }
-      ]
-    };
-
-    app.debug('Sending delta:', JSON.stringify(delta));
-    app.handleMessage(context, delta);
-    return { state: 'COMPLETED', statusCode: 200 };
-  }
-
-  const plugin: Plugin = {
-
-    start: function (properties: any) {
-      const logging = {
-        info: (msg: any) => {
-        app.debug(msg)
-        },
-        error: (msg: any) => {
-          app.error(msg)
-        }
-      }
-
-      app.registerPutHandler('vessels.self', 'plugins.displays.activeScreen', handler, 'kip-plugin');
-      app.registerPutHandler('vessels.self', 'plugins.displays.screens', handler, 'kip-plugin');
-    },
-
-    stop: function () {
-    },
-
-    id: 'kip-commander',
-    name: 'KIP Commander',
-    description: 'Signal K Plugin For Changing KIP Dashboards remotely',
-
-    schema: () => {
-      const schema: any = {
-      }
-
-      return schema
-    },
-
-    uiSchema: () => {
-      const uiSchema: any = {
-        authInfo: {
-          'ui:widget': 'textarea'
-        }
-      }
-      return uiSchema
+    } catch (error) {
+      app.error(`Error in PUT handler: ${error}`);
+      return { state: "COMPLETED" as const, statusCode: 400, message: (error as Error).message };
     }
   }
 
-  return plugin
-}
+  const plugin: Plugin = {
+    id: 'kip',
+    name: 'KIP',
+    description: 'KIP server plugin',
+    start: (settings) => {
+      app.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+      app.registerPutHandler(context, displaysPath, displayPutHandler);
+    },
+    stop: () => {
+      app.debug(`Stopping plugin`);
+    },
+    schema: () => {
+        return {
+          type: "object",
+          properties: {}
+        };
+    }
+  };
 
-interface Plugin {
-  start: (app: any) => void
-  stop: () => void
-  id: string
-  name: string
-  description: string
-  schema: any
-  uiSchema: any
+  return plugin;
 }

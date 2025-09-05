@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "3.10.0-beta.1",
+  "version": "3.10.0-beta.11",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -25,6 +25,7 @@
   "keywords": [
     "signalk-webapp",
     "signalk-category-instruments",
+    "signalk-node-server-plugin",
     "signal k",
     "signalk",
     "instruments",
@@ -45,7 +46,7 @@
     "build:plugin": "tsc -p ./kip-plugin/tsconfig.plugin.json",
     "build:dev": "ng build --configuration=dev",
     "build:prod": "ng build --configuration=production",
-    "build:all": "npm run build:prod && npm run build:plugin",
+    "build:all": "npm run build:plugin && npm run build:prod",
     "e2e": "ng e2e"
   },
   "devDependencies": {
@@ -108,5 +109,8 @@
     "tslib": "^2.6.2",
     "typescript": "^5.8.3",
     "zone.js": "^0.15.1"
+  },
+  "dependencies": {
+    "@signalk/server-api": "^2.7.2"
   }
 }
