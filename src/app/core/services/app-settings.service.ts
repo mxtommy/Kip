@@ -31,6 +31,9 @@ export class AppSettingsService {
   private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private redNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
+  private isRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private enableRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -222,6 +225,24 @@ export class AppSettingsService {
     } else {
       this._dashboards = this.activeConfig.dashboards;
     }
+
+    if (this.activeConfig.app.isRemoteControl === undefined) {
+      this.setIsRemoteControl(false);
+    } else {
+      this.isRemoteControl.next(this.activeConfig.app.isRemoteControl);
+    }
+
+    if (this.activeConfig.app.enableRemoteControl === undefined) {
+      this.setEnableRemoteControl(false);
+    } else {
+      this.enableRemoteControl.next(this.activeConfig.app.enableRemoteControl);
+    }
+
+    if (this.activeConfig.app.instanceName === undefined) {
+      this.setInstanceName('');
+    } else {
+      this.instanceName.next(this.activeConfig.app.instanceName);
+    }
   }
 
   //UnitDefaults
@@ -341,6 +362,65 @@ export class AppSettingsService {
     }
   }
 
+  // isRemoteControl mode
+  public getIsRemoteControlAsO() {
+    return this.isRemoteControl.asObservable();
+  }
+
+  public getIsRemoteControl(): boolean {
+    return this.isRemoteControl.getValue();
+  }
+
+  public setIsRemoteControl(enabled: boolean) {
+    this.isRemoteControl.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  // Enable Remote Control mode
+  public getEnableRemoteControlAsO() {
+    return this.enableRemoteControl.asObservable();
+  }
+
+  public getEnableRemoteControl(): boolean {
+    return this.enableRemoteControl.getValue();
+  }
+
+  public setEnableRemoteControl(enabled: boolean) {
+    this.enableRemoteControl.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  // Remote Control Instance Name
+  public getInstanceNameAsO() {
+    return this.instanceName.asObservable();
+  }
+
+  public getInstanceName(): string {
+    return this.instanceName.getValue();
+  }
+
+  public setInstanceName(name: string) {
+    this.instanceName.next(name);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
 
   public getNightModeBrightness(): number {
     return this.nightModeBrightness.getValue();
@@ -480,6 +560,9 @@ export class AppSettingsService {
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
+      isRemoteControl: this.isRemoteControl.getValue(),
+      enableRemoteControl: this.enableRemoteControl.getValue(),
+      instanceName: this.instanceName.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),

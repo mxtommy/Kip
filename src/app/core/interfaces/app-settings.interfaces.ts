@@ -25,6 +25,9 @@ export interface IAppConfig {
   autoNightMode: boolean;
   redNightMode: boolean;
   nightModeBrightness: number;
+  isRemoteControl: boolean;
+  enableRemoteControl: boolean;
+  instanceName: string;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;

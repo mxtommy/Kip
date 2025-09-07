@@ -76,6 +76,9 @@ export class SignalKDeltaService implements OnDestroy {
     maxObjectSize: 20,  // Object number of property limit
     enableFlattening: true // Enable or disable recursive flattening of objects
   };
+  private readonly DO_NOT_FLATTEN_PATHS = [  // StartWith paths fragment to exclude from flattening
+    'displays.',
+  ];
 
   constructor() {
     // Register WebSocket retry callback with ConnectionStateMachine
@@ -348,13 +351,20 @@ export class SignalKDeltaService implements OnDestroy {
           } else {
             // It's a path value source update.
             if ((typeof(item.value) == 'object') && (item.value !== null)) {
-              // Check if recursive flattening is enabled and possible
-              if (this.FLATTEN_CONFIG.enableFlattening &&
-                  this.canFlattenCompletely(item.value, this.FLATTEN_CONFIG.maxDepth, this.FLATTEN_CONFIG.maxObjectSize)) {
-
+              if (this.DO_NOT_FLATTEN_PATHS.some(sub_string => item.path.includes(sub_string))) {
+                // Skip flattening, treat as a single value
+                const dataPath: IPathValueData = {
+                  context: context,
+                  path: item.path,
+                  source: update.$source,
+                  timestamp: update.timestamp,
+                  value: item.value,
+                };
+                this._skValue$.next(dataPath);
+              } else if (this.FLATTEN_CONFIG.enableFlattening &&
+                this.canFlattenCompletely(item.value, this.FLATTEN_CONFIG.maxDepth, this.FLATTEN_CONFIG.maxObjectSize)) {
                 // Perform recursive flattening
                 const flattenedItems = this.flattenObjectValue(item.value, item.path);
-
                 flattenedItems.forEach(flatItem => {
                   const dataPath: IPathValueData = {
                     context: context,
