@@ -9,5 +9,6 @@
   { "title": "Datasets and Data Chart Widget", "file": "datasets.md" },
   { "title": "Gafana Integration", "file": "grafana.md" },
   { "title": "InfluxDB and Signal K", "file": "influxdb.md" },
+  { "title": "Kiosk Mode", "file": "kiosk.md" },
   { "title": "Contact Us", "file": "contact-us.md" }
 ]
