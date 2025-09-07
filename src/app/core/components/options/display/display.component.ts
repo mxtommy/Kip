@@ -44,8 +44,6 @@ export class SettingsDisplayComponent implements OnInit {
   /* If true, the display can be remotely controlled by another KIP via Signal K displays path. */
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
-  /* If true, display remote control UI to control another KIP instances via Signal K displays path. */
-  protected enableRemoteControl = model<boolean>(false);
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
   readonly LIGHT_THEME_NAME = "light-theme";
@@ -61,7 +59,6 @@ export class SettingsDisplayComponent implements OnInit {
     this.isLightTheme.set(this._settings.getThemeName() === this.LIGHT_THEME_NAME);
     this.isRedNightMode.set(this._settings.getRedNightMode());
     this.isRemoteControl.set(this._settings.getIsRemoteControl());
-    this.enableRemoteControl.set(this._settings.getEnableRemoteControl());
     this.instanceName.set(this._settings.getInstanceName());
   }
 
@@ -70,7 +67,6 @@ export class SettingsDisplayComponent implements OnInit {
     this._settings.setRedNightMode(this.isRedNightMode());
     this._settings.setNightModeBrightness(this.nightBrightness());
     this._settings.setIsRemoteControl(this.isRemoteControl());
-    this._settings.setEnableRemoteControl(this.enableRemoteControl());
     if (this.isRemoteControl()) {
       this._settings.setInstanceName(this.instanceName());
     } else {

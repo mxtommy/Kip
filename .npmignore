@@ -1,5 +1,6 @@
 # Manual project excludes
 /src
+/kip-plugin
 .angular/
 e2e/
 svg-templates/
@@ -10,7 +11,8 @@ angular.json
 tsconfig.json
 tslint.json
 protractor.conf.js
-
+COPILOT.md
+eslint.config.js
 
 # dependencies
 /node_modules

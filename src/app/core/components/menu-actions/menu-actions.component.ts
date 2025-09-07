@@ -9,7 +9,6 @@ import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-l
 import { uiEventService } from '../../services/uiEvent.service';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RemoteDashboardsService } from '../../services/remote-dashboards.service';
 
 interface MenuActionItem extends LargeIconTile {
   id: number;
@@ -35,7 +34,6 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected dashboard = inject(DashboardService);
   protected app = inject(AppService);
   private _settings = inject(AppSettingsService);
-  private readonly _remote = inject(RemoteDashboardsService);
   protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
   protected readonly menuItems = computed<MenuActionItem[]>(() => {
     const dashboards = this.dashboard.dashboards();

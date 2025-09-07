@@ -9,7 +9,6 @@ export const DefaultAppConfig: IAppConfig = {
   "redNightMode": false,
   "nightModeBrightness": 0.27,
   "isRemoteControl": false,
-  "enableRemoteControl": false,
   "instanceName": "",
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,

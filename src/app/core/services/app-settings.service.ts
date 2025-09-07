@@ -32,7 +32,6 @@ export class AppSettingsService {
   private redNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
   private isRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private enableRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   public proxyEnabled = false;
@@ -232,12 +231,6 @@ export class AppSettingsService {
       this.isRemoteControl.next(this.activeConfig.app.isRemoteControl);
     }
 
-    if (this.activeConfig.app.enableRemoteControl === undefined) {
-      this.setEnableRemoteControl(false);
-    } else {
-      this.enableRemoteControl.next(this.activeConfig.app.enableRemoteControl);
-    }
-
     if (this.activeConfig.app.instanceName === undefined) {
       this.setInstanceName('');
     } else {
@@ -373,26 +366,6 @@ export class AppSettingsService {
 
   public setIsRemoteControl(enabled: boolean) {
     this.isRemoteControl.next(enabled);
-    const appConf = this.buildAppStorageObject();
-
-    if (this.useSharedConfig) {
-      this.storage.patchConfig('IAppConfig', appConf);
-    } else {
-      this.saveAppConfigToLocalStorage();
-    }
-  }
-
-  // Enable Remote Control mode
-  public getEnableRemoteControlAsO() {
-    return this.enableRemoteControl.asObservable();
-  }
-
-  public getEnableRemoteControl(): boolean {
-    return this.enableRemoteControl.getValue();
-  }
-
-  public setEnableRemoteControl(enabled: boolean) {
-    this.enableRemoteControl.next(enabled);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {
@@ -561,7 +534,6 @@ export class AppSettingsService {
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
       isRemoteControl: this.isRemoteControl.getValue(),
-      enableRemoteControl: this.enableRemoteControl.getValue(),
       instanceName: this.instanceName.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),

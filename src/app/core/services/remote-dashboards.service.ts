@@ -38,6 +38,7 @@ export class RemoteDashboardsService {
       const dashboards = this._dashboard.dashboards();
 
       untracked(() => {
+        this.previousIsRemoteControl = isRemoteControl;
         let screensPayload: IScreensPayload = undefined;
         let activeDashboard: number = undefined;
         if (!isRemoteControl) {
@@ -112,8 +113,8 @@ export class RemoteDashboardsService {
       });
   }
 
-  public async setActiveDashboard(kipId: string, screenId: number | null): Promise<IV2CommandResponse> {
-    const body = screenId === null ? null : { screenId };
+  public async setActiveDashboard(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
+    const body = screenIdx === null ? null : { screenIdx };
     return lastValueFrom(
       this._http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/activeScreen`, body)
     );
