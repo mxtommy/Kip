@@ -122,6 +122,14 @@ For example, Signal K will notify KIP when a water depth or temperature sensor r
 ## Multiple User Profiles
 If you have different roles on board: captain, skipper, tactician, navigator, engineer—or simply different people with different needs, each can tailor KIP as they wish. The use of profiles also allows you to tie specific configuration arrangements to use cases or device form factors.
 
+## Remote Control Other KIP Displays
+Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device) from any KIP, including your phone.
+
+Use cases
+- Mast display: change dashboards from the cockpit.
+- Wall/helm screens: toggle dashboards without standing up or reaching for controls.
+- Non‑touch/no input: select dashboards when no keyboard/mouse is connected or touch is not supported/disabled.
+
 ## Dedicated Fullscreen instrument display (Kiosk Mode)
 Runs KIP on Raspberry Pi as a single application full-screen, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
 
