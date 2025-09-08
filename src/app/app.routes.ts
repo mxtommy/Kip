@@ -13,6 +13,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/components/options/tabs/tabs.component').then(m => m.TabsComponent),
     title: 'KIP - Options'
   },
+  { path: 'remote',
+    loadComponent: () => import('./core/components/remote-control/remote-control.component').then(m => m.RemoteControlComponent),
+    title: 'KIP - Remote Control'
+  },
   { path: 'help',
     loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent),
     title: 'KIP - Help'

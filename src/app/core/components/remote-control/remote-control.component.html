@@ -1,0 +1,41 @@
+<page-header [pageTitle]="pageTitle" />
+<mat-sidenav-container class="sidenav-remote-control-container">
+  <mat-sidenav mode="side" opened>
+    <mat-action-list>
+      @for (display of displays(); track $index) {
+        <button
+          mat-list-item
+          tabindex="0"
+          [class.selected]="selectedDisplayButtonId() === display.displayId"
+          (click)="displayDashboards(display.displayId)">{{ display.displayName }}</button>
+      }
+    </mat-action-list>
+  </mat-sidenav>
+  <mat-sidenav-content class="sidenav-remote-control-content">
+    @if (screens.isLoading()) {
+      <div class="loading-container" aria-label="Loading screens">
+        <mat-progress-spinner mode="indeterminate" diameter="64" strokeWidth="5"></mat-progress-spinner>
+      </div>
+    } @else if(screens.hasValue()) {
+      @for(screen of screens.value(); track screen.id) {
+        <tile-large-icon
+          tabindex="0"
+          #tile
+          [active]="activeScreen.value() === $index ? true : false"
+          [svgIcon]="screen.icon"
+          [iconSize]="72"
+          [label]="screen.name"
+          (click)="setActiveScreen($index)"
+        />
+      }
+    } @else {
+      <div class="empty-state-msg" role="status" aria-live="polite">
+        <mat-icon class="empty-state-icon" aria-hidden="true" color="primary">cast</mat-icon>
+        <div class="copy">
+          <p>Select an available KIP instance in the menu.</p>
+          <p>To allow remote control of a dashboard, on that KIP device open Options → Display → Remote Control and enable it.</p>
+        </div>
+      </div>
+    }
+  </mat-sidenav-content>
+</mat-sidenav-container>

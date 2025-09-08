@@ -1,0 +1,13 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../plugin",
+    "types": [],
+    "resolveJsonModule": true,
+    "sourceMap": false,
+    "module": "commonjs",
+    "moduleResolution": "node"
+  },
+  "include": ["./src/*.*"]
+}

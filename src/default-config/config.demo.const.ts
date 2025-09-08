@@ -8,6 +8,8 @@ export const DemoAppConfig: IAppConfig = {
   "autoNightMode": false,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
+  "isRemoteControl": false,
+  "instanceName": "",
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",

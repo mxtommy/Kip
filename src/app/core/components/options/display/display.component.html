@@ -54,6 +54,34 @@
             Enable light theme for brighter display settings.
         </mat-checkbox>
       </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Remote Control
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Enable remote dashboard management between KIP instances.
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-checkbox #isRemoteControlCb class="full-width"
+          [(ngModel)]="isRemoteControl"
+          name="isRemoteControl">
+            Allow this KIP dashboard to be changed remotely by other KIP instances.
+        </mat-checkbox>
+        <mat-form-field class="instance-name">
+          <mat-label>Instance Name</mat-label>
+          <input matInput
+            (ngModelChange)="displayForm.form.markAsDirty()"
+            name="instanceName"
+            placeholder="Ex. Mast"
+            [(ngModel)]="instanceName"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="!isRemoteControlCb.checked"
+            required>
+        </mat-form-field>
+      </mat-expansion-panel>
     </mat-accordion>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
