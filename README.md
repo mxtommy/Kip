@@ -58,6 +58,8 @@ Create and manage profiles for different roles, devices, or use cases. Each prof
 Meant to build purposeful screens with however many widgets you want, wherever you want them.
 
 Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards.
+
+Add widgets list sorted by category
 ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
 
 Intuitive widget configuration.
