@@ -129,7 +129,7 @@ Use cases
 - Non‑touch/no input: select dashboards when no keyboard/mouse is connected or touch is not supported/disabled.
 
 ## Dedicated Fullscreen instrument display (Kiosk Mode)
-Runs KIP on Raspberry Pi as a single application full-screen, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
+Runs KIP on Raspberry Pi as a single full-screen application, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
 
 ## Complementary Components
 Typical complementary components you may install (many are often bundled with Signal K distributions):
@@ -172,35 +172,15 @@ Those domains already have excellent, specialized open‑source tools. Instead o
 - **Signal K Plugins** – Domain‑specific enrichment (polars, performance calculations, derived environmental data, routing aids) published directly into the Signal K data model that KIP can then display.
 
 **Why this separation matters**
-Keeping KIP focused preserves responsiveness (lower CPU / memory), reduces UI clutter, and accelerates iteration on core sailing UX. Heavy analytics, complex workflow logic, and broad third‑party embedding stay where they are strongest—outside—but still feed KIP through the common Signal K data fabric.
 
-In short: use KIP to see & act on live sailing information; use the complementary tools to store it long‑term, analyze it deeply, automate decisions, or build advanced integrations.
-
-## Project Scope
-What KIP IS about:
-- Real‑time presentation of vessel & environment data (navigation, performance, systems) pulled from Signal K.
-- Fast, legible, touchscreen‑friendly dashboards for underway decision making.
-- Configurable widgets (gauges, charts, timers, controls) tuned for sailing operations.
-
-What KIP deliberately IS NOT trying to become:
-- A full data lake / long‑term time‑series historian.
-- A general purpose automation / rules / orchestration engine.
-- A universal external web‑app embedding or mash‑up framework.
-- A low‑code integration hub for arbitrarily wiring protocols and services.
-
-Those domains already have excellent, specialized open‑source tools. Instead of re‑implementing them, KIP plays nicely alongside them within a Signal K based onboard stack.
-
-**Processing & Extensions**
-- **Signal K Plugins** – Domain‑specific enrichment (polars, performance calculations, derived environmental data, routing aids) published directly into the Signal K data model that KIP can then display.
-
-**Why this separation matters**
-Keeping KIP focused preserves responsiveness (lower CPU / memory), reduces UI clutter, and accelerates iteration on core sailing UX. Heavy analytics, complex workflow logic, and broad third‑party embedding stay where they are strongest—outside—but still feed KIP through the common Signal K data fabric.
+Keeping KIP focused preserves responsiveness (lower CPU / memory), reduces UI clutter, and accelerates core sailing user experience development. Heavy analytics, complex workflow logic, and broad third‑party embedding stay where they are strongest—outside—but still feed KIP through the common Signal K data fabric.
 
 In short: use KIP to see & act on live sailing information; use the complementary tools to store it long‑term, analyze it deeply, automate decisions, or build advanced integrations.
 
 **Tools**
+
 Linux, Mac, RPi, or Windows dev platform supported
-1. Install the latest Node version (v16+, v18 recommended)
+1. Install the latest Node version (v20+)
 2. Download your favorite coding IDE (we use the free Visual Studio Code)
 3. Create your own GitHub KIP fork.
 4. Configure your IDE's source control to point to your forked KIP instance (with Visual Studio Code, GitHub support is built-in) and get the fork's master branch locally.
@@ -212,12 +192,12 @@ Linux, Mac, RPi, or Windows dev platform supported
 2. Check out this new branch.
 3. In a command shell (or in the Visual Studio Code Terminal window), go to the root of your local project branch folder, if not done automatically by your IDE.
 4. Install project dependencies using the NPM package and dependency manager: run `npm install`. NPM will read the Kip project dependencies, download, and install everything automatically for you.
-5. Build the app locally using Angular CLI: from that same project root folder, run `ng build`. The CLI tool will build KIP.
+5. Build the app locally using Angular CLI: from that same project root folder, run `npm run build:all`. The CLI tool will build KIP.
 
 **Setup**
 1. Fire up your local dev instance with `npm run dev`.
-2. Hit Run/Start Debugging in Visual Studio Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`. Alternatively, to start the dev server and connect using remote devices such as your phone:  
-   `ng serve --configuration=dev --serve-path=/@mxtommy/kip/ --host=<your computer's IP> --port=4200 --disable-host-check`
+2. Hit Run/Start Debugging in Visual Studio Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`. Alternatively, to start the dev server and allow remote devices connections, such as with your phone or RPi:  
+   `ng serve --configuration=dev --serve-path=/@mxtommy/kip/ --host=<your computer's IP> --port=4200`
 3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*  
@@ -228,7 +208,8 @@ Use the following tool and command line:
 `npx pwa-asset-generator ./src/assets/favicon.svg ./src/assets/ -i ./src/index.html -m ./src manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
 
 **Share**
-Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged, and included in the next release.
+
+Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged, and included in the next release. It's always optimal to sync with us prior to engaging in extensive new development work.
 
 ## Development Instructions & Guidelines
 
@@ -250,4 +231,4 @@ For guidance on high-performance widget animations (e.g., wind dial rotations, l
 - **Widget Development**: Always extend `BaseWidgetComponent` (see COPILOT.md).
 - **Angular Patterns**: Use signals, standalone components, and modern control flow.
 - **Theming**: Follow KIP's theme system for consistent UI.
-- **Code Quality**: Run `npm run lint` before commits (enforced by Husky).
+- **Code Quality**: Run `npm run lint` before commits.
