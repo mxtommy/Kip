@@ -99,13 +99,13 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 Get the latest version of KIP to see what's new!
 
 ### Widget Samples
-Various
+Gauges
 ![Sample Gauges Image](./images/KipGaugeSample1-1024x545.png)
 
-Electrical and Tank Monitoring Sample
+Various
 ![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
 
-Freeboard-SK Integration
+Freeboard-SK Integration with Autopilot
 ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
 
 Grafana Integration
