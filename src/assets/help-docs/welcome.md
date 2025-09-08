@@ -58,3 +58,28 @@ Save your night vision by automatically switching KIP to day or night mode based
 
 ## Multiple User Profiles and Configuration Sharing
 KIP supports multiple user profiles, allowing different roles on board—such as captain, skipper, tactician, navigator, or engineer—to tailor the interface to their needs. Profiles can also be used to tie specific configuration arrangements to use cases or device form factors. See the Login & Configurations help sections for mode details.
+
+## Remote Control Other KIP Displays
+Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
+
+Use cases
+- Mast display: change dashboards from the cockpit.
+- Wall/helm screens: toggle dashboards without standing up or reaching for controls.
+- Headless/non‑touch: select dashboards when no keyboard/mouse is connected.
+
+Setup
+1) On the device you want to control (Target KIP)
+- Open Options → Display → Remote Control.
+- Enable “Allow this KIP dashboard to be managed remotely.”
+- Set an Instance Name (easier to recognize later).
+
+2) On the device you’ll control from (Controller KIP)
+- Open the Actions menu, access Settings and choose Remote Control.
+- Pick a device from the list (by Instance Name).
+- Choose a dashboard tile to set it active on the target device.
+
+Notes and tips
+- Both devices must connect to the same Signal K server.
+- Permissions: you must use an authenticated connection to Signal K user (Connectivity Login to Server toggle).
+- If the device list is empty, verify the Target KIP has “Allow this dashboard to be managed remotely” enabled and a name set.
+- Changes are sent instantly; the UI shows the currently active dashboard.

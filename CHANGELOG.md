@@ -1,3 +1,8 @@
+# v 3.10.0
+# New Feature
+* Remote Control Plugin: Instantly switch dashboards on any KIP from any KIP (or your phone). Perfect for mast displays, hard‑to‑reach screens, and non‑touch devices. Open Actions → Settings → Remote Control, pick a device, tap a dashboard—done. Enable remote control in Options → Display → Remote Control.
+# Improvements
+* Added Kiosk Mode setup guide to Help
 # v 3.9.0
 # New Feature
 * A new dashboard navigation experience. Introducing our all-new Dashboard sidenav designed for speed. Effortlessly jump between dashboards with a single tap, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
