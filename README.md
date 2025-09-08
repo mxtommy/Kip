@@ -16,7 +16,7 @@ Key features include:
 - **Remote Control**: Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
 - **Kiosk Mode**: Run as a single full-screen application; mast, helm, portable display used as a dedicated instrument panel, a chartplotter, etc.
 
-KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
+KIP is open-source under the MIT license, built by the community and 100% free. [Join the community](https://discord.gg/AMDYT2DQga) on Discord or contribute to the project on GitHub!
 
 ## Read the Help introduction How-to
 Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
@@ -51,9 +51,6 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 
 ### Multiple User Profiles
 Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings.
-
-### Open Source and Community-Driven
-KIP is built with modern web technologies and is open-source under the MIT license. Like many others, join the community on Discord or contribute to the project on GitHub to help shape its future.
 
 ## User Experience
 
@@ -133,19 +130,6 @@ Use cases
 
 ## Dedicated Fullscreen instrument display (Kiosk Mode)
 Runs KIP on Raspberry Pi as a single application full-screen, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
-
-## Complementary Components
-Typical complementary components you may install (many are often bundled with Signal K distributions):
-
-**Navigation & Charting**
-- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
-
-**Visual Flow / Automation**
-- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
-
-**Data Storage & Analytics**
-- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
-- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
 
 ## Complementary Components
 Typical complementary components you may install (many are often bundled with Signal K distributions):
