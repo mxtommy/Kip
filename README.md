@@ -6,8 +6,6 @@ With its responsive design, KIP works seamlessly across phones, tablets, Raspber
 
 ![KIP](./images/KIPDemo.png)
 
-![Form factor support](./images/formfactor.png)
-
 Key features include:
 - **Flexible Layouts**: Build purposeful dashboards with an easy-to-use and intuitive grid layout system. Drag widgets into place and make adjustments with simple gestures or clicks.
 - **Reusable Widget Library**: A wide range of widgets for numerical, textual, and graphical data, as well as advanced controls like switches, sliders, and autopilot operation.
@@ -15,6 +13,8 @@ Key features include:
 - **Data State Notifications**: Stay informed with visual and audio alerts for critical data thresholds.
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
+- **Remote Control**: Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
+- **Kiosk Mode**: Run as a single full-screen application; mast, helm, portable display used as a dedicated instrument panel, a chartplotter, etc.
 
 KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
 
@@ -22,7 +22,6 @@ KIP is open-source under the MIT license, built by the community and 100% free. 
 Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
 
 # Design Goal
-
 The goal is to replicate and enhance the functionality of modern marine instrumentation displays while providing unmatched customization and flexibility. The design principles include:
 
 - **Full-Screen Utilization**: Ensure the display uses the entire screen without requiring scrolling, maximizing visibility and usability.
@@ -30,6 +29,8 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - **Touchscreen Excellence**: Deliver an intuitive and seamless experience for touchscreen users, with support for gestures like swiping and tapping.
 - **Cross-Device Compatibility**: Guarantee a consistent and responsive experience across phones, tablets, computers, and other devices.
 - **Modern Browser Support**: Include support for the latest versions of Chromium and other modern web browsers to ensure optimal performance and compatibility.
+
+![Form factor support](./images/formfactor.png)
 
 ## Features
 
