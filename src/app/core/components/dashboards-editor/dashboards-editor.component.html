@@ -8,7 +8,8 @@
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
       (press)="onPress(index, $event)"
-      (doubletap)="editDashboard(index)">
+      (doubletap)="editDashboard(index)"
+      tabindex="0">
       <div class="item-index">{{index + 1}}</div>
       <div >
         <mat-icon class="dashboard-icon"

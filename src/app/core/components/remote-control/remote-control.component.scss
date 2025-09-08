@@ -1,0 +1,71 @@
+@use '@angular/material' as mat;
+
+.sidenav-remote-control-container {
+  height: calc(100% - 63px - 24px);
+  width: calc(100% - 48px);
+  margin: 0px 24px 24px 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+mat-sidenav {
+  width: 150px;
+   @include mat.sidenav-overrides((
+    container-shape: square
+  ));
+}
+
+.selected {
+  background-color: var(--mat-sys-inverse-on-surface);
+}
+
+.loading-container {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sidenav-remote-control-content {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  height: 100%;
+  width: calc(100% - 150px);
+  padding: 5px 5px 5px 5px;
+  gap: 5px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  flex: 1 1 auto;           // take remaining space
+  min-height: 0;
+}
+
+tile-large-icon {
+  width: 190px;
+}
+
+.empty-state-msg {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: calc(100% - 150px);
+  min-height: 70vh;
+  padding: 2rem;
+  text-align: center;
+  color: var(--mat-sys-outline-variant);
+  font-style: italic;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: var(--mat-sys-outline-variant);
+  margin-bottom: 1rem;
+}

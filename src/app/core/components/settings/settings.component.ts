@@ -36,6 +36,9 @@ export class SettingsComponent {
       case 'datainspector':
         this._router.navigate(['/data']);
         break;
+      case 'remotecontrol':
+        this._router.navigate(['/remote']);
+        break;
       case 'options':
         this._router.navigate(['/options']);
         break;

@@ -97,23 +97,24 @@ export interface IKipDisplayInfo {
 /** Response for GET /plugins/kip/displays */
 export type IKipDisplayList = IKipDisplayInfo[];
 
+/** A single screen entry */
+export interface IKipScreenItem {
+  id: string;
+  name: string;
+  icon: string;
+}
+
 /** Response for GET /plugins/kip/displays/{displayId} */
-export type IKipDisplayScreen = Record<string, unknown> | null;
+export type IKipDisplayScreen = IKipScreenItem[];
 
 /** Response for GET /plugins/kip/displays/{displayId}/activeScreen */
 export type IKipActiveScreen = number | null;
 
-/** Standard success envelope from plugin PUTs */
-export interface IKipSuccessResponse {
-  state: 'SUCCESS';
-  statusCode: 200;
-}
-
-/** Standard error envelope from plugin */
-export interface IKipErrorResponse {
-  state: 'FAILED';
+/** Standard response envelope from plugin PUTs */
+export interface IKipResponse {
+  state: string;
   statusCode: number;
-  message: string;
+  message?: string;
 }
 
 /** Request body for PUT /plugins/kip/displays/{displayId}/activeScreen */

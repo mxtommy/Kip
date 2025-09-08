@@ -11,17 +11,18 @@ export default (server: ServerAPI): Plugin => {
   } as const;
 
   // Helpers
-  function getDisplaySelfPath(displayId: string, suffix?: string): string {
+  function getDisplaySelfPath(displayId: string, suffix?: string): object | undefined {
     const tail = suffix ? `.${suffix}` : ''
     const want = `displays.${displayId}${tail}`
     const full = server.getSelfPath(want)
-    server.debug(`getDisplaySelfPath: displayId: ${displayId}, suffix: ${suffix}, want=${want}, fullPath=${full}`)
-    return full
+    server.debug(`getDisplaySelfPath: displayId: ${displayId}, suffix: ${suffix}, want=${want}, fullPath=${JSON.stringify(full)}`)
+    return full ? full : undefined;
   }
 
-  function getAvailableDisplays(): Record<string, { displayName?: string }> | string | undefined {
-    const fullPath = server.getSelfPath('displays');
-    return server.getPath(fullPath) as Record<string, { displayName?: string }> | undefined
+  function getAvailableDisplays(): object | undefined {
+    const fullPath = server.getSelfPath('displays') ;
+    server.debug(`getAvailableDisplays: fullPath=${JSON.stringify(fullPath)}`);
+    return fullPath ? fullPath : undefined;
   }
 
   function pathToDotNotation(path: string): string {
@@ -100,7 +101,7 @@ export default (server: ServerAPI): Plugin => {
         server.debug(`** PUT ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
         try {
           const dottedPath = pathToDotNotation(req.path);
-          server.debug(`Updating SK path ${dottedPath} with body`)
+          server.debug(`Updating SK path ${dottedPath}`)
           server.handleMessage(
             plugin.id,
             {
@@ -164,17 +165,17 @@ export default (server: ServerAPI): Plugin => {
         server.debug(`** GET ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
         try {
           const displays = getAvailableDisplays();
-          const items =
-            displays && typeof displays === 'object'
-              ? Object.entries(displays)
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                .filter(([_, v]) => v && typeof v === 'object')
-                .map(([displayId, v]: [string, { displayName?: string }]) => ({
+          const items = displays && typeof displays === 'object'
+            ? Object.entries(displays)
+                .filter(([, v]) => v && typeof v === 'object')
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map(([displayId, v]: [string, any]) => ({
                   displayId,
-                  displayName: v.displayName ?? null
+                  displayName: v?.value?.displayName ?? null
                 }))
-              : [];
-
+            : [];
+          server.debug(`getAvailableDisplays returned: ${JSON.stringify(displays)}`);
+          server.debug(`Found ${items.length} displays: ${JSON.stringify(items)}`);
           return res.status(200).json(items);
         } catch (error) {
           server.error(`Error reading displays: ${String((error as Error).message || error)}`);
@@ -190,14 +191,15 @@ export default (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing displayId parameter')
           }
 
-          const fullPath = getDisplaySelfPath(displayId);
-          const value = server.getPath(fullPath);
+          const node = getDisplaySelfPath(displayId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const screens = (node as any)?.value?.screens ?? null;
 
-          if (value === undefined) {
+          if (screens === undefined) {
             return sendFail(res, 404, `Display ${displayId} not found`)
           }
 
-          return sendOk(res, value);
+          return sendOk(res, screens);
         } catch (error) {
           server.error(`Error reading display ${req.params?.displayId}: ${String((error as Error).message || error)}`);
           return sendFail(res, 400, (error as Error).message)
@@ -212,14 +214,15 @@ export default (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing displayId parameter')
           }
 
-          const fullPath = getDisplaySelfPath(displayId, 'activeScreen');
-          const value = server.getPath(fullPath);
+          const node = getDisplaySelfPath(displayId, 'activeScreen');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const idx = (node as any)?.value ?? null;
 
-          if (value === undefined) {
+          if (idx === undefined) {
             return sendFail(res, 404, `Active screen for display ${displayId} not found`)
           }
 
-          return sendOk(res, value);
+          return sendOk(res, idx);
         } catch (error) {
           server.error(`Error reading activeScreen for ${req.params?.displayId}: ${String((error as Error).message || error)}`);
           return sendFail(res, 400, (error as Error).message)
