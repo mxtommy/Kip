@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { DataService } from './data.service';
-import { IDatasetServiceDatapoint, IDatasetServiceDatasetConfig } from './data-set.service';
+import { Injectable, inject } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, of } from "rxjs";
+import { catchError, switchMap } from "rxjs/operators";
+import { DataService } from "./data.service";
+import { IDatasetServiceDatapoint, IDatasetServiceDatasetConfig } from "./data-set.service";
 
 // Interface for REST history feed response
 interface IHistoryFeedResponse {
@@ -20,7 +20,7 @@ interface IHistoryFeedResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root"
 })
 export class HistoryService {
   private http = inject(HttpClient);
@@ -33,10 +33,10 @@ export class HistoryService {
   public fetchHistoryData(
     config: IDatasetServiceDatasetConfig,
     maxDataPoints: number,
-    historyApiUrl?: string
+    historyApiUrl: string = `${window.location.protocol}//${window.location.host}/signalk/v1/history`
   ): Observable<IDatasetServiceDatapoint[]> {
-    // Use provided URL or default to localhost:3000
-    const baseUrl = historyApiUrl || `http://localhost:3000/signalk/v1/history`;
+    // Use provided URL or default to current host
+    const baseUrl = historyApiUrl;
     const endTime = new Date();
     
     // Calculate time range based on dataset configuration
@@ -46,7 +46,7 @@ export class HistoryService {
     const cleanPath = this.normalizePathKey(config.path);
     
     const params = new URLSearchParams({
-      context: 'vessels.self',
+      context: "vessels.self",
       from: timeRange.start.toISOString(),
       to: timeRange.end.toISOString(),
       paths: `${cleanPath}:max`
@@ -67,7 +67,7 @@ export class HistoryService {
 
         // Process historical data points
         const datapoints: IDatasetServiceDatapoint[] = [];
-        const unit = this.data.getPathUnitType(config.path) || 'unitless';
+        const unit = this.data.getPathUnitType(config.path) || "unitless";
         const domain = this.resolveAngleDomain(config.path, unit);
 
         // Plugin-controlled scheduling: only return data points that fit the requested schedule
@@ -78,12 +78,12 @@ export class HistoryService {
             const timestamp = new Date(row[0] as string).getTime();
             const value = row[1] as number;
             
-            if (typeof value === 'number' && !isNaN(value)) {
+            if (typeof value === "number" && !isNaN(value)) {
               const datapoint: IDatasetServiceDatapoint = {
                 timestamp,
                 data: {
-                  value: unit === 'rad' 
-                    ? (domain === 'signed' 
+                  value: unit === "rad" 
+                    ? (domain === "signed" 
                         ? this.normalizeToSigned(value)
                         : this.normalizeToDirection(value))
                     : value,
@@ -107,32 +107,45 @@ export class HistoryService {
   }
 
   /**
+   * Convert time scale format to ISO 8601 duration format
+   */
+  private getISO8601Duration(config: IDatasetServiceDatasetConfig): string {
+    switch (config.timeScaleFormat) {
+      case "Last 30 Minutes":
+        return "PT30M";
+      case "Last 5 Minutes":
+        return "PT5M";
+      case "Last Minute":
+        return "PT1M";
+      case "hour":
+        return `PT${config.period}H`;
+      case "minute":
+        return `PT${config.period}M`;
+      default: // "second"
+        return `PT${config.period}S`;
+    }
+  }
+
+  /**
+   * Convert ISO 8601 duration to milliseconds for internal calculations
+   */
+  private durationToMs(duration: string): number {
+    const match = duration.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/);
+    if (!match) return 0;
+    
+    const hours = parseInt(match[1] || "0", 10);
+    const minutes = parseInt(match[2] || "0", 10);
+    const seconds = parseFloat(match[3] || "0");
+    
+    return (hours * 60 * 60 + minutes * 60 + seconds) * 1000;
+  }
+
+  /**
    * Calculate appropriate time range based on dataset configuration
    */
   private calculateTimeRange(config: IDatasetServiceDatasetConfig, endTime: Date): { start: Date, end: Date } {
-    let timeRangeMs: number;
-
-    switch (config.timeScaleFormat) {
-      case "Last 30 Minutes":
-        timeRangeMs = 30 * 60 * 1000;
-        break;
-      case "Last 5 Minutes":
-        timeRangeMs = 5 * 60 * 1000;
-        break;
-      case "Last Minute":
-        timeRangeMs = 1 * 60 * 1000;
-        break;
-      case "hour":
-        timeRangeMs = config.period * 60 * 60 * 1000;
-        break;
-      case "minute":
-        timeRangeMs = config.period * 60 * 1000;
-        break;
-      default: // "second"
-        timeRangeMs = config.period * 1000;
-        break;
-    }
-
+    const duration = this.getISO8601Duration(config);
+    const timeRangeMs = this.durationToMs(duration);
     const startTime = new Date(endTime.getTime() - timeRangeMs);
     return { start: startTime, end: endTime };
   }
@@ -148,29 +161,26 @@ export class HistoryService {
   ): [string, ...unknown[]][] {
     if (data.length === 0) return [];
 
-    // Calculate the appropriate interval based on the dataset configuration
-    let intervalMs: number;
+    // Calculate the appropriate interval based on the dataset configuration using ISO 8601 durations
+    const getSchedulingInterval = (config: IDatasetServiceDatasetConfig): string => {
+      switch (config.timeScaleFormat) {
+        case "Last 30 Minutes":
+          return "PT15S"; // 15 seconds
+        case "Last 5 Minutes":
+          return "PT5S"; // 5 seconds
+        case "Last Minute":
+          return "PT1S"; // 1 second
+        case "hour":
+          return "PT30S"; // 30 seconds
+        case "minute":
+          return "PT1S"; // 1 second
+        default: // "second"
+          return "PT0.2S"; // 200ms
+      }
+    };
     
-    switch (config.timeScaleFormat) {
-      case "Last 30 Minutes":
-        intervalMs = 15000; // 15 seconds
-        break;
-      case "Last 5 Minutes":
-        intervalMs = 5000; // 5 seconds
-        break;
-      case "Last Minute":
-        intervalMs = 1000; // 1 second
-        break;
-      case "hour":
-        intervalMs = 30000; // 30 seconds
-        break;
-      case "minute":
-        intervalMs = 1000; // 1 second
-        break;
-      default: // "second"
-        intervalMs = 200; // 200ms
-        break;
-    }
+    const intervalDuration = getSchedulingInterval(config);
+    const intervalMs = this.durationToMs(intervalDuration);
 
     // Filter data to match the desired interval and prevent duplicates
     const filteredData: [string, ...unknown[]][] = [];
@@ -202,11 +212,11 @@ export class HistoryService {
 
   // Utility methods for path and angle normalization
   private normalizePathKey(path: string): string {
-    return path.replace(/^vessels\.self\./, '').replace(/^self\./, '');
+    return path.replace(/^vessels\.self\./, "").replace(/^self\./, "");
   }
 
-  private resolveAngleDomain(path: string, unit: string): 'scalar' | 'direction' | 'signed' {
-    if (unit !== 'rad') return 'scalar';
+  private resolveAngleDomain(path: string, unit: string): "scalar" | "direction" | "signed" {
+    if (unit !== "rad") return "scalar";
     
     const signedAnglePaths = new Set<string>([
       "navigation.attitude.roll",
@@ -219,7 +229,7 @@ export class HistoryService {
     ]);
 
     const normalized = this.normalizePathKey(path);
-    return signedAnglePaths.has(normalized) ? 'signed' : 'direction';
+    return signedAnglePaths.has(normalized) ? "signed" : "direction";
   }
 
   private mod(a: number, n: number): number { 
