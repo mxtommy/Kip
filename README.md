@@ -121,9 +121,11 @@ Grafana Integration
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
 ## Night Mode
-Keep your night vision with automatic or manual day and night switching. The image below looks very dark, but at night... it's perfect!
+Keep your night vision with automatic or manual day and night switching, and color preserving dim mode or an all Red theme. The image below looks very dark, but at night... it's perfect!
 
-![Night mode](./images/KipNightMode-1024.png)
+![Night mode - All Red](./images/KipNightMode-1024.png)
+
+![Night mode - Brightness](./images/KipBrightness-1024.png)
 
 ## Harness the Power of Data State Notifications
 Stay informed with notifications about the state of the data you are interested in.
