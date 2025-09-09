@@ -248,6 +248,19 @@ export class WidgetService {
       componentClassName: 'WidgetHorizonComponent'
     },
     {
+      name: 'Heel Gauge',
+      description: 'Dedicated heel (roll) angle gauge with smooth needle animation and server-provided zone highlighting; displays port/stbd side and magnitude in degrees.',
+      icon: 'pitchRollGauge',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-heel-gauge',
+      componentClassName: 'WidgetHeelGaugeComponent'
+    },
+    {
       name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',

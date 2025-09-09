@@ -1,0 +1,46 @@
+<widget-host
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+
+>
+  <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid" class="heel-gauge-svg">
+    <defs>
+      <linearGradient id="heelGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" [attr.stop-color]="theme().zoneWarn"/>
+        <stop offset="50%" [attr.stop-color]="theme().contrastDim"/>
+        <stop offset="100%" [attr.stop-color]="theme().zoneWarn"/>
+      </linearGradient>
+    </defs>
+    <!-- Zones arc group dynamically injected via *ngFor over highlights() -->
+     @if (zoneHighlights().length > 0) {
+        @for(h of zoneHighlights(); track $index) {
+          <path [attr.d]="h.path" [attr.fill]="h.fill" [attr.stroke]="h.fill" [attr.stroke-width]="h.width" fill="none"/>
+        }
+     }
+    <!-- Static dial background -->
+    <circle cx="100" cy="100" r="90" [attr.fill]="theme().cardColor" stroke="none" />
+    <circle cx="100" cy="100" r="88" [attr.fill]="theme().background" stroke="none" />
+    <!-- Tick marks -->
+    <g class="ticks">
+        @for(t of majorTicks(); track $index) {
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" stroke-width="2" />
+          @if ($index % 2 === 0) {
+            <text [attr.x]="t.tx" [attr.y]="t.ty" text-anchor="middle" alignment-baseline="middle" [attr.fill]="theme().contrastDim" font-size="10" font-family="Roboto">{{ t.label }}</text>
+          }
+        }
+    </g>
+    <!-- Needle group (rotated) -->
+    <g #needleGroup [attr.transform]="'rotate(' + needleAngle() + ' 100 100)'" class="needle">
+      <line x1="100" y1="100" x2="100" y2="25" [attr.stroke]="needleColor()" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="6" [attr.fill]="needleColor()" />
+    </g>
+    <!-- Value / label -->
+    <text x="100" y="125" text-anchor="middle" font-family="Roboto" font-size="40" font-weight="bold" [attr.fill]="valueColor()">
+      {{ displayValue() }}
+      <tspan font-size="20" dy="-15">°</tspan>
+    </text>
+    <text x="100" y="150" text-anchor="middle" font-family="Roboto" font-size="16" font-weight="bold" [attr.fill]="theme().contrastDim">{{ heelSide() }}</text>
+    <text x="100" y="170" text-anchor="middle" font-family="Roboto" font-size="14" font-weight="normal" [attr.fill]="theme().contrastDim">{{ widgetProperties.config.displayName }}</text>
+  </svg>
+</widget-host>

@@ -40,6 +40,7 @@ import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widg
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
+import { WidgetHeelGaugeComponent } from '../../../widgets/widget-heel-gauge/widget-heel-gauge.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 
@@ -103,7 +104,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       WidgetLabelComponent,
       WidgetSliderComponent,
       WidgetWindTrendsChartComponent,
-      WidgetHorizonComponent
+      WidgetHorizonComponent,
+      WidgetHeelGaugeComponent
     ]);
   }
 
