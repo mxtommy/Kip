@@ -66,9 +66,6 @@ Meant to build purposeful dashboards with however many widgets you want, whereve
 
 Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards.
 
-Organize your dashboards and access tools
-![Options and Dashboards](./images/Options.png)
-
 Add widget lists sorted by category
 ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
 
@@ -80,6 +77,9 @@ See what Signal K has to offer that you can leverage with widgets. Select it and
 
 Many units are supported. Choose your preferred app defaults, then tweak them widget-by-widget as necessary. KIP will automatically convert the units for you.
 ![Units Configuration Image](./images/KipConfig-Units-1024.png)
+
+Organize your dashboards and access tools
+![Options and Dashboards](./images/Options.png)
 
 ## Reusable Widget Library
 All KIP widgets are visual presentation controls that are very versatile, with multiple advanced configuration options available to suit your needs:
