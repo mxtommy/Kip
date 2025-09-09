@@ -43,6 +43,9 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - Swipe left and right to access notifications and other system features quickly.
 - Use keyboard shortcuts for essential features, ensuring fast and efficient navigation across devices.
 
+![Sidenav Dashboard Access](./images/ActionSidenav.png)
+Sidenav for quick access to all important features.
+
 ### Progressive Web App (PWA) Support
 Run KIP in full-screen mode without browser controls, just like a native mobile app. This feature is supported on most mobile operating systems. Follow your browser's instructions to install KIP as a PWA for quick and easy access. It's usually just a few clicks, such as "Add to Home Screen".
 
@@ -59,11 +62,14 @@ Create and manage profiles for different roles, devices, or use cases. Each prof
 ## User Experience
 
 ### Flexible and Easy
-Meant to build purposeful screens with however many widgets you want, wherever you want them.
+Meant to build purposeful dashboards with however many widgets you want, wherever you want them.
 
 Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards.
 
-Add widgets list sorted by category
+Organize your dashboards and access tools
+![Options and Dashboards](./images/Options.png)
+
+Add widget lists sorted by category
 ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
 
 Intuitive widget configuration.
