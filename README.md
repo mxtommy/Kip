@@ -18,9 +18,9 @@ Key features include:
 
 KIP is open-source under the MIT license, built by the community and 100% free. [Join the community](https://discord.gg/AMDYT2DQga) on Discord or contribute to the project on GitHub!
 
-## Installations Ideas
+## Installations Showcase
 ![Form factor support](./images/exterior_user_installs.png)
-In addition to the obvious navstation, tablet and phone applications, users have taken KIP outside using Raspberry Pi and Pi Zero computers, rugged tablets and all kinds of touch screens.
+In addition to the obvious navstation, tablet and phone use cases, users have taken KIP outside using Raspberry Pi and Pi Zero computers, rugged tablets and all kinds of cheap to expensive touch screens.
 
 ## Read the Help introduction How-to
 You just installed KIP and your stuck; read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
