@@ -46,3 +46,6 @@ yarn-error.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Local scripts
+link-kip.sh
