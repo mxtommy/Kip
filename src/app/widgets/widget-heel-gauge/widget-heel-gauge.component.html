@@ -2,45 +2,84 @@
   [(config)]="widgetProperties.config"
   [id]="widgetProperties.uuid"
   (configChange)="updateConfig($event)"
-
 >
-  <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid" class="heel-gauge-svg">
-    <defs>
-      <linearGradient id="heelGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" [attr.stop-color]="theme().zoneWarn"/>
-        <stop offset="50%" [attr.stop-color]="theme().contrastDim"/>
-        <stop offset="100%" [attr.stop-color]="theme().zoneWarn"/>
-      </linearGradient>
-    </defs>
-    <!-- Zones arc group dynamically injected via *ngFor over highlights() -->
-     @if (zoneHighlights().length > 0) {
-        @for(h of zoneHighlights(); track $index) {
-          <path [attr.d]="h.path" [attr.fill]="h.fill" [attr.stroke]="h.fill" [attr.stroke-width]="h.width" fill="none"/>
+  <div class="heel-inclinometer">
+    <!-- Fine scale (-5 .. +5) -->
+    <svg class="scale fine" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="fineTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color: rgba(255,255,255,0.25);" />
+          <stop offset="45%" style="stop-color: rgba(255,255,255,0.10);" />
+          <stop offset="100%" style="stop-color: rgba(255,255,255,0.00);" />
+        </linearGradient>
+      </defs>
+      <!-- Glass tube background with rounded ends -->
+      <path class="tube-background" d="M 60,70 A 2400,2400 0 0,0 340,70 A 10,10 0 0,1 340,90 A 2400,2400 0 0,1 60,90 A 10,10 0 0,1 60,70 Z" />
+      <path class="tube-highlight" d="M 60,71 A 2400,2400 0 0,0 340,71 A 8,8 0 0,1 340,77 A 2400,2400 0 0,1 60,77 A 8,8 0 0,1 60,71 Z" />
+      <path class="tube-highlight-secondary" d="M 60,83 A 2400,2400 0 0,0 340,83 A 8,8 0 0,1 340,86 A 2400,2400 0 0,1 60,86 A 8,8 0 0,1 60,83 Z" />
+      <!-- Scale line -->
+      <path #finePath class="scale-line" d="M 60,90 A 2400,2400 0 0,0 340,90" />
+      <!-- Tick marks groups -->
+      <g class="tick-marks">
+        @for(t of fineTicks(); track $index) {
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.5 : 1" />
         }
-     }
-    <!-- Static dial background -->
-    <circle cx="100" cy="100" r="90" [attr.fill]="theme().cardColor" stroke="none" />
-    <circle cx="100" cy="100" r="88" [attr.fill]="theme().background" stroke="none" />
-    <!-- Tick marks -->
-    <g class="ticks">
-        @for(t of majorTicks(); track $index) {
-          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" stroke-width="2" />
-          @if ($index % 2 === 0) {
-            <text [attr.x]="t.tx" [attr.y]="t.ty" text-anchor="middle" alignment-baseline="middle" [attr.fill]="theme().contrastDim" font-size="10" font-family="Roboto">{{ t.label }}</text>
-          }
+      </g>
+      <g class="inner-tick-marks">
+        @for(t of fineInnerTicks(); track $index) {
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
         }
-    </g>
-    <!-- Needle group (rotated) -->
-    <g #needleGroup [attr.transform]="'rotate(' + needleAngle() + ' 100 100)'" class="needle">
-      <line x1="100" y1="100" x2="100" y2="25" [attr.stroke]="needleColor()" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="100" cy="100" r="6" [attr.fill]="needleColor()" />
-    </g>
-    <!-- Value / label -->
-    <text x="100" y="125" text-anchor="middle" font-family="Roboto" font-size="40" font-weight="bold" [attr.fill]="valueColor()">
-      {{ displayValue() }}
-      <tspan font-size="20" dy="-15">°</tspan>
-    </text>
-    <text x="100" y="150" text-anchor="middle" font-family="Roboto" font-size="16" font-weight="bold" [attr.fill]="theme().contrastDim">{{ heelSide() }}</text>
-    <text x="100" y="170" text-anchor="middle" font-family="Roboto" font-size="14" font-weight="normal" [attr.fill]="theme().contrastDim">{{ widgetProperties.config.displayName }}</text>
-  </svg>
+      </g>
+      <g class="scale-values">
+        @for(lbl of fineLabels(); track $index) {
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y" text-anchor="middle" dominant-baseline="hanging" [attr.font-size]="lbl.value === 0 ? 14 : 12" font-family="Roboto" [attr.fill]="theme().contrast">{{ lbl.text }}</text>
+        }
+      </g>
+      <!-- Pointer -->
+      <g class="pointer" [class.ready]="ready()" [attr.transform]="finePointerTransform()">
+        <ellipse rx="7" ry="10" [attr.fill]="theme().contrast" />
+      </g>
+    </svg>
+
+    <div class="brand" [attr.style]="'color:' + theme().contrastDim">HEEL</div>
+
+    <!-- Coarse scale (-35 .. +35) -->
+    <svg class="scale coarse" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="coarseTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color: rgba(255,255,255,0.25);" />
+          <stop offset="45%" style="stop-color: rgba(255,255,255,0.10);" />
+          <stop offset="100%" style="stop-color: rgba(255,255,255,0.00);" />
+        </linearGradient>
+      </defs>
+      <path class="tube-background" d="M 40,90 A 400,400 0 0,0 360,90 A 10,10 0 0,1 360,110 A 400,400 0 0,1 40,110 A 10,10 0 0,1 40,90 Z" />
+      <path class="tube-highlight" d="M 40,92 A 400,400 0 0,0 360,92 A 8,8 0 0,1 360,96 A 400,400 0 0,1 40,96 A 8,8 0 0,1 40,92 Z" />
+      <path class="tube-highlight-secondary" d="M 40,103 A 400,400 0 0,0 360,103 A 8,8 0 0,1 360,106 A 400,400 0 0,1 40,106 A 8,8 0 0,1 40,103 Z" />
+      <path #coarsePath class="scale-line" d="M 40,110 A 400,400 0 0,0 360,110" />
+      <g class="tick-marks">
+        @for(t of coarseTicks(); track $index) {
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.5 : 1" />
+        }
+      </g>
+      <g class="inner-tick-marks">
+        @for(t of coarseInnerTicks(); track $index) {
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
+        }
+      </g>
+      <g class="scale-values">
+        @for(lbl of coarseLabels(); track $index) {
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y" text-anchor="middle" dominant-baseline="hanging" [attr.font-size]="lbl.value === 0 ? 14 : 12" font-family="Roboto" [attr.fill]="theme().contrast">{{ lbl.text }}</text>
+        }
+      </g>
+      <g class="pointer" [class.ready]="ready()" [attr.transform]="coarsePointerTransform()">
+        <ellipse rx="7" ry="10" [attr.fill]="theme().contrast" />
+      </g>
+    </svg>
+
+    <div class="value-display" [attr.style]="'color:' + theme().contrast">
+      <span class="angle">{{ displayValue() }}°</span>
+      <span class="side" [attr.style]="'color:' + theme().contrastDim">{{ heelSide() }}</span>
+      <span class="label" [attr.style]="'color:' + theme().contrastDim">{{ widgetProperties.config.displayName }}</span>
+    </div>
+  </div>
 </widget-host>

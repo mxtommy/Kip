@@ -1,8 +1,72 @@
-.heel-gauge-svg {
-  width: 100%;
+:host {
+  display: block;
   height: 100%;
+  width: 100%;
 }
 
-.needle {
-  transition: transform 0s linear;
+.heel-inclinometer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+  font-family: Roboto, Arial, sans-serif;
+  .brand {
+    font-size: 12px;
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-top: -6px;
+  }
+  .value-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 4px;
+    .angle {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .side {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .label {
+      font-size: 11px;
+      margin-top: 1px;
+    }
+  }
+}
+
+svg.scale {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+svg.scale .tube-background {
+  fill: var(--card-color, #202020);
+  filter: none;
+}
+
+svg.scale .tube-highlight {
+  fill: rgba(255, 255, 255, 0.15);
+}
+
+svg.scale .tube-highlight-secondary {
+  fill: rgba(255, 255, 255, 0.07);
+}
+
+svg.scale .scale-line {
+  stroke: none;
+  fill: none;
+}
+
+svg.scale .pointer ellipse {
+  fill: currentColor;
+}
+
+svg.scale .pointer {
+  transition: transform 0.4s ease;
 }

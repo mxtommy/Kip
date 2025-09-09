@@ -1,12 +1,12 @@
-import { Component, OnInit, OnDestroy, computed, effect, signal, viewChild, ElementRef, inject, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { animateRotation } from '../../core/utils/svg-animate.util';
 import { Subscription } from 'rxjs';
-import { getHighlights } from '../../core/utils/zones-highlight.utils';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 
-interface IArcHighlight { path: string; fill: string; width: number; }
+// Internal helper interfaces
+interface ITickPoint { x1: number; y1: number; x2: number; y2: number; major: boolean; }
+interface ILabelPoint { x: number; y: number; text: string; value: number; }
 
 @Component({
   selector: 'widget-heel-gauge',
@@ -14,9 +14,12 @@ interface IArcHighlight { path: string; fill: string; width: number; }
   styleUrls: ['./widget-heel-gauge.component.scss'],
   imports: [WidgetHostComponent],
 })
-export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+
+export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly ngZone = inject(NgZone);
-  private readonly needleGroup = viewChild<ElementRef<SVGGElement>>('needleGroup');
+  // Paths for fine and coarse scales
+  private readonly finePathRef = viewChild<ElementRef<SVGPathElement>>('finePath');
+  private readonly coarsePathRef = viewChild<ElementRef<SVGPathElement>>('coarsePath');
 
   protected readonly heelDeg = signal<number | null>(null);
   protected readonly absHeel = computed(() => {
@@ -35,44 +38,25 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     return v.toFixed(dec);
   });
 
-  protected readonly needleAngle = signal(0); // rotation relative center (0 = up)
-  private previousAngle = 0;
-  private needleAnimFrames = new WeakMap<SVGGElement, number>();
+  // Ready flag after initial frame to enable CSS transitions if needed
+  protected readonly ready = signal(false);
 
-  // Dial tick marks (every 15° across -45..45, with longer major ticks every 30°)
-  protected readonly majorTicks = computed(() => {
-    const ticks: { x1: number; y1: number; x2: number; y2: number; tx: number; ty: number; label: string }[] = [];
-    const min = -45, max = 45;
-    const centerX = 100, centerY = 100, outerR = 88, innerRMinor = 82, innerRMajor = 78, labelR = 70;
-    for (let v = min; v <= max; v += 15) {
-      const angle = this.valueToDialAngle(v, min, max); // -90..90
-      const rad = (angle - 90) * Math.PI / 180;
-      const isMajor = (v - min) % 30 === 0;
-      const innerR = isMajor ? innerRMajor : innerRMinor;
-      const xOuter = centerX + outerR * Math.cos(rad);
-      const yOuter = centerY + outerR * Math.sin(rad);
-      const xInner = centerX + innerR * Math.cos(rad);
-      const yInner = centerY + innerR * Math.sin(rad);
-      const xLabel = centerX + labelR * Math.cos(rad);
-      const yLabel = centerY + labelR * Math.sin(rad) + 4; // small vertical tweak
-      ticks.push({
-        x1: xInner,
-        y1: yInner,
-        x2: xOuter,
-        y2: yOuter,
-        tx: xLabel,
-        ty: yLabel,
-        label: isMajor ? `${Math.abs(v)}` : ''
-      });
-    }
-    return ticks;
-  });
+  // Generated tick & label arrays
+  protected readonly fineTicks = signal<ITickPoint[]>([]);
+  protected readonly fineInnerTicks = signal<ITickPoint[]>([]);
+  protected readonly fineLabels = signal<ILabelPoint[]>([]);
+  protected readonly coarseTicks = signal<ITickPoint[]>([]);
+  protected readonly coarseInnerTicks = signal<ITickPoint[]>([]);
+  protected readonly coarseLabels = signal<ILabelPoint[]>([]);
 
-  // Zones metadata subscription
+  // Pointer transforms
+  protected readonly finePointerTransform = computed(() => this.computePointerTransform('fine'));
+  protected readonly coarsePointerTransform = computed(() => this.computePointerTransform('coarse'));
+
+  // (Legacy) Zones metadata subscription – retained for potential future adaptation
   private metaSub: Subscription | null = null;
-  protected readonly zoneHighlights = signal<IArcHighlight[]>([]);
-  protected readonly valueColor = signal<string>('');
-  protected readonly needleColor = signal<string>('');
+  // Horizontal variant currently does not render zones visually
+  protected readonly zoneHighlights = signal<[]>([]);
 
   constructor() {
     super();
@@ -99,12 +83,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
       ignoreZones: false
     };
 
-    effect(() => {
-      if (this.theme()) {
-        this.valueColor.set(this.theme().contrast);
-        this.needleColor.set(this.theme().contrast);
-      }
-    });
+  // Trigger recalculations if theme changes (e.g., for dynamic colors)
+  effect(() => { this.theme(); });
   }
 
   ngOnInit(): void {
@@ -124,33 +104,11 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
       }
       const val = newValue.data.value;
       this.heelDeg.set(val);
-      this.animateNeedle(val);
+  // trigger pointer recompute; transforms are computed from heelDeg
     });
 
-    if (!this.widgetProperties.config.ignoreZones) {
-      this.observeMetaStream();
-      this.metaSub = this.zones$.subscribe(zones => {
-        if (zones && zones.length > 0) {
-          // Convert zones to highlight arcs (simplified: map ranges to arc sectors)
-          const lower = -45; // visualization domain
-          const upper = 45;
-          const min = lower; const max = upper;
-          const highlightsRaw = getHighlights(zones, this.theme(), this.widgetProperties.config.paths['heelAngle'].convertUnitTo, this.unitsService, min, max, false);
-          const arcs: IArcHighlight[] = [];
-          for (const z of highlightsRaw) {
-            if (z.from == null || z.to == null) continue;
-            const clampedFrom = Math.max(min, Math.min(max, z.from));
-            const clampedTo = Math.max(min, Math.min(max, z.to));
-            const startAngle = this.valueToDialAngle(clampedFrom, min, max);
-            const endAngle = this.valueToDialAngle(clampedTo, min, max);
-            arcs.push({ path: this.describeArc(100, 100, 80, startAngle, endAngle), fill: z.color, width: 6 });
-          }
-          this.zoneHighlights.set(arcs);
-        } else {
-          this.zoneHighlights.set([]);
-        }
-      });
-    }
+  // Zones not visualized; ensure empty
+  this.zoneHighlights.set([]);
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -158,49 +116,88 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     this.startWidget();
   }
 
-  private animateNeedle(val: number) {
-    const clamped = Math.max(-45, Math.min(45, val));
-    const targetAngle = this.valueToDialAngle(clamped, -45, 45);
-    const el = this.needleGroup()?.nativeElement;
-    if (!el) {
-      this.needleAngle.set(targetAngle);
-      this.previousAngle = targetAngle;
-      return;
+  private computePointerTransform(scale: 'fine' | 'coarse'): string {
+    const angle = this.heelDeg();
+    if (angle == null) return '';
+    const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
+    if (!pathEl) return '';
+    const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -35, max: 35 };
+    const val = Math.max(domain.min, Math.min(domain.max, angle));
+    const pathLength = pathEl.getTotalLength();
+    const pct = (val - domain.min) / (domain.max - domain.min);
+    const distance = pct * pathLength;
+    const point = pathEl.getPointAtLength(distance);
+    // Edge delta for tangent
+    const delta = distance < 10 || distance > pathLength - 10 ? 5 : 1;
+    const before = pathEl.getPointAtLength(Math.max(0, distance - delta));
+    const after = pathEl.getPointAtLength(Math.min(pathLength, distance + delta));
+    const tangentAngle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
+    // Vertical offset to center pointer ellipse in tube (approx 10px upward)
+    const verticalOffset = -10;
+    return `translate(${point.x}, ${point.y + verticalOffset}) rotate(${tangentAngle})`;
+  }
+
+  private buildScale(pathEl: SVGPathElement, min: number, max: number, majorStep: number, minorStep: number) {
+    const pathLength = pathEl.getTotalLength();
+    const ticks: ITickPoint[] = [];
+    const innerTicks: ITickPoint[] = [];
+    const labels: ILabelPoint[] = [];
+    for (let v = min; v <= max + 1e-6; v += minorStep) {
+      const isMajor = Math.abs((v - min) % majorStep) < 1e-6;
+      const pct = (v - min) / (max - min);
+      const distance = pct * pathLength;
+      const point = pathEl.getPointAtLength(distance);
+      // Tangent angle for orientation
+      const before = pathEl.getPointAtLength(Math.max(0, distance - 1));
+      const after = pathEl.getPointAtLength(Math.min(pathLength, distance + 1));
+      const angle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
+      const outerLen = isMajor ? 8 : 4;
+      const innerLen = isMajor ? 6 : 3;
+      const outerStart = this.pointFromAngle(point, angle + 90, 0);
+      const outerEnd = this.pointFromAngle(point, angle + 90, outerLen);
+      ticks.push({ x1: outerStart.x, y1: outerStart.y, x2: outerEnd.x, y2: outerEnd.y, major: isMajor });
+      const innerStart = this.pointFromAngle(point, angle - 90, 0);
+      const innerEnd = this.pointFromAngle(point, angle - 90, innerLen);
+      innerTicks.push({ x1: innerStart.x, y1: innerStart.y, x2: innerEnd.x, y2: innerEnd.y, major: isMajor });
+      if (isMajor) {
+        const labelPoint = this.pointFromAngle(point, angle + 90, outerLen + 8);
+        labels.push({ x: labelPoint.x, y: labelPoint.y, text: `${Math.abs(v)}${v === 0 ? '°' : ''}` , value: v});
+      }
     }
-    animateRotation(el, this.previousAngle, targetAngle, 600, () => this.previousAngle = targetAngle, this.needleAnimFrames, [100,100], this.ngZone);
-    this.needleAngle.set(targetAngle);
+    return { ticks, innerTicks, labels };
   }
 
-  private valueToDialAngle(value: number, min: number, max: number): number {
-    // Map value range [-45,45] to dial arc [-90, 90]
-    const pct = (value - min) / (max - min); // 0..1
-    return -90 + pct * 180;
+  private pointFromAngle(point: {x: number; y: number}, angle: number, distance: number) {
+    const rad = angle * Math.PI/180;
+    return { x: point.x + Math.cos(rad) * distance, y: point.y + Math.sin(rad) * distance };
   }
 
-  // SVG arc helper
-  private polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-    return {
-      x: centerX + (radius * Math.cos(angleInRadians)),
-      y: centerY + (radius * Math.sin(angleInRadians))
-    };
-  }
-  private describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number) {
-    const start = this.polarToCartesian(x, y, radius, endAngle);
-    const end = this.polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-    const d = ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
-    return d;
+  ngAfterViewInit(): void {
+    // Build scales once view paths are available
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        const finePath = this.finePathRef()?.nativeElement;
+        const coarsePath = this.coarsePathRef()?.nativeElement;
+        if (finePath) {
+          const s = this.buildScale(finePath, -5, 5, 1, 0.5);
+            this.fineTicks.set(s.ticks);
+            this.fineInnerTicks.set(s.innerTicks);
+            this.fineLabels.set(s.labels);
+        }
+        if (coarsePath) {
+          const s2 = this.buildScale(coarsePath, -35, 35, 10, 5);
+          this.coarseTicks.set(s2.ticks);
+          this.coarseInnerTicks.set(s2.innerTicks);
+          this.coarseLabels.set(s2.labels);
+        }
+        this.ready.set(true);
+      });
+    });
   }
 
   ngOnDestroy(): void {
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
-    const el = this.needleGroup()?.nativeElement;
-    if (el) {
-      const id = this.needleAnimFrames.get(el);
-      if (id) cancelAnimationFrame(id);
-    }
   }
 }
