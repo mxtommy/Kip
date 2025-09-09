@@ -120,8 +120,8 @@ Freeboard-SK Integration with Autopilot
 Grafana Integration
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
-## Night Mode
-Keep your night vision with automatic or manual day and night switching, and color preserving dim mode or an all Red theme. The image below looks very dark, but at night... it's perfect!
+## Night Modes
+Keep your night vision with automatic or manual day and night switching to a color preserving dim mode or an all Red theme. The images below look very dark, but at night... they are perfect!
 
 ![Night mode - All Red](./images/KipNightMode-1024.png)
 
