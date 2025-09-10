@@ -132,9 +132,9 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const before = pathEl.getPointAtLength(Math.max(0, distance - delta));
     const after = pathEl.getPointAtLength(Math.min(pathLength, distance + delta));
     const tangentAngle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
-    // Vertical offset to center pointer ellipse in tube (approx 10px upward)
-    const verticalOffset = -10;
-    return `translate(${point.x}, ${point.y + verticalOffset}) rotate(${tangentAngle})`;
+  // Use fixed center line Y for visual alignment rather than path point.y offset
+  const fixedCenterY = scale === 'fine' ? 80 : 100; // Derived from original SVG pointer translate Y
+  return `translate(${point.x}, ${fixedCenterY}) rotate(${tangentAngle})`;
   }
 
   private buildScale(pathEl: SVGPathElement, min: number, max: number, majorStep: number, minorStep: number) {
@@ -191,6 +191,10 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
           this.coarseLabels.set(s2.labels);
         }
         this.ready.set(true);
+        // Initialize to 0° if no data yet so pointers start centered
+        if (this.heelDeg() == null) {
+          this.heelDeg.set(0);
+        }
       });
     });
   }
