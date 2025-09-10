@@ -3,6 +3,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { getColors } from '../../core/utils/themeColors.utils';
 
 // Internal helper interfaces
 interface ITickPoint { x1: number; y1: number; x2: number; y2: number; major: boolean; }
@@ -21,22 +22,24 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   private readonly finePathRef = viewChild<ElementRef<SVGPathElement>>('finePath');
   private readonly coarsePathRef = viewChild<ElementRef<SVGPathElement>>('coarsePath');
 
-  protected readonly heelDeg = signal<number | null>(null);
-  protected readonly absHeel = computed(() => {
-    const v = this.heelDeg();
+  protected readonly angleDeg = signal<number | null>(null);
+  protected readonly absAngle = computed(() => {
+    const v = this.angleDeg();
     return v == null ? null : Math.abs(v);
   });
-  protected readonly heelSide = computed(() => {
-    const v = this.heelDeg();
+  protected readonly angleSide = computed(() => {
+    const v = this.angleDeg();
     if (v == null) return '';
     return v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
   });
   protected readonly displayValue = computed(() => {
-    const v = this.heelDeg();
+    const v = this.angleDeg();
     if (v == null) return '--';
     const dec = this.widgetProperties?.config?.numDecimal ?? 1;
     return v.toFixed(dec);
   });
+
+  protected themeColor = signal('contrast');
 
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
@@ -50,8 +53,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly coarseLabels = signal<ILabelPoint[]>([]);
 
   // Pointer transforms
-  protected readonly finePointerTransform = computed(() => this.computePointerTransform('fine'));
-  protected readonly coarsePointerTransform = computed(() => this.computePointerTransform('coarse'));
+  protected readonly finePointerTransform = computed(() => this.computePointerTransform(this.angleDeg(), 'fine'));
+  protected readonly coarsePointerTransform = computed(() => this.computePointerTransform(this.angleDeg(), 'coarse'));
 
   // (Legacy) Zones metadata subscription – retained for potential future adaptation
   private metaSub: Subscription | null = null;
@@ -62,29 +65,33 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     super();
 
     this.defaultConfig = {
-      displayName: 'Heel',
+      displayName: "Heel",
       filterSelfPaths: true,
       paths: {
-        heelAngle: {
-          description: 'Heel / Roll Angle',
-            path: 'navigation.attitude.roll',
-            source: '',
-            pathType: 'number',
-            isPathConfigurable: true,
-            convertUnitTo: 'deg',
-            sampleTime: 1000,
-            pathRequired: true
+        "angle": {
+          description: "Heel / Roll / Other Angle",
+          path: "self.navigation.attitude.roll",
+          source: "default",
+          pathType: "number",
+          isPathConfigurable: true,
+          convertUnitTo: "deg",
+          sampleTime: 1000,
+          pathRequired: true
         }
       },
       numInt: 2,
       numDecimal: 1,
+      color: "contrast",
       enableTimeout: false,
       dataTimeout: 5,
       ignoreZones: false
     };
 
-  // Trigger recalculations if theme changes (e.g., for dynamic colors)
-  effect(() => { this.theme(); });
+    // Trigger recalculations if theme changes (e.g., for dynamic colors)
+    effect(() => {
+      this.theme();
+      this.setColors();
+    });
   }
 
   ngOnInit(): void {
@@ -97,27 +104,29 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     this.unsubscribeMetaStream();
     this.metaSub?.unsubscribe();
 
-    this.observeDataStream('heelAngle', newValue => {
-      if (!newValue || !newValue.data || newValue.data.value == null) {
-        this.heelDeg.set(null);
+    this.observeDataStream("angle", newValue => {
+      if (!newValue || !newValue.data) {
+        this.angleDeg.set(null);
         return;
       }
       const val = newValue.data.value;
-      this.heelDeg.set(val);
-  // trigger pointer recompute; transforms are computed from heelDeg
+      this.angleDeg.set(val);
     });
 
-  // Zones not visualized; ensure empty
-  this.zoneHighlights.set([]);
+    // Zones not visualized; ensure empty
+    this.zoneHighlights.set([]);
   }
+
+  private setColors(): void {
+      this.themeColor.set(getColors(this.widgetProperties.config.color, this.theme()).color);
+    }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
   }
 
-  private computePointerTransform(scale: 'fine' | 'coarse'): string {
-    const angle = this.heelDeg();
+  private computePointerTransform(angle: number | null, scale: 'fine' | 'coarse'): string {
     if (angle == null) return '';
     const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
     if (!pathEl) return '';
@@ -132,9 +141,10 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const before = pathEl.getPointAtLength(Math.max(0, distance - delta));
     const after = pathEl.getPointAtLength(Math.min(pathLength, distance + delta));
     const tangentAngle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
-  // Use fixed center line Y for visual alignment rather than path point.y offset
-  const fixedCenterY = scale === 'fine' ? 80 : 100; // Derived from original SVG pointer translate Y
-  return `translate(${point.x}, ${fixedCenterY}) rotate(${tangentAngle})`;
+    // Use fixed center line Y for visual alignment rather than path point.y offset
+  // Adjusted fixed centers after moving scales to top of SVG
+  const fixedCenterY = scale === 'fine' ? 80 : 135;
+    return `translate(${point.x}, ${fixedCenterY}) rotate(${tangentAngle})`;
   }
 
   private buildScale(pathEl: SVGPathElement, min: number, max: number, majorStep: number, minorStep: number) {
@@ -161,14 +171,14 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
       innerTicks.push({ x1: innerStart.x, y1: innerStart.y, x2: innerEnd.x, y2: innerEnd.y, major: isMajor });
       if (isMajor) {
         const labelPoint = this.pointFromAngle(point, angle + 90, outerLen + 8);
-        labels.push({ x: labelPoint.x, y: labelPoint.y, text: `${Math.abs(v)}${v === 0 ? '°' : ''}` , value: v});
+        labels.push({ x: labelPoint.x, y: labelPoint.y, text: `${Math.abs(v)}`, value: v });
       }
     }
     return { ticks, innerTicks, labels };
   }
 
-  private pointFromAngle(point: {x: number; y: number}, angle: number, distance: number) {
-    const rad = angle * Math.PI/180;
+  private pointFromAngle(point: { x: number; y: number }, angle: number, distance: number) {
+    const rad = angle * Math.PI / 180;
     return { x: point.x + Math.cos(rad) * distance, y: point.y + Math.sin(rad) * distance };
   }
 
@@ -180,9 +190,9 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
         const coarsePath = this.coarsePathRef()?.nativeElement;
         if (finePath) {
           const s = this.buildScale(finePath, -5, 5, 1, 0.5);
-            this.fineTicks.set(s.ticks);
-            this.fineInnerTicks.set(s.innerTicks);
-            this.fineLabels.set(s.labels);
+          this.fineTicks.set(s.ticks);
+          this.fineInnerTicks.set(s.innerTicks);
+          this.fineLabels.set(s.labels);
         }
         if (coarsePath) {
           const s2 = this.buildScale(coarsePath, -35, 35, 10, 5);
@@ -192,8 +202,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
         }
         this.ready.set(true);
         // Initialize to 0° if no data yet so pointers start centered
-        if (this.heelDeg() == null) {
-          this.heelDeg.set(0);
+        if (this.angleDeg() == null) {
+          this.angleDeg.set(0);
         }
       });
     });

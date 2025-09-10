@@ -2,42 +2,33 @@
   display: block;
   height: 100%;
   width: 100%;
+  font-family: "Roboto";
 }
 
-.heel-inclinometer {
+.value-display {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  height: 100%;
-  gap: 4px;
-  font-family: Roboto, Arial, sans-serif;
   .brand {
-    font-size: 12px;
-    letter-spacing: 2px;
+    color: var(--kip-contrast-color);
+    font-size: 36px;
     font-weight: 600;
     margin-top: -6px;
   }
-  .value-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 4px;
-    .angle {
-      font-size: 24px;
-      font-weight: 600;
-    }
-    .side {
-      font-size: 12px;
-      margin-top: 2px;
-    }
-    .label {
-      font-size: 11px;
-      margin-top: 1px;
-    }
+  .angle {
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .side {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .label {
+    font-size: 11px;
+    margin-top: 1px;
   }
 }
+
 
 svg.scale {
   width: 100%;
@@ -46,16 +37,35 @@ svg.scale {
 }
 
 svg.scale .tube-background {
-  fill: var(--card-color, #202020);
-  filter: none;
+  fill: var(--mat-sys-surface-container);
+  filter: url(#tubeEffect);
 }
 
 svg.scale .tube-highlight {
-  fill: rgba(255, 255, 255, 0.15);
+  fill: url(#fineTubeGradient);
+  opacity: 0.3;
+  mix-blend-mode: soft-light;
+  transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+.tube-highlight-color {
+  stop-color: var(--mat-sys-surface-container);
+}
+.opacity1 {
+  opacity: 0.12;
+}
+.opacity2 {
+  opacity: 0.05;
+}
+.opacity3 {
+  opacity: 0;
 }
 
 svg.scale .tube-highlight-secondary {
-  fill: rgba(255, 255, 255, 0.07);
+  fill: url(#fineTubeGradient);
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  transition: fill 0.3s ease, opacity 0.3s ease;
 }
 
 svg.scale .scale-line {
@@ -63,10 +73,18 @@ svg.scale .scale-line {
   fill: none;
 }
 
-svg.scale .pointer ellipse {
-  fill: currentColor;
-}
-
 svg.scale .pointer {
   transition: transform 0.4s ease;
+}
+
+.tick-marks {
+  stroke: var(--kip-contrast-dim-color);
+}
+
+.scale-values {
+  fill: var(--kip-contrast-color);
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-size: 12;
+  font-weight: bold;
 }

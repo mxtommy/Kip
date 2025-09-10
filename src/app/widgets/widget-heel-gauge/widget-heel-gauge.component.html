@@ -3,18 +3,32 @@
   [id]="widgetProperties.uuid"
   (configChange)="updateConfig($event)"
 >
-  <div class="heel-inclinometer">
     <!-- Fine scale (-5 .. +5) -->
     <svg class="scale fine" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="fineTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color: rgba(255,255,255,0.25);" />
-          <stop offset="45%" style="stop-color: rgba(255,255,255,0.10);" />
-          <stop offset="100%" style="stop-color: rgba(255,255,255,0.00);" />
+          <stop offset="0%" class="tube-highlight-color opacity1" />
+          <stop offset="45%" class="tube-highlight-color opacity2" />
+          <stop offset="100%" class="tube-highlight-color opacity3" />
         </linearGradient>
+        <filter id="tubeEffect">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+          <feSpecularLighting in="blur" surfaceScale="4" specularConstant=".6" specularExponent="30" lighting-color="#white" result="specular">
+            <fePointLight x="200" y="-50" z="150" />
+            <fePointLight x="200" y="150" z="80" />
+          </feSpecularLighting>
+          <feComposite in="specular" in2="SourceAlpha" operator="in" result="specular" />
+          <feComposite in="SourceGraphic" in2="specular" operator="arithmetic" k1="0" k2="1" k3="0.7" k4="0" />
+        </filter>
       </defs>
       <!-- Glass tube background with rounded ends -->
       <path class="tube-background" d="M 60,70 A 2400,2400 0 0,0 340,70 A 10,10 0 0,1 340,90 A 2400,2400 0 0,1 60,90 A 10,10 0 0,1 60,70 Z" />
+
+            <!-- Pointer -->
+      <g class="pointer" [class.ready]="ready()" [attr.transform]="finePointerTransform()">
+        <ellipse rx="7" ry="10" [attr.fill]="themeColor()" />
+      </g>
+
       <path class="tube-highlight" d="M 60,71 A 2400,2400 0 0,0 340,71 A 8,8 0 0,1 340,77 A 2400,2400 0 0,1 60,77 A 8,8 0 0,1 60,71 Z" />
       <path class="tube-highlight-secondary" d="M 60,83 A 2400,2400 0 0,0 340,83 A 8,8 0 0,1 340,86 A 2400,2400 0 0,1 60,86 A 8,8 0 0,1 60,83 Z" />
       <!-- Scale line -->
@@ -22,26 +36,26 @@
       <!-- Tick marks groups -->
       <g class="tick-marks">
         @for(t of fineTicks(); track $index) {
-          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.5 : 1" />
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke-width]="t.major ? 1.5 : 1" />
         }
       </g>
-      <g class="inner-tick-marks">
+      <g class="tick-marks">
         @for(t of fineInnerTicks(); track $index) {
-          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
         }
       </g>
       <g class="scale-values">
         @for(lbl of fineLabels(); track $index) {
-          <text [attr.x]="lbl.x" [attr.y]="lbl.y" text-anchor="middle" dominant-baseline="hanging" [attr.font-size]="lbl.value === 0 ? 14 : 12" font-family="Roboto" [attr.fill]="theme().contrast">{{ lbl.text }}</text>
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
         }
-      </g>
-      <!-- Pointer -->
-      <g class="pointer" [class.ready]="ready()" [attr.transform]="finePointerTransform()">
-        <ellipse rx="7" ry="10" [attr.fill]="theme().contrast" />
       </g>
     </svg>
 
-    <div class="brand" [attr.style]="'color:' + theme().contrastDim">HEEL</div>
+    <div class="value-display" [attr.style]="'color:' + themeColor()">
+      <span class="brand">{{ widgetProperties.config.displayName }}</span>
+      <span class="angle">{{ displayValue() }}°</span>
+      <span class="side" [attr.style]="'color:' + themeColor()">{{ angleSide() }}</span>
+    </div>
 
     <!-- Coarse scale (-35 .. +35) -->
     <svg class="scale coarse" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid meet">
@@ -58,28 +72,21 @@
       <path #coarsePath class="scale-line" d="M 40,110 A 400,400 0 0,0 360,110" />
       <g class="tick-marks">
         @for(t of coarseTicks(); track $index) {
-          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.5 : 1" />
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke-width]="t.major ? 1.5 : 1" />
         }
       </g>
-      <g class="inner-tick-marks">
+      <g class="tick-marks">
         @for(t of coarseInnerTicks(); track $index) {
-          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke]="theme().contrastDim" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
+          <line [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" [attr.stroke-width]="t.major ? 1.2 : 0.8" opacity="0.6" />
         }
       </g>
       <g class="scale-values">
         @for(lbl of coarseLabels(); track $index) {
-          <text [attr.x]="lbl.x" [attr.y]="lbl.y" text-anchor="middle" dominant-baseline="hanging" [attr.font-size]="lbl.value === 0 ? 14 : 12" font-family="Roboto" [attr.fill]="theme().contrast">{{ lbl.text }}</text>
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
         }
       </g>
       <g class="pointer" [class.ready]="ready()" [attr.transform]="coarsePointerTransform()">
-        <ellipse rx="7" ry="10" [attr.fill]="theme().contrast" />
+        <ellipse rx="7" ry="10" [attr.fill]="themeColor()" />
       </g>
     </svg>
-
-    <div class="value-display" [attr.style]="'color:' + theme().contrast">
-      <span class="angle">{{ displayValue() }}°</span>
-      <span class="side" [attr.style]="'color:' + theme().contrastDim">{{ heelSide() }}</span>
-      <span class="label" [attr.style]="'color:' + theme().contrastDim">{{ widgetProperties.config.displayName }}</span>
-    </div>
-  </div>
 </widget-host>
