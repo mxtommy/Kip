@@ -1,13 +1,14 @@
 import { AfterViewInit, Component, inject, input, OnDestroy, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
 import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 import { uiEventService } from '../../services/uiEvent.service';
 import { AppSettingsService } from '../../services/app-settings.service';
+import { Router, NavigationEnd } from '@angular/router';
+import { distinctUntilChanged, filter, map, startWith } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 interface MenuActionItem extends LargeIconTile {
@@ -22,19 +23,41 @@ interface MenuActionItem extends LargeIconTile {
 @Component({
   selector: 'menu-actions',
   standalone: true,
-  imports: [ MatIconModule, MatButtonModule, TileLargeIconComponent ],
+  imports: [MatIconModule, MatButtonModule, TileLargeIconComponent],
   templateUrl: './menu-actions.component.html',
   styleUrl: './menu-actions.component.scss'
 })
 
 export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected actionsSidenav = input.required<MatSidenav>();
-  private _router = inject(Router);
+  private readonly _router = inject(Router);
   protected uiEvent = inject(uiEventService);
   protected dashboard = inject(DashboardService);
   protected app = inject(AppService);
   private _settings = inject(AppSettingsService);
-  protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), {requireSync: true});
+  protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
+
+  // Reactive signal: true when URL is '/', '/dashboard', or any '/dashboard/*'
+  private readonly _initialDashboardMatch = (() => {
+    const tree = this._router.parseUrl(this._router.url);
+    const primary = tree.root.children['primary'];
+    const segments = primary ? primary.segments.map(s => s.path) : [];
+    return segments.length === 0 || segments[0] === 'dashboard';
+  })();
+  protected readonly isDashboardContext = toSignal(
+    this._router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      startWith<NavigationEnd | null>(null), // trigger initial evaluation
+      map(() => {
+        const tree = this._router.parseUrl(this._router.url);
+        const primary = tree.root.children['primary'];
+        const segments = primary ? primary.segments.map(s => s.path) : [];
+        return segments.length === 0 || segments[0] === 'dashboard';
+      }),
+      distinctUntilChanged()
+    ),
+    { initialValue: this._initialDashboardMatch }
+  );
   protected readonly menuItems = computed<MenuActionItem[]>(() => {
     const dashboards = this.dashboard.dashboards();
     const activeIdx = this.dashboard.activeDashboard();
@@ -83,17 +106,17 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         this.uiEvent.toggleFullScreen();
         break;
       case 'settings':
-        this._router.navigate([`settings`]);
+        this._router.navigate(['/settings']);
         break;
       case 'layout':
         this.dashboard.toggleStaticDashboard();
-      break;
-    case 'nightMode':
-      this.app.isNightMode.set(!this.app.isNightMode());
-      this.app.toggleDayNightMode();
-      break;
-    default:
-      break;
+        break;
+      case 'nightMode':
+        this.app.isNightMode.set(!this.app.isNightMode());
+        this.app.toggleDayNightMode();
+        break;
+      default:
+        break;
     }
   }
 
@@ -102,8 +125,5 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     this._router.navigate([`dashboard/${dashboardId}`]);
   }
 
-  protected isOnDashboardPage(): boolean {
-    const url = this._router.url;
-    return url.startsWith('/dashboard');
-  }
+  // (legacy helper methods removed in favor of isDashboardContext signal)
 }

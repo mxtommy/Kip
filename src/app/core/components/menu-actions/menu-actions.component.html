@@ -2,31 +2,57 @@
   <div class="actions-top-container">
     @if (uiEvent.fullscreenSupported()) {
       @if (!uiEvent.fullscreenStatus()) {
-        <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
+        <button
+          mat-flat-button
+          class="action-button"
+          tabindex="0"
+          (click)="onActionItem('toggleFullScreen')"
+        >
           <span class="material-icons">fullscreen</span>
         </button>
       } @else {
-      <button mat-flat-button class="action-button" tabindex="0" (click)="onActionItem('toggleFullScreen')">
+        <button
+          mat-flat-button
+          class="action-button"
+          tabindex="0"
+          (click)="onActionItem('toggleFullScreen')"
+        >
           <span class="material-icons">close_fullscreen</span>
         </button>
       }
-    }
-    @if (!isAutoNightMode()) {
+    } @if (!isAutoNightMode()) {
       @if (!app.isNightMode()) {
-        <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <button
+          mat-flat-button
+          class="action-button"
+          (click)="onActionItem('nightMode')"
+        >
           <span class="material-icons">mode_night</span>
         </button>
       } @else {
-        <button mat-flat-button class="action-button" (click)="onActionItem('nightMode')">
+        <button
+          mat-flat-button
+          class="action-button"
+          (click)="onActionItem('nightMode')"
+        >
           <span class="material-icons">light_mode</span>
         </button>
       }
     }
-    <button mat-flat-button class="action-button home-btn" tabindex="0" (click)="onActionItem('settings')">
-      <mat-icon height="24px" width="24px" style="height: 24px; width: 24px;" class="home-icon"
-          svgIcon="kip"
-          aria-hidden="false"
-        ></mat-icon>
+    <button
+      mat-flat-button
+      class="action-button home-btn"
+      tabindex="0"
+      (click)="onActionItem('settings')"
+    >
+      <mat-icon
+        height="24px"
+        width="24px"
+        style="height: 24px; width: 24px"
+        class="home-icon"
+        svgIcon="kip"
+        aria-hidden="false"
+      ></mat-icon>
     </button>
   </div>
   <div class="menu-item-container" #tileContainer>
@@ -43,7 +69,13 @@
     }
   </div>
   <div class="actions-bottom-container">
-    <button mat-flat-button class="action-button" style="width: 135px;" (click)="onActionItem('layout')" [disabled]="!isOnDashboardPage()">
+    <button
+      mat-flat-button
+      class="action-button"
+      style="width: 135px"
+      (click)="onActionItem('layout')"
+      [disabled]="!isDashboardContext()"
+    >
       <span class="material-icons">lock_open</span>
     </button>
   </div>
