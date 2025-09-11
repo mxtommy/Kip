@@ -367,7 +367,7 @@ export class WidgetService {
     },
     {
       name: 'Wind Trends',
-      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
+      description: 'Real-time True Wind trends with dual top axes for direction (degrees) and speed (knots). Displays live values and SMA over the current period average.',
       icon: 'windtrendsWidget',
       minWidth: 5,
       minHeight: 4,

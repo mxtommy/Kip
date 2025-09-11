@@ -1,3 +1,6 @@
+
+@motamman
+
 # About KIP
 
 KIP is a powerful and versatile marine instrumentation package designed to display [Signal K](https://signalk.org) data ([GitHub Projet](https://github.com/SignalK/signalk-server)). It replicates the functionality of modern Multi-Function Displays (MFDs) similar to most commercial products, while offering unmatched flexibility and customization. KIP can be tailored to any arrangement, displaying all kinds of data available from the [Signal K](https://signalk.org) server.
