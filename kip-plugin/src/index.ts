@@ -2,7 +2,7 @@ import { Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 
-export default (server: ServerAPI): Plugin => {
+const start = (server: ServerAPI): Plugin => {
 
   const API_PATHS = {
     DISPLAYS: `/displays`,
@@ -245,3 +245,4 @@ export default (server: ServerAPI): Plugin => {
 
   return plugin;
 }
+module.exports = start;

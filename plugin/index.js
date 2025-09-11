@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const server_api_1 = require("@signalk/server-api");
 const openapi = __importStar(require("./openApi.json"));
-exports.default = (server) => {
+const start = (server) => {
     const API_PATHS = {
         DISPLAYS: `/displays`,
         INSTANCE: `/displays/:displayId`,
@@ -255,3 +255,4 @@ exports.default = (server) => {
     };
     return plugin;
 };
+module.exports = start;
