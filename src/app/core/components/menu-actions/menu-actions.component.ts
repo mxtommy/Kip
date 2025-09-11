@@ -124,6 +124,4 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     this.actionsSidenav().close();
     this._router.navigate([`dashboard/${dashboardId}`]);
   }
-
-  // (legacy helper methods removed in favor of isDashboardContext signal)
 }
