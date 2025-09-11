@@ -1,3 +1,7 @@
+# v 3.10.4
+## Fixes
+* Dashboard edit button disabled by default on load. Fixes #805
+* Clicking the right sidenav Settings button closes the sidenav but does not navigate to the page on some browsers.
 # v 3.10.3
 ## Fixes
 * Failed to start: pluginConstructor is not a function. Fixes #808
