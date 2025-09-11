@@ -1,3 +1,8 @@
+# v 3.10.3
+## Fixes
+* Failed to start: pluginConstructor is not a function. Fixes #808
+# v 3.10.1 & v 3.10.2
+* Unpublished packages: manipulation errors
 # v 3.10.0
 # New Feature
 * Remote Control Plugin: Instantly switch dashboards on any KIP from any KIP (or your phone). Perfect for mast displays, hard‑to‑reach screens, and non‑touch devices. Open Actions → Settings → Remote Control, pick a device, tap a dashboard—done. Enable remote control in Options → Display → Remote Control.
