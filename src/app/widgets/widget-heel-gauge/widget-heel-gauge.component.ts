@@ -4,6 +4,7 @@ import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { ITheme } from '../../core/services/app-service';
 
 // Internal helper interfaces
 interface ITickPoint { x1: number; y1: number; x2: number; y2: number; major: boolean; }
@@ -79,8 +80,12 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
           pathRequired: true
         }
       },
+      gauge: {
+        type: 'angle',
+        invertAngle: false
+      },
       numInt: 2,
-      numDecimal: 1,
+      numDecimal: 0,
       color: "contrast",
       enableTimeout: false,
       dataTimeout: 5,
@@ -89,8 +94,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
 
     // Trigger recalculations if theme changes (e.g., for dynamic colors)
     effect(() => {
-      this.theme();
-      this.setColors();
+      const t = this.theme();
+      this.setColors(t);
     });
   }
 
@@ -109,7 +114,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
         this.angleDeg.set(null);
         return;
       }
-      const val = newValue.data.value;
+      const val = this.widgetProperties.config.gauge.invertAngle ? -newValue.data.value : newValue.data.value;
       this.angleDeg.set(val);
     });
 
@@ -117,12 +122,13 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     this.zoneHighlights.set([]);
   }
 
-  private setColors(): void {
-      this.themeColor.set(getColors(this.widgetProperties.config.color, this.theme()).color);
-    }
+  private setColors(theme: ITheme): void {
+    this.themeColor.set(getColors(this.widgetProperties.config.color, theme).color);
+  }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
+    this.setColors(this.theme());
     this.startWidget();
   }
 
@@ -130,21 +136,28 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     if (angle == null) return '';
     const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
     if (!pathEl) return '';
-    const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -35, max: 35 };
+    const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -40, max: 40 };
     const val = Math.max(domain.min, Math.min(domain.max, angle));
     const pathLength = pathEl.getTotalLength();
     const pct = (val - domain.min) / (domain.max - domain.min);
     const distance = pct * pathLength;
     const point = pathEl.getPointAtLength(distance);
-    // Edge delta for tangent
+    // Tangent computation (adaptive delta near ends)
     const delta = distance < 10 || distance > pathLength - 10 ? 5 : 1;
     const before = pathEl.getPointAtLength(Math.max(0, distance - delta));
     const after = pathEl.getPointAtLength(Math.min(pathLength, distance + delta));
-    const tangentAngle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
-    // Use fixed center line Y for visual alignment rather than path point.y offset
-  // Adjusted fixed centers after moving scales to top of SVG
-  const fixedCenterY = scale === 'fine' ? 80 : 135;
-    return `translate(${point.x}, ${fixedCenterY}) rotate(${tangentAngle})`;
+    const tx = after.x - before.x;
+    const ty = after.y - before.y;
+    const tangentAngle = Math.atan2(ty, tx) * 180 / Math.PI;
+    // Normal (perpendicular) vector (normalized)
+    const len = Math.hypot(tx, ty) || 1;
+    const nx = -ty / len; // rotate tangent -90° for outward (depending on path orientation)
+    const ny = tx / len;
+    // Offset ellipse center along normal instead of fixed vertical to keep consistent spacing across curvature
+    const normalOffset = -10; // negative to move "up" relative to visual layout; adjust if inverted
+    const cx = point.x + nx * normalOffset;
+    const cy = point.y + ny * normalOffset;
+    return `translate(${cx}, ${cy}) rotate(${tangentAngle})`;
   }
 
   private buildScale(pathEl: SVGPathElement, min: number, max: number, majorStep: number, minorStep: number) {
@@ -152,15 +165,18 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const ticks: ITickPoint[] = [];
     const innerTicks: ITickPoint[] = [];
     const labels: ILabelPoint[] = [];
-    for (let v = min; v <= max + 1e-6; v += minorStep) {
-      const isMajor = Math.abs((v - min) % majorStep) < 1e-6;
-      const pct = (v - min) / (max - min);
-      const distance = pct * pathLength;
+    const span = max - min;
+    const steps = Math.round(span / minorStep);
+    const majorEvery = Math.round(majorStep / minorStep);
+    for (let i = 0; i <= steps; i++) {
+      const v = min + i * minorStep;
+      const pct = i / steps; // exact 0..1
+      const distance = i === steps ? pathLength : pct * pathLength;
       const point = pathEl.getPointAtLength(distance);
-      // Tangent angle for orientation
       const before = pathEl.getPointAtLength(Math.max(0, distance - 1));
       const after = pathEl.getPointAtLength(Math.min(pathLength, distance + 1));
       const angle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI;
+      const isMajor = (i % majorEvery === 0) || Math.abs(v) < 1e-9; // ensure 0 labeled even if rounding
       const outerLen = isMajor ? 8 : 4;
       const innerLen = isMajor ? 6 : 3;
       const outerStart = this.pointFromAngle(point, angle + 90, 0);
@@ -195,7 +211,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
           this.fineLabels.set(s.labels);
         }
         if (coarsePath) {
-          const s2 = this.buildScale(coarsePath, -35, 35, 10, 5);
+          const s2 = this.buildScale(coarsePath, -40, 40, 10, 5);
           this.coarseTicks.set(s2.ticks);
           this.coarseInnerTicks.set(s2.innerTicks);
           this.coarseLabels.set(s2.labels);

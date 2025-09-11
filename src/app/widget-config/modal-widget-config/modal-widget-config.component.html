@@ -300,6 +300,13 @@
                   Ignore Zones configuration
                 </mat-checkbox>
               }
+              @if ((widgetConfig?.gauge?.type === "angle" )) {
+                <div formGroupName="gauge">
+                  <mat-checkbox name="invertAngle" formControlName="invertAngle">
+                    Reverse Angle
+                  </mat-checkbox>
+                </div>
+              }
               @if ( (widgetConfig?.gauge?.type === 'ngRadial' && ['measuring','capacity'].includes(formMaster.value.gauge.subType))
                 || widgetConfig?.gauge?.type === 'ngLinear') {
                 <mat-form-field formGroupName="gauge">
