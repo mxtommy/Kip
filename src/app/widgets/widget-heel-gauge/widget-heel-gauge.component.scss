@@ -47,7 +47,7 @@ svg.scale .tube-background {
 // glass effect
 svg.scale .tube-highlight {
   fill: url(#fineTubeGradient);
-  opacity: 0.3;
+  opacity: 0.15;
   mix-blend-mode: soft-light;
   transition: fill 0.3s ease, opacity 0.3s ease;
 }
@@ -60,32 +60,18 @@ svg.scale .tube-highlight-secondary {
 }
 
 .tube-highlight-color {
-  stop-color: var(--mat-sys-surface-container);
+  stop-color: var(--kip-contrast-color);
 }
 
-// dark theme adjustments
-[data-theme="dark"] .tube-highlight {
-  opacity: 0.15;
-  mix-blend-mode: soft-light;
-}
-
-[data-theme="dark"] .tube-highlight-secondary {
-  opacity: 0.1;
-  mix-blend-mode: overlay;
-}
-
-[data-theme="dark"] .inner-tick-marks line {
-  opacity: 0.5;
-}
 
 .opacity1 {
-  opacity: 0.12;
+  stop-opacity: 0.12;
 }
 .opacity2 {
-  opacity: 0.05;
+  stop-opacity: 0.05;
 }
 .opacity3 {
-  opacity: 0;
+  stop-opacity: 0;
 }
 
 svg.scale .scale-line {
@@ -107,4 +93,28 @@ svg.scale .scale-line {
   dominant-baseline: hanging;
   font-size: 12;
   font-weight: bold;
+}
+
+.pointer-ball .pointer-core {
+  fill: url(#pointerBallGradient);
+}
+
+.pointer-ball .pointer-gloss {
+  fill: url(#pointerGlossGradient);
+  transform: translateY(-1px);
+}
+
+.pointer-ball .pointer-ring {
+  fill: none;
+  stroke: var(--kip-card-background-color);
+  stroke-width: 1;
+  mix-blend-mode: screen;
+}
+
+.pointer-ball {
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+.pointer.ready .pointer-ball {
+  filter: none; /* specular filter already applied on core */
 }

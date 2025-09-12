@@ -5,11 +5,7 @@
 >
   <div class="container">
     <!-- Fine scale (-5 .. +5) -->
-    <svg
-      class="flex-element scale fine"
-      viewBox="0 0 400 105"
-      preserveAspectRatio="xMidYMid meet"
-    >
+    <svg class="flex-element scale fine" viewBox="0 0 400 105" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="fineTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" class="tube-highlight-color opacity1" />
@@ -23,7 +19,7 @@
             surfaceScale="4"
             specularConstant=".6"
             specularExponent="30"
-            lighting-color="#white"
+            lighting-color="currentColor"
             result="specular"
           >
             <fePointLight x="200" y="-50" z="150" />
@@ -51,16 +47,6 @@
         class="tube-background"
         d="M 60,10 A 2400,2400 0 0,0 340,10 A 10,10 0 0,1 340,30 A 2400,2400 0 0,1 60,30 A 10,10 0 0,1 60,10 Z"
       />
-
-      <!-- Pointer -->
-      <g
-        class="pointer"
-        [class.ready]="ready()"
-        [attr.transform]="finePointerTransform()"
-      >
-        <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
-      </g>
-
       <path
         class="tube-highlight"
         d="M 60,11 A 2400,2400 0 0,0 340,11 A 8,8 0 0,1 340,17 A 2400,2400 0 0,1 60,17 A 8,8 0 0,1 60,11 Z"
@@ -100,6 +86,14 @@
         <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
         }
       </g>
+      <!-- Pointer -->
+      <g
+        class="pointer"
+        [class.ready]="ready()"
+        [attr.transform]="finePointerTransform()"
+      >
+        <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
+      </g>
       <text class="brand" x="200" y="93" text-anchor="middle">
         {{ widgetProperties.config.displayName }}
       </text>
@@ -111,13 +105,7 @@
       preserveAspectRatio="xMidYMid meet"
     >
       <defs>
-        <linearGradient
-          id="coarseTubeGradient"
-          x1="0%"
-          y1="0%"
-          x2="0%"
-          y2="100%"
-        >
+        <linearGradient id="coarseTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%" >
           <stop offset="0%" style="stop-color: rgba(255, 255, 255, 0.25)" />
           <stop offset="45%" style="stop-color: rgba(255, 255, 255, 0.1)" />
           <stop offset="100%" style="stop-color: rgba(255, 255, 255, 0)" />
