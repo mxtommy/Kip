@@ -1,16 +1,18 @@
-# KIP – Signal K Instrument Panel  
+# KIP – Signal K Instrument Panel
 
-**KIP is a modern, plug-and-play marine instrument panel for Signal K — pre-installed, intuitive, and ready to use on any device with a browser.**
+**KIP is a modern, plug-and-play marine instrument panel for Signal K — pre-installed, intuitive, and ready to use with zero setup.**  
 
-KIP delivers the familiar feel of a classic marine app combined with the flexibility of [Signal K](https://signalk.org). Unlike other dashboards, KIP is bundled with the [Signal K](https://signalk.org) server, so there’s no setup or installation needed — just open it in your browser and start using it. Optimized for marine displays, it provides a polished, intuitive interface and works across phones, tablets, laptops, and fixed displays.
+Unlike many dashboards, KIP comes **bundled with the Signal K server**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. One instance works across devices — no per-device deployment is needed.
 
 KIP is designed for sailors and boaters who want:
-- A ready-to-use, classic marine app experience with minimal setup.
-- A modern, polished interface optimized for use at sea.
-- Cross-platform support: works on tablets, phones, laptops, or fixed displays – anywhere you can run a web browser.
-- All your data in one place: instantly displays all data available from the Signal K server.
 
-While commercial MFDs lock you into fixed layouts, KIP combines the familiar feel of professional instruments with the flexibility of Signal K. The result is a modern, touch -first, reliable, and highly usable instrument panel that just works.
+- A **ready-to-use, classic marine app experience** with minimal setup.
+- A **modern, polished interface** optimized for use at sea.
+- **Cross-platform support**: runs on phones, tablets, laptops, Raspberry Pi or fixed displays - anywhere you can run a web browser.
+- **Instant access to all Signal K data**: displays gauges, charts, switches, and other widgets right out of the box.
+- **Flexible dashboards**: customize layouts, drag-and-drop widgets, night/day mode, kiosk/fullscreen support.
+
+With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi Function Display for [Signal K](https://signalk.org) vessels.
 
 ![KIP](./images/KIPDemo.png)
 
