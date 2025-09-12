@@ -17,37 +17,26 @@
   gap: 0px;
 }
 
-.flex-element {
-  flex: 1 1 auto;
+.brand {
+  font-size: 25px;
+  font-weight: bold;
+  fill: var(--kip-contrast-dim-color);
 }
-
-.value-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: visible;
-  .brand {
-    fill: var(--kip-contrast-color);
-    font-size: 16px;
-    font-weight: 600;
-  }
-  .angle {
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .side {
-    font-size: 6px;
-    margin-top: 2px;
-  }
-  .label {
-    font-size: 11px;
-    margin-top: 1px;
-  }
+.angle {
+  font-size: 50px;
+  font-weight: bold;
+}
+.side {
+  font-size: 16px;
 }
 
 svg.scale {
   width: 100%;
-  height: 100%;
+  height: auto;
+}
+
+.fine {
+  overflow: none;
 }
 
 svg.scale .tube-background {
@@ -55,6 +44,7 @@ svg.scale .tube-background {
   filter: url(#tubeEffect);
 }
 
+// glass effect
 svg.scale .tube-highlight {
   fill: url(#fineTubeGradient);
   opacity: 0.3;
@@ -62,9 +52,32 @@ svg.scale .tube-highlight {
   transition: fill 0.3s ease, opacity 0.3s ease;
 }
 
+svg.scale .tube-highlight-secondary {
+  fill: url(#fineTubeGradient);
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
 .tube-highlight-color {
   stop-color: var(--mat-sys-surface-container);
 }
+
+// dark theme adjustments
+[data-theme="dark"] .tube-highlight {
+  opacity: 0.15;
+  mix-blend-mode: soft-light;
+}
+
+[data-theme="dark"] .tube-highlight-secondary {
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+}
+
+[data-theme="dark"] .inner-tick-marks line {
+  opacity: 0.5;
+}
+
 .opacity1 {
   opacity: 0.12;
 }
@@ -75,20 +88,13 @@ svg.scale .tube-highlight {
   opacity: 0;
 }
 
-svg.scale .tube-highlight-secondary {
-  fill: url(#fineTubeGradient);
-  opacity: 0.2;
-  mix-blend-mode: overlay;
-  transition: fill 0.3s ease, opacity 0.3s ease;
-}
-
 svg.scale .scale-line {
   stroke: none;
   fill: none;
 }
 
-svg.scale .pointer {
-  transition: transform 0.4s ease;
+.ready {
+  transition: transform 1s ease-in-out;
 }
 
 .tick-marks {

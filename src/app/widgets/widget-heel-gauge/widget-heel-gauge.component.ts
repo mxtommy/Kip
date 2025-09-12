@@ -23,7 +23,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   private readonly finePathRef = viewChild<ElementRef<SVGPathElement>>('finePath');
   private readonly coarsePathRef = viewChild<ElementRef<SVGPathElement>>('coarsePath');
 
-  protected readonly angleDeg = signal<number | null>(null);
+  protected angleDeg = signal<number | null>(null);
   protected readonly absAngle = computed(() => {
     const v = this.angleDeg();
     return v == null ? null : Math.abs(v);
@@ -34,13 +34,14 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     return v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
   });
   protected readonly displayValue = computed(() => {
-    const v = this.angleDeg();
+    const v = Math.abs(this.angleDeg());
     if (v == null) return '--';
     const dec = this.widgetProperties?.config?.numDecimal ?? 1;
     return v.toFixed(dec);
   });
 
-  protected themeColor = signal('contrast');
+  protected themeColorValue = signal('contrast');
+  protected themeColorLabel = signal('contrast');
 
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
@@ -54,8 +55,14 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly coarseLabels = signal<ILabelPoint[]>([]);
 
   // Pointer transforms
-  protected readonly finePointerTransform = computed(() => this.computePointerTransform(this.angleDeg(), 'fine'));
-  protected readonly coarsePointerTransform = computed(() => this.computePointerTransform(this.angleDeg(), 'coarse'));
+  protected readonly finePointerTransform = computed(() => {
+    const a = this.angleDeg();
+    return this.computePointerTransform(a, 'fine');
+  });
+  protected readonly coarsePointerTransform = computed(() => {
+    const a = this.angleDeg();
+    return this.computePointerTransform(a, 'coarse');
+  });
 
   // (Legacy) Zones metadata subscription – retained for potential future adaptation
   private metaSub: Subscription | null = null;
@@ -123,7 +130,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   }
 
   private setColors(theme: ITheme): void {
-    this.themeColor.set(getColors(this.widgetProperties.config.color, theme).color);
+    this.themeColorValue.set(getColors(this.widgetProperties.config.color, theme).color);
+    this.themeColorLabel.set(getColors(this.widgetProperties.config.color, theme).dim);
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -132,8 +140,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     this.startWidget();
   }
 
-  private computePointerTransform(angle: number | null, scale: 'fine' | 'coarse'): string {
-    if (angle == null) return '';
+  private computePointerTransform(angleValue: number | null, scale: 'fine' | 'coarse'): string {
+    const angle = angleValue ?? 0;
     const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
     if (!pathEl) return '';
     const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -40, max: 40 };
@@ -216,11 +224,11 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
           this.coarseInnerTicks.set(s2.innerTicks);
           this.coarseLabels.set(s2.labels);
         }
-        this.ready.set(true);
         // Initialize to 0° if no data yet so pointers start centered
         if (this.angleDeg() == null) {
           this.angleDeg.set(0);
         }
+        this.ready.set(true);
       });
     });
   }
