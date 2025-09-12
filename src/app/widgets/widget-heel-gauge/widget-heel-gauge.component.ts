@@ -31,7 +31,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly angleSide = computed(() => {
     const v = this.angleDeg();
     if (v == null) return '';
-    return v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
+     const side = v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
+     return this.widgetProperties?.config?.gauge.sideLabel ? side : '';
   });
   protected readonly displayValue = computed(() => {
     const v = Math.abs(this.angleDeg());
@@ -89,14 +90,14 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
       },
       gauge: {
         type: 'angle',
-        invertAngle: false
+        invertAngle: false,
+        sideLabel: true
       },
       numInt: 2,
       numDecimal: 0,
       color: "contrast",
       enableTimeout: false,
-      dataTimeout: 5,
-      ignoreZones: false
+      dataTimeout: 5
     };
 
     // Trigger recalculations if theme changes (e.g., for dynamic colors)

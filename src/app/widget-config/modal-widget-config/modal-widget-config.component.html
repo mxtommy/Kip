@@ -302,6 +302,13 @@
               }
               @if ((widgetConfig?.gauge?.type === "angle" )) {
                 <div formGroupName="gauge">
+                  <mat-checkbox name="sideLabel" formControlName="sideLabel">
+                    Show Heeling Side Label
+                  </mat-checkbox>
+                </div>
+              }
+              @if ((widgetConfig?.gauge?.type === "angle" )) {
+                <div formGroupName="gauge">
                   <mat-checkbox name="invertAngle" formControlName="invertAngle">
                     Reverse Angle
                   </mat-checkbox>

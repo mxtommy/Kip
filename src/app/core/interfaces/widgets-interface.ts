@@ -157,6 +157,8 @@ export interface IWidgetSvcConfig {
     invertRoll?: boolean;
     /** Optional. Invert the angle path data */
     invertAngle?: boolean;
+    /** Optional. Show the side label on the gauge */
+    sideLabel?: boolean;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;

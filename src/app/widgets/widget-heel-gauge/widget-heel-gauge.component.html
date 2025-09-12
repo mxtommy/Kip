@@ -104,13 +104,6 @@
       viewBox="0 0 400 115"
       preserveAspectRatio="xMidYMid meet"
     >
-      <defs>
-        <linearGradient id="coarseTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%" >
-          <stop offset="0%" style="stop-color: rgba(255, 255, 255, 0.25)" />
-          <stop offset="45%" style="stop-color: rgba(255, 255, 255, 0.1)" />
-          <stop offset="100%" style="stop-color: rgba(255, 255, 255, 0)" />
-        </linearGradient>
-      </defs>
       <g transform="translate(0,15)">
         <text
           class="angle"
@@ -122,59 +115,57 @@
           {{ displayValue() }}°
           <tspan class="side" dx="-16">{{ angleSide() }}</tspan>
         </text>
-        <g>
-          <path
-            class="tube-background"
-            d="M 40,0 A 400,400 0 0,0 360,0 A 10,10 0 0,1 360,20 A 400,400 0 0,1 40,20 A 10,10 0 0,1 40,0 Z"
+        <path
+          class="tube-background"
+          d="M 40,0 A 400,400 0 0,0 360,0 A 10,10 0 0,1 360,20 A 400,400 0 0,1 40,20 A 10,10 0 0,1 40,0 Z"
+        />
+        <path
+          class="tube-highlight"
+          d="M 40,1 A 400,400 0 0,0 360,1 A 8,8 0 0,1 360,7 A 400,400 0 0,1 40,7 A 8,8 0 0,1 40,1 Z"
+        />
+        <path
+          class="tube-highlight-secondary"
+          d="M 40,13 A 400,400 0 0,0 360,13 A 8,8 0 0,1 360,16 A 400,400 0 0,1 40,16 A 8,8 0 0,1 40,13 Z"
+        />
+        <path
+          #coarsePath
+          class="scale-line"
+          d="M 40,20 A 400,400 0 0,0 360,20"
+        />
+        <g class="tick-marks">
+          @for(t of coarseTicks(); track $index) {
+          <line
+            [attr.x1]="t.x1"
+            [attr.y1]="t.y1"
+            [attr.x2]="t.x2"
+            [attr.y2]="t.y2"
+            [attr.stroke-width]="t.major ? 1.5 : 1"
           />
-          <path
-            class="tube-highlight"
-            d="M 40,1 A 400,400 0 0,0 360,1 A 8,8 0 0,1 360,7 A 400,400 0 0,1 40,7 A 8,8 0 0,1 40,1 Z"
+          }
+        </g>
+        <g class="tick-marks">
+          @for(t of coarseInnerTicks(); track $index) {
+          <line
+            [attr.x1]="t.x1"
+            [attr.y1]="t.y1"
+            [attr.x2]="t.x2"
+            [attr.y2]="t.y2"
+            [attr.stroke-width]="t.major ? 1.2 : 0.8"
+            opacity="0.6"
           />
-          <path
-            class="tube-highlight-secondary"
-            d="M 40,13 A 400,400 0 0,0 360,13 A 8,8 0 0,1 360,16 A 400,400 0 0,1 40,16 A 8,8 0 0,1 40,13 Z"
-          />
-          <path
-            #coarsePath
-            class="scale-line"
-            d="M 40,20 A 400,400 0 0,0 360,20"
-          />
-          <g class="tick-marks">
-            @for(t of coarseTicks(); track $index) {
-            <line
-              [attr.x1]="t.x1"
-              [attr.y1]="t.y1"
-              [attr.x2]="t.x2"
-              [attr.y2]="t.y2"
-              [attr.stroke-width]="t.major ? 1.5 : 1"
-            />
-            }
-          </g>
-          <g class="tick-marks">
-            @for(t of coarseInnerTicks(); track $index) {
-            <line
-              [attr.x1]="t.x1"
-              [attr.y1]="t.y1"
-              [attr.x2]="t.x2"
-              [attr.y2]="t.y2"
-              [attr.stroke-width]="t.major ? 1.2 : 0.8"
-              opacity="0.6"
-            />
-            }
-          </g>
-          <g class="scale-values">
-            @for(lbl of coarseLabels(); track $index) {
-            <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
-            }
-          </g>
-          <g
-            class="pointer"
-            [class.ready]="ready()"
-            [attr.transform]="coarsePointerTransform()"
-          >
-            <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
-          </g>
+          }
+        </g>
+        <g class="scale-values">
+          @for(lbl of coarseLabels(); track $index) {
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
+          }
+        </g>
+        <g
+          class="pointer"
+          [class.ready]="ready()"
+          [attr.transform]="coarsePointerTransform()"
+        >
+          <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
         </g>
       </g>
     </svg>

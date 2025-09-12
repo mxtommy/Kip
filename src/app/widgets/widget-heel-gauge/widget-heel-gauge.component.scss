@@ -35,10 +35,6 @@ svg.scale {
   height: auto;
 }
 
-.fine {
-  overflow: none;
-}
-
 svg.scale .tube-background {
   fill: var(--mat-sys-surface-container);
   filter: url(#tubeEffect);
