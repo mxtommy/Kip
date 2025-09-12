@@ -28,7 +28,7 @@
         <text
           id="textDisabled"
           [attr.fill]="labelColorDisabled"
-          style="text-anchor: middle;text-align: center;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+          style="text-anchor: middle;text-align: center;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
           x="77.968102"
           y="22">
             {{ data().ctrlLabel }}
@@ -57,7 +57,7 @@
       <text
           id="textEnabled"
           [attr.fill]="labelColorEnabled"
-          style="text-anchor: middle;text-align: center;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+          style="text-anchor: middle;text-align: center;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
           x="77.968102"
           y="22">
             {{ data().ctrlLabel }}

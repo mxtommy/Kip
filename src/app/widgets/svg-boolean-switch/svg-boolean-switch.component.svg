@@ -19,7 +19,7 @@
       <text
         id="text1-5"
         [attr.fill]="labelColor"
-        style="text-align:center;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        style="text-align:center;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         x="47.083984"
         y="22.636719">
         {{ data().ctrlLabel }}
@@ -53,16 +53,25 @@
       style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"
     />
     <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
-      <text
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <text filter="url(#glow)"
         id="text1"
         [attr.fill]="valueColor"
-        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         x="47.083984"
         y="22.636719">{{ data().ctrlLabel }}
       </text>
     </svg>
     <g transform="translate(6,2)" id="enabledToogleControl">
-      <rect
+      <rect filter="url(#glow)"
          width="37.714306"
          height="22"
          rx="10.999999"
