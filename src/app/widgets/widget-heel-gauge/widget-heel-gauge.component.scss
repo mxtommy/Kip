@@ -63,7 +63,6 @@ svg.scale .tube-highlight-secondary {
   stop-color: var(--kip-contrast-color);
 }
 
-
 .opacity1 {
   stop-opacity: 0.12;
 }
@@ -95,26 +94,16 @@ svg.scale .scale-line {
   font-weight: bold;
 }
 
-.pointer-ball .pointer-core {
-  fill: url(#pointerBallGradient);
-}
-
-.pointer-ball .pointer-gloss {
-  fill: url(#pointerGlossGradient);
-  transform: translateY(-1px);
-}
-
-.pointer-ball .pointer-ring {
-  fill: none;
-  stroke: var(--kip-card-background-color);
-  stroke-width: 1;
-  mix-blend-mode: screen;
-}
-
-.pointer-ball {
-  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
-}
-
-.pointer.ready .pointer-ball {
-  filter: none; /* specular filter already applied on core */
+.pointer ellipse {
+  /* Base color already from fill attribute (themeColorValue) */
+  stroke: rgba(255,255,255,0.35);
+  /* rim highlight */
+  stroke-width: 0.7;
+  paint-order: stroke fill;
+  /* draw stroke above fill */
+  /* Faux depth via stacked shadows */
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.55)) /* core edge darken */
+    drop-shadow(0 1px 1.5px rgba(0,0,0,0.55)) /* lower shadow */
+    drop-shadow(0 -1px 1px rgba(255,255,255,0.25)); /* top glow */
+  transition: filter 0.25s, stroke 0.25s;
 }
