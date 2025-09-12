@@ -1,18 +1,19 @@
 # KIP – Signal K Instrument Panel
 
-**KIP is a modern, plug-and-play marine instrument panel for Signal K — pre-installed, intuitive, and ready to use with zero setup.**  
+**KIP is the most popular Signal K Multi-Function Display — modern, plug-and-play, pre-installed, and ready to use with zero setup.**
 
 Unlike many dashboards, KIP comes **bundled with the Signal K server**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. One instance works across devices — no per-device deployment is needed.
 
 KIP is designed for sailors and boaters who want:
 
 - A **ready-to-use, classic marine app experience** with minimal setup.
-- A **modern, polished interface** optimized for use at sea.
-- **Cross-platform support**: runs on phones, tablets, laptops, Raspberry Pi or fixed displays - anywhere you can run a web browser.
+- A **modern, polished interface** optimized for marine displays.
+- **Touch-first design**: intuitive user experience on tablets, phones, or any touch-enabled device.
+- **Cross-platform support**: runs on phones, tablets, laptops, Raspberry Pi, Web Enabled TV or other fixed displays - anywhere you can run a web browser.
 - **Instant access to all Signal K data**: displays gauges, charts, switches, and other widgets right out of the box.
-- **Flexible dashboards**: customize layouts, drag-and-drop widgets, night/day mode, kiosk/fullscreen support.
+- **Flexible dashboards**: customize layouts, drag-and-drop widgets, night/day mode, kiosk/fullscreen and remote control support.
 
-With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi Function Display for [Signal K](https://signalk.org) vessels.
+With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi-Function Display for [Signal K](https://signalk.org) vessels.
 
 ![KIP](./images/KIPDemo.png)
 
