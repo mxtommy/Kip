@@ -1,7 +1,8 @@
-# KIP – Signal K Instrument Panel
+# KIP – Signal K Instrument Panel  
+
 **KIP is a modern, plug-and-play marine instrument panel for Signal K — pre-installed, intuitive, and ready to use on any device with a browser.**
 
-KIP is a modern, intuitive, and marine-optimized instrument panel for [Signal K](https://signalk.org). Unlike many dashboards, KIP is pre-installed and bundled with the [Signal K](https://signalk.org) server, so there is nothing to download or configure. It works right out of the box, giving you a plug-and-play Multi-Function Display (MFD) experience on any device with a browser.
+KIP delivers the familiar feel of a classic marine app combined with the flexibility of [Signal K](https://signalk.org). Unlike other dashboards, KIP is bundled with the [Signal K](https://signalk.org) server, so there’s no setup or installation needed — just open it in your browser and start using it. Optimized for marine displays, it provides a polished, intuitive interface and works across phones, tablets, laptops, and fixed displays.
 
 KIP is designed for sailors and boaters who want:
 - A ready-to-use, classic marine app experience with minimal setup.
