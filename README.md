@@ -1,8 +1,15 @@
-# About KIP
+# KIP – Signal K Instrument Panel
+**KIP is a modern, plug-and-play marine instrument panel for Signal K — pre-installed, intuitive, and ready to use on any device with a browser.**
 
-KIP is a powerful and versatile marine instrumentation package designed to display [Signal K](https://signalk.org) data ([GitHub Projet](https://github.com/SignalK/signalk-server)). It replicates the functionality of modern Multi-Function Displays (MFDs) similar to most commercial products, while offering unmatched flexibility and customization. KIP can be tailored to any arrangement, displaying all kinds of data available from the [Signal K](https://signalk.org) server.
+KIP is a modern, intuitive, and marine-optimized instrument panel for [Signal K](https://signalk.org). Unlike many dashboards, KIP is pre-installed and bundled with the [Signal K](https://signalk.org) server, so there is nothing to download or configure. It works right out of the box, giving you a plug-and-play Multi-Function Display (MFD) experience on any device with a browser.
 
-With its responsive design, KIP works seamlessly across phones, tablets, Raspberry Pi, and computers, ensuring an optimal user experience on any device. It supports touchscreen gestures, night/day modes, Progressive Web App (PWA) functionality for a full-screen, app-like experience or Kiosk mode as a dedicate hardware solution.
+KIP is designed for sailors and boaters who want:
+- A ready-to-use, classic marine app experience with minimal setup.
+- A modern, polished interface optimized for use at sea.
+- Cross-platform support: works on tablets, phones, laptops, or fixed displays – anywhere you can run a web browser.
+- All your data in one place: instantly displays all data available from the Signal K server.
+
+While commercial MFDs lock you into fixed layouts, KIP combines the familiar feel of professional instruments with the flexibility of Signal K. The result is a modern, touch -first, reliable, and highly usable instrument panel that just works.
 
 ![KIP](./images/KIPDemo.png)
 
