@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { ITheme } from '../../core/services/app-service';
@@ -31,21 +30,28 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly angleSide = computed(() => {
     const v = this.angleDeg();
     if (v == null) return '';
-     const side = v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
-     return this.widgetProperties?.config?.gauge.sideLabel ? side : '';
+    const side = v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
+    return this.widgetProperties?.config?.gauge.sideLabel ? side : '';
   });
   protected readonly displayValue = computed(() => {
-    const v = Math.abs(this.angleDeg());
+    const v = this.absAngle();
     if (v == null) return '--';
     const dec = this.widgetProperties?.config?.numDecimal ?? 1;
     return v.toFixed(dec);
   });
 
   protected themeColorValue = signal('contrast');
-  protected themeColorLabel = signal('contrast');
 
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
+
+  // Dynamic transition duration (ms) derived from configured sampleTime
+  protected readonly pointerTransition = computed(() => {
+    const ms = this.widgetProperties?.config?.paths?.['angle']?.sampleTime ?? 1000;
+    // Slightly shorter than sampling interval for responsiveness
+    const duration = Math.max(100, ms * 0.95);
+    return `transform ${duration}ms ease-in-out`;
+  });
 
   // Generated tick & label arrays
   protected readonly fineTicks = signal<ITickPoint[]>([]);
@@ -56,19 +62,11 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly coarseLabels = signal<ILabelPoint[]>([]);
 
   // Pointer transforms
-  protected readonly finePointerTransform = computed(() => {
-    const a = this.angleDeg();
-    return this.computePointerTransform(a, 'fine');
-  });
-  protected readonly coarsePointerTransform = computed(() => {
-    const a = this.angleDeg();
-    return this.computePointerTransform(a, 'coarse');
-  });
-
-  // (Legacy) Zones metadata subscription – retained for potential future adaptation
-  private metaSub: Subscription | null = null;
-  // Horizontal variant currently does not render zones visually
-  protected readonly zoneHighlights = signal<[]>([]);
+  private makePointerTransform(scale: 'fine' | 'coarse') {
+    return computed(() => this.computePointerTransform(this.angleDeg(), scale));
+  }
+  protected readonly finePointerTransform = this.makePointerTransform('fine');
+  protected readonly coarsePointerTransform = this.makePointerTransform('coarse');
 
   constructor() {
     super();
@@ -114,8 +112,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
 
   protected startWidget(): void {
     this.unsubscribeDataStream();
-    this.unsubscribeMetaStream();
-    this.metaSub?.unsubscribe();
+  this.unsubscribeMetaStream();
 
     this.observeDataStream("angle", newValue => {
       if (!newValue || !newValue.data) {
@@ -126,13 +123,10 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
       this.angleDeg.set(val);
     });
 
-    // Zones not visualized; ensure empty
-    this.zoneHighlights.set([]);
   }
 
   private setColors(theme: ITheme): void {
-    this.themeColorValue.set(getColors(this.widgetProperties.config.color, theme).color);
-    this.themeColorLabel.set(getColors(this.widgetProperties.config.color, theme).dim);
+  this.themeColorValue.set(getColors(this.widgetProperties.config.color, theme).color);
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
@@ -144,7 +138,11 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   private computePointerTransform(angleValue: number | null, scale: 'fine' | 'coarse'): string {
     const angle = angleValue ?? 0;
     const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
-    if (!pathEl) return '';
+    if (!pathEl) {
+      // Fallback center position before paths are measurable (improves first paint)
+      // Values derived from arc geometry used in template paths
+      return scale === 'fine' ? 'translate(200,20) rotate(0)' : 'translate(200,10) rotate(0)';
+    }
     const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -40, max: 40 };
     const val = Math.max(domain.min, Math.min(domain.max, angle));
     const pathLength = pathEl.getTotalLength();
@@ -237,6 +235,5 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   ngOnDestroy(): void {
     this.unsubscribeDataStream();
     this.unsubscribeMetaStream();
-    this.metaSub?.unsubscribe();
   }
 }

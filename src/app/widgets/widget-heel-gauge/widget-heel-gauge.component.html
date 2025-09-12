@@ -90,6 +90,7 @@
       <g
         class="pointer"
         [class.ready]="ready()"
+        [style.transition]="pointerTransition()"
         [attr.transform]="finePointerTransform()"
       >
         <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
@@ -163,6 +164,7 @@
         <g
           class="pointer"
           [class.ready]="ready()"
+          [style.transition]="pointerTransition()"
           [attr.transform]="coarsePointerTransform()"
         >
           <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
