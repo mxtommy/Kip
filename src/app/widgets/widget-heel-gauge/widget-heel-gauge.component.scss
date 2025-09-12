@@ -1,0 +1,103 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  font-family: "Roboto";
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 0px;
+}
+
+.brand {
+  font-size: 25px;
+  font-weight: bold;
+  fill: var(--kip-contrast-dim-color);
+}
+.angle {
+  font-size: 50px;
+  font-weight: bold;
+}
+.side {
+  font-size: 16px;
+}
+
+svg.scale {
+  width: 100%;
+  height: auto;
+}
+
+svg.scale .tube-background {
+  fill: var(--mat-sys-surface-container);
+  filter: url(#tubeEffect);
+}
+
+// glass effect
+svg.scale .tube-highlight {
+  fill: url(#fineTubeGradient);
+  opacity: 0.15;
+  mix-blend-mode: soft-light;
+  transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+svg.scale .tube-highlight-secondary {
+  fill: url(#fineTubeGradient);
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+.tube-highlight-color {
+  stop-color: var(--kip-contrast-color);
+}
+
+.opacity1 {
+  stop-opacity: 0.12;
+}
+.opacity2 {
+  stop-opacity: 0.05;
+}
+.opacity3 {
+  stop-opacity: 0;
+}
+
+svg.scale .scale-line {
+  stroke: none;
+  fill: none;
+}
+
+
+
+.tick-marks {
+  stroke: var(--kip-contrast-dim-color);
+}
+
+.scale-values {
+  fill: var(--kip-contrast-color);
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-size: 12;
+  font-weight: bold;
+}
+
+.pointer ellipse {
+  /* Base color already from fill attribute (themeColorValue) */
+  stroke: rgba(255,255,255,0.35);
+  /* rim highlight */
+  stroke-width: 0.7;
+  paint-order: stroke fill;
+  /* draw stroke above fill */
+  /* Faux depth via stacked shadows */
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.55)) /* core edge darken */
+    drop-shadow(0 1px 1.5px rgba(0,0,0,0.55)) /* lower shadow */
+    drop-shadow(0 -1px 1px rgba(255,255,255,0.25)); /* top glow */
+  transition: filter 0.25s, stroke 0.25s;
+}

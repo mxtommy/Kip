@@ -1,0 +1,177 @@
+<widget-host
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+>
+  <div class="container">
+    <!-- Fine scale (-5 .. +5) -->
+    <svg class="flex-element scale fine" viewBox="0 0 400 105" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="fineTubeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" class="tube-highlight-color opacity1" />
+          <stop offset="45%" class="tube-highlight-color opacity2" />
+          <stop offset="100%" class="tube-highlight-color opacity3" />
+        </linearGradient>
+        <filter id="tubeEffect">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+          <feSpecularLighting
+            in="blur"
+            surfaceScale="4"
+            specularConstant=".6"
+            specularExponent="30"
+            lighting-color="currentColor"
+            result="specular"
+          >
+            <fePointLight x="200" y="-50" z="150" />
+            <fePointLight x="200" y="150" z="80" />
+          </feSpecularLighting>
+          <feComposite
+            in="specular"
+            in2="SourceAlpha"
+            operator="in"
+            result="specular"
+          />
+          <feComposite
+            in="SourceGraphic"
+            in2="specular"
+            operator="arithmetic"
+            k1="0"
+            k2="1"
+            k3="0.7"
+            k4="0"
+          />
+        </filter>
+      </defs>
+      <!-- Glass tube background (reduced height) -->
+      <path
+        class="tube-background"
+        d="M 60,10 A 2400,2400 0 0,0 340,10 A 10,10 0 0,1 340,30 A 2400,2400 0 0,1 60,30 A 10,10 0 0,1 60,10 Z"
+      />
+      <path
+        class="tube-highlight"
+        d="M 60,11 A 2400,2400 0 0,0 340,11 A 8,8 0 0,1 340,17 A 2400,2400 0 0,1 60,17 A 8,8 0 0,1 60,11 Z"
+      />
+      <path
+        class="tube-highlight-secondary"
+        d="M 60,23 A 2400,2400 0 0,0 340,23 A 8,8 0 0,1 340,26 A 2400,2400 0 0,1 60,26 A 8,8 0 0,1 60,23 Z"
+      />
+      <!-- Scale line -->
+      <path #finePath class="scale-line" d="M 60,30 A 2400,2400 0 0,0 340,30" />
+      <!-- Tick marks groups -->
+      <g class="tick-marks">
+        @for(t of fineTicks(); track $index) {
+        <line
+          [attr.x1]="t.x1"
+          [attr.y1]="t.y1"
+          [attr.x2]="t.x2"
+          [attr.y2]="t.y2"
+          [attr.stroke-width]="t.major ? 1.5 : 1"
+        />
+        }
+      </g>
+      <g class="tick-marks">
+        @for(t of fineInnerTicks(); track $index) {
+        <line
+          [attr.x1]="t.x1"
+          [attr.y1]="t.y1"
+          [attr.x2]="t.x2"
+          [attr.y2]="t.y2"
+          [attr.stroke-width]="t.major ? 1.2 : 0.8"
+          opacity="0.6"
+        />
+        }
+      </g>
+      <g class="scale-values">
+        @for(lbl of fineLabels(); track $index) {
+        <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
+        }
+      </g>
+      <!-- Pointer -->
+      <g
+        class="pointer"
+        transform="translate(200 20) rotate(0)"
+        [class.ready]="ready()"
+        [style.transition]="ready() ? pointerTransition() : 'none'"
+        [style.transform]="finePointerTransform()"
+      >
+        <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
+      </g>
+      <text class="brand" x="200" y="93" text-anchor="middle">
+        {{ widgetProperties.config.displayName }}
+      </text>
+    </svg>
+    <!-- Coarse scale (-35 .. +35) -->
+    <svg
+      class="flex-element scale"
+      viewBox="0 0 400 115"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <g transform="translate(0,15)">
+        <text
+          class="angle"
+          x="200"
+          y="22"
+          [attr.fill]="themeColorValue()"
+          text-anchor="middle"
+        >
+          {{ displayValue() }}°
+          <tspan class="side" dx="-16">{{ angleSide() }}</tspan>
+        </text>
+        <path
+          class="tube-background"
+          d="M 40,0 A 400,400 0 0,0 360,0 A 10,10 0 0,1 360,20 A 400,400 0 0,1 40,20 A 10,10 0 0,1 40,0 Z"
+        />
+        <path
+          class="tube-highlight"
+          d="M 40,1 A 400,400 0 0,0 360,1 A 8,8 0 0,1 360,7 A 400,400 0 0,1 40,7 A 8,8 0 0,1 40,1 Z"
+        />
+        <path
+          class="tube-highlight-secondary"
+          d="M 40,13 A 400,400 0 0,0 360,13 A 8,8 0 0,1 360,16 A 400,400 0 0,1 40,16 A 8,8 0 0,1 40,13 Z"
+        />
+        <path
+          #coarsePath
+          class="scale-line"
+          d="M 40,20 A 400,400 0 0,0 360,20"
+        />
+        <g class="tick-marks">
+          @for(t of coarseTicks(); track $index) {
+          <line
+            [attr.x1]="t.x1"
+            [attr.y1]="t.y1"
+            [attr.x2]="t.x2"
+            [attr.y2]="t.y2"
+            [attr.stroke-width]="t.major ? 1.5 : 1"
+          />
+          }
+        </g>
+        <g class="tick-marks">
+          @for(t of coarseInnerTicks(); track $index) {
+          <line
+            [attr.x1]="t.x1"
+            [attr.y1]="t.y1"
+            [attr.x2]="t.x2"
+            [attr.y2]="t.y2"
+            [attr.stroke-width]="t.major ? 1.2 : 0.8"
+            opacity="0.6"
+          />
+          }
+        </g>
+        <g class="scale-values">
+          @for(lbl of coarseLabels(); track $index) {
+          <text [attr.x]="lbl.x" [attr.y]="lbl.y">{{ lbl.text }}°</text>
+          }
+        </g>
+        <g
+          class="pointer"
+          transform="translate(200 10) rotate(0)"
+          [class.ready]="ready()"
+          [style.transition]="ready() ? pointerTransition() : 'none'"
+          [style.transform]="coarsePointerTransform()"
+        >
+          <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
+        </g>
+      </g>
+    </svg>
+  </div>
+</widget-host>
