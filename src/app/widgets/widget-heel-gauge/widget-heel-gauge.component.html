@@ -89,9 +89,10 @@
       <!-- Pointer -->
       <g
         class="pointer"
+        transform="translate(200 20) rotate(0)"
         [class.ready]="ready()"
-        [style.transition]="pointerTransition()"
-        [attr.transform]="finePointerTransform()"
+        [style.transition]="ready() ? pointerTransition() : 'none'"
+        [style.transform]="finePointerTransform()"
       >
         <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
       </g>
@@ -163,9 +164,10 @@
         </g>
         <g
           class="pointer"
+          transform="translate(200 10) rotate(0)"
           [class.ready]="ready()"
-          [style.transition]="pointerTransition()"
-          [attr.transform]="coarsePointerTransform()"
+          [style.transition]="ready() ? pointerTransition() : 'none'"
+          [style.transform]="coarsePointerTransform()"
         >
           <ellipse rx="6" ry="9" [attr.fill]="themeColorValue()" />
         </g>

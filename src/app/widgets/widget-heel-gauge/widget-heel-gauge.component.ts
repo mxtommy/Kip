@@ -22,7 +22,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   private readonly finePathRef = viewChild<ElementRef<SVGPathElement>>('finePath');
   private readonly coarsePathRef = viewChild<ElementRef<SVGPathElement>>('coarsePath');
 
-  protected angleDeg = signal<number | null>(null);
+  protected angleDeg = signal<number | null>(0);
   protected readonly absAngle = computed(() => {
     const v = this.angleDeg();
     return v == null ? null : Math.abs(v);
@@ -41,11 +41,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   });
 
   protected themeColorValue = signal('contrast');
-
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
-
-  // Dynamic transition duration (ms) derived from configured sampleTime
   protected readonly pointerTransition = computed(() => {
     const ms = this.widgetProperties?.config?.paths?.['angle']?.sampleTime ?? 1000;
     // Slightly shorter than sampling interval for responsiveness
@@ -140,8 +137,8 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const pathEl = scale === 'fine' ? this.finePathRef()?.nativeElement : this.coarsePathRef()?.nativeElement;
     if (!pathEl) {
       // Fallback center position before paths are measurable (improves first paint)
-      // Values derived from arc geometry used in template paths
-      return scale === 'fine' ? 'translate(200,20) rotate(0)' : 'translate(200,10) rotate(0)';
+      // Provide CSS transform with units for transition compatibility
+      return scale === 'fine' ? 'translate(200px, 20px) rotate(0deg)' : 'translate(200px, 10px) rotate(0deg)';
     }
     const domain = scale === 'fine' ? { min: -5, max: 5 } : { min: -40, max: 40 };
     const val = Math.max(domain.min, Math.min(domain.max, angle));
@@ -164,7 +161,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const normalOffset = -10; // negative to move "up" relative to visual layout; adjust if inverted
     const cx = point.x + nx * normalOffset;
     const cy = point.y + ny * normalOffset;
-    return `translate(${cx}, ${cy}) rotate(${tangentAngle})`;
+  return `translate(${cx}px, ${cy}px) rotate(${tangentAngle}deg)`;
   }
 
   private buildScale(pathEl: SVGPathElement, min: number, max: number, majorStep: number, minorStep: number) {
