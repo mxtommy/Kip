@@ -235,8 +235,21 @@ export class WidgetService {
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
+      name: 'Level Gauge',
+      description: 'Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.',
+      icon: 'level',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-heel-gauge',
+      componentClassName: 'WidgetHeelGaugeComponent'
+    },
+    {
       name: 'Pitch & Roll',
-      description: 'Horizon-style attitude indicator showing live pitch and roll (°) with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
+      description: 'Horizon-style attitude indicator showing live pitch and roll degrees with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
       icon: 'pitchRollGauge',
       minWidth: 1,
       minHeight: 1,
@@ -246,19 +259,6 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-horizon',
       componentClassName: 'WidgetHorizonComponent'
-    },
-    {
-      name: 'Heel Gauge',
-      description: 'Dedicated heel (roll) angle gauge with smooth needle animation and server-provided zone highlighting; displays port/stbd side and magnitude in degrees.',
-      icon: 'pitchRollGauge',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Gauge',
-      requiredPlugins: [],
-      selector: 'widget-heel-gauge',
-      componentClassName: 'WidgetHeelGaugeComponent'
     },
     {
       name: 'Classic Steel',

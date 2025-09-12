@@ -185,6 +185,14 @@
         <circle cx="12" cy="12" r="2" />
       </g>
     </svg>
+    <svg id="level" xmlns="http://www.w3.org/2000/svg" viewBox="-0.5 -0.5 16 16" height="16" width="16">
+      <path fill="var(--mat-sys-primary)" fill-opacity="0.5" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m10.48125 4.518750000000001 0 2.9812499999999997 -5.9624999999999995 0 0 -2.9812499999999997 -3.5812500000000003 0 0 5.9624999999999995 3.5812500000000003 0 5.9624999999999995 0 3.5812500000000003 0 0 -5.9624999999999995 -3.5812500000000003 0z"></path>
+      <path fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m4.518750000000001 5.1125 5.9624999999999995 0"></path>
+      <path fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m8.69375 9.2875 0 1.1937499999999999"></path>
+      <path fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m11.08125 9.2875 0 1.1937499999999999"></path>
+      <path fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m3.9187499999999997 9.2875 0 1.1937499999999999"></path>
+      <path fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1" d="m6.30625 9.2875 0 1.1937499999999999"></path>
+    </svg>
     <svg id="pitchRollGauge" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <defs>
         <clipPath id="pitchRollGaugeClip">
