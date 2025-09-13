@@ -68,14 +68,14 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 - Seamlessly switch between multiple configuration profles for different roles and devices or use cases.
 
 ### Multiple User Profiles
-Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings.
+Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings and perfectly match defferent screen resolutions.
 
 ## User Experience
 
 ### Flexible and Easy
 Meant to build purposeful dashboards with however many widgets you want, wherever you want them.
 
-Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards.
+Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards or effortlessly jump between dashboards with a single tap in the action sidenav, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
 
 Add widget lists sorted by category
 ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
