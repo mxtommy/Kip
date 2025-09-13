@@ -8,12 +8,13 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 
 import { MatButton } from '@angular/material/button';
 import { CanvasService } from '../../core/services/canvas.service';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'widget-racetimer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss'],
-  imports: [WidgetHostComponent, MatButton]
+  imports: [WidgetHostComponent, MatButton, MatIconModule]
 })
 export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly canvas = inject(CanvasService);
@@ -44,8 +45,9 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     super();
 
     this.defaultConfig = {
-      timerLength: 300,
+      timerLength: -300,
       color: 'contrast',
+      playBeeps: true,
     };
 
     effect(() => {
@@ -92,16 +94,22 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   private subscribeTimer() {
     this.timerRunning = this.TimersService.isRunning(this.timeName);
 
-    this.timerSub = this.TimersService.createTimer(this.timeName, -3000, 100).subscribe(
+    this.timerSub = this.TimersService.createTimer(this.timeName, this.widgetProperties.config.timerLength, 1000).subscribe(
       newValue => {
         this.dataValue = newValue;
 
         if (newValue > 0) {
           this.zoneState = States.Normal;
-        } else if (newValue > -100) {
+        } else if (newValue === 0) {
+          this.beep(500, 2000);
+        } else if (newValue > -10) {
           this.zoneState = States.Alarm;
-        } else if (newValue > -300) {
+          this.beep(450, 100);
+        } else if (newValue >= -29) {
           this.zoneState = States.Warn;
+        } else if (newValue === -30) {
+          this.zoneState = States.Warn;
+          this.beep(400, 200);
         } else {
           this.zoneState = States.Normal;
         }
@@ -142,29 +150,29 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   public roundToMin() {
     let v = this.dataValue;
     if (this.dataValue < 0) { v = v * -1 } // always positive
-    const seconds = v % 600;
+    const seconds = v % 60;
 
     if (this.dataValue > 0) {
-      if (seconds > 300) {
-        this.TimersService.setTimer(this.timeName, this.dataValue + (600 - seconds));
+      if (seconds > 30) {
+        this.TimersService.setTimer(this.timeName, this.dataValue + (60 - seconds));
       } else {
         this.TimersService.setTimer(this.timeName, this.dataValue - seconds);
       }
     } else {
-      if (seconds > 300) {
-        this.TimersService.setTimer(this.timeName, this.dataValue - (600 - seconds));
+      if (seconds > 30) {
+        this.TimersService.setTimer(this.timeName, this.dataValue - (60 - seconds));
       } else {
         this.TimersService.setTimer(this.timeName, this.dataValue + seconds);
       }
     }
   }
 
-  addOneMin() {
-    this.TimersService.setTimer(this.timeName, this.dataValue + 600);
+  protected addTime(amount: number): void {
+    this.TimersService.setTimer(this.timeName, this.dataValue + amount);
   }
 
-  remOneMin() {
-    this.TimersService.setTimer(this.timeName, this.dataValue - 600);
+  protected removeTime(amount: number): void {
+    this.TimersService.setTimer(this.timeName, this.dataValue - amount);
   }
 
   private getColors(color: string) {
@@ -217,6 +225,24 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
   }
 
+  protected beep(frequency = 440, duration = 100) {
+    if (this.widgetProperties.config.playBeeps) {
+      const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency; // Hz
+      gainNode.gain.value = 0.1; // volume
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+    }
+  }
+
   private unsubscribeTimer() {
     this.timerSub?.unsubscribe();
   }
@@ -242,10 +268,9 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
     if (this.dataValue != null) {
       const v = Math.abs(this.dataValue); // Always positive
-      const m = Math.floor(v / 600);
-      const s = Math.floor((v % 600) / 10);
-      const d = Math.floor(v % 10);
-      valueText = `${m}:${('0' + s).slice(-2)}.${d}`;
+      const m = Math.floor(v / 60);
+      const s = Math.floor(v % 60);
+      valueText = `${m}:${('0' + s).slice(-2)}`;
 
       if (this.dataValue < 0) {
         valueText = `-${valueText}`;

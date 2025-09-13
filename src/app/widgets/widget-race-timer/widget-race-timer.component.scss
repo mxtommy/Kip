@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 :host {
   display: block;
   width: 100%;
@@ -24,17 +25,16 @@
 .timerBarContainer {
   position: absolute;
   left: 0px;
-  bottom: 8%;
-  height: auto;
-  width: calc(100% - 20px);
-  margin: 0px 10px 0px 10px;
+  bottom: 0px;
+  height: 23%;
+  width: 100%;
+  padding: 0px 10px 10px 10px;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
   align-items: stretch;
-  align-content: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .timer-button-groups {
@@ -44,13 +44,18 @@
 }
 
 .timer-adjusters-group {
-  flex-grow: 1;
-  flex-shrink: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 10px;
+  height: 100%;
 }
 
 .timer-countdown-group {
-  flex-grow: 3;
-  flex-shrink: 3;
+  flex-grow: 1;
+  flex-shrink: 1;
 }
 
 .timer-synch-button {
@@ -63,11 +68,54 @@
   margin-right: 5px;
 }
 
-.timer-reset-button {
-  width: calc(40% - 0px);
-  margin: 0px 10px 0px 10px;
+.buttons-svg-icon {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
 }
 
-.timer-adjust-buttons {
-  width: calc(30% - 10px);
+.button {
+  min-width: 0px;
+  height:100%;
+  width: 100%;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  @include mat.button-overrides((
+    filled-container-height: 100%,
+    filled-horizontal-padding: 0px,
+    filled-icon-spacing: 0px,
+  ));
+}
+
+.main-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-port-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.svg-content {
+  width: 100%;
+  height: 100%;
+  padding: 0em;
+  margin: 0em;
+  text {
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    text-anchor:middle;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal;
+    font-variant-ligatures: normal;
+    font-variant-caps: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    stroke: none;
+  }
 }
