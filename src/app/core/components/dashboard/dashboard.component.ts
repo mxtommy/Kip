@@ -64,7 +64,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
-  protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$);
+  protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$, { initialValue: true });
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
@@ -171,6 +171,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const id = params['id'];
+      console.error(`Activated route params: ${JSON.stringify(params)}`);
       let pageIdParam: number | null = null;
       if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
         pageIdParam = Number(id);
@@ -178,15 +179,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this.dashboard.setActiveDashboard(pageIdParam ?? this.dashboard.activeDashboard());
       this.loadDashboard(this.dashboard.activeDashboard());
     });
-  }
-
-  ngOnDestroy(): void {
-    // Destroy the Gridstack instance to clean up internal resources
-    const _gridstack = this._gridstack();
-    if (_gridstack?.grid) {
-      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
-    }
-    this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 
   private handleKeyDown(key: string, event: KeyboardEvent): void {
@@ -364,5 +356,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected navigateToHelp(): void {
     this._router.navigate(['/help']);
+  }
+
+  ngOnDestroy(): void {
+    // Destroy the Gridstack instance to clean up internal resources
+    const _gridstack = this._gridstack();
+    if (_gridstack?.grid) {
+      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    }
+    this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 }

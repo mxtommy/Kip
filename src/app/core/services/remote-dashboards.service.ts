@@ -1,4 +1,4 @@
-import { DestroyRef, effect, inject, Injectable, untracked } from '@angular/core';
+import { DestroyRef, effect, inject, Injectable, untracked, OnDestroy } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { IV2CommandResponse } from '../interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
@@ -16,7 +16,7 @@ export interface IScreensPayload {
 @Injectable({
   providedIn: 'root'
 })
-export class RemoteDashboardsService {
+export class RemoteDashboardsService implements OnDestroy {
   private readonly _http = inject(HttpClient);
   private readonly _settings = inject(AppSettingsService);
   private readonly _dashboard = inject(DashboardService);
@@ -28,6 +28,7 @@ export class RemoteDashboardsService {
   private readonly KIP_UUID = this._settings.KipUUID;
   private readonly ACTIVE_SCREEN_PATH = `self.displays.${this.KIP_UUID}.activeScreen`;
   private previousIsRemoteControl = false;
+  private isRemoteScreenIdxCleared = true;
 
   constructor() {
     effect(() => {
@@ -40,12 +41,9 @@ export class RemoteDashboardsService {
       untracked(() => {
         this.previousIsRemoteControl = isRemoteControl;
         let screensPayload: IScreensPayload = undefined;
-        let activeDashboard: number = undefined;
         if (!isRemoteControl) {
           // If remote control is disabled, clear out the displayName, screens and activeScreen on the server
           screensPayload = null;
-          activeDashboard = null;
-
         } else {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const dashboardListItems: DashboardListItem[] = dashboards.map(({ configuration, ...rest }) => rest);
@@ -53,22 +51,14 @@ export class RemoteDashboardsService {
             displayName: displayName,
             screens: dashboardListItems
           };
-          activeDashboard = this._dashboard.activeDashboard();
+          this.isRemoteScreenIdxCleared = false;
         }
-
 
         // Share the screens configuration with the server
         this.shareScreens(this.KIP_UUID, screensPayload).then(() => {
-          console.log('[Remote Dashboards] Screens shared');
+          console.log('[Remote Dashboards] Screen configuration shared');
         }).catch((err) => {
-          console.error('[Remote Dashboards] Error sharing screens:', err);
-        });
-
-        // If remote control is disabled, also clear out the activeScreen on the server
-        this.setActiveDashboard(this.KIP_UUID, activeDashboard).then(() => {
-          console.log('[Remote Dashboards] Shared active dashboard');
-        }).catch((err) => {
-          console.error('[Remote Dashboards] Error sharing active dashboard:', err);
+          console.error('[Remote Dashboards] Error sharing screen configuration:', err);
         });
       });
     });
@@ -76,18 +66,43 @@ export class RemoteDashboardsService {
     effect(() => {
       // Whenever the active dashboard changes and remote control is enabled, share the new active dashboard with the server
       const isRemoteControl = this._isRemoteControl();
-      if (!isRemoteControl) return;
       const activeIdx = this._dashboard.activeDashboard();
       untracked(() => {
-        this.setActiveDashboard(this.KIP_UUID, activeIdx).then(() => {
-          console.log('[Remote Dashboards] Shared active dashboard');
-        }).catch((err) => {
-          console.error('[Remote Dashboards] Error sharing active dashboard:', err);
-        });
+        if (isRemoteControl) {
+          this.setActiveDashboard(this.KIP_UUID, activeIdx).then(() => {
+            console.log(`[Remote Dashboards] Shared active dashboard: ${activeIdx}`);
+          }).catch((err) => {
+            console.error('[Remote Dashboards] Error sharing active dashboard:', err);
+          });
+        } else {
+          if (!this.isRemoteScreenIdxCleared) {
+            // If remote control was just disabled, clear out the activeScreen on the server
+            this.setActiveDashboard(this.KIP_UUID, null).then(() => {
+              console.log('[Remote Dashboards] Disabled: Cleared active dashboard on server');
+            }).catch((err) => {
+              console.error('[Remote Dashboards] Error clearing active dashboard on server:', err);
+            });
+            this.isRemoteScreenIdxCleared = true;
+          }
+        }
       });
     });
 
     this.setupRemoteControlListener();
+  }
+
+  /**
+   * On application/service teardown, explicitly clear shared screens and active dashboard
+   * so remote consumers don't retain a stale representation of this client.
+   */
+  ngOnDestroy(): void {
+    // Fire and forget; app is shutting down. Avoid awaiting to not block destroy cycle.
+    try {
+      this.shareScreens(this.KIP_UUID, null).catch(() => {/* ignore */});
+    } catch { /* ignore */ }
+    try {
+      this.setActiveDashboard(this.KIP_UUID, null).catch(() => {/* ignore */});
+    } catch { /* ignore */ }
   }
 
   private setupRemoteControlListener() {

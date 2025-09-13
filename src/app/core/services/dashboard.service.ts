@@ -269,6 +269,9 @@ export class DashboardService {
    * @param itemIndex The index of the dashboard to activate.
    */
   public setActiveDashboard(itemIndex: number): void {
+    if (itemIndex === this.activeDashboard()) return;
+    // No change if the same dashboard is selected to prevent unnecessary cascading updates
+
     if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
       this.activeDashboard.set(itemIndex);
     } else {
