@@ -2,7 +2,7 @@
 # New Feature
 * Level gauge: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring. **Special thanks to @fymmot for permission to integrate his plugin code. See https://github.com/fymmot/signalk-heel-angle**
 # Improvements
-* Minor Switch Panel state visibility improvement using bold fonts and a blow effect. Fixes #813
+* Minor Switch Panel state visibility improvement using bold fonts and a glow effect. Fixes #813
 * Enhance Countdown Timer Widget with Configurable Time and Sound Alerts. Fixes #814
 ## Fixes
 * Dashboard edit button in disabled state on initial app load. Fixes #809
