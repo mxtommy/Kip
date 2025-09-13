@@ -67,9 +67,6 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 - Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
 - Seamlessly switch between multiple configuration profles for different roles and devices or use cases.
 
-### Multiple User Profiles
-Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings and perfectly match defferent screen resolutions.
-
 ## User Experience
 
 ### Flexible and Easy
