@@ -64,8 +64,8 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 - Effortlessly create and customize dashboards using an intuitive grid layout system.
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
-- Organize and reorder dashboards by adding names and arranging them to suit your workflow.
-- Seamlessly switch between multiple dashboards for different roles, devices, or use cases.
+- Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
+- Seamlessly switch between multiple configuration profles for different roles and devices or use cases.
 
 ### Multiple User Profiles
 Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings.
