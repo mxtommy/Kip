@@ -12,9 +12,22 @@ margin-right: 15px;
 max-height: max-content;
 }
 
+.field-wrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+}
+
 .field-margin {
   margin-left: 15px;
   margin-bottom: 15px;
+}
+
+.field-flex
+{
+  flex: auto;
 }
 
 .icon-section {

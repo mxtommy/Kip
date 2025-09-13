@@ -18,8 +18,8 @@ import { DomSanitizer } from '@angular/platform-browser';
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss',
   host: {
-    '(document:mouseup)': '_onPointerRelease()',
-    '(document:touchend)': '_onPointerRelease()'
+    '(document:mouseup)': 'onPointerRelease()',
+    '(document:touchend)': 'onPointerRelease()'
   }
 })
 export class DashboardsEditorComponent {
@@ -48,7 +48,7 @@ export class DashboardsEditorComponent {
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.add(data.name, [], data.icon);
+      this._dashboard.add(data.name, [], data.icon, data.collapseFreeboardShell);
     });
   }
 
@@ -82,10 +82,11 @@ export class DashboardsEditorComponent {
       name: dashboard.name,
       icon: dashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
-      cancelBtnText: 'Cancel'
+      cancelBtnText: 'Cancel',
+      collapseFreeboardShell: dashboard.collapseFreeboardShell ?? false
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.update(itemIndex, data.name, data.icon);
+      this._dashboard.update(itemIndex, data.name, data.icon, data.collapseFreeboardShell);
     });
   }
 
@@ -100,10 +101,11 @@ export class DashboardsEditorComponent {
       name: `${currentName} copy`,
       icon: originalDashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
-      cancelBtnText: 'Cancel'
+      cancelBtnText: 'Cancel',
+      collapseFreeboardShell: originalDashboard.collapseFreeboardShell ?? false
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.duplicate(itemIndex, data.name, data.icon);
+      this._dashboard.duplicate(itemIndex, data.name, data.icon, data.collapseFreeboardShell);
     });
   }
 
@@ -171,7 +173,7 @@ export class DashboardsEditorComponent {
     });
   }
 
-  private _onPointerRelease(): void {
+  protected onPointerRelease(): void {
     // Allow future drags after actual release, but only if sheet not open
     if (!this._sheetOpen) {
       this.suppressDrag = false;

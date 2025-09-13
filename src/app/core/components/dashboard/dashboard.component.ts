@@ -50,9 +50,9 @@ interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: 
   imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
-    host: {
-    '(document:mouseup)': '_onPointerRelease()',
-    '(document:touchend)': '_onPointerRelease()'
+  host: {
+    '(document:mouseup)': 'onPointerRelease()',
+    '(document:touchend)': 'onPointerRelease()'
   }
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
@@ -287,7 +287,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private _onPointerRelease(): void {
+  protected onPointerRelease(): void {
     if (this._suppressDrag) {
       this._suppressDrag = false;
       // Restore original static (edit) state: if dashboard not static we re-enable drag

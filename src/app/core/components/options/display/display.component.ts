@@ -4,7 +4,6 @@ import { AppService } from '../../../services/app-service';
 import { AppSettingsService } from '../../../services/app-settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -12,6 +11,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { SignalkPluginsService } from '../../../services/signalk-plugins.service';
 import { DataService } from '../../../services/data.service';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
 
 
 @Component({
@@ -20,12 +21,13 @@ import { MatInputModule } from '@angular/material/input';
     styleUrls: ['./display.component.scss'],
     imports: [
         FormsModule,
-        MatCheckbox,
         MatDivider,
         MatButton,
         MatSliderModule,
         MatExpansionModule,
-        MatInputModule
+        MatInputModule,
+        MatSlideToggleModule,
+        MatSelectModule
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
@@ -44,6 +46,9 @@ export class SettingsDisplayComponent implements OnInit {
   /* If true, the display can be remotely controlled by another KIP via Signal K displays path. */
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
+  // Freeboard shell config
+  protected freeboardShellEnabled = model<boolean>(false);
+  protected freeboardShellSide = model<'left' | 'right'>('left');
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
   readonly LIGHT_THEME_NAME = "light-theme";
@@ -60,6 +65,8 @@ export class SettingsDisplayComponent implements OnInit {
     this.isRedNightMode.set(this._settings.getRedNightMode());
     this.isRemoteControl.set(this._settings.getIsRemoteControl());
     this.instanceName.set(this._settings.getInstanceName());
+    this.freeboardShellEnabled.set(this._settings.getFreeboardShellEnabled());
+    this.freeboardShellSide.set(this._settings.getFreeboardShellSide());
   }
 
   protected saveAllSettings():void {
@@ -85,9 +92,11 @@ export class SettingsDisplayComponent implements OnInit {
       this._settings.setThemeName("");
     }
     this._app.sendSnackbarNotification("Configuration saved", 3000, false);
+    this._settings.setFreeboardShellEnabled(this.freeboardShellEnabled());
+    this._settings.setFreeboardShellSide(this.freeboardShellSide());
   }
 
-  protected isAutoNightModeSupported(e: MatCheckboxChange): void {
+  protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
     this.displayForm().form.markAsDirty();
     // If user unchecked, immediately disable and abort
     if (!e.checked) {

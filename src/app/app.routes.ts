@@ -1,9 +1,15 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './core/components/dashboard/dashboard.component';
+import { freeboardShellGuard } from './core/guards/freeboard-shell.guard';
 
 export const routes: Routes = [
   { path: 'dashboard/:id',
-    component: DashboardComponent
+    component: DashboardComponent,
+    canMatch: [freeboardShellGuard]
+  },
+  { path: 'dashboard-split/:id',
+    loadComponent: () => import('./core/components/freeboard-split/freeboard-split.component').then(m => m.FreeboardSplitComponent),
+    canMatch: [freeboardShellGuard]
   },
   { path: 'settings',
     loadComponent: () => import('./core/components/settings/settings.component').then(m => m.SettingsComponent),
@@ -30,7 +36,6 @@ export const routes: Routes = [
     title: 'Login'
   },
   { path: '**',
-    component: DashboardComponent,
-    title: 'KIP',
+    redirectTo: 'dashboard/0'
   }
 ];

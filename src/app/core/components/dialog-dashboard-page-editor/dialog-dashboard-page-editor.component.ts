@@ -7,11 +7,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { SelectIconComponent } from '../select-icon/select-icon.component';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'dialog-dashboard-page-editor',
   standalone: true,
-  imports: [ MatDialogModule, MatIconModule, MatFormFieldModule, MatInputModule, MatButtonModule, FormsModule, SelectIconComponent ],
+  imports: [ MatDialogModule, MatIconModule, MatFormFieldModule, MatInputModule, MatButtonModule, FormsModule, SelectIconComponent, MatCheckboxModule ],
   templateUrl: './dialog-dashboard-page-editor.component.html',
   styleUrl: './dialog-dashboard-page-editor.component.scss'
 })

@@ -26,30 +26,21 @@
 }
 
 /* Empty Dashboard State Styles */
-.dashboard-empty-state {
+.dashboard-empty-state-container {
   display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  min-height: 80vh;
+  justify-content: space-around;
+  height: 100%;
   width: 100%;
   padding: 2rem;
   text-align: center;
 }
 
-.empty-state-content {
+.dashboard-empty-state-action {
   max-width: 500px;
   color: var(--mat-sys-outline-variant);
-}
-
-.empty-state-icon {
-  font-size: 4rem;
-  width: 4rem;
-  height: 4rem;
-  color: var(--mat-sys-outline-variant);
-  margin-bottom: 1rem;
-}
-
-.empty-state-actions {
   .touch-icon {
     font-size: 2rem;
     width: 2rem;
@@ -60,6 +51,14 @@
   }
 }
 
+.empty-state-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: var(--mat-sys-outline-variant);
+  margin-bottom: 1rem;
+}
+
 .empty-state-button {
   @include mat.button-overrides((
     filled-label-text-color: var(--kip-widget-card-background-color),
@@ -67,16 +66,6 @@
     filled-hover-state-layer-opacity: 0.7,
     filled-state-layer-color: var(--mat-sys-primary-fixed-dim)
   ));
-}
-
-.empty-state-help {
-  position: fixed;
-  left: 50%;
-  bottom: 10%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .empty-state-help-button {

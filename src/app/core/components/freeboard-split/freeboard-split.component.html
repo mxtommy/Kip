@@ -1,0 +1,29 @@
+<div class="split-root" [class]="side() === 'left' ? 'side-left' : 'side-right'">
+  @if(ghostActive()) {
+    <!-- Ghost line shown only while resizing -->
+    <div class="resize-ghost" [style.transform]="ghostTransform()"></div>
+  }
+  <div class="fsk-shell" #panel
+    [style.width.px]="panelCollapsed() ? 0 : panelWidth()"
+    [class.collapsed]="panelCollapsed()"
+    [class.locked]="forceCollapsed()"
+    [class.drag-disabled]="!canResize()">
+    @if(showHandle()) {
+      <div class="drag-handle"
+        (pointerdown)="startResize($event)"
+        role="separator"
+        aria-label="Resize Freeboard chartplotter panel"
+        aria-orientation="vertical">
+      </div>
+    }
+    <widget-freeboardsk class="fsk-iframe" [widgetProperties]="freeboardWidgetStub" />
+  </div>
+  <div class="dash-container">
+    <dashboard />
+  </div>
+  @if(showToggleButton()) {
+    <button mat-mini-fab class="collapse-toggle" (click)="toggleCollapse()">
+      {{ panelCollapsed() ? '›' : '‹' }}
+    </button>
+  }
+</div>

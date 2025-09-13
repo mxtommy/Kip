@@ -17,7 +17,7 @@ export class WidgetListCardComponent {
   protected pluginsStatus = input.required<{ name: string; enabled: boolean; required: boolean }[]>();
   protected pluginDependencyValid = input.required<boolean>();
 
-  onKeydown(ev: KeyboardEvent) {
+  protected onKeydown(ev: KeyboardEvent) {
     if (ev.key === 'Enter' || ev.key === ' ') {
       ev.preventDefault();
       (ev.target as HTMLElement).click();

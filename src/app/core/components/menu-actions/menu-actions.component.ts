@@ -42,7 +42,11 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     const tree = this._router.parseUrl(this._router.url);
     const primary = tree.root.children['primary'];
     const segments = primary ? primary.segments.map(s => s.path) : [];
-    return segments.length === 0 || segments[0] === 'dashboard';
+    return (
+      segments.length === 0 ||
+      segments[0] === 'dashboard' ||
+      segments[0] === 'dashboard-split'
+    );
   })();
   protected readonly isDashboardContext = toSignal(
     this._router.events.pipe(
@@ -52,7 +56,11 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         const tree = this._router.parseUrl(this._router.url);
         const primary = tree.root.children['primary'];
         const segments = primary ? primary.segments.map(s => s.path) : [];
-        return segments.length === 0 || segments[0] === 'dashboard';
+        return (
+          segments.length === 0 ||
+          segments[0] === 'dashboard' ||
+          segments[0] === 'dashboard-split'
+        );
       }),
       distinctUntilChanged()
     ),

@@ -33,6 +33,10 @@ export class AppSettingsService {
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
   private isRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private freeboardShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private freeboardShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
+  private freeboardShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
+  private freeboardShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -236,6 +240,24 @@ export class AppSettingsService {
     } else {
       this.instanceName.next(this.activeConfig.app.instanceName);
     }
+
+    if (this.activeConfig.app.freeboardShellEnabled === undefined) {
+      this.setFreeboardShellEnabled(false);
+    } else {
+      this.freeboardShellEnabled.next(this.activeConfig.app.freeboardShellEnabled);
+    }
+
+    if (this.activeConfig.app.freeboardShellSide === undefined) {
+      this.setFreeboardShellSide('left');
+    } else {
+      this.freeboardShellSide.next(this.activeConfig.app.freeboardShellSide);
+    }
+
+    if (this.activeConfig.app.freeboardShellWidth === undefined) {
+      this.setFreeboardShellWidth(300);
+    } else {
+      this.freeboardShellWidth.next(this.activeConfig.app.freeboardShellWidth);
+    }
   }
 
   //UnitDefaults
@@ -395,6 +417,75 @@ export class AppSettingsService {
     }
   }
 
+  // --- Freeboard Shell Settings API ---
+  public getFreeboardShellEnabledAsO() {
+    return this.freeboardShellEnabled.asObservable();
+  }
+  public getFreeboardShellEnabled(): boolean {
+    return this.freeboardShellEnabled.getValue();
+  }
+  public setFreeboardShellEnabled(enabled: boolean): void {
+    this.freeboardShellEnabled.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  public getFreeboardShellSideAsO() {
+    return this.freeboardShellSide.asObservable();
+  }
+  public getFreeboardShellSide(): 'left' | 'right' {
+    return this.freeboardShellSide.getValue();
+  }
+  public setFreeboardShellSide(side: 'left' | 'right'): void {
+    this.freeboardShellSide.next(side);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  public getFreeboardShellWidthAsO() {
+    return this.freeboardShellWidth.asObservable();
+  }
+  public getFreeboardShellWidth(): number {
+    return this.freeboardShellWidth.getValue();
+  }
+  public setFreeboardShellWidth(width: number): void {
+    this.freeboardShellWidth.next(Math.max(200, Math.min(width, 1000)));
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  public getFreeboardShellCollapsedAsO() {
+    return this.freeboardShellCollapsed.asObservable();
+  }
+  public getFreeboardShellCollapsed(): boolean {
+    return this.freeboardShellCollapsed.getValue();
+  }
+  public setFreeboardShellCollapsed(collapsed: boolean): void {
+    this.freeboardShellCollapsed.next(collapsed);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
   public getNightModeBrightness(): number {
     return this.nightModeBrightness.getValue();
   }
@@ -538,6 +629,9 @@ export class AppSettingsService {
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
+      freeboardShellEnabled: this.freeboardShellEnabled.getValue(),
+      freeboardShellSide: this.freeboardShellSide.getValue() ?? 'right',
+      freeboardShellWidth: this.freeboardShellWidth.getValue() ?? 380
     }
     return storageObject;
   }

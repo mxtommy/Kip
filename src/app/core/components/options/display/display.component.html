@@ -14,17 +14,17 @@
             </mat-panel-description>
           }
         </mat-expansion-panel-header>
-        <mat-checkbox class="full-width"
+        <mat-slide-toggle class="full-width sliders"
           (change)="isAutoNightModeSupported($event)"
           name="autoNightMode"
           [(ngModel)]="autoNightMode">
           Automatically activate day and night modes based on sun phases.
-        </mat-checkbox>
-        <mat-checkbox class="full-width"
-        [(ngModel)]="isRedNightMode"
-        name="redNightMode">
+        </mat-slide-toggle>
+        <mat-slide-toggle class="full-width sliders"
+          [(ngModel)]="isRedNightMode"
+          name="redNightMode">
           Enable red-only night mode.
-        </mat-checkbox>
+        </mat-slide-toggle>
         <div style="padding-left: 10px;">
           <br/>
           <span class="mat-body-medium">Adjust Night Mode Brightness</span>
@@ -48,11 +48,38 @@
             </mat-panel-description>
           }
         </mat-expansion-panel-header>
-        <mat-checkbox class="full-width"
+        <mat-slide-toggle class="full-width"
           [(ngModel)]="isLightTheme"
           name="isLightTheme">
             Enable light theme for brighter display settings.
-        </mat-checkbox>
+        </mat-slide-toggle>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Chartplotter
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Set integrated chartplotter mode.
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-slide-toggle #isFskShellEnabled class="full-width"
+          name="freeboardShellEnabled"
+          [(ngModel)]="freeboardShellEnabled">
+          Enable Freeboard-SK chartplotter split view shell mode.
+        </mat-slide-toggle>
+          <mat-form-field class="optional-field">
+            <mat-label>Display Freeboard-SK in</mat-label>
+            <mat-select
+              name="freeboardShellSide"
+              [(ngModel)]="freeboardShellSide"
+              [disabled]="!isFskShellEnabled.checked">
+              <mat-option value="left">Left split</mat-option>
+              <mat-option value="right">Right split</mat-option>
+            </mat-select>
+          </mat-form-field>
       </mat-expansion-panel>
       <mat-expansion-panel>
         <mat-expansion-panel-header>
@@ -65,12 +92,12 @@
             </mat-panel-description>
           }
         </mat-expansion-panel-header>
-        <mat-checkbox #isRemoteControlCb class="full-width"
+        <mat-slide-toggle #isRemoteControlCb class="full-width"
           [(ngModel)]="isRemoteControl"
           name="isRemoteControl">
             Allow this KIP dashboard to be changed remotely by other KIP instances.
-        </mat-checkbox>
-        <mat-form-field class="instance-name">
+        </mat-slide-toggle>
+        <mat-form-field class="optional-field">
           <mat-label>Instance Name</mat-label>
           <input matInput
             (ngModelChange)="displayForm.form.markAsDirty()"
