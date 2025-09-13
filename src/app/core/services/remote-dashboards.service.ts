@@ -1,4 +1,4 @@
-import { DestroyRef, effect, inject, Injectable, untracked, OnDestroy } from '@angular/core';
+import { DestroyRef, effect, inject, Injectable, untracked } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { IV2CommandResponse } from '../interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
@@ -16,7 +16,7 @@ export interface IScreensPayload {
 @Injectable({
   providedIn: 'root'
 })
-export class RemoteDashboardsService implements OnDestroy {
+export class RemoteDashboardsService {
   private readonly _http = inject(HttpClient);
   private readonly _settings = inject(AppSettingsService);
   private readonly _dashboard = inject(DashboardService);
@@ -31,6 +31,15 @@ export class RemoteDashboardsService implements OnDestroy {
   private isRemoteScreenIdxCleared = true;
 
   constructor() {
+    const startupClear = this.setActiveDashboard(this.KIP_UUID, null)
+    // Always clear any stale activeScreen value on startup (independent of remote control flag)
+      .then(() => {
+        console.log('[Remote Dashboards] Startup: cleared stale activeScreen (unconditional)');
+      })
+      .catch(err => {
+        console.warn('[Remote Dashboards] Startup: failed to clear stale activeScreen', err);
+      });
+
     effect(() => {
       // Whenever the dashboards or display name or remote control setting changes, share the new state with the server
       const isRemoteControl = this._isRemoteControl();
@@ -88,21 +97,8 @@ export class RemoteDashboardsService implements OnDestroy {
       });
     });
 
-    this.setupRemoteControlListener();
-  }
-
-  /**
-   * On application/service teardown, explicitly clear shared screens and active dashboard
-   * so remote consumers don't retain a stale representation of this client.
-   */
-  ngOnDestroy(): void {
-    // Fire and forget; app is shutting down. Avoid awaiting to not block destroy cycle.
-    try {
-      this.shareScreens(this.KIP_UUID, null).catch(() => {/* ignore */});
-    } catch { /* ignore */ }
-    try {
-      this.setActiveDashboard(this.KIP_UUID, null).catch(() => {/* ignore */});
-    } catch { /* ignore */ }
+    // Ensure listener attaches after we attempt to clear stale value so we don't react to it.
+    startupClear.finally(() => this.setupRemoteControlListener());
   }
 
   private setupRemoteControlListener() {
