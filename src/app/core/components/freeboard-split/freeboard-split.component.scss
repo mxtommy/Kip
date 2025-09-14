@@ -20,7 +20,10 @@
   transition: width 0.2s ease;
 }
 .fsk-shell.collapsed {
-  width: 0 !important;
+  width: 1px !important; /* keep non-zero so map libraries detect size */
+  visibility: hidden; /* visually hidden but layout participates */
+  opacity: 0; /* ensure no flash */
+  pointer-events: none; /* prevent interaction */
 }
 .fsk-iframe {
   flex: 1 1 auto;

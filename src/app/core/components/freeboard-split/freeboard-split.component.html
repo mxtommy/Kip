@@ -4,7 +4,7 @@
     <div class="resize-ghost" [style.transform]="ghostTransform()"></div>
   }
   <div class="fsk-shell" #panel
-    [style.width.px]="panelCollapsed() ? 0 : panelWidth()"
+    [style.width.px]="panelWidth()"
     [class.collapsed]="panelCollapsed()"
     [class.locked]="forceCollapsed()"
     [class.drag-disabled]="!canResize()">

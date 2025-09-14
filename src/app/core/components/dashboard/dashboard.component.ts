@@ -171,7 +171,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const id = params['id'];
-      console.error(`Activated route params: ${JSON.stringify(params)}`);
       let pageIdParam: number | null = null;
       if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
         pageIdParam = Number(id);
