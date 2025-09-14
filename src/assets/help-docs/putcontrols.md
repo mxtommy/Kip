@@ -1,14 +1,14 @@
-# Updating Signal K Data with PUT Commands
+# Digital Switching and using PUT Commands
 
 Signal K allows users to update data paths and trigger device reactions. This can include turning a light on or off, dimming it, activating a bilge pump, or other similar actions. This guide explains how to use the Switch Panel or Slider widgets to achieve this, how to verify if a path supports data reception (known as PUT-enabled in Signal K terms), and what is required to enable PUT functionality.
 
 ## What is Required to Trigger Device Reactions
-For Signal K to accept any data from a client application, the application must be authenticated with a valid security token. Read the **Login & Configurations** help section for details on how to setup login in KIP. By default, sending data to a Signal K path only updates the value and broadcasts it to the network. No actions are taken unless a plugin or handler is configured to respond to the updated value. For example:
-- Sending a PUT 'engage' command to `self.steering.autopilot.state` will update the state value, but the autopilot will not engage unless a plugin or handler is set up to process the command and communicate with the hardware.
+For Signal K to accept any data from a client application, the application must be authenticated with a valid security token. Read the **Login & Configurations** help section for details on how to setup login in KIP. By default, sending data to a Signal K path only updates the value and broadcasts it to the network. No actions are taken unless an action handler is configured to respond to the updated value. For example:
+- Sending a PUT 'engage' command to `self.steering.autopilot.state` will update the state value, but the autopilot will not engage unless a handler (the autopilot plugin in this case) is set up to process the command and communicate with the hardware.
 
-To enable actions, you have several options:
+To enable action handles, you have several options:
 1. **Install a Plugin**:
-   - The simplest option is to look in Signal K's Appstore. There are many plugins already available in the Signal K ecosystem. Search for the plugin you need, install it, and configure it.
+   - The simplest option is to look in Signal K's Appstore. There are many plugins already available in the Signal K ecosystem such as plugins for (Shelly)[https://www.shelly.com], (Sonoff)[https://sonoff.tech/collections/diy-smart-switches] and standard N2K, like the (Yacht Devices)[https://www.yachtd.com] YDCC. Search for the plugin you need, install it, and configure it.
    
 2. **Use Node-RED's Signal K PUT Handler**:
    - Node-RED is a visual and easy-to-learn automation platform installed with Signal K. The Signal K team has created Signal K-specific Node-RED nodes, allowing you to easily automate your vessel. You can find Node-RED in the Webapps section of the Signal K Admin site.

@@ -60,26 +60,49 @@ Save your night vision by automatically switching KIP to day or night mode based
 KIP supports multiple user profiles, allowing different roles on board—such as captain, skipper, tactician, navigator, or engineer—to tailor the interface to their needs. Profiles can also be used to tie specific configuration arrangements to use cases or device form factors. See the Login & Configurations help sections for mode details.
 
 ## Remote Control Other KIP Displays
-Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
+Control which dashboard is shown on another KIP instance (for example: a mast display, a TV or pilot‑house screen that is hard to reach, or a device with no local input hardware).
 
-Use cases
-- Mast display: change dashboards from the cockpit.
-- Wall/helm screens: toggle dashboards without standing up or reaching for controls.
-- Headless/non‑touch: select dashboards when no keyboard/mouse is connected.
+### Typical Use Cases
+- Mast display: change dashboards from the cockpit without going forward.
+- Salon / TV screen: rotate between navigation and status dashboards easily.
+- Headless / no input device: select dashboards when there is no keyboard/mouse or touch is disabled.
 
-Setup
-1) On the device you want to control (Target KIP)
-- Open Options → Display → Remote Control.
-- Enable “Allow this KIP dashboard to be managed remotely.”
-- Set an Instance Name (easier to recognize later).
+### Requirements
+- Both devices must be connected to the same Signal K server.
+- You must be logged in (authenticated) on both devices (Connectivity tab → Login to Server enabled).
+- The target device must explicitly allow remote control (Display tab → Remote Control option group).
 
-2) On the device you’ll control from (Controller KIP)
-- Open the Actions menu, access Settings and choose Remote Control.
-- Pick a device from the list (by Instance Name).
-- Choose a dashboard tile to set it active on the target device.
+### Good Naming Practice
+If multiple devices log in with the same Signal K user to share configuration, they inevitably share the same Instance Name. Whilst being confusing, it will still work. To fix this, you must use different Signal K users and set a descriptive name on each configuration (e.g. Mast Display, Helm Port, Nav Station) so you can identify them quickly.
 
-Notes and tips
-- Both devices must connect to the same Signal K server.
-- Permissions: you must use an authenticated connection to Signal K user (Connectivity Login to Server toggle).
-- If the device list is empty, verify the Target KIP has “Allow this dashboard to be managed remotely” enabled and a name set.
-- Changes are sent instantly; the UI shows the currently active dashboard.
+### Setup
+1. On the device you want to control (Target KIP)
+  - Open: Options → Display → Remote Control.
+  - Enable: Allow this KIP dashboard to be managed remotely.
+  - Set: Instance Name (this is what will appear in the controller list).
+2. On the controlling device
+  - Open: Actions menu → Settings → Remote Control.
+  - Select the target device by its Instance Name.
+  - Click / tap a dashboard tile to activate it on the target device.
+
+### Using Remote Control
+- The currently active dashboard on the target device is highlighted.
+- Switching is usually instantaneous; brief delays can indicate network latency.
+- You can leave the Remote Control panel open to “page” through dashboards live.
+
+### Troubleshooting
+| Problem | What to Check |
+|---------|----------------|
+| Target device not listed | Is remote control enabled there? Is Instance Name set? Both on same Signal K server? |
+| No highlight / not switching | Confirm target device stays online (no sleep / browser closed). Refresh controller panel. |
+| Wrong device switched | Two devices share same Instance Name—rename one. |
+| Works, then stops | Network drop or Signal K reconnect in progress—wait a few seconds or reload. |
+
+### Tips
+- Keep Instance Names short but meaningful (e.g. Mast, Helm, NavTV).
+- For unattended displays, enable the browser’s keep‑awake / no‑sleep features if supported.
+- Combine with Night Mode + per‑profile layouts for role‑specific remote switching.
+- Use different Signal K users if you want fully isolated configurations.
+
+### Privacy / Safety Note
+Anyone with access to a logged‑in controlling KIP instance can switch dashboards on enabled targets. Only enable remote management on displays where that is acceptable.
