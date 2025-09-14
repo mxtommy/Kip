@@ -4,7 +4,8 @@
     <div class="resize-ghost" [style.transform]="ghostTransform()"></div>
   }
   <div class="fsk-shell" #panel
-    [style.width.px]="panelWidth()"
+    [style.width.px]="!chartplotterModeInPortrait() ? panelWidth() : null"
+    [style.height.%]="chartplotterModeInPortrait() ? (panelRatio()*100) : null"
     [class.collapsed]="panelCollapsed()"
     [class.locked]="forceCollapsed()"
     [class.drag-disabled]="!canResize()">
@@ -21,7 +22,7 @@
     }
     <widget-freeboardsk class="fsk-iframe" [widgetProperties]="freeboardWidgetStub" />
   </div>
-  <div class="dash-container">
+  <div class="dash-container" [style.height.%]="chartplotterModeInPortrait() ? ((1-panelRatio())*100) : null">
     <dashboard />
   </div>
 </div>

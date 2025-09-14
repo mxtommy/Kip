@@ -17,8 +17,7 @@
 .split-root.portrait-column .fsk-shell,
 .split-root.portrait-column .dash-container {
   width: 100% !important;
-  height: 50%;
-  transition: height 0.2s ease;
+  //transition: height 0.2s ease;
 }
 .split-root.side-left.portrait-column .dash-container {
   order: 2;
@@ -85,7 +84,6 @@
   min-width: 28px;
   cursor: col-resize;
   pointer-events: auto; /* participate in drag start */
-  //box-shadow: none;
 }
 .drag-handle .drag-fab mat-icon {
   font-size: 20px;

@@ -254,7 +254,7 @@ export class AppSettingsService {
     }
 
     if (this.activeConfig.app.freeboardShellWidth === undefined) {
-      this.setFreeboardShellWidth(300);
+      this.setFreeboardShellWidth(0.3); // default ratio
     } else {
       this.freeboardShellWidth.next(this.activeConfig.app.freeboardShellWidth);
     }
@@ -459,7 +459,9 @@ export class AppSettingsService {
     return this.freeboardShellWidth.getValue();
   }
   public setFreeboardShellWidth(width: number): void {
-    this.freeboardShellWidth.next(Math.max(200, Math.min(width, 1000)));
+    // interpret input as ratio (0-1), clamp to sensible bounds
+    const ratio = Math.min(0.9, Math.max(0.1, width));
+    this.freeboardShellWidth.next(ratio);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {

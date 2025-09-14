@@ -22,7 +22,9 @@ export class SplitShellComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly ngZone = inject(NgZone);
   public readonly side = signal<'left' | 'right'>(this._settings.getFreeboardShellSide());
-  public panelWidth = signal<number>(this._settings.getFreeboardShellWidth());
+  // Stored as ratio (0-1)
+  public panelRatio = signal<number>(this._settings.getFreeboardShellWidth());
+  public panelWidth = signal<number>(0); // derived pixels
   public panelCollapsed = signal<boolean>(this._settings.getFreeboardShellCollapsed());
 
   // Derived runtime forced collapse when active dashboard has collapseFreeboardShell flag
@@ -64,6 +66,17 @@ export class SplitShellComponent {
   private ghostWidth = 0; // candidate width while dragging
 
   constructor() {
+    // Compute pixel width from ratio on init and when window resizes
+    const recomputeWidth = () => {
+      const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+      if (!host) return;
+      const total = host.clientWidth;
+      this.panelWidth.set(Math.round(total * this.panelRatio()));
+    };
+    window.addEventListener('resize', recomputeWidth, { passive: true });
+    // initial
+    queueMicrotask(recomputeWidth);
+
     effect(() => {
       const forceCollapsed = this.forceCollapsed();
       untracked(() => {
@@ -74,6 +87,12 @@ export class SplitShellComponent {
           this.panelCollapsed.set(this._settings.getFreeboardShellCollapsed());
         }
       });
+    });
+
+    effect(() => {
+      // Recompute width when ratio changes
+      this.panelRatio();
+      recomputeWidth();
     });
   }
 
@@ -89,7 +108,7 @@ export class SplitShellComponent {
     if (!this.canResize()) return;
     this.resizing = true;
     this.startX = ev.clientX;
-    this.startW = this.panelWidth();
+  this.startW = this.panelWidth();
   this.ghostWidth = this.startW; // initial
   this.ghostActive.set(true);
     this.updateGhostTransform(this.startW);
@@ -104,7 +123,13 @@ export class SplitShellComponent {
   protected onMove(ev: PointerEvent): void {
     if (!this.resizing) return;
     const delta = this.side() === 'left' ? (ev.clientX - this.startX) : (this.startX - ev.clientX);
-    const newW = Math.min(1000, Math.max(200, this.startW + delta));
+  // Constrain between 10% and 90% of container
+  const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+  const total = host?.clientWidth ?? 1;
+  const raw = this.startW + delta;
+  const minPx = total * 0.1;
+  const maxPx = total * 0.9;
+  const newW = Math.min(maxPx, Math.max(minPx, raw));
     if (Math.abs(newW - this.ghostWidth) < SplitShellComponent.MIN_DELTA_PX) return;
     this.ghostWidth = newW;
     // Update ghost transform outside Angular; no width mutation to shell to avoid layout churn
@@ -125,13 +150,19 @@ export class SplitShellComponent {
     if (panelRef && !this.panelCollapsed()) {
       panelRef.nativeElement.style.width = finalW + 'px';
     }
-    this.ngZone.run(() => this.panelWidth.set(finalW));
+    this.ngZone.run(() => {
+      this.panelWidth.set(finalW);
+      const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+      const total = host?.clientWidth ?? finalW;
+      const ratio = total ? finalW / total : 0.3;
+      this.panelRatio.set(ratio);
+    });
     if (!this.forceCollapsed()) {
       // Persist within Angular (already in zone if called from pointerup listener outside zone)
       if (NgZone.isInAngularZone()) {
-        this._settings.setFreeboardShellWidth(this.panelWidth());
+        this._settings.setFreeboardShellWidth(this.panelRatio());
       } else {
-        this.ngZone.run(() => this._settings.setFreeboardShellWidth(this.panelWidth()));
+        this.ngZone.run(() => this._settings.setFreeboardShellWidth(this.panelRatio()));
       }
     }
   }
