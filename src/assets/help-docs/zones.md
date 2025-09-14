@@ -1,4 +1,4 @@
-# Harness the Power of Data State Notifications
+## Harness the Power of Data State Notifications
 
 Stay informed about your vessel’s data with Signal K’s state notifications. For example, Signal K can flag certain sensor readings—such as depth or temperature—when they reach critical levels. KIP can then visually or audibly alert you. For instance, if the depth drops to 3 meters or less, KIP can highlight this with a warning sound or visual cue. This powerful feature combines **Zones Configuration** and **Notification Methods** in Signal K.
 

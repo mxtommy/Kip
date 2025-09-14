@@ -1,4 +1,4 @@
-# Data Inspector
+## Data Inspector
 
 The Data Inspector is a powerful tool in KIP that allows you to view all Signal K paths and the data received from the server in real time. It provides detailed insights into the data being transmitted, including metadata, sources, and supported operations. This guide explains how to use the Data Inspector effectively.
 

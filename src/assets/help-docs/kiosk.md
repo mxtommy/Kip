@@ -1,4 +1,4 @@
-# Raspberry Pi Kiosk Mode (Chromium)
+## Raspberry Pi Kiosk Mode (Chromium)
 
 This guide launches Chromium in kiosk mode to display KIP at:
 http://<sk_server_IP>:3000/@mxtommy/kip/#/page/0

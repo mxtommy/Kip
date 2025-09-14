@@ -4,6 +4,14 @@
 
 Unlike many dashboards, KIP comes **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
 
+[![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
+[![Community Videos](https://img.shields.io/badge/Community-Videos-purple)](src/assets/help-docs/community.md)
+[![Contact](https://img.shields.io/badge/Contact-Get_in_touch-success)](src/assets/help-docs/contact-us.md)
+
+Help: [Basics](src/assets/help-docs/welcome.md) · [Dashboards](src/assets/help-docs/dashboards.md) · [Widgets](src/assets/help-docs/dashboards.md#4-widget-gallery-overview) · [Datasets](src/assets/help-docs/datasets.md) · [Remote Control](src/assets/help-docs/welcome.md#remote-control-other-kip-displays) · [Contact](src/assets/help-docs/contact-us.md)
+
+<h2 id="help">Documentation & Help</h2>
+
 KIP is designed for sailors and boaters who want:
 
 - A **ready-to-use, classic marine app experience** with minimal setup.
