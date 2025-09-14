@@ -3,14 +3,6 @@
 
 Unlike many dashboards, KIP comes **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
 
-<h3 id="help">Documentation & Help</h3>
-
-[![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
-[![Community Videos](https://img.shields.io/badge/Community-Videos-purple)](src/assets/help-docs/community.md)
-[![Contact](https://img.shields.io/badge/Contact-Get_in_touch-success)](src/assets/help-docs/contact-us.md)
-
-Help: [Basics](src/assets/help-docs/welcome.md) · [Dashboards](src/assets/help-docs/dashboards.md) · [Widgets](src/assets/help-docs/dashboards.md#4-widget-gallery-overview) · [Digital Switching](src/assets/help-docs/putcontrols.md) · [Remote Control](src/assets/help-docs/welcome.md#remote-control-other-kip-displays)
-
 KIP is designed for sailors and boaters who want:
 
 - A **ready-to-use, classic marine app experience** with minimal setup.
@@ -23,6 +15,14 @@ KIP is designed for sailors and boaters who want:
 With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi-Function Display for [Signal K](https://signalk.org) vessels.
 
 ![KIP](./images/KIPDemo.png)
+
+<h3 id="help">Documentation & Help</h3>
+
+[![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
+[![Community Videos](https://img.shields.io/badge/Community-Videos-purple)](src/assets/help-docs/community.md)
+[![Contact](https://img.shields.io/badge/Contact-Get_in_touch-success)](src/assets/help-docs/contact-us.md)
+
+Help: [Basics](src/assets/help-docs/welcome.md) · [Dashboards](src/assets/help-docs/dashboards.md) · [Widgets](src/assets/help-docs/dashboards.md#4-widget-gallery-overview) · [Digital Switching](src/assets/help-docs/putcontrols.md) · [Remote Control](src/assets/help-docs/welcome.md#remote-control-other-kip-displays)
 
 Key features include:
 - **Flexible Layouts**: Build purposeful dashboards with an easy-to-use and intuitive grid layout system. Drag widgets into place and make adjustments with simple gestures or clicks.
