@@ -11,6 +11,38 @@
 .split-root.side-right {
   flex-direction: row-reverse;
 }
+.split-root.portrait-column {
+  flex-direction: column; /* stack vertically */
+}
+.split-root.portrait-column .fsk-shell,
+.split-root.portrait-column .dash-container {
+  width: 100% !important;
+  height: 50%;
+  transition: height 0.2s ease;
+}
+.split-root.side-left.portrait-column .dash-container {
+  order: 2;
+}
+.split-root.side-left.portrait-column .fsk-shell {
+  order: 1;
+}
+.split-root.side-right.portrait-column .fsk-shell {
+  order: 2;
+}
+.split-root.side-right.portrait-column .dash-container {
+  order: 1;
+}
+.split-root.portrait-column .fsk-shell.collapsed {
+  /* When forced collapsed in portrait, simply collapse height */
+  height: 0 !important;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.split-root.portrait-column .drag-handle,
+.split-root.portrait-column .resize-ghost {
+  display: none; /* No horizontal resize in column mode */
+}
 .fsk-shell {
   position: relative;
   height: 100%;
