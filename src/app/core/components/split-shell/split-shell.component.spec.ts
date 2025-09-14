@@ -17,7 +17,7 @@ class MockAppSettingsService {
 }
 
 class MockDashboardService {
-  dashboards() { return [{ id: '1', collapseFreeboardShell: false }]; }
+  dashboards() { return [{ id: '1', collapseSplitShell: false }]; }
   activeDashboard() { return 0; }
   isDashboardStatic() { return true; }
 }

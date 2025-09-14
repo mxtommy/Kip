@@ -91,7 +91,7 @@ export class DashboardService {
    * Behavior:
    * - Generates a new UUID for the dashboard.
    * - If no icon provided, defaults to 'dashboard-dashboard'.
-   * - collapseFreeboardShell flag (optional) controls forced Freeboard Shell panel collapse
+   * - collapseSplitShell flag (optional) controls forced Freeboard Shell panel collapse
    *   when global Freeboard Shell Mode is enabled:
    *     true  => In split view the Freeboard panel is locked collapsed (user cannot expand/resize).
    *     false/undefined => Normal persisted panel behavior.
@@ -101,7 +101,7 @@ export class DashboardService {
    * @param name  Display name of the dashboard.
    * @param configuration Initial Gridstack widget configuration (empty array for blank).
    * @param icon Optional icon key (defaults to 'dashboard-dashboard').
-   * @param collapseFreeboardShell Optional per-dashboard forced shell collapse flag (defaults to false).
+   * @param collapseSplitShell Optional per-dashboard forced shell collapse flag (defaults to false).
    * @returns Index (0-based) of the newly inserted dashboard.
    */
   public add(name: string, configuration: NgGridStackWidget[], icon?: string, collapseSplitShell?: boolean): number {
@@ -122,7 +122,7 @@ export class DashboardService {
    *  - change the dashboard id
    *  - alter the widget configuration array
    *
-   * collapseFreeboardShell semantics:
+   * collapseSplitShell semantics:
    *  - true  => When global Freeboard Shell Mode is enabled the Freeboard panel
    *            is forced collapsed & locked for this dashboard (no expand/resize).
    *  - false => Normal persisted panel behavior (user can expand/resize if allowed).
@@ -130,7 +130,7 @@ export class DashboardService {
    * @param itemIndex Index of the dashboard to update (0-based).
    * @param name New display name.
    * @param icon New icon key (fallback to 'dashboard-dashboard').
-   * @param collapseFreeboardShell Per-dashboard forced collapse flag.
+   * @param collapseSplitShell Per-dashboard forced collapse flag.
    */
   public update(itemIndex: number, name: string, icon: string, collapseSplitShell: boolean): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
@@ -162,7 +162,7 @@ export class DashboardService {
    * - Generates a new UUID for every widget AND updates each widget's
    *   input.widgetProperties.uuid to keep internal references consistent.
    * - Name and icon are replaced with the provided values (icon defaults to 'dashboard-dashboard' if empty).
-   * - collapseFreeboardShell flag explicitly set from the provided parameter (falls back to false if undefined),
+   * - collapseSplitShell flag explicitly set from the provided parameter (falls back to false if undefined),
    *   rather than inheriting the original value silently. Caller decides whether to retain or change it.
    *
    * Safety / Validation:
@@ -170,7 +170,7 @@ export class DashboardService {
    * - If the original configuration is not an array, logs an error and replaces with [] in the duplicate.
    * - Logs an error if any widget lacks the expected input.widgetProperties structure.
    *
-   * Freeboard Shell Flag Semantics (collapseFreeboardShell):
+   * Freeboard Shell Flag Semantics (collapseSplitShell):
    * - true  => When global Freeboard Shell Mode is enabled, the Freeboard panel is forced collapsed & locked
    *            (no expand/resize) for the duplicated dashboard.
    * - false => Normal persisted panel behavior (user may expand/resize when allowed).
@@ -178,7 +178,7 @@ export class DashboardService {
    * @param itemIndex             Index of the dashboard to duplicate (0-based).
    * @param newName               Display name for the duplicated dashboard.
    * @param newIcon               Optional icon key (defaults to 'dashboard-dashboard' if falsy).
-   * @param collapseFreeboardShell Per-dashboard forced Freeboard panel collapse flag for the duplicate.
+   * @param collapseSplitShell Per-dashboard forced Freeboard panel collapse flag for the duplicate.
    * @returns                     The new dashboard's index, or -1 on failure.
    */
   public duplicate(itemIndex: number, newName: string, newIcon: string, collapseSplitShell: boolean): number {

@@ -25,9 +25,13 @@ max-height: max-content;
   margin-bottom: 15px;
 }
 
-.field-flex
-{
+.field-flex {
   flex: auto;
+}
+
+.icon-selector {
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 4px;
 }
 
 .icon-section {

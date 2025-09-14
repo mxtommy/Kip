@@ -8,17 +8,26 @@
   <mat-dialog-content>
     <div class="field-wrapper field-margin">
       <mat-form-field class="field-flex">
-        <mat-label>Name</mat-label>
+        <mat-label>Display Name</mat-label>
         <input matInput type="text" id="name" placeholder="Name" name="name" [(ngModel)]="data.name" required cdkFocusInitial/>
         <mat-error>
           A name is required
         </mat-error>
       </mat-form-field>
-      <mat-checkbox class="field-flex" placeholder="collapseSplitShell" name="collapseSplitShell" [(ngModel)]="data.collapseSplitShell">Auto-collapse Split panel</mat-checkbox>
+      <mat-checkbox
+        class="field-flex"
+        placeholder="collapseSplitShell"
+        name="collapseSplitShell"
+        [(ngModel)]="data.collapseSplitShell"
+        [disabled]="!isSplitShellEnabled()">
+          Auto-collapse Freeboard-SK shell when displaying this dashboard
+        </mat-checkbox>
     </div>
     <div class="field-margin icon-section">
-      <span style="font-size: 1.2em;">Icon</span>
-      <select-icon [iconFile]="'assets/svg/icons.svg'" [currentIcon]="data.icon" (selectedIcon)="onIconSelected($event)"></select-icon>
+      <span style="font-size: 1.2em;">Icon Gallery</span>
+      <div class="icon-selector">
+        <select-icon [iconFile]="'assets/svg/icons.svg'" [currentIcon]="data.icon" (selectedIcon)="onIconSelected($event)"></select-icon>
+      </div>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">

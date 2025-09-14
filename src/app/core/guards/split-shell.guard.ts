@@ -9,7 +9,7 @@ import { AppSettingsService } from '../services/app-settings.service';
 export const splitShellGuard: CanMatchFn = (route: Route, segments: UrlSegment[]): boolean | UrlTree => {
   const settings = inject(AppSettingsService);
   const router = inject(Router);
-  const enabled = settings.getFreeboardShellEnabled();
+  const enabled = settings.getSplitShellEnabled();
   const url = '/' + segments.map(s => s.path).join('/');
 
   // Routes we map:

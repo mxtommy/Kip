@@ -27,8 +27,8 @@ export class SplitShellComponent {
   public panelWidth = signal<number>(0); // derived pixels
   public panelCollapsed = signal<boolean>(this._settings.getSplitShellCollapsed());
 
-  // Derived runtime forced collapse when active dashboard has collapseFreeboardShell flag
-  public forceCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseFreeboardShell);
+  // Derived runtime forced collapse when active dashboard has collapseSplitShell flag
+  public forceCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
 
   // Only show toggle on handset (portrait) per requirement
   private handset$ = this.breakpointObserver.observe(Breakpoints.HandsetPortrait);

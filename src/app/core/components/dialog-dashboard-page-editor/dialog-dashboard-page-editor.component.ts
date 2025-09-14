@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { SelectIconComponent } from '../select-icon/select-icon.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { AppSettingsService } from '../../services/app-settings.service';
 
 @Component({
   selector: 'dialog-dashboard-page-editor',
@@ -19,12 +20,15 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 export class DialogDashboardPageEditorComponent {
   protected dialogRef = inject<MatDialogRef<DialogDashboardPageEditorComponent>>(MatDialogRef);
   protected data = inject<DialogDashboardPageEditorData>(MAT_DIALOG_DATA);
+  private _settings = inject(AppSettingsService);
+  protected isSplitShellEnabled = signal<boolean>(true);
 
   constructor() {
     // Set default icon if not provided
     if (!this.data.icon) {
       this.data.icon = 'dashboard-dashboard';
     }
+    this.isSplitShellEnabled.set(this._settings.getSplitShellEnabled());
   }
 
   protected save(): void {
