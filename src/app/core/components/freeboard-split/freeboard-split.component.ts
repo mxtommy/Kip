@@ -5,12 +5,13 @@ import { DashboardService } from '../../services/dashboard.service';
 import { WidgetFreeboardskComponent } from '../../../widgets/widget-freeboardsk/widget-freeboardsk.component';
 import { DashboardComponent } from '../dashboard/dashboard.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'freeboard-split',
-  imports: [CommonModule, WidgetFreeboardskComponent, DashboardComponent, MatButtonModule],
+  imports: [CommonModule, WidgetFreeboardskComponent, DashboardComponent, MatButtonModule, MatIconModule],
   templateUrl: './freeboard-split.component.html',
   styleUrl: './freeboard-split.component.scss'
 })

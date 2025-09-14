@@ -38,19 +38,37 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: 3px;
   cursor: col-resize;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--mat-sys-inverse-primary);
   z-index: 5;
 }
+.drag-handle .drag-fab {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  cursor: col-resize;
+  pointer-events: auto; /* participate in drag start */
+  //box-shadow: none;
+}
+.drag-handle .drag-fab mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
 .side-left .drag-handle {
-  right: 0;
+  right: -2px;
 }
 .side-right .drag-handle {
-  left: 0;
+  left: -2px;
 }
 .drag-handle:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--mat-sys-error-container);
 }
 .collapse-toggle {
   position: absolute;
@@ -77,7 +95,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--mat-sys-primary, #42a5f5);
+  background: var(--mat-sys-error-container);
   opacity: 0.9;
   pointer-events: none;
   z-index: 30; /* above shell and dash but below overlays */

@@ -14,6 +14,9 @@
         role="separator"
         aria-label="Resize Freeboard chartplotter panel"
         aria-orientation="vertical">
+        <button mat-mini-fab class="drag-fab" tabindex="-1" aria-hidden="true" (pointerdown)="startResize($event)">
+          <mat-icon fontIcon="drag_indicator"></mat-icon>
+        </button>
       </div>
     }
     <widget-freeboardsk class="fsk-iframe" [widgetProperties]="freeboardWidgetStub" />
