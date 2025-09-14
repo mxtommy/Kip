@@ -222,8 +222,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const containerHeight = this._hostEl.nativeElement.clientHeight || window.innerHeight;
       const rows = grid.getRow ? grid.getRow() : 0;
       if (rows > 0 && grid.cellHeight) {
-        const cellHeight = Math.floor(containerHeight / rows);
-        grid.cellHeight(cellHeight);
+        const rowCount: number = Number(rows) || 0;
+        let cellHeight = rowCount > 0 ? (containerHeight / rowCount) : 1;
+        cellHeight = Math.max(1, Math.round(cellHeight * 100) / 100); // keep 2-dec precision
+        grid.cellHeight(cellHeight as unknown as number);
         if (grid.batchUpdate && grid.commit) {
           grid.batchUpdate();
           grid.commit();
