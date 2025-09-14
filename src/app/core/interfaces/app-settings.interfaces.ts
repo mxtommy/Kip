@@ -30,9 +30,9 @@ export interface IAppConfig {
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
-  freeboardShellEnabled?: boolean;
-  freeboardShellSide?: 'left' | 'right';
-  freeboardShellWidth?: number;
+  splitShellEnabled?: boolean;
+  splitShellSide?: 'left' | 'right';
+  splitShellWidth?: number;
 }
 
 export interface IThemeConfig {

@@ -33,10 +33,10 @@ export class AppSettingsService {
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
   private isRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
-  private freeboardShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private freeboardShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
-  private freeboardShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
-  private freeboardShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
+  private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
+  private splitShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -241,22 +241,22 @@ export class AppSettingsService {
       this.instanceName.next(this.activeConfig.app.instanceName);
     }
 
-    if (this.activeConfig.app.freeboardShellEnabled === undefined) {
-      this.setFreeboardShellEnabled(false);
+    if (this.activeConfig.app.splitShellEnabled === undefined) {
+      this.setSplitShellEnabled(false);
     } else {
-      this.freeboardShellEnabled.next(this.activeConfig.app.freeboardShellEnabled);
+      this.splitShellEnabled.next(this.activeConfig.app.splitShellEnabled);
     }
 
-    if (this.activeConfig.app.freeboardShellSide === undefined) {
-      this.setFreeboardShellSide('left');
+    if (this.activeConfig.app.splitShellSide === undefined) {
+      this.setSplitShellSide('left');
     } else {
-      this.freeboardShellSide.next(this.activeConfig.app.freeboardShellSide);
+      this.splitShellSide.next(this.activeConfig.app.splitShellSide);
     }
 
-    if (this.activeConfig.app.freeboardShellWidth === undefined) {
-      this.setFreeboardShellWidth(0.3); // default ratio
+    if (this.activeConfig.app.splitShellWidth === undefined) {
+      this.setSplitShellWidth(0.3); // default ratio
     } else {
-      this.freeboardShellWidth.next(this.activeConfig.app.freeboardShellWidth);
+      this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
     }
   }
 
@@ -417,15 +417,15 @@ export class AppSettingsService {
     }
   }
 
-  // --- Freeboard Shell Settings API ---
-  public getFreeboardShellEnabledAsO() {
-    return this.freeboardShellEnabled.asObservable();
+  // --- split Shell Settings API ---
+  public getSplitShellEnabledAsO() {
+    return this.splitShellEnabled.asObservable();
   }
-  public getFreeboardShellEnabled(): boolean {
-    return this.freeboardShellEnabled.getValue();
+  public getSplitShellEnabled(): boolean {
+    return this.splitShellEnabled.getValue();
   }
-  public setFreeboardShellEnabled(enabled: boolean): void {
-    this.freeboardShellEnabled.next(enabled);
+  public setSplitShellEnabled(enabled: boolean): void {
+    this.splitShellEnabled.next(enabled);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {
@@ -435,14 +435,14 @@ export class AppSettingsService {
     }
   }
 
-  public getFreeboardShellSideAsO() {
-    return this.freeboardShellSide.asObservable();
+  public getSplitShellSideAsO() {
+    return this.splitShellSide.asObservable();
   }
-  public getFreeboardShellSide(): 'left' | 'right' {
-    return this.freeboardShellSide.getValue();
+  public getSplitShellSide(): 'left' | 'right' {
+    return this.splitShellSide.getValue();
   }
-  public setFreeboardShellSide(side: 'left' | 'right'): void {
-    this.freeboardShellSide.next(side);
+  public setSplitShellSide(side: 'left' | 'right'): void {
+    this.splitShellSide.next(side);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {
@@ -452,16 +452,16 @@ export class AppSettingsService {
     }
   }
 
-  public getFreeboardShellWidthAsO() {
-    return this.freeboardShellWidth.asObservable();
+  public getSplitShellWidthAsO() {
+    return this.splitShellWidth.asObservable();
   }
-  public getFreeboardShellWidth(): number {
-    return this.freeboardShellWidth.getValue();
+  public getSplitShellWidth(): number {
+    return this.splitShellWidth.getValue();
   }
-  public setFreeboardShellWidth(width: number): void {
+  public setSplitShellWidth(width: number): void {
     // interpret input as ratio (0-1), clamp to sensible bounds
     const ratio = Math.min(0.9, Math.max(0.1, width));
-    this.freeboardShellWidth.next(ratio);
+    this.splitShellWidth.next(ratio);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {
@@ -471,14 +471,14 @@ export class AppSettingsService {
     }
   }
 
-  public getFreeboardShellCollapsedAsO() {
-    return this.freeboardShellCollapsed.asObservable();
+  public getSplitShellCollapsedAsO() {
+    return this.splitShellCollapsed.asObservable();
   }
-  public getFreeboardShellCollapsed(): boolean {
-    return this.freeboardShellCollapsed.getValue();
+  public getSplitShellCollapsed(): boolean {
+    return this.splitShellCollapsed.getValue();
   }
-  public setFreeboardShellCollapsed(collapsed: boolean): void {
-    this.freeboardShellCollapsed.next(collapsed);
+  public setSplitShellCollapsed(collapsed: boolean): void {
+    this.splitShellCollapsed.next(collapsed);
     const appConf = this.buildAppStorageObject();
 
     if (this.useSharedConfig) {
@@ -631,9 +631,9 @@ export class AppSettingsService {
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
-      freeboardShellEnabled: this.freeboardShellEnabled.getValue(),
-      freeboardShellSide: this.freeboardShellSide.getValue() ?? 'right',
-      freeboardShellWidth: this.freeboardShellWidth.getValue() ?? 380
+      splitShellEnabled: this.splitShellEnabled.getValue(),
+      splitShellSide: this.splitShellSide.getValue() ?? 'right',
+      splitShellWidth: this.splitShellWidth.getValue() ?? 380
     }
     return storageObject;
   }

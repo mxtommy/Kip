@@ -21,11 +21,11 @@ export class SplitShellComponent {
   private readonly _dashboard = inject(DashboardService);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly ngZone = inject(NgZone);
-  public readonly side = signal<'left' | 'right'>(this._settings.getFreeboardShellSide());
+  public readonly side = signal<'left' | 'right'>(this._settings.getSplitShellSide());
   // Stored as ratio (0-1)
-  public panelRatio = signal<number>(this._settings.getFreeboardShellWidth());
+  public panelRatio = signal<number>(this._settings.getSplitShellWidth());
   public panelWidth = signal<number>(0); // derived pixels
-  public panelCollapsed = signal<boolean>(this._settings.getFreeboardShellCollapsed());
+  public panelCollapsed = signal<boolean>(this._settings.getSplitShellCollapsed());
 
   // Derived runtime forced collapse when active dashboard has collapseFreeboardShell flag
   public forceCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseFreeboardShell);
@@ -84,7 +84,7 @@ export class SplitShellComponent {
           this.panelCollapsed.set(true);
         } else {
           // restore persisted user collapse state
-          this.panelCollapsed.set(this._settings.getFreeboardShellCollapsed());
+          this.panelCollapsed.set(this._settings.getSplitShellCollapsed());
         }
       });
     });
@@ -111,7 +111,7 @@ export class SplitShellComponent {
     const next = !this.panelCollapsed();
     this.panelCollapsed.set(next);
     // Persist only when not forced
-    this._settings.setFreeboardShellCollapsed(next);
+    this._settings.setSplitShellCollapsed(next);
   }
 
   public startResize(ev: PointerEvent): void {
@@ -170,9 +170,9 @@ export class SplitShellComponent {
     if (!this.forceCollapsed()) {
       // Persist within Angular (already in zone if called from pointerup listener outside zone)
       if (NgZone.isInAngularZone()) {
-        this._settings.setFreeboardShellWidth(this.panelRatio());
+        this._settings.setSplitShellWidth(this.panelRatio());
       } else {
-        this.ngZone.run(() => this._settings.setFreeboardShellWidth(this.panelRatio()));
+        this.ngZone.run(() => this._settings.setSplitShellWidth(this.panelRatio()));
       }
     }
   }

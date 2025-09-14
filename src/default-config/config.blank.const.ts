@@ -13,9 +13,9 @@ export const DefaultAppConfig: IAppConfig = {
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,
-  "freeboardShellEnabled": true,
-  "freeboardShellSide": "right",
-  "freeboardShellWidth": 380
+  "splitShellEnabled": true,
+  "splitShellSide": "right",
+  "splitShellWidth": 380
 }
 
 export const DefaultThemeConfig: IThemeConfig = {

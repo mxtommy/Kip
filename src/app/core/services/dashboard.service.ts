@@ -12,7 +12,7 @@ export interface Dashboard {
   id: string
   name?: string;
   icon?: string;
-  collapseFreeboardShell?: boolean;
+  collapseSplitShell?: boolean;
   configuration?: NgGridStackWidget[] | [];
 }
 
@@ -55,7 +55,7 @@ export class DashboardService {
           "y": 0
         }
       ],
-      collapseFreeboardShell: false
+      collapseSplitShell: false
     }
   ];
 
@@ -104,10 +104,10 @@ export class DashboardService {
    * @param collapseFreeboardShell Optional per-dashboard forced shell collapse flag (defaults to false).
    * @returns Index (0-based) of the newly inserted dashboard.
    */
-  public add(name: string, configuration: NgGridStackWidget[], icon?: string, collapseFreeboardShell?: boolean): number {
+  public add(name: string, configuration: NgGridStackWidget[], icon?: string, collapseSplitShell?: boolean): number {
     let newIndex = 0;
     this.dashboards.update(dashboards => {
-      const updated = [ ...dashboards, {id: UUID.create(), name, icon: icon ?? 'dashboard-dashboard', configuration, collapseFreeboardShell: collapseFreeboardShell ?? false} ];
+      const updated = [ ...dashboards, {id: UUID.create(), name, icon: icon ?? 'dashboard-dashboard', configuration, collapseSplitShell: collapseSplitShell ?? false} ];
       newIndex = updated.length - 1;
       return updated;
     });
@@ -132,9 +132,9 @@ export class DashboardService {
    * @param icon New icon key (fallback to 'dashboard-dashboard').
    * @param collapseFreeboardShell Per-dashboard forced collapse flag.
    */
-  public update(itemIndex: number, name: string, icon: string, collapseFreeboardShell: boolean): void {
+  public update(itemIndex: number, name: string, icon: string, collapseSplitShell: boolean): void {
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) =>
-      i === itemIndex ? { ...dashboard, name: name, icon: icon ?? 'dashboard-dashboard', collapseFreeboardShell: collapseFreeboardShell ?? false } : dashboard));
+      i === itemIndex ? { ...dashboard, name: name, icon: icon ?? 'dashboard-dashboard', collapseSplitShell: collapseSplitShell ?? false } : dashboard));
   }
 
   /**
@@ -181,7 +181,7 @@ export class DashboardService {
    * @param collapseFreeboardShell Per-dashboard forced Freeboard panel collapse flag for the duplicate.
    * @returns                     The new dashboard's index, or -1 on failure.
    */
-  public duplicate(itemIndex: number, newName: string, newIcon: string, collapseFreeboardShell: boolean): number {
+  public duplicate(itemIndex: number, newName: string, newIcon: string, collapseSplitShell: boolean): number {
     if (itemIndex < 0 || itemIndex >= this.dashboards().length) {
         console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
         return -1;
@@ -193,7 +193,7 @@ export class DashboardService {
     newDashboard.id = UUID.create();
     newDashboard.name = newName;
     newDashboard.icon = newIcon || 'dashboard-dashboard';
-    newDashboard.collapseFreeboardShell = collapseFreeboardShell ?? false;
+    newDashboard.collapseSplitShell = collapseSplitShell ?? false;
 
     if (Array.isArray(newDashboard.configuration)) {
         newDashboard.configuration.forEach((widget: NgGridStackWidget) => {

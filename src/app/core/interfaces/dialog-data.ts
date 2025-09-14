@@ -27,7 +27,7 @@ export interface DialogDashboardPageEditorData {
   icon?: string;
   confirmBtnText?: string;
   cancelBtnText: string;
-  collapseFreeboardShell?: boolean;
+  collapseSplitShell?: boolean;
 }
 
 export interface DialogWidgetOptionsData {

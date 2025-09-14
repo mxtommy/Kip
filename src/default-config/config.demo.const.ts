@@ -10,9 +10,9 @@ export const DemoAppConfig: IAppConfig = {
   "nightModeBrightness": 0.27,
   "isRemoteControl": false,
   "instanceName": "",
-  "freeboardShellEnabled": true,
-  "freeboardShellSide": "right",
-  "freeboardShellWidth": 380,
+  "splitShellEnabled": true,
+  "splitShellSide": "right",
+  "splitShellWidth": 380,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",

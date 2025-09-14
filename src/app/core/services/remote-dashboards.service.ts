@@ -79,7 +79,6 @@ export class RemoteDashboardsService {
       untracked(() => {
         if (isRemoteControl) {
           this.setActiveDashboard(this.KIP_UUID, activeIdx).then(() => {
-            console.log(`[Remote Dashboards] Shared active dashboard: ${activeIdx}`);
           }).catch((err) => {
             console.error('[Remote Dashboards] Error sharing active dashboard:', err);
           });
