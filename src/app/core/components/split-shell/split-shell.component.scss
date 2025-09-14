@@ -70,11 +70,6 @@
 .drag-handle:hover {
   background: var(--mat-sys-error-container);
 }
-.collapse-toggle {
-  position: absolute;
-  top: 0.5rem;
-  z-index: 10;
-}
 .side-left .collapse-toggle {
   left: 0.25rem;
 }

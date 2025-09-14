@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked, NgZone, ElementRef, ViewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked, NgZone, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -16,6 +16,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   styleUrl: './split-shell.component.scss'
 })
 export class SplitShellComponent {
+  private readonly panelEl = viewChild.required<ElementRef<HTMLElement>>('panel');
   private readonly _settings = inject(AppSettingsService);
   private readonly _dashboard = inject(DashboardService);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -38,6 +39,16 @@ export class SplitShellComponent {
     config: {}
   };
 
+  public chartplotterModeInPortrait = computed(() => {
+    return this.handset().matches && !this.forceCollapsed();
+  });
+  public showHandle = computed(() => {
+    return !this.forceCollapsed() && !this.panelCollapsed() && this.canResize();
+  });
+  public canResize = computed(() => {
+    return !this._dashboard.isDashboardStatic() && !this.forceCollapsed();
+  });
+
   // Resize state
   private resizing = false;
   private startX = 0;
@@ -47,7 +58,6 @@ export class SplitShellComponent {
   private readonly boundUp = () => this.onUp();
   // Minimal pixel change before emitting an update
   private static readonly MIN_DELTA_PX = 1;
-  @ViewChild('panel', { static: true }) private panelEl?: ElementRef<HTMLElement>;
   // Ghost resize state
   public ghostActive = signal<boolean>(false); // template *ngIf
   public ghostTransform = signal<string>(''); // inline style
@@ -66,10 +76,6 @@ export class SplitShellComponent {
       });
     });
   }
-
-  public showToggleButton = () => this.handset().matches && !this.forceCollapsed();
-  public showHandle = () => !this.forceCollapsed() && !this.panelCollapsed() && this.canResize();
-  public canResize = () => !this._dashboard.isDashboardStatic() && !this.forceCollapsed();
 
   public toggleCollapse(): void {
     if (this.forceCollapsed()) return;
@@ -115,8 +121,9 @@ export class SplitShellComponent {
     const finalW = this.ghostWidth;
   this.ghostActive.set(false);
     // Apply width instantly (mutate DOM) then update signal in zone
-    if (this.panelEl && !this.panelCollapsed()) {
-      this.panelEl.nativeElement.style.width = finalW + 'px';
+    const panelRef = this.panelEl();
+    if (panelRef && !this.panelCollapsed()) {
+      panelRef.nativeElement.style.width = finalW + 'px';
     }
     this.ngZone.run(() => this.panelWidth.set(finalW));
     if (!this.forceCollapsed()) {
