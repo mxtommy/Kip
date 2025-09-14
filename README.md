@@ -4,6 +4,7 @@
 Unlike many dashboards, KIP comes **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
 
 <h3 id="help">Documentation & Help</h3>
+
 [![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
 [![Community Videos](https://img.shields.io/badge/Community-Videos-purple)](src/assets/help-docs/community.md)
 [![Contact](https://img.shields.io/badge/Contact-Get_in_touch-success)](src/assets/help-docs/contact-us.md)
