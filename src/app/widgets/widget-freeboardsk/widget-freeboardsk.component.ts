@@ -1,7 +1,7 @@
 import { DashboardService } from './../../core/services/dashboard.service';
 import { AuthenticationService } from './../../core/services/authentication.service';
 import { AppSettingsService } from './../../core/services/app-settings.service';
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, input, OnDestroy, OnInit, viewChild } from '@angular/core';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { SafePipe } from "../../core/pipes/safe.pipe";
@@ -20,6 +20,7 @@ export class WidgetFreeboardskComponent extends BaseWidgetComponent implements O
   private _dashboard = inject(DashboardService);
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('freeboardSkIframe');
   public widgetUrl: string = null;
+  public disableWidgetShell = input<boolean>(false);
   private _authTokenSubscription: Subscription = null;
   protected dashboard = inject(DashboardService);
 
