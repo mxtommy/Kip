@@ -1,4 +1,4 @@
-# Datasets and Data Chart Widget
+## Datasets and Data Chart Widget
 
 Datasets and the Data Chart widget work together to provide real-time data visualization in KIP. They allow you to collect and display historical data trends for Signal K paths, enabling better decision-making and monitoring. This guide explains how to configure and use Datasets and the Data Chart widget effectively.
 

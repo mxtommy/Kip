@@ -1,4 +1,4 @@
-# Configuration Management
+## Configuration Management
 
 KIP provides a "Login to Server" option that determines where your configuration is stored. It is **strongly recommended** to enable server login in the **Settings** under the **Connectivity** tab. This ensures your configurations are stored remotely on the Signal K server and allows automatic loading of configuration from any device. See the "Creating a Signal K user" section below for information on how to create a user.
 

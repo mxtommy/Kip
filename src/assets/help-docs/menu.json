@@ -10,5 +10,6 @@
   { "title": "Kiosk Mode", "file": "kiosk.md" },
   { "title": "Grafana Integration", "file": "grafana.md" },
   { "title": "InfluxDB and Signal K", "file": "influxdb.md" },
+  { "title": "Online Community Content", "file": "community.md" },
   { "title": "Contact Us", "file": "contact-us.md" }
 ]

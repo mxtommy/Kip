@@ -1,4 +1,4 @@
-# Digital Switching and using PUT Commands
+## Digital Switching and using PUT Commands
 
 Signal K allows users to update data paths and trigger device reactions. This can include turning a light on or off, dimming it, activating a bilge pump, or other similar actions. This guide explains how to use the Switch Panel or Slider widgets to achieve this, how to verify if a path supports data reception (known as PUT-enabled in Signal K terms), and what is required to enable PUT functionality.
 

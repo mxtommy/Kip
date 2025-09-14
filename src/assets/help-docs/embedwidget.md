@@ -1,4 +1,4 @@
-# Using the Embed Page Viewer Widget
+## Using the Embed Page Viewer Widget
 
 The Embed Page Viewer widget allows you to display external web pages or web applications directly within your dashboard. By default, the Embed Page Viewer widget does not allow input (touch, mouse and keyboard interactions) with the content in the Embed. To enable interactions, check the setting the widget's options. 
 
