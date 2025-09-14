@@ -81,6 +81,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
   private _resizeObserver?: ResizeObserver;
   private _pendingResizeRaf: number | null = null;
+  private _lastContainerHeight = 0;
+  private _lastCellHeight = 0;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -220,16 +222,25 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
       const grid = baseGrid as unknown as GridApi;
       const containerHeight = this._hostEl.nativeElement.clientHeight || window.innerHeight;
+      if (containerHeight === this._lastContainerHeight) {
+        // Host height unchanged; skip unless first run produced no cell height.
+        if (this._lastCellHeight > 0) return;
+      }
       const rows = grid.getRow ? grid.getRow() : 0;
       if (rows > 0 && grid.cellHeight) {
         const rowCount: number = Number(rows) || 0;
         let cellHeight = rowCount > 0 ? (containerHeight / rowCount) : 1;
         cellHeight = Math.max(1, Math.round(cellHeight * 100) / 100); // keep 2-dec precision
+        if (this._lastCellHeight === cellHeight && this._lastContainerHeight === containerHeight) {
+          return; // nothing changed
+        }
         grid.cellHeight(cellHeight as unknown as number);
         if (grid.batchUpdate && grid.commit) {
           grid.batchUpdate();
           grid.commit();
         }
+        this._lastContainerHeight = containerHeight;
+        this._lastCellHeight = cellHeight;
       }
     } catch { /* swallow errors silently */ }
   }
