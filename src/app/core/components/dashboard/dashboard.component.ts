@@ -175,14 +175,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
-      const id = params['id'];
-      let pageIdParam: number | null = null;
-      if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
-        pageIdParam = Number(id);
-      }
-      this.dashboard.setActiveDashboard(pageIdParam ?? this.dashboard.activeDashboard());
-      this.loadDashboard(this.dashboard.activeDashboard());
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
+      const raw = params['id'];
+      const parsed = Number(raw);
+      const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
+
+      if (!isValidNumber) return; // ignore non-numeric params entirely
+
+      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return;
+      if (parsed === this.dashboard.activeDashboard()) return;
+
+      this.dashboard.setActiveDashboard(parsed);
+      this.loadDashboard(parsed);
     });
   }
 
