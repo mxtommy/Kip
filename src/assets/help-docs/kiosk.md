@@ -99,6 +99,22 @@ exec "$BROWSER" \
   --app="$URL"
 ```
 
+Optionally, you can also add the following `exec "BROWSER" \` flags:
+
+Force Chromium to keep all threads active and not optimyze resource usage
+```
+--disable-background-timer-throttling \
+--disable-renderer-backgrounding \
+--disable-backgrounding-occluded-windows
+```
+
+Reduce memory consumption (Pi Zero)
+```
+--disable-gpu \
+--single-process \
+--js-flags="--max-old-space-size=512"
+```
+
 Save, then:
 
 ```
