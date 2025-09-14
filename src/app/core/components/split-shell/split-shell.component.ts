@@ -10,12 +10,12 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'freeboard-split',
+  selector: 'split-shell',
   imports: [CommonModule, WidgetFreeboardskComponent, DashboardComponent, MatButtonModule, MatIconModule],
-  templateUrl: './freeboard-split.component.html',
-  styleUrl: './freeboard-split.component.scss'
+  templateUrl: './split-shell.component.html',
+  styleUrl: './split-shell.component.scss'
 })
-export class FreeboardSplitComponent {
+export class SplitShellComponent {
   private readonly _settings = inject(AppSettingsService);
   private readonly _dashboard = inject(DashboardService);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -99,7 +99,7 @@ export class FreeboardSplitComponent {
     if (!this.resizing) return;
     const delta = this.side() === 'left' ? (ev.clientX - this.startX) : (this.startX - ev.clientX);
     const newW = Math.min(1000, Math.max(200, this.startW + delta));
-    if (Math.abs(newW - this.ghostWidth) < FreeboardSplitComponent.MIN_DELTA_PX) return;
+    if (Math.abs(newW - this.ghostWidth) < SplitShellComponent.MIN_DELTA_PX) return;
     this.ghostWidth = newW;
     // Update ghost transform outside Angular; no width mutation to shell to avoid layout churn
     this.ngZone.runOutsideAngular(() => this.updateGhostTransform(newW));

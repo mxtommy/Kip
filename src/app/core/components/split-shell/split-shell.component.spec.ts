@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { FreeboardSplitComponent } from './freeboard-split.component';
+import { SplitShellComponent } from './split-shell.component';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -29,7 +29,7 @@ class MockBreakpointObserver {
 describe('FreeboardSplitComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FreeboardSplitComponent],
+      imports: [SplitShellComponent],
       providers: [
         { provide: AppSettingsService, useClass: MockAppSettingsService },
         { provide: DashboardService, useClass: MockDashboardService },
@@ -39,7 +39,7 @@ describe('FreeboardSplitComponent', () => {
   });
 
   it('should create and reflect initial width', () => {
-    const fixture = TestBed.createComponent(FreeboardSplitComponent);
+    const fixture = TestBed.createComponent(SplitShellComponent);
     const comp = fixture.componentInstance;
     fixture.detectChanges();
     expect(comp).toBeTruthy();
@@ -47,7 +47,7 @@ describe('FreeboardSplitComponent', () => {
   });
 
   it('should toggle collapse (when not forced)', () => {
-    const fixture = TestBed.createComponent(FreeboardSplitComponent);
+    const fixture = TestBed.createComponent(SplitShellComponent);
     const comp = fixture.componentInstance;
     fixture.detectChanges();
     const prev = comp.panelCollapsed();
