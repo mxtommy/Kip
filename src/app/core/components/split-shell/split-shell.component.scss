@@ -17,7 +17,15 @@
 .split-root.portrait-column .fsk-shell,
 .split-root.portrait-column .dash-container {
   width: 100% !important;
-  //transition: height 0.2s ease;
+  min-height: 0;
+}
+.split-root.portrait-column .fsk-shell {
+  flex: 0 0 calc(var(--panel-ratio, 0.3) * 100%);
+}
+.split-root.portrait-column .dash-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 .split-root.side-left.portrait-column .dash-container {
   order: 2;
@@ -32,11 +40,7 @@
   order: 1;
 }
 .split-root.portrait-column .fsk-shell.collapsed {
-  /* When forced collapsed in portrait, simply collapse height */
-  height: 0 !important;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
+  flex: 0 0 0 !important;
 }
 .split-root.portrait-column .drag-handle,
 .split-root.portrait-column .resize-ghost {

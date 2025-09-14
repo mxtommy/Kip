@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -64,6 +64,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
+  private readonly _hostEl = inject(ElementRef<HTMLElement>); // host element reference
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$, { initialValue: true });
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
@@ -78,6 +79,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     resizable: { handles: 'all' },
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
+  private _resizeObserver?: ResizeObserver;
+  private _pendingResizeRaf: number | null = null;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -111,6 +114,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.resizeGridColumns();
+    this.setupResizeObserver();
     this._uiEvent.addHotkeyListener(
       this._boundHandleKeyDown,
       { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
@@ -180,6 +184,21 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private setupResizeObserver(): void {
+    if (this._resizeObserver) return;
+    const host = this._hostEl.nativeElement;
+    try {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (this._pendingResizeRaf !== null) return; // throttle to next frame
+        this._pendingResizeRaf = requestAnimationFrame(() => {
+          this._pendingResizeRaf = null;
+          this.resizeGridColumns();
+        });
+      });
+      this._resizeObserver.observe(host);
+    } catch { /* ignore if ResizeObserver unsupported */ }
+  }
+
   private handleKeyDown(key: string, event: KeyboardEvent): void {
     if (key === 'arrowdown') {
       this.previousDashboard(event);
@@ -189,7 +208,28 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected resizeGridColumns(): void {
-    this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
+    try {
+      const gridCmp = this._gridstack();
+      const baseGrid = gridCmp.grid;
+      if (!baseGrid) return;
+      interface GridApi {
+        getRow?: () => number;
+        cellHeight?: (val: number) => void;
+        batchUpdate?: () => void;
+        commit?: () => void;
+      }
+      const grid = baseGrid as unknown as GridApi;
+      const containerHeight = this._hostEl.nativeElement.clientHeight || window.innerHeight;
+      const rows = grid.getRow ? grid.getRow() : 0;
+      if (rows > 0 && grid.cellHeight) {
+        const cellHeight = Math.floor(containerHeight / rows);
+        grid.cellHeight(cellHeight);
+        if (grid.batchUpdate && grid.commit) {
+          grid.batchUpdate();
+          grid.commit();
+        }
+      }
+    } catch { /* swallow errors silently */ }
   }
 
   /**
@@ -362,6 +402,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const _gridstack = this._gridstack();
     if (_gridstack?.grid) {
       _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    }
+    if (this._resizeObserver) {
+      try { this._resizeObserver.disconnect(); } catch { /* ignore */ }
+      this._resizeObserver = undefined;
+    }
+    if (this._pendingResizeRaf !== null) {
+      cancelAnimationFrame(this._pendingResizeRaf);
+      this._pendingResizeRaf = null;
     }
     this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }

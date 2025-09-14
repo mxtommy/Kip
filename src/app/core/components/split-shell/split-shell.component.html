@@ -1,11 +1,10 @@
-<div class="split-root" [ngClass]="[side() === 'left' ? 'side-left' : 'side-right', chartplotterModeInPortrait() ? 'portrait-column' : '']">
+<div class="split-root" [ngClass]="[side() === 'left' ? 'side-left' : 'side-right', chartplotterModeInPortrait() ? 'portrait-column' : '']" [style.--panel-ratio]="panelRatio()">
   @if(ghostActive()) {
     <!-- Ghost line shown only while resizing -->
     <div class="resize-ghost" [style.transform]="ghostTransform()"></div>
   }
   <div class="fsk-shell" #panel
     [style.width.px]="!chartplotterModeInPortrait() ? panelWidth() : null"
-    [style.height.%]="chartplotterModeInPortrait() ? (panelRatio()*100) : null"
     [class.collapsed]="panelCollapsed()"
     [class.locked]="forceCollapsed()"
     [class.drag-disabled]="!canResize()">
@@ -22,7 +21,7 @@
     }
     <widget-freeboardsk class="fsk-iframe" [widgetProperties]="freeboardWidgetStub" />
   </div>
-  <div class="dash-container" [style.height.%]="chartplotterModeInPortrait() ? ((1-panelRatio())*100) : null">
+  <div class="dash-container">
     <dashboard />
   </div>
 </div>

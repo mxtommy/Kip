@@ -93,6 +93,16 @@ export class SplitShellComponent {
       // Recompute width when ratio changes
       this.panelRatio();
       recomputeWidth();
+      if (this.chartplotterModeInPortrait()) {
+        // allow gridstack to recompute internal layout
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
+      }
+    });
+
+    effect(() => {
+      // Orientation mode change triggers resize for gridstack
+      this.chartplotterModeInPortrait();
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
     });
   }
 
