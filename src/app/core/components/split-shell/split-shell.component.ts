@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, NgZone, ElementRef, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, NgZone, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -15,7 +15,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   templateUrl: './split-shell.component.html',
   styleUrl: './split-shell.component.scss'
 })
-export class SplitShellComponent {
+export class SplitShellComponent implements OnDestroy {
   private readonly panelEl = viewChild.required<ElementRef<HTMLElement>>('panel');
   private readonly _settings = inject(AppSettingsService);
   private readonly _dashboard = inject(DashboardService);
@@ -59,33 +59,23 @@ export class SplitShellComponent {
   public ghostTransform = signal<string>(''); // inline style
   private ghostWidth = 0; // candidate width while dragging
 
+  // Recompute panel pixel width from current ratio
+  private readonly recomputeWidth = () => {
+    const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+    if (!host) return;
+    const total = host.clientWidth;
+    this.panelWidth.set(Math.round(total * this.panelRatio()));
+  };
+
   constructor() {
-    // Compute pixel width from ratio on init and when window resizes
-    const recomputeWidth = () => {
-      const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
-      if (!host) return;
-      const total = host.clientWidth;
-      this.panelWidth.set(Math.round(total * this.panelRatio()));
-    };
-    window.addEventListener('resize', recomputeWidth, { passive: true });
-    // initial
-    queueMicrotask(recomputeWidth);
+    window.addEventListener('resize', this.recomputeWidth, { passive: true });
+    queueMicrotask(this.recomputeWidth);
 
-    // Removed effect that restored/persisted collapse; now purely computed.
 
     effect(() => {
-      // Recompute width when ratio changes
-      this.panelRatio();
-      recomputeWidth();
-      if (this.chartplotterModeInPortrait()) {
-        // allow gridstack to recompute internal layout
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
-      }
-    });
-
-    effect(() => {
-      // Orientation mode change triggers resize for gridstack
-      this.chartplotterModeInPortrait();
+      this.chartplotterModeInPortrait(); // dependency tracking
+      this.panelRatio(); // dependency tracking
+      this.recomputeWidth();
       setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
     });
   }
@@ -141,9 +131,11 @@ export class SplitShellComponent {
       const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
       const total = host?.clientWidth ?? finalW;
       const ratio = total ? finalW / total : 0.3;
-      this.panelRatio.set(ratio);
-      // Persist global split shell width (size is global, not per dashboard)
-      this._settings.setSplitShellWidth(this.panelRatio());
+      const prev = this.panelRatio();
+      if (Math.abs(ratio - prev) > 0.0005) {
+        this.panelRatio.set(ratio);
+        this._settings.setSplitShellWidth(ratio);
+      }
     });
   }
 
@@ -153,6 +145,14 @@ export class SplitShellComponent {
       this.ghostTransform.set(`translateX(${width}px)`);
     } else {
       this.ghostTransform.set(`translateX(-${width}px)`);
+    }
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.recomputeWidth);
+    if (this.resizing) {
+      window.removeEventListener('pointermove', this.boundMove);
+      window.removeEventListener('pointerup', this.boundUp);
     }
   }
 }
