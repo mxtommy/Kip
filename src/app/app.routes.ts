@@ -1,15 +1,15 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './core/components/dashboard/dashboard.component';
-import { freeboardShellGuard } from './core/guards/freeboard-shell.guard';
+import { splitShellGuard } from './core/guards/split-shell.guard';
 
 export const routes: Routes = [
   { path: 'dashboard/:id',
     component: DashboardComponent,
-    canMatch: [freeboardShellGuard]
+    canMatch: [splitShellGuard]
   },
-  { path: 'dashboard-split/:id',
-    loadComponent: () => import('./core/components/freeboard-split/freeboard-split.component').then(m => m.FreeboardSplitComponent),
-    canMatch: [freeboardShellGuard]
+  { path: 'chartplotter/:id',
+    loadComponent: () => import('./core/components/split-shell/split-shell.component').then(m => m.SplitShellComponent),
+    canMatch: [splitShellGuard]
   },
   { path: 'settings',
     loadComponent: () => import('./core/components/settings/settings.component').then(m => m.SettingsComponent),

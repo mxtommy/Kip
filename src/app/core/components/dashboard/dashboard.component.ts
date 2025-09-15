@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -64,6 +64,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
+  private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$, { initialValue: true });
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
@@ -78,6 +79,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     resizable: { handles: 'all' },
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
+  private _resizeObserver?: ResizeObserver;
+  private _pendingResizeRaf: number | null = null;
+  private _lastContainerHeight = 0;
+  private _lastCellHeight = 0;
+  private _hasLoadedInitialDashboard = false;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -111,6 +117,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.resizeGridColumns();
+    this.setupResizeObserver();
     this._uiEvent.addHotkeyListener(
       this._boundHandleKeyDown,
       { ctrlKey: true, keys: ['arrowdown', 'arrowup'] } // Filter for arrow keys with Ctrl
@@ -169,16 +176,40 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
-      const id = params['id'];
-      console.error(`Activated route params: ${JSON.stringify(params)}`);
-      let pageIdParam: number | null = null;
-      if (id !== undefined && id !== null && id !== '' && !isNaN(Number(id))) {
-        pageIdParam = Number(id);
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
+      const raw = params['id'];
+      const parsed = Number(raw);
+      const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
+      if (!isValidNumber) return; // ignore non-numeric params entirely
+
+      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return;
+
+      const current = this.dashboard.activeDashboard();
+      const firstLoad = !this._hasLoadedInitialDashboard;
+      // Always force a load on first valid param even if index matches default active index (0)
+      if (firstLoad || parsed !== current) {
+        if (parsed !== current) {
+          this.dashboard.setActiveDashboard(parsed);
+        }
+        this.loadDashboard(parsed);
+        this._hasLoadedInitialDashboard = true;
       }
-      this.dashboard.setActiveDashboard(pageIdParam ?? this.dashboard.activeDashboard());
-      this.loadDashboard(this.dashboard.activeDashboard());
     });
+  }
+
+  private setupResizeObserver(): void {
+    if (this._resizeObserver) return;
+    const host = this._hostEl.nativeElement;
+    try {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (this._pendingResizeRaf !== null) return; // throttle to next frame
+        this._pendingResizeRaf = requestAnimationFrame(() => {
+          this._pendingResizeRaf = null;
+          this.resizeGridColumns();
+        });
+      });
+      this._resizeObserver.observe(host);
+    } catch { /* ignore if ResizeObserver unsupported */ }
   }
 
   private handleKeyDown(key: string, event: KeyboardEvent): void {
@@ -190,7 +221,39 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected resizeGridColumns(): void {
-    this._gridstack().grid.cellHeight(window.innerHeight / this._gridstack().grid.getRow());
+    try {
+      const gridCmp = this._gridstack();
+      const baseGrid = gridCmp.grid;
+      if (!baseGrid) return;
+      interface GridApi {
+        getRow?: () => number;
+        cellHeight?: (val: number) => void;
+        batchUpdate?: () => void;
+        commit?: () => void;
+      }
+      const grid = baseGrid as unknown as GridApi;
+      const containerHeight = this._hostEl.nativeElement.clientHeight || window.innerHeight;
+      if (containerHeight === this._lastContainerHeight) {
+        // Host height unchanged; skip unless first run produced no cell height.
+        if (this._lastCellHeight > 0) return;
+      }
+      const rows = grid.getRow ? grid.getRow() : 0;
+      if (rows > 0 && grid.cellHeight) {
+        const rowCount: number = Number(rows) || 0;
+        let cellHeight = rowCount > 0 ? (containerHeight / rowCount) : 1;
+        cellHeight = Math.max(1, Math.round(cellHeight * 100) / 100); // keep 2-dec precision
+        if (this._lastCellHeight === cellHeight && this._lastContainerHeight === containerHeight) {
+          return; // nothing changed
+        }
+        grid.cellHeight(cellHeight as unknown as number);
+        if (grid.batchUpdate && grid.commit) {
+          grid.batchUpdate();
+          grid.commit();
+        }
+        this._lastContainerHeight = containerHeight;
+        this._lastCellHeight = cellHeight;
+      }
+    } catch { /* swallow errors silently */ }
   }
 
   /**
@@ -202,13 +265,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
     const _gridstack = this._gridstack();
-    if (_gridstack?.grid) {
-      setTimeout(() => {
-        _gridstack.grid.batchUpdate();
-        _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
-        _gridstack.grid.commit();
-      }, 0);
+    // If grid not yet ready (rare timing race), retry next microtask.
+    if (!_gridstack?.grid) {
+      queueMicrotask(() => this.loadDashboard(dashboardId));
+      return;
     }
+    // Synchronous load eliminates one-frame empty dashboard flicker.
+    _gridstack.grid.batchUpdate();
+    _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+    _gridstack.grid.commit();
   }
 
   protected saveDashboard(): void {
@@ -218,11 +283,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected saveLayoutChanges(): void {
     this.dashboard.setStaticDashboard(true);
+    this.dashboard.notifyLayoutEditSaved();
   }
 
   protected cancelLayoutChanges(): void {
     this.loadDashboard(this.dashboard.activeDashboard());
     this.dashboard.setStaticDashboard(true);
+    this.dashboard.notifyLayoutEditCanceled();
   }
 
   protected addNewWidget(e: Event | CustomEvent): void {
@@ -363,6 +430,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const _gridstack = this._gridstack();
     if (_gridstack?.grid) {
       _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+    }
+    if (this._resizeObserver) {
+      try { this._resizeObserver.disconnect(); } catch { /* ignore */ }
+      this._resizeObserver = undefined;
+    }
+    if (this._pendingResizeRaf !== null) {
+      cancelAnimationFrame(this._pendingResizeRaf);
+      this._pendingResizeRaf = null;
     }
     this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }

@@ -45,7 +45,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
     return (
       segments.length === 0 ||
       segments[0] === 'dashboard' ||
-      segments[0] === 'dashboard-split'
+      segments[0] === 'chartplotter'
     );
   })();
   protected readonly isDashboardContext = toSignal(
@@ -59,7 +59,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         return (
           segments.length === 0 ||
           segments[0] === 'dashboard' ||
-          segments[0] === 'dashboard-split'
+          segments[0] === 'chartplotter'
         );
       }),
       distinctUntilChanged()

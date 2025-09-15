@@ -11,6 +11,9 @@
 
 .grid-stack {
   width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative; /* allow absolute overlay for empty state */
 }
 
 .edit-layout-close-icon {
@@ -27,15 +30,24 @@
 
 /* Empty Dashboard State Styles */
 .dashboard-empty-state-container {
+  position: absolute; /* detach from normal flow so it cannot change grid height */
+  inset: 0;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-around;
-  height: 100%;
-  width: 100%;
-  padding: 2rem;
+  justify-content: space-around; /* centered instead of space-around to avoid implicit extra space */
+  padding: 1.5rem; /* balanced padding, overlay does not affect container size */
   text-align: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: auto; /* still interactive */
+}
+
+/* Fine-tune on very short landscape mobile: reduce padding to prevent crowding */
+@media (orientation: landscape) and (max-height: 420px) {
+  .dashboard-empty-state-container { padding: 0.75rem; }
+  .empty-state-icon { font-size: 3.25rem; width: 3.25rem; height: 3.25rem; }
 }
 
 .dashboard-empty-state-action {

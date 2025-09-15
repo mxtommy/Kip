@@ -67,14 +67,14 @@
         </mat-expansion-panel-header>
         <mat-slide-toggle #isFskShellEnabled class="full-width"
           name="freeboardShellEnabled"
-          [(ngModel)]="freeboardShellEnabled">
+          [(ngModel)]="splitShellEnabled">
           Enable Freeboard-SK chartplotter split view shell mode.
         </mat-slide-toggle>
           <mat-form-field class="optional-field">
             <mat-label>Display Freeboard-SK in</mat-label>
             <mat-select
-              name="freeboardShellSide"
-              [(ngModel)]="freeboardShellSide"
+              name="splitShellSide"
+              [(ngModel)]="splitShellSide"
               [disabled]="!isFskShellEnabled.checked">
               <mat-option value="left">Left split</mat-option>
               <mat-option value="right">Right split</mat-option>

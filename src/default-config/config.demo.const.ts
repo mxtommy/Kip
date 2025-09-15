@@ -10,9 +10,9 @@ export const DemoAppConfig: IAppConfig = {
   "nightModeBrightness": 0.27,
   "isRemoteControl": false,
   "instanceName": "",
-  "freeboardShellEnabled": true,
-  "freeboardShellSide": "right",
-  "freeboardShellWidth": 380,
+  "splitShellEnabled": true,
+  "splitShellSide": "left",
+  "splitShellWidth": 0.7,
   "dataSets": [
     {
       "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
@@ -22,51 +22,61 @@ export const DemoAppConfig: IAppConfig = {
       "baseUnit": "m/s",
       "label": "self.environment.wind.speedApparent, Source: default, Scale: minute, Period: 1",
       "timeScaleFormat": "minute"
+    },
+    {
+      "uuid": "339698a7-2cff-4ab9-9b50-d8056f971471",
+      "path": "self.environment.depth.belowTransducer",
+      "pathSource": "default",
+      "baseUnit": "m",
+      "timeScaleFormat": "minute",
+      "period": 0.2,
+      "label": "simple-chart-339698a7-2cff-4ab9-9b50-d8056f971471",
+      "editable": false
     }
   ],
   "unitDefaults": {
-    "Unitless": 'unitless',
-    "Speed": 'knots',
-    "Flow": 'l/h',
-    "Temperature": 'celsius',
-    "Length": 'm',
-    "Volume": 'liter',
-    "Current": 'A',
-    "Potential": 'V',
-    "Charge": 'C',
-    "Power": 'W',
-    "Energy": 'J',
-    "Pressure": 'mmHg',
+    "Unitless": "unitless",
+    "Speed": "knots",
+    "Flow": "l/h",
+    "Temperature": "celsius",
+    "Length": "m",
+    "Volume": "liter",
+    "Current": "A",
+    "Potential": "V",
+    "Charge": "C",
+    "Power": "W",
+    "Energy": "J",
+    "Pressure": "mmHg",
     "Fuel Distance": "nm/l",
     "Energy Distance": "nm/kWh",
-    "Density": 'kg/m3',
-    "Time": 'Hours',
-    "Angular Velocity": 'deg/min',
-    "Angle": 'deg',
-    "Frequency": 'Hz',
-    "Ratio": 'ratio',
-    "Resistance": 'ohm'
+    "Density": "kg/m3",
+    "Time": "Hours",
+    "Angular Velocity": "deg/min",
+    "Angle": "deg",
+    "Frequency": "Hz",
+    "Ratio": "ratio",
+    "Resistance": "ohm"
   },
   "notificationConfig": {
     "disableNotifications": false,
     "menuGrouping": true,
     "security": {
-      "disableSecurity": true,
+      "disableSecurity": true
     },
     "devices": {
       "disableDevices": false,
       "showNormalState": false,
-      "showNominalState": false,
+      "showNominalState": false
     },
     "sound": {
       "disableSound": false,
       "muteNormal": true,
       "muteNominal": true,
-      "muteWarn": true,
+      "muteWarn": false,
       "muteAlert": false,
       "muteAlarm": false,
-      "muteEmergency": false,
-    },
+      "muteEmergency": false
+    }
   }
 }
 
@@ -255,6 +265,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
               "driftEnable": true,
               "awsEnable": true,
               "twsEnable": true,
+              "twaEnable": true,
               "sailSetupEnable": false,
               "enableTimeout": false,
               "dataTimeout": 5
@@ -300,7 +311,8 @@ export const DemoDashboardsConfig: Dashboard[] = [
                 "enableTicks": true,
                 "compassUseNumbers": false,
                 "highlightsWidth": 5,
-                "scaleStart": 180
+                "scaleStart": 180,
+                "barStartPosition": "left"
               },
               "numInt": 1,
               "numDecimal": 1,
@@ -492,7 +504,8 @@ export const DemoDashboardsConfig: Dashboard[] = [
         "x": 3,
         "y": 10
       }
-    ]
+    ],
+    "collapseSplitShell": true
   },
   {
     "id": "7c67c8c5-dc55-4e1d-9fc5-3dd95fd41bea",
@@ -502,21 +515,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
       {
         "x": 0,
         "y": 0,
-        "w": 8,
-        "h": 12,
-        "id": "488d620a-37d4-4b98-849d-304cd18003e9",
-        "selector": "widget-freeboardsk",
-        "input": {
-          "widgetProperties": {
-            "type": "widget-freeboardsk",
-            "uuid": "488d620a-37d4-4b98-849d-304cd18003e9"
-          }
-        }
-      },
-      {
-        "x": 8,
-        "y": 0,
-        "w": 2,
+        "w": 6,
         "h": 3,
         "id": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
         "selector": "widget-gauge-ng-compass",
@@ -556,9 +555,9 @@ export const DemoDashboardsConfig: Dashboard[] = [
         }
       },
       {
-        "x": 10,
+        "x": 6,
         "y": 0,
-        "w": 2,
+        "w": 6,
         "h": 3,
         "id": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
         "selector": "widget-datetime",
@@ -589,9 +588,9 @@ export const DemoDashboardsConfig: Dashboard[] = [
         }
       },
       {
-        "x": 8,
+        "x": 0,
         "y": 3,
-        "w": 4,
+        "w": 12,
         "h": 9,
         "id": "daa21350-009e-4d99-8209-364f9b99caee",
         "selector": "widget-autopilot",
@@ -610,6 +609,37 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "isPathConfigurable": false,
                   "showPathSkUnitsFilter": false,
                   "convertUnitTo": "",
+                  "sampleTime": 500
+                },
+                "autopilotMode": {
+                  "description": "Autopilot Mode",
+                  "path": "self.steering.autopilot.mode",
+                  "source": "default",
+                  "pathType": "string",
+                  "isPathConfigurable": false,
+                  "showPathSkUnitsFilter": false,
+                  "convertUnitTo": "",
+                  "sampleTime": 500
+                },
+                "autopilotEngaged": {
+                  "description": "Autopilot Engaged",
+                  "path": "self.steering.autopilot.engaged",
+                  "source": "default",
+                  "pathType": "boolean",
+                  "isPathConfigurable": false,
+                  "showPathSkUnitsFilter": false,
+                  "convertUnitTo": "",
+                  "sampleTime": 500
+                },
+                "autopilotV2Target": {
+                  "description": "Autopilot API v2 Target",
+                  "path": "self.steering.autopilot.target",
+                  "source": "default",
+                  "pathType": "number",
+                  "convertUnitTo": "deg",
+                  "isPathConfigurable": false,
+                  "showPathSkUnitsFilter": false,
+                  "pathSkUnitsFilter": "rad",
                   "sampleTime": 500
                 },
                 "autopilotTargetHeading": {
@@ -710,11 +740,20 @@ export const DemoDashboardsConfig: Dashboard[] = [
                   "sampleTime": 500
                 }
               },
+              "autopilot": {
+                "invertRudder": true,
+                "headingDirectionTrue": false,
+                "courseDirectionTrue": false,
+                "apiVersion": null,
+                "instanceId": null,
+                "pluginId": null,
+                "modes": null
+              },
+              "enableTimeout": false,
+              "dataTimeout": 5,
               "invertRudder": true,
               "headingDirectionTrue": false,
               "courseDirectionTrue": false,
-              "enableTimeout": false,
-              "dataTimeout": 5,
               "autopilotInstance": "_default"
             }
           }

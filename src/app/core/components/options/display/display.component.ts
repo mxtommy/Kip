@@ -47,8 +47,8 @@ export class SettingsDisplayComponent implements OnInit {
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
   // Freeboard shell config
-  protected freeboardShellEnabled = model<boolean>(false);
-  protected freeboardShellSide = model<'left' | 'right'>('left');
+  protected splitShellEnabled = model<boolean>(false);
+  protected splitShellSide = model<'left' | 'right'>('left');
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
   readonly LIGHT_THEME_NAME = "light-theme";
@@ -65,8 +65,8 @@ export class SettingsDisplayComponent implements OnInit {
     this.isRedNightMode.set(this._settings.getRedNightMode());
     this.isRemoteControl.set(this._settings.getIsRemoteControl());
     this.instanceName.set(this._settings.getInstanceName());
-    this.freeboardShellEnabled.set(this._settings.getFreeboardShellEnabled());
-    this.freeboardShellSide.set(this._settings.getFreeboardShellSide());
+    this.splitShellEnabled.set(this._settings.getSplitShellEnabled());
+    this.splitShellSide.set(this._settings.getSplitShellSide());
   }
 
   protected saveAllSettings():void {
@@ -92,8 +92,8 @@ export class SettingsDisplayComponent implements OnInit {
       this._settings.setThemeName("");
     }
     this._app.sendSnackbarNotification("Configuration saved", 3000, false);
-    this._settings.setFreeboardShellEnabled(this.freeboardShellEnabled());
-    this._settings.setFreeboardShellSide(this.freeboardShellSide());
+    this._settings.setSplitShellEnabled(this.splitShellEnabled());
+    this._settings.setSplitShellSide(this.splitShellSide());
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {

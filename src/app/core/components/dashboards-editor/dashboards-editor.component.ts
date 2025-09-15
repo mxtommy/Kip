@@ -48,7 +48,7 @@ export class DashboardsEditorComponent {
       cancelBtnText: 'Cancel'
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.add(data.name, [], data.icon, data.collapseFreeboardShell);
+      this._dashboard.add(data.name, [], data.icon, data.collapseSplitShell);
     });
   }
 
@@ -78,15 +78,15 @@ export class DashboardsEditorComponent {
   protected editDashboard(itemIndex: number): void {
     const dashboard = this._dashboard.dashboards()[itemIndex];
     this._dialog.openDashboardPageEditorDialog({
-      title: 'Dashboard Details',
+      title: 'Dashboard Options',
       name: dashboard.name,
       icon: dashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel',
-      collapseFreeboardShell: dashboard.collapseFreeboardShell ?? false
+      collapseSplitShell: dashboard.collapseSplitShell ?? false
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.update(itemIndex, data.name, data.icon, data.collapseFreeboardShell);
+      this._dashboard.update(itemIndex, data.name, data.icon, data.collapseSplitShell);
     });
   }
 
@@ -102,10 +102,10 @@ export class DashboardsEditorComponent {
       icon: originalDashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel',
-      collapseFreeboardShell: originalDashboard.collapseFreeboardShell ?? false
+      collapseSplitShell: originalDashboard.collapseSplitShell ?? false
     }).afterClosed().subscribe(data => {
       if (!data) { return } //clicked cancel
-      this._dashboard.duplicate(itemIndex, data.name, data.icon, data.collapseFreeboardShell);
+      this._dashboard.duplicate(itemIndex, data.name, data.icon, data.collapseSplitShell);
     });
   }
 
