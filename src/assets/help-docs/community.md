@@ -55,21 +55,11 @@ Open a PR or post in Discord #showcase with:
 
 ---
 
----
-
 ## More Community Resources
 
 - [Signal K Home page](https://signalk.org/) — The open marine data standard powering KIP
 - [Signal K Discord](https://discord.com/invite/uuZrwz4dCS) — Live chat server: questions, support, contribute and collaborate
-- [Signal K GutHub Project](https://github.com/SignalK) — Feature requests, bug reports, and feedback
-- [SensESP](https://signalk.org/SensESP/) — A Signal K sensor development toolkit for the ESP32 platform
-- [OpenMarine Community](https://openmarine.net/) — OpenPlotter, MacArthur HAT and open source marine tech
-
-## More Community Resources
-
-- [Signal K Home page](https://signalk.org/) — The open marine data standard powering KIP
-- [Signal K Discord](https://discord.com/invite/uuZrwz4dCS) — Live chat server: questions, support, contribute and collaborate
-- [Signal K GutHub Project](https://github.com/SignalK) — Feature requests, bug reports, and feedback
+- [Signal K GitHub Project](https://github.com/SignalK) — Feature requests, bug reports, and feedback
 - [SensESP](https://signalk.org/SensESP/) — A Signal K sensor development toolkit for the ESP32 platform
 - [OpenMarine Community](https://openmarine.net/) — OpenPlotter, MacArthur HAT and open source marine tech
 
