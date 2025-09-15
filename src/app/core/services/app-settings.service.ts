@@ -471,23 +471,6 @@ export class AppSettingsService {
     }
   }
 
-  public getSplitShellCollapsedAsO() {
-    return this.splitShellCollapsed.asObservable();
-  }
-  public getSplitShellCollapsed(): boolean {
-    return this.splitShellCollapsed.getValue();
-  }
-  public setSplitShellCollapsed(collapsed: boolean): void {
-    this.splitShellCollapsed.next(collapsed);
-    const appConf = this.buildAppStorageObject();
-
-    if (this.useSharedConfig) {
-      this.storage.patchConfig('IAppConfig', appConf);
-    } else {
-      this.saveAppConfigToLocalStorage();
-    }
-  }
-
   public getNightModeBrightness(): number {
     return this.nightModeBrightness.getValue();
   }

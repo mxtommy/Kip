@@ -64,7 +64,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
-  private readonly _hostEl = inject(ElementRef<HTMLElement>); // host element reference
+  private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$, { initialValue: true });
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
@@ -83,6 +83,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _pendingResizeRaf: number | null = null;
   private _lastContainerHeight = 0;
   private _lastCellHeight = 0;
+  private _hasLoadedInitialDashboard = false;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -179,14 +180,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const raw = params['id'];
       const parsed = Number(raw);
       const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
-
       if (!isValidNumber) return; // ignore non-numeric params entirely
 
       if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return;
-      if (parsed === this.dashboard.activeDashboard()) return;
 
-      this.dashboard.setActiveDashboard(parsed);
-      this.loadDashboard(parsed);
+      const current = this.dashboard.activeDashboard();
+      const firstLoad = !this._hasLoadedInitialDashboard;
+      // Always force a load on first valid param even if index matches default active index (0)
+      if (firstLoad || parsed !== current) {
+        if (parsed !== current) {
+          this.dashboard.setActiveDashboard(parsed);
+        }
+        this.loadDashboard(parsed);
+        this._hasLoadedInitialDashboard = true;
+      }
     });
   }
 
