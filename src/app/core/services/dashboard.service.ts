@@ -27,7 +27,7 @@ export interface widgetOperation {
 export class DashboardService {
   private _settings = inject(AppSettingsService);
   private _router = inject(Router);
-  public dashboards = signal<Dashboard[]>([], {equal: isEqual});
+  public dashboards = signal<Dashboard[]>([], { equal: isEqual });
   public readonly activeDashboard = signal<number>(0);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
@@ -59,14 +59,17 @@ export class DashboardService {
     }
   ];
 
+  public readonly layoutEditSaved = signal<number>(0);
+  public readonly layoutEditCanceled = signal<number>(0);
+
   constructor() {
     const dashboards = this._settings.getDashboardConfig();
 
     if (!dashboards || dashboards.length === 0) {
       console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
       const newBlankDashboard = this.blankDashboard.map(dashboard => ({
-          ...dashboard,
-          id: UUID.create()
+        ...dashboard,
+        id: UUID.create()
       }));
       this.dashboards.set([...newBlankDashboard]);
     } else {
@@ -107,7 +110,7 @@ export class DashboardService {
   public add(name: string, configuration: NgGridStackWidget[], icon?: string, collapseSplitShell?: boolean): number {
     let newIndex = 0;
     this.dashboards.update(dashboards => {
-      const updated = [ ...dashboards, {id: UUID.create(), name, icon: icon ?? 'dashboard-dashboard', configuration, collapseSplitShell: collapseSplitShell ?? false} ];
+      const updated = [...dashboards, { id: UUID.create(), name, icon: icon ?? 'dashboard-dashboard', configuration, collapseSplitShell: collapseSplitShell ?? false }];
       newIndex = updated.length - 1;
       return updated;
     });
@@ -146,7 +149,7 @@ export class DashboardService {
     this.dashboards.update(dashboards => dashboards.filter((_, i) => i !== itemIndex));
 
     if (this.dashboards().length === 0) {
-      this.add( 'Dashboard ' + (this.dashboards().length + 1), []);
+      this.add('Dashboard ' + (this.dashboards().length + 1), []);
       this.activeDashboard.set(0);
     } else if (this.activeDashboard() > this.dashboards().length - 1) {
       this.activeDashboard.set(this.dashboards().length - 1);
@@ -183,8 +186,8 @@ export class DashboardService {
    */
   public duplicate(itemIndex: number, newName: string, newIcon: string, collapseSplitShell: boolean): number {
     if (itemIndex < 0 || itemIndex >= this.dashboards().length) {
-        console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
-        return -1;
+      console.error(`[Dashboard Service] Invalid itemIndex: ${itemIndex}`);
+      return -1;
     }
 
     const originalDashboard = this.dashboards()[itemIndex];
@@ -196,17 +199,17 @@ export class DashboardService {
     newDashboard.collapseSplitShell = collapseSplitShell ?? false;
 
     if (Array.isArray(newDashboard.configuration)) {
-        newDashboard.configuration.forEach((widget: NgGridStackWidget) => {
-            if (widget && widget.input?.widgetProperties) {
-                widget.id = UUID.create();
-                widget.input.widgetProperties.uuid = widget.id;
-            } else {
-                console.error("Dashboard Service] Widget configuration is missing required properties:", widget);
-            }
-        });
+      newDashboard.configuration.forEach((widget: NgGridStackWidget) => {
+        if (widget && widget.input?.widgetProperties) {
+          widget.id = UUID.create();
+          widget.input.widgetProperties.uuid = widget.id;
+        } else {
+          console.error("Dashboard Service] Widget configuration is missing required properties:", widget);
+        }
+      });
     } else {
-        console.error("Dashboard Service] Dashboard configuration is not an array:", newDashboard.configuration);
-        newDashboard.configuration = [];
+      console.error("Dashboard Service] Dashboard configuration is not an array:", newDashboard.configuration);
+      newDashboard.configuration = [];
     }
 
     let newIndex = -1;
@@ -335,7 +338,7 @@ export class DashboardService {
    * @param id The widget ID to delete.
    */
   public deleteWidget(id: string): void {
-    this._widgetAction.next({id: id, operation: 'delete'});
+    this._widgetAction.next({ id: id, operation: 'delete' });
   }
 
   /**
@@ -343,7 +346,7 @@ export class DashboardService {
    * @param id The widget ID to duplicate.
    */
   public duplicateWidget(id: string): void {
-    this._widgetAction.next({id: id, operation: 'duplicate'});
+    this._widgetAction.next({ id: id, operation: 'duplicate' });
   }
 
   /**
@@ -352,5 +355,13 @@ export class DashboardService {
    */
   public setStaticDashboard(isStatic: boolean): void {
     this._isDashboardStatic.next(isStatic);
+  }
+
+  public notifyLayoutEditSaved(): void {
+     this.layoutEditSaved.update(v => v + 1);
+   }
+
+  public notifyLayoutEditCanceled(): void {
+    this.layoutEditCanceled.update(v => v + 1);
   }
 }

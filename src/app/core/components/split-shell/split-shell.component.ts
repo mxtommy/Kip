@@ -24,6 +24,7 @@ export class SplitShellComponent implements OnDestroy {
   public readonly side = signal<'left' | 'right'>(this._settings.getSplitShellSide());
   // Stored as ratio (0-1)
   public panelRatio = signal<number>(this._settings.getSplitShellWidth());
+  private originalPanelRatio: number | null = null; // captured when entering edit (non-static) mode
   public panelWidth = signal<number>(0); // derived pixels
   public panelCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
 
@@ -73,10 +74,47 @@ export class SplitShellComponent implements OnDestroy {
 
 
     effect(() => {
-      this.chartplotterModeInPortrait(); // dependency tracking
-      this.panelRatio(); // dependency tracking
+      this.chartplotterModeInPortrait();
+      this.panelRatio();
       this.recomputeWidth();
       setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
+    });
+
+    // Track transitions into edit mode to snapshot original ratio
+    effect(() => {
+      const isStatic = this._dashboard.isDashboardStatic();
+      if (!isStatic) {
+        // entering edit mode
+        if (this.originalPanelRatio === null) {
+          this.originalPanelRatio = this.panelRatio();
+        }
+      }
+      if (isStatic && this.originalPanelRatio !== null) {
+        // leaving edit mode (save or cancel) handled by explicit events below
+        // do nothing here; explicit events decide persistence or revert
+      }
+    });
+
+    // Persist only when dashboard signals a save
+    effect(() => {
+      this._dashboard.layoutEditSaved(); // dependency
+      // If saved while in edit mode, commit current ratio to settings
+      if (this.originalPanelRatio !== null) {
+        const r = this.panelRatio();
+        this._settings.setSplitShellWidth(r);
+        this.originalPanelRatio = null;
+      }
+    });
+
+    // Revert on cancel
+    effect(() => {
+      this._dashboard.layoutEditCanceled(); // dependency
+      if (this.originalPanelRatio !== null) {
+        const revert = this.originalPanelRatio;
+        this.panelRatio.set(revert);
+        queueMicrotask(() => this.recomputeWidth());
+        this.originalPanelRatio = null;
+      }
     });
   }
 
@@ -134,7 +172,7 @@ export class SplitShellComponent implements OnDestroy {
       const prev = this.panelRatio();
       if (Math.abs(ratio - prev) > 0.0005) {
         this.panelRatio.set(ratio);
-        this._settings.setSplitShellWidth(ratio);
+        // DO NOT persist here; defer until layoutEditSaved effect
       }
     });
   }
