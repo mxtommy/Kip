@@ -1,5 +1,19 @@
+# v 3.12.0
+# New Features
+* Chartplotter Mode: A dual‑panel, performance‑tuned split experience that lets you run KIP dashboards and Freeboard‑SK together in one adaptive shell. Keep the chart live while moving between dashboards. Seamless side‑by‑side in landscape, smart vertical stacking in portrait and as always, designed for mobile and touch. Use the per‑dashboard forced collapse option for data‑focused layouts while Freeboard remains active in the background. Drag resize split distribution with commit‑on‑save editing. This feature brings you:
+  * Freeboard-SK chart continuity while you cycle dashboards (full-on dedicated MFD feel, Signal K native!)
+  * Remote dashboard switching compatible (no chart context loss)
+  * Split collapse and change dashboard transitive animations
+  * Per‑dashboard collapse flag to lock map closed for data‑dense layouts
+  * Optional Freeboard‑SK widget still available if persistent background map not required
+# Improvements
+* Updated help documentation:
+  * New Community section: curated video library, creator channel directory, contribution guidelines (PR / Discord #showcase) and ecosystem resource table.
+  * Added optional Chromium "No Sleep" and resource usage optimization launch parameters to the "Kiosk Mode" documentation.
+  * Enhanced "Digital Switching and PUT" section with links to supported devices.
+  * "Managing Dashboards" tips and recommendations update.
 # v 3.11.0
-# New Feature
+# New Features
 * Level gauge: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring. **Special thanks to @fymmot for permission to integrate his plugin code. See https://github.com/fymmot/signalk-heel-angle**
 # Improvements
 * Minor Switch Panel state visibility improvement using bold fonts and a glow effect. Fixes #813
