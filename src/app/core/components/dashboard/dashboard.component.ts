@@ -258,13 +258,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private loadDashboard(dashboardId: number): void {
     const dashboard = this.dashboard.dashboards()[dashboardId];
     const _gridstack = this._gridstack();
-    if (_gridstack?.grid) {
-      setTimeout(() => {
-        _gridstack.grid.batchUpdate();
-        _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
-        _gridstack.grid.commit();
-      }, 0);
+    // If grid not yet ready (rare timing race), retry next microtask.
+    if (!_gridstack?.grid) {
+      queueMicrotask(() => this.loadDashboard(dashboardId));
+      return;
     }
+    // Synchronous load eliminates one-frame empty dashboard flicker.
+    _gridstack.grid.batchUpdate();
+    _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+    _gridstack.grid.commit();
   }
 
   protected saveDashboard(): void {
