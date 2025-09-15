@@ -46,7 +46,7 @@ export class SettingsDisplayComponent implements OnInit {
   /* If true, the display can be remotely controlled by another KIP via Signal K displays path. */
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
-  // Freeboard shell config
+  // Freeboard split shell config
   protected splitShellEnabled = model<boolean>(false);
   protected splitShellSide = model<'left' | 'right'>('left');
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
@@ -81,8 +81,6 @@ export class SettingsDisplayComponent implements OnInit {
       this._settings.setInstanceName('');
     }
 
-    this.displayForm().form.markAsPristine();
-
     if (!this._app.isNightMode()) {
       this._app.setBrightness(1);
     }
@@ -91,9 +89,11 @@ export class SettingsDisplayComponent implements OnInit {
     } else {
       this._settings.setThemeName("");
     }
-    this._app.sendSnackbarNotification("Configuration saved", 3000, false);
     this._settings.setSplitShellEnabled(this.splitShellEnabled());
     this._settings.setSplitShellSide(this.splitShellSide());
+
+    this.displayForm().form.markAsPristine();
+    this._app.sendSnackbarNotification("Configuration saved", 3000, false);
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
