@@ -20,7 +20,9 @@
           [(ngModel)]="autoNightMode">
           Automatically activate day and night modes based on sun phases.
         </mat-slide-toggle>
-        <mat-slide-toggle class="full-width sliders"
+        <mat-slide-toggle
+          #redNightModeToggle
+          class="full-width sliders"
           [(ngModel)]="isRedNightMode"
           name="redNightMode">
           Enable red-only night mode.
@@ -29,11 +31,11 @@
           <br/>
           <span class="mat-body-medium">Adjust Night Mode Brightness</span>
           <br/>
-          <mat-slider min="0" max="1" step="0.01" discrete>
+          <mat-slider min="0" max="1" step="0.01" [disabled]="redNightModeToggle.checked" discrete>
             <input #inputBrightness matSliderThumb
             [value]="nightBrightness()"
             (input)="setBrightness(+inputBrightness.value)"
-            [disabled]="isRedNightMode()">
+            [disabled]="redNightModeToggle.checked">
           </mat-slider>
         </div>
       </mat-expansion-panel>
@@ -57,27 +59,27 @@
       <mat-expansion-panel>
         <mat-expansion-panel-header>
           <mat-panel-title>
-            Chartplotter
+            Chartplotter Mode
           </mat-panel-title>
           @if (!isPhonePortrait().matches) {
             <mat-panel-description>
-              Set integrated chartplotter mode.
+              Configure persistent dual‑panel chart & dashboards layout.
             </mat-panel-description>
           }
         </mat-expansion-panel-header>
         <mat-slide-toggle #isFskShellEnabled class="full-width"
           name="freeboardShellEnabled"
           [(ngModel)]="splitShellEnabled">
-          Enable Freeboard-SK chartplotter split view shell mode.
+          Enable Freeboard‑SK dual‑panel Chartplotter Mode.
         </mat-slide-toggle>
           <mat-form-field class="optional-field">
-            <mat-label>Display Freeboard-SK in</mat-label>
+            <mat-label>Freeboard-SK panel side</mat-label>
             <mat-select
               name="splitShellSide"
               [(ngModel)]="splitShellSide"
               [disabled]="!isFskShellEnabled.checked">
-              <mat-option value="left">Left split</mat-option>
-              <mat-option value="right">Right split</mat-option>
+              <mat-option value="left">Left side</mat-option>
+              <mat-option value="right">Right side</mat-option>
             </mat-select>
           </mat-form-field>
       </mat-expansion-panel>

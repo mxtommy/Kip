@@ -19,15 +19,18 @@
   background-color: var(--mat-sys-surface-container-low);
 
   &:hover {
-    border-color: var(--mat-sys-outline-variant);
+    outline: 2px solid var(--mat-sys-on-primary-container);
+    outline-offset: 2px;
   }
 
   &.selected {
-    background-color: var(--mat-sys-on-tertiary);
+    outline: 2px solid var(--mat-sys-on-primary-container);
+    outline-offset: 2px;
+    background-color: var(--mat-sys-primary-container);
   }
 
   &:focus {
-    outline: 2px solid var(--mat-sys-tertiary);
+    outline: 2px solid var(--mat-sys-on-primary-container);
     outline-offset: 2px;
   }
 }
