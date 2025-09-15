@@ -6,9 +6,8 @@
   <div class="fsk-shell" #panel
     [style.width.px]="!chartplotterModeInPortrait() ? panelWidth() : null"
     [class.collapsed]="panelCollapsed()"
-    [class.locked]="forceCollapsed()"
     [class.drag-disabled]="!canResize()">
-    @if(showHandle()) {
+    @if(canResize()) {
       <div class="drag-handle"
         (pointerdown)="startResize($event)"
         role="separator"

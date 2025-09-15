@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked, NgZone, ElementRef, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, NgZone, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -25,10 +25,7 @@ export class SplitShellComponent {
   // Stored as ratio (0-1)
   public panelRatio = signal<number>(this._settings.getSplitShellWidth());
   public panelWidth = signal<number>(0); // derived pixels
-  public panelCollapsed = signal<boolean>(this._settings.getSplitShellCollapsed());
-
-  // Derived runtime forced collapse when active dashboard has collapseSplitShell flag
-  public forceCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
+  public panelCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
 
   // Only show toggle on handset (portrait) per requirement
   private handset$ = this.breakpointObserver.observe(Breakpoints.HandsetPortrait);
@@ -42,13 +39,10 @@ export class SplitShellComponent {
   };
 
   public chartplotterModeInPortrait = computed(() => {
-    return this.handset().matches && !this.forceCollapsed();
-  });
-  public showHandle = computed(() => {
-    return !this.forceCollapsed() && !this.panelCollapsed() && this.canResize();
+    return this.handset().matches && !this.panelCollapsed();
   });
   public canResize = computed(() => {
-    return !this._dashboard.isDashboardStatic() && !this.forceCollapsed();
+    return !this._dashboard.isDashboardStatic() && !this.panelCollapsed();
   });
 
   // Resize state
@@ -77,17 +71,7 @@ export class SplitShellComponent {
     // initial
     queueMicrotask(recomputeWidth);
 
-    effect(() => {
-      const forceCollapsed = this.forceCollapsed();
-      untracked(() => {
-        if (forceCollapsed) {
-          this.panelCollapsed.set(true);
-        } else {
-          // restore persisted user collapse state
-          this.panelCollapsed.set(this._settings.getSplitShellCollapsed());
-        }
-      });
-    });
+    // Removed effect that restored/persisted collapse; now purely computed.
 
     effect(() => {
       // Recompute width when ratio changes
@@ -106,21 +90,13 @@ export class SplitShellComponent {
     });
   }
 
-  public toggleCollapse(): void {
-    if (this.forceCollapsed()) return;
-    const next = !this.panelCollapsed();
-    this.panelCollapsed.set(next);
-    // Persist only when not forced
-    this._settings.setSplitShellCollapsed(next);
-  }
-
   public startResize(ev: PointerEvent): void {
     if (!this.canResize()) return;
     this.resizing = true;
     this.startX = ev.clientX;
-  this.startW = this.panelWidth();
-  this.ghostWidth = this.startW; // initial
-  this.ghostActive.set(true);
+    this.startW = this.panelWidth();
+    this.ghostWidth = this.startW; // initial
+    this.ghostActive.set(true);
     this.updateGhostTransform(this.startW);
     (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
     // Attach listeners only for active resize (outside Angular for perf)
@@ -133,13 +109,13 @@ export class SplitShellComponent {
   protected onMove(ev: PointerEvent): void {
     if (!this.resizing) return;
     const delta = this.side() === 'left' ? (ev.clientX - this.startX) : (this.startX - ev.clientX);
-  // Constrain between 10% and 90% of container
-  const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
-  const total = host?.clientWidth ?? 1;
-  const raw = this.startW + delta;
-  const minPx = total * 0.1;
-  const maxPx = total * 0.9;
-  const newW = Math.min(maxPx, Math.max(minPx, raw));
+    // Constrain between 10% and 90% of container
+    const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+    const total = host?.clientWidth ?? 1;
+    const raw = this.startW + delta;
+    const minPx = total * 0.1;
+    const maxPx = total * 0.9;
+    const newW = Math.min(maxPx, Math.max(minPx, raw));
     if (Math.abs(newW - this.ghostWidth) < SplitShellComponent.MIN_DELTA_PX) return;
     this.ghostWidth = newW;
     // Update ghost transform outside Angular; no width mutation to shell to avoid layout churn
@@ -154,7 +130,7 @@ export class SplitShellComponent {
     window.removeEventListener('pointerup', this.boundUp);
     // Commit ghost width to actual panel now
     const finalW = this.ghostWidth;
-  this.ghostActive.set(false);
+    this.ghostActive.set(false);
     // Apply width instantly (mutate DOM) then update signal in zone
     const panelRef = this.panelEl();
     if (panelRef && !this.panelCollapsed()) {
@@ -166,15 +142,9 @@ export class SplitShellComponent {
       const total = host?.clientWidth ?? finalW;
       const ratio = total ? finalW / total : 0.3;
       this.panelRatio.set(ratio);
+      // Persist global split shell width (size is global, not per dashboard)
+      this._settings.setSplitShellWidth(this.panelRatio());
     });
-    if (!this.forceCollapsed()) {
-      // Persist within Angular (already in zone if called from pointerup listener outside zone)
-      if (NgZone.isInAngularZone()) {
-        this._settings.setSplitShellWidth(this.panelRatio());
-      } else {
-        this.ngZone.run(() => this._settings.setSplitShellWidth(this.panelRatio()));
-      }
-    }
   }
 
   private updateGhostTransform(width: number) {
