@@ -20,18 +20,81 @@
   max-height: max-content;
 }
 
-.markdown-content {
-  display: block;
-  height: calc(100% - 75px);
-  width: 100%;
-  overflow-x: scroll;
-  padding: 25px;
-}
-
 .dialog-close-icon {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   gap: 5px;
   padding-right: 15px;
+}
+
+::ng-deep .markdown-content {
+  display: block;
+  height: calc(100% - 75px);
+  width: 100%;
+  overflow-x: scroll;
+  padding: 25px;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  background: var(--mat-sys-surface-container, #fff);
+  color: var(--mat-sys-on-surface, #222);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+::ng-deep .markdown-content h1,
+::ng-deep .markdown-content h2,
+::ng-deep .markdown-content h3,
+::ng-deep .markdown-content h4 {
+  color: var(--mat-sys-primary, #1976d2);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+::ng-deep .markdown-content pre {
+  padding: 1em;
+  overflow-x: auto;
+}
+::ng-deep .markdown-content table {
+  border: 1px solid var(--mat-sys-on-background);
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+::ng-deep .markdown-content table td {
+  border: 1px solid var(--mat-sys-on-background);
+  padding: 8px;
+  text-align: left;
+}
+::ng-deep .markdown-content th {
+  color: var(--mat-sys-primary, #1976d2);
+  font-weight: 600;
+  padding: 0.5em 1em;
+  border: 2px solid var(--mat-sys-primary, #1976d2);
+  text-align: left;
+}
+::ng-deep .markdown-content table tr:nth-child(even) {
+  background-color: var(--mat-sys-surface-container-high);
+}
+::ng-deep .markdown-content a {
+  color: var(--mat-sys-primary, #1976d2);
+  text-decoration: underline;
+}
+::ng-deep .markdown-content a:hover {
+  text-decoration: none;
+  color: var(--mat-sys-secondary, #005fa3);
+}
+::ng-deep .markdown-content ul,
+::ng-deep .markdown-content ol {
+  margin-left: 2em;
+  margin-bottom: 1em;
+}
+::ng-deep .markdown-content blockquote {
+  border-left: 4px solid var(--mat-sys-tertiary);
+  background: var(--mat-sys-on-tertiary-fixed-variant);
+  padding: 0.5em 1em;
+  color: var(--mat-sys-on-surface-variant, #555);
+  margin: 1em 0;
 }

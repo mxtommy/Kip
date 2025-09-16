@@ -23,16 +23,16 @@ Kiosk mode runs a single application full-screen and suppresses most desktop UI.
 
 - Raspberry Pi OS with Desktop, user: `pi` (or adjust paths).
 - Chromium installed:
-  ```
+  ```bash
   sudo apt update
   sudo apt install -y chromium-browser || sudo apt install -y chromium
   ```
 - Optional (hide mouse cursor):
-  ```
+  ```bash
   sudo apt install -y unclutter
   ```
 - Enable Desktop autologin:
-  ```
+  ```bash
   sudo raspi-config
   ```
   System Options → Boot / Auto Login → Desktop Autologin
@@ -43,13 +43,13 @@ Kiosk mode runs a single application full-screen and suppresses most desktop UI.
 
 ## 2) Create the kiosk launcher script
 
-```
+```bash
 sudo nano /home/pi/kiosk.sh
 ```
 
 Paste:
 
-```
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -102,14 +102,14 @@ exec "$BROWSER" \
 Optionally, you can also add the following `exec "BROWSER" \` flags:
 
 Force Chromium to keep all threads active and not optimyze resource usage
-```
+```bash
 --disable-background-timer-throttling \
 --disable-renderer-backgrounding \
 --disable-backgrounding-occluded-windows
 ```
 
 Reduce memory consumption (Pi Zero)
-```
+```bash
 --disable-gpu \
 --single-process \
 --js-flags="--max-old-space-size=512"
@@ -117,7 +117,7 @@ Reduce memory consumption (Pi Zero)
 
 Save, then:
 
-```
+```bash
 sudo chmod +x /home/pi/kiosk.sh
 ```
 
@@ -130,14 +130,14 @@ URL="http://signalk.local:3000/@mxtommy/kip/#/page/0" /home/pi/kiosk.sh
 
 Create an autostart entry:
 
-```
+```bash
 mkdir -p ~/.config/autostart
 nano ~/.config/autostart/kiosk.desktop
 ```
 
 Paste:
 
-```
+```ini
 [Desktop Entry]
 Type=Application
 Name=KIP Kiosk
@@ -152,14 +152,14 @@ This launches after the desktop session starts.
 
 Recommended if you want Chromium to restart on crash.
 
-```
+```bash
 mkdir -p ~/.config/systemd/user
 nano ~/.config/systemd/user/kiosk.service
 ```
 
 Paste:
 
-```
+```ini
 [Unit]
 Description=KIP Chromium Kiosk
 After=graphical-session.target network-online.target
@@ -178,13 +178,13 @@ WantedBy=graphical-session.target
 
 Enable:
 
-```
+```bash
 systemctl --user daemon-reload
 systemctl --user enable --now kiosk.service
 ```
 
 Logs (for debugging):
-```
+```bash
 journalctl --user -u kiosk.service -f
 ```
 
@@ -192,7 +192,7 @@ Note: This runs after user login to the desktop. Ensure Desktop Autologin is ena
 
 ## 4) Reboot and verify
 
-```
+```bash
 sudo reboot
 ```
 
