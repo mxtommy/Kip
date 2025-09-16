@@ -1,33 +1,61 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="raceWrapper" (onResize)="onResized($event)">
-    <canvas id="canvasValue" class="canvas-size" #canvasEl></canvas>
-    <div class="timerBarContainer">
-      <div class="timer-button-groups timer-adjusters-group">
-        <button mat-flat-button class="timer-adjust-buttons" (click)="remOneMin()">
-          -1
+<widget-host class="racetimer-wrapper"
+  [(config)]="widgetProperties.config"
+  [id]="widgetProperties.uuid"
+  (configChange)="updateConfig($event)"
+>
+  <canvas class="racetimer-canvas" #canvasMainRef></canvas>
+  <div class="timerBarContainer">
+    <div class="timer-button-groups timer-adjusters-group">
+      <button mat-flat-button class="button other-small-button" (click)="removeTime(5)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="11">-5s</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" (click)="removeTime(60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="11">-60s</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button main-button" (click)="resetTimer()">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="11">Reset</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" (click)="addTime(60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="11">+60s</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" (click)="addTime(5)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text xml:space="preserve" x="50" y="11">+5s</text>
+          </svg>
+        </mat-icon>
+      </button>
+    </div>
+    <div class="timer-button-groups timer-countdown-group">
+      @if (!timerRunning) {
+        <button mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
+          Start
         </button>
-        <button mat-flat-button class="timer-reset-button" (click)="resetTimer()">
-          Reset
+      }
+      @if (timerRunning) {
+        <button mat-flat-button class="timer-start-button" (click)="pauseTimer()">
+          Pause
         </button>
-        <button mat-flat-button class="timer-adjust-buttons" (click)="addOneMin()">
-          +1
-        </button>
-      </div>
-      <div class="timer-button-groups timer-countdown-group">
-        @if (!timerRunning) {
-          <button mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
-            Start
-          </button>
-        }
-        @if (timerRunning) {
-          <button mat-flat-button class="timer-start-button" (click)="pauseTimer()">
-            Pause
-          </button>
-        }
-        <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">
-          Synch
-        </button>
-      </div>
+      }
+      <button mat-flat-button class="timer-synch-button button-color-red" (click)="roundToMin()">
+        Synch
+      </button>
     </div>
   </div>
 </widget-host>

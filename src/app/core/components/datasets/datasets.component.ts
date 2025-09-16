@@ -20,14 +20,13 @@ import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
-import { PageHeaderComponent } from '../page-header/page-header.component';
 
 
 @Component({
     selector: 'settings-datasets',
     templateUrl: './datasets.component.html',
     styleUrls: ['./datasets.component.scss'],
-    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider, PageHeaderComponent]
+    imports: [FormsModule, MatFormField, MatLabel, MatInput, MatTable, MatSort, MatColumnDef, MatHeaderCellDef, MatHeaderCell, MatSortHeader, MatCellDef, MatCell, MatButton, MatHeaderRowDef, MatHeaderRow, MatRowDef, MatRow, MatNoDataRow, MatPaginator, MatDivider]
 })
 export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
 
@@ -49,7 +48,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private loadDatasets() {
-    this.tableData.data = this.dsService.list();
+    this.tableData.data = this.dsService.list().filter(ds => ds.editable !== false);
   }
 
   ngAfterViewInit() {
@@ -101,7 +100,7 @@ export class SettingsDatasetsComponent implements OnInit, AfterViewInit {
   }
 
   private addDataset(dataset: IDatasetServiceDatasetConfig) {
-    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label);
+    this.dsService.create(dataset.path, dataset.pathSource, dataset.timeScaleFormat, dataset.period, dataset.label, true, true);
     this.loadDatasets();
   }
 

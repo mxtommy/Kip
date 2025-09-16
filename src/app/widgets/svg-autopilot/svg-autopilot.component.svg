@@ -363,7 +363,7 @@
       [class]="apMode() == 'wind' ? 'awa-text' : 'contrast-text'"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="907.84814"
-      y="160.33212">{{ apModeValue() }}<tspan
+      y="160.33212">{{ apModeValue() ?? '--' }}<tspan
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         >{{ apModeValueAnnotation() }}</tspan></text>
     <text xml:space="preserve"
@@ -381,7 +381,7 @@
       class="contrast-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:73.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none"
       x="109.25"
-      y="160.33212">{{ compass.newValue }}°<tspan
+      y="160.33212">{{ compassAngle() ?? '--' }}°<tspan
         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:33.3333px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
         >{{ hdgDirectionTrue() }}</tspan></text>
   </g>
@@ -390,7 +390,7 @@
       class="contrast-text"
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:240px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none"
       x="523.93127"
-      y="480">{{ lockedHdg() }}<tspan style="font-weight:normal;font-size:180px" dy="-38">°</tspan></text>
+  y="480">{{ lockedHdg() ?? '--' }}<tspan style="font-weight:normal;font-size:180px" dy="-38">°</tspan></text>
     <text
        xml:space="preserve"
        class="contrast-text-dim"

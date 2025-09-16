@@ -4,27 +4,28 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 
 
 @Component({
-    selector: 'widget-text',
-    templateUrl: './widget-text.component.html',
-    styleUrls: ['./widget-text.component.css'],
-    imports: [ WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent ],
-    standalone: true
+  selector: 'widget-text',
+  templateUrl: './widget-text.component.html',
+  styleUrls: ['./widget-text.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
 export class WidgetTextComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
-  private canvas = inject(CanvasService);
-  private dataValue: string | null = null;
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
+  private titleBitmap: HTMLCanvasElement | null = null;
+  private titleBitmapText: string | null = null;
+  private canvas = inject(CanvasService);
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private dataValue: string | null = null;
   protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private isDestroyed = false; // guard against callbacks after destroyed
-  private maxTextWidth = 0;
-  private maxTextHeight = 0;
 
   constructor() {
     super();
@@ -50,7 +51,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     effect(() => {
       if (this.theme()) {
         this.setColors();
-        this.drawValue();
+        this.drawWidget();
       }
     });
   }
@@ -60,11 +61,18 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   }
 
   ngAfterViewInit(): void {
-    const canvasElement = this.canvasValue().nativeElement;
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvasCtx = this.canvasValue().nativeElement.getContext('2d');
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.80);
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.drawWidget();
+      }
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     if (this.isDestroyed) return;
     this.startWidget();
   }
@@ -74,21 +82,8 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.setColors();
     this.observeDataStream('stringPath', newValue => {
       this.dataValue = newValue.data.value;
-      this.drawValue();
+      this.drawWidget();
     });
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
-    this.drawValue();
-  }
-
-  ngOnDestroy() {
-    this.isDestroyed = true;
-    this.destroyDataStreams();
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvasValue().nativeElement.remove();
   }
 
   private setColors(): void {
@@ -96,30 +91,60 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
   }
 
-  protected onResized(e: ResizeObserverEntry) {
-    if (e.contentRect.height < 25 || e.contentRect.width < 25) return;
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    if (this.isDestroyed) return;
-    this.drawValue();
+  protected updateConfig(config: IWidgetSvcConfig): void {
+    this.widgetProperties.config = config;
+    this.startWidget();
+    this.drawWidget();
   }
 
-/* ******************************************************************************************* */
+  ngOnDestroy() {
+    this.isDestroyed = true;
+    this.destroyDataStreams();
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
+  }
+
+  /* ******************************************************************************************* */
   /*                                  Canvas Drawing                                             */
   /* ******************************************************************************************* */
-  drawValue() {
+  drawWidget() {
     if (!this.canvasCtx) return;
-    this.canvas.clearCanvas(this.canvasCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+    const titleHeight = Math.floor(this.cssHeight * 0.1);
+    if (!this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== this.widgetProperties.config.displayName
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(
+        this.widgetProperties.config.displayName,
+        this.labelColor(),
+        'normal',
+        this.cssWidth,
+        this.cssHeight
+      );
+      this.titleBitmapText = this.widgetProperties.config.displayName;
+    }
+
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+    if (this.titleBitmap && this.titleBitmap.width > 0 && this.titleBitmap.height > 0) {
+      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
+
     const valueText = this.dataValue === null ? '--' : this.dataValue;
+    const edge = this.canvas.EDGE_BUFFER || 10;
+    const availableHeight = Math.max(0, this.cssHeight - titleHeight - 2 * edge);
+    const maxWidth = Math.max(0, Math.floor(this.cssWidth - 2 * edge));
+    const maxHeight = Math.max(0, Math.floor(availableHeight));
+    const centerX = Math.floor(this.cssWidth / 2);
+    const centerY = Math.floor(titleHeight + edge + availableHeight / 2);
 
     this.canvas.drawText(
       this.canvasCtx,
       valueText,
-      Math.floor(this.canvasValue().nativeElement.width / 2),
-      Math.floor(this.canvasValue().nativeElement.height / 2 * 1.15),
-      this.maxTextWidth,
-      this.maxTextHeight,
+      centerX,
+      centerY,
+      maxWidth,
+      maxHeight,
       'bold',
       this.valueColor,
       'center',

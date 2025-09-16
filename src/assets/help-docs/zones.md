@@ -1,4 +1,4 @@
-# Harness the Power of Data State Notifications
+## Harness the Power of Data State Notifications
 
 Stay informed about your vessel’s data with Signal K’s state notifications. For example, Signal K can flag certain sensor readings—such as depth or temperature—when they reach critical levels. KIP can then visually or audibly alert you. For instance, if the depth drops to 3 meters or less, KIP can highlight this with a warning sound or visual cue. This powerful feature combines **Zones Configuration** and **Notification Methods** in Signal K.
 
@@ -51,10 +51,12 @@ You can **Silence** or **Resolve** notifications.
 ## Displaying Zones and Notifications
 
 - **Notifications Menu:**  
-  The Notifications Menu lists all active notifications, including details such as path, severity, and message. You can silence or resolve notifications directly from this menu. By default, the menu is hidden; when a notification arrives, a prominent button appears in the lower-right corner. Tap or click this button to open the menu, or swipe right to access it at any time.
+  The Notifications Menu lists all active notifications, including details such as path, severity, and message. You can silence or resolve notifications directly from this menu. At the bottom of the Notifications menu, you will find a Mute button. This button mutes the notification volume. It does not Silence the notifications. It is meant as a quick noise cancelling button to spare your ears until you resolve the issue(s) but has no effect on the notifications.
+  
+  By default, the Notifications menu is hidden; when a notification arrives, a prominent button appears in the lower-right corner to alert you of changes in notifications. Tap or click this button to open the menu, or swipe right to access it at any time.
 
 - **Individual Widgets:**  
-  Widgets such as **Numeric**, **Linear**, **Radial**, and **Steel Style** visually highlight relevant data ranges according to their configured zones and integrate notification states into their display. You can configure each widget to ignore zones if desired.
+  Widgets such as **Numeric**, **Simple Linear**, **Linear**, **Radial**, and **Steel Style** visually highlight relevant data ranges according to their configured zones and integrate notification states into their display. You can configure each widget to ignore zones if desired.
 
 ---
 

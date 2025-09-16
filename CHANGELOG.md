@@ -1,3 +1,108 @@
+# v 3.12.0
+# New Features
+* Chartplotter Mode: A dual‑panel, performance‑tuned split experience that lets you run KIP dashboards and Freeboard‑SK together in one adaptive shell. Keep the chart live while moving between dashboards. Seamless side‑by‑side in landscape, smart vertical stacking in portrait and as always, designed for mobile and touch. Use the per‑dashboard forced collapse option for data‑focused layouts while Freeboard remains active in the background. Drag resize split distribution with commit‑on‑save editing. This feature brings you:
+  * Freeboard-SK chart continuity while you cycle dashboards (full-on dedicated MFD feel, Signal K native!)
+  * Remote dashboard switching compatible (no chart context loss)
+  * Split collapse and change dashboard transitive animations
+  * Per‑dashboard collapse flag to lock map closed for data‑dense layouts
+  * Optional Freeboard‑SK widget still available if persistent background map not required
+# Improvements
+* Updated help documentation:
+  * New Community section: curated video library, creator channel directory, contribution guidelines (PR / Discord #showcase) and ecosystem resource table.
+  * Added optional Chromium "No Sleep" and resource usage optimization launch parameters to the "Kiosk Mode" documentation.
+  * Enhanced "Digital Switching and PUT" section with links to supported devices.
+  * "Managing Dashboards" tips and recommendations update.
+# v 3.11.0
+# New Features
+* Level gauge: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring. **Special thanks to @fymmot for permission to integrate his plugin code. See https://github.com/fymmot/signalk-heel-angle**
+# Improvements
+* Minor Switch Panel state visibility improvement using bold fonts and a glow effect. Fixes #813
+* Enhance Countdown Timer Widget with Configurable Time and Sound Alerts. Fixes #814
+## Fixes
+* Dashboard edit button in disabled state on initial app load. Fixes #809
+# v 3.10.4
+## Fixes
+* Dashboard edit button disabled by default on load. Fixes #805
+* Clicking the right sidenav Settings button closes the sidenav but does not navigate to the page on some browsers.
+# v 3.10.3
+## Fixes
+* Failed to start: pluginConstructor is not a function. Fixes #808
+# v 3.10.1 & v 3.10.2
+* Unpublished packages: manipulation errors
+# v 3.10.0
+# New Feature
+* Remote Control Plugin: Instantly switch dashboards on any KIP from any KIP (or your phone). Perfect for mast displays, hard‑to‑reach screens, and non‑touch devices. Open Actions → Settings → Remote Control, pick a device, tap a dashboard—done. Enable remote control in Options → Display → Remote Control.
+# Improvements
+* Added Kiosk Mode setup guide to Help
+# v 3.9.0
+# New Feature
+* A new dashboard navigation experience. Introducing our all-new Dashboard sidenav designed for speed. Effortlessly jump between dashboards with a single tap, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
+* Discover the brand new Settings button at the top of the sidenav. Instantly access tools to manage your dashboards, plus quick links to Options, Data Inspector, and Help—all in one place.
+* Personalize your dashboards with style: double-click any dashboard to open the new icon gallery and give each page a unique visual identity.
+* All configuration controls are now streamlined as tabs within the Options page, making customization faster and more enjoyable than ever.
+# Improvements
+* Reduced GPU memory usage to improve performance and stability, especially on low-end hardware such as the RPi Zero 2.
+* Added canvas bitmap blitting for better rendering speed and visual performance.
+* Replaced HammerJS with native gesture support for improved responsiveness.
+* Updated CSS to help prevent accidental page reloads and unwanted text selection on mobile devices.
+* Enabled Notification audio on mobile.
+# v 3.8.2
+# Improvements
+* Faster app loading with local font and font swap support
+* Linux/RPi UI cleanup with removal of unnecessary scroll bars in multiple pages
+* Increased mobile Wake Lock support
+* Help component active page marker
+## Fixes
+* Dashboard card Drag & Drop and Long Press event collision preventing dashboard reordering in Chromium.
+# v 3.8.1
+## Improvements
+* Expose option to invert pitch and roll axes in Horizon gauge widget
+* Enhance memory management and lifecycle handling
+* Application dependencies updated
+# V 3.8.0
+## New features
+* Pitch & Roll widget: Horizon-style attitude display for live pitch and roll, helping monitor vessel motion in sea state.
+## Improvements
+* Radial gauge: Progress bar start position (left, middle, right) — enables split-from-center and regressive styles.
+* Linear gauge: Needle option refined — tick values and bars are centered within the needle for better readability.
+* Add Widget dialog: Optional plugin dependency awareness and display.
+## Fixes
+* Widget resize: Touch events could stop responding. Fixes #759
+* Racer Start Line widget: Correct rotation button direction. Thanks @gregw — Fixes #757
+# V 3.7.0
+## New features
+* Real‑time True Wind Trends widget with dual top axes for direction (°) and speed (kts). Shows live values plus SMA over the period average for faster tactical wind shift / pressure awareness.
+## Improvements
+* Data Chart layout: Cleaner vertical option, optional min/max line, flexible top/right axes, larger fonts for readability.
+* Dataset Service circular angle stats: Correct mean/SMA/min/max for wrap‑around angles (no 0→360 jump spikes) for smoother, accurate trends.
+* Widget categories: New Core & Racing groupings (retired "Basic") reduce hunting time and clarify purpose.
+* Configuration upgrade guidance: More prominent tips ease migration and new input control adaptation after upgrades.
+* Help access: "Get help" button on empty dashboards boosts documentation visibility and user support.
+* Tutorial widget: Clearer instructions improve first‑time user experience.
+* Help documentation updates.
+## Fixes
+* Enforce WSS under HTTPS to avoid mixed‑content issues. _Contribution by @tkurki_
+* Server reconnect counter should not resets when switching tabs; removed redundant snackbar action button.
+## New Contributor
+* @tkurki made their first contribution
+# V 3.6.1
+## Fixes
+* Dashboard swipe gesture over Freeboard-SK and Embed widgets not changing dashboard. Fixes #744
+* Path Options form with hardcoded paths falsy reported as invalid 
+* Display of Windsteer widget's True Wind Angle indicator is not optional
+# V 3.6.0
+## Improvements
+* Numeric widget now features mini background charts for instant visual trend insights
+* Data Chart widget now supports vertical orientation and inverted value scales for greater flexibility
+* Data Chart loading speed and resource usage significantly improved, enabling smoother performance with large datasets
+## Fixes
+* Fixed login loop bug in V3.4+ when KIP is run on Signal K server and authentication is denied
+# V 3.5.1
+## Fixes
+* Dashboard ID URL not redirecting to dashboard instance (/mxtommy/kip/#/dashboard/1)
+* Widget resize handles too small to operate with fingers on smaller screens
+* Display network connection and socket error messages only
+* WebSocket retry should not stop after five attempts
 # V 3.5.0
 ## New features
 * Gain tactical racing advantages with new signalk-racer plugin integrated widgets for start line analysis and  race countdowns. _Contribution by @gregw_

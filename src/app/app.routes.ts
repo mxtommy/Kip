@@ -1,13 +1,27 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './core/components/dashboard/dashboard.component';
+import { splitShellGuard } from './core/guards/split-shell.guard';
 
 export const routes: Routes = [
   { path: 'dashboard/:id',
-    component: DashboardComponent
+    component: DashboardComponent,
+    canMatch: [splitShellGuard]
+  },
+  { path: 'chartplotter/:id',
+    loadComponent: () => import('./core/components/split-shell/split-shell.component').then(m => m.SplitShellComponent),
+    canMatch: [splitShellGuard]
   },
   { path: 'settings',
-    loadComponent: () => import('./settings/settings/settings.component').then(m => m.AppSettingsComponent),
+    loadComponent: () => import('./core/components/settings/settings.component').then(m => m.SettingsComponent),
     title: 'KIP - Settings'
+  },
+  { path: 'options',
+    loadComponent: () => import('./core/components/options/tabs/tabs.component').then(m => m.TabsComponent),
+    title: 'KIP - Options'
+  },
+  { path: 'remote',
+    loadComponent: () => import('./core/components/remote-control/remote-control.component').then(m => m.RemoteControlComponent),
+    title: 'KIP - Remote Control'
   },
   { path: 'help',
     loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent),
@@ -17,24 +31,11 @@ export const routes: Routes = [
     loadComponent: () => import('./core/components/data-inspector/data-inspector.component').then(m => m.DataInspectorComponent),
     title: 'KIP - Data Inspector'
   },
-  { path: 'dashboards',
-    loadComponent: () => import('./core/components/dashboards-editor/dashboards-editor.component').then(m => m.DashboardsEditorComponent),
-    title: 'KIP - Dashboards'
-  },
-  { path: 'datasets',
-    loadComponent: () => import('./core/components/datasets/datasets.component').then(m => m.SettingsDatasetsComponent),
-    title: 'KIP - Datasets'
-  },
-  { path: 'configurations',
-    loadComponent: () => import('./core/components/configuration/config.component').then(m => m.SettingsConfigComponent),
-    title: 'KIP - Configurations'
-  },
   { path: 'login',
     loadComponent: () => import('./widgets/widget-login/widget-login.component').then(m => m.WidgetLoginComponent),
     title: 'Login'
   },
   { path: '**',
-    component: DashboardComponent,
-    title: 'KIP',
+    redirectTo: 'dashboard/0'
   }
 ];

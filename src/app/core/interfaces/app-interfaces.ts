@@ -75,8 +75,51 @@ export interface IDefaultSource {
 }
 
 export interface IMeta {
-  /** Optional SK context representing the root node emitting the value. Empty context should assume the message is from Self. Other contexts can be from AIS, DCS and other types of remote emitting sources configured */
+  /** Optional SK context representing the root node emitting the value.
+   * Empty context should assume the message is from Self. Other contexts
+   * can be from AIS, DCS and other types of remote emitting sources
+   * configured */
   context: string,
   path: string;
   meta: ISkMetadata;
 }
+
+/**
+ * KIP Remote Displays API types (plugin endpoints under /plugins/kip)
+ */
+export interface IKipDisplayInfo {
+  /** KIP instance UUID */
+  displayId: string;
+  /** Optional friendly name (nullable) */
+  displayName: string | null;
+}
+
+/** Response for GET /plugins/kip/displays */
+export type IKipDisplayList = IKipDisplayInfo[];
+
+/** A single screen entry */
+export interface IKipScreenItem {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+/** Response for GET /plugins/kip/displays/{displayId} */
+export type IKipDisplayScreen = IKipScreenItem[];
+
+/** Response for GET /plugins/kip/displays/{displayId}/activeScreen */
+export type IKipActiveScreen = number | null;
+
+/** Standard response envelope from plugin PUTs */
+export interface IKipResponse {
+  state: string;
+  statusCode: number;
+  message?: string;
+}
+
+/** Request body for PUT /plugins/kip/displays/{displayId}/activeScreen */
+export interface IKipActiveScreenSetRequest {
+  /** Index of active screen or null to clear */
+  screenIdx: number | null;
+}
+

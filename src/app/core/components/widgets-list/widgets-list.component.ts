@@ -6,7 +6,6 @@ import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'widgets-list',
-  standalone: true,
   imports: [MatButtonToggleModule, WidgetListCardComponent],
   templateUrl: './widgets-list.component.html',
   styleUrl: './widgets-list.component.scss'
@@ -16,7 +15,7 @@ export class WidgetsListComponent implements OnInit {
   protected _widgets = inject(WidgetService);
   private _widgetsList: WidgetDescriptionWithPluginStatus[] = [];
   protected filteredWidgetsList = signal<WidgetDescriptionWithPluginStatus[]>([]);
-  protected _widgetCategory = signal<string>("Basic");
+  protected _widgetCategory = signal<string>("Core");
   protected isDependencyValid = signal<boolean>(true);
 
   ngOnInit(): void {
@@ -34,6 +33,7 @@ export class WidgetsListComponent implements OnInit {
   }
 
   protected onSelectWidget(selectedWidget: WidgetDescriptionWithPluginStatus): void {
+  if (!selectedWidget.isDependencyValid) return; // guard against keyboard activation on disabled card
     const {
       name,
       description,
@@ -43,7 +43,8 @@ export class WidgetsListComponent implements OnInit {
       defaultWidth,
       defaultHeight,
       category,
-      pluginDependency,
+      requiredPlugins,
+      optionalPlugins,
       selector,
       componentClassName
     } = selectedWidget;
@@ -57,7 +58,9 @@ export class WidgetsListComponent implements OnInit {
       defaultWidth,
       defaultHeight,
       category,
-      pluginDependency,
+      requiredPlugins,
+      // Only include optionalPlugins if present
+      ...(optionalPlugins ? { optionalPlugins } : {}),
       selector,
       componentClassName
     };

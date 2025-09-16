@@ -31,6 +31,12 @@ export class AppSettingsService {
   private autoNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private redNightMode: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private nightModeBrightness: BehaviorSubject<number> = new BehaviorSubject<number>(1);
+  private isRemoteControl: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
+  private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
+  private splitShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -222,6 +228,36 @@ export class AppSettingsService {
     } else {
       this._dashboards = this.activeConfig.dashboards;
     }
+
+    if (this.activeConfig.app.isRemoteControl === undefined) {
+      this.setIsRemoteControl(false);
+    } else {
+      this.isRemoteControl.next(this.activeConfig.app.isRemoteControl);
+    }
+
+    if (this.activeConfig.app.instanceName === undefined) {
+      this.setInstanceName('');
+    } else {
+      this.instanceName.next(this.activeConfig.app.instanceName);
+    }
+
+    if (this.activeConfig.app.splitShellEnabled === undefined) {
+      this.setSplitShellEnabled(false);
+    } else {
+      this.splitShellEnabled.next(this.activeConfig.app.splitShellEnabled);
+    }
+
+    if (this.activeConfig.app.splitShellSide === undefined) {
+      this.setSplitShellSide('left');
+    } else {
+      this.splitShellSide.next(this.activeConfig.app.splitShellSide);
+    }
+
+    if (this.activeConfig.app.splitShellWidth === undefined) {
+      this.setSplitShellWidth(0.3); // default ratio
+    } else {
+      this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
+    }
   }
 
   //UnitDefaults
@@ -341,6 +377,99 @@ export class AppSettingsService {
     }
   }
 
+  // isRemoteControl mode
+  public getIsRemoteControlAsO() {
+    return this.isRemoteControl.asObservable();
+  }
+
+  public getIsRemoteControl(): boolean {
+    return this.isRemoteControl.getValue();
+  }
+
+  public setIsRemoteControl(enabled: boolean) {
+    this.isRemoteControl.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  // Remote Control Instance Name
+  public getInstanceNameAsO() {
+    return this.instanceName.asObservable();
+  }
+
+  public getInstanceName(): string {
+    return this.instanceName.getValue();
+  }
+
+  public setInstanceName(name: string) {
+    this.instanceName.next(name);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  // --- split Shell Settings API ---
+  public getSplitShellEnabledAsO() {
+    return this.splitShellEnabled.asObservable();
+  }
+  public getSplitShellEnabled(): boolean {
+    return this.splitShellEnabled.getValue();
+  }
+  public setSplitShellEnabled(enabled: boolean): void {
+    this.splitShellEnabled.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  public getSplitShellSideAsO() {
+    return this.splitShellSide.asObservable();
+  }
+  public getSplitShellSide(): 'left' | 'right' {
+    return this.splitShellSide.getValue();
+  }
+  public setSplitShellSide(side: 'left' | 'right'): void {
+    this.splitShellSide.next(side);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
+  public getSplitShellWidthAsO() {
+    return this.splitShellWidth.asObservable();
+  }
+  public getSplitShellWidth(): number {
+    return this.splitShellWidth.getValue();
+  }
+  public setSplitShellWidth(width: number): void {
+    // interpret input as ratio (0-1), clamp to sensible bounds
+    const ratio = Math.min(0.9, Math.max(0.1, width));
+    this.splitShellWidth.next(ratio);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
 
   public getNightModeBrightness(): number {
     return this.nightModeBrightness.getValue();
@@ -364,7 +493,9 @@ export class AppSettingsService {
 
   public saveDashboards(dashboards: Dashboard[]) {
     if (this.useSharedConfig) {
-      this.storage.patchConfig('Dashboards', dashboards);
+      if (this.storage.storageServiceReady$.getValue()) {
+        this.storage.patchConfig('Dashboards', dashboards);
+      }
     } else {
       this.saveLDashboardsConfigToLocalStorage(dashboards);
     }
@@ -409,14 +540,16 @@ export class AppSettingsService {
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
 
       if (this.useSharedConfig) {
-        this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
-        .then( () => {
-          console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
-          this.reloadApp();
-        })
-        .catch(error => {
-          console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
-        });
+        if (this.storage.storageServiceReady$.getValue()) {
+          this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
+            .then(() => {
+              console.log("[AppSettings Service] Replaced server config name: " + this.sharedConfigName + ", with default configuration values");
+              this.reloadApp();
+            })
+            .catch(error => {
+              console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
+            });
+        }
       } else {
 
         this.reloadApp();
@@ -460,6 +593,11 @@ export class AppSettingsService {
 
   public reloadApp() {
     console.log("[AppSettings Service] Reload app");
+    // Prevent hard navigation in unit tests (breaks Karma)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).__KIP_TEST__) {
+      return; // no-op
+    }
     location.replace("./");
   }
 
@@ -471,9 +609,14 @@ export class AppSettingsService {
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
+      isRemoteControl: this.isRemoteControl.getValue(),
+      instanceName: this.instanceName.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
+      splitShellEnabled: this.splitShellEnabled.getValue(),
+      splitShellSide: this.splitShellSide.getValue() ?? 'right',
+      splitShellWidth: this.splitShellWidth.getValue() ?? 380
     }
     return storageObject;
   }

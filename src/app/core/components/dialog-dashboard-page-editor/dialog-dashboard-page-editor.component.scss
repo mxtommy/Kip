@@ -1,0 +1,45 @@
+.dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dialog-close-icon {
+margin-right: 15px;
+}
+
+.mat-mdc-dialog-content {
+max-height: max-content;
+}
+
+.field-wrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+}
+
+.field-margin {
+  margin-left: 15px;
+  margin-bottom: 15px;
+}
+
+.field-flex {
+  flex: auto;
+}
+
+.icon-selector {
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 4px;
+}
+
+.icon-section {
+  .mat-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--mat-sys-on-surface);
+    font-size: 14px;
+    font-weight: 400;
+  }
+}

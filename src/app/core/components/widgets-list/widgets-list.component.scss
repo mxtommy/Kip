@@ -4,5 +4,6 @@
 
 .dependency-missing {
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.8;
+  background-color: var(--mat-sys-neutral10);
 }

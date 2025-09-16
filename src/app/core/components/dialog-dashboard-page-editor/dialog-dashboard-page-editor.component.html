@@ -1,0 +1,39 @@
+<form name="name" (ngSubmit)="save()" #name="ngForm">
+  <div class="dialogue-header">
+    <h5 mat-dialog-title>{{data.title}}</h5>
+    <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <mat-dialog-content>
+    <div class="field-wrapper field-margin">
+      <mat-form-field class="field-flex">
+        <mat-label>Display Name</mat-label>
+        <input matInput type="text" id="name" placeholder="Name" name="name" [(ngModel)]="data.name" required cdkFocusInitial/>
+        <mat-error>
+          A name is required
+        </mat-error>
+      </mat-form-field>
+      <mat-checkbox
+        class="field-flex"
+        placeholder="collapseSplitShell"
+        name="collapseSplitShell"
+        [(ngModel)]="data.collapseSplitShell"
+        [disabled]="!isSplitShellEnabled()">
+          Auto-collapse Freeboard-SK panel when displaying this dashboard.
+        </mat-checkbox>
+    </div>
+    <div class="field-margin icon-section">
+      <span style="font-size: 1.2em;">Icon Gallery</span>
+      <div class="icon-selector">
+        <select-icon [iconFile]="'assets/svg/icons.svg'" [currentIcon]="data.icon" (selectedIcon)="onIconSelected($event)"></select-icon>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-flat-button [mat-dialog-close]="false">{{data.cancelBtnText}}</button>
+    @if (data.confirmBtnText) {
+      <button mat-flat-button type="submit" [disabled]="!name.valid">{{data.confirmBtnText}}</button>
+    }
+  </mat-dialog-actions>
+</form>

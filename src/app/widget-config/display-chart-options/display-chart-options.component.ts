@@ -1,5 +1,4 @@
 import { Component, OnInit, input, inject } from '@angular/core';
-import { DatasetService } from '../../core/services/data-set.service';
 import { AppService } from '../../core/services/app-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
@@ -18,7 +17,6 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
   imports: [MatCardModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatOptionModule, MatLabel, MatInputModule, MatRadioModule, ReactiveFormsModule]
 })
 export class DisplayChartOptionsComponent implements OnInit {
-  private dsService = inject(DatasetService);
   private app = inject(AppService);
 
   readonly displayName = input.required<UntypedFormControl>();
@@ -32,7 +30,8 @@ export class DisplayChartOptionsComponent implements OnInit {
   readonly showDatasetMaximumValueLine = input.required<UntypedFormControl>();
   readonly showDatasetAverageValueLine = input.required<UntypedFormControl>();
   readonly showDatasetAngleAverageValueLine = input.required<UntypedFormControl>();
-  readonly verticalGraph = input.required<UntypedFormControl>();
+  readonly verticalChart = input.required<UntypedFormControl>();
+  readonly inverseYAxis = input.required<UntypedFormControl>();
   readonly showTimeScale = input.required<UntypedFormControl>();
 
   readonly showYScale = input.required<UntypedFormControl>();
@@ -50,11 +49,13 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;
-    if (!this.showAverageData().value) {
+    if (this.showAverageData() && !this.showAverageData()?.value) {
       this.trackAgainstAverage().disable();
     }
 
-    this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit().value);
+    if (this.enableMinMaxScaleLimit()) {
+      this.setValueScaleOptionsControls(this.enableMinMaxScaleLimit().value);
+    }
   }
 
   private setValueScaleOptionsControls(enableMinMaxScaleLimit: boolean) {

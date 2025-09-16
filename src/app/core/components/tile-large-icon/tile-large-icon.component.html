@@ -1,2 +1,9 @@
-<mat-icon [svgIcon]="svgIcon()" [style.width.px]="iconSize()" [style.height.px]="iconSize()" aria-hidden="false"></mat-icon>
-<p class="large-icon-tile-label">{{label()}}</p>
+<div matRipple [class]="`${compact() ? 'icon-container-compact' : 'icon-container'}`" [class.active-container-accent]="active()">
+  <mat-icon [svgIcon]="svgIcon()" [style.width.px]="iconSize()" [style.height.px]="iconSize()" aria-hidden="false"></mat-icon>
+  @if (!iconOnly()) {
+    <p [class]="`large-icon-tile-label${compact() ? ' compact' : ''}`">{{label()}}</p>
+  }
+  @if (active()) {
+  <div class="active-accent-bar"></div>
+  }
+</div>

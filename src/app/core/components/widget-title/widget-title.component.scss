@@ -1,17 +1,19 @@
+/* Force host and all parents to fill available space */
 :host {
-  position: absolute;
   display: block;
   width: 100%;
   height: 100%;
   z-index: 10;
 }
 
-canvas {
-  display: block;
-}
-
-.textGenericWrapper {
-  position: relative;
+.title-wrapper {
   width: 100%;
   height: 100%;
+  min-height: 1px;
+}
+
+.title-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }

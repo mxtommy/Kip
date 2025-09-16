@@ -1,11 +1,29 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnChanges, SimpleChanges, OnInit, input, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, OnInit, OnDestroy, input, inject, ElementRef, viewChild } from '@angular/core';
+import { CanvasService } from '../../core/services/canvas.service';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let steelseries: any; // 3rd party
+declare let steelseries: any; // 3rd party global (loaded from asset in production build)
+
+// Test/SSR safety: provide a minimal mock to avoid ReferenceError when the real script isn't loaded (e.g., unit tests)
+// Only defines the enum-like objects accessed at module evaluation time. Runtime drawing logic won't run in specs.
+if (typeof steelseries === 'undefined') {
+  (globalThis as unknown as Record<string, unknown>).steelseries = {
+    BackgroundColor: {
+      DARK_GRAY: 'darkGray', SATIN_GRAY: 'satinGray', LIGHT_GRAY: 'lightGray', WHITE: 'white', BLACK: 'black',
+      BEIGE: 'beige', BROWN: 'brown', RED: 'red', GREEN: 'green', BLUE: 'blue', ANTHRACITE: 'anthracite',
+      MUD: 'mud', PUNCHED_SHEET: 'punchedSheet', CARBON: 'carbon', STAINLESS: 'stainless', BRUSHED_METAL: 'brushedMetal',
+      BRUSHED_STAINLESS: 'brushedStainless', TURNED: 'turned'
+    },
+    FrameDesign: {
+      BLACK_METAL: 'blackMetal', METAL: 'metal', SHINY_METAL: 'shinyMetal', BRASS: 'brass', STEEL: 'steel', CHROME: 'chrome',
+      GOLD: 'gold', ANTHRACITE: 'anthracite', TILTED_GRAY: 'tiltedGray', TILTED_BLACK: 'tiltedBlack', GLOSSY_METAL: 'glossyMetal'
+    }
+  };
+}
 
 export const SteelBackgroundColors = {
   'darkGray': steelseries.BackgroundColor.DARK_GRAY,
@@ -48,8 +66,10 @@ export const SteelFrameColors = {
     styleUrls: ['./gauge-steel.component.scss'],
     imports: [NgxResizeObserverModule]
 })
-export class GaugeSteelComponent implements OnInit, OnChanges {
+export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private unitsService = inject(UnitsService);
+  private readonly canvasService = inject(CanvasService);
+  protected readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('gaugeCanvas');
 
   readonly widgetUUID = input<string>(undefined);
   readonly subType = input<string>(undefined); // linear or radial
@@ -71,6 +91,9 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
   private gauge;
   private gaugeOptions = {};
   protected paddingTop = 0;
+  private lastSizeSignature = '';
+  private resizeTimer: number | null = null;
+  private pendingStructuralRebuild = false;
 
   ngOnInit(): void {
     this.buildOptions();
@@ -197,35 +220,60 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     }
   }
 
-  private startGauge() {
-    this.gaugeStarted = true;
+  private startGauge(forceRebuild = false) {
     this.buildOptions();
-        // Initializing gauges
+
+    const id = this.widgetUUID();
+    if (!id) return;
+
+    // structural conditions requiring rebuild
+    const structuralChange = forceRebuild || this.pendingStructuralRebuild;
+
+    if (this.gauge && !structuralChange) {
+      // Update mutable properties only
+      if (this.gauge.setValueAnimated && this.value() != null) {
+        // value updates handled in ngOnChanges, but keep for safety
+      }
+      this.gaugeStarted = true;
+      return;
+    }
+
+    // Re-create
+    this.pendingStructuralRebuild = false;
+    this.gaugeStarted = true;
     const subType = this.subType();
-    if (subType == 'radial') {
-      this.gauge = new steelseries.Radial(this.widgetUUID(), this.gaugeOptions);
-    } else if (subType == 'linear') {
-       if (this.barGauge()) {
-        this.gauge = new steelseries.LinearBargraph(this.widgetUUID(), this.gaugeOptions);
+    if (subType === 'radial') {
+      this.gauge = new steelseries.Radial(id, this.gaugeOptions);
+    } else if (subType === 'linear') {
+      if (this.barGauge()) {
+        this.gauge = new steelseries.LinearBargraph(id, this.gaugeOptions);
       } else {
-        this.gauge = new steelseries.Linear(this.widgetUUID(), this.gaugeOptions);
+        this.gauge = new steelseries.Linear(id, this.gaugeOptions);
       }
     }
   }
 
   onResized(event) {
-    if (event.contentRect.height < 50 || event.contentRect.width < 50) {
-      return;
-    }
-    if (this.subType() == 'radial') {
+    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
+    let signature: string;
+    if (this.subType() === 'radial') {
       const size = Math.min(event.contentRect.height, event.contentRect.width);
-      this.gaugeOptions['size'] = size; // radial uses size. takes only size as both are the same
-
+      this.gaugeOptions['size'] = size;
+      signature = 'radial:' + size;
     } else {
-      this.gaugeOptions['width'] = event.contentRect.width; // linear
-      this.gaugeOptions['height'] = event.contentRect.height; // linear
+      const w = Math.floor(event.contentRect.width);
+      const h = Math.floor(event.contentRect.height);
+      this.gaugeOptions['width'] = w;
+      this.gaugeOptions['height'] = h;
+      signature = `linear:${w}x${h}`;
     }
-    this.startGauge();
+    if (signature === this.lastSizeSignature) return; // no meaningful change
+    this.lastSizeSignature = signature;
+    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout(() => {
+      this.startGauge(true); // size change may require rebuild
+      this.resizeTimer = null;
+    }, 120);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -234,7 +282,8 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
         this.gauge.setValueAnimated(changes.value.currentValue);
     }
     if (changes.zones) {
-      this.startGauge(); //reset
+      this.pendingStructuralRebuild = true;
+      this.startGauge(true); // sections require rebuild
     }
     if (changes.title) {
       this.gauge.setTitleString(changes.title.currentValue);
@@ -246,7 +295,8 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
       this.gauge.setFrameDesign(SteelFrameColors[changes.frameColor.currentValue]);
     }
     if (changes.radialSize){
-      this.startGauge(); //reset
+      this.pendingStructuralRebuild = true;
+      this.startGauge(true); // radial geometry change
     }
     if(changes.minValue) {
       this.gauge.setMinValue(changes.minValue.currentValue);
@@ -254,5 +304,23 @@ export class GaugeSteelComponent implements OnInit, OnChanges {
     if(changes.maxValue) {
       this.gauge.setMaxValue(changes.maxValue.currentValue);
     }
+  }
+
+  ngOnDestroy(): void {
+    // Stop any running animations before cleanup
+    if (this.gauge && this.gauge.setValue) {
+      // Call setValue to stop any running setValueAnimated animations
+      const currentValue = this.gauge.getValue ? this.gauge.getValue() : this.value();
+      this.gauge.setValue(currentValue);
+    }
+
+    // Steelseries draws into the canvas with id widgetUUID(). Release it to free GPU memory.
+    const id = this.widgetUUID();
+    if (id) {
+      const canvas = document.getElementById(id) as HTMLCanvasElement | null;
+      this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
+    }
+    // Null out gauge reference for GC
+    this.gauge = null;
   }
 }

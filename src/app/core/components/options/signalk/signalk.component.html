@@ -1,0 +1,56 @@
+<form name="connectionForm" (ngSubmit)="connectToServer()" #connectionForm="ngForm">
+  <br />
+  <table class="connect-table">
+    <tr class="connect-table">
+      <td class="url-cell">
+        <mat-form-field class="connectUrlInput">
+          <mat-label>Signal K URL</mat-label>
+          <input type=url matInput placeholder="Ex. http://192.168.0.1:3000" name="signalKURL" [(ngModel)]="connectionConfig.signalKUrl" [ngModelOptions]="{standalone: false}" required pattern="https?://.+">
+          <mat-error>
+            Valid URL is required. Ex. "https://demo.signalK.org" or "http://my.server.com:3000"
+          </mat-error>
+        </mat-form-field>
+      </td>
+      <td class="connect-cell">
+        <button mat-flat-button class="connect-btn" type="submit" [disabled]="!connectionForm.form.valid || isConnecting">
+          {{ isConnecting ? 'Validating...' : 'Connect' }}
+        </button>
+      </td>
+    </tr>
+    <tr class="connect-table">
+      <td colspan="2">
+        <mat-slide-toggle #useSharedConfigToggle
+          name="useSharedConfigToggle"
+          matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
+          [(ngModel)]="connectionConfig.useSharedConfig"
+          [ngModelOptions]="{standalone: true}"
+          [disabled]="!connectionConfig.signalKUrl"
+          (change)="useSharedConfigToggleClick($event)">
+            Login to server
+        </mat-slide-toggle>
+        <button mat-flat-button type="button" class="credentials-btn" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+          Set Credential
+        </button>
+        <br />
+        <mat-checkbox [(ngModel)]="connectionConfig.signalKSubscribeAll" [ngModelOptions]="{standalone: false}" name="signalKSubscribeAll">Subscribe to remote sources messages such as AIS and DSC targets. <i>Warning: this maybe generate heavy traffic.</i></mat-checkbox>
+      </td>
+    </tr>
+    <tr class="connect-table">
+      <td colspan="2">
+        <mat-checkbox [(ngModel)]="connectionConfig.proxyEnabled" [ngModelOptions]="{standalone: false}" name="isProxyEnabled">Signal K server is behind a Proxy</mat-checkbox>
+      </td>
+    </tr>
+  </table>
+</form>
+
+  <div class="activity-container">
+    <div class="activity-graph-container">
+      <canvas class="activity-graph" #activityGraph></canvas>
+    </div>
+    <div class="info-container">
+      <pre>KIP: {{ app.appVersion() }}
+{{ app.browserVersion() }}, {{ app.osVersion() }}<br />
+{{ endpointServiceStatus.serverDescription }}
+{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}</pre>
+    </div>
+  </div>

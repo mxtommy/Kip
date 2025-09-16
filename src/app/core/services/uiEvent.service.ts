@@ -1,50 +1,68 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, OnDestroy, signal } from '@angular/core';
 import screenfull from 'screenfull';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let NoSleep: any; //3rd party library
+import NoSleep from '@zakj/no-sleep';
 
 @Injectable({
   providedIn: 'root'
 })
-export class uiEventService {
+export class uiEventService implements OnDestroy {
   public isDragging = signal<boolean>(false);
   public fullscreenStatus = signal<boolean>(false);
   public fullscreenSupported = signal<boolean>(true);
   public noSleepStatus = signal<boolean>(false);
   public noSleepSupported = signal<boolean>(true);
-  private noSleep = new NoSleep();
+  private noSleep: { enable: () => void; disable: () => void } | null = null;
   private initialTouchX: number | null = null;
   private initialTouchY: number | null = null;
   private hotkeyListeners = new Map<(key: string, event: KeyboardEvent) => void, EventListener>();
+  // Stored bound gesture handler so remove works (otherwise bind() creates new fn)
+  private boundPreventGestures: EventListener | null = null;
+  private readonly fullscreenChangeHandler = () => {
+    this.fullscreenStatus.set(screenfull.isFullscreen);
+    if (!screenfull.isFullscreen) {
+      // On exit, disable NoSleep if we enabled it purely for fullscreen
+      if (this.noSleep && this.noSleepStatus()) {
+        try { this.noSleep.disable(); } catch { /* ignore disable errors */ }
+        this.noSleepStatus.set(false);
+      }
+    }
+  };
 
   constructor() {
-    if (screenfull.isEnabled) {
-      screenfull.on('change', () => {
-        this.fullscreenStatus.set(screenfull.isFullscreen);
-        if (!screenfull.isFullscreen) {
-          this.noSleep.disable();
-        }
-      });
-    } else {
-      this.fullscreenSupported.set(false);
-      console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
-    }
+    // Skip side-effectful logic during unit tests to avoid reloads / timers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isTest = (window as any).__KIP_TEST__;
+    if (!isTest) {
+      if (screenfull.isEnabled) {
+        screenfull.on('change', this.fullscreenChangeHandler);
+      } else {
+        this.fullscreenSupported.set(false);
+        console.log('[UI Event Service] Fullscreen mode is not supported by device/browser.');
+      }
 
-    this.checkNoSleepSupport();
-    if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
-      this.toggleNoSleep();
+      this.checkNoSleepSupport();
+      if (this.checkPwaMode() && this.noSleepSupported() && !this.noSleepStatus()) {
+        this.toggleNoSleep();
+      }
+    } else {
+      // In tests mark features unsupported to short-circuit code paths gracefully
+      this.fullscreenSupported.set(false);
+      this.noSleepSupported.set(false);
     }
   }
 
   private checkNoSleepSupport(): void {
     try {
-      this.noSleep = new NoSleep();
-      if (typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
+      if (!this.noSleep) {
+        this.noSleep = new NoSleep();
+      }
+      if (!this.noSleep || typeof this.noSleep.enable !== 'function' || typeof this.noSleep.disable !== 'function') {
         throw new Error('[UI Event Service] NoSleep methods not available');
       }
     } catch (error) {
       this.noSleepSupported.set(false);
       console.warn(`[UI Event Service] NoSleep is not supported by this device/browser. Error: ${error}`);
+      this.noSleep = null;
     }
   }
 
@@ -58,9 +76,10 @@ export class uiEventService {
   private toggleNoSleep(): void {
     if (this.noSleepSupported()) {
       if (!this.noSleepStatus()) {
-        this.noSleep.enable();
+        if (!this.noSleep) this.checkNoSleepSupport();
+        try { this.noSleep?.enable(); } catch (e) { console.warn('[UI Event Service] Failed to enable NoSleep:', e); }
       } else {
-        this.noSleep.disable();
+        try { this.noSleep?.disable(); } catch { /* ignore */ }
       }
       this.noSleepStatus.set(!this.noSleepStatus());
       console.log('[UI Event Service] NoSleep active:', this.noSleepStatus());
@@ -71,12 +90,15 @@ export class uiEventService {
     if (screenfull.isEnabled) {
       if (!this.fullscreenStatus()) {
         screenfull.request();
-        this.noSleep.enable();
+        if (!this.noSleepStatus()) {
+          if (!this.noSleep) this.checkNoSleepSupport();
+          try { this.noSleep?.enable(); this.noSleepStatus.set(true); } catch { /* enable failed */ }
+        }
       } else {
         if (screenfull.isFullscreen) {
           screenfull.exit();
         }
-        this.noSleep.disable();
+        if (this.noSleepStatus()) { try { this.noSleep?.disable(); } catch { /* ignore */ } this.noSleepStatus.set(false); }
       }
       this.fullscreenStatus.set(!this.fullscreenStatus());
     } else {
@@ -85,33 +107,31 @@ export class uiEventService {
     }
   }
 
-  public addGestureListeners(
-    onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void
-  ): void {
-    const boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
+  public addGestureListeners(onSwipeLeft: (e: Event | CustomEvent) => void, onSwipeRight: (e: Event | CustomEvent) => void): void {
+    if (!this.boundPreventGestures) {
+      this.boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
+    }
     document.addEventListener('openLeftSidenav', onSwipeLeft);
     document.addEventListener('openRightSidenav', onSwipeRight);
-    document.addEventListener('touchstart', boundPreventGestures, { passive: false });
-    document.addEventListener('touchmove', boundPreventGestures, { passive: false });
-    document.addEventListener('touchend', boundPreventGestures);
-    document.addEventListener('touchcancel', boundPreventGestures);
+    document.addEventListener('touchstart', this.boundPreventGestures, { passive: false });
+    document.addEventListener('touchmove', this.boundPreventGestures, { passive: false });
+    document.addEventListener('touchend', this.boundPreventGestures);
+    document.addEventListener('touchcancel', this.boundPreventGestures);
   }
 
-  public removeGestureListeners(
-    onSwipeLeft: (e: Event) => void,
-    onSwipeRight: (e: Event) => void
-  ): void {
-    const boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
+  public removeGestureListeners(onSwipeLeft: (e: Event | CustomEvent) => void, onSwipeRight: (e: Event | CustomEvent) => void): void {
     document.removeEventListener('openLeftSidenav', onSwipeLeft);
     document.removeEventListener('openRightSidenav', onSwipeRight);
-    document.removeEventListener('touchstart', boundPreventGestures);
-    document.removeEventListener('touchmove', boundPreventGestures);
-    document.removeEventListener('touchend', boundPreventGestures);
-    document.removeEventListener('touchcancel', boundPreventGestures);
+    if (this.boundPreventGestures) {
+      document.removeEventListener('touchstart', this.boundPreventGestures);
+      document.removeEventListener('touchmove', this.boundPreventGestures);
+      document.removeEventListener('touchend', this.boundPreventGestures);
+      document.removeEventListener('touchcancel', this.boundPreventGestures);
+    }
   }
 
   public preventBrowserHistorySwipeGestures(e: TouchEvent): void {
+    if (!(e instanceof TouchEvent)) return;
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const edgeThreshold = 30; // More reliable threshold
@@ -177,5 +197,30 @@ export class uiEventService {
       document.removeEventListener('keydown', wrappedCallback);
       this.hotkeyListeners.delete(callback);
     }
+  }
+
+  ngOnDestroy(): void {
+    // Cleanup screenfull listener (mainly for tests / HMR safety)
+    if (screenfull.isEnabled) {
+      try { screenfull.off('change', this.fullscreenChangeHandler); } catch { /* ignore */ }
+    }
+    // Disable NoSleep to release resources
+    if (this.noSleep && this.noSleepStatus()) {
+      try { this.noSleep.disable(); } catch { /* ignore */ }
+    }
+    this.noSleep = null;
+    // Remove any globally added gesture listeners if still present
+    if (this.boundPreventGestures) {
+      document.removeEventListener('touchstart', this.boundPreventGestures);
+      document.removeEventListener('touchmove', this.boundPreventGestures);
+      document.removeEventListener('touchend', this.boundPreventGestures);
+      document.removeEventListener('touchcancel', this.boundPreventGestures);
+      this.boundPreventGestures = null;
+    }
+    // Hotkeys
+    for (const [, listener] of this.hotkeyListeners.entries()) {
+      document.removeEventListener('keydown', listener);
+    }
+    this.hotkeyListeners.clear();
   }
 }

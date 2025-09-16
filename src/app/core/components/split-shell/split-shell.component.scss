@@ -1,0 +1,137 @@
+.split-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+.split-root.side-left {
+  flex-direction: row;
+}
+.split-root.side-right {
+  flex-direction: row-reverse;
+}
+.split-root.portrait-column {
+  flex-direction: column; /* stack vertically */
+}
+.split-root.portrait-column .fsk-shell,
+.split-root.portrait-column .dash-container {
+  width: 100% !important;
+  min-height: 0;
+}
+.split-root.portrait-column .fsk-shell {
+  flex: 0 0 calc(var(--panel-ratio, 0.3) * 100%);
+}
+.split-root.portrait-column .dash-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.split-root.side-left.portrait-column .dash-container {
+  order: 2;
+}
+.split-root.side-left.portrait-column .fsk-shell {
+  order: 1;
+}
+.split-root.side-right.portrait-column .fsk-shell {
+  order: 2;
+}
+.split-root.side-right.portrait-column .dash-container {
+  order: 1;
+}
+.split-root.portrait-column .fsk-shell.collapsed {
+  flex: 0 0 0 !important;
+}
+.split-root.portrait-column .drag-handle,
+.split-root.portrait-column .resize-ghost {
+  display: none; /* No horizontal resize in column mode */
+}
+.fsk-shell {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--mat-sys-surface-container, #111);
+  transition: width 0.2s ease;
+}
+.fsk-shell.collapsed {
+  width: 1px !important; /* keep non-zero so map libraries detect size */
+  visibility: hidden; /* visually hidden but layout participates */
+  opacity: 0; /* ensure no flash */
+  pointer-events: none; /* prevent interaction */
+}
+.fsk-iframe {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dash-container {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+.drag-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  cursor: col-resize;
+  background: var(--mat-sys-inverse-primary);
+  z-index: 5;
+}
+.drag-handle .drag-fab {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  cursor: col-resize;
+  pointer-events: auto; /* participate in drag start */
+}
+.drag-handle .drag-fab mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+.side-left .drag-handle {
+  right: -2px;
+}
+.side-right .drag-handle {
+  left: -2px;
+}
+.drag-handle:hover {
+  background: var(--mat-sys-error-container);
+}
+.side-left .collapse-toggle {
+  left: 0.25rem;
+}
+.side-right .collapse-toggle {
+  right: 0.25rem;
+}
+.fsk-shell.drag-disabled .drag-handle {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Ghost resize line shown during drag (commit-on-release) */
+.resize-ghost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--mat-sys-error-container);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 30; /* above shell and dash but below overlays */
+  will-change: transform;
+  transition: none;
+}
+/* Place ghost at correct side base; transform translates horizontally */
+.side-left .resize-ghost {
+  left: 0;
+}
+.side-right .resize-ghost {
+  right: 0;
+}

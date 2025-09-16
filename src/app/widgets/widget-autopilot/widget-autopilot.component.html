@@ -11,7 +11,7 @@
           </svg>
         </mat-icon>
       </button>
-      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-engage' : 'ap-btn ap-btn-ctrlbar ap-btn-disengage'" (click)="buildAndSendCommand('standby')">
+      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-disengage' : 'ap-btn ap-btn-ctrlbar ap-btn-engage'" (click)="buildAndSendCommand('standby')">
         <mat-icon class="svg-icon-ctrlbar">
           <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
             <text xml:space="preserve"
@@ -25,14 +25,13 @@
     <div class="ap-screen">
       <app-svg-autopilot
         [apMode]="apMode()"
-        [targetPilotHeading]="autopilotTargetHeading"
-        [targetWindAngleHeading]="autopilotTargetWindHeading"
-        [compassHeading]="heading"
-        [courseXte]="crossTrackError"
-        [appWindAngle]="windAngleApparent"
-        [rudderAngle]="rudder"
         [targetPilotHeadingTrue]="widgetProperties.config.autopilot.courseDirectionTrue"
+        [autopilotTarget]="autopilotTarget()"
+        [courseXte]="crossTrackError()"
+        [compassHeading]="heading()"
         [headingDirectionTrue]="widgetProperties.config.autopilot.headingDirectionTrue"
+        [appWindAngle]="windAngleApparent()"
+        [rudderAngle]="rudder()"
       ></app-svg-autopilot>
       <div class="ap-screen-overlay" [style.visibility]="countdownOverlayVisibility()">
         <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">

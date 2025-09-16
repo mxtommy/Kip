@@ -1,0 +1,153 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.page-content {
+  width: 100%;
+  height: calc(100% - 63px);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 0px 24px 10px 24px;
+}
+
+.flex-item-copy {
+  flex: 2 1 41%;
+  padding: 10px 20px 10px 20px;
+  border-radius: 15px;
+}
+
+.flex-item-reset {
+  flex: 1 1 100%;
+  padding: 10px 20px 10px 20px;
+  border-radius: 15px;
+}
+
+a {
+  font-size: 14px;
+}
+a:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+a:link, a:visited {
+  color: rgb(138, 180, 248);
+  text-decoration: none;
+}
+
+.warningText {
+  padding-left: 15px;
+}
+
+.no-token-notice {
+  height: 58px;
+  contain: content;
+  text-align: center;
+  font-style: italic;
+}
+
+.mat-mdc-radio-button ~ .mat-radio-button {
+  margin-right: 16px;
+  margin-left: 16px;
+}
+
+.config-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.config-column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+  margin: 0px 10px 0px 10px;
+}
+
+.sources-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 15px 0;
+}
+
+.sources-radio-button {
+  margin: 5px;
+  margin-left: 0px !important;
+}
+
+.select-config {
+  margin-left: 0px;
+}
+
+.config-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.btn-div {
+  align-self: center;
+}
+
+.adv-btn {
+  width: 100%;
+}
+
+.config-operation-container {
+  display: grid;
+  grid-template-columns: [col-start] auto [col1-end] min-content [col2-end];
+  grid-template-rows: [row-start] max-content [row1-end] max-content [row2-end];
+  grid-template-areas:
+    "download-txt download-btn"
+    "upload-txt upload-btn"
+    "demo-txt demo-btn"
+    "reset-txt reset-btn"
+    "config-txt config-btn";
+  row-gap: 20px;
+  column-gap: 10px;
+}
+
+.upload-txt {
+  grid-area: upload-txt;
+}
+
+.upload-btn {
+  grid-area: upload-btn;
+}
+
+.download-txt {
+  grid-area: download-txt;
+}
+
+.download-btn {
+  grid-area: download-btn;
+}
+
+.demo-txt {
+  grid-area: demo-txt;
+}
+
+.demo-btn {
+  grid-area: demo-btn;
+}
+
+.reset-txt {
+  grid-area: reset-txt;
+}
+
+.reset-btn {
+  grid-area: reset-btn;
+}
+
+.config-txt {
+  grid-area: config-txt;
+}
+
+.config-btn {
+  grid-area: config-btn;
+}

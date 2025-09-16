@@ -1,12 +1,24 @@
-# About KIP
+# KIP – Signal K Multi-Function Display (MFD) and Marine Instrument Panel
+[![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
+[![Community Videos](https://img.shields.io/badge/Community-Videos-purple)](src/assets/help-docs/community.md)
+[![Contact](https://img.shields.io/badge/Contact-Get_in_touch-success)](src/assets/help-docs/contact-us.md)
 
-KIP is a powerful and versatile marine instrumentation package designed to display Signal K data. It replicates the functionality of modern Multi-Function Displays (MFDs) similar to most commercial products, while offering unmatched flexibility and customization. KIP can be tailored to any arrangement, displaying all kinds of data available from the Signal K server.
+**KIP is the most popular Signal K MFD and marine instrument panel: plug-and-play, touch-optimized, pre-installed, and ready-to-use across all devices.**
 
-With its responsive design, KIP works seamlessly across phones, tablets, Raspberry Pi, and computers, ensuring an optimal user experience on any device. It supports touchscreen gestures, night/day modes, and even Progressive Web App (PWA) functionality for a full-screen, app-like experience.
+Unlike many instrument panels, KIP offers full MFD functionnality and is **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
+
+KIP is designed for sailors and boaters who want:
+
+- A **ready-to-use, classic marine app experience** with minimal setup.
+- A **modern, polished interface** optimized for marine displays.
+- **Touch-optimized design**: touch-first, intuitive design for tablets, phones, and other touch-enabled devices.
+- **Cross-platform support**: runs on phones, tablets, laptops, Raspberry Pi, Web Enabled TV or other fixed displays - anywhere you can run a web browser.
+- **Instant access to all Signal K data**: displays gauges, charts, switches, and other widgets right out of the box.
+- **Flexible dashboards**: customize layouts, drag-and-drop widgets, night/day mode, kiosk/fullscreen and remote control support.
+
+With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi-Function Display for [Signal K](https://signalk.org) vessels.
 
 ![KIP](./images/KIPDemo.png)
-
-![Form factor support](./images/formfactor.png)
 
 Key features include:
 - **Flexible Layouts**: Build purposeful dashboards with an easy-to-use and intuitive grid layout system. Drag widgets into place and make adjustments with simple gestures or clicks.
@@ -15,14 +27,20 @@ Key features include:
 - **Data State Notifications**: Stay informed with visual and audio alerts for critical data thresholds.
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
+- **Remote Control**: Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
+- **Chartplotter Mode**: An optimized Freeboard-SK and KIP split mode offering unparalleled chart navigation and dashboards integration for full-on dedicated MFD feel, Signal K native.
+- **Kiosk Mode**: Run as a single full-screen application; mast, helm, portable display used as a dedicated instrument panel, a chartplotter, etc.
 
-KIP is open-source under the MIT license, built by the community and 100% free. Join the community on Discord or contribute to the project on GitHub!
+KIP is open-source under the MIT license, built by the community and 100% free. [Join the community](https://discord.gg/AMDYT2DQga) on Discord or contribute to the project on GitHub!
 
-## Basic Instruction
-Read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
+## Installations Showcase
+![Form factor support](./images/exterior_user_installs.png)
+In addition to the obvious navstation, tablet and phone use cases, users have taken KIP outside using Raspberry Pi and Pi Zero computers, rugged tablets and all kinds of cheap to expensive touch screens.
+
+## Read the Help introduction How-to
+You just installed KIP and your stuck; read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
 
 # Design Goal
-
 The goal is to replicate and enhance the functionality of modern marine instrumentation displays while providing unmatched customization and flexibility. The design principles include:
 
 - **Full-Screen Utilization**: Ensure the display uses the entire screen without requiring scrolling, maximizing visibility and usability.
@@ -31,12 +49,17 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - **Cross-Device Compatibility**: Guarantee a consistent and responsive experience across phones, tablets, computers, and other devices.
 - **Modern Browser Support**: Include support for the latest versions of Chromium and other modern web browsers to ensure optimal performance and compatibility.
 
+![Form factor support](./images/formfactor.png)
+
 ## Features
 
 ### Intuitive Controls
 - Swipe up and down to navigate through your dashboards effortlessly.
 - Swipe left and right to access notifications and other system features quickly.
 - Use keyboard shortcuts for essential features, ensuring fast and efficient navigation across devices.
+
+![Sidenav Dashboard Access](./images/ActionSidenav.png)
+Sidenav for quick access to all important features.
 
 ### Progressive Web App (PWA) Support
 Run KIP in full-screen mode without browser controls, just like a native mobile app. This feature is supported on most mobile operating systems. Follow your browser's instructions to install KIP as a PWA for quick and easy access. It's usually just a few clicks, such as "Add to Home Screen".
@@ -45,21 +68,22 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 - Effortlessly create and customize dashboards using an intuitive grid layout system.
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
-- Organize and reorder dashboards by adding names and arranging them to suit your workflow.
-- Seamlessly switch between multiple dashboards for different roles, devices, or use cases.
+- Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
+- Seamlessly switch between multiple configuration profiles for different roles and devices or use cases.
 
-### Multiple User Profiles
-Create and manage profiles for different roles, devices, or use cases. Each profile can have its own dashboard configurations and settings.
+### Chartplotter Mode
+Keep a live Freeboard‑SK chart visible while switching dashboards for an MFD‑style workflow. The chart persists (no reload or flicker), you can choose its side, collapse it per‑dashboard for full data pages, and drag resize the split. Layout auto‑stacks in portrait / narrow screens. See the dedicated Chartplotter Mode help page for setup, performance tips, and troubleshooting.
 
-### Open Source and Community-Driven
-KIP is built with modern web technologies and is open-source under the MIT license. Like many others, join the community on Discord or contribute to the project on GitHub to help shape its future.
+![Chartplotter Mode](./images/ChartPlotterMode.png)
 
 ## User Experience
 
 ### Flexible and Easy
-Meant to build purposeful screens with however many widgets you want, wherever you want them.
+Meant to build purposeful dashboards with however many widgets you want, wherever you want them.
 
-Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards.
+Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards or effortlessly jump between dashboards with a single tap in the action sidenav, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
+
+Add widget lists sorted by category
 ![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
 
 Intuitive widget configuration.
@@ -70,6 +94,9 @@ See what Signal K has to offer that you can leverage with widgets. Select it and
 
 Many units are supported. Choose your preferred app defaults, then tweak them widget-by-widget as necessary. KIP will automatically convert the units for you.
 ![Units Configuration Image](./images/KipConfig-Units-1024.png)
+
+Organize your dashboards and access tools
+![Options and Dashboards](./images/Options.png)
 
 ## Reusable Widget Library
 All KIP widgets are visual presentation controls that are very versatile, with multiple advanced configuration options available to suit your needs:
@@ -85,6 +112,8 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **Radial gauge**: Visually display any numerical data on a radial scale: boat speed, wind speed, engine RPM, etc.
 - **Compass gauge**: A card or marine compass to display directional data such as heading, bearing to next waypoint, wind angle, etc.
 - **Radial and linear Steel gauge**: Old-school look & feel gauges.
+- **Level gauge**: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.
+- **Pitch & Roll**: Horizon-style attitude indicator showing live pitch and roll for monitoring trim, heel, and sea-state response.
 - **Wind Steering Display**: Your typical sailboat wind gauge.
 - **Freeboard-SK Chart Plotter**: A high-quality Signal K implementation of the Freeboard integration widget.
 - **Autopilot Head**: Operate your autopilot from any device remotely.
@@ -97,22 +126,24 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 Get the latest version of KIP to see what's new!
 
 ### Widget Samples
-Various
+Gauges
 ![Sample Gauges Image](./images/KipGaugeSample1-1024x545.png)
 
-Electrical and Tank Monitoring Sample
+Various
 ![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
 
-Freeboard-SK Integration
+Freeboard-SK Integration with Autopilot
 ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
 
 Grafana Integration
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
-## Night Mode
-Keep your night vision with automatic or manual day and night switching. The image below looks very dark, but at night... it's perfect!
+## Night Modes
+Keep your night vision with automatic or manual day and night switching to a color preserving dim mode or an all Red theme. The images below look very dark, but at night... they are perfect!
 
-![Night mode](./images/KipNightMode-1024.png)
+![Night mode - All Red](./images/KipNightMode-1024.png)
+
+![Night mode - Brightness](./images/KipBrightness-1024.png)
 
 ## Harness the Power of Data State Notifications
 Stay informed with notifications about the state of the data you are interested in.
@@ -120,6 +151,30 @@ For example, Signal K will notify KIP when a water depth or temperature sensor r
 
 ## Multiple User Profiles
 If you have different roles on board: captain, skipper, tactician, navigator, engineer—or simply different people with different needs, each can tailor KIP as they wish. The use of profiles also allows you to tie specific configuration arrangements to use cases or device form factors.
+
+## Remote Control Other KIP Displays
+Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device) from any KIP, including your phone.
+
+Use cases
+- Mast display: change dashboards from the cockpit.
+- Wall/helm screens: toggle dashboards without standing up or reaching for controls.
+- Non‑touch/no input: select dashboards when no keyboard/mouse is connected or touch is not supported/disabled.
+
+## Dedicated Fullscreen instrument display (Kiosk Mode)
+Runs KIP on Raspberry Pi as a single full-screen application, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
+
+## Complementary Components
+Typical complementary components you may install (many are often bundled with Signal K distributions):
+
+**Navigation & Charting**
+- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+
+**Visual Flow / Automation**
+- **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
+
+**Data Storage & Analytics**
+- **InfluxDB / other TSDB** – High‑resolution historical storage of sensor & performance metrics beyond what lightweight widget charts should retain.
+- **Grafana** – Rich exploratory / comparative dashboards, ad‑hoc queries, alert rules on stored metrics, correlation across heterogeneous data sources.
 
 # Connect, Share, and Support
 KIP has its own Discord Signal K channel for getting in touch. Join us at https://discord.gg/AMDYT2DQga
@@ -131,9 +186,33 @@ https://github.com/mxtommy/Kip/issues
 # How To Contribute
 KIP is under the MIT license and is built with Node and Angular using various open-source assets. All free!
 
+## Project Scope
+What KIP IS about:
+- Real‑time presentation of vessel & environment data (navigation, performance, systems) pulled from Signal K.
+- Fast, legible, touchscreen‑friendly dashboards for underway decision making.
+- Configurable widgets (gauges, charts, timers, controls) tuned for sailing operations.
+
+What KIP deliberately IS NOT trying to become:
+- A full data lake / long‑term time‑series historian.
+- A general purpose automation / rules / orchestration engine.
+- A universal external web‑app embedding or mash‑up framework.
+- A low‑code integration hub for arbitrarily wiring protocols and services.
+
+Those domains already have excellent, specialized open‑source tools. Instead of re‑implementing them, KIP plays nicely alongside them within a Signal K based onboard stack.
+
+**Processing & Extensions**
+- **Signal K Plugins** – Domain‑specific enrichment (polars, performance calculations, derived environmental data, routing aids) published directly into the Signal K data model that KIP can then display.
+
+**Why this separation matters**
+
+Keeping KIP focused preserves responsiveness (lower CPU / memory), reduces UI clutter, and accelerates core sailing user experience development. Heavy analytics, complex workflow logic, and broad third‑party embedding stay where they are strongest—outside—but still feed KIP through the common Signal K data fabric.
+
+In short: use KIP to see & act on live sailing information; use the complementary tools to store it long‑term, analyze it deeply, automate decisions, or build advanced integrations.
+
 **Tools**
+
 Linux, Mac, RPi, or Windows dev platform supported
-1. Install the latest Node version (v16+, v18 recommended)
+1. Install the latest Node version (v20+)
 2. Download your favorite coding IDE (we use the free Visual Studio Code)
 3. Create your own GitHub KIP fork.
 4. Configure your IDE's source control to point to your forked KIP instance (with Visual Studio Code, GitHub support is built-in) and get the fork's master branch locally.
@@ -145,12 +224,12 @@ Linux, Mac, RPi, or Windows dev platform supported
 2. Check out this new branch.
 3. In a command shell (or in the Visual Studio Code Terminal window), go to the root of your local project branch folder, if not done automatically by your IDE.
 4. Install project dependencies using the NPM package and dependency manager: run `npm install`. NPM will read the Kip project dependencies, download, and install everything automatically for you.
-5. Build the app locally using Angular CLI: from that same project root folder, run `ng build`. The CLI tool will build KIP.
+5. Build the app locally using Angular CLI: from that same project root folder, run `npm run build:all`. The CLI tool will build KIP.
 
 **Setup**
 1. Fire up your local dev instance with `npm run dev`.
-2. Hit Run/Start Debugging in Visual Studio Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`. Alternatively, to start the dev server and connect using remote devices such as your phone:  
-   `ng serve --configuration=dev --serve-path=/@mxtommy/kip/ --host=<your computer's IP> --port=4200 --disable-host-check`
+2. Hit Run/Start Debugging in Visual Studio Code or point your favorite browser to `http://localhost:4200/@mxtommy/kip`. Alternatively, to start the dev server and allow remote devices connections, such as with your phone or RPi:  
+   `ng serve --configuration=dev --serve-path=/@mxtommy/kip/ --host=<your computer's IP> --port=4200`
 3. Voila!
 
 *As you work on source code and save files, the app will automatically reload in the browser with your latest changes.*  
@@ -158,10 +237,11 @@ Linux, Mac, RPi, or Windows dev platform supported
 
 **Apple PWA Icon Generation**
 Use the following tool and command line:  
-`npx pwa-asset-generator ./src/svg-templates/icon/KIP-icon.svg ./src/assets/ -i ./src/index.html -m ./src manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
+`npx pwa-asset-generator ./src/assets/favicon.svg ./src/assets/ -i ./src/index.html -m ./src manifest.json -b "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898" -p 5%`
 
 **Share**
-Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged, and included in the next release.
+
+Once done with your work, from your fork's working branch, make a GitHub pull request to have your code reviewed, merged, and included in the next release. It's always optimal to sync with us prior to engaging in extensive new development work.
 
 ## Development Instructions & Guidelines
 
@@ -170,6 +250,9 @@ For comprehensive development guidance, please refer to these instruction files:
 ### **Primary Instructions:**
 - **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration.
 - **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v20+ coding standards, component patterns, and framework best practices.
+
+### **Performance & SVG Animation**
+For guidance on high-performance widget animations (e.g., wind dial rotations, laylines, wind sectors) using requestAnimationFrame outside Angular's change detection, see the new section 12 "SVG Animation Utilities" in [COPILOT.md](./COPILOT.md#12-svg-animation-utilities-requestanimationframe-helpers).
 
 ### **Development Workflow:**
 1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns.
@@ -180,4 +263,4 @@ For comprehensive development guidance, please refer to these instruction files:
 - **Widget Development**: Always extend `BaseWidgetComponent` (see COPILOT.md).
 - **Angular Patterns**: Use signals, standalone components, and modern control flow.
 - **Theming**: Follow KIP's theme system for consistent UI.
-- **Code Quality**: Run `npm run lint` before commits (enforced by Husky).
+- **Code Quality**: Run `npm run lint` before commits.

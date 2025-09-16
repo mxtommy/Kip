@@ -1,25 +1,32 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, inject, effect, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
 import { MatButton } from '@angular/material/button';
 import { CanvasService } from '../../core/services/canvas.service';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'widget-racetimer',
-    templateUrl: './widget-race-timer.component.html',
-    styleUrls: ['./widget-race-timer.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, MatButton]
+  selector: 'widget-racetimer',
+  templateUrl: './widget-race-timer.component.html',
+  styleUrls: ['./widget-race-timer.component.scss'],
+  imports: [WidgetHostComponent, MatButton, MatIconModule]
 })
-export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly canvas = inject(CanvasService);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private maxTextWidth = 0;
+  private maxTextHeight = 0;
+
   private TimersService = inject(TimersService);
-  private canvas = inject(CanvasService);
-  readonly canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
   protected dataValue: number = null;
   private zoneState: string = null;
   private currentValueLength = 0; // length (in characters) of value text to be displayed. if changed from last time, need to recalculate font size...
@@ -34,20 +41,19 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   timerSub: Subscription = null;
 
-  private canvasCtx: CanvasRenderingContext2D = null;
-
   constructor() {
     super();
 
     this.defaultConfig = {
-      timerLength: 300,
+      timerLength: -300,
       color: 'contrast',
+      playBeeps: true,
     };
 
     effect(() => {
       if (this.theme()) {
         this.getColors(this.widgetProperties.config.color);
-        this.updateCanvas();
+        this.drawWidget();
       }
     });
   }
@@ -55,59 +61,71 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
   ngOnInit(): void {
     this.validateConfig();
     this.subscribeTimer();
+  }
+
+  ngAfterViewInit(): void {
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.maxTextWidth = Math.floor(this.cssWidth * 0.95);
+        this.maxTextHeight = Math.floor(this.cssHeight);
+        this.drawWidget();
+      },
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.startWidget();
   }
 
   protected startWidget(): void {
     this.getColors(this.widgetProperties.config.color);
-    this.canvasCtx = this.canvasEl().nativeElement.getContext('2d');
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-    this.updateCanvas();
-  }
-
-  onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50) { return; }
-    if (event.contentRect.width < 50) { return; }
-    if ((this.canvasEl().nativeElement.width != Math.floor(event.contentRect.width)) || (this.canvasEl().nativeElement.height != Math.floor(event.contentRect.height))) {
-      this.canvasEl().nativeElement.width = Math.floor(event.contentRect.width);
-      this.canvasEl().nativeElement.height = Math.floor(event.contentRect.height / 2);
-      this.currentValueLength = 0; //will force resetting the font size
-      this.updateCanvas();
-    }
+    this.drawWidget();
   }
 
   private subscribeTimer() {
     this.timerRunning = this.TimersService.isRunning(this.timeName);
 
-    this.timerSub = this.TimersService.createTimer(this.timeName, -3000, 100).subscribe(
+    this.timerSub = this.TimersService.createTimer(this.timeName, this.widgetProperties.config.timerLength, 1000).subscribe(
       newValue => {
         this.dataValue = newValue;
 
         if (newValue > 0) {
           this.zoneState = States.Normal;
-        } else if (newValue > -100) {
+        } else if (newValue === 0) {
+          this.beep(500, 2000);
+        } else if (newValue > -10) {
           this.zoneState = States.Alarm;
-        } else if (newValue > -300) {
-          this.zoneState =States.Warn;
+          this.beep(450, 100);
+        } else if (newValue >= -29) {
+          this.zoneState = States.Warn;
+        } else if (newValue === -30) {
+          this.zoneState = States.Warn;
+          this.beep(400, 200);
         } else {
           this.zoneState = States.Normal;
         }
 
-       //start flashing if alarm
-       if (this.zoneState == States.Alarm && !this.flashInterval) {
-        this.flashInterval = setInterval(() => {
-          this.flashOn = !this.flashOn;
-          this.updateCanvas();
-        }, 500); // used to flash stuff in alarm
-      } else if (this.zoneState != States.Alarm) {
-        // stop alarming if not in alarm state
-        clearInterval(this.flashInterval);
-      }
-        this.updateCanvas();
+        //start flashing if alarm
+        if (this.zoneState == States.Alarm && !this.flashInterval) {
+          this.flashInterval = setInterval(() => {
+            this.flashOn = !this.flashOn;
+            this.drawWidget();
+          }, 500); // used to flash stuff in alarm
+        } else if (this.zoneState != States.Alarm) {
+          // stop alarming if not in alarm state
+          clearInterval(this.flashInterval);
+          this.flashInterval = null;
+        }
+        this.drawWidget();
       }
     );
   }
@@ -131,30 +149,30 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
 
   public roundToMin() {
     let v = this.dataValue;
-    if (this.dataValue < 0) { v = v * -1} // always positive
-    const seconds = v % 600;
+    if (this.dataValue < 0) { v = v * -1 } // always positive
+    const seconds = v % 60;
 
     if (this.dataValue > 0) {
-      if (seconds > 300) {
-        this.TimersService.setTimer(this.timeName, this.dataValue + (600 - seconds));
+      if (seconds > 30) {
+        this.TimersService.setTimer(this.timeName, this.dataValue + (60 - seconds));
       } else {
         this.TimersService.setTimer(this.timeName, this.dataValue - seconds);
       }
     } else {
-      if (seconds > 300) {
-        this.TimersService.setTimer(this.timeName, this.dataValue - (600 - seconds));
+      if (seconds > 30) {
+        this.TimersService.setTimer(this.timeName, this.dataValue - (60 - seconds));
       } else {
         this.TimersService.setTimer(this.timeName, this.dataValue + seconds);
       }
     }
   }
 
-  addOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue + 600);
+  protected addTime(amount: number): void {
+    this.TimersService.setTimer(this.timeName, this.dataValue + amount);
   }
 
-  remOneMin() {
-      this.TimersService.setTimer(this.timeName, this.dataValue - 600);
+  protected removeTime(amount: number): void {
+    this.TimersService.setTimer(this.timeName, this.dataValue - amount);
   }
 
   private getColors(color: string) {
@@ -207,42 +225,52 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     }
   }
 
+  protected beep(frequency = 440, duration = 100) {
+    if (this.widgetProperties.config.playBeeps) {
+      const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency; // Hz
+      gainNode.gain.value = 0.1; // volume
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+    }
+  }
+
   private unsubscribeTimer() {
-      this.timerSub?.unsubscribe();
+    this.timerSub?.unsubscribe();
   }
 
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
-    }
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
     clearInterval(this.flashInterval);
+    this.flashInterval = null;
     this.destroyDataStreams();
   }
 
-/* ******************************************************************************************* */
+  /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
   /* ******************************************************************************************* */
 
-  updateCanvas() {
-    if (this.canvasCtx) {
-      this.canvas.clearCanvas(this.canvasCtx, this.canvasEl().nativeElement.width, this.canvasEl().nativeElement.height);
-      this.drawValue();
-    }
-  }
+  drawWidget() {
+    if (!this.canvasCtx) return;
 
-  drawValue() {
-    const canvasEl = this.canvasEl().nativeElement;
-    const maxTextWidth = Math.floor(canvasEl.width * 0.95);
-    const maxTextHeight = Math.floor(canvasEl.height);
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
     let valueText: string;
 
     if (this.dataValue != null) {
       const v = Math.abs(this.dataValue); // Always positive
-      const m = Math.floor(v / 600);
-      const s = Math.floor((v % 600) / 10);
-      const d = Math.floor(v % 10);
-      valueText = `${m}:${('0' + s).slice(-2)}.${d}`;
+      const m = Math.floor(v / 60);
+      const s = Math.floor(v % 60);
+      valueText = `${m}:${('0' + s).slice(-2)}`;
 
       if (this.dataValue < 0) {
         valueText = `-${valueText}`;
@@ -257,8 +285,8 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
       this.valueFontSize = this.canvas.calculateOptimalFontSize(
         this.canvasCtx,
         valueText,
-        maxTextWidth,
-        maxTextHeight,
+        this.maxTextWidth,
+        this.maxTextHeight,
         'bold'
       );
     }
@@ -269,7 +297,13 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
         if (this.flashOn) {
           this.canvasCtx.fillStyle = this.textColor;
         } else {
-          this.canvas.drawRectangle(this.canvasCtx, 0, 0, canvasEl.width, canvasEl.height, this.warnColor);
+          this.canvas.drawRectangle(
+            this.canvasCtx,
+            0,
+            0,
+            this.cssWidth,
+            this.cssHeight,
+            this.warnColor);
           this.canvasCtx.fillStyle = this.textColor;
         }
         break;
@@ -284,10 +318,10 @@ export class WidgetRaceTimerComponent extends BaseWidgetComponent implements OnI
     this.canvas.drawText(
       this.canvasCtx,
       valueText,
-      canvasEl.width / 2,
-      canvasEl.height / 2,
-      maxTextWidth,
-      maxTextHeight,
+      this.cssWidth / 2,
+      this.cssHeight / 2,
+      this.maxTextWidth,
+      this.maxTextHeight,
       'bold',
       this.canvasCtx.fillStyle,
       'center',

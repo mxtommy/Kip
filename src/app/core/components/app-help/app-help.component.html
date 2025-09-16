@@ -1,22 +1,40 @@
 <div class="fullpage-header">
   <h6 class="fullpage-header-title">{{ pageTitle }}</h6>
-  <button mat-flat-button [matMenuTriggerFor]="helpMenu">
-    Table of Content
+  <button mat-flat-button [matMenuTriggerFor]="helpMenu" [disabled]="isLoading() || hasError() || helpFiles().length === 0">
+    @if (isLoading()) { Loading... } @else { Table of Content }
   </button>
   <mat-menu #helpMenu="matMenu">
     <ng-template matMenuContent>
-      @for (file of helpFiles; track $index) {
-        <button mat-menu-item (click)="selectFile(file.file)">
-          {{ file.title }}
-        </button>
+      @if (hasError()) {
+        <button mat-menu-item disabled>Error loading menu</button>
+      } @else if (!isLoading() && helpFiles().length === 0) {
+        <button mat-menu-item disabled>No help entries</button>
+      } @else {
+        @for (file of helpFiles(); track file.file) {
+          <button mat-menu-item (click)="selectFile(file.file)" [disabled]="selectedFile() === file.file">
+            {{ file.title }}
+          </button>
+        }
       }
     </ng-template>
   </mat-menu>
-  <button mat-icon-button class="dialog-close-icon" (click)="closePage()">
-    <mat-icon>close</mat-icon>
-  </button>
+  <div class="dialog-close-icon">
+    <button mat-icon-button (click)="backPage()">
+      <mat-icon>arrow_back_ios</mat-icon>
+    </button>
+    <button mat-icon-button (click)="closePage()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
 </div>
 <mat-divider></mat-divider>
-  @if (selectedFile) {
-    <markdown class="markdown-content" [src]="'assets/help-docs/' + selectedFile"></markdown>
-  }
+
+@if (hasError()) {
+  <div class="markdown-content">Unable to load help content.</div>
+} @else if (isLoading() && helpFiles().length === 0) {
+  <div class="markdown-content">Loading help...</div>
+} @else if (selectedFile()) {
+  <div class="markdown-content">
+    <markdown clipboard ngPreserveWhitespaces [src]="`assets/help-docs/${selectedFile()}`"></markdown>
+  </div>
+}

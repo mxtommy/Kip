@@ -4,6 +4,7 @@ import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
 
 @Component({
     selector: 'widget-iframe',
@@ -14,7 +15,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private _sanitizer = inject(DomSanitizer);
   protected _dashboard = inject(DashboardService);
-  readonly iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
+  protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
   protected widgetUrl: SafeResourceUrl | null = null;
   protected displayTransparentOverlay = signal<string>('block');
 
@@ -43,9 +44,8 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
   }
 
   ngAfterViewInit() {
-    const iframe = this.iframe();
-    if (iframe) {
-      iframe.nativeElement.onload = () => this.injectHammerJS();
+    if (this.iframe()) {
+  this.iframe().nativeElement.onload = () => this.injectSwipeScript();
     }
   }
 
@@ -54,6 +54,21 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
 
   ngOnDestroy() {
     window.removeEventListener('message', this.handleIframeGesture);
+    // Clear iframe onload to release closure references
+    if (this.iframe()) {
+      this.iframe().nativeElement.onload = null;
+    }
+    // Remove injected script from iframe (if same-origin) to avoid lingering closures
+    try {
+      const iframeDoc = this.iframe()?.nativeElement.contentDocument;
+      if (iframeDoc) {
+        const id = `kip-gesture-inject-${this.widgetProperties.uuid}`;
+        const existing = iframeDoc.getElementById(id);
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      }
+    } catch { /* ignore cross-origin or access errors */ }
+    // Ensure any data streams from BaseWidget are cleaned up
+    try { this.destroyDataStreams(); } catch { /* noop if not present */ }
   }
 
   private handleIframeGesture = (event: MessageEvent) => {
@@ -63,10 +78,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     if (event.data.gesture && event.data.eventData.instanceId === this.widgetProperties.uuid) {
       switch (event.data.gesture) {
         case 'swipeup':
-          this._dashboard.previousDashboard();
+          this._dashboard.navigateToPreviousDashboard();
           break;
         case 'swipedown':
-          this._dashboard.nextDashboard();
+          this._dashboard.navigateToNextDashboard();
           break;
         case 'swipeleft': {
           const leftSidebarEvent = new Event('openLeftSidenav', { bubbles: true, cancelable: true });
@@ -99,150 +114,25 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     }
   };
 
-  private injectHammerJS() {
-    const baseHref = document.getElementsByTagName('base')[0]?.href || '/';
+  private injectSwipeScript() {
     const iframeWindow = this.iframe().nativeElement.contentWindow;
     const iframeDocument = this.iframe().nativeElement.contentDocument;
-
     if (!iframeDocument || !iframeWindow) {
       console.error('[WidgetIframe] Iframe contentDocument or contentWindow is undefined. Possible cross-origin issue or iframe not fully loaded.');
       return;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((iframeWindow as any).Hammer) {
-      console.log('[WidgetIframe] HammerJS already loaded in iframe');
-      return;
+    try {
+      const id = `kip-gesture-inject-${this.widgetProperties.uuid}`;
+      // Avoid double-injecting the same script
+      if (iframeDocument.getElementById(id)) return;
+      const scriptText = generateSwipeScript({ instanceId: this.widgetProperties.uuid });
+      const script = iframeDocument.createElement('script');
+      script.id = id;
+      script.textContent = scriptText;
+      iframeDocument.body.appendChild(script);
+    } catch (e) {
+      console.warn('[WidgetIframe] Failed to inject swipe script into iframe:', e);
     }
-
-    // Inject HammerJS
-    const hammerScript = iframeDocument.createElement('script');
-    hammerScript.src = `${baseHref}assets/hammer.min.js`;
-    hammerScript.onload = () => this.injectSwipeHandler();
-    iframeDocument.body.appendChild(hammerScript);
-  }
-
-  private injectSwipeHandler() {
-    const iframeDocument = this.iframe().nativeElement.contentDocument;
-    if (!iframeDocument) {
-      console.error('[WidgetIframe] Iframe contentDocument is undefined. Possible cross-origin issue or iframe not fully loaded.');
-      return;
-    }
-
-    // Create a script to listen for gestures and send a message to the parent page
-    const script = iframeDocument.createElement('script');
-    script.textContent = `
-      if (!window.hammerInstance) {
-        const hammer = new Hammer(document.body);
-        hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL, velocity: 1.5, threshold: 200, domEvents: true });
-
-        const instanceId = '${this.widgetProperties.uuid}'; // Include the instance ID in the script to prevent multiple listeners
-
-        hammer.on('swipeleft', (ev) => {
-          ev.preventDefault();
-          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'swipeleft', eventData: eventData }, '*');
-        });
-
-        hammer.on('swiperight', (ev) => {
-          ev.preventDefault();
-          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'swiperight', eventData: eventData }, '*');
-        });
-
-        hammer.on('swipeup', (ev) => {
-          ev.preventDefault();
-          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'swipeup', eventData: eventData }, '*');
-        });
-
-        hammer.on('swipedown', (ev) => {
-          ev.preventDefault();
-          ev.srcEvent.stopPropagation(); // Stop propagation to prevent FSK from handling the gesture
-          const eventData = {
-            type: ev.type,
-            deltaX: ev.deltaX,
-            deltaY: ev.deltaY,
-            velocityX: ev.velocityX,
-            velocityY: ev.velocityY,
-            direction: ev.direction,
-            distance: ev.distance,
-            angle: ev.angle,
-            center: ev.center,
-            offsetDirection: ev.offsetDirection,
-            scale: ev.scale,
-            rotation: ev.rotation,
-            isFinal: ev.isFinal,
-            instanceId: instanceId // Include the instance ID in the event data
-          };
-          window.parent.postMessage({ gesture: 'swipedown', eventData: eventData }, '*');
-        });
-
-        // Add keydown listener
-        document.addEventListener('keydown', (event) => {
-          if (event.ctrlKey && event.shiftKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'E', 'F', 'N'].includes(event.key)) {
-            const keyEventData = {
-              key: event.key,
-              ctrlKey: event.ctrlKey,
-              shiftKey: event.shiftKey,
-              instanceId: instanceId
-            };
-            window.parent.postMessage({ type: 'keydown', keyEventData: keyEventData }, '*');
-          }
-        });
-
-        window.hammerInstance = hammer; // Store the instance to prevent multiple listeners
-      }
-    `;
-    iframeDocument.body.appendChild(script);
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {

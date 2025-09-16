@@ -1,9 +1,8 @@
 <widget-host
+  class="label-wrapper"
   [(config)]="widgetProperties.config"
   [id]="widgetProperties.uuid"
   (configChange)="updateConfig($event)"
 >
-  <div class="wrapper" (onResize)="onResized($event)">
-    <canvas #canvasEl class="canvas" style="z-index: inherit;"></canvas>
-  </div>
+  <canvas class="label-canvas" #canvasMainRef></canvas>
 </widget-host>

@@ -5,20 +5,28 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
 import { getColors } from '../../core/utils/themeColors.utils';
+import { MinichartComponent } from '../minichart/minichart.component';
+import { DatasetService } from '../../core/services/data-set.service';
 
 @Component({
-    selector: 'widget-numeric',
-    templateUrl: './widget-numeric.component.html',
-    styleUrls: ['./widget-numeric.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
+  selector: 'widget-numeric',
+  templateUrl: './widget-numeric.component.html',
+  styleUrls: ['./widget-numeric.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent]
 })
 export class WidgetNumericComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private canvasUnit = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasUnit');
-  private canvasMinMax = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMinMax');
-  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
-  private canvas = inject(CanvasService);
+  protected miniChart = viewChild(MinichartComponent);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private backgroundBitmap: HTMLCanvasElement | null = null;
+  private backgroundBitmapText: string | null = null;
+  protected showMiniChart = signal<boolean>(false);
+  private readonly canvas = inject(CanvasService);
+  private readonly _dataset = inject(DatasetService);
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
@@ -32,10 +40,6 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
 
   private flashInterval = null;
   private isDestroyed = false; // gard against callbacks after destroyed
-
-  protected canvasValCtx: CanvasRenderingContext2D;
-  protected canvasMinMaxCtx: CanvasRenderingContext2D;
-  protected canvasUnitCtx: CanvasRenderingContext2D;
 
   constructor() {
     super();
@@ -59,7 +63,11 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       showMax: false,
       showMin: false,
       numDecimal: 1,
-      numInt: 1,
+      showMiniChart: false,
+      yScaleMin: 0,
+      yScaleMax: 10,
+      inverseYAxis: false,
+      verticalChart: false,
       color: 'contrast',
       enableTimeout: false,
       dataTimeout: 5,
@@ -69,35 +77,51 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
     effect(() => {
       if (this.theme()) {
         this.setColors();
-        this.updateCanvas();
-        this.updateCanvasUnit();
+        this.drawWidget();
       }
     });
   }
 
   ngOnInit(): void {
     this.validateConfig();
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
   }
 
   ngAfterViewInit(): void {
-    const canvasElement = this.canvasValue().nativeElement;
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvas.setHighDPISize(this.canvasUnit().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvas.setHighDPISize(this.canvasMinMax().nativeElement, canvasElement.parentElement.getBoundingClientRect());
-    this.canvasValCtx = this.canvasValue().nativeElement.getContext('2d');
-    this.canvasMinMaxCtx = this.canvasMinMax().nativeElement.getContext('2d');
-    this.canvasUnitCtx = this.canvasUnit().nativeElement.getContext('2d');
-
-    this.maxValueTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.calculateMaxMinTextDimensions();
+        this.drawWidget();
+      },
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.calculateMaxMinTextDimensions();
     if (this.isDestroyed) return;
+    this.manageDatasetAndChart();
+
+    if (this.showMiniChart() && this.miniChart()) {
+      this.setMiniChart();
+    }
     this.startWidget();
-    this.updateCanvasUnit();
+  }
+
+  private calculateMaxMinTextDimensions(): void {
+    this.maxValueTextWidth = Math.floor(this.cssWidth * 0.85);
+    this.maxValueTextHeight = Math.floor(this.cssHeight * 0.70);
+    this.maxMinMaxTextWidth = Math.floor(this.cssWidth * 0.57);
+    this.maxMinMaxTextHeight = Math.floor(this.cssHeight * 0.1);
   }
 
   protected startWidget(): void {
+    if (this.showMiniChart() && this.miniChart()) {
+      this.miniChart().startChart();
+    }
     this.unsubscribeDataStream();
     this.minValue = null;
     this.maxValue = null;
@@ -128,32 +152,54 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
         }
       }
 
-      this.updateCanvas();
+      this.drawWidget();
     });
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
-    this.startWidget();
-    this.updateCanvas();
-    this.updateCanvasUnit();
+
+    this.manageDatasetAndChart();
+
+    // Defer to next tick so viewChild is ready if just shown
+    setTimeout(() => {
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
+      this.startWidget();
+      this.drawWidget();
+    });
   }
 
-  protected onResized(e: ResizeObserverEntry) {
-    if ((e.contentRect.height < 25) || (e.contentRect.width < 25)) return;
+  private manageDatasetAndChart(): void {
+    const pathInfo = this.widgetProperties.config.paths['numericPath'];
+    if (!pathInfo || !pathInfo.path || !pathInfo.source) return;
 
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, e.contentRect);
-    this.canvas.setHighDPISize(this.canvasUnit().nativeElement, e.contentRect);
-    this.canvas.setHighDPISize(this.canvasMinMax().nativeElement, e.contentRect);
+    if (this.widgetProperties.config.showMiniChart) {
+      if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
+        this._dataset.create(pathInfo.path, pathInfo.source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+      }
+    } else {
+      // Remove dataset if it exists
+      this._dataset.list()
+        .filter(ds => ds.uuid === this.widgetProperties.uuid)
+        .forEach(ds => this._dataset.remove(ds.uuid));
+    }
 
-    this.maxValueTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.maxValueTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.70);
-    this.maxMinMaxTextWidth = Math.floor(this.canvasMinMax().nativeElement.width * 0.57);
-    this.maxMinMaxTextHeight = Math.floor(this.canvasMinMax().nativeElement.height * 0.1);
+    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+  }
 
-    if (this.isDestroyed) return;
-    this.updateCanvas();
-    this.updateCanvasUnit();
+  private setMiniChart(): void {
+    this.miniChart().dataPath = this.widgetProperties.config.paths['numericPath'].path;
+    this.miniChart().dataSource = this.widgetProperties.config.paths['numericPath'].source;
+    this.miniChart().color = this.widgetProperties.config.color;
+    this.miniChart().convertUnitTo = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    this.miniChart().numDecimal = this.widgetProperties.config.numDecimal;
+    this.miniChart().yScaleMin = this.widgetProperties.config.yScaleMin;
+    this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
+    this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
+    this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
+    this.miniChart().datasetUUID = this.widgetProperties.uuid;
   }
 
   private setColors(): void {
@@ -168,40 +214,83 @@ export class WidgetNumericComponent extends BaseWidgetComponent implements After
       clearInterval(this.flashInterval);
       this.flashInterval = null;
     }
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvas.clearCanvas(this.canvasMinMaxCtx, this.canvasMinMax().nativeElement.width, this.canvasMinMax().nativeElement.height);
-    this.canvas.clearCanvas(this.canvasUnitCtx, this.canvasUnit().nativeElement.width, this.canvasUnit().nativeElement.height);
+    // Remove associated mini-chart dataset if present
+    this._dataset.removeIfExists(this.widgetProperties?.uuid, true);
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
   }
 
-/* ******************************************************************************************* */
-/*                                  Canvas                                                     */
-/* ******************************************************************************************* */
-private updateCanvas(): void {
-    if (this.canvasValCtx) {
-      this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-      this.drawValue();
-      if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
-        this.canvas.clearCanvas(this.canvasMinMaxCtx, this.canvasMinMax().nativeElement.width, this.canvasMinMax().nativeElement.height);
-        this.drawMinMax();
-      }
+  /* ******************************************************************************************* */
+  /*                                  Canvas                                                     */
+  /* ******************************************************************************************* */
+  private drawWidget(): void {
+    if (!this.canvasCtx) return;
+    // Compose background bitmap with title and unit
+    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    const marginX = 10 * this.canvas.scaleFactor;
+    const marginY = 5 * this.canvas.scaleFactor;
+    if (!this.backgroundBitmap ||
+      this.backgroundBitmap.width !== this.canvasElement.width ||
+      this.backgroundBitmap.height !== this.canvasElement.height ||
+      this.backgroundBitmapText !== this.widgetProperties.config.displayName + '|' + unit
+    ) {
+      this.backgroundBitmap = this.canvas.renderStaticToBitmap(
+        this.canvasCtx,
+        this.cssWidth,
+        this.cssHeight,
+        (ctx) => {
+          // Draw the title (same as before)
+          this.canvas['drawTitleInternal'](
+            ctx,
+            this.widgetProperties.config.displayName,
+            this.labelColor(),
+            'normal',
+            this.cssWidth,
+            this.cssHeight,
+            0.1 // titleFraction
+          );
+          // Draw the unit (same as drawUnit)
+          if (!['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) {
+            this.canvas.drawText(
+              ctx,
+              unit,
+              this.cssWidth - marginX,
+              this.cssHeight - marginY,
+              Math.floor(this.cssWidth * 0.25),
+              Math.floor(this.cssHeight * 0.15),
+              'bold',
+              this.valueColor,
+              'end',
+              'bottom'
+            );
+          }
+        }
+      );
+      this.backgroundBitmapText = this.widgetProperties.config.displayName + '|' + unit;
     }
-  }
 
-  private updateCanvasUnit(): void {
-    if (this.canvasUnitCtx) {
-      this.canvas.clearCanvas(this.canvasUnitCtx, this.canvasUnit().nativeElement.width, this.canvasUnit().nativeElement.height);
-      this.drawUnit();
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+
+    if (
+      this.backgroundBitmap &&
+      this.backgroundBitmap.width > 0 &&
+      this.backgroundBitmap.height > 0
+    ) {
+      this.canvasCtx.drawImage(this.backgroundBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
+    this.drawValue();
+    if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
+      this.drawMinMax();
     }
   }
 
   private drawValue(): void {
     const valueText = this.getValueText();
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
     this.canvas.drawText(
-      this.canvasValCtx,
+      this.canvasCtx,
       valueText,
-      Math.floor(this.canvasValue().nativeElement.width / 2),
-      Math.floor((this.canvasValue().nativeElement.height / 2) * 1.15),
+      Math.floor(this.cssWidth / 2),
+      Math.floor((this.cssHeight / 2) * 1.15),
       this.maxValueTextWidth,
       this.maxValueTextHeight,
       'bold',
@@ -211,39 +300,16 @@ private updateCanvas(): void {
 
   private getValueText(): string {
     if (this.dataValue === null) {
-        return "--";
+      return "--";
     }
 
     const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
     if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
-        return this.dataValue.toString();
+      return this.dataValue.toString();
     }
 
     return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
   }
-
-  private drawUnit(): void {
-  const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-  if (['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) return;
-
-  const marginX = 10 * this.canvas.scaleFactor;
-  const marginY = 5 * this.canvas.scaleFactor;
-  const canvasWidth = this.canvasUnit().nativeElement.width;
-  const canvasHeight = this.canvasUnit().nativeElement.height;
-
-  this.canvas.drawText(
-    this.canvasUnitCtx,
-    unit,
-    canvasWidth - marginX,    // X: right edge minus margin
-    canvasHeight - marginY,   // Y: bottom edge minus margin
-    Math.floor(canvasWidth * 0.25),
-    Math.floor(canvasHeight * 0.15),
-    'bold',
-    this.valueColor,
-    'end',        // right-aligned
-    'bottom'      // baseline at the bottom
-  );
-}
 
   private drawMinMax(): void {
 
@@ -257,18 +323,20 @@ private updateCanvas(): void {
       valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Max: --';
     }
     valueText = valueText.trim();
-
+    const marginX = 10 * this.canvas.scaleFactor;
+    const marginY = 5 * this.canvas.scaleFactor;
+    const canvasHeight = this.cssHeight;
     this.canvas.drawText(
-      this.canvasMinMaxCtx,
+      this.canvasCtx,
       valueText,
-      10 * this.canvas.scaleFactor, // X: left edge plus margin
-      Math.floor(this.canvasMinMax().nativeElement.height - 10 * this.canvas.scaleFactor), // Y: bottom edge minus margin
+      marginX, // X: left edge plus margin
+      Math.floor(canvasHeight - marginY), // Y: bottom edge minus margin
       this.maxMinMaxTextWidth,
       this.maxMinMaxTextHeight,
       'normal',
       this.valueColor,
       'start',      // left-aligned
-      'alphabetic'  // baseline at the bottom
+      'bottom'  // baseline at the bottom
     );
   }
 

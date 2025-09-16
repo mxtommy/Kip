@@ -195,27 +195,8 @@ export class SignalKConnectionService {
         )
       );
 
-      console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
-      this.serverVersion$.next(endpointResponse.body.server.version);
-
-      const httpUrl = endpointResponse.body.endpoints.v1["signalk-http"];
-      const wsUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
-
-      if (proxyEnabled) {
-        console.debug("[Connection Service] Proxy Mode Enabled");
-        serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
-        serverServiceEndpoints.WsServiceUrl = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + new URL(wsUrl).pathname;
-      } else {
-        serverServiceEndpoints.httpServiceUrl = httpUrl;
-        serverServiceEndpoints.WsServiceUrl = wsUrl;
-      }
-
-      console.debug("[Connection Service] HTTP URI: " + serverServiceEndpoints.httpServiceUrl);
-      console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
-
-      serverServiceEndpoints.operation = 2;
-      serverServiceEndpoints.message = endpointResponse.status.toString();
-      serverServiceEndpoints.serverDescription = `${endpointResponse.body.server.id} ${endpointResponse.body.server.version}`;
+      // Process the endpoint response to configure URLs
+      Object.assign(serverServiceEndpoints, this.processEndpointResponse(endpointResponse, proxyEnabled, subscribeAll));
 
       // Notify ConnectionStateMachine of HTTP success
       this.connectionStateMachine.onHTTPDiscoverySuccess();
@@ -276,33 +257,12 @@ export class SignalKConnectionService {
         )
       );
 
-      console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
-      this.serverVersion$.next(endpointResponse.body.server.version);
-
-      const httpUrl = endpointResponse.body.endpoints.v1["signalk-http"];
-      const wsUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
-
-      const serverServiceEndpoints: IEndpointStatus = {
-        operation: 2,
-        message: "Connected",
-        serverDescription: endpointResponse.body.server.id,
-        httpServiceUrl: null,
-        WsServiceUrl: null,
-      };
-
-      if (this.currentProxyEnabled) {
-        console.debug("[Connection Service] Proxy Mode Enabled");
-        serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
-        serverServiceEndpoints.WsServiceUrl = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + new URL(wsUrl).pathname;
-      } else {
-        serverServiceEndpoints.httpServiceUrl = httpUrl;
-        serverServiceEndpoints.WsServiceUrl = wsUrl;
-      }
+      // Process the endpoint response to configure URLs
+      const serverServiceEndpoints = this.processEndpointResponse(endpointResponse, this.currentProxyEnabled, this.currentSubscribeAll);
 
       // Notify ConnectionStateMachine of success
       this.connectionStateMachine.onHTTPDiscoverySuccess();
 
-      serverServiceEndpoints.subscribeAll = !!this.currentSubscribeAll;
       this.serverServiceEndpoint$.next(serverServiceEndpoints);
 
     } catch (error) {
@@ -320,6 +280,50 @@ export class SignalKConnectionService {
       this.serverServiceEndpoint$.next(serverServiceEndpoints);
       this.handleError(error);
     }
+  }
+
+  /**
+   * Process Signal K endpoint response and configure HTTP/WebSocket URLs
+   * @param endpointResponse - The HTTP response containing endpoint information
+   * @param proxyEnabled - Whether proxy mode is enabled
+   * @param subscribeAll - Whether to subscribe to all messages
+   * @returns Configured endpoint status object
+   */
+  private processEndpointResponse(
+    endpointResponse: { body: ISignalKEndpointResponse; status: number },
+    proxyEnabled?: boolean,
+    subscribeAll?: boolean
+  ): IEndpointStatus {
+    console.debug("[Connection Service] Signal K HTTP Endpoints retrieved");
+    this.serverVersion$.next(endpointResponse.body.server.version);
+
+    const httpUrl = endpointResponse.body.endpoints.v1["signalk-http"];
+    const wsUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+
+    const serverServiceEndpoints: IEndpointStatus = {
+      operation: 2,
+      message: endpointResponse.status?.toString() || "Connected",
+      serverDescription: `${endpointResponse.body.server.id} ${endpointResponse.body.server.version}`,
+      httpServiceUrl: null,
+      WsServiceUrl: null,
+    };
+
+    if (proxyEnabled) {
+      console.debug("[Connection Service] Proxy Mode Enabled");
+      serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
+      serverServiceEndpoints.WsServiceUrl = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + new URL(wsUrl).pathname;
+    } else {
+      serverServiceEndpoints.httpServiceUrl = httpUrl;
+      // Only override ws:// to wss:// when page is HTTPS, otherwise keep original
+      const isHttpsPage = window.location.protocol === 'https:';
+      serverServiceEndpoints.WsServiceUrl = isHttpsPage ? wsUrl.replace('ws://', 'wss://') : wsUrl;
+    }
+
+    console.debug("[Connection Service] HTTP URI: " + serverServiceEndpoints.httpServiceUrl);
+    console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
+
+    serverServiceEndpoints.subscribeAll = !!subscribeAll;
+    return serverServiceEndpoints;
   }
 
   private handleError(error: HttpErrorResponse): never {

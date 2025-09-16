@@ -1,0 +1,9 @@
+:host {
+  display: block;
+  width: 100%;
+  height: calc(90% - 10px);
+  position: absolute;
+  bottom: 0px;
+  border-radius: 17px;
+  overflow: hidden; // Optional: ensures content doesn't overflow rounded corners
+}

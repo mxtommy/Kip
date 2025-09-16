@@ -1,91 +1,43 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
+<svg fill="none" stroke="none"
    width="512"
    height="512"
-   viewBox="0 0 135.46667 135.46667"
-   version="1.1"
-   id="svg1"
+   viewBox="0 0 135 135"
    xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <defs
-     id="defs1">
-    <linearGradient
-       id="swatch6">
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="0"
-         id="stop6" />
-    </linearGradient>
-    <linearGradient
-       xlink:href="#swatch6"
-       id="linearGradient6"
-       x1="0"
-       y1="67.733337"
-       x2="135.46667"
-       y2="67.733337"
-       gradientUnits="userSpaceOnUse" />
+   xmlns="http://www.w3.org/2000/svg">
+  <defs id="defs1">
   </defs>
-  <g
-     id="layer1">
+  <g>
     <rect
-       style="fill:url(#linearGradient6);fill-opacity:1;stroke-width:2.117;stroke-linecap:square;stroke-dasharray:none"
-       id="rect4"
-       width="135.46667"
-       height="135.46667"
+       fill="#003399"
+       width="135"
+       height="135"
        x="0"
-       y="0" />
+       y="0"
+       rx="10" />
     <text
        xml:space="preserve"
-       style="font-weight:bold;font-size:25.4px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';fill:#00d000;fill-opacity:0.71372551;stroke-width:2.117;stroke-linecap:square;stroke-dasharray:none;opacity:1"
-       x="4.9013381"
-       y="24.292282"
-       id="text4"><tspan
-         id="tspan4"
-         style="fill:#00d000;fill-opacity:0.71372551;stroke-width:2.117"
-         x="4.9013381"
-         y="24.292282">Speed</tspan></text>
+       style="font-weight:bold;font-size:35px;font-family:Arial;fill:#FFCC00"
+       x="7"
+       y="32">KIP</text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:105.833px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769;stroke-linecap:square;stroke-dasharray:none"
-       x="4.7299533"
-       y="109.62286"
-       id="text5"><tspan
-         id="tspan5"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:105.833px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769"
-         x="4.7299533"
-         y="109.62286">9</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:95px;font-family:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#FFCC00"
+       x="9"
+       y="108">9</text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:105.833px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769;stroke-linecap:square;stroke-dasharray:none"
-       x="74.030319"
-       y="109.62286"
-       id="text5-0"><tspan
-         id="tspan5-8"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:105.833px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769"
-         x="74.030319"
-         y="109.62286">8</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:95px;font-family:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#FFCC00"
+       x="73"
+       y="108">8</text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:88.1945px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769;stroke-linecap:square;stroke-dasharray:none"
-       x="54.86277"
-       y="105.4138"
-       id="text5-1"><tspan
-         id="tspan5-3"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:88.1945px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00d000;fill-opacity:1;stroke-width:7.4769"
-         x="54.86277"
-         y="105.4138">.</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:88px;font-family:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#FFCC00"
+       x="55"
+       y="107">.</text>
     <text
        xml:space="preserve"
-       style="font-weight:bold;font-size:21.2566px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';fill:#00d000;fill-opacity:1;stroke-width:1.77166;stroke-linecap:square;stroke-dasharray:none"
-       x="74.298759"
-       y="128.38905"
-       id="text6"><tspan
-         id="tspan6"
-         style="stroke-width:1.77166;fill:#00d000;fill-opacity:1"
-         x="74.298759"
-         y="128.38905">knots</tspan></text>
+       style="font-weight:bold;font-size:18;font-family:Arial;fill:#FFCC00"
+       x="55"
+       y="128">Signal K</text>
   </g>
 </svg>

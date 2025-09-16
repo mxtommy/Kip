@@ -1,0 +1,21 @@
+<div class="icon-grid">
+  @for (icon of icons(); track icon.id) {
+    <div
+      class="icon-item"
+      [class.selected]="selected() === icon.id"
+      (click)="selectIcon(icon.id)"
+      [attr.aria-label]="'Select ' + icon.id + ' icon'"
+      tabindex="0"
+      (keydown.enter)="selectIcon(icon.id)"
+      (keydown.space)="selectIcon(icon.id); $event.preventDefault()">
+      <div class="icon-container">
+        <mat-icon
+          [svgIcon]="icon.id"
+          [style.width.px]="64"
+          [style.height.px]="64"
+          aria-hidden="false"
+        ></mat-icon>
+      </div>
+    </div>
+  }
+</div>

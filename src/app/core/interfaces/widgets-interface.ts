@@ -106,6 +106,8 @@ export interface IWidgetSvcConfig {
   numDecimal?: number;
   /** Used by multiple Widget: number of fixed Integer places to display */
   numInt?: number;
+  /** Display the mini chart or not flag */
+  showMiniChart?: boolean;
 
   /** The widget's path configuration property used for Observable setup. This property can be either contain an object with one key:string per path with it's value as a IWidgetPath object, or an Array of IWidgetPaths. Array is used by multi-control widgets where key:strings Objects are not appropriate. The Key:string Object should be used for typical widgets. */
   paths?: IPathArray | IWidgetPath[];
@@ -145,6 +147,18 @@ export interface IWidgetSvcConfig {
     digitalMeter?: boolean;
     /** Optional. Width of gauge highlights */
     highlightsWidth?: number;
+    /** Optional. Used by ngRadial to set bar start position */
+    barStartPosition?: "left" | "right" | "middle";
+    /** Optional. Used by Horizon steelgauge to show or hide the frame */
+    noFrameVisible?: boolean;
+    /** Optional. Invert the pitch path data */
+    invertPitch?: boolean;
+    /** Optional. Invert the roll path data */
+    invertRoll?: boolean;
+    /** Optional. Invert the angle path data */
+    invertAngle?: boolean;
+    /** Optional. Show the side label on the gauge */
+    sideLabel?: boolean;
   }
   /** Used by numeric data Widget: Display minimum registered value since started */
   showMin?: boolean;
@@ -184,6 +198,8 @@ export interface IWidgetSvcConfig {
   awsEnable?: boolean;
   /** Used by wind Widget: enable/disable True Wind Speed UI feature */
   twsEnable?: boolean;
+  /** Used by wind Widget: enable/disable True Wind Angle UI indicator feature */
+  twaEnable?: boolean;
   /** Used by wind Widget: enable/disable sailSetup UI feature */
   sailSetupEnable?: boolean;
 
@@ -198,10 +214,10 @@ export interface IWidgetSvcConfig {
 
   /** Used by historical data Widget */
   datasetUUID?: string;
-  /** NOTE: Retired property - Used by historical data Widget */
-  invertData?: boolean;
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
+  /** Used by windtrend chart Widget to set datapoint configuration */
+  timeScale?: string;
   /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
   trackAgainstAverage?: boolean;
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */
@@ -234,12 +250,14 @@ export interface IWidgetSvcConfig {
   yScaleMin?: number;
   /** Chart y scale maximum */
   yScaleMax?: number;
+  /** Inverse Chart Y axis */
+  inverseYAxis?: boolean;
+  /** Chart data flow direction. True = vertical (top to bottom), False = horizontal (left to right) */
+  verticalChart?: boolean;
   /** Chart scale minimum value */
   minValue?: number;
   /** Chart scale maximum value */
   maxValue?: number;
-  /** Used by historical data Widget */
-  verticalGraph?: boolean;
 
  /** Used by IFrame widget: URL lo load in the iframe */
   widgetUrl?: string;
@@ -248,10 +266,8 @@ export interface IWidgetSvcConfig {
 
   /** Use by racetimer widget */
   timerLength?: number;
-
   /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/
   nextDashboard?: number;
-
   /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
   playBeeps?: boolean;
 }

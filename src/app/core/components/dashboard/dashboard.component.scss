@@ -11,6 +11,9 @@
 
 .grid-stack {
   width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative; /* allow absolute overlay for empty state */
 }
 
 .edit-layout-close-icon {
@@ -26,30 +29,30 @@
 }
 
 /* Empty Dashboard State Styles */
-.dashboard-empty-state {
+.dashboard-empty-state-container {
+  position: absolute; /* detach from normal flow so it cannot change grid height */
+  inset: 0;
   display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  width: 100%;
-  padding: 2rem;
+  justify-content: space-around; /* centered instead of space-around to avoid implicit extra space */
+  padding: 1.5rem; /* balanced padding, overlay does not affect container size */
   text-align: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: auto; /* still interactive */
 }
 
-.empty-state-content {
+/* Fine-tune on very short landscape mobile: reduce padding to prevent crowding */
+@media (orientation: landscape) and (max-height: 420px) {
+  .dashboard-empty-state-container { padding: 0.75rem; }
+  .empty-state-icon { font-size: 3.25rem; width: 3.25rem; height: 3.25rem; }
+}
+
+.dashboard-empty-state-action {
   max-width: 500px;
   color: var(--mat-sys-outline-variant);
-}
-
-.empty-state-icon {
-  font-size: 4rem;
-  width: 4rem;
-  height: 4rem;
-  color: var(--mat-sys-outline-variant);
-  margin-bottom: 1rem;
-}
-
-.empty-state-actions {
   .touch-icon {
     font-size: 2rem;
     width: 2rem;
@@ -60,12 +63,28 @@
   }
 }
 
+.empty-state-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: var(--mat-sys-outline-variant);
+  margin-bottom: 1rem;
+}
+
 .empty-state-button {
   @include mat.button-overrides((
     filled-label-text-color: var(--kip-widget-card-background-color),
     filled-container-color: var(--mat-sys-outline-variant),
     filled-hover-state-layer-opacity: 0.7,
     filled-state-layer-color: var(--mat-sys-primary-fixed-dim)
+  ));
+}
+
+.empty-state-help-button {
+  @include mat.button-overrides((
+    text-label-text-color: var(--mat-sys-outline-variant),
+    text-hover-state-layer-opacity: 0.7,
+    text-state-layer-color: var(--mat-sys-primary-fixed-dim)
   ));
 }
 

@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked } from '@angular/core';
+import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked, OnDestroy, NgZone, inject } from '@angular/core';
 import { animateRotation } from '../../core/utils/svg-animate.util';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
@@ -14,7 +14,7 @@ interface ISVGRotationObject {
     styleUrl: './svg-racesteer.component.scss',
     imports: []
 })
-export class SvgRacesteerComponent {
+export class SvgRacesteerComponent implements OnDestroy {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');
   protected readonly twaIndicator = viewChild.required<ElementRef<SVGGElement>>('twaIndicator');
   protected readonly wptIndicator = viewChild.required<ElementRef<SVGGElement>>('wptIndicator');
@@ -114,6 +114,7 @@ export class SvgRacesteerComponent {
   private speedLineAnimId: number | null = null;
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
+  private readonly ngZone = inject(NgZone);
 
   constructor() {
     effect(() => {
@@ -133,7 +134,7 @@ export class SvgRacesteerComponent {
         this.compass.newValue = heading;
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone, [600, 620]);
           this.updateLaylines();
           this.updateWindSectors();
         }
@@ -184,7 +185,7 @@ export class SvgRacesteerComponent {
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
          if (this.twaIndicator()?.nativeElement) {
-          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], undefined, this.ngZone);
           this.updateLaylines();
         }
       });
@@ -216,7 +217,7 @@ export class SvgRacesteerComponent {
         this.set.oldValue = this.set.newValue;
         this.set.newValue =  driftSet;
         if (this.setIndicator()?.nativeElement) {
-          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], undefined, this.ngZone);
         }
       });
     });
@@ -444,5 +445,36 @@ export class SvgRacesteerComponent {
     while (h3 > 359) { h3 = h3 - 359; }
     while (h3 < 0) { h3 = h3 + 359; }
     return h3;
+  }
+
+  ngOnDestroy(): void {
+    // Cancel layline animations
+    if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
+    if (this.stbdLaylineAnimId) cancelAnimationFrame(this.stbdLaylineAnimId);
+    this.portLaylineAnimId = null;
+    this.stbdLaylineAnimId = null;
+
+    // Cancel wind sector animations
+    if (this.portSectorAnimId) cancelAnimationFrame(this.portSectorAnimId);
+    if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
+    this.portSectorAnimId = null;
+    this.stbdSectorAnimId = null;
+
+    // Cancel any animateRotation frames tracked in WeakMap for known elements
+    const els: (ElementRef<SVGGElement> | undefined)[] = [
+      this.rotatingDial(),
+      this.awaIndicator(),
+      this.twaIndicator(),
+      this.wptIndicator(),
+      this.setIndicator(),
+      this.cogIndicator(),
+    ];
+    for (const ref of els) {
+      const el = ref?.nativeElement;
+      if (!el) continue;
+      const id = this.animationFrameIds.get(el);
+      if (id) cancelAnimationFrame(id);
+      this.animationFrameIds.delete(el);
+    }
   }
 }

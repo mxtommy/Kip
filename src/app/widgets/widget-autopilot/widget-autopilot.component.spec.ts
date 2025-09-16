@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { WidgetAutopilotV2Component } from './widget-autopilot.component';
+import { WidgetAutopilotComponent } from './widget-autopilot.component';
 
 describe('WidgetAutopilotComponent', () => {
-  let component: WidgetAutopilotV2Component;
-  let fixture: ComponentFixture<WidgetAutopilotV2Component>;
+  let component: WidgetAutopilotComponent;
+  let fixture: ComponentFixture<WidgetAutopilotComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [WidgetAutopilotV2Component]
+    imports: [WidgetAutopilotComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WidgetAutopilotV2Component);
+    fixture = TestBed.createComponent(WidgetAutopilotComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

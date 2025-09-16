@@ -207,6 +207,27 @@ html {
 html,
 body {
   height: 100%;
+  overscroll-behavior-y: none; /* block vertical "overscroll" gestures */
+  user-select: none; /* prevent text selection */
+  -webkit-user-select: none; /* Safari/iOS */
+  -ms-user-select: none;     /* old Edge */
+  overflow-x: hidden;
+}
+
+/* Allow selection inside input/textarea and editable areas */
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+  margin: 0;
+  overscroll-behavior-y: none;
+}
+
+/* Make an internal scroller instead of window */
+.app-shell {
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 body {
@@ -221,6 +242,8 @@ body {
   filter: brightness(var(--kip-nightModeBrightness)) var(--kip-nightModeFilters);
   backdrop-filter: brightness(var(--kip-nightModeBrightness));
   transition: filter 0.3s ease;
+  position: relative; /* ensure z-index takes effect on this stacking context */
+  z-index: 1300;      /* sits above overlay (1100) so sidenav will cover the FAB */
 }
 
 .dialogBackdrop {
@@ -234,28 +257,23 @@ body {
   border-left: 5px solid var(--kip-green-color);
 }
 
-/***************************************************
-* Default styles for markdown (help docs) content
-***************************************************/
-.markdown-content a {
-  color: var(--mat-sys-primary);
+/* Make gridstack resize handles larger */
+.grid-stack .ui-resizable-se,
+.grid-stack .ui-resizable-sw,
+.grid-stack .ui-resizable-ne,
+.grid-stack .ui-resizable-nw {
+  width: 32px;
+  height: 32px;
 }
 
-.markdown-content table {
-  border: 1px solid var(--mat-sys-on-background);
-  border-collapse: collapse;
-  width: 100%;
+.grid-stack .ui-resizable-e,
+.grid-stack .ui-resizable-w {
+  width: 32px;
 }
 
-.markdown-content table th,
-.markdown-content table td {
-  border: 1px solid var(--mat-sys-on-background);
-  padding: 8px;
-  text-align: left;
-}
-
-.markdown-content table tr:nth-child(even) {
-  background-color: var(--mat-sys-surface-container-high);
+.grid-stack .ui-resizable-n,
+.grid-stack .ui-resizable-s {
+  height: 32px;
 }
 
 /*************************************************************************
@@ -307,6 +325,19 @@ body {
 #loader .dot:nth-child(7n+1)::before {
   animation: 0.8s linear 0.1s normal none infinite running load;
   background: #e5ab13 none repeat scroll 0 0;
+}
+
+.notification-overlay-panel {
+  position: fixed;              /* ensure it lives in the viewport, not in ancestor stacking contexts */
+  bottom: 20px;
+  left: 20px;
+  z-index: 1100 !important;
+  pointer-events: auto;
+}
+
+/* More specific rule to avoid being overridden by library rules */
+.cdk-overlay-container .cdk-overlay-pane.notification-overlay-panel {
+  z-index: 1100 !important;
 }
 
 #loader .dot:nth-child(7n+2) {

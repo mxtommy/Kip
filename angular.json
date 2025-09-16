@@ -27,14 +27,19 @@
               "src/manifest.json"
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/prismjs/themes/prism-okaidia.css"
             ],
-            "scripts": [],
+            "scripts": [
+              "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/components/prism-bash.min.js",
+              "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/clipboard/dist/clipboard.min.js"
+            ],
             "allowedCommonJsDependencies": [
               "@godind/canvas-gauges",
               "howler",
-              "js-quantities",
-              "hammerjs"
+              "js-quantities"
             ],
             "browser": "src/main.ts"
           },
@@ -94,7 +99,6 @@
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [],
             "styles": [
-              "src/styles.css",
               "src/styles.scss"
             ],
             "assets": [
@@ -134,46 +138,6 @@
               "e2e/**/*.ts",
               "e2e/**/*.html"
             ]
-          }
-        }
-      }
-    },
-    "themeColors": {
-      "projectType": "library",
-      "root": "projects/theme-colors",
-      "sourceRoot": "projects/theme-colors/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:ng-packagr",
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/theme-colors/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/theme-colors/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "tsConfig": "projects/theme-colors/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/theme-colors/**/*.ts",
-              "projects/theme-colors/**/*.html"
-            ],
-            "eslintConfig": "projects/theme-colors/eslint.config.js"
           }
         }
       }

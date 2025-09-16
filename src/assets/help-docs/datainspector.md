@@ -1,4 +1,4 @@
-# Data Inspector
+## Data Inspector
 
 The Data Inspector is a powerful tool in KIP that allows you to view all Signal K paths and the data received from the server in real time. It provides detailed insights into the data being transmitted, including metadata, sources, and supported operations. This guide explains how to use the Data Inspector effectively.
 
@@ -6,10 +6,11 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 ## How to use the Data Inspector
 1. **Filter Paths**:
-   - Use the filter input box to narrow down the list of paths. For example:
+   - Use the filter input box to narrow down the list of paths using any part of the path, source or value. For example:
      - Type `self.` to view paths related to your vessel.
      - Type `environment` to view environmental data like wind or temperature.
      - Type `speed` to view any speed related data like wind speed, max speed, polar speed, etc.
+     - Type `derived` to view all path from source derived-data .
 
 2. **Sort and Navigate**:
    - Click on column headers to sort the data by Path, PUT Support, or Source.
@@ -23,7 +24,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 2. **PUT Support**:
    - You can see if a path supports PUT operations, indicated by a green checkmark in the **PUT Support** column.
-   - For more details on PUT support and how to use it, refer to the Updating Signal K Data Guide.
+   - For more details on PUT support and how to use it, refer to the **Updating Signal K Data** help documentation.
 
 3. **Multiple Data Sources**:
    - The Data Inspector displays how many sources are providing data for each path.
@@ -43,7 +44,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
   - Check if a path supports PUT operations before configuring widgets like the Switch Panel or Slider.
 
 - **Troubleshoot Data Issues**:
-  - The Data Inspector is a good troubleshooting tool, but it should be matched with the Signal K Data Browser when trying to understand raw data and what is going on. The combination of these tools provides a more complete picture of the data and its behavior.
+  - The Data Inspector is a good troubleshooting tool, but it should be matched with the Signal K Data Browser when trying to understand raw data and what is going on. The combination of these tools provides a more complete picture of the data, it's processing and its behavior.
 
 ## Summary
 

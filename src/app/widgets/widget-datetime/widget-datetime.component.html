@@ -1,6 +1,3 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="dateGenericWrapper" (onResize)="onResized($event)">
-    <canvas #canvasValue style="z-index: inherit;" ></canvas>
-    <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"></widget-title>
-  </div>
+<widget-host class="date-wrapper" [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+    <canvas class="date-canvas" #canvasMainRef ></canvas>
 </widget-host>

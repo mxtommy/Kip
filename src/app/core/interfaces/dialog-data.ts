@@ -21,6 +21,15 @@ export interface DialogNameData {
   cancelBtnText: string;
 }
 
+export interface DialogDashboardPageEditorData {
+  title: string;
+  name: string;
+  icon?: string;
+  confirmBtnText?: string;
+  cancelBtnText: string;
+  collapseSplitShell?: boolean;
+}
+
 export interface DialogWidgetOptionsData {
   title: string;
   config: object;

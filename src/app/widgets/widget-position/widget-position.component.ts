@@ -4,18 +4,23 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 
 @Component({
-    selector: 'widget-position',
-    templateUrl: './widget-position.component.html',
-    styleUrls: ['./widget-position.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent]
+  selector: 'widget-position',
+  templateUrl: './widget-position.component.html',
+  styleUrls: ['./widget-position.component.scss'],
+  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
 export class WidgetPositionComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private canvasValue = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasValue');
-  private canvas = inject(CanvasService);
+  private readonly canvas = inject(CanvasService);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private cssWidth = 0;
+  private cssHeight = 0;
+  private titleBitmap: HTMLCanvasElement | null = null;
+  private titleBitmapText: string | null = null;
   private latPos = '';
   private longPos = '';
   protected labelColor = signal<string>(undefined);
@@ -25,7 +30,6 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   private middle = 0;
   private center = 0;
   private fontSizeOffset = 0;
-  private canvasValCtx: CanvasRenderingContext2D;
   private isDestroyed = false;
 
   constructor() {
@@ -65,7 +69,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     effect(() => {
       if (this.theme()) {
         this.setColors();
-        this.drawValue();
+        this.drawWidget();
       }
     });
   }
@@ -75,11 +79,19 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   }
 
   ngAfterViewInit(): void {
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, this.canvasValue().nativeElement.parentElement.getBoundingClientRect());
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.60 / 2); // Two lines
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.canvasValCtx = this.canvasValue().nativeElement.getContext('2d');
-    this.calculateFontSizeAndPositions();
+    this.canvasElement = this.canvasMainRef().nativeElement;
+    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvas.registerCanvas(this.canvasElement, {
+      autoRelease: true,
+      onResize: (w, h) => {
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.calculateFontSizeAndPositions();
+        this.drawWidget();
+      },
+    });
+    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     if (this.isDestroyed) return;
     this.startWidget();
   }
@@ -88,46 +100,37 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     this.unsubscribeDataStream();
     this.setColors();
     this.observeDataStream('longPath', newValue => {
-      if (newValue.data.value ===  null) {
+      if (newValue.data.value === null) {
         this.longPos = '';
       } else if (this.widgetProperties.config.paths['longPath'].convertUnitTo === 'pdeg') {
         this.longPos = newValue.data.value.toFixed(6) + '°';
       } else {
         this.longPos = newValue.data.value.toString();
       }
-      this.drawValue();
+      this.drawWidget();
     });
     this.observeDataStream('latPath', newValue => {
-      if (newValue.data.value ===  null) {
+      if (newValue.data.value === null) {
         this.latPos = '';
       } else if (this.widgetProperties.config.paths['latPath'].convertUnitTo === 'pdeg') {
         this.latPos = newValue.data.value.toFixed(7) + '°';
       } else {
         this.latPos = newValue.data.value.toString();
       }
-      this.drawValue();
+      this.drawWidget();
     });
   }
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
     this.unsubscribeDataStream();
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
-    this.canvasValue().nativeElement.remove();
+    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    catch { /* ignore */ }
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
     this.widgetProperties.config = config;
     this.startWidget();
-  }
-
-  protected onResized(event: ResizeObserverEntry): void {
-    if (event.contentRect.height < 25 || event.contentRect.width < 25) return;
-    this.canvas.setHighDPISize(this.canvasValue().nativeElement, this.canvasValue().nativeElement.parentElement.getBoundingClientRect());
-    this.maxTextHeight = Math.floor(this.canvasValue().nativeElement.height * 0.60 / 2); // Two lines
-    this.maxTextWidth = Math.floor(this.canvasValue().nativeElement.width * 0.85);
-    this.calculateFontSizeAndPositions();
-    this.drawValue();
   }
 
   private setColors(): void {
@@ -136,19 +139,40 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
   }
 
   private calculateFontSizeAndPositions(): void {
-    this.center = this.canvasValue().nativeElement.width / 2;
-    this.middle = this.canvasValue().nativeElement.height * 0.57;
-
+    this.maxTextHeight = Math.floor(this.cssHeight * 0.6 / 2);
+    this.maxTextWidth = Math.floor(this.cssWidth * 0.85);
+    this.center = this.cssWidth / 2;
+    this.middle = this.cssHeight * 0.57;
     const longestString = this.latPos.length > this.longPos.length ? this.latPos : this.longPos;
-    const size = this.canvas.calculateOptimalFontSize(this.canvasValCtx, longestString, this.maxTextWidth, this.maxTextHeight, 'bold')
+    const size = this.canvas.calculateOptimalFontSize(this.canvasCtx, longestString, this.maxTextWidth, this.maxTextHeight, 'bold')
     this.fontSizeOffset = Math.floor(size * 0.0005);
   }
 
-  private drawValue(): void {
-    if (!this.canvasValCtx) return;
-    this.canvas.clearCanvas(this.canvasValCtx, this.canvasValue().nativeElement.width, this.canvasValue().nativeElement.height);
+  private drawWidget(): void {
+    if (!this.canvasCtx) return;
+
+    if (!this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== this.widgetProperties.config.displayName
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(
+        this.widgetProperties.config.displayName,
+        this.labelColor(),
+        'normal',
+        this.cssWidth,
+        this.cssHeight
+      );
+      this.titleBitmapText = this.widgetProperties.config.displayName;
+    }
+
+    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
+
+    if (this.titleBitmap && this.titleBitmap.width > 0 && this.titleBitmap.height > 0) {
+      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
+    }
     this.canvas.drawText(
-      this.canvasValCtx,
+      this.canvasCtx,
       this.latPos,
       this.center,
       this.middle - this.fontSizeOffset,
@@ -161,7 +185,7 @@ export class WidgetPositionComponent extends BaseWidgetComponent implements Afte
     );
 
     this.canvas.drawText(
-      this.canvasValCtx,
+      this.canvasCtx,
       this.longPos,
       this.center,
       this.middle + this.fontSizeOffset,

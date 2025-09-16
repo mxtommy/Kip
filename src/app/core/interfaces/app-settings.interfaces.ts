@@ -25,9 +25,14 @@ export interface IAppConfig {
   autoNightMode: boolean;
   redNightMode: boolean;
   nightModeBrightness: number;
+  isRemoteControl: boolean;
+  instanceName: string;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
+  splitShellEnabled?: boolean;
+  splitShellSide?: 'left' | 'right';
+  splitShellWidth?: number;
 }
 
 export interface IThemeConfig {

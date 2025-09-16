@@ -121,14 +121,32 @@ export class SignalkRequestsService {
   }
 
   /**
-  * Sends request to Signal K server and returns requestId.
-  * @param path Signal K full path. Automatically removes "self" if included in path.
-  * @param value Value to be sent.
-  * @param widgetUUID Optional - Subscriber's Widget UUID to be included as part of
-  * the subscribeRequest Subject response. Enables Widget specific filtering.
-  * @return requestId Identifier for this specific request. Enables Request specific filtering.
-  */
-  public putRequest(path: string, value: unknown, widgetUUID: string): string {
+   * Sends a async PUT request to the Signal K server and returns a requestId for tracking.
+   *
+   * @param path - The Signal K full path to write to. Must be a non-empty string. If
+   * the path starts with 'self.', it will be removed automatically.
+   * @param value - The value to be sent. Can be any type, but must not be undefined.
+   * @param widgetUUID - (Optional) The widget's UUID. Used for filtering responses
+   * specific to the requesting widget.
+   * @returns The Signal K server generated request tracking number
+   * for this PUT.
+   *
+   * Returns null and logs an error if the server did not accept the request or if
+   * the path is missing/empty or the value is undefined.
+   *
+   * @example
+   *   const reqId = putRequest('navigation.lights', true, 'this.widgetProperties.uuid');
+   *   if (reqId) { ... }
+   */
+  public putRequest(path: string, value: unknown, widgetUUID: string): string | null {
+    if (typeof value === 'undefined') {
+      console.error("[Request Service] Undefined value for PUT request");
+      return null;
+    }
+    if (!path) {
+      console.error("[Request Service] Path is required for PUT request");
+      return null;
+    }
     const requestId = UUID.create();
     const noSelfPath = path.replace(/^(self\.)/,""); //no self in path...
     const selfContext = "vessels.self";    // hard coded context. Could be dynamic at some point

@@ -1,4 +1,4 @@
-<gridstack #grid
+<gridstack kipGestures #grid
   [options]="gridOptions()"
   (swipeup)="previousDashboard($event)"
   (swipedown)="nextDashboard($event)"
@@ -6,21 +6,27 @@
   (window:resize)="resizeGridColumns()"
 >
   <!-- Empty state content - shown when grid has no widgets -->
-  <div empty-content class="dashboard-empty-state">
-    <div class="empty-state-content">
-      <div class="empty-state-actions">
-        <mat-icon class="empty-state-icon">dashboard</mat-icon>
-        @if (!dashboard.isDashboardStatic()) {
-          <p class="empty-state-text"><strong>Long press/click and hold anywhere</strong> to add widgets</p>
-          <mat-icon class="touch-icon">touch_app</mat-icon>
-        } @else {
-          <p class="empty-state-text">This empty dashboard is ready to be customized.</p>
-          <button class="empty-state-button" mat-flat-button (click)="editDashboard()">
-            <mat-icon>lock_open</mat-icon>
-            Unlock and Customize
+  <div empty-content class="dashboard-empty-state-container">
+    <div class="dashboard-empty-state-action">
+      <mat-icon class="empty-state-icon">dashboard</mat-icon>
+      @if (!dashboard.isDashboardStatic()) {
+        <p class="empty-state-text"><strong>Long press/click and hold anywhere</strong> to add widgets</p>
+        <mat-icon class="touch-icon">touch_app</mat-icon>
+      } @else {
+        <p class="empty-state-text">This empty dashboard is ready to be customized.</p>
+        <button class="empty-state-button" mat-flat-button (click)="editDashboard()">
+          <mat-icon>lock_open</mat-icon>
+          Unlock and Customize
+        </button>
+      }
+    </div>
+    <div>
+      <div class="empty-state-help">
+          <button class="empty-state-help-button" mat-button (click)="navigateToHelp()">
+            <mat-icon>help</mat-icon>
+            Get Help
           </button>
-        }
-      </div>
+        </div>
     </div>
   </div>
 </gridstack>
@@ -47,7 +53,4 @@
     [activePage]="dashboard.activeDashboard()"
     [dashboards]="dashboard.dashboards()"
   />
-  @if (notificationsInfo().alarmCount > 0) {
-    <notification-badge />
-  }
 }

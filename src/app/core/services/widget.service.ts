@@ -1,13 +1,28 @@
 import { inject, Injectable } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
 
-export const WIDGET_CATEGORIES = ['Basic', 'Gauges', 'Components'] as const;
+export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
 export enum WidgetCategories {
-  Basic = "Basic",
-  Gauges = "Gauges",
-  Components = "Components"
+  Core = "Core",
+  Gauge = "Gauge",
+  Component = "Component",
+  Racing = "Racing"
 }
+/**
+ * WidgetDescription defines the metadata and plugin dependencies for a widget.
+ *
+ * - requiredPlugins: All listed plugins must be enabled for the widget to function.
+ * - optionalPlugins: If present, at least one must be enabled for the widget to function. If requirements are met, missing optional plugins are shown as unavailable but do not block use.
+ *
+ * Example:
+ * {
+ *   name: 'Autopilot',
+ *   ...
+ *   requiredPlugins: [],
+ *   optionalPlugins: ['autopilot', 'pypilot-autopilot-provider']
+ * }
+ */
 export interface WidgetDescription {
   /**
    * The name of the widget, which will be displayed in the widget list.
@@ -25,11 +40,13 @@ export interface WidgetDescription {
    */
   icon: string;
   /**
-   * An array of plugin names that this widget requires to be installed
-   * and enabled on the Signal K server. If the widget does not have any
-   * dependencies, this can be an empty array.
+   * Plugins that must be enabled for the widget to function. If empty, no required plugins.
    */
-  pluginDependency: string[];
+  requiredPlugins: string[];
+  /**
+   * Plugins that are optional for the widget. If present, at least one must be enabled for the widget to function. If omitted or empty, no optional plugin logic is applied.
+   */
+  optionalPlugins?: string[];
   /**
    * The category of the widget, used for filtering in the widget list.
    */
@@ -64,7 +81,7 @@ export interface WidgetDescription {
 
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   isDependencyValid: boolean;
-  pluginsStatus: { name: string; enabled: boolean }[];
+  pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
 }
 
 @Injectable({
@@ -72,31 +89,31 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 })
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
-  private readonly _widgetCategories = ["Basic", "Gauges", "Components"];
-  private readonly _widgetDefinition: WidgetDescription[] = [
+  private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
-      description: 'Displays numeric data in a clear and concise format with option to display minimum and maximum recorded values.',
+      description: 'Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.',
       icon: 'numericWidget',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
     },
     {
       name: 'Text',
-      description: 'Displays text data with customizable color formatting option.',
+      description: 'Displays text data with a customizable color formatting option.',
       icon: 'textWidget',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
     },
@@ -108,8 +125,8 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
     },
@@ -121,10 +138,23 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-position',
       componentClassName: 'WidgetPositionComponent',
+    },
+    {
+      name: 'Static Label',
+      description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
+      icon: 'labelWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Core',
+      requiredPlugins: [],
+      selector: 'widget-label',
+      componentClassName: 'WidgetLabelComponent'
     },
     {
       name: 'Switch Panel',
@@ -134,8 +164,8 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
@@ -147,166 +177,180 @@ export class WidgetService {
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
+      category: 'Core',
+      requiredPlugins: [],
       selector: 'widget-slider',
       componentClassName: 'WidgetSliderComponent'
     },
     {
-      name: 'Static Label',
-      description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
-      icon: 'labelWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Basic',
-      pluginDependency: [],
-      selector: 'widget-label',
-      componentClassName: 'WidgetLabelComponent'
-    },
-    {
-      name: "Simple Linear",
+      name: "Compact Linear",
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
       icon: 'simpleLinearGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
-      pluginDependency: [],
+      category: 'Gauge',
+      requiredPlugins: [],
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
     },
     {
       name: 'Linear',
-      description: 'A horizontal or vertical linear gauge that supports zones highlights. ',
+      description: 'A horizontal or vertical linear gauge that supports zone highlighting.',
       icon: 'linearGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
-      pluginDependency: [],
+      category: 'Gauge',
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
     },
     {
       name: 'Radial',
-      description: 'A radial gauge that supports various configurations, including capacity and measurement dials and zones highlight.',
+      description: 'A radial gauge with configurable capacity and measurement dials plus zone highlighting.',
       icon: 'radialGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
-      pluginDependency: [],
+      category: 'Gauge',
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
     },
     {
       name: 'Compass',
-      description: 'A faceplate or card rotating compass gauge with various cardinal point indicator options.',
+      description: 'A faceplate or card-style rotating compass gauge with multiple cardinal point indicator options.',
       icon: 'compassGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
-      pluginDependency: [],
+      category: 'Gauge',
+      requiredPlugins: [],
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
     {
-      name: 'Steel Style',
+      name: 'Level Gauge',
+      description: 'Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.',
+      icon: 'level',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-heel-gauge',
+      componentClassName: 'WidgetHeelGaugeComponent'
+    },
+    {
+      name: 'Pitch & Roll',
+      description: 'Horizon-style attitude indicator showing live pitch and roll degrees with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
+      icon: 'pitchRollGauge',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-horizon',
+      componentClassName: 'WidgetHorizonComponent'
+    },
+    {
+      name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
       icon: 'steelGauge',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Gauges',
-      pluginDependency: [],
+      category: 'Gauge',
+      requiredPlugins: [],
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
     {
       name: 'Windsteer',
-      description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information',
+      description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',
       icon: 'windsteeringWidget',
       minWidth: 1,
       minHeight: 1,
       defaultWidth: 2,
       defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: [],
+      category: 'Component',
+      requiredPlugins: [],
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
     },
     {
-      name: 'Racesteer',
-      description: 'A dynamic race steering display that fuses polar performance data with live environmental conditions, guiding you to the optimal steering, tacking, and gybing angles for maximum speed. Instantly see how your performance stacks up against competition polars, helping you make smarter tactical decisions on the water.',
-      icon: 'racesteeringWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: ['signalk-polar-performance-plugin'],
-      selector: 'widget-racesteer',
-      componentClassName: 'WidgetRacesteerComponent'
-    },
-    {
       name: 'Freeboard-SK',
-      description: 'Add Freeboard-SK Chart Plotter as a widget with auto sign-in to your dashboard.',
+      description: 'Adds the Freeboard-SK chart plotter as a widget with automatic sign-in to your dashboard.',
       icon: 'freeboardWidget',
       minWidth: 3,
       minHeight: 4,
       defaultWidth: 3,
       defaultHeight: 7,
-      category: 'Components',
-      pluginDependency: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider' ],
+      category: 'Component',
+      requiredPlugins: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider'],
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
     },
     {
-      name: 'Data Chart',
-      description: 'Visualize data on a realtime chart with multiple series pre configured such as averages, SMA, EMA and DEMA. The use the Data Chart widget KIP Dataset must be configured.',
-      icon: 'datachartWidget',
-      minWidth: 1,
-      minHeight: 2,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: [],
-      selector: 'widget-data-chart',
-      componentClassName: 'WidgetDataChartComponent'
-    },
-    {
       name: 'Autopilot Head',
-      description: 'A basic Autopilot Head for supported Signal K v1 API autopilot devices.',
+      description: 'Provides typical autopilot controls for Signal K v1 & v2 Autopilot API devices. Requires a compatible hardware-specific Autopilot plugin for full functionality.',
       icon: 'autopilotWidget',
       minWidth: 2,
       minHeight: 7,
       defaultWidth: 2,
       defaultHeight: 7,
-      category: 'Components',
-      pluginDependency: ['autopilot'],
+      category: 'Component',
+      requiredPlugins: [],
+      optionalPlugins: ['autopilot', 'pypilot-autopilot-provider'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
     {
-      name: 'Countdown Timer',
-      description: 'A simple race start countdown timer. The timer can be started, paused, synched, reset and the countdown duration specified.',
-      icon: 'racetimerWidget',
-      minWidth: 3,
-      minHeight: 3,
-      defaultWidth: 3,
-      defaultHeight: 4,
-      category: 'Components',
-      pluginDependency: [],
-      selector: 'widget-racetimer',
-      componentClassName: 'WidgetRaceTimerComponent',
+      name: 'Realtime Data Chart',
+      description: 'Visualizes data on a real-time chart with multiple preconfigured series including actuals, SMA and period overall averages and Min/Max. Requires the KIP Dataset to be configured.',
+      icon: 'datachartWidget',
+      minWidth: 1,
+      minHeight: 2,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-data-chart',
+      componentClassName: 'WidgetDataChartComponent'
+    },
+    {
+      name: 'Embed Webpage Viewer',
+      description: 'Embeds external web-based applications—such as Grafana graphs or other Signal K apps—into your dashboard for seamless integration. Interaction is disabled by default but can be enabled.',
+      icon: 'embedWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-iframe',
+      componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Racesteer',
+      description: 'A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.',
+      icon: 'racesteeringWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 3,
+      category: 'Racing',
+      requiredPlugins: ['signalk-polar-performance-plugin'],
+      selector: 'widget-racesteer',
+      componentClassName: 'WidgetRacesteerComponent'
     },
     {
       name: 'Racer - Start Line Insight',
@@ -316,53 +360,53 @@ export class WidgetService {
       minHeight: 2,
       defaultWidth: 2,
       defaultHeight: 2,
-      pluginDependency: ['signalk-racer'],
-      category: 'Components',
+      requiredPlugins: ['signalk-racer'],
+      category: 'Racing',
       selector: 'widget-racer-line',
       componentClassName: 'WidgetRacerLineComponent',
     },
     {
       name: 'Racer - Start Timer',
-      description: 'An advanced racing countdown timer that indicates if you are OCS (On Course Side). Set the start line, choose your countdown duration, easily adjust the timer, or set the exact start time. At the start, automatically switches to your desired dashboard—unless you are over early.',
+      description: 'An advanced racing countdown timer that indicates OCS (On Course Side) status. Set the start line, choose or adjust the duration, or specify the exact start time. Automatically switches to the target dashboard at the start unless over early.',
       icon: 'racertimerWidget',
       minWidth: 2,
       minHeight: 2,
       defaultWidth: 2,
       defaultHeight: 2,
-      pluginDependency: ['signalk-racer'],
-      category: 'Components',
+      requiredPlugins: ['signalk-racer'],
+      category: 'Racing',
       selector: 'widget-racer-timer',
       componentClassName: 'WidgetRacerTimerComponent',
     },
     {
-      name: 'Embed Webpage Viewer',
-      description: 'Use this widget to embed a view of an external web based applications, such as Grafana graphs, other Signal K Apps and related tools, in your dashboard for a seamless integration. Interactions with the embedded page are not enabled by default but are supported.',
-      icon: 'embedWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: [],
-      selector: 'widget-iframe',
-      componentClassName: 'WidgetIframeComponent',
+      name: 'Wind Trends',
+      description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
+      icon: 'windtrendsWidget',
+      minWidth: 5,
+      minHeight: 4,
+      defaultWidth: 5,
+      defaultHeight: 4,
+      category: 'Racing',
+      requiredPlugins: [],
+      selector: 'widget-windtrends-chart',
+      componentClassName: 'WidgetWindTrendsChartComponent'
     },
     {
-      name: "Tutorial",
-      description: "KIP's getting started tutorial widget.",
-      icon: 'tutorialWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
-      category: 'Components',
-      pluginDependency: [],
-      selector: 'widget-tutorial',
-      componentClassName: 'WidgetTutorialComponent',
+      name: 'Countdown Timer',
+      description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
+      icon: 'racetimerWidget',
+      minWidth: 3,
+      minHeight: 3,
+      defaultWidth: 3,
+      defaultHeight: 4,
+      category: 'Racing',
+      requiredPlugins: [],
+      selector: 'widget-racetimer',
+      componentClassName: 'WidgetRaceTimerComponent',
     }
   ];
 
-  get kipWidgets(): WidgetDescription[] {
+  get kipWidgets(): readonly WidgetDescription[] {
     return this._widgetDefinition;
   }
 
@@ -376,8 +420,8 @@ export class WidgetService {
    * For each widget, this method:
    * - Checks all unique plugin dependencies using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
-   *   - `isDependencyValid`: `true` if all dependencies are enabled or if there are no dependencies; `false` otherwise.
-   *   - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean }` for every dependency.
+   * - `isDependencyValid`: `true` if all required plugins are enabled and, if optionalPlugins is present, at least one optional plugin is enabled. Otherwise `false`.
+   * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
    *
    * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
    *
@@ -392,9 +436,12 @@ export class WidgetService {
   public async getKipWidgetsWithStatus(): Promise<WidgetDescriptionWithPluginStatus[]> {
     const pluginCache: Record<string, boolean> = {};
 
-    // Collect all unique plugin dependencies
+    // Collect all unique plugin dependencies (required + optional)
     const allDeps = Array.from(
-      new Set(this._widgetDefinition.flatMap(w => w.pluginDependency))
+      new Set(this._widgetDefinition.flatMap(w => [
+        ...(w.requiredPlugins || []),
+        ...(w.optionalPlugins || [])
+      ]))
     );
 
     // Check each unique dependency once
@@ -406,18 +453,25 @@ export class WidgetService {
 
     // Map widgets using the cached results
     return this._widgetDefinition.map(widget => {
-      if (!widget.pluginDependency || widget.pluginDependency.length === 0) {
-        return {
-          ...widget,
-          isDependencyValid: true,
-          pluginsStatus: []
-        };
-      }
-      const pluginsStatus = widget.pluginDependency.map(dep => ({
+      const required = widget.requiredPlugins || [];
+      const optional = widget.optionalPlugins || [];
+
+      const requiredStatus = required.map(dep => ({
         name: dep,
-        enabled: pluginCache[dep]
+        enabled: pluginCache[dep],
+        required: true
       }));
-      const isDependencyValid = pluginsStatus.every(p => p.enabled);
+      const optionalStatus = optional.map(dep => ({
+        name: dep,
+        enabled: pluginCache[dep],
+        required: false
+      }));
+      const pluginsStatus = [...requiredStatus, ...optionalStatus];
+      // Widget is valid if all required plugins are enabled AND (if any optional plugins, at least one is enabled)
+      let isDependencyValid = requiredStatus.every(p => p.enabled);
+      if (isDependencyValid && optional.length > 0) {
+        isDependencyValid = optionalStatus.some(p => p.enabled);
+      }
       return {
         ...widget,
         isDependencyValid,

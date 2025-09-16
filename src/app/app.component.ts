@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { SignalKDeltaService } from './core/services/signalk-delta.service';
@@ -10,219 +11,280 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
+import { NotificationOverlayService } from './core/services/notification-overlay.service';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { GestureDirective } from './core/directives/gesture.directive';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
 import { uiEventService } from './core/services/uiEvent.service';
 import { DialogService } from './core/services/dialog.service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { DatasetService } from './core/services/data-set.service';
 
-
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    imports: [ MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule ]
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
-  private readonly _deltaService = inject(SignalKDeltaService); // Loading of SignalKDeltaService to start collecting deltas
+  private readonly _deltaService = inject(SignalKDeltaService); // force init
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _app = inject(AppService);
   private readonly _dashboard = inject(DashboardService);
+  private readonly _notifications = inject(NotificationsService);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
   public readonly appSettingsService = inject(AppSettingsService);
   public readonly authenticationService = inject(AuthenticationService);
-  private readonly _dataSet = inject(DatasetService); // Early loading of DatasetService
+  private readonly _dataSet = inject(DatasetService); // force init
   private readonly _responsive = inject(BreakpointObserver);
+  private readonly _destroyRef = inject(DestroyRef);
+  private readonly _notificationOverlay = inject(NotificationOverlayService);
+  private readonly _router = inject(Router);
 
+  private notificationHowl?: Howl;
+  private _upgradeShown = false;
 
   protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
+  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly isDashboardStatic = toSignal(this._dashboard.isDashboardStatic$);
+  protected dashboardVisible = signal<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
-  protected notificationsVisibility = 'hidden';
+  private scheduledOpen: number | null = null;
+  private readonly OPEN_DELAY_MS = 300; // should match/ exceed sidenav close animation time
 
-
-  protected themeName: string;
-  private themeNameSub: Subscription;
-  private appNotificationSub: Subscription;
-  private connectionStatusSub: Subscription;
+  // Stable handler refs (prevent leak from rebinding)
+  private readonly _swipeLeftHandler = (e: Event | CustomEvent) => this.onSwipeLeft(e);
+  private readonly _swipeRightHandler = (e: Event | CustomEvent) => this.onSwipeRight(e);
+  private readonly _hotkeyHandler = (key: string, event: KeyboardEvent) => this.handleKeyDown(key, event);
 
   constructor() {
     effect(() => {
-      if (this.appSettingsService.configUpgrade()) {
+      if (!this._upgradeShown && this.appSettingsService.configUpgrade()) {
+        this._upgradeShown = true;
         this._dialog.openFrameDialog({
-          title: 'Configuration Upgrade',
+          title: 'Upgrade Instructions',
           component: 'upgrade-config',
-        }, true).subscribe(data => {
-          if (!data) {return} //clicked cancel
-        });
+        }, true)
+          .pipe(takeUntilDestroyed(this._destroyRef))
+          .subscribe();
+      }
+    });
+
+    // Sequencing: only open overlay when notifications sidenav is closed.
+    // Also ensure overlay is closed if the sidenav opens.
+    // Use effects to react to relevant signals in an injection context.
+    // Effect: open/close overlay based on dashboard static state and notificationsInfo,
+    // but only when the notifications sidenav is closed.
+    // We'll delay opening the overlay until after the sidenav close animation completes
+    // to avoid visual overlap during the closing transition. If the sidenav re-opens
+    // before the delay expires, cancel the scheduled open.
+
+    // initialize dashboardVisible from current URL
+    try {
+      this.dashboardVisible.set(this.isUrlDashboard(this._router.url));
+    } catch { /* ignore */ }
+
+    // update dashboardVisible on navigation (auto-unsubscribes via DestroyRef)
+    this._router.events
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed(this._destroyRef))
+      .subscribe((e: NavigationEnd) => {
+        try {
+          this.dashboardVisible.set(this.isUrlDashboard((e as NavigationEnd).urlAfterRedirects || (e as NavigationEnd).url));
+        } catch { /* ignore */ }
+      });
+
+    effect(() => {
+      const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const sidenavOpen = this.notificationsSidenavOpened();
+
+      // If sidenav is open, immediately close overlay and cancel any scheduled open
+      if (sidenavOpen) {
+        if (this.scheduledOpen) {
+          clearTimeout(this.scheduledOpen as unknown as number);
+          this.scheduledOpen = null;
+        }
+        try { this._notificationOverlay.close(); } catch { /* ignore */ }
+        return;
+      }
+
+      // Sidenav is closed: if we need to show the badge, schedule an open after delay
+      if (shouldShowBadge) {
+        if (this.scheduledOpen) {
+          // already scheduled
+          return;
+        }
+        this.scheduledOpen = window.setTimeout(() => {
+          this.scheduledOpen = null;
+          try { this._notificationOverlay.open(); } catch { /* ignore */ }
+        }, this.OPEN_DELAY_MS);
+      } else {
+        // Nothing to show: ensure no scheduled open is pending and overlay closed
+        if (this.scheduledOpen) {
+          clearTimeout(this.scheduledOpen as unknown as number);
+          this.scheduledOpen = null;
+        }
+        try { this._notificationOverlay.close(); } catch { /* ignore */ }
+      }
+    });
+
+    // Ensure immediate closure if user programmatically opens the sidenav elsewhere.
+    effect(() => {
+      const sidenavOpen = this.notificationsSidenavOpened();
+      if (sidenavOpen) {
+        try {
+          this._notificationOverlay.close();
+        } catch {
+          // ignore
+        }
       }
     });
 
     this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
-  }
 
-  ngOnInit() {
-    // Connection Status Notification sub
-    this.connectionStatusSub = this._connectionStateMachine.status$.subscribe((status: IConnectionStatus) => {
-      this.displayConnectionsStatusNotification(status);
-      }
-    );
+    this._connectionStateMachine.status$
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe((status: IConnectionStatus) => this.displayConnectionsStatusNotification(status));
 
-    // Snackbar Notifications sub
-    this.appNotificationSub = this._app.getSnackbarAppNotifications().subscribe(appNotification => {
-        this._snackBar.open(appNotification.message, 'dismiss', {
+    this._app.getSnackbarAppNotifications()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(appNotification => {
+        this._snackBar.open(appNotification.message, appNotification.action, {
           duration: appNotification.duration,
           verticalPosition: 'top'
         });
 
         if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
-          let sound = new Howl({
-            src: ['assets/notification.mp3'],
-            autoplay: true,
-            preload: true,
-            loop: false,
-            volume: 0.3,
-            onend: function() {
-              // console.log('Finished!');
-              // sound.unload();
-              sound = undefined;
-            },
-            onloaderror: function() {
-              console.log("snackbar: player onload error");
-              sound.unload();
-              sound = undefined;
-            },
-            onplayerror: function() {
-              console.log("snackbar: player locked");
-              this.howlPlayer.once('unlock', function() {
-                this.howlPlayer.play();
-                this.howlPlayer.unload();
-                this.howlPlayer = undefined;
-              });
-              sound.unload();
-              sound = undefined;
-            }
-          });
-          sound.play();
-          Howler.autoUnlock = true;
-          Howler.autoSuspend = false;
+          if (!this.notificationHowl) {
+            this.notificationHowl = new Howl({
+              src: ['assets/notification.mp3'],
+              preload: true,
+              volume: 0.3
+            });
+          }
+          // restart sound for rapid successive notifications
+          this.notificationHowl.stop();
+          this.notificationHowl.play();
         }
-      }
-    );
+      });
+  }
 
-    // Add event listeners for swipe gestures
+  private isUrlDashboard(url: string | null | undefined): boolean {
+    if (!url) return false;
+    // Normalize trailing slash
+    const path = url.split('?')[0].replace(/\/+$/, '');
+    // Matches /dashboard and /dashboard/<id>
+    return path === '/dashboard' || /^\/dashboard(\/\d+)?$/.test(path) || path === '/';
+  }
+
+  ngOnInit() {
     this._uiEvent.addGestureListeners(
-      this.onSwipeLeft.bind(this),
-      this.onSwipeRight.bind(this)
+      this._swipeLeftHandler,
+      this._swipeRightHandler
     );
   }
 
   ngAfterViewInit(): void {
     this._uiEvent.addHotkeyListener(
-      (key, event) => this.handleKeyDown(key, event),
-      { ctrlKey: true, keys: ['arrowright', 'arrowleft'] } // Filter for arrow keys with Ctrl
+      this._hotkeyHandler,
+      { ctrlKey: true, keys: ['arrowright', 'arrowleft'] }
     );
   }
 
   private handleKeyDown(key: string, event: KeyboardEvent): void {
-    if (key === 'arrowright') {
-      this.onSwipeRight(event);
-    } else if (key === 'arrowleft') {
-      this.onSwipeLeft(event);
-    } else if (key === 'escape') {
-      this.backdropClicked();
+    switch (key) {
+      case 'arrowright':
+        this.onSwipeRight(event);
+        break;
+      case 'arrowleft':
+        this.onSwipeLeft(event);
+        break;
+      case 'escape':
+        this.backdropClicked();
+        break;
     }
   }
 
   protected escapeKeyPressed(key: string): void {
-    key= key.toLocaleLowerCase();
-    if (key === 'escape') {
-      this.backdropClicked();
-    }
+    key = key.toLowerCase();
+    if (key === 'escape') this.backdropClicked();
   }
 
   private displayConnectionsStatusNotification(connectionStatus: IConnectionStatus) {
     const message = connectionStatus.message;
-
-    // Use legacy operation codes for compatibility
     switch (connectionStatus.operation) {
-      case 0: // not connected
+      case 0:
         this._app.sendSnackbarNotification(message, 5000, true);
         break;
-
-      case 1: // connecting
-        this._app.sendSnackbarNotification(message, 5000, true); // Increased from 2000 to see it longer
-       break;
-
-      case 2: // connected
-        this._app.sendSnackbarNotification(message, 2000, false);
+      case 1:
+      case 2:
         break;
-
-      case 3: // connection error/retrying
-        this._app.sendSnackbarNotification(message, 5000, false); // Changed from 0 (indefinite) to 5000 to avoid blocking
+      case 3:
+        this._app.sendSnackbarNotification(message, 3000, false, "");
         break;
-
-      case 4: // resetting
-        this._app.sendSnackbarNotification(message, 3000, true);
+      case 4:
+        this._app.sendSnackbarNotification(message, 3000, true, "");
         break;
-
-      case 5: // permanent failure
+      case 5:
         this._app.sendSnackbarNotification(message, 0, false);
         break;
-
       default:
-        console.error(`[AppComponent] Unknown operation code: ${connectionStatus.operation} for state: ${connectionStatus.state}`);
+        console.error('[AppComponent] Unknown operation code:', connectionStatus.operation);
         this._app.sendSnackbarNotification(`Unknown connection status: ${connectionStatus.state}`, 0, false);
-        break;
     }
   }
 
-  protected onSwipeRight(e: Event): void {
+  protected onSwipeRight(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.actionsSidenavOpened.set(false);
         this.notificationsSidenavOpened.set(true);
       } else {
         this.actionsSidenavOpened.set(false);
-        this.notificationsSidenavOpened.update(opened => !opened);
+        this.notificationsSidenavOpened.update(o => !o);
       }
     }
   }
 
   protected backdropClicked(): void {
-    this.notificationsSidenavOpened.update(opened => opened ? !opened : false);
-    this.actionsSidenavOpened.update(opened => opened ? !opened : false);
+    this.notificationsSidenavOpened.update(o => o ? !o : false);
+    this.actionsSidenavOpened.update(o => o ? !o : false);
   }
 
-  protected onSwipeLeft(e: Event): void {
+  protected onSwipeLeft(e: Event | CustomEvent): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      e.preventDefault();
+      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.notificationsSidenavOpened.set(false);
         this.actionsSidenavOpened.set(true);
       } else {
         this.notificationsSidenavOpened.set(false);
-        this.actionsSidenavOpened.update(opened => !opened);
+        this.actionsSidenavOpened.update(o => !o);
       }
     }
   }
 
   ngOnDestroy() {
-    this.themeNameSub.unsubscribe();
-    this.appNotificationSub.unsubscribe();
-    this.connectionStatusSub.unsubscribe();
     this._uiEvent.removeGestureListeners(
-      this.onSwipeLeft.bind(this),
-      this.onSwipeRight.bind(this)
+      this._swipeLeftHandler,
+      this._swipeRightHandler
     );
-    this._uiEvent.removeHotkeyListener(this.handleKeyDown.bind(this));
+    this._uiEvent.removeHotkeyListener(this._hotkeyHandler);
+    this.notificationHowl?.unload();
+    this.notificationHowl = undefined;
+    // clear any pending scheduled open to avoid orphaned timer running after destroy
+    if (this.scheduledOpen) {
+      clearTimeout(this.scheduledOpen as unknown as number);
+      this.scheduledOpen = null;
+    }
   }
 }

@@ -8,9 +8,14 @@ export const DefaultAppConfig: IAppConfig = {
   "autoNightMode": true,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
+  "isRemoteControl": false,
+  "instanceName": "",
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,
+  "splitShellEnabled": true,
+  "splitShellSide": "left",
+  "splitShellWidth": 0.3
 }
 
 export const DefaultThemeConfig: IThemeConfig = {

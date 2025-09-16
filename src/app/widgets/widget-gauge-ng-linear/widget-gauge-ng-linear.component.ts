@@ -292,7 +292,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       fontTitleWeight: "bold",
 
       barLength: isVertical ? 80 : 90,
-      barWidth: isTicks ? 30 : 60,
+      barWidth: isTicks ? isNeedle ? 0 : 30 : 60,
       barProgress: true,
       barBeginCircle: 0,
       barStrokeWidth: 0,
@@ -300,14 +300,14 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       needle: isNeedle,
       needleType: this.widgetProperties.config.gauge.useNeedle ? "arrow" : "line",
-      needleShadow: false,
+      needleShadow: true,
       needleSide: "both",
-      needleStart: this.widgetProperties.config.gauge.useNeedle ? 22 : -45,
-      needleEnd: this.widgetProperties.config.gauge.useNeedle ? 120 : 55,
+      needleStart: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 200 : 155 : -45,
+      needleEnd: this.widgetProperties.config.gauge.useNeedle ? isVertical ? 175 : 180 : 55,
 
-      colorNeedleEnd: "",
-      colorNeedleShadowUp: "",
-      colorNeedleShadowDown: "black",
+      colorNeedleEnd: getColors(this.widgetProperties.config.color, this.theme()).color,
+      colorNeedleShadowUp: getColors(this.widgetProperties.config.color, this.theme()).color,
+      colorNeedleShadowDown: getColors(this.widgetProperties.config.color, this.theme()).color,
 
       units: this.widgetProperties.config.paths['gaugePath'].convertUnitTo,
       fontUnits: "Roboto",
@@ -355,12 +355,12 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
 
       majorTicksInt: this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1,
       majorTicksDec: this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2,
-      numberSide: "left",
-      fontNumbersSize: isTicks ? 25 : 0,
-      numbersMargin: isVertical ? -3 : -5,
+      numberSide: isNeedle ? "right" : "left",
+      fontNumbersSize: isTicks ? isVertical ? 22 : 30 : 0,
+      numbersMargin: isVertical ? isNeedle ? -7 : -3 : isNeedle ? -33 : -5,
       tickSide: "left",
-      ticksWidth: isTicks ? 10 : 0,
-      ticksPadding: isTicks ? isVertical ? 5 : 8 : 0,
+      ticksWidth: isTicks ? isNeedle ? isVertical ? 15 : 10 : 10 : 0,
+      ticksPadding: isTicks ? isVertical ? isNeedle ? 0 : 5 : isNeedle ? 9 : 8 : 0,
       strokeTicks: isTicks,
       minorTicks: isTicks ? 2 : 0,
       ticksWidthMinor: isTicks ? 6 : 0,
@@ -431,7 +431,7 @@ export class WidgetGaugeNgLinearComponent extends BaseWidgetComponent implements
       colorBarProgress: this.widgetProperties.config.gauge.useNeedle ? "" : themePaletteColor,
       colorBarProgressEnd: '',
       colorNeedle: this.widgetProperties.config.gauge.useNeedle ? themePaletteColor : themePaletteDarkColor,
-      needleWidth: this.widgetProperties.config.gauge.useNeedle ? 20 : 0,
+      needleWidth: this.widgetProperties.config.gauge.useNeedle ? 45 : 0,
     });
   }
 

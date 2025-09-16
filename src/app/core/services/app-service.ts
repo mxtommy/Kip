@@ -1,15 +1,19 @@
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import * as packageInfo from '../../../../package.json';
+import packageInfo from '../../../../package.json';
+import { RemoteDashboardsService } from './remote-dashboards.service';
 
 /**
  * Snack-bar notification message interface.
  */
 export interface AppNotification {
   message: string;
+  action?: string;
   duration: number;
   silent: boolean;
 }
@@ -75,8 +79,11 @@ export class AppService {
   public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
   private _cssThemeColorRoles: ITheme = null;
-  private _settings = inject(AppSettingsService);
-  private _data = inject(DataService);
+  private readonly _settings = inject(AppSettingsService);
+  private readonly _data = inject(DataService);
+  private readonly _iconRegistry = inject(MatIconRegistry);
+  private readonly _sanitizer = inject(DomSanitizer);
+  private readonly _remote = inject(RemoteDashboardsService);
   public isNightMode = signal<boolean>(false);
   private _useAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
   private _theme = toSignal(this._settings.getThemeNameAsO(), { requireSync: true });
@@ -88,6 +95,11 @@ export class AppService {
   public readonly osVersion = signal<string>('Unknown');
 
   constructor() {
+    // Register SVG icon set globally (only once)
+    this._iconRegistry.addSvgIconSet(
+      this._sanitizer.bypassSecurityTrustResourceUrl('assets/svg/icons.svg')
+    );
+
     effect(() => {
       if (this._theme() === 'light-theme') {
         document.body.classList.toggle('light-theme', this._theme() === 'light-theme');
@@ -140,8 +152,8 @@ export class AppService {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    */
-  public sendSnackbarNotification(message: string, duration = 10000, silent = false) {
-    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent});
+  public sendSnackbarNotification(message: string, duration = 10000, silent = false, action = "Dismiss") {
+    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent, action: action });
   }
 
   /**

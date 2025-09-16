@@ -1,0 +1,91 @@
+.server-status {
+  background-color: var(--kip-contrast-dimmer-color);
+  margin-top: 20px;
+  margin: 1% 5% 0% 5%;
+  padding: 10px 20px 20px 20px;
+}
+
+.flex-item-chart {
+  flex: 1 1 250px;
+  position: relative;
+  margin: 0px;
+  height: 150px;
+  width: 100%;
+  border: 2px inset;
+  border-color: var(--kip-contrast-color)
+}
+
+.connect-btn {
+  margin-left: 15px;
+}
+
+.credentials-btn {
+  margin: 7px 0px 4px 20px;
+}
+
+.connect-table {
+  width: 100%;
+  vertical-align: middle;
+}
+.connectUrlInput {
+  width: 100%;
+}
+
+.url-cell {
+  width: 100%;
+}
+
+.connect-cell {
+  width: fit-content;
+  vertical-align: middle;
+}
+
+.flex-item-detail {
+  flex: 0 0 290px;
+}
+
+.fit {
+  width: fit-content;
+}
+
+tr {
+  vertical-align: top;
+}
+
+.tableCellLabel {
+  display: table-cell;
+  text-align: right;
+  padding: 5px;
+}
+
+.tableCellData {
+  display: table-cell;
+  margin: 0px !important;
+  padding: 5px;
+}
+
+.activity-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  gap:10px
+}
+
+.activity-graph-container {
+  height: 100px;
+  width: 230px;
+  padding: 23px 0px 0px 15px;
+}
+
+.activity-graph {
+  border: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--mat-sys-background);
+}
+
+.info-container {
+  height: 123px;
+  align-content: center;
+  font-size: 11px;
+}

@@ -1,0 +1,367 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "KIP Remote Displays API",
+    "description": "API endpoints to list KIP displays and control the active screen for a given KIP instance via Signal K self.displays tree.\n\nUsage:\n- List displays:\n  curl -s http://localhost:3000/plugins/kip/displays\n- Read a display's screens:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}\n- Set a display entry:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"displayName\":\"Mast\"}' http://localhost:3000/plugins/kip/displays/{displayId}\n- Get active screen:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen\n- Set active screen:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen",
+    "termsOfService": "http://signalk.org/terms/",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "externalDocs": {
+    "url": "http://signalk.org/specification/",
+    "description": "Signal K specification."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Displays",
+      "description": "KIP display discovery and control."
+    }
+  ],
+  "components": {
+    "schemas": {
+      "DisplayInfo": {
+        "type": "object",
+        "properties": {
+          "displayId": {
+            "type": "string",
+            "description": "KIP instance UUID"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "displayId"
+        ]
+      },
+      "ScreenItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon"
+        ]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "SUCCESS"
+            ]
+          },
+          "statusCode": {
+            "type": "integer",
+            "enum": [
+              200
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "statusCode"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "FAILED"
+            ]
+          },
+          "statusCode": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "statusCode",
+          "message"
+        ]
+      },
+      "ActiveScreenSetRequest": {
+        "type": "object",
+        "properties": {
+          "screenIdx": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Index of active screen or null to clear"
+          }
+        }
+      },
+      "AnyObjectOrNull": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": true
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "parameters": {
+      "DisplayIdParam": {
+        "in": "path",
+        "required": true,
+        "name": "displayId",
+        "description": "KIP instance UUID",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "JAUTHENTICATION"
+      }
+    }
+  },
+  "security": [
+    {
+      "cookieAuth": []
+    },
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/plugins/kip/displays": {
+      "get": {
+        "tags": [
+          "Displays"
+        ],
+        "summary": "List available KIP displays",
+        "responses": {
+          "200": {
+            "description": "List of KIP instances discovered under self.displays",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisplayInfo"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/kip/displays/{displayId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DisplayIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Displays"
+        ],
+        "summary": "List screens for a display (self.displays.{displayId}.value.screens)",
+        "responses": {
+          "200": {
+            "description": "Array of screen entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScreenItem"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Displays"
+        ],
+        "summary": "Set display entry under self.displays.{displayId}",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnyObjectOrNull"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/kip/displays/{displayId}/activeScreen": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DisplayIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Displays"
+        ],
+        "summary": "Get active screen index for display",
+        "responses": {
+          "200": {
+            "description": "Active screen index or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Displays"
+        ],
+        "summary": "Set active screen index for display",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActiveScreenSetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

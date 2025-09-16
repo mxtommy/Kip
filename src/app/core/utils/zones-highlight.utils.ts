@@ -20,6 +20,8 @@ import { UnitsService } from "../services/units.service";
  * @param {UnitsService} unitsService - Service used to convert zone bounds to the target unit.
  * @param {number} lowerScale - The minimum value of the gauge's display range.
  * @param {number} upperScale - The maximum value of the gauge's display range.
+ * @param {boolean} [invert=false] When true, the gauge's scale is inverted (lowerScale > upperScale).
+ * The function normalizes internally so returned highlight ranges are always in ascending numeric order.
  * @returns {IDataHighlight[]} Array of highlight objects, each with a from, to, and color property.
  *
  * @example
@@ -33,8 +35,8 @@ import { UnitsService } from "../services/units.service";
  * );
  * // highlights: [{from: 0, to: 5, color: '#00ff00'}, ...]
  */
-export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: string, unitsService: UnitsService, lowerScale: number, upperScale: number): IDataHighlight[] {
-  const gaugeZonesHighlight: IDataHighlight[] = [];
+export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: string, unitsService: UnitsService, lowerScale: number, upperScale: number, invert = false): IDataHighlight[] {
+  let gaugeZonesHighlight: IDataHighlight[] = [];
   // Sort zones based on lower value
   const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);
   for (const zone of sortedZones) {
@@ -86,5 +88,10 @@ export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: st
 
     gaugeZonesHighlight.push({from: lower, to: upper, color: color});
   };
+  // If the scale is inverted, swap from/to for each highlight segment
+  if (invert) {
+    gaugeZonesHighlight = gaugeZonesHighlight.map(h => ({ from: upperScale - h.to, to: upperScale - h.from, color: h.color }));
+  }
+
   return gaugeZonesHighlight;
 }

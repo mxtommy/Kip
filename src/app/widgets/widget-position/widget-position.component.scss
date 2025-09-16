@@ -4,15 +4,14 @@
   height: 100%;
 }
 
-.textGenericWrapper {
-  position: relative;
+.position-wrapper {
   width: 100%;
   height: 100%;
+  min-height: 1px;
 }
 
-.canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: inherit;
+.position-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }

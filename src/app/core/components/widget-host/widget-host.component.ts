@@ -1,5 +1,6 @@
 import { Component, inject, input, model } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { GestureDirective } from '../../directives/gesture.directive';
 import { DialogService } from '../../services/dialog.service';
 import { IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import { DashboardService } from '../../services/dashboard.service';
@@ -9,7 +10,7 @@ import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widg
 @Component({
   selector: 'widget-host',
   standalone: true,
-  imports: [ MatCardModule, MatBottomSheetModule ],
+  imports: [ MatCardModule, MatBottomSheetModule, GestureDirective ],
   templateUrl: './widget-host.component.html',
   styleUrl: './widget-host.component.scss'
 })
@@ -23,8 +24,11 @@ export class WidgetHostComponent {
   constructor() {
   }
 
-  public openWidgetOptions(): void {
+  public openWidgetOptions(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
+      // Prevent opening Options Dialogue if the widget has no config property
+      if (!this.config()) return;
       this._dialog.openWidgetOptions({
         title: 'Widget Options',
         config: this.config(),
@@ -38,9 +42,14 @@ export class WidgetHostComponent {
     }
   }
 
-  public openBottomSheet(): void {
+  public openBottomSheet(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
-      const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent);
+      // Detect Linux Firefox for workaround
+      const isLinuxFirefox = typeof navigator !== 'undefined' &&
+        /Linux/.test(navigator.platform) &&
+        /Firefox/.test(navigator.userAgent);
+      const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
       sheetRef.afterDismissed().subscribe((action) => {
         switch (action) {
           case 'delete':

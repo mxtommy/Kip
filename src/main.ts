@@ -1,4 +1,4 @@
-import { enableProdMode, Injectable, importProvidersFrom, provideAppInitializer } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideAppInitializer } from '@angular/core';
 import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -19,32 +19,13 @@ import { DataService } from './app/core/services/data.service';
 import { AuthenticationService } from './app/core/services/authentication.service';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
-import { HAMMER_GESTURE_CONFIG, HammerGestureConfig, BrowserModule, HammerModule, bootstrapApplication } from '@angular/platform-browser';
+import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
-import 'hammerjs';
-
-/**
- * Injectable class that override Hammerjs default gesture configuration.
- *
- * @export
- * @class kipHammerConfig
- * @extends {HammerGestureConfig}
- */
-@Injectable()
-export class kipHammerConfig extends HammerGestureConfig {
-  // see: https://angular.dev/api/platform-browser/HammerGestureConfig
-  overrides = {
-    // Override default hammerjs gestures configuration
-    swipe: { direction: Hammer.DIRECTION_ALL, velocity: 0.3, threshold: 10, domEvents: true },
-    press: { time: 500, domEvents: true },
-  };
-  options = {
-    domEvents: true,
-  };
-}
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { AppOverlayContainer } from './app/core/utils/app-overlay-container';
 
 if (environment.production) {
   enableProdMode();
@@ -52,10 +33,7 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    importProvidersFrom(
-      BrowserModule,
-      HammerModule
-    ),
+  importProvidersFrom(BrowserModule),
     // Imports Interceptor that capture http requests and inserts authorization
     // Token automatically in every httpClient outbound calls.
     // NOTE: it does not work for WebSockets. Only http/REST calls
@@ -63,11 +41,6 @@ bootstrapApplication(AppComponent, {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthenticationInterceptor,
       multi: true,
-    },
-    // Binds KIP's Hammerjs configuration overrides to a provider
-    {
-      provide: HAMMER_GESTURE_CONFIG,
-      useClass: kipHammerConfig
     },
     // MatDialog App wide default config
     {
@@ -111,6 +84,12 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
     provideAnimations(),
+    // Ensure CDK Overlay container is created inside the application root so
+    // overlays share the same stacking context as the app elements (sidenavs, etc.)
+    {
+      provide: OverlayContainer,
+      useClass: AppOverlayContainer,
+    },
     /**
      * Bootstrap function that starts network, authentication and storage service
      * and gets the configuration from Signal K before app.component is started.

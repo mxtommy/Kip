@@ -1,6 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, effect, signal, computed } from '@angular/core';
 import { MarkdownComponent } from 'ngx-markdown';
-import { HttpClient } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
@@ -14,38 +14,46 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './app-help.component.html',
   styleUrl: './app-help.component.scss'
 })
-export class AppHelpComponent implements OnInit {
+export class AppHelpComponent {
   protected readonly pageTitle = 'Help';
-  private http = inject(HttpClient);
-  private _router = inject(Router);
-  protected helpFiles: { title: string; file: string }[] = [];
-  protected selectedFile = '';
+  private readonly _router = inject(Router);
 
-  ngOnInit(): void {
-    this.http.get<{ title: string; file: string }[]>('assets/help-docs/menu.json')
-      .subscribe({
-        next: data => {
-          this.helpFiles = data.filter(item => this.isValidFile(item.file));
-          if (this.helpFiles.length > 0) {
-            this.selectedFile = this.helpFiles[0].file; // Load first file by default
-          }
-        },
-        error: err => {
-          console.error('[Help] Failed to load help menu:', err);
-          this.helpFiles = [];
-        }
-      });
-  }
+  // Resource for the help menu JSON (reactive & eagerly fetched)
+  private readonly _helpMenuRes = httpResource<{ title: string; file: string }[]>(() => 'assets/help-docs/menu.json');
+
+  // Raw list (filtered) as a signal
+  protected readonly helpFiles = computed(() => {
+    if (this._helpMenuRes.hasValue()) {
+      return (this._helpMenuRes.value() ?? []).filter(item => item.file.endsWith('.md'));
+    }
+    return [] as { title: string; file: string }[];
+  });
+
+  // Selected file signal (empty until helpFiles first populated)
+  protected selectedFile = signal<string>('');
+
+  // Initialize default selection reactively when data arrives first time
+  private _initSelectionOnce = signal<boolean>(false);
+  private _syncEffect = effect(() => {
+    const files = this.helpFiles();
+    if (!this._initSelectionOnce() && files.length > 0) {
+      this.selectedFile.set(files[0].file);
+      this._initSelectionOnce.set(true);
+    }
+  });
+
+  protected hasError = computed(() => this._helpMenuRes.error() != null);
+  protected isLoading = computed(() => this._helpMenuRes.isLoading());
 
   protected selectFile(file: string): void {
-    this.selectedFile = file;
+    this.selectedFile.set(file);
   }
 
-  private isValidFile(filePath: string): boolean {
-    return filePath.endsWith('.md');
+  protected backPage() {
+    this._router.navigate(['/settings']);
   }
 
-  protected closePage() {
+  protected closePage(): void {
     this._router.navigate(['/dashboard']);
   }
 }
