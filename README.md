@@ -5,7 +5,7 @@
 
 **KIP is the most popular Signal K MFD and marine instrument panel: plug-and-play, touch-optimized, pre-installed, and ready-to-use across all devices.**
 
-Unlike many dashboards, KIP comes **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
+Unlike many instrument panels, KIP offers full MFD functionnality and is **automatically included with Signal K distributions**, so there’s nothing extra to install or configure. Simply start your [Signal K](https://signalk.org) server, open KIP in a browser, and it’s ready to go. A single instance works everywhere — no per-device deployment is needed.
 
 KIP is designed for sailors and boaters who want:
 
@@ -28,6 +28,7 @@ Key features include:
 - **Multiple User Profiles**: Tailor configurations for different roles, devices, or use cases.
 - **Cross-Device Compatibility**: Access KIP remotely on any device by navigating to `http://<Signal K Server URL>:<port>/@mxtommy/kip`.
 - **Remote Control**: Control which dashboard is shown on another KIP instance (e.g., a mast display, hard-to-reach screen, or a non‑touch device).
+- **Chartplotter Mode**: An optimized Freeboard-SK and KIP split mode offering unparalleled chart navigation and dashboards integration for full-on dedicated MFD feel, Signal K native.
 - **Kiosk Mode**: Run as a single full-screen application; mast, helm, portable display used as a dedicated instrument panel, a chartplotter, etc.
 
 KIP is open-source under the MIT license, built by the community and 100% free. [Join the community](https://discord.gg/AMDYT2DQga) on Discord or contribute to the project on GitHub!
@@ -68,7 +69,12 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
 - Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
-- Seamlessly switch between multiple configuration profles for different roles and devices or use cases.
+- Seamlessly switch between multiple configuration profiles for different roles and devices or use cases.
+
+### Chartplotter Mode
+Keep a live Freeboard‑SK chart visible while switching dashboards for an MFD‑style workflow. The chart persists (no reload or flicker), you can choose its side, collapse it per‑dashboard for full data pages, and drag resize the split. Layout auto‑stacks in portrait / narrow screens. See the dedicated Chartplotter Mode help page for setup, performance tips, and troubleshooting.
+
+![Chartplotter Mode](./images/ChartPlotterMode.png)
 
 ## User Experience
 
