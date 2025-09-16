@@ -276,30 +276,6 @@ body {
   height: 32px;
 }
 
-/***************************************************
-* Default styles for markdown (help docs) content
-***************************************************/
-.markdown-content a {
-  color: var(--mat-sys-primary);
-}
-
-.markdown-content table {
-  border: 1px solid var(--mat-sys-on-background);
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.markdown-content table th,
-.markdown-content table td {
-  border: 1px solid var(--mat-sys-on-background);
-  padding: 8px;
-  text-align: left;
-}
-
-.markdown-content table tr:nth-child(even) {
-  background-color: var(--mat-sys-surface-container-high);
-}
-
 /*************************************************************************
 *  Loading Spinner styles. Used during app bootstrap process (while
 *  executing app-initNetwork.service but before Angular has fully loaded)

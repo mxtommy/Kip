@@ -27,9 +27,15 @@
               "src/manifest.json"
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/prismjs/themes/prism-okaidia.css"
             ],
-            "scripts": [],
+            "scripts": [
+              "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/components/prism-bash.min.js",
+              "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/clipboard/dist/clipboard.min.js"
+            ],
             "allowedCommonJsDependencies": [
               "@godind/canvas-gauges",
               "howler",
