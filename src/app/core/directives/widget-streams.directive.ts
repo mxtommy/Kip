@@ -2,8 +2,9 @@ import { Directive, DestroyRef, inject, input } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil } from 'rxjs';
+import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WidgetRuntimeDirective } from './widget-runtime.directive';
 
 @Directive({
   selector: '[widget-streams]',
@@ -16,6 +17,7 @@ export class WidgetStreamsDirective {
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private streams: { pathName: string; observable: Observable<IPathUpdate> }[] | undefined;
   private reset$ = new Subject<void>();
 
@@ -28,7 +30,7 @@ export class WidgetStreamsDirective {
   }
 
   createObservables(): void {
-  const cfg = this.streamsConfig();
+    const cfg = this.runtime?.config() ?? this.streamsConfig();
     if (!cfg?.paths) { this.streams = undefined; return; }
     const entries = Object.entries(cfg.paths);
     if (!entries.length) { this.streams = undefined; return; }
@@ -41,7 +43,7 @@ export class WidgetStreamsDirective {
   }
 
   observe(pathName: string, next: (value: IPathUpdate) => void): void {
-    const cfg = this.streamsConfig();
+    const cfg = this.runtime?.config() ?? this.streamsConfig();
     if (!cfg) return;
     if (!this.streams || !this.streams.length) this.createObservables();
 
@@ -67,14 +69,17 @@ export class WidgetStreamsDirective {
 
     if (pathType === 'number') {
       data$ = data$.pipe(
-        map(x => ({ data: { value: toUnit(x.data.value as number), timestamp: x.data.timestamp }, state: x.state } as IPathUpdate)),
-        sampleTime(sample),
+        map(x => ({ data: { value: toUnit(x.data.value as number), timestamp: x.data.timestamp }, state: x.state } as IPathUpdate))
       );
     } else if (pathType === 'string' || pathType === 'Date') {
-      data$ = data$.pipe(sampleTime(sample));
+      // pass-through; sampling handled below
     } else { // boolean
-      data$ = data$.pipe(sampleTime(sample));
+      // pass-through; sampling handled below
     }
+
+    const initial$ = data$.pipe(take(1));
+    const sampled$ = data$.pipe(sampleTime(sample));
+    data$ = merge(initial$, sampled$);
 
     if (enableTimeout) {
       data$ = data$.pipe(

@@ -9,6 +9,7 @@ import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { WidgetMetaDirective } from '../../core/directives/widget-meta.directive';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
 import { AppService } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -18,7 +19,7 @@ import { cloneDeep, merge } from 'lodash-es';
   selector: 'widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective, WidgetMetaDirective]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective, WidgetMetaDirective, WidgetRuntimeDirective]
 })
 export class WidgetNumericComponent extends BaseWidget implements AfterViewInit, OnInit, OnDestroy {
   @Input({ required: true }) protected widgetProperties!: IWidget;
@@ -174,7 +175,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   }
 
   protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
+    this.widgetProperties.config = cloneDeep(config);
 
     this.manageDatasetAndChart();
 
@@ -183,8 +184,6 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       if (this.showMiniChart() && this.miniChart()) {
         this.setMiniChart();
       }
-      this.metaDir()?.reset();
-      this.metaDir()?.observe();
       this.startWidget();
       this.drawWidget();
     });

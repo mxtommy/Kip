@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService } from '../services/data.service';
 import { ISkZone } from '../interfaces/signalk-interfaces';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import { WidgetRuntimeDirective } from './widget-runtime.directive';
 
 @Directive({
   selector: '[widget-meta]',
@@ -17,10 +18,11 @@ export class WidgetMetaDirective {
 
   private readonly dataService = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private reset$ = new Subject<void>();
 
   observe(pathKey?: string): void {
-    const cfg = this.metaConfig();
+    const cfg = this.runtime?.config() ?? this.metaConfig();
     if (!cfg?.paths || Object.keys(cfg.paths).length === 0) return;
 
     const key = pathKey || Object.keys(cfg.paths)[0];
