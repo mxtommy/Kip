@@ -1,8 +1,8 @@
-<widget-host class="numeric-wrapper"  [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" widget-runtime [runtimeWidget]="widgetProperties" [runtimeDefaultConfig]="defaultConfig" [runtimeConfig]="widgetProperties.config" widget-streams [streamsConfig]="widgetProperties.config" [streamsWidget]="widgetProperties" widget-meta [metaConfig]="widgetProperties.config" [metaWidget]="widgetProperties">
+<widget-host2 class="numeric-wrapper"  [config]="widgetProperties.config" [id]="widgetProperties.uuid" [runtimeWidget]="widgetProperties" [runtimeDefaultConfig]="defaultConfig">
   @if (showMiniChart()) {
     <minichart
       [theme]="this.theme()"
       />
   }
   <canvas #canvasMainRef class="numeric-canvas"></canvas>
-</widget-host>
+</widget-host2>

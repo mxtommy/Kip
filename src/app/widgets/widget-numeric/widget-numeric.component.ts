@@ -1,6 +1,6 @@
 import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild, signal, Input } from '@angular/core';
 import { States } from '../../core/interfaces/signalk-interfaces';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { WidgetHost2Component } from '../../core/components/widget-host2/widget-host2.component';
 import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
@@ -8,9 +8,9 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { WidgetMetaDirective } from '../../core/directives/widget-meta.directive';
-import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { IPathUpdate } from '../../core/services/data.service';
 import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { AppService } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { cloneDeep, merge } from 'lodash-es';
@@ -19,7 +19,7 @@ import { cloneDeep, merge } from 'lodash-es';
   selector: 'widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective, WidgetMetaDirective, WidgetRuntimeDirective]
+  imports: [WidgetHost2Component, NgxResizeObserverModule, MinichartComponent]
 })
 export class WidgetNumericComponent extends BaseWidget implements AfterViewInit, OnInit, OnDestroy {
   @Input({ required: true }) protected widgetProperties!: IWidget;
@@ -27,7 +27,6 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   private streamsDir = viewChild(WidgetStreamsDirective);
-  private metaDir = viewChild(WidgetMetaDirective);
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private cssWidth = 0;
@@ -49,9 +48,38 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   private maxValueTextHeight = 0;
   private maxMinMaxTextWidth = 0;
   private maxMinMaxTextHeight = 0;
+  private streamRegistered = false;
 
   private flashInterval = null;
   private isDestroyed = false; // gard against callbacks after destroyed
+  // runtime directive is attached to the child <widget-host2>, so obtain it via viewChild
+  private runtimeDir = viewChild(WidgetRuntimeDirective);
+
+  private onNumericValue = (newValue: IPathUpdate) => {
+    this.dataValue = newValue.data.value as number;
+    if (this.minValue === null || this.dataValue < this.minValue) {
+      this.minValue = this.dataValue;
+    } else if (this.maxValue === null || this.dataValue > this.maxValue) {
+      this.maxValue = this.dataValue;
+    }
+    if (!this.currentConfig().ignoreZones) {
+      switch (newValue.state) {
+        case States.Alarm:
+          this.valueStateColor = this.theme().zoneAlarm;
+          break;
+        case States.Warn:
+          this.valueStateColor = this.theme().zoneWarn;
+          break;
+        case States.Alert:
+          this.valueStateColor = this.theme().zoneAlert;
+          break;
+        default:
+          this.valueStateColor = this.valueColor;
+          break;
+      }
+    }
+    this.drawWidget();
+  };
 
   constructor() {
     super();
@@ -92,6 +120,20 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
         this.drawWidget();
       }
     });
+
+    // React to config changes from host2 runtime; guard until canvas/view are ready
+    effect(() => {
+      const cfg = this.runtimeDir()?.config();
+      if (!cfg) return;
+      if (this.isDestroyed || !this.canvasCtx) return;
+      this.manageDatasetAndChart();
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
+      this.startWidget();
+      this.drawWidget();
+    });
+
   }
 
   public override serialize(): NgCompInputs {
@@ -125,6 +167,8 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       this.setMiniChart();
     }
     this.startWidget();
+
+    // config changes are handled by the constructor effect; nothing to set up here
   }
 
   private calculateMaxMinTextDimensions(): void {
@@ -138,91 +182,65 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     if (this.showMiniChart() && this.miniChart()) {
       this.miniChart().startChart();
     }
-    this.streamsDir()?.reset();
-    this.metaDir()?.reset();
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
     this.setColors();
-    this.metaDir()?.observe();
-    this.streamsDir()?.observe('numericPath', newValue => {
-      this.dataValue = newValue.data.value;
-      // Initialize min/max
-      if (this.minValue === null || this.dataValue < this.minValue) {
-        this.minValue = this.dataValue;
-      } else if (this.maxValue === null || this.dataValue > this.maxValue) {
-        this.maxValue = this.dataValue;
-      }
-      if (!this.widgetProperties.config.ignoreZones) {
-        switch (newValue.state) {
-          case States.Alarm:
-            this.valueStateColor = this.theme().zoneAlarm;
-            break;
-          case States.Warn:
-            this.valueStateColor = this.theme().zoneWarn;
-            break;
-          case States.Alert:
-            this.valueStateColor = this.theme().zoneAlert;
-            break;
-          default:
-            this.valueStateColor = this.valueColor;
-            break;
-        }
-      }
-
-      this.drawWidget();
-    });
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = cloneDeep(config);
-
-    this.manageDatasetAndChart();
-
-    // Defer to next tick so viewChild is ready if just shown
-    setTimeout(() => {
-      if (this.showMiniChart() && this.miniChart()) {
-        this.setMiniChart();
-      }
-      this.startWidget();
-      this.drawWidget();
-    });
+    if (!this.streamRegistered) {
+      this.streamsDir()?.observe('numericPath', this.onNumericValue);
+      this.streamRegistered = true;
+    }
   }
 
   private manageDatasetAndChart(): void {
-    const pathInfo = this.widgetProperties.config.paths['numericPath'];
-    if (!pathInfo || !pathInfo.path || !pathInfo.source) return;
+    const cfg = this.runtimeDir()?.config() ?? this.widgetProperties.config;
+    const pathInfo = cfg.paths['numericPath'];
+    const show = !!cfg.showMiniChart;
 
-    if (this.widgetProperties.config.showMiniChart) {
-      if (this._dataset.list().filter(ds => ds.uuid === this.widgetProperties.uuid).length === 0) {
-        this._dataset.create(pathInfo.path, pathInfo.source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
-      }
-    } else {
-      // Remove dataset if it exists
-      this._dataset.list()
-        .filter(ds => ds.uuid === this.widgetProperties.uuid)
-        .forEach(ds => this._dataset.remove(ds.uuid));
+    // Always reflect the toggle in the UI
+    this.showMiniChart.set(show);
+
+    // If disabling, remove dataset if present
+    if (!show) {
+      this._dataset.removeIfExists?.(this.widgetProperties?.uuid, true);
+      return;
     }
 
-    this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
+    // Enabling: only create when we have a path; default source to 'default'
+    if (!pathInfo || !pathInfo.path) return;
+    const source = pathInfo.source ?? 'default';
+
+    const existing = this._dataset.getDatasetConfig?.(this.widgetProperties.uuid);
+    if (!existing) {
+      // Create a hidden, non-editable dataset tied to this widget UUID
+      this._dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+    } else {
+      // Update dataset path/source if they changed so the chart follows config
+      if (existing.path !== pathInfo.path || existing.pathSource !== source) {
+        this._dataset.edit({ ...existing, path: pathInfo.path, pathSource: source });
+      }
+    }
   }
 
   private setMiniChart(): void {
-    this.miniChart().dataPath = this.widgetProperties.config.paths['numericPath'].path;
-    this.miniChart().dataSource = this.widgetProperties.config.paths['numericPath'].source;
-    this.miniChart().color = this.widgetProperties.config.color;
-    this.miniChart().convertUnitTo = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
-    this.miniChart().numDecimal = this.widgetProperties.config.numDecimal;
-    this.miniChart().yScaleMin = this.widgetProperties.config.yScaleMin;
-    this.miniChart().yScaleMax = this.widgetProperties.config.yScaleMax;
-    this.miniChart().inverseYAxis = this.widgetProperties.config.inverseYAxis;
-    this.miniChart().verticalChart = this.widgetProperties.config.verticalChart;
+    const cfg = this.runtimeDir()?.config() ?? this.widgetProperties.config;
+    const pathInfo = cfg.paths['numericPath'];
+    this.miniChart().dataPath = pathInfo?.path ?? null;
+    this.miniChart().dataSource = pathInfo?.source ?? 'default';
+    this.miniChart().color = cfg.color;
+    this.miniChart().convertUnitTo = pathInfo?.convertUnitTo;
+    this.miniChart().numDecimal = cfg.numDecimal;
+    this.miniChart().yScaleMin = cfg.yScaleMin;
+    this.miniChart().yScaleMax = cfg.yScaleMax;
+    this.miniChart().inverseYAxis = cfg.inverseYAxis;
+    this.miniChart().verticalChart = cfg.verticalChart;
     this.miniChart().datasetUUID = this.widgetProperties.uuid;
   }
 
   private setColors(): void {
-    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-    this.valueStateColor = this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
+    const cfg = this.currentConfig();
+    this.labelColor.set(getColors(cfg.color, this.theme()).dim);
+    this.valueStateColor = this.valueColor = getColors(cfg.color, this.theme()).color;
   }
 
   ngOnDestroy() {
@@ -243,13 +261,14 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   private drawWidget(): void {
     if (!this.canvasCtx) return;
     // Compose background bitmap with title and unit
-    const unit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    const cfg = this.currentConfig();
+    const unit = cfg.paths['numericPath'].convertUnitTo;
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;
     if (!this.backgroundBitmap ||
       this.backgroundBitmap.width !== this.canvasElement.width ||
       this.backgroundBitmap.height !== this.canvasElement.height ||
-      this.backgroundBitmapText !== this.widgetProperties.config.displayName + '|' + unit
+      this.backgroundBitmapText !== cfg.displayName + '|' + unit
     ) {
       this.backgroundBitmap = this.canvas.renderStaticToBitmap(
         this.canvasCtx,
@@ -259,7 +278,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
           // Draw the title (same as before)
           this.canvas['drawTitleInternal'](
             ctx,
-            this.widgetProperties.config.displayName,
+            cfg.displayName,
             this.labelColor(),
             'normal',
             this.cssWidth,
@@ -283,7 +302,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
           }
         }
       );
-      this.backgroundBitmapText = this.widgetProperties.config.displayName + '|' + unit;
+      this.backgroundBitmapText = cfg.displayName + '|' + unit;
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
@@ -296,7 +315,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       this.canvasCtx.drawImage(this.backgroundBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
     this.drawValue();
-    if (this.widgetProperties.config.showMax || this.widgetProperties.config.showMin) {
+    if (cfg.showMax || cfg.showMin) {
       this.drawMinMax();
     }
   }
@@ -320,24 +339,25 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       return "--";
     }
 
-    const cUnit = this.widgetProperties.config.paths['numericPath'].convertUnitTo;
+    const cUnit = this.currentConfig().paths['numericPath'].convertUnitTo;
     if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
       return this.dataValue.toString();
     }
 
-    return this.applyDecorations(this.dataValue.toFixed(this.widgetProperties.config.numDecimal));
+    return this.applyDecorations(this.dataValue.toFixed(this.currentConfig().numDecimal));
   }
 
   private drawMinMax(): void {
 
-    if (!this.widgetProperties.config.showMin && !this.widgetProperties.config.showMax) return;
+    const cfg = this.currentConfig();
+    if (!cfg.showMin && !cfg.showMax) return;
 
     let valueText = '';
-    if (this.widgetProperties.config.showMin) {
-      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Min: --';
+    if (cfg.showMin) {
+      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(cfg.numDecimal))}` : ' Min: --';
     }
-    if (this.widgetProperties.config.showMax) {
-      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(this.widgetProperties.config.numDecimal))}` : ' Max: --';
+    if (cfg.showMax) {
+      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(cfg.numDecimal))}` : ' Max: --';
     }
     valueText = valueText.trim();
     const marginX = 10 * this.canvas.scaleFactor;
@@ -359,7 +379,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
 
   private applyDecorations(txtValue: string): string {
     // apply decoration when required
-    switch (this.widgetProperties.config.paths['numericPath'].convertUnitTo) {
+    switch (this.currentConfig().paths['numericPath'].convertUnitTo) {
       case 'percent':
       case 'percentraw':
         txtValue += '%';
@@ -368,6 +388,10 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
         break;
     }
     return txtValue;
+  }
+
+  private currentConfig(): IWidgetSvcConfig {
+    return this.runtimeDir()?.config() ?? this.widgetProperties.config;
   }
 
   private validateConfig() {

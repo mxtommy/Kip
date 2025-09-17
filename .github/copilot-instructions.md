@@ -10,7 +10,8 @@ Use this quick-start map to be productive in this repo. Prefer these concrete pa
 
 ## Daily workflows
 - Dev: npm run dev, then open http://localhost:4200/@mxtommy/kip/ (needs a running Signal K server).
-- Build: npm run build-dev | npm run build-prod (outputs to public/ and respects baseHref).
+- Build KIP app: npm run build:dev | npm run build:prod (outputs KIP to public/ and respects baseHref).
+- Build KIP app and KIP plugin: npm run build:all (outputs KIP to public/ and respects baseHref. Outputs plugin to kip-plugin).
 - Quality: npm run lint, npm test (Karma). E2E (Protractor) is legacy/optional.
 
 ## Widget contract (critical)

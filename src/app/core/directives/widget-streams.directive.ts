@@ -1,4 +1,4 @@
-import { Directive, DestroyRef, inject, input } from '@angular/core';
+import { Directive, DestroyRef, inject, input, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
@@ -11,8 +11,14 @@ import { WidgetRuntimeDirective } from './widget-runtime.directive';
   exportAs: 'widgetStreams'
 })
 export class WidgetStreamsDirective {
-  streamsConfig = input.required<IWidgetSvcConfig>();
-  streamsWidget = input.required<IWidget>();
+  streamsConfig = input<IWidgetSvcConfig>();
+  streamsWidget = input<IWidget>();
+
+  // Programmatic config/widget owned by Host2
+  private _streamsConfig = signal<IWidgetSvcConfig | undefined>(undefined);
+  private _streamsWidget = signal<IWidget | undefined>(undefined);
+  public setStreamsConfig(cfg: IWidgetSvcConfig | undefined) { this._streamsConfig.set(cfg); }
+  public setStreamsWidget(w: IWidget | undefined) { this._streamsWidget.set(w); }
 
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
@@ -20,6 +26,7 @@ export class WidgetStreamsDirective {
   private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private streams: { pathName: string; observable: Observable<IPathUpdate> }[] | undefined;
   private reset$ = new Subject<void>();
+  private registrations: { pathName: string; next: (value: IPathUpdate) => void }[] = [];
 
   buildObserver(pathKey: string, next: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
     return {
@@ -30,7 +37,7 @@ export class WidgetStreamsDirective {
   }
 
   createObservables(): void {
-    const cfg = this.runtime?.config() ?? this.streamsConfig();
+    const cfg = this.runtime?.config() ?? this._streamsConfig() ?? this.streamsConfig();
     if (!cfg?.paths) { this.streams = undefined; return; }
     const entries = Object.entries(cfg.paths);
     if (!entries.length) { this.streams = undefined; return; }
@@ -43,7 +50,9 @@ export class WidgetStreamsDirective {
   }
 
   observe(pathName: string, next: (value: IPathUpdate) => void): void {
-    const cfg = this.runtime?.config() ?? this.streamsConfig();
+    // Track registration to allow re-observe on resets/config updates
+    this.registrations.push({ pathName, next });
+    const cfg = this.runtime?.config() ?? this._streamsConfig() ?? this.streamsConfig();
     if (!cfg) return;
     if (!this.streams || !this.streams.length) this.createObservables();
 
@@ -111,5 +120,14 @@ export class WidgetStreamsDirective {
     this.reset$.complete();
     this.reset$ = new Subject<void>();
     this.streams = undefined;
+  }
+
+  resetAndReobserve(): void {
+    this.reset();
+    const regs = [...this.registrations];
+    this.registrations = []; // re-added by observe
+    for (const r of regs) {
+      this.observe(r.pathName, r.next);
+    }
   }
 }
