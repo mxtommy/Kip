@@ -134,7 +134,7 @@ export class SvgRacesteerComponent implements OnDestroy {
         this.compass.newValue = heading;
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone, [600, 620]);
+          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
           this.updateLaylines();
           this.updateWindSectors();
         }
@@ -185,7 +185,7 @@ export class SvgRacesteerComponent implements OnDestroy {
         this.trueWindHeading = trueWindAngle;
         this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
          if (this.twaIndicator()?.nativeElement) {
-          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], undefined, this.ngZone);
+          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
           this.updateLaylines();
         }
       });
@@ -217,7 +217,7 @@ export class SvgRacesteerComponent implements OnDestroy {
         this.set.oldValue = this.set.newValue;
         this.set.newValue =  driftSet;
         if (this.setIndicator()?.nativeElement) {
-          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], undefined, this.ngZone);
+          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
         }
       });
     });
@@ -463,11 +463,9 @@ export class SvgRacesteerComponent implements OnDestroy {
     // Cancel any animateRotation frames tracked in WeakMap for known elements
     const els: (ElementRef<SVGGElement> | undefined)[] = [
       this.rotatingDial(),
-      this.awaIndicator(),
       this.twaIndicator(),
       this.wptIndicator(),
       this.setIndicator(),
-      this.cogIndicator(),
     ];
     for (const ref of els) {
       const el = ref?.nativeElement;
