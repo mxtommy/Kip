@@ -62,9 +62,9 @@ export class WidgetMetaDirective {
 
   resetAndReobserve(): void {
     let key = this.lastKey;
-  const cfg = this.runtime?.config() ?? this._metaConfig() ?? this.metaConfig();
+    const cfg = this.runtime?.config() ?? this._metaConfig() ?? this.metaConfig();
     if (cfg?.paths && key && !cfg.paths[key]) {
-      key = undefined as unknown as string; // force fallback to first path inside observe
+      key = undefined; // force fallback to first path inside observe
     }
     this.reset();
     this.observe(key);

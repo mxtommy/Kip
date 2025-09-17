@@ -9,7 +9,7 @@ import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { IPathUpdate } from '../../core/services/data.service';
-import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
+import { BaseWidget } from 'gridstack/dist/angular';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { AppService } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -26,7 +26,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   public defaultConfig: IWidgetSvcConfig = undefined;
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  private streamsDir = viewChild(WidgetStreamsDirective);
+  private stream = viewChild(WidgetStreamsDirective);
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private cssWidth = 0;
@@ -41,6 +41,9 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
+  private lastDrawnValue: number | null = null;
+  private lastDrawnMin: number | null = null;
+  private lastDrawnMax: number | null = null;
   protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
@@ -50,10 +53,9 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   private maxMinMaxTextHeight = 0;
   private streamRegistered = false;
 
-  private flashInterval = null;
   private isDestroyed = false; // gard against callbacks after destroyed
   // runtime directive is attached to the child <widget-host2>, so obtain it via viewChild
-  private runtimeDir = viewChild(WidgetRuntimeDirective);
+  private runtime = viewChild(WidgetRuntimeDirective);
 
   private onNumericValue = (newValue: IPathUpdate) => {
     this.dataValue = newValue.data.value as number;
@@ -123,7 +125,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
 
     // React to config changes from host2 runtime; guard until canvas/view are ready
     effect(() => {
-      const cfg = this.runtimeDir()?.config();
+  const cfg = this.runtime()?.config();
       if (!cfg) return;
       if (this.isDestroyed || !this.canvasCtx) return;
       this.manageDatasetAndChart();
@@ -136,9 +138,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
 
   }
 
-  public override serialize(): NgCompInputs {
-    return { widgetProperties: this.widgetProperties };
-  }
+  // serialize is handled at base or via runtime/host; no override needed here
 
   ngOnInit(): void {
     this.validateConfig();
@@ -187,13 +187,13 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     this.dataValue = null;
     this.setColors();
     if (!this.streamRegistered) {
-      this.streamsDir()?.observe('numericPath', this.onNumericValue);
+      this.stream()?.observe('numericPath', this.onNumericValue);
       this.streamRegistered = true;
     }
   }
 
   private manageDatasetAndChart(): void {
-    const cfg = this.runtimeDir()?.config() ?? this.widgetProperties.config;
+  const cfg = this.runtime()?.config() ?? this.widgetProperties.config;
     const pathInfo = cfg.paths['numericPath'];
     const show = !!cfg.showMiniChart;
 
@@ -223,7 +223,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   }
 
   private setMiniChart(): void {
-    const cfg = this.runtimeDir()?.config() ?? this.widgetProperties.config;
+  const cfg = this.runtime()?.config() ?? this.widgetProperties.config;
     const pathInfo = cfg.paths['numericPath'];
     this.miniChart().dataPath = pathInfo?.path ?? null;
     this.miniChart().dataSource = pathInfo?.source ?? 'default';
@@ -241,14 +241,13 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     const cfg = this.currentConfig();
     this.labelColor.set(getColors(cfg.color, this.theme()).dim);
     this.valueStateColor = this.valueColor = getColors(cfg.color, this.theme()).color;
+    // Invalidate cached background so title/unit redraw with new colors
+    this.backgroundBitmap = null;
+    this.backgroundBitmapText = null;
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
-    if (this.flashInterval) {
-      clearInterval(this.flashInterval);
-      this.flashInterval = null;
-    }
     // Remove associated mini-chart dataset if present
     this._dataset.removeIfExists(this.widgetProperties?.uuid, true);
     try { this.canvas.unregisterCanvas(this.canvasElement); }
@@ -265,6 +264,17 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     const unit = cfg.paths['numericPath'].convertUnitTo;
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;
+    const bgText = cfg.displayName + '|' + unit;
+
+    // Short-circuit: if no value/min/max change and background text unchanged
+    if (
+      this.backgroundBitmapText === bgText &&
+      this.lastDrawnValue === this.dataValue &&
+      this.lastDrawnMin === this.minValue &&
+      this.lastDrawnMax === this.maxValue
+    ) {
+      return;
+    }
     if (!this.backgroundBitmap ||
       this.backgroundBitmap.width !== this.canvasElement.width ||
       this.backgroundBitmap.height !== this.canvasElement.height ||
@@ -275,7 +285,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
         this.cssWidth,
         this.cssHeight,
         (ctx) => {
-          // Draw the title (same as before)
+          // Draw the title
           this.canvas['drawTitleInternal'](
             ctx,
             cfg.displayName,
@@ -285,7 +295,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
             this.cssHeight,
             0.1 // titleFraction
           );
-          // Draw the unit (same as drawUnit)
+          // Draw the unit
           if (!['unitless', 'percent', 'ratio', 'latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin'].includes(unit)) {
             this.canvas.drawText(
               ctx,
@@ -302,7 +312,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
           }
         }
       );
-      this.backgroundBitmapText = cfg.displayName + '|' + unit;
+      this.backgroundBitmapText = bgText;
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
@@ -318,6 +328,11 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     if (cfg.showMax || cfg.showMin) {
       this.drawMinMax();
     }
+
+    // Update last drawn snapshot
+    this.lastDrawnValue = this.dataValue;
+    this.lastDrawnMin = this.minValue;
+    this.lastDrawnMax = this.maxValue;
   }
 
   private drawValue(): void {
@@ -391,7 +406,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   }
 
   private currentConfig(): IWidgetSvcConfig {
-    return this.runtimeDir()?.config() ?? this.widgetProperties.config;
+    return this.runtime()?.config() ?? this.widgetProperties.config;
   }
 
   private validateConfig() {

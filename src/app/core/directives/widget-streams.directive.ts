@@ -32,7 +32,7 @@ export class WidgetStreamsDirective {
     return {
       next: v => next(v),
       error: err => console.error('[Widget] Observer got an error: ' + err),
-      complete: () => console.log('[Widget] Observer got a complete notification: ' + pathKey),
+      complete: () => {}
     };
   }
 
