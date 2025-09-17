@@ -1,30 +1,23 @@
-import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild, signal, Input } from '@angular/core';
+import { Component, OnDestroy, ElementRef, OnInit, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
+import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
-import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
-import { AppService } from '../../core/services/app-service';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { cloneDeep, merge } from 'lodash-es';
 
 @Component({
-  selector: 'widget-numeric',
+  selector: 'widget-numeric-backup',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent]
 })
-export class WidgetNumericComponent extends BaseWidget implements AfterViewInit, OnInit, OnDestroy {
-  @Input({ required: true }) protected widgetProperties!: IWidget;
-  public defaultConfig: IWidgetSvcConfig = undefined;
+export class WidgetNumericBackupComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  private streamsDir = viewChild(WidgetStreamsDirective);
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private cssWidth = 0;
@@ -34,8 +27,6 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   protected showMiniChart = signal<boolean>(false);
   private readonly canvas = inject(CanvasService);
   private readonly _dataset = inject(DatasetService);
-  protected app = inject(AppService);
-  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
@@ -91,10 +82,6 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     });
   }
 
-  public override serialize(): NgCompInputs {
-    return { widgetProperties: this.widgetProperties };
-  }
-
   ngOnInit(): void {
     this.validateConfig();
     this.showMiniChart.set(this.widgetProperties.config.showMiniChart);
@@ -135,12 +122,12 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
     if (this.showMiniChart() && this.miniChart()) {
       this.miniChart().startChart();
     }
-    this.streamsDir()?.reset();
+    this.unsubscribeDataStream();
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
     this.setColors();
-    this.streamsDir()?.observe('numericPath', newValue => {
+    this.observeDataStream('numericPath', newValue => {
       this.dataValue = newValue.data.value;
       // Initialize min/max
       if (this.minValue === null || this.dataValue < this.minValue) {
@@ -222,6 +209,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.destroyDataStreams();
     if (this.flashInterval) {
       clearInterval(this.flashInterval);
       this.flashInterval = null;
@@ -363,9 +351,5 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
         break;
     }
     return txtValue;
-  }
-
-  private validateConfig() {
-    this.widgetProperties.config = cloneDeep(merge(this.defaultConfig, this.widgetProperties.config));
   }
 }
