@@ -8,6 +8,7 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { DatasetService } from '../../core/services/data-set.service';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { WidgetMetaDirective } from '../../core/directives/widget-meta.directive';
 import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
 import { AppService } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -17,7 +18,7 @@ import { cloneDeep, merge } from 'lodash-es';
   selector: 'widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective]
+  imports: [WidgetHostComponent, NgxResizeObserverModule, MinichartComponent, WidgetStreamsDirective, WidgetMetaDirective]
 })
 export class WidgetNumericComponent extends BaseWidget implements AfterViewInit, OnInit, OnDestroy {
   @Input({ required: true }) protected widgetProperties!: IWidget;
@@ -25,6 +26,7 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   private streamsDir = viewChild(WidgetStreamsDirective);
+  private metaDir = viewChild(WidgetMetaDirective);
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private cssWidth = 0;
@@ -136,10 +138,12 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       this.miniChart().startChart();
     }
     this.streamsDir()?.reset();
+    this.metaDir()?.reset();
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
     this.setColors();
+    this.metaDir()?.observe();
     this.streamsDir()?.observe('numericPath', newValue => {
       this.dataValue = newValue.data.value;
       // Initialize min/max
@@ -179,6 +183,8 @@ export class WidgetNumericComponent extends BaseWidget implements AfterViewInit,
       if (this.showMiniChart() && this.miniChart()) {
         this.setMiniChart();
       }
+      this.metaDir()?.reset();
+      this.metaDir()?.observe();
       this.startWidget();
       this.drawWidget();
     });
