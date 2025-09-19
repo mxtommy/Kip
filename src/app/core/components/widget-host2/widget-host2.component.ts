@@ -52,8 +52,14 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
   }
 
   public override serialize(): NgCompInputs {
-    // Always persist merged runtime options
-    this.widgetProperties.config = this._runtime?.options();
+    // Always persist merged runtime options. If options() undefined (should be rare), retain existing config.
+    const merged = this._runtime?.options();
+    if (merged) {
+      this.widgetProperties.config = merged;
+    } else if (!this.widgetProperties.config) {
+      // As a final fallback ensure config is at least an empty object to avoid Gridstack persisting undefined
+      this.widgetProperties.config = {} as IWidgetSvcConfig;
+    }
     return { widgetProperties: this.widgetProperties as IWidget } as NgCompInputs;
   }
 
@@ -65,25 +71,39 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     if (!this.outlet) return;
     const type = this.widgetProperties.type;
     if (!type) return;
-    const resolved = this._widgetService.getComponentType(type);
-    const compType = (resolved as Type<WidgetViewComponentBase>);
-    const childRef = this.outlet.createComponent(compType);
-    childRef.setInput('id', this.widgetProperties.uuid);
-    childRef.setInput('type', this.widgetProperties.type);
-    // Support components exposing defaultConfig field; if absent treat as undefined
-    const defaultConfig = childRef.instance.defaultConfig as IWidgetSvcConfig | undefined;
-    // Initialize runtime with both default + saved (if any). This will immediately produce merged options.
+    const resolved = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    const compType = resolved;
+
+    // 1. Obtain default config without forcing a full component instantiation when possible.
+    // Try static DEFAULT_CONFIG pattern first.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let defaultCfg: IWidgetSvcConfig | undefined = compType && (compType as any).DEFAULT_CONFIG;
+    if (!defaultCfg && compType) {
+      // Fallback: temporary instance solely to read instance defaultConfig, then destroy.
+      const tempRef = this.outlet.createComponent(compType);
+      defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
+      tempRef.destroy();
+    }
+
+    // 2. Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
     if (this._runtime?.initialize) {
-      this._runtime.initialize(defaultConfig, this.widgetProperties.config);
+      this._runtime.initialize(defaultCfg, this.widgetProperties.config);
     } else {
-      // Fallback for safety
-      this._runtime?.defaultConfig.set(defaultConfig);
+      this._runtime?.defaultConfig.set(defaultCfg);
+      if (this.widgetProperties.config) this._runtime?.setRuntimeConfig?.(this.widgetProperties.config);
     }
     const merged = this._runtime?.options();
-    if (merged) {
-      this.widgetProperties.config = merged;
+    if (merged) this.widgetProperties.config = merged;
+
+    // 3. Create the component BEFORE streams reobserve so it can subscribe early.
+    if (compType) {
+      const childRef = this.outlet.createComponent(compType);
+      childRef.setInput('id', this.widgetProperties.uuid);
+      childRef.setInput('type', this.widgetProperties.type);
     }
-    this.applyRuntimeConfig(merged);
+    // Initial diff-based streams wiring (registrations occur when child calls observe)
+    this._streams?.applyStreamsConfigDiff?.(merged);
+    this._meta?.applyMetaConfigDiff?.(merged);
     this._childCreated = true;
   }
 
@@ -97,10 +117,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
       this.widgetProperties.config = runtimeCfg;
     }
 
-    this._streams?.setStreamsConfig?.(runtimeCfg);
-    this._meta?.setMetaConfig?.(runtimeCfg);
-    this._streams?.resetAndReobserve?.();
-    this._meta?.resetAndReobserve?.();
+    // Diff-based streams config (avoids full reset storm)
+    this._streams?.applyStreamsConfigDiff?.(runtimeCfg);
+    this._meta?.applyMetaConfigDiff?.(runtimeCfg);
   }
 
   public openWidgetOptions(e: Event | CustomEvent): void {

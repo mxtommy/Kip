@@ -20,7 +20,8 @@ import { NgxResizeObserverModule } from 'ngx-resize-observer';
 export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public defaultConfig: IWidgetSvcConfig = {
+  // Static default so Host2 can merge without instantiating component
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {
@@ -49,6 +50,8 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     dataTimeout: 5,
     ignoreZones: false
   };
+  // Instance alias (kept for any legacy access patterns)
+  public defaultConfig: IWidgetSvcConfig = WidgetNumericComponent.DEFAULT_CONFIG;
 
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');

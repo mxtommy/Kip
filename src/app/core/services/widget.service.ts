@@ -92,6 +92,9 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  // Cache for selector -> component Type resolutions to avoid repeated definition scans
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
   /**
    * Mapping of `componentClassName` (as declared in `_widgetDefinition`) to the concrete
    * Angular component Type. During the Host2 migration only widgets that have been
@@ -449,9 +452,17 @@ export class WidgetService {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponentType(selector: string): Type<any> | undefined {
+    if (this._componentTypeCache.has(selector)) {
+      return this._componentTypeCache.get(selector);
+    }
     const def = this._widgetDefinition.find(w => w.selector === selector);
-    if (!def) return undefined;
-    return this._componentTypeMap[def.componentClassName];
+    if (!def) {
+      this._componentTypeCache.set(selector, undefined);
+      return undefined;
+    }
+    const resolved = this._componentTypeMap[def.componentClassName];
+    this._componentTypeCache.set(selector, resolved);
+    return resolved;
   }
 
   /**
