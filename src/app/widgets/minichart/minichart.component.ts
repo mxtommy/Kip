@@ -27,7 +27,6 @@ interface IDataSetRow {
 
 @Component({
   selector: 'minichart',
-  standalone: true,
   imports: [],
   templateUrl: './minichart.component.html',
   styleUrls: ['./minichart.component.scss'],

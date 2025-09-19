@@ -6,7 +6,6 @@ import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { UUID } from '../utils/uuid.util';
 import { BehaviorSubject } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface Dashboard {
   id: string
@@ -31,9 +30,7 @@ export class DashboardService {
   public readonly activeDashboard = signal<number>(0);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
-  private _isDashboardStatic = new BehaviorSubject<boolean>(true);
-  public isDashboardStatic$ = this._isDashboardStatic.asObservable();
-  public readonly isDashboardStatic = toSignal(this.isDashboardStatic$);
+  public isDashboardStatic = signal<boolean>(true);
   public readonly blankDashboard: Dashboard[] = [
     {
       id: null,
@@ -77,6 +74,7 @@ export class DashboardService {
     }
 
     effect(() => {
+      // Persist dashboards on any change
       this._settings.saveDashboards(this.dashboards());
     });
   }
@@ -85,7 +83,7 @@ export class DashboardService {
    * Toggles the static/fixed state of the dashboard layout.
    */
   public toggleStaticDashboard(): void {
-    this._isDashboardStatic.next(!this._isDashboardStatic.value);
+    this.isDashboardStatic.set(!this.isDashboardStatic());
   }
 
   /**
@@ -354,7 +352,7 @@ export class DashboardService {
    * @param isStatic Whether the dashboard should be static.
    */
   public setStaticDashboard(isStatic: boolean): void {
-    this._isDashboardStatic.next(isStatic);
+    this.isDashboardStatic.set(isStatic);
   }
 
   public notifyLayoutEditSaved(): void {

@@ -139,10 +139,10 @@
       <widget-datetime [widgetProperties]="etaProperties()" class="embed-widget" />
     </div>
     <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-numeric [widgetProperties]="dtwProperties()" class="embed-widget"/>
+      <widget-numeric-view [widgetProperties]="dtwProperties()" class="embed-widget"/>
     </div>
     <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-numeric [widgetProperties]="ttwProperties()" class="embed-widget" />
+      <widget-numeric-view [widgetProperties]="ttwProperties()" class="embed-widget" />
     </div>
     <!-- Route Button row -->
     <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">

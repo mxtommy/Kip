@@ -1,8 +1,0 @@
-<widget-host2 class="numeric-wrapper"  [config]="widgetProperties.config" [id]="widgetProperties.uuid" [runtimeWidget]="widgetProperties" [runtimeDefaultConfig]="defaultConfig">
-  @if (showMiniChart()) {
-    <minichart
-      [theme]="this.theme()"
-      />
-  }
-  <canvas #canvasMainRef class="numeric-canvas"></canvas>
-</widget-host2>

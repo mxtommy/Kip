@@ -37,7 +37,7 @@ export class WidgetStreamsDirective {
   }
 
   createObservables(): void {
-    const cfg = this.runtime?.config() ?? this._streamsConfig() ?? this.streamsConfig();
+    const cfg = this._streamsConfig();
     if (!cfg?.paths) { this.streams = undefined; return; }
     const entries = Object.entries(cfg.paths);
     if (!entries.length) { this.streams = undefined; return; }
@@ -52,7 +52,7 @@ export class WidgetStreamsDirective {
   observe(pathName: string, next: (value: IPathUpdate) => void): void {
     // Track registration to allow re-observe on resets/config updates
     this.registrations.push({ pathName, next });
-    const cfg = this.runtime?.config() ?? this._streamsConfig() ?? this.streamsConfig();
+    const cfg =  this._streamsConfig();
     if (!cfg) return;
     if (!this.streams || !this.streams.length) this.createObservables();
 

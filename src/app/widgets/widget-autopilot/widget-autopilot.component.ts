@@ -33,7 +33,6 @@ import { WidgetHostComponent } from '../../core/components/widget-host/widget-ho
 import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
 import { WidgetPositionComponent } from '../widget-position/widget-position.component';
-import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
 import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
@@ -48,6 +47,7 @@ import {
   IV2ApiEndpoints,
   TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
+import { WidgetNumericViewComponent } from '../widget-numeric/widget-numeric-view.component';
 
 interface MenuItem {
   label: string;
@@ -107,7 +107,7 @@ const DEFAULTS = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
+    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericViewComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private readonly _requests = inject(SignalkRequestsService);

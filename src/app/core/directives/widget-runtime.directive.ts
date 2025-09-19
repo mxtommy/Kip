@@ -1,7 +1,6 @@
 import { Directive, computed, input, signal } from '@angular/core';
 import { cloneDeep, merge } from 'lodash-es';
 import type { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import type { NgCompInputs } from 'gridstack/dist/angular';
 
 @Directive({
   selector: '[widget-runtime]',
@@ -56,16 +55,5 @@ export class WidgetRuntimeDirective {
       w.config = cloneDeep(cfg);
     }
     this.setRuntimeConfig(cfg);
-  }
-
-  /**
-   * Returns Gridstack-compatible serializable inputs, mirroring BaseWidget.serialize().
-   * This does not persist by itself; it exposes the current widgetProperties payload
-   * from the dashboard service.
-   */
-  public serialize(): NgCompInputs {
-    const w = this.runtimeWidget?.();
-    // gridstack expects `{ widgetProperties }`
-    return { widgetProperties: w as unknown as IWidget } as NgCompInputs;
   }
 }
