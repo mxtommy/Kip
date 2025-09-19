@@ -227,8 +227,8 @@ export class CanvasService {
   * for offscreen canvases by calling `setTransform` or `scale`).
    */
   public setHighDPISize(canvas: HTMLCanvasElement, parentContainer: DOMRectReadOnly): void {
-    const cssWidth = Math.floor(parentContainer.width);
-    const cssHeight = Math.floor(parentContainer.height);
+    const cssWidth = Math.round(parentContainer.width);
+    const cssHeight = Math.round(parentContainer.height);
 
     canvas.width = Math.round(cssWidth * this.scaleFactor);
     canvas.height = Math.round(cssHeight * this.scaleFactor);
@@ -332,7 +332,7 @@ export class CanvasService {
     if (!ctx) return;
 
     const maxWidth = canvasWidth - 2 * this.EDGE_BUFFER;
-    const maxHeight = Math.floor(canvasHeight * titleFraction);
+    const maxHeight = Math.round(canvasHeight * titleFraction);
     const fontSize = this.calculateOptimalFontSize(ctx, text, maxWidth, maxHeight, fontWeight);
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -438,7 +438,7 @@ export class CanvasService {
     let fontSize = maxFontSize;
 
     while (minFontSize <= maxFontSize) {
-      fontSize = Math.floor((minFontSize + maxFontSize) / 2);
+      fontSize = Math.round((minFontSize + maxFontSize) / 2);
       ctx.font = `${fontWeight} ${fontSize}px ${this.DEFAULT_FONT}`;
       const measure = ctx.measureText(text).width;
 
