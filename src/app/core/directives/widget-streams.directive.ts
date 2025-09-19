@@ -16,14 +16,12 @@ export class WidgetStreamsDirective {
 
   // Programmatic config/widget owned by Host2
   private _streamsConfig = signal<IWidgetSvcConfig | undefined>(undefined);
-  private _streamsWidget = signal<IWidget | undefined>(undefined);
   public setStreamsConfig(cfg: IWidgetSvcConfig | undefined) { this._streamsConfig.set(cfg); }
-  public setStreamsWidget(w: IWidget | undefined) { this._streamsWidget.set(w); }
 
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
+  private readonly runtime = inject(WidgetRuntimeDirective);
   private streams: { pathName: string; observable: Observable<IPathUpdate> }[] | undefined;
   private reset$ = new Subject<void>();
   private registrations: { pathName: string; next: (value: IPathUpdate) => void }[] = [];

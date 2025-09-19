@@ -47,7 +47,7 @@ import {
   IV2ApiEndpoints,
   TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
-import { WidgetNumericViewComponent } from '../widget-numeric/widget-numeric-view.component';
+import { WidgetNumericViewComponent } from '../widget-numeric/widget-numeric.component';
 
 interface MenuItem {
   label: string;

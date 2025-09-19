@@ -1,5 +1,8 @@
 import { inject, Injectable } from '@angular/core';
+import { Type } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
+import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
+import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -78,7 +81,6 @@ export interface WidgetDescription {
    */
   componentClassName: string;
 }
-
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   isDependencyValid: boolean;
   pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
@@ -90,6 +92,20 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  /**
+   * Mapping of `componentClassName` (as declared in `_widgetDefinition`) to the concrete
+   * Angular component Type. During the Host2 migration only widgets that have been
+   * refactored into a presentational component get entries here. Adding a new migrated
+   * widget requires:
+   *  1. Import the component here
+   *  2. Add an entry: `ComponentClassName: ComponentClassReference`
+   *  3. Ensure its `selector` and `componentClassName` are defined in `_widgetDefinition`.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeMap: Record<string, Type<any>> = {
+    WidgetNumericComponent: WidgetNumericComponent,
+    WidgetTextComponent: WidgetTextComponent,
+  };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -412,6 +428,30 @@ export class WidgetService {
 
   get categories(): string[] {
     return this._widgetCategories;
+  }
+
+  /**
+   * Resolves a widget's runtime component Type from its selector.
+   *
+   * Flow:
+   *  1. Locate the widget definition whose `selector` matches the provided string.
+   *  2. Look up the definition's `componentClassName` inside `_componentTypeMap`.
+   *  3. Return the component Type if the widget has been migrated; otherwise `undefined`.
+   *
+   * Host2 will fall back to a safe default (currently Numeric) when `undefined` is returned.
+   * This allows incremental migration without breaking existing dashboard configs.
+   *
+   * NOTE: We intentionally keep this lightweight instead of using dynamic `import()` to
+   * preserve tree‑shaking.
+   *
+   * @param selector Dashboard widget type / selector (e.g. `widget-numeric`).
+   * @returns Angular component Type or undefined if not yet migrated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public getComponentType(selector: string): Type<any> | undefined {
+    const def = this._widgetDefinition.find(w => w.selector === selector);
+    if (!def) return undefined;
+    return this._componentTypeMap[def.componentClassName];
   }
 
   /**

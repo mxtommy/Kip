@@ -232,6 +232,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected saveLayoutChanges(): void {
     this.dashboard.setStaticDashboard(true);
+    this.saveDashboard();
     this.dashboard.notifyLayoutEditSaved();
   }
 

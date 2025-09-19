@@ -1,5 +1,5 @@
-import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, Input, untracked } from '@angular/core';
-import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, untracked, input, OnInit } from '@angular/core';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -12,14 +12,14 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 @Component({
-  selector: 'widget-numeric-view',
-  templateUrl: './widget-numeric-view.component.html',
-  styleUrls: ['./widget-numeric-view.component.scss'],
+  selector: 'widget-numeric',
+  templateUrl: './widget-numeric.component.html',
+  styleUrls: ['./widget-numeric.component.scss'],
   imports: [NgxResizeObserverModule, MinichartComponent]
 })
-export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
-  @Input({ required: true }) protected widgetProperties!: IWidget;
-  private config = signal<IWidgetSvcConfig | null>(null);
+export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy {
+  public id = input.required<string>();
+  public type = input.required<string>();
   public defaultConfig: IWidgetSvcConfig = {
     displayName: 'Gauge Label',
     filterSelfPaths: true,
@@ -60,8 +60,8 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
 
   private readonly canvas = inject(CanvasService);
   private readonly _dataset = inject(DatasetService);
-  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
-  private readonly stream = inject(WidgetStreamsDirective, { optional: true });
+  private readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly stream = inject(WidgetStreamsDirective);
 
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
@@ -92,7 +92,7 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
     } else if (this.maxValue === null || this.dataValue > this.maxValue) {
       this.maxValue = this.dataValue;
     }
-    if (!this.config().ignoreZones) {
+    if (!this.runtime?.options().ignoreZones) {
       // No States enum here; assume colors are already in theme
       this.valueStateColor = this.valueColor;
     }
@@ -104,7 +104,7 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
 
       untracked(() => {
-        if (!this.config()) return
+        if (!this.runtime?.options()) return
         if (theme) {
           this.setColors();
           this.drawWidget();
@@ -113,19 +113,26 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
     });
 
     effect(() => {
-      const cfg = this.widgetProperties;
+      const cfg = this.runtime?.options();
       if (!cfg) return;
       if (this.isDestroyed || !this.canvasCtx) return;
       this.manageDatasetAndChart();
-      if (this.showMiniChart() && this.miniChart()) this.setMiniChart();
+      if (this.showMiniChart() && this.miniChart()) {
+        this.setMiniChart();
+      }
       this.startWidget();
       this.drawWidget();
     });
   }
 
+  ngOnInit(): void {
+    const opts = this.runtime.options();
+    if (opts) {
+      this.showMiniChart.set(opts.showMiniChart);
+    }
+  }
+
   ngAfterViewInit(): void {
-    this.config.set(this.widgetProperties.config);
-    this.showMiniChart.set(this.config().showMiniChart);
     this.canvasElement = this.canvasMainRef().nativeElement;
     this.canvasCtx = this.canvasElement.getContext('2d');
     this.canvas.registerCanvas(this.canvasElement, {
@@ -142,7 +149,9 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
     this.calculateMaxMinTextDimensions();
     if (this.isDestroyed) return;
     this.manageDatasetAndChart();
-    if (this.showMiniChart() && this.miniChart()) this.setMiniChart();
+    if (this.showMiniChart() && this.miniChart()) {
+      this.setMiniChart();
+    }
     this.startWidget();
   }
 
@@ -168,26 +177,26 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
   }
 
   private manageDatasetAndChart(): void {
-    const cfg = this.config();
+    const cfg = this.runtime.options();
     const pathInfo = cfg.paths['numericPath'];
     const show = !!cfg.showMiniChart;
     this.showMiniChart.set(show);
     if (!show) {
-      this._dataset.removeIfExists?.(this.widgetProperties.uuid, true);
+      this._dataset.removeIfExists(this.id(), true);
       return;
     }
     if (!pathInfo || !pathInfo.path) return;
     const source = pathInfo.source ?? 'default';
-    const existing = this._dataset.getDatasetConfig?.(this.widgetProperties.uuid);
+    const existing = this._dataset.getDatasetConfig(this.id());
     if (!existing) {
-      this._dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.widgetProperties.uuid}`, true, false, this.widgetProperties.uuid);
+      this._dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, true, false, this.id());
     } else if (existing.path !== pathInfo.path || existing.pathSource !== source) {
       this._dataset.edit({ ...existing, path: pathInfo.path, pathSource: source });
     }
   }
 
   private setMiniChart(): void {
-    const cfg = this.runtime?.config() ?? this.widgetProperties.config;
+    const cfg = this.runtime.options();
     const pathInfo = cfg.paths['numericPath'];
     this.miniChart().dataPath = pathInfo?.path ?? null;
     this.miniChart().dataSource = pathInfo?.source ?? 'default';
@@ -198,11 +207,11 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
     this.miniChart().yScaleMax = cfg.yScaleMax;
     this.miniChart().inverseYAxis = cfg.inverseYAxis;
     this.miniChart().verticalChart = cfg.verticalChart;
-    this.miniChart().datasetUUID = this.widgetProperties.uuid;
+    this.miniChart().datasetUUID = this.id();
   }
 
   private setColors(): void {
-    const cfg = this.config();
+    const cfg = this.runtime.options();
     if (!cfg) return;
     this.labelColor.set(getColors(cfg.color, this.theme()).dim);
     this.valueStateColor = this.valueColor = getColors(cfg.color, this.theme()).color;
@@ -212,7 +221,7 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
 
   private drawWidget(): void {
     if (!this.canvasCtx) return;
-    const cfg = this.config();
+    const cfg = this.runtime.options();
     const unit = cfg.paths['numericPath'].convertUnitTo;
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;
@@ -292,15 +301,15 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
 
   private getValueText(): string {
     if (this.dataValue === null) return "--";
-    const cUnit = this.config().paths['numericPath'].convertUnitTo;
+    const cUnit = this.runtime.options().paths['numericPath'].convertUnitTo;
     if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
       return this.dataValue.toString();
     }
-    return this.applyDecorations(this.dataValue.toFixed(this.config().numDecimal));
+    return this.applyDecorations(this.dataValue.toFixed(this.runtime.options().numDecimal));
   }
 
   private drawMinMax(): void {
-    const cfg = this.config();
+    const cfg = this.runtime.options();
     if (!cfg.showMin && !cfg.showMax) return;
     let valueText = '';
     if (cfg.showMin) {
@@ -327,7 +336,7 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
   }
 
   private applyDecorations(txtValue: string): string {
-    switch (this.config().paths['numericPath'].convertUnitTo) {
+    switch (this.runtime.options().paths['numericPath'].convertUnitTo) {
       case 'percent':
       case 'percentraw':
         txtValue += '%';
@@ -338,7 +347,7 @@ export class WidgetNumericViewComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this._dataset.removeIfExists(this.widgetProperties.uuid, true);
+    this._dataset.removeIfExists(this.id(), true);
     try { this.canvas.unregisterCanvas(this.canvasElement); } catch { /* ignore */ }
   }
 }

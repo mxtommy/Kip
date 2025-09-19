@@ -7,18 +7,16 @@ import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from './widget-runtime.directive';
 
 @Directive({
-  selector: '[widget-meta]',
-  exportAs: 'widgetMeta'
+  selector: '[widget-metadata]',
+  exportAs: 'widgetMetadata'
 })
-export class WidgetMetaDirective {
+export class WidgetMetadataDirective {
   metaConfig = input<IWidgetSvcConfig>();
   metaWidget = input<IWidget>();
 
   // Programmatic config/widget owned by Host2
   private _metaConfig = signal<IWidgetSvcConfig | undefined>(undefined);
-  private _metaWidget = signal<IWidget | undefined>(undefined);
   public setMetaConfig(cfg: IWidgetSvcConfig | undefined) { this._metaConfig.set(cfg); }
-  public setMetaWidget(w: IWidget | undefined) { this._metaWidget.set(w); }
 
   zones$ = new BehaviorSubject<ISkZone[]>([]);
 
@@ -29,7 +27,7 @@ export class WidgetMetaDirective {
   private lastKey: string | undefined;
 
   observe(pathKey?: string): void {
-  const cfg = this.runtime?.config() ?? this._metaConfig() ?? this.metaConfig();
+  const cfg = this.runtime?.options() ?? this._metaConfig() ?? this.metaConfig();
     if (!cfg?.paths || Object.keys(cfg.paths).length === 0) return;
 
     const key = pathKey || Object.keys(cfg.paths)[0];
@@ -62,7 +60,7 @@ export class WidgetMetaDirective {
 
   resetAndReobserve(): void {
     let key = this.lastKey;
-    const cfg = this.runtime?.config() ?? this._metaConfig() ?? this.metaConfig();
+    const cfg = this.runtime?.options() ?? this._metaConfig() ?? this.metaConfig();
     if (cfg?.paths && key && !cfg.paths[key]) {
       key = undefined; // force fallback to first path inside observe
     }

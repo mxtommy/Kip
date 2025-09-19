@@ -1,43 +1,45 @@
-import { Directive, computed, input, signal } from '@angular/core';
+import { Directive, computed, output, signal } from '@angular/core';
 import { cloneDeep, merge } from 'lodash-es';
-import type { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
 @Directive({
   selector: '[widget-runtime]',
-  exportAs: 'widgetRuntime',
-  standalone: true
+  exportAs: 'widgetRuntime'
 })
 export class WidgetRuntimeDirective {
-  runtimeWidget = input<IWidget>();
-  runtimeDefaultConfig = input<IWidgetSvcConfig>();
-  // Reactive config input for cases where only config object changes identity
-  runtimeConfig = input<IWidgetSvcConfig>();
+  protected runtimeConfig = output<IWidgetSvcConfig | undefined>();
+  public defaultConfig = signal<IWidgetSvcConfig | undefined>(undefined);
 
-  // Programmatic runtime config set by host2 when it owns the model
+  // Internal runtime config
   private _runtimeConfig = signal<IWidgetSvcConfig | undefined>(undefined);
 
-  public config = computed<IWidgetSvcConfig | undefined>(() => {
-    const d = this.runtimeDefaultConfig();
-    const cfgInput = this.runtimeConfig();
-    const cfgProg = this._runtimeConfig();
-    const cfg = cfgInput ?? cfgProg;
-    if (cfg) {
-      return cloneDeep(merge({}, d ?? {}, cfg));
+  // Combined user config and default widget config. If only default exists, use it.
+  public options = computed<IWidgetSvcConfig | undefined>(() => {
+    const base = this.defaultConfig();
+    const user = this._runtimeConfig();
+    if (base && user) {
+      const merged = cloneDeep(merge({}, base, user));
+      this.runtimeConfig.emit(merged);
+      return merged;
     }
-    const w = this.runtimeWidget();
-    if (!w) return d ? cloneDeep(d) : undefined;
-    return cloneDeep(merge({}, d ?? {}, w.config ?? {}));
+    if (base && !user) {
+      // Emit base so dependents can start even before user customization
+      const cloned = cloneDeep(base);
+      this.runtimeConfig.emit(cloned);
+      return cloned;
+    }
+    return undefined;
   });
 
   public firstPathKey = computed<string | undefined>(() => {
-    const cfg = this.config();
+    const cfg = this.options();
     if (!cfg?.paths) return undefined;
     const keys = Object.keys(cfg.paths);
     return keys.length ? keys[0] : undefined;
   });
 
   public getPathCfg(pathKey: string) {
-    const cfg = this.config();
+    const cfg = this.options();
     return cfg?.paths?.[pathKey];
   }
 
@@ -45,15 +47,9 @@ export class WidgetRuntimeDirective {
     this._runtimeConfig.set(cfg);
   }
 
-  /**
-   * Applies the provided config to the bound widget instance and updates the
-   * directive's programmatic config, keeping both in sync.
-   */
-  public applyConfigToWidget(cfg: IWidgetSvcConfig): void {
-    const w = this.runtimeWidget?.();
-    if (w) {
-      w.config = cloneDeep(cfg);
-    }
-    this.setRuntimeConfig(cfg);
+  // Convenience for host component to initialize both default + saved
+  public initialize(defaultCfg: IWidgetSvcConfig | undefined, savedCfg: IWidgetSvcConfig | undefined) {
+    if (defaultCfg) this.defaultConfig.set(defaultCfg);
+    if (savedCfg) this._runtimeConfig.set(savedCfg);
   }
 }
