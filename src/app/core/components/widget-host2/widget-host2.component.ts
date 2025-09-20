@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input, effect, ComponentRef } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input, effect, ComponentRef, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -45,7 +45,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
  * 5. Applying diff-based data & metadata configs (no wholesale resets) via directives.
  * 6. Persisting the merged runtime config during serialize for Gridstack state.
  */
-export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
+export class WidgetHost2Component extends BaseWidget implements OnInit, AfterViewInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
   @ViewChild('childOutlet', { read: ViewContainerRef, static: false }) private outlet!: ViewContainerRef;
@@ -59,6 +59,7 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
   private readonly _app = inject(AppService);
   protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
   private childRef: ComponentRef<WidgetViewComponentBase>;
+  private compType: Type<WidgetViewComponentBase>
 
   constructor() {
     super();
@@ -88,26 +89,17 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     return { widgetProperties: this.widgetProperties as IWidget } as NgCompInputs;
   }
 
-  ngAfterViewInit(): void {
-    this.createChildIfNeeded();
-  }
-
-  /**
-   * Lazily create the underlying widget view and initialize runtime + diff-based
-   * stream / metadata wiring. Idempotent for safety (no-op if outlet/type missing).
-   */
-  private createChildIfNeeded(): void {
-    if (!this.outlet) return;
+  ngOnInit(): void {
     const type = this.widgetProperties.type;
     if (!type) return;
-    const compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    this.compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
 
     // Try static DEFAULT_CONFIG pattern first.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let defaultCfg: IWidgetSvcConfig | undefined = compType && (compType as any).DEFAULT_CONFIG;
-    if (!defaultCfg && compType) {
+    let defaultCfg: IWidgetSvcConfig | undefined = this.compType && (this.compType as any).DEFAULT_CONFIG;
+    if (!defaultCfg && this.compType) {
       // Fallback: temporary instance solely to read instance defaultConfig, then destroy.
-      const tempRef = this.outlet.createComponent(compType);
+      const tempRef = this.outlet.createComponent(this.compType);
       defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
       tempRef.destroy();
     }
@@ -116,17 +108,25 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
     const merged = this._runtime?.options();
     if (merged) this.widgetProperties.config = merged;
+    // Initial diff-based streams wiring (registrations occur when child calls observe)
+    this._streams?.applyStreamsConfigDiff?.(merged);
+    this._meta?.applyMetaConfigDiff?.(merged);
+  }
+
+  /**
+   * Lazily create the underlying widget view and initialize runtime + diff-based
+   * stream / metadata wiring. Idempotent for safety (no-op if outlet/type missing).
+   */
+  ngAfterViewInit(): void {
+    if (!this.outlet) return;
 
     // Create the component BEFORE streams reobserve so it can subscribe early.
-    if (compType) {
-      this.childRef = this.outlet.createComponent(compType);
+    if (this.compType) {
+      this.childRef = this.outlet.createComponent(this.compType);
       this.childRef.setInput('id', this.widgetProperties.uuid);
       this.childRef.setInput('type', this.widgetProperties.type);
       this.childRef.setInput('theme', this.theme());
     }
-    // Initial diff-based streams wiring (registrations occur when child calls observe)
-    this._streams?.applyStreamsConfigDiff?.(merged);
-    this._meta?.applyMetaConfigDiff?.(merged);
   }
 
   /**
