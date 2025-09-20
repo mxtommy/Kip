@@ -1,4 +1,5 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input, effect, ComponentRef } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
@@ -12,6 +13,7 @@ import { DialogService } from '../../services/dialog.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widget-host-bottom-sheet.component';
 import { WidgetService } from '../../services/widget.service';
+import { AppService } from '../../services/app-service';
 
 // Base shape expected from view components (optional defaultConfig)
 // NOTE: Widgets may expose a static DEFAULT_CONFIG to avoid temporary instantiation.
@@ -54,9 +56,19 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
   private readonly _meta = inject(WidgetMetadataDirective, { optional: true });
   private readonly _runtime = inject(WidgetRuntimeDirective, { optional: true });
   private readonly _widgetService = inject(WidgetService);
+  private readonly _app = inject(AppService);
+  protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
+  private childRef: ComponentRef<WidgetViewComponentBase>;
 
   constructor() {
     super();
+
+    effect(() => {
+      const theme = this.theme();
+      if (this.childRef) {
+        this.childRef.setInput('theme', theme);
+      }
+    });
   }
 
   /**
@@ -107,9 +119,10 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
 
     // Create the component BEFORE streams reobserve so it can subscribe early.
     if (compType) {
-      const childRef = this.outlet.createComponent(compType);
-      childRef.setInput('id', this.widgetProperties.uuid);
-      childRef.setInput('type', this.widgetProperties.type);
+      this.childRef = this.outlet.createComponent(compType);
+      this.childRef.setInput('id', this.widgetProperties.uuid);
+      this.childRef.setInput('type', this.widgetProperties.type);
+      this.childRef.setInput('theme', this.theme());
     }
     // Initial diff-based streams wiring (registrations occur when child calls observe)
     this._streams?.applyStreamsConfigDiff?.(merged);

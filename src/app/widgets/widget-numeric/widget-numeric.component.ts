@@ -6,8 +6,7 @@ import { WidgetStreamsDirective } from '../../core/directives/widget-streams.dir
 import { IPathUpdate } from '../../core/services/data.service';
 import { CanvasService } from '../../core/services/canvas.service';
 import { DatasetService } from '../../core/services/data-set.service';
-import { AppService } from '../../core/services/app-service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ITheme } from '../../core/services/app-service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -21,7 +20,7 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  // Static default so Host2 can merge without instantiating component
+  public theme = input.required<ITheme|null>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Gauge Label',
     filterSelfPaths: true,
@@ -54,8 +53,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   protected showMiniChart = signal<boolean>(false);
-  protected app = inject(AppService);
-  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+  // AppService no longer injected here; theme signal is supplied by Host2.
   protected labelColor = signal<string>(undefined);
 
   private readonly canvas = inject(CanvasService);
