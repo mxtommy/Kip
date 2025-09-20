@@ -10,6 +10,12 @@ import { WidgetRuntimeDirective } from './widget-runtime.directive';
   selector: '[widget-metadata]',
   exportAs: 'widgetMetadata'
 })
+/**
+ * Metadata directive subscribes to zones metadata for (typically) the primary path.
+ * Optimized for single-path usage: signature = path only. Provides a BehaviorSubject `zones$`
+ * so consumers can synchronously read last known zones on subscription.
+ * Diff method re-subscribes only when the primary path changes or is removed.
+ */
 export class WidgetMetadataDirective {
   metaConfig = input<IWidgetSvcConfig>();
   metaWidget = input<IWidget>();
@@ -29,6 +35,7 @@ export class WidgetMetadataDirective {
   private currentSub: Subscription | undefined;
   private pathSignature: string | undefined;
 
+  /** Begin observing metadata for provided pathKey (or first configured path if omitted). */
   observe(pathKey?: string): void {
     const cfg = this.runtime?.options() ?? this._metaConfig() ?? this.metaConfig();
     if (!cfg?.paths || Object.keys(cfg.paths).length === 0) return;
@@ -66,6 +73,7 @@ export class WidgetMetadataDirective {
     this.currentSub = sub;
   }
 
+  /** Reset current metadata subscription and clear zones. */
   reset(): void {
     this.reset$.next();
     this.reset$.complete();
@@ -79,6 +87,10 @@ export class WidgetMetadataDirective {
     this.zones$.next([]);
   }
 
+  /**
+   * @deprecated Legacy helper: reset then re-infer path and observe again.
+   * Will be removed after confirming no external references.
+   */
   resetAndReobserve(): void {
     let key = this.lastKey;
     const cfg = this.runtime?.options() ?? this._metaConfig() ?? this.metaConfig();

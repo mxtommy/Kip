@@ -14,6 +14,8 @@ import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widg
 import { WidgetService } from '../../services/widget.service';
 
 // Base shape expected from view components (optional defaultConfig)
+// NOTE: Widgets may expose a static DEFAULT_CONFIG to avoid temporary instantiation.
+// If absent, Host2 will create & immediately destroy a temp instance to read instance.defaultConfig.
 interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
 
 @Component({
@@ -24,9 +26,23 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
   hostDirectives: [
     { directive: WidgetStreamsDirective },
     { directive: WidgetMetadataDirective },
-    { directive: WidgetRuntimeDirective, outputs: ['runtimeConfig:'] }
+    { directive: WidgetRuntimeDirective }
   ]
 })
+/**
+ * Host2 is the parent component for all dashboard widgets. It's objective
+ * is to abstract away the complexities of widget instantiation and management
+ * and make widget creation seamless as much as possible.
+ *
+ * Host2 is responsible for:
+ * 1. Discovering the concrete widget view component from `WidgetService`.
+ * 2. Obtaining default configuration (prefers static DEFAULT_CONFIG, else ephemeral instance).
+ * 3. Initializing runtime directive with (default + saved passed by gridstack)
+ *    config BEFORE child creation so streams/metadata directives can diff/attach immediately.
+ * 4. Creating the child component and supplying minimal structural inputs.
+ * 5. Applying diff-based data & metadata configs (no wholesale resets) via directives.
+ * 6. Persisting the merged runtime config during serialize for Gridstack state.
+ */
 export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
@@ -43,9 +59,13 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     super();
   }
 
-
+  /**
+   * Gridstack persistence hook. Ensures we always write the merged runtime options
+   * (default + user) so external dashboard storage stays in sync.
+   * Falls back to an empty object to avoid Gridstack serializing `undefined`.
+   * @returns Gridstack input mapping containing updated `widgetProperties`.
+   */
   public override serialize(): NgCompInputs {
-    // Always persist merged runtime options. If options() undefined (should be rare), retain existing config.
     const merged = this._runtime?.options();
     if (merged) {
       this.widgetProperties.config = merged;
@@ -60,13 +80,16 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     this.createChildIfNeeded();
   }
 
+  /**
+   * Lazily create the underlying widget view and initialize runtime + diff-based
+   * stream / metadata wiring. Idempotent for safety (no-op if outlet/type missing).
+   */
   private createChildIfNeeded(): void {
     if (!this.outlet) return;
     const type = this.widgetProperties.type;
     if (!type) return;
-  const compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    const compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
 
-    // 1. Obtain default config without forcing a full component instantiation when possible.
     // Try static DEFAULT_CONFIG pattern first.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let defaultCfg: IWidgetSvcConfig | undefined = compType && (compType as any).DEFAULT_CONFIG;
@@ -77,12 +100,12 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
       tempRef.destroy();
     }
 
-    // 2. Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
+    // Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
     this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
     const merged = this._runtime?.options();
     if (merged) this.widgetProperties.config = merged;
 
-    // 3. Create the component BEFORE streams reobserve so it can subscribe early.
+    // Create the component BEFORE streams reobserve so it can subscribe early.
     if (compType) {
       const childRef = this.outlet.createComponent(compType);
       childRef.setInput('id', this.widgetProperties.uuid);
@@ -93,6 +116,12 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     this._meta?.applyMetaConfigDiff?.(merged);
   }
 
+  /**
+   * Apply a new user-edited config (e.g., from options dialog):
+   * - Updates runtime merged options
+   * - Triggers diff-based reconfiguration for streams & metadata
+   * @param cfg New user configuration fragment (already validated) or undefined to re-emit existing.
+   */
   private applyRuntimeConfig(cfg?: IWidgetSvcConfig): void {
     if (cfg) {
       // Update widget config
@@ -108,6 +137,10 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     this._meta?.applyMetaConfigDiff?.(runtimeCfg);
   }
 
+  /**
+   * Open the widget options dialog (skips when dashboard is static).
+   * @param e Event used to stop propagation (click/context menu/etc.).
+   */
   public openWidgetOptions(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {
@@ -125,6 +158,10 @@ export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
     }
   }
 
+  /**
+   * Open the bottom sheet for widget management (delete / duplicate actions).
+   * @param e Event used to stop propagation.
+   */
   public openBottomSheet(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
     if (!this._dashboard.isDashboardStatic()) {

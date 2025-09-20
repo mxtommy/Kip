@@ -51,19 +51,15 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     dataTimeout: 5,
     ignoreZones: false
   };
-  // Instance alias (kept for any legacy access patterns)
-  public defaultConfig: IWidgetSvcConfig = WidgetNumericComponent.DEFAULT_CONFIG;
-
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-
   protected showMiniChart = signal<boolean>(false);
   protected app = inject(AppService);
   protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
   protected labelColor = signal<string>(undefined);
 
   private readonly canvas = inject(CanvasService);
-  private readonly _dataset = inject(DatasetService);
+  private readonly dataset = inject(DatasetService);
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly stream = inject(WidgetStreamsDirective);
 
@@ -206,16 +202,16 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     const show = !!cfg.showMiniChart;
     this.showMiniChart.set(show);
     if (!show) {
-      this._dataset.removeIfExists(this.id(), true);
+      this.dataset.removeIfExists(this.id(), true);
       return;
     }
     if (!pathInfo || !pathInfo.path) return;
     const source = pathInfo.source ?? 'default';
-    const existing = this._dataset.getDatasetConfig(this.id());
+    const existing = this.dataset.getDatasetConfig(this.id());
     if (!existing) {
-      this._dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, true, false, this.id());
+      this.dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, true, false, this.id());
     } else if (existing.path !== pathInfo.path || existing.pathSource !== source) {
-      this._dataset.edit({ ...existing, path: pathInfo.path, pathSource: source });
+      this.dataset.edit({ ...existing, path: pathInfo.path, pathSource: source });
     }
   }
 
@@ -373,7 +369,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this._dataset.removeIfExists(this.id(), true);
+    this.dataset.removeIfExists(this.id(), true);
     try { this.canvas.unregisterCanvas(this.canvasElement); } catch { /* ignore */ }
   }
 }

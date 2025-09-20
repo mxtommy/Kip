@@ -6,6 +6,11 @@ import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
   selector: '[widget-runtime]',
   exportAs: 'widgetRuntime'
 })
+/**
+ * Runtime directive merges a widget's default configuration with the (possibly user-edited)
+ * saved configuration. It memoizes the merged object to provide a stable reference unless
+ * either source reference changes, reducing downstream signal churn.
+ */
 export class WidgetRuntimeDirective {
   protected runtimeConfig = output<IWidgetSvcConfig | undefined>();
   public defaultConfig = signal<IWidgetSvcConfig | undefined>(undefined);
@@ -16,7 +21,10 @@ export class WidgetRuntimeDirective {
   private lastUserRef: IWidgetSvcConfig | undefined;
   private lastMergedRef: IWidgetSvcConfig | undefined;
 
-  // Combined user config and default widget config. If only default exists, use it.
+  /**
+   * Merged runtime options (default + user). Returns identical object instance when
+   * neither underlying reference changed, enabling efficient consumers.
+   */
   public options = computed<IWidgetSvcConfig | undefined>(() => {
     const base = this.defaultConfig();
     const user = this._runtimeConfig();
@@ -41,6 +49,7 @@ export class WidgetRuntimeDirective {
     return merged;
   });
 
+  /** Convenience: first configured path key (widgets needing only a single path can use this). */
   public firstPathKey = computed<string | undefined>(() => {
     const cfg = this.options();
     if (!cfg?.paths) return undefined;
@@ -48,16 +57,18 @@ export class WidgetRuntimeDirective {
     return keys.length ? keys[0] : undefined;
   });
 
+  /** Retrieve a single path config safely from current merged options. */
   public getPathCfg(pathKey: string) {
     const cfg = this.options();
     return cfg?.paths?.[pathKey];
   }
 
+  /** Set (replace) the user runtime portion of the configuration. */
   public setRuntimeConfig(cfg: IWidgetSvcConfig | undefined) {
     this._runtimeConfig.set(cfg);
   }
 
-  // Convenience for host component to initialize both default + saved
+  /** Seed both default and saved configs (called once by Host2 before child creation). */
   public initialize(defaultCfg: IWidgetSvcConfig | undefined, savedCfg: IWidgetSvcConfig | undefined) {
     if (defaultCfg) this.defaultConfig.set(defaultCfg);
     if (savedCfg) this._runtimeConfig.set(savedCfg);
