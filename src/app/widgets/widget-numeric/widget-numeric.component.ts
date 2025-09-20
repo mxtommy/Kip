@@ -10,6 +10,7 @@ import { AppService } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
   selector: 'widget-numeric',
@@ -95,10 +96,24 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     } else if (this.maxValue === null || this.dataValue > this.maxValue) {
       this.maxValue = this.dataValue;
     }
+
     if (!this.runtime?.options().ignoreZones) {
-      // No States enum here; assume colors are already in theme
-      this.valueStateColor = this.valueColor;
+      switch (newValue.state) {
+        case States.Alarm:
+          this.valueStateColor = this.theme().zoneAlarm;
+          break;
+        case States.Warn:
+          this.valueStateColor = this.theme().zoneWarn;
+          break;
+        case States.Alert:
+          this.valueStateColor = this.theme().zoneAlert;
+          break;
+        default:
+          this.valueStateColor = this.valueColor;
+          break;
+      }
     }
+
     this.drawWidget();
   };
 
@@ -174,8 +189,12 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     this.dataValue = null;
     this.setColors();
     if (!this.streamRegistered) {
-      this.stream?.observe('numericPath', this.onNumericValue);
-      this.streamRegistered = true;
+      if (this.runtime?.options()?.paths?.['numericPath']?.path) {
+        this.stream?.observe('numericPath', this.onNumericValue);
+        this.streamRegistered = true;
+      } else {
+        this.drawValue();
+      }
     }
   }
 
