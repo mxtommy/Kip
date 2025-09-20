@@ -53,7 +53,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   protected showMiniChart = signal<boolean>(false);
-  // AppService no longer injected here; theme signal is supplied by Host2.
   protected labelColor = signal<string>(undefined);
 
   private readonly canvas = inject(CanvasService);
@@ -107,7 +106,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
           break;
       }
     }
-
     this.drawWidget();
   };
 
@@ -151,11 +149,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         this.drawWidget();
       },
     });
-    /* this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
-    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
-    this.calculateMaxMinTextDimensions();
-    this.drawWidget(); // initial clear */
-
 
     const opts = this.runtime.options();
     if (opts) {
