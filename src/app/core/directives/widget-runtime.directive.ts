@@ -12,23 +12,33 @@ export class WidgetRuntimeDirective {
 
   // Internal runtime config
   private _runtimeConfig = signal<IWidgetSvcConfig | undefined>(undefined);
+  private lastBaseRef: IWidgetSvcConfig | undefined;
+  private lastUserRef: IWidgetSvcConfig | undefined;
+  private lastMergedRef: IWidgetSvcConfig | undefined;
 
   // Combined user config and default widget config. If only default exists, use it.
   public options = computed<IWidgetSvcConfig | undefined>(() => {
     const base = this.defaultConfig();
     const user = this._runtimeConfig();
+    // Fast path reuse if references unchanged
+    if (this.lastMergedRef && base === this.lastBaseRef && user === this.lastUserRef) {
+      return this.lastMergedRef;
+    }
+    let merged: IWidgetSvcConfig | undefined;
     if (base && user) {
-      const merged = cloneDeep(merge({}, base, user));
-      this.runtimeConfig.emit(merged);
-      return merged;
+      merged = merge(cloneDeep(base), cloneDeep(user));
+    } else if (base && !user) {
+      merged = cloneDeep(base);
+    } else if (!base && user) {
+      merged = cloneDeep(user);
+    } else {
+      merged = undefined;
     }
-    if (base && !user) {
-      // Emit base so dependents can start even before user customization
-      const cloned = cloneDeep(base);
-      this.runtimeConfig.emit(cloned);
-      return cloned;
-    }
-    return undefined;
+    this.lastBaseRef = base;
+    this.lastUserRef = user;
+    this.lastMergedRef = merged;
+    this.runtimeConfig.emit(merged);
+    return merged;
   });
 
   public firstPathKey = computed<string | undefined>(() => {

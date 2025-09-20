@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input, OnInit } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
@@ -27,7 +27,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
     { directive: WidgetRuntimeDirective, outputs: ['runtimeConfig:'] }
   ]
 })
-export class WidgetHost2Component extends BaseWidget implements OnInit, AfterViewInit {
+export class WidgetHost2Component extends BaseWidget implements AfterViewInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
   @ViewChild('childOutlet', { read: ViewContainerRef, static: false }) private outlet!: ViewContainerRef;
@@ -37,19 +37,12 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
   private readonly _streams = inject(WidgetStreamsDirective, { optional: true });
   private readonly _meta = inject(WidgetMetadataDirective, { optional: true });
   private readonly _runtime = inject(WidgetRuntimeDirective, { optional: true });
-  private _childCreated = false;
   private readonly _widgetService = inject(WidgetService);
 
   constructor() {
     super();
   }
 
-  ngOnInit(): void {
-    // If there is a saved config, seed runtime now (default will merge once child provides it)
-    if (this.widgetProperties?.config) {
-      this._runtime?.setRuntimeConfig?.(this.widgetProperties.config);
-    }
-  }
 
   public override serialize(): NgCompInputs {
     // Always persist merged runtime options. If options() undefined (should be rare), retain existing config.
@@ -71,8 +64,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     if (!this.outlet) return;
     const type = this.widgetProperties.type;
     if (!type) return;
-    const resolved = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
-    const compType = resolved;
+  const compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
 
     // 1. Obtain default config without forcing a full component instantiation when possible.
     // Try static DEFAULT_CONFIG pattern first.
@@ -86,12 +78,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     }
 
     // 2. Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
-    if (this._runtime?.initialize) {
-      this._runtime.initialize(defaultCfg, this.widgetProperties.config);
-    } else {
-      this._runtime?.defaultConfig.set(defaultCfg);
-      if (this.widgetProperties.config) this._runtime?.setRuntimeConfig?.(this.widgetProperties.config);
-    }
+    this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
     const merged = this._runtime?.options();
     if (merged) this.widgetProperties.config = merged;
 
@@ -104,7 +91,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     // Initial diff-based streams wiring (registrations occur when child calls observe)
     this._streams?.applyStreamsConfigDiff?.(merged);
     this._meta?.applyMetaConfigDiff?.(merged);
-    this._childCreated = true;
   }
 
   private applyRuntimeConfig(cfg?: IWidgetSvcConfig): void {

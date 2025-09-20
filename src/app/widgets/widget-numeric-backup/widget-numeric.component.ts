@@ -102,12 +102,14 @@ export class WidgetNumericBackupComponent extends BaseWidgetComponent implements
     this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
     this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.calculateMaxMinTextDimensions();
+    this.drawWidget(); // initial clear
     if (this.isDestroyed) return;
     this.manageDatasetAndChart();
 
     if (this.showMiniChart() && this.miniChart()) {
       this.setMiniChart();
     }
+
     this.startWidget();
   }
 

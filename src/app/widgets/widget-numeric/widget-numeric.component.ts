@@ -77,9 +77,9 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
-  private lastDrawnValue: number | null = null;
-  private lastDrawnMin: number | null = null;
-  private lastDrawnMax: number | null = null;
+  private lastDrawnValue: number | null = undefined;
+  private lastDrawnMin: number | null = undefined;
+  private lastDrawnMax: number | null = undefined;
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
@@ -137,6 +137,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       this.manageDatasetAndChart();
       if (this.showMiniChart() && this.miniChart()) {
         this.setMiniChart();
+        this.miniChart().startChart();
       }
       this.startWidget();
       this.drawWidget();
@@ -144,13 +145,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   ngOnInit(): void {
-    const opts = this.runtime.options();
-    if (opts) {
-      this.showMiniChart.set(opts.showMiniChart);
-    }
-  }
-
-  ngAfterViewInit(): void {
+    this.setColors();
     this.canvasElement = this.canvasMainRef().nativeElement;
     this.canvasCtx = this.canvasElement.getContext('2d');
     this.canvas.registerCanvas(this.canvasElement, {
@@ -162,15 +157,26 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         this.drawWidget();
       },
     });
-    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
+    /* this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
     this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.calculateMaxMinTextDimensions();
+    this.drawWidget(); // initial clear */
+
+
+    const opts = this.runtime.options();
+    if (opts) {
+      this.showMiniChart.set(opts.showMiniChart);
+      this.startWidget();
+    }
+  }
+
+  ngAfterViewInit(): void {
     if (this.isDestroyed) return;
     this.manageDatasetAndChart();
     if (this.showMiniChart() && this.miniChart()) {
       this.setMiniChart();
+      this.miniChart().startChart();
     }
-    this.startWidget();
   }
 
   private calculateMaxMinTextDimensions(): void {
@@ -181,13 +187,9 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private startWidget(): void {
-    if (this.showMiniChart() && this.miniChart()) {
-      this.miniChart().startChart();
-    }
     this.minValue = null;
     this.maxValue = null;
     this.dataValue = null;
-    this.setColors();
     if (!this.streamRegistered) {
       if (this.runtime?.options()?.paths?.['numericPath']?.path) {
         this.stream?.observe('numericPath', this.onNumericValue);
@@ -301,10 +303,11 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       this.canvasCtx.drawImage(this.backgroundBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
     this.drawValue();
-    if (cfg.showMax || cfg.showMin) this.drawMinMax();
-    this.lastDrawnValue = this.dataValue;
-    this.lastDrawnMin = this.minValue;
-    this.lastDrawnMax = this.maxValue;
+    if (cfg.showMax || cfg.showMin) {
+      this.drawMinMax();
+      this.lastDrawnMin = this.minValue;
+      this.lastDrawnMax = this.maxValue;
+    }
   }
 
   private drawValue(): void {
@@ -319,6 +322,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       'bold',
       this.valueStateColor
     );
+    this.lastDrawnValue = this.dataValue;
   }
 
   private getValueText(): string {
