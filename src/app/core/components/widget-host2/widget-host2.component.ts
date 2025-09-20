@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, AfterViewInit, Input, effect, ComponentRef, OnInit } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -45,10 +45,12 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
  * 5. Applying diff-based data & metadata configs (no wholesale resets) via directives.
  * 6. Persisting the merged runtime config during serialize for Gridstack state.
  */
-export class WidgetHost2Component extends BaseWidget implements OnInit, AfterViewInit {
+export class WidgetHost2Component extends BaseWidget implements OnInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
-  @ViewChild('childOutlet', { read: ViewContainerRef, static: false }) private outlet!: ViewContainerRef;
+  // Mark static:true so the outlet is available during ngOnInit allowing
+  // runtime initialization + child creation before the first stability check.
+  @ViewChild('childOutlet', { read: ViewContainerRef, static: true }) private outlet!: ViewContainerRef;
   private readonly _dialog = inject(DialogService);
   protected readonly _dashboard = inject(DashboardService);
   private readonly _bottomSheet = inject(MatBottomSheet);
@@ -97,7 +99,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     // Try static DEFAULT_CONFIG pattern first.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let defaultCfg: IWidgetSvcConfig | undefined = this.compType && (this.compType as any).DEFAULT_CONFIG;
-    if (!defaultCfg && this.compType) {
+    if (!defaultCfg && this.compType && this.outlet) {
       // Fallback: temporary instance solely to read instance defaultConfig, then destroy.
       const tempRef = this.outlet.createComponent(this.compType);
       defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
@@ -111,20 +113,13 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, AfterVie
     // Initial diff-based streams wiring (registrations occur when child calls observe)
     this._streams?.applyStreamsConfigDiff?.(merged);
     this._meta?.applyMetaConfigDiff?.(merged);
-  }
 
-  /**
-   * Lazily create the underlying widget view and initialize runtime + diff-based
-   * stream / metadata wiring. Idempotent for safety (no-op if outlet/type missing).
-   */
-  ngAfterViewInit(): void {
-    if (!this.outlet) return;
-
-    // Create the component BEFORE streams reobserve so it can subscribe early.
-    if (this.compType) {
+    // Create the child component BEFORE first change detection completes so its
+    if (this.outlet && this.compType) {
       this.childRef = this.outlet.createComponent(this.compType);
       this.childRef.setInput('id', this.widgetProperties.uuid);
       this.childRef.setInput('type', this.widgetProperties.type);
+      // Pass current theme value; ongoing updates handled by effect in ctor.
       this.childRef.setInput('theme', this.theme());
     }
   }

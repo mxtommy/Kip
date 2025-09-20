@@ -50,16 +50,16 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     dataTimeout: 5,
     ignoreZones: false
   };
-  protected miniChart = viewChild(MinichartComponent);
-  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  protected showMiniChart = signal<boolean>(false);
-  protected labelColor = signal<string>(undefined);
-
-  private readonly canvas = inject(CanvasService);
-  private readonly dataset = inject(DatasetService);
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly stream = inject(WidgetStreamsDirective);
 
+  private readonly canvas = inject(CanvasService);
+  private readonly dataset = inject(DatasetService);
+  protected miniChart = viewChild(MinichartComponent);
+  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+
+  protected showMiniChart = signal<boolean>(false);
+  protected labelColor = signal<string>(undefined);
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private cssWidth = 0;
@@ -131,6 +131,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         this.setMiniChart();
         this.miniChart().startChart();
       }
+      this.setColors();
       this.startWidget();
       this.drawWidget();
     });
