@@ -3,6 +3,7 @@ import { Type } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
+import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -108,6 +109,7 @@ export class WidgetService {
   private readonly _componentTypeMap: Record<string, Type<any>> = {
     WidgetNumericComponent: WidgetNumericComponent,
     WidgetTextComponent: WidgetTextComponent,
+    WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -452,15 +454,21 @@ export class WidgetService {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponentType(selector: string): Type<any> | undefined {
-    if (this._componentTypeCache.has(selector)) {
-      return this._componentTypeCache.get(selector);
-    }
+    // Only return cached value if it's a defined component Type; avoid sticky undefined caching
+    const cached = this._componentTypeCache.get(selector);
+    if (cached) return cached;
+
     const def = this._widgetDefinition.find(w => w.selector === selector);
-    if (!def) {
-      this._componentTypeCache.set(selector, undefined);
+    if (!def) return undefined;
+
+    const resolved = this._componentTypeMap[def.componentClassName];
+    if (!resolved) {
+      // Do NOT cache undefined so that adding a new mapping later in dev picks it up without reload
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        console.warn('[WidgetService] No component mapping for', def.componentClassName);
+      }
       return undefined;
     }
-    const resolved = this._componentTypeMap[def.componentClassName];
     this._componentTypeCache.set(selector, resolved);
     return resolved;
   }

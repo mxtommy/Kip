@@ -31,6 +31,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
     { directive: WidgetRuntimeDirective }
   ]
 })
+
 /**
  * Host2 is the parent component for all dashboard widgets. It's objective
  * is to abstract away the complexities of widget instantiation and management
