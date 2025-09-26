@@ -4,6 +4,7 @@ import { SignalkPluginsService } from './signalk-plugins.service';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
+import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -96,6 +97,7 @@ export class WidgetService {
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
+  //TODO: remove and clean up this logic once migration is completed
   /**
    * Mapping of `componentClassName` (as declared in `_widgetDefinition`) to the concrete
    * Angular component Type. During the Host2 migration only widgets that have been
@@ -110,6 +112,7 @@ export class WidgetService {
     WidgetNumericComponent: WidgetNumericComponent,
     WidgetTextComponent: WidgetTextComponent,
     WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
+    WidgetWindComponent: WidgetWindComponent,
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
