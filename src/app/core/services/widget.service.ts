@@ -5,6 +5,7 @@ import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-nume
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
 import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
+import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -113,6 +114,7 @@ export class WidgetService {
     WidgetTextComponent: WidgetTextComponent,
     WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
     WidgetWindComponent: WidgetWindComponent,
+    WidgetTutorialComponent: WidgetTutorialComponent,
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -362,6 +364,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Tutorial',
+      description: 'An instructional widget that guides new users through basic navigation, gestures, and dashboard editing steps.',
+      icon: 'helpWidget',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 6,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-tutorial',
+      componentClassName: 'WidgetTutorialComponent'
     },
     {
       name: 'Racesteer',
