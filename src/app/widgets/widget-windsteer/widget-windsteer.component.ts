@@ -156,7 +156,7 @@ export class WidgetWindComponent implements OnDestroy {
   private zones = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
 
-  private registeredPaths = new Set<string>();
+  // Removed local registeredPaths guard; rely on WidgetStreamsDirective diff + idempotent observe() with stable callbacks
 
   private hasHeading = false;
   private hasCOG = false;
@@ -199,128 +199,105 @@ export class WidgetWindComponent implements OnDestroy {
   private readonly SPEED_EPSILON = 0.1;  // knots
 
   constructor() {
+    // Stable stream callbacks registered via effect; directive handles diffing
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg) return;
       untracked(() => {
         this.appWindSpeedUnit.set(cfg.paths['appWindSpeed'].convertUnitTo);
         this.trueWindSpeedUnit.set(cfg.paths['trueWindSpeed'].convertUnitTo);
-        this.setupStreams();
+        this.registerStreams();
         this.stopWindSectors();
         this.startWindSectors();
       });
     });
   }
 
-  private setupStreams() {
+  // Stable callbacks -------------------------------------------------
+  private onHeadingUpdate = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = this.normalizeAngle(u.data.value);
+    if (!this.hasHeading || this.angleDelta(this.currentHeading(), next) >= this.DEG_EPSILON) {
+      this.currentHeading.set(next); this.hasHeading = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onCOGUpdate = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = this.normalizeAngle(u.data.value);
+    if (!this.hasCOG || this.angleDelta(this.courseOverGroundAngle(), next) >= this.DEG_EPSILON) {
+      this.courseOverGroundAngle.set(next); this.hasCOG = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onDriftUpdate = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = u.data.value;
+    if (!this.hasDrift || Math.abs(this.driftFlow() - next) >= this.SPEED_EPSILON) {
+      this.driftFlow.set(next); this.hasDrift = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onSetUpdate = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = this.normalizeAngle(u.data.value);
+    if (!this.hasSet || this.angleDelta(this.driftSet(), next) >= this.DEG_EPSILON) {
+      this.driftSet.set(next); this.hasSet = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onWaypointUpdate = (u: IPathUpdate) => {
+    const raw = u.data.value;
+    const next = this.normalizeAngle(raw);
+    if (!this.hasWPT || this.angleDelta(this.waypointAngle(), next) >= this.DEG_EPSILON) {
+      this.waypointAngle.set(next); this.hasWPT = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onAppWindAngle = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const raw = u.data.value;
+    const next = this.normalizeAngle(raw);
+    if (!this.hasAWA || this.angleDelta(this.appWindAngle(), next) >= this.DEG_EPSILON) {
+      this.appWindAngle.set(next); this.hasAWA = true;
+      const cfg = this.runtime.options();
+      if (cfg?.windSectorEnable) this.addHistoricalWindDirection(this.normalizeAngle(raw));
+      this.scheduleMarkForCheck();
+    }
+  };
+  private onAppWindSpeed = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = u.data.value;
+    if (!this.hasAWS || Math.abs(this.appWindSpeed() - next) >= this.SPEED_EPSILON) {
+      this.appWindSpeed.set(next); this.hasAWS = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onTrueWindSpeed = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const next = u.data.value;
+    if (!this.hasTWS || Math.abs(this.trueWindSpeed() - next) >= this.SPEED_EPSILON) {
+      this.trueWindSpeed.set(next); this.hasTWS = true; this.scheduleMarkForCheck();
+    }
+  };
+  private onTrueWindAngle = (u: IPathUpdate) => {
+    if (u.data.value == null) u.data.value = 0;
+    const cfg = this.runtime.options();
+    const path = cfg?.paths['trueWindAngle'].path || '';
+    const base = (path.includes('angleTrueWater') || path.includes('angleTrueGround')) ? this.addHeading(this.currentHeading(), u.data.value) : u.data.value;
+    const next = this.normalizeAngle(base);
+    if (!this.hasTWA || this.angleDelta(this.trueWindAngle(), next) >= this.DEG_EPSILON) {
+      this.trueWindAngle.set(next); this.hasTWA = true; this.scheduleMarkForCheck();
+    }
+  };
+
+  private registerStreams() {
     const cfg = this.runtime.options();
     if (!cfg) return;
     this.zones.runOutsideAngular(() => {
-      const observeOnce = (key: string, fn: (u: IPathUpdate) => void) => {
-        if (this.registeredPaths.has(key)) return;
-        if (!cfg.paths[key]?.path) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.stream.observe(key as any, fn);
-        this.registeredPaths.add(key);
-      };
-
-      observeOnce('headingPath', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = this.normalizeAngle(newValue.data.value);
-        if (!this.hasHeading || this.angleDelta(this.currentHeading(), next) >= this.DEG_EPSILON) {
-          this.currentHeading.set(next);
-          this.hasHeading = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('courseOverGround', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = this.normalizeAngle(newValue.data.value);
-        if (!this.hasCOG || this.angleDelta(this.courseOverGroundAngle(), next) >= this.DEG_EPSILON) {
-          this.courseOverGroundAngle.set(next);
-          this.hasCOG = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('drift', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = newValue.data.value;
-        if (!this.hasDrift || Math.abs(this.driftFlow() - next) >= this.SPEED_EPSILON) {
-          this.driftFlow.set(next);
-          this.hasDrift = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('set', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = this.normalizeAngle(newValue.data.value);
-        if (!this.hasSet || this.angleDelta(this.driftSet(), next) >= this.DEG_EPSILON) {
-          this.driftSet.set(next);
-          this.hasSet = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('nextWaypointBearing', newValue => {
-        const raw = newValue.data.value;
-        const next = this.normalizeAngle(raw);
-        if (!this.hasWPT || this.angleDelta(this.waypointAngle(), next) >= this.DEG_EPSILON) {
-          this.waypointAngle.set(next);
-          this.hasWPT = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('appWindAngle', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const raw = newValue.data.value;
-        const next = this.normalizeAngle(raw);
-        if (!this.hasAWA || this.angleDelta(this.appWindAngle(), next) >= this.DEG_EPSILON) {
-          this.appWindAngle.set(next);
-          this.hasAWA = true;
-          if (cfg.windSectorEnable) {
-            this.addHistoricalWindDirection(this.normalizeAngle(raw));
-          }
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('appWindSpeed', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = newValue.data.value;
-        if (!this.hasAWS || Math.abs(this.appWindSpeed() - next) >= this.SPEED_EPSILON) {
-          this.appWindSpeed.set(next);
-          this.hasAWS = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('trueWindSpeed', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const next = newValue.data.value;
-        if (!this.hasTWS || Math.abs(this.trueWindSpeed() - next) >= this.SPEED_EPSILON) {
-          this.trueWindSpeed.set(next);
-          this.hasTWS = true;
-          this.scheduleMarkForCheck();
-        }
-      });
-
-      observeOnce('trueWindAngle', newValue => {
-        if (newValue.data.value == null) newValue.data.value = 0;
-        const path = cfg.paths['trueWindAngle'].path;
-        const base = (path.includes('angleTrueWater') || path.includes('angleTrueGround'))
-          ? this.addHeading(this.currentHeading(), newValue.data.value)
-          : newValue.data.value;
-        const next = this.normalizeAngle(base);
-        if (!this.hasTWA || this.angleDelta(this.trueWindAngle(), next) >= this.DEG_EPSILON) {
-          this.trueWindAngle.set(next);
-          this.hasTWA = true;
-          this.scheduleMarkForCheck();
-        }
-      });
+      this.stream.observe('headingPath', this.onHeadingUpdate);
+      this.stream.observe('courseOverGround', this.onCOGUpdate);
+      this.stream.observe('drift', this.onDriftUpdate);
+      this.stream.observe('set', this.onSetUpdate);
+      this.stream.observe('nextWaypointBearing', this.onWaypointUpdate);
+      this.stream.observe('appWindAngle', this.onAppWindAngle);
+      this.stream.observe('appWindSpeed', this.onAppWindSpeed);
+      this.stream.observe('trueWindSpeed', this.onTrueWindSpeed);
+      this.stream.observe('trueWindAngle', this.onTrueWindAngle);
     });
   }
 
