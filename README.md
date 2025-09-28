@@ -164,10 +164,10 @@ Use cases
 Runs KIP on Raspberry Pi as a single full-screen application, suppresses desktop UI and stays on screen like a dedicated instrument display at a fraction of the cost. Read the [Kiosk Mode](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/kiosk.md) help file.
 
 ## Complementary Components
-Typical complementary components you may install (many are often bundled with Signal K distributions):
+Typical complementary components you may install (most are often bundled with Signal K distributions):
 
 **Navigation & Charting**
-- **Freeboard‑SK** – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
+- **Freeboard‑SK** (pre-installed) – Multi‑station, web chart plotter dedicated to Signal K: routes, waypoints, charts, alarms, weather layers, and instrument overlays.
 
 **Visual Flow / Automation**
 - **Node‑RED** – Low‑code, flow‑based wiring of devices, APIs, online services, and custom logic (alert escalation, device control automation, data enrichment, protocol bridging).
