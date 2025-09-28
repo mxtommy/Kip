@@ -74,7 +74,7 @@ Run KIP in full-screen mode without browser controls, just like a native mobile 
 ### Chartplotter Mode
 Keep a live Freeboard‑SK chart visible while switching dashboards for an MFD‑style workflow. The chart persists (no reload or flicker), you can choose its side, collapse it per‑dashboard for full data pages, and drag resize the split. Layout auto‑stacks in portrait / narrow screens. See the dedicated Chartplotter Mode help page for setup, performance tips, and troubleshooting.
 
-![Chartplotter Mode](./images/ChartPlotterMode.png)
+![Chartplotter Mode](./images/ChartplotterMode.png)
 
 ## User Experience
 
