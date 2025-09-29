@@ -1,10 +1,9 @@
-import { Directive, DestroyRef, inject, input, signal } from '@angular/core';
+import { Directive, DestroyRef, inject, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
-import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { WidgetRuntimeDirective } from './widget-runtime.directive';
 
 @Directive({
   selector: '[widget-streams]',
@@ -12,37 +11,42 @@ import { WidgetRuntimeDirective } from './widget-runtime.directive';
 })
 /**
  * Streams directive manages live data subscriptions for widget Signal K paths.
- * Key features:
- * - Per-path base observable cache to avoid redundant DataService subscriptions.
- * - Diffing: `applyStreamsConfigDiff` rebuilds only changed path pipelines (incl. root timeout settings).
- * - Fast first emission (take(1)) merged with sampled stream to minimize initial render latency.
- * - Optional timeout + retry handling driven by widget config (enableTimeout, dataTimeout).
- * - Unit conversion for numeric paths centralized before consumer callback.
- * Consumers (widget view components) call `observe(pathKey, cb)` to register interest.
+ *
+ * Architecture:
+ * - Each widget instance gets its own directive instance (no cross-widget sharing)
+ * - One callback per path (subsequent observe() calls replace previous callback)
+ * - Per-path base observable cache to avoid redundant DataService subscriptions
+ * - Diff-based updates: only rebuilds subscriptions when path signatures change
+ *
+ * Key Features:
+ * - Fast first emission (take(1)) merged with sampled stream for immediate render
+ * - Automatic unit conversion for numeric paths via UnitsService
+ * - Optional timeout + retry handling (enableTimeout, dataTimeout config)
+ * - Path validation: null/undefined/empty paths trigger cleanup
+ * - Signature tracking: path + pathType + sampleTime + convertUnitTo + source
+ *
+ * Usage Pattern:
+ * - Call observe(pathKey, callback) once per required path
+ * - Multiple paths require multiple observe() calls
+ * - Config changes automatically trigger diff-based subscription updates
+ * - All subscriptions auto-cleanup on directive destroy
  */
 export class WidgetStreamsDirective {
-  streamsConfig = input<IWidgetSvcConfig>();
-  streamsWidget = input<IWidget>();
-
-  // Programmatic config/widget owned by Host2
   private _streamsConfig = signal<IWidgetSvcConfig | undefined>(undefined);
-  public setStreamsConfig(cfg: IWidgetSvcConfig | undefined) { this._streamsConfig.set(cfg); }
-
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly runtime = inject(WidgetRuntimeDirective);
   // Base raw observables per logical path key
   private streams: Map<string, Observable<IPathUpdate>> | undefined;
+  private registrations: { pathName: string; next: (value: IPathUpdate) => void }[] = [];
   // Active subscriptions per path (so we can surgically unsubscribe changed/removed paths)
   private subscriptions = new Map<string, { sub: Subscription; signature: string }>();
   // Root-level signature (timeout settings) to detect when all paths need pipeline rebuild
-  private rootSignature: string | undefined;
   private reset$ = new Subject<void>();
-  private registrations: { pathName: string; next: (value: IPathUpdate) => void }[] = [];
+  private rootSignature: string | undefined;
 
   /** Build a simple Observer wrapper for a given path key. */
-  buildObserver(pathKey: string, next: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
+  private buildObserver(pathKey: string, next: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
     return {
       next: v => next(v),
       error: err => console.error('[Widget] Observer got an error: ' + err),
@@ -51,7 +55,14 @@ export class WidgetStreamsDirective {
   }
 
   private computePathSignature(pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string }): string {
-    return [pathCfg.path, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, pathCfg.source || ''].join('|');
+    const normalizedPath = this.normalizePath(pathCfg.path) ?? '';
+    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, pathCfg.source || ''].join('|');
+  }
+
+  private normalizePath(path: unknown): string | undefined {
+    if (typeof path !== 'string') return undefined;
+    const trimmed = path.trim();
+    return trimmed.length ? trimmed : undefined;
   }
 
   private computeRootSignature(cfg: IWidgetSvcConfig | undefined): string {
@@ -65,10 +76,19 @@ export class WidgetStreamsDirective {
 
   /** Create (or reuse) base observable, assemble pipeline, and subscribe with diff-aware replacement. */
   private buildAndSubscribe(pathName: string, next: (value: IPathUpdate) => void, cfg: IWidgetSvcConfig, pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string }): void {
+    const normalizedPath = this.normalizePath(pathCfg.path);
+    if (!normalizedPath) {
+      const existing = this.subscriptions.get(pathName);
+      if (existing) existing.sub.unsubscribe();
+      this.subscriptions.delete(pathName);
+      this.streams?.delete(pathName);
+      return;
+    }
+
     // Build base observable if missing
     this.ensureStreamsMap();
     if (!this.streams!.has(pathName)) {
-      this.streams!.set(pathName, this.dataService.subscribePath(pathCfg.path, pathCfg.source || 'default'));
+      this.streams!.set(pathName, this.dataService.subscribePath(normalizedPath, pathCfg.source || 'default'));
     }
     const base$ = this.streams!.get(pathName)!;
 
@@ -98,8 +118,8 @@ export class WidgetStreamsDirective {
         timeout({
           each: dataTimeout,
           with: () => throwError(() => {
-            console.log(timeoutErrorMsg + pathCfg.path);
-            this.dataService.timeoutPathObservable(pathCfg.path, pathType);
+            console.log(timeoutErrorMsg + normalizedPath);
+            this.dataService.timeoutPathObservable(normalizedPath, pathType);
           })
         }),
         retryWhen(error => error.pipe(
@@ -115,7 +135,8 @@ export class WidgetStreamsDirective {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(observer);
-    const signature = this.computePathSignature(pathCfg);
+    const normalizedCfg = { ...pathCfg, path: normalizedPath };
+    const signature = this.computePathSignature(normalizedCfg);
     // Replace any existing subscription
     const existing = this.subscriptions.get(pathName);
     if (existing) existing.sub.unsubscribe();
@@ -123,10 +144,59 @@ export class WidgetStreamsDirective {
   }
 
   /**
-   * Diff and apply new config: only rebuild subscriptions whose signatures (or root signature) changed.
-   * If there was no previous config (first load), we defer building until a widget calls observe().
+   * Programmatically set widget configuration for the streams directive.
+   *
+   * This is a manual config injection mechanism primarily used when widgets are
+   * embedded and require hardcoded or parent component configuration management.
+   *
+   * Behavior:
+   * - Updates internal config signal immediately
+   * - Does NOT trigger automatic subscription updates (unlike applyStreamsConfigDiff)
+   * - Widgets must call observe() after setStreamsConfig() to establish subscriptions
+   * - Useful for runtime config injection without Host2 dependency
+   *
+   * Usage Patterns:
+   * ```ts
+   * // Embedded widget scenario
+   * const streams = inject(WidgetStreamsDirective);
+   * streams.setStreamsConfig(myWidgetConfig);
+   * streams.observe('primaryPath', data => this.handleData(data));
+   *
+   * // Dynamic config updates
+   * streams.setStreamsConfig(newConfig);
+   * streams.observe('newPath', callback); // Creates subscription with new config
+   * ```
+   *
+   * Note: For regular widgets, use WidgetRuntimeDirective which automatically
+   * handles stream lifecycle management and config changes.
+   *
+   * @param cfg Widget service config or undefined to clear configuration
+   * @public For manual config injection in embedded/hardcoded contexts such the
+   * Widget-autopilot widget in route mode.
    */
-  applyStreamsConfigDiff(cfg: IWidgetSvcConfig | undefined): void {
+  public setStreamsConfig(cfg: IWidgetSvcConfig | undefined) {
+    this._streamsConfig.set(cfg);
+  }
+
+  /**
+   * Apply config changes with diff-based subscription management.
+   * Called automatically by Host2 when widget config updates.
+   *
+   * Behavior:
+   * - Compares path signatures (path + pathType + sampleTime + convertUnitTo + source)
+   * - Compares root signature (timeout settings: enableTimeout + dataTimeout)
+   * - Only rebuilds subscriptions for paths with changed signatures
+   * - Removes subscriptions for deleted paths
+   * - Preserves unchanged subscriptions for performance
+   * - Cleans up invalid paths (null/undefined/empty)
+   * - Defers subscription creation until observe() is called if no registrations exist
+   *
+   * Performance: Avoids unnecessary subscription churn during config edits
+   *
+   * @param cfg New widget config or undefined to clear all subscriptions
+   * @internal Used by Host2 runtime - widgets should not call directly
+   */
+  public applyStreamsConfigDiff(cfg: IWidgetSvcConfig | undefined): void {
     const prevCfg = this._streamsConfig();
     const prevRootSig = this.rootSignature;
     const newRootSig = this.computeRootSignature(cfg);
@@ -156,21 +226,32 @@ export class WidgetStreamsDirective {
     const rootChanged = prevRootSig !== newRootSig;
     for (const p of newPaths) {
       const pathCfg = cfg.paths[p];
-      if (!pathCfg?.path) continue;
-      const sig = this.computePathSignature(pathCfg);
+      const normalizedPath = this.normalizePath(pathCfg?.path);
+      if (!normalizedPath) {
+        const existing = this.subscriptions.get(p);
+        if (existing) existing.sub.unsubscribe();
+        this.subscriptions.delete(p);
+        this.streams?.delete(p);
+        continue;
+      }
+      const normalizedCfg = { ...pathCfg, path: normalizedPath };
+      const sig = this.computePathSignature(normalizedCfg);
       const existing = this.subscriptions.get(p);
       if (!existing || existing.signature !== sig || rootChanged) {
         // Rebuild if we have at least one registration; otherwise just refresh base observable
         const regs = this.registrations.filter(r => r.pathName === p);
         if (!regs.length) {
-          // Update base observable signature only
+          // Update base observable signature only - no active registrations yet
           this.ensureStreamsMap();
-          this.streams!.set(p, this.dataService.subscribePath(pathCfg.path, pathCfg.source || 'default'));
-          if (existing) { existing.sub.unsubscribe(); this.subscriptions.delete(p); }
-        } else {
-          for (const r of regs) {
-            this.buildAndSubscribe(p, r.next, cfg, pathCfg);
+          this.streams!.set(p, this.dataService.subscribePath(normalizedPath, pathCfg.source || 'default'));
+          if (existing) {
+            existing.sub.unsubscribe();
+            this.subscriptions.delete(p);
           }
+        } else {
+          // Should only be one registration per path in this design
+          const reg = regs[0];
+          this.buildAndSubscribe(p, reg.next, cfg, normalizedCfg);
         }
       }
     }
@@ -179,77 +260,85 @@ export class WidgetStreamsDirective {
   /**
    * Register (idempotent) a consumer callback for a logical path key.
    *
-   * Behavior:
-   * - If this is the first registration for the path, a subscription pipeline is built (or rebuilt if signature changed).
-   * - Duplicate registrations (same function reference for same key) are ignored.
-   * - If config for the key is missing or path is empty, this is a no-op.
-   * - Subsequent config diffs that change only other paths will not disturb this subscription.
-   * - Path of type numeric are unit-converted
-   * - All paths are sampled at the configured `sampleTime` (default: 1000ms).
+   * DESIGN: Each widget instance gets its own directive instance. Only ONE callback
+   * per path is supported - multiple calls with different callbacks will replace
+   * the previous one. This simplifies subscription management and avoids callback
+   * multiplexing complexity.
    *
-   * Idempotency Details:
-   * - Re-calling with an identical callback for the same path does not resubscribe.
-   * - Re-calling after the underlying path signature changes (e.g., unit, sampleTime) triggers a rebuild via diff logic.
+   * Behavior:
+   * - First call for a path builds subscription pipeline
+   * - Subsequent calls with same callback are no-op (idempotent)
+   * - Different callback for same path replaces the previous registration
+   * - Invalid paths (null/empty) clear any existing subscription
+   * - Pipeline rebuilds automatically when path config signature changes. Signature is made of: path, pathType, source, sampleTime, convertUnitTo
    *
    * Lifecycle / Cleanup:
-   * - Subscriptions are automatically cleaned up on directive destroy.
-   * - When a path is removed from config, diff logic unsubscribes it and future emits stop.
-   * - If you need to temporarily suspend updates, change the widget config to remove the path; re-adding will rebuild.
+   * - Subscriptions auto-cleanup on directive destroy
+   * - Config changes trigger diff-based subscription signature tracking
+   * - Invalid paths immediately cleanup resources
    *
-   * Best Practices for Widget Authors:
-   * 1. Call once per required path key inside `ngOnInit` or first render guard.
-   * 2. Keep the callback stable (avoid recreating arrow functions every change detection if possible) to minimize diff noise.
-   * 3. Perform minimal work in the callback; delegate heavy transforms to signals/computed properties.
-   * 4. Avoid manual unsubscribe – the directive owns lifecycle.
+   * Best Practices:
+   * 1. Call once per required path key in component initialization
+   * 2. Keep callback stable (avoid recreating functions) to prevent unnecessary rebuilds
+   * 3. Delegate heavy processing to signals/computed - keep callback lightweight
+   * 4. No manual cleanup needed - directive handles lifecycle
    *
-   * Example (single path numeric widget):
+   * Examples:
    * ```ts
+   * // Single path numeric widget
    * this.streams.observe('speed', update => {
-   *   this.speed.set(update.data.value as number);
+   *   this.speed.set(update.data.value as number); // Auto unit-converted
+   * });
+   *
+   * // Multiple paths - call observe() once per path
+   * this.streams.observe('windSpeed', update => this.windSpeed.set(update.data.value));
+   * this.streams.observe('windAngle', update => this.windAngle.set(update.data.value));
+   * this.streams.observe('boatSpeed', update => {
+   *   let myValue: number;
+   *   // custom processing
+   *   this.boatSpeed.set(myValue);
    * });
    * ```
    *
-   * Example (multiple paths):
-   * ```ts
-   * ['stw','sog'].forEach(k => this.streams.observe(k, u => this.values[k].set(u.data.value)));
-   * ```
-   *
-   * @param pathName Logical path key defined in widget config (config.paths[pathName]).
-   * @param next Callback invoked with each processed `IPathUpdate` (IMPORTANT: unit conversion and sampleTime are automatically applied before callback).
+   * @param pathName Logical path key from widget config (config.paths[pathName])
+   * @param next Callback for processed updates (unit conversion + sampling applied)
    */
-  observe(pathName: string, next: (value: IPathUpdate) => void): void {
-    // Avoid duplicate registration (same path & same callback reference)
-    if (!this.registrations.find(r => r.pathName === pathName && r.next === next)) {
-      this.registrations.push({ pathName, next });
-    }
+  public observe(pathName: string, next: (value: IPathUpdate) => void): void {
+    // Replace any existing registration for this path (one callback per path)
+    this.registrations = this.registrations.filter(r => r.pathName !== pathName);
+    this.registrations.push({ pathName, next });
+
     const cfg = this._streamsConfig();
-    if (!cfg || !cfg.paths?.[pathName]) return;
+    if (!cfg || !cfg.paths?.[pathName]) {
+      // Config missing - cleanup existing subscription but keep registration for later
+      const existing = this.subscriptions.get(pathName);
+      if (existing) {
+        existing.sub.unsubscribe();
+        this.subscriptions.delete(pathName);
+        this.streams?.delete(pathName);
+      }
+      return;
+    }
+
     const pathCfg = cfg.paths[pathName];
+    const normalizedPath = this.normalizePath(pathCfg?.path);
+    if (!normalizedPath) {
+      // Invalid path - cleanup subscription and remove registration
+      const existing = this.subscriptions.get(pathName);
+      if (existing) {
+        existing.sub.unsubscribe();
+        this.subscriptions.delete(pathName);
+        this.streams?.delete(pathName);
+      }
+      this.registrations = this.registrations.filter(r => r.pathName !== pathName);
+      return;
+    }
+
+    const normalizedCfg = { ...pathCfg, path: normalizedPath };
+    const sig = this.computePathSignature(normalizedCfg);
     const existing = this.subscriptions.get(pathName);
-    const sig = this.computePathSignature(pathCfg);
     if (existing && existing.signature === sig) return; // already subscribed with current signature
-    this.buildAndSubscribe(pathName, next, cfg, pathCfg);
-  }
 
-  /**
-   * @deprecated Legacy full reset. Prefer diff-based `applyStreamsConfigDiff`.
-   */
-  reset(): void {
-    this.subscriptions.forEach(s => s.sub.unsubscribe());
-    this.subscriptions.clear();
-    this.streams = undefined;
-    this.reset$.next();
-    this.reset$.complete();
-    this.reset$ = new Subject<void>();
-  }
-
-  /**
-   * @deprecated Legacy helper: full reset then re-observe registered callbacks.
-   * Safe to remove once no external callers remain.
-   */
-  resetAndReobserve(): void {
-    const regs = [...this.registrations];
-    this.reset();
-    for (const r of regs) this.observe(r.pathName, r.next);
+    this.buildAndSubscribe(pathName, next, cfg, normalizedCfg);
   }
 }

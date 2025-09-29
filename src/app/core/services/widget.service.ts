@@ -7,6 +7,7 @@ import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-
 import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
 import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
 import { WidgetSliderComponent } from '../../widgets/widget-slider/widget-slider.component';
+import { WidgetSimpleLinearComponent } from '../../widgets/widget-simple-linear/widget-simple-linear.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -117,6 +118,7 @@ export class WidgetService {
     WidgetWindComponent: WidgetWindComponent,
     WidgetTutorialComponent: WidgetTutorialComponent,
     WidgetSliderComponent: WidgetSliderComponent,
+    WidgetSimpleLinearComponent: WidgetSimpleLinearComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {

@@ -318,9 +318,9 @@ export class WidgetWindComponent implements OnDestroy {
     this.lastSector = {};
 
     if (!this.runtime.options()?.windSectorEnable) {
-      this.trueWindMinHistoric = undefined;
-      this.trueWindMidHistoric = undefined;
-      this.trueWindMaxHistoric = undefined;
+      this.trueWindMinHistoric.set(undefined);
+      this.trueWindMidHistoric.set(undefined);
+      this.trueWindMaxHistoric.set(undefined);
       this.lastSector = {};
       this.scheduleMarkForCheck();
       return;
@@ -359,10 +359,10 @@ export class WidgetWindComponent implements OnDestroy {
     }
 
     if (!this.windSamples.length || !this.windMinDeque.length || !this.windMaxDeque.length) {
-      if (this.trueWindMinHistoric !== undefined || this.trueWindMidHistoric !== undefined || this.trueWindMaxHistoric !== undefined) {
-        this.trueWindMinHistoric = undefined;
-        this.trueWindMidHistoric = undefined;
-        this.trueWindMaxHistoric = undefined;
+      if (this.trueWindMinHistoric() !== undefined || this.trueWindMidHistoric() !== undefined || this.trueWindMaxHistoric() !== undefined) {
+        this.trueWindMinHistoric.set(undefined);
+        this.trueWindMidHistoric.set(undefined);
+        this.trueWindMaxHistoric.set(undefined);
         this.lastSector = {};
         this.scheduleMarkForCheck();
       }
