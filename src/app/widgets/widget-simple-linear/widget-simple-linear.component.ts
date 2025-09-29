@@ -62,13 +62,11 @@ export class WidgetSimpleLinearComponent {
 
   // Computed signal for highlights (zones)
   protected readonly highlights = computed<IDataHighlight[]>(() => {
+    const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();
-    const zones = this.metadata.zones();
     if (!cfg || !theme) return [];
     if (cfg.ignoreZones || !this.metadata) return [];
-
-
     if (!zones?.length) return [];
 
     const unit = cfg.paths['gaugePath'].convertUnitTo;

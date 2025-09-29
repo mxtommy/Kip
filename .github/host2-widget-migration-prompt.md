@@ -67,40 +67,62 @@ Template: remove `<widget-host>`; Host2 host & directives are applied at higher 
 
 ---
 ## 4. Metadata (Zones) – Only If Needed
-Use `WidgetMetadataDirective` iff widget renders zone bands or derives state from zones. Pattern:
+Inject `WidgetMetadataDirective` ONLY if the widget visually renders zone bands (highlights) or derives state (Alarm/Warn/etc) from zones metadata. Otherwise omit it entirely.
+
+Simplest pattern (mirrors `widget-simple-linear`):
 ```ts
-private metadata = inject(WidgetMetadataDirective);
+private metadata = inject(WidgetMetadataDirective, { optional: true });
+
+// Zones metadata observation (idempotent)
 effect(() => {
   const cfg = this.runtime.options();
-  if (!cfg) return;
-  untracked(() => this.metadata.observe('gaugePath')); // idempotent
+  if (!cfg || cfg.ignoreZones || !this.metadata) return;
+  // We don't want observe() itself to register as a reactive dependency.
+  untracked(() => this.metadata.observe('gaugePath'));
 });
 ```
-Convert to signal if needed: `const zones = toSignal(this.metadata.zones$, { initialValue: [] });`
+
+Access zones directly: `const zones = this.metadata?.zones() ?? [];`
+
+Notes:
+* The directive exposes a signal already; do NOT wrap with `toSignal()`.
+* Call `observe()` once per path key you need zones for; it's idempotent and path-diff aware.
+* Always read `zones()` inside a computed/effect before returning so Angular tracks it.
+* Guard with `cfg.ignoreZones` so unnecessary subscriptions are skipped when zones disabled.
 
 ---
 ## 5. Highlights (getHighlights)
-Use for visual zone bands only (gauges). Skip for purely textual widgets (numeric).
-Recompute when: zones | scale bounds | unit | orientation | ignoreZones changes.
+Use ONLY for visual zone bands (e.g., gauges). Skip for widgets that just show numbers/text.
+
+Recompute triggers (implicit via dependencies you read inside the computed/effect):
+* zones() array reference
+* scale bounds (min/max or adjusted scale)
+* unit / orientation changes
+* ignoreZones toggle
+
+Pattern using `computed` (adapt from `widget-simple-linear`):
 ```ts
-highlights = signal<IDataHighlight[]>([]);
-effect(() => {
+protected readonly highlights = computed<IDataHighlight[]>(() => {
+  const zones = this.metadata.zones(); // reading establishes dependency
   const cfg = this.runtime.options();
   const theme = this.theme();
-  if (!cfg || !theme) return;
-  untracked(() => {
-    if (cfg.ignoreZones) return this.highlights.set([]);
-    const zones = this.metadata?.zones() ?? [];
-    if (!zones.length) return this.highlights.set([]);
-    const unit = cfg.paths.gaugePath.convertUnitTo;
-    const min = this.adjustedScale?.min ?? cfg.displayScale.lower;
-    const max = this.adjustedScale?.max ?? cfg.displayScale.upper;
-    const invert = cfg.gauge?.barStartPosition === 'right';
-    this.highlights.set(getHighlights(zones, theme, unit, this.unitsService, min, max, invert));
-  });
+  if (!cfg || !theme) return [];
+  if (cfg.ignoreZones || !this.metadata) return [];
+  if (!zones?.length) return [];
+
+  const unit = cfg.paths.gaugePath.convertUnitTo;
+  const min = cfg.displayScale.lower;        // or adjustedScale.min
+  const max = cfg.displayScale.upper;        // or adjustedScale.max
+  return getHighlights(zones, theme, unit, this.unitsService, min, max);
 });
 ```
-Do not manually sort, clamp, or convert bounds—helper handles it.
+
+Alternatively, use an `effect` updating a `highlights` signal if you need imperative post-processing. Prefer `computed` when the result derives purely from other signals.
+
+Rules:
+* Don't manually clamp/sort zones; helper manages ordering & scaling.
+* Always early-return fast for disabled or empty states to minimize work.
+* Avoid `untracked` inside this computed—dependencies must be tracked so recompute fires.
 
 ---
 ## 6. Scale & Theme Utilities
@@ -143,6 +165,17 @@ Combine both inside one config/theme effect.
 | Missing unit conversion | Must use `streams.observe` (never raw DataService) |
 | Excess highlight recompute | Effect deps only (zones/scale/unit/orientation/ignoreZones) |
 | Hardcoded colors | Use `getColors` or theme roles |
+
+---
+### Untracked Usage Guidance
+Use `untracked(() => ...)` only when performing side-effectful calls or one-time registrations inside an effect after you've already READ all reactive dependencies you want that effect to depend upon.
+
+Good examples:
+* Calling `streams.observe(...)` after reading `cfg` & `path`.
+* Calling `metadata.observe(...)` after confirming `cfg.ignoreZones` is false.
+* Assigning multiple signals based on already captured reactive values (batch-like scenario).
+
+Avoid inside `computed` blocks producing derived data (like highlights) because it suppresses dependency tracking for anything read inside untracked.
 
 ---
 ## 10. AI Request Template
