@@ -14,6 +14,7 @@ import { WidgetRacerLineComponent } from '../../widgets/widget-racer-line/widget
 import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
 import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
+import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -129,8 +130,9 @@ export class WidgetService {
     WidgetRacerTimerComponent: WidgetRacerTimerComponent,
     WidgetRacerLineComponent: WidgetRacerLineComponent,
     WidgetRaceTimerComponent: WidgetRaceTimerComponent,
-  WidgetPositionComponent: WidgetPositionComponent,
-  WidgetLabelComponent: WidgetLabelComponent
+    WidgetPositionComponent: WidgetPositionComponent,
+    WidgetLabelComponent: WidgetLabelComponent,
+    WidgetIframeComponent: WidgetIframeComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {

@@ -1,81 +1,92 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
+import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { ITheme } from '../../core/services/app-service';
 
 @Component({
-    selector: 'widget-iframe',
-    templateUrl: './widget-iframe.component.html',
-    styleUrls: ['./widget-iframe.component.scss'],
-    imports: [WidgetHostComponent]
+  selector: 'widget-iframe',
+  templateUrl: './widget-iframe.component.html',
+  styleUrls: ['./widget-iframe.component.scss']
 })
-export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
-  private _sanitizer = inject(DomSanitizer);
-  protected _dashboard = inject(DashboardService);
+export class WidgetIframeComponent implements AfterViewInit, OnDestroy {
+  // Functional Host2 inputs
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Runtime directive (config merge done by container)
+  protected readonly runtime = inject(WidgetRuntimeDirective);
+  protected readonly _dashboard = inject(DashboardService);
+  private readonly _sanitizer = inject(DomSanitizer);
+
+  // Static default config (legacy parity)
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    widgetUrl: null,
+    allowInput: false
+  };
+
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('plainIframe');
-  protected widgetUrl: SafeResourceUrl | null = null;
+  protected widgetUrl = signal<SafeResourceUrl | null>(null);
   protected displayTransparentOverlay = signal<string>('block');
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      widgetUrl: null,
-      allowInput: false
-    };
-
+    // Effect to derive overlay state from dashboard edit/static + config.allowInput
     effect(() => {
-      if (!this._dashboard.isDashboardStatic()) {
-        this.displayTransparentOverlay.set('block');
-      } else {
-        this.displayTransparentOverlay.set(this.widgetProperties.config.allowInput ? 'none' : 'block');
-      }
+      const cfg = this.runtime.options();
+      const dashIsStatic = this._dashboard.isDashboardStatic();
+      if (!cfg) return;
+      untracked(() => {
+        if (!dashIsStatic) this.displayTransparentOverlay.set('block');
+        else this.displayTransparentOverlay.set(cfg.allowInput ? 'none' : 'block');
+      });
     });
-  }
 
-  ngOnInit() {
-    this.validateConfig();
+    // Effect to resolve URL when config changes
+    effect(() => {
+      const url = this.runtime.options()?.widgetUrl;
+      this.widgetUrl.set(this.resolveUrl(url));
+    });
+
+    // Register message listener once
     window.addEventListener('message', this.handleIframeGesture);
-    this.displayTransparentOverlay.set(this.widgetProperties.config.allowInput ? 'none' : 'block');
-    this.widgetUrl = this.resolveUrl(this.widgetProperties.config.widgetUrl);
   }
 
-  ngAfterViewInit() {
-    if (this.iframe()) {
-  this.iframe().nativeElement.onload = () => this.injectSwipeScript();
-    }
+  ngAfterViewInit(): void {
+    if (!this.iframe()) return;
+    this.iframe().nativeElement.onload = () => this.injectSwipeScript();
+    // Attempt injection if iframe already loaded (cached load edge case)
+    try {
+      const doc = this.iframe().nativeElement.contentDocument;
+      if (doc && (doc.readyState === 'complete' || doc.readyState === 'interactive')) this.injectSwipeScript();
+    } catch { /* ignore */ }
   }
 
-  protected startWidget(): void {
-  }
-
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     window.removeEventListener('message', this.handleIframeGesture);
     // Clear iframe onload to release closure references
-    if (this.iframe()) {
-      this.iframe().nativeElement.onload = null;
-    }
+    if (this.iframe()) this.iframe().nativeElement.onload = null;
     // Remove injected script from iframe (if same-origin) to avoid lingering closures
     try {
       const iframeDoc = this.iframe()?.nativeElement.contentDocument;
       if (iframeDoc) {
-        const id = `kip-gesture-inject-${this.widgetProperties.uuid}`;
+        const id = `kip-gesture-inject-${this.id()}`;
         const existing = iframeDoc.getElementById(id);
         if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
       }
     } catch { /* ignore cross-origin or access errors */ }
-    // Ensure any data streams from BaseWidget are cleaned up
-    try { this.destroyDataStreams(); } catch { /* noop if not present */ }
   }
 
   private handleIframeGesture = (event: MessageEvent) => {
     if (!event.data) return;
 
+    const instanceId = event.data?.eventData?.instanceId || event.data?.keyEventData?.instanceId;
+    if (!instanceId || instanceId !== this.id()) return;
+
     // Handle gestures
-    if (event.data.gesture && event.data.eventData.instanceId === this.widgetProperties.uuid) {
+    if (event.data.gesture) {
       switch (event.data.gesture) {
         case 'swipeup':
           this._dashboard.navigateToPreviousDashboard();
@@ -88,7 +99,7 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
           window.document.dispatchEvent(leftSidebarEvent);
           break;
         }
-        case 'swiperight':{
+        case 'swiperight': {
           const rightSidebarEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });
           window.document.dispatchEvent(rightSidebarEvent);
           break;
@@ -97,19 +108,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
           break;
       }
     }
-
     // Handle keydown events
-    if (event.data.type === 'keydown' && event.data.keyEventData.instanceId === this.widgetProperties.uuid) {
+    if (event.data.type === 'keydown' && event.data.keyEventData) {
       const { key, ctrlKey, shiftKey } = event.data.keyEventData;
-
-      // Re-dispatch the keydown event
-      const keyboardEvent = new KeyboardEvent('keydown', {
-        key,
-        ctrlKey,
-        shiftKey,
-        bubbles: true,
-        cancelable: true,
-      });
+      const keyboardEvent = new KeyboardEvent('keydown', { key, ctrlKey, shiftKey, bubbles: true, cancelable: true });
       document.dispatchEvent(keyboardEvent);
     }
   };
@@ -122,10 +124,10 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
       return;
     }
     try {
-      const id = `kip-gesture-inject-${this.widgetProperties.uuid}`;
+      const id = `kip-gesture-inject-${this.id()}`;
       // Avoid double-injecting the same script
       if (iframeDocument.getElementById(id)) return;
-      const scriptText = generateSwipeScript({ instanceId: this.widgetProperties.uuid });
+      const scriptText = generateSwipeScript({ instanceId: this.id() });
       const script = iframeDocument.createElement('script');
       script.id = id;
       script.textContent = scriptText;
@@ -133,10 +135,6 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     } catch (e) {
       console.warn('[WidgetIframe] Failed to inject swipe script into iframe:', e);
     }
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetUrl = this.resolveUrl(config.widgetUrl);
   }
 
   private isValidProtocol(url: string): boolean {
@@ -149,16 +147,14 @@ export class WidgetIframeComponent extends BaseWidgetComponent implements OnInit
     }
   }
 
-  private resolveUrl(rawUrl: string): SafeResourceUrl | null {
+  private resolveUrl(rawUrl: string | null | undefined): SafeResourceUrl | null {
     if (!rawUrl) return null;
     try {
-      // Check if the URL is absolute
       const parsedUrl = new URL(rawUrl, window.location.origin);
-      const resolvedUrl = this.isValidProtocol(parsedUrl.href) ? this._sanitizer.bypassSecurityTrustResourceUrl(parsedUrl.href) : null;
-      return resolvedUrl;
+      return this.isValidProtocol(parsedUrl.href) ? this._sanitizer.bypassSecurityTrustResourceUrl(parsedUrl.href) : null;
     } catch (e) {
       console.warn(`[Embed Widget] Can't resolve Url: ${rawUrl}, Error: ${e}`);
-      return null; // Return an empty string if the URL is invalid
+      return null;
     }
   }
 }
