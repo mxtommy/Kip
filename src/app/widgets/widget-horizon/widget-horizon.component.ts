@@ -105,6 +105,11 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   private sizeSignature = signal<string>('');
   private resizeDebounceHandle: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private resizeStabilityTimer: number | null = null;
+  private pendingTargetSize: number | null = null; // size awaiting stability
+  private liveInteractiveSize: number | null = null; // instantaneous size while user drags
+  private lastStabilitySize: number | null = null; // last committed size
+  private readonly STABILITY_MS = 180; // window size must remain unchanged
 
   // Gauge internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -177,18 +182,71 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
 
   private queueResize(w: number, h: number): void {
     if (w < 50 || h < 50) return;
-    const size = Math.min(w, h);
-    const prev = this.sizeSignature();
-    const prevSize = prev ? Number(prev.split(':')[1]) : NaN;
-    // Ignore tiny changes (<4px) to reduce rebuild churn
-    if (Number.isFinite(prevSize) && Math.abs(size - prevSize) < 4) return;
-    const sig = 'horizon:' + Math.round(size);
-    if (sig === prev) return;
-    if (this.resizeDebounceHandle) window.clearTimeout(this.resizeDebounceHandle);
-    this.resizeDebounceHandle = window.setTimeout(() => {
-      this.sizeSignature.set(sig);
-      this.resizeDebounceHandle = null;
-    }, 120);
+    const size = Math.round(Math.min(w, h));
+    const prevSig = this.sizeSignature();
+    const prevSize = prevSig ? Number(prevSig.split(':')[1]) : NaN;
+    // Ignore tiny pixel noise (<4px)
+    if (Number.isFinite(prevSize) && Math.abs(size - prevSize) < 4) {
+      return;
+    }
+
+    // Live interactive scaling: apply a CSS transform so the visual follows cursor immediately
+    this.liveInteractiveSize = size;
+    this.applyLiveScale();
+
+    // If size unchanged from last stability candidate, just keep waiting
+    if (this.pendingTargetSize === size) {
+      this.resetStabilityTimer();
+      return;
+    }
+    this.pendingTargetSize = size;
+    this.resetStabilityTimer();
+  }
+
+  private resetStabilityTimer(): void {
+    if (this.resizeStabilityTimer) {
+      window.clearTimeout(this.resizeStabilityTimer);
+    }
+    this.resizeStabilityTimer = window.setTimeout(() => {
+      if (this.pendingTargetSize != null) {
+        // Commit size: update signature (triggers rebuild via effect)
+        const committed = this.pendingTargetSize;
+        const sig = 'horizon:' + committed;
+        if (sig !== this.sizeSignature()) {
+          this.sizeSignature.set(sig);
+        }
+        this.lastStabilitySize = committed;
+        this.pendingTargetSize = null;
+        this.liveInteractiveSize = null;
+        this.clearLiveScale();
+      }
+      this.resizeStabilityTimer = null;
+    }, this.STABILITY_MS);
+  }
+
+  private applyLiveScale(): void {
+    const wrapperEl = this.wrapperRef()?.nativeElement as HTMLElement | undefined;
+    if (!wrapperEl || this.liveInteractiveSize == null) return;
+    // Base (committed) size from last signature or fallback to current interactive size
+    const baseSig = this.sizeSignature();
+    const baseSize = baseSig ? Number(baseSig.split(':')[1]) : this.liveInteractiveSize;
+    if (!baseSize || baseSize <= 0) return;
+    const scale = this.liveInteractiveSize / baseSize;
+    // Only apply if deviation meaningful (>2%)
+    if (Math.abs(1 - scale) < 0.02) {
+      this.clearLiveScale();
+      return;
+    }
+    wrapperEl.style.willChange = 'transform';
+    wrapperEl.style.transformOrigin = 'center center';
+    wrapperEl.style.transform = `scale(${scale})`;
+  }
+
+  private clearLiveScale(): void {
+    const wrapperEl = this.wrapperRef()?.nativeElement as HTMLElement | undefined;
+    if (!wrapperEl) return;
+    wrapperEl.style.transform = '';
+    wrapperEl.style.willChange = '';
   }
 
   private buildOptions(cfg: IWidgetSvcConfig): void {
@@ -225,6 +283,8 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
       const ctx = existingCanvas.getContext('2d');
       if (ctx) ctx.clearRect(0, 0, existingCanvas.width, existingCanvas.height);
     }
+    // Remove any temporary live scale before final rebuild (ensures crisp pixels)
+    this.clearLiveScale();
     try {
       this.gauge = new steelseries.Horizon(canvasId, this.gaugeOptions);
       // Apply last known values
@@ -243,6 +303,10 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
     if (this.resizeDebounceHandle) {
       window.clearTimeout(this.resizeDebounceHandle);
       this.resizeDebounceHandle = null;
+    }
+    if (this.resizeStabilityTimer) {
+      window.clearTimeout(this.resizeStabilityTimer);
+      this.resizeStabilityTimer = null;
     }
     if (this.resizeObserver) {
       try { this.resizeObserver.disconnect(); } catch { /* ignore */ }
