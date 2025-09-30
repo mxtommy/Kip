@@ -6,15 +6,16 @@
 
 .canvas-wrap {
   position: relative;
-  display: block;
+  display: flex;            // center without transforms
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  padding: 0px;
+  padding: 0;
   > canvas {
     display: block;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    position: static;       // remove absolute
+    transform: none;        // remove translate
+
   }
 }
