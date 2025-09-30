@@ -6,36 +6,41 @@ import { WidgetStreamsDirective } from '../../core/directives/widget-streams.dir
 import { ITheme } from '../../core/services/app-service';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let steelseries: any; // 3rd party global
+declare let steelseries: any; // 3rd party global (loaded via scripts bundle)
 
-export const SteelPointerColors = {
-  'Red': steelseries.ColorDef.RED,
-  'Green': steelseries.ColorDef.GREEN,
-  'Blue': steelseries.ColorDef.BLUE,
-  'Orange': steelseries.ColorDef.ORANGE,
-  'Yellow': steelseries.ColorDef.YELLOW,
-  'Cyan': steelseries.ColorDef.CYAN,
-  'Magenta': steelseries.ColorDef.MAGENTA,
-  'White': steelseries.ColorDef.WHITE,
-  'Gray': steelseries.ColorDef.GRAY,
-  'Black': steelseries.ColorDef.BLACK,
-  'Raith': steelseries.ColorDef.RAITH,
-  'Green LCD': steelseries.ColorDef.GREEN_LCD,
-  'JUG Green': steelseries.ColorDef.JUG_GREEN
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSteelPointerColors(ss: any) {
+  return {
+    'Red': ss.ColorDef.RED,
+    'Green': ss.ColorDef.GREEN,
+    'Blue': ss.ColorDef.BLUE,
+    'Orange': ss.ColorDef.ORANGE,
+    'Yellow': ss.ColorDef.YELLOW,
+    'Cyan': ss.ColorDef.CYAN,
+    'Magenta': ss.ColorDef.MAGENTA,
+    'White': ss.ColorDef.WHITE,
+    'Gray': ss.ColorDef.GRAY,
+    'Black': ss.ColorDef.BLACK,
+    'Raith': ss.ColorDef.RAITH,
+    'Green LCD': ss.ColorDef.GREEN_LCD,
+    'JUG Green': ss.ColorDef.JUG_GREEN
+  };
 }
-
-export const SteelFrameDesign = {
-  'blackMetal': steelseries.FrameDesign.BLACK_METAL,
-  'metal': steelseries.FrameDesign.METAL,
-  'shinyMetal': steelseries.FrameDesign.SHINY_METAL,
-  'brass': steelseries.FrameDesign.BRASS,
-  'steel': steelseries.FrameDesign.STEEL,
-  'chrome': steelseries.FrameDesign.CHROME,
-  'gold': steelseries.FrameDesign.GOLD,
-  'anthracite': steelseries.FrameDesign.ANTHRACITE,
-  'tiltedGray': steelseries.FrameDesign.TILTED_GRAY,
-  'tiltedBlack': steelseries.FrameDesign.TILTED_BLACK,
-  'glossyMetal': steelseries.FrameDesign.GLOSSY_METAL
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSteelFrameDesign(ss: any) {
+  return {
+    'blackMetal': ss.FrameDesign.BLACK_METAL,
+    'metal': ss.FrameDesign.METAL,
+    'shinyMetal': ss.FrameDesign.SHINY_METAL,
+    'brass': ss.FrameDesign.BRASS,
+    'steel': ss.FrameDesign.STEEL,
+    'chrome': ss.FrameDesign.CHROME,
+    'gold': ss.FrameDesign.GOLD,
+    'anthracite': ss.FrameDesign.ANTHRACITE,
+    'tiltedGray': ss.FrameDesign.TILTED_GRAY,
+    'tiltedBlack': ss.FrameDesign.TILTED_BLACK,
+    'glossyMetal': ss.FrameDesign.GLOSSY_METAL
+  };
 }
 
 @Component({
@@ -99,6 +104,7 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   private wrapperRef = viewChild<ElementRef<HTMLDivElement>>('hWrapper');
   private sizeSignature = signal<string>('');
   private resizeDebounceHandle: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   // Gauge internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,12 +163,12 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
     // Setup ResizeObserver manually
     const wrapperEl = this.wrapperRef()?.nativeElement;
     if (wrapperEl) {
-      const ro = new ResizeObserver(entries => {
+      this.resizeObserver = new ResizeObserver(entries => {
         const entry = entries[0];
         if (!entry) return;
         this.queueResize(entry.contentRect.width, entry.contentRect.height);
       });
-      ro.observe(wrapperEl);
+      this.resizeObserver.observe(wrapperEl);
       // Initial size
       const rect = wrapperEl.getBoundingClientRect();
       this.queueResize(rect.width, rect.height);
@@ -172,8 +178,12 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   private queueResize(w: number, h: number): void {
     if (w < 50 || h < 50) return;
     const size = Math.min(w, h);
-    const sig = 'horizon:' + size;
-    if (sig === this.sizeSignature()) return;
+    const prev = this.sizeSignature();
+    const prevSize = prev ? Number(prev.split(':')[1]) : NaN;
+    // Ignore tiny changes (<4px) to reduce rebuild churn
+    if (Number.isFinite(prevSize) && Math.abs(size - prevSize) < 4) return;
+    const sig = 'horizon:' + Math.round(size);
+    if (sig === prev) return;
     if (this.resizeDebounceHandle) window.clearTimeout(this.resizeDebounceHandle);
     this.resizeDebounceHandle = window.setTimeout(() => {
       this.sizeSignature.set(sig);
@@ -182,10 +192,16 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildOptions(cfg: IWidgetSvcConfig): void {
+    if (typeof steelseries === 'undefined') {
+      // steelseries not yet loaded (scripts), skip; effect will rerun when sizeSignature changes again after load
+      return;
+    }
+    const frameMap = getSteelFrameDesign(steelseries);
+    const pointerMap = getSteelPointerColors(steelseries);
     this.gaugeOptions = {
-      pointerColor: SteelPointerColors.Red,
+      pointerColor: pointerMap.Red,
       frameVisible: cfg.gauge?.noFrameVisible ?? false,
-      frameDesign: SteelFrameDesign[cfg.gauge?.faceColor ?? 'anthracite'],
+      frameDesign: frameMap[cfg.gauge?.faceColor ?? 'anthracite'],
       foregroundVisible: false,
       size: this.parseSizeFromSignature(this.sizeSignature())
     };
@@ -200,9 +216,14 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
 
   private createOrRebuildGauge(): void {
     const canvasId = this.id() + '-canvas';
-    // Release old canvas (steelseries may have inserted its own canvas inside target)
+    // Release old gauge reference; clear canvas explicitly to prevent layered visuals
     if (this.gauge) {
       try { this.gauge = null; } catch { /* ignore */ }
+    }
+    const existingCanvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+    if (existingCanvas) {
+      const ctx = existingCanvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, existingCanvas.width, existingCanvas.height);
     }
     try {
       this.gauge = new steelseries.Horizon(canvasId, this.gaugeOptions);
@@ -218,6 +239,15 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Cleanup timers / observers
+    if (this.resizeDebounceHandle) {
+      window.clearTimeout(this.resizeDebounceHandle);
+      this.resizeDebounceHandle = null;
+    }
+    if (this.resizeObserver) {
+      try { this.resizeObserver.disconnect(); } catch { /* ignore */ }
+      this.resizeObserver = null;
+    }
     // Best-effort cleanup: release canvas element
     const canvas = document.getElementById(this.id() + '-canvas') as HTMLCanvasElement | null;
     this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: false });
