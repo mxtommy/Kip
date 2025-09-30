@@ -1,29 +1,12 @@
-import { Component, OnInit, OnDestroy, AfterContentInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, AfterViewInit, inject, effect, signal, viewChild, ElementRef, input, untracked } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { ITheme } from '../../core/services/app-service';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let steelseries: any; // 3rd party global
-
-// Provide minimal mock for unit tests when external script not loaded.
-if (typeof steelseries === 'undefined') {
-  (globalThis as unknown as Record<string, unknown>).steelseries = {};
-}
-// Augment missing collections (idempotent) with minimal placeholders.
-const ss = (globalThis as unknown as { steelseries: Record<string, unknown> }).steelseries as Record<string, unknown> & { ColorDef?: unknown; FrameDesign?: unknown };
-// dynamic augmentation for test shim
-(ss as Record<string, unknown>)['ColorDef'] = (ss as Record<string, unknown>)['ColorDef'] || {
-  RED: 'red', GREEN: 'green', BLUE: 'blue', ORANGE: 'orange', YELLOW: 'yellow', CYAN: 'cyan', MAGENTA: 'magenta',
-  WHITE: 'white', GRAY: 'gray', BLACK: 'black', RAITH: 'raith', GREEN_LCD: 'greenLcd', JUG_GREEN: 'jugGreen'
-};
-// dynamic augmentation for test shim
-(ss as Record<string, unknown>)['FrameDesign'] = (ss as Record<string, unknown>)['FrameDesign'] || {
-  BLACK_METAL: 'blackMetal', METAL: 'metal', SHINY_METAL: 'shinyMetal', BRASS: 'brass', STEEL: 'steel', CHROME: 'chrome',
-  GOLD: 'gold', ANTHRACITE: 'anthracite', TILTED_GRAY: 'tiltedGray', TILTED_BLACK: 'tiltedBlack', GLOSSY_METAL: 'glossyMetal'
-};
 
 export const SteelPointerColors = {
   'Red': steelseries.ColorDef.RED,
@@ -59,141 +42,185 @@ export const SteelFrameDesign = {
   selector: 'widget-horizon',
   templateUrl: './widget-horizon.component.html',
   styleUrls: ['./widget-horizon.component.scss'],
-  standalone: true,
-  imports: [WidgetHostComponent, NgxResizeObserverModule]
 })
-export class WidgetHorizonComponent extends BaseWidgetComponent implements OnInit, AfterContentInit, OnDestroy {
-  private cdr = inject(ChangeDetectorRef);
+export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
+  // Functional inputs (Host2)
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Directives/services
+  protected readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective);
   private readonly canvasService = inject(CanvasService);
 
+  // Static default config (legacy parity + displayName)
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Horizon',
+    filterSelfPaths: true,
+    paths: {
+      gaugePitchPath: {
+        description: 'Attitude Pitch Data',
+        path: 'self.navigation.attitude.pitch',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        convertUnitTo: 'deg',
+        sampleTime: 1000
+      },
+      gaugeRollPath: {
+        description: 'Attitude Roll Data',
+        path: 'self.navigation.attitude.roll',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        convertUnitTo: 'deg',
+        sampleTime: 1000
+      }
+    },
+    gauge: {
+      type: 'horizon',
+      noFrameVisible: false,
+      faceColor: 'anthracite',
+      invertPitch: false,
+      invertRoll: false
+    },
+    enableTimeout: false,
+    dataTimeout: 5
+  };
+
+  // View / layout
+  private wrapperRef = viewChild<ElementRef<HTMLDivElement>>('hWrapper');
+  private sizeSignature = signal<string>('');
+  private resizeDebounceHandle: number | null = null;
+
+  // Gauge internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected gaugeOptions: any = {};
-  private gauge = null;
-  private streamsInitialized = false;
-  private lastSizeSignature = '';
-  private resizeTimer: number | null = null;
-  private pendingStructuralRebuild = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private gauge: any = null;
+  private lastStructuralKey = '';
+  private latestPitch = 0;
+  private latestRoll = 0;
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      filterSelfPaths: true,
-      paths: {
-        "gaugePitchPath": {
-          description: "Attitude Pitch Data",
-          path: "self.navigation.attitude.pitch",
-          source: "default",
-          pathType: 'number',
-          pathRequired: false,
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          convertUnitTo: "deg",
-          sampleTime: 1000
-        },
-        "gaugeRollPath": {
-          description: "Attitude Roll Data",
-          path: "self.navigation.attitude.roll",
-          source: "default",
-          pathType: 'number',
-          pathRequired: false,
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          convertUnitTo: "deg",
-          sampleTime: 1000
+    // Observe pitch path
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pitchCfg = cfg.paths?.['gaugePitchPath'];
+      if (!pitchCfg?.path) return;
+      untracked(() => this.streams.observe('gaugePitchPath', pkt => {
+        const v = (pkt?.data?.value as number) ?? 0;
+        this.latestPitch = v;
+        if (this.gauge) {
+          const inv = cfg.gauge?.invertPitch ? -v : v;
+          try { this.gauge.setPitchAnimated(inv); } catch { /* ignore */ }
         }
-      },
-      gauge: {
-        type: 'horizon',
-        noFrameVisible: false,
-        faceColor: 'anthracite',
-        invertPitch: false,
-        invertRoll: false
-      },
-      enableTimeout: false,
-      dataTimeout: 5,
-    };
+      }));
+    });
+
+    // Observe roll path
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const rollCfg = cfg.paths?.['gaugeRollPath'];
+      if (!rollCfg?.path) return;
+      untracked(() => this.streams.observe('gaugeRollPath', pkt => {
+        const v = (pkt?.data?.value as number) ?? 0;
+        this.latestRoll = v;
+        if (this.gauge) {
+          const inv = cfg.gauge?.invertRoll ? -v : v;
+          try { this.gauge.setRollAnimated(inv); } catch { /* ignore */ }
+        }
+      }));
+    });
+
+    // Structural gauge (re)build effect
+    effect(() => {
+      const cfg = this.runtime.options();
+      const sig = this.sizeSignature();
+      if (!cfg || !sig) return; // wait for size
+      const structuralKey = [cfg.gauge?.faceColor, cfg.gauge?.noFrameVisible ? '1':'0', sig].join('|');
+      if (structuralKey === this.lastStructuralKey && this.gauge) return;
+      this.lastStructuralKey = structuralKey;
+      this.buildOptions(cfg);
+      this.createOrRebuildGauge();
+    });
   }
 
-  ngOnInit() {
-    this.validateConfig();
-  }
-
-  ngAfterContentInit(): void {
-    this.cdr.detectChanges(); // Force DOM update
-    this.startWidget();
-    // Perform an initial resize to avoid first-draw jump
-    const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
-    const container = canvas?.parentElement as HTMLElement | null;
-    if (container) {
-      const rect = container.getBoundingClientRect();
-      this.onResized({ contentRect: { width: rect.width, height: rect.height } } as unknown as ResizeObserverEntry);
-    }
-  }
-
-  protected startWidget(forceRebuild = false): void {
-    this.buildOptions();
-    const id = this.widgetProperties.uuid + '-canvas';
-    if (!id) return;
-
-    if (this.gauge && !forceRebuild && !this.pendingStructuralRebuild) {
-      // mutable-only update path (no direct setters beyond pitch/roll used later)
-    } else {
-      this.pendingStructuralRebuild = false;
-      this.gauge = new steelseries.Horizon(id, this.gaugeOptions);
-    }
-
-    if (!this.streamsInitialized) {
-      this.observeDataStream('gaugePitchPath', newValue => {
-        const v = newValue.data.value ?? 0;
-        this.gauge.setPitchAnimated(this.widgetProperties.config.gauge.invertPitch ? -v : v);
+  ngAfterViewInit(): void {
+    // Setup ResizeObserver manually
+    const wrapperEl = this.wrapperRef()?.nativeElement;
+    if (wrapperEl) {
+      const ro = new ResizeObserver(entries => {
+        const entry = entries[0];
+        if (!entry) return;
+        this.queueResize(entry.contentRect.width, entry.contentRect.height);
       });
-
-      this.observeDataStream('gaugeRollPath', newValue => {
-        const v = newValue.data.value ?? 0;
-        this.gauge.setRollAnimated(this.widgetProperties.config.gauge.invertRoll ? -v : v);
-      });
-
-      this.streamsInitialized = true;
+      ro.observe(wrapperEl);
+      // Initial size
+      const rect = wrapperEl.getBoundingClientRect();
+      this.queueResize(rect.width, rect.height);
     }
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.pendingStructuralRebuild = true; // horizon face/frame toggles etc.
-    this.startWidget(true);
-  }
-
-  private buildOptions() {
-    this.gaugeOptions['pointerColor'] = SteelPointerColors.Red;
-    this.gaugeOptions['frameVisible'] = this.widgetProperties.config.gauge.noFrameVisible ?? false;
-    this.gaugeOptions['frameDesign'] = SteelFrameDesign[this.widgetProperties.config.gauge.faceColor ?? 'anthracite'];
-    this.gaugeOptions['foregroundVisible'] = false;
-  }
-
-  onResized(event: ResizeObserverEntry) {
-    if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
-    const size = Math.min(event.contentRect.height, event.contentRect.width);
-    const signature = 'horizon:' + size;
-    if (signature === this.lastSizeSignature) return;
-    this.lastSizeSignature = signature;
-    this.gaugeOptions['size'] = size;
-    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
-    this.resizeTimer = window.setTimeout(() => {
-      this.startWidget(true);
-      this.resizeTimer = null;
+  private queueResize(w: number, h: number): void {
+    if (w < 50 || h < 50) return;
+    const size = Math.min(w, h);
+    const sig = 'horizon:' + size;
+    if (sig === this.sizeSignature()) return;
+    if (this.resizeDebounceHandle) window.clearTimeout(this.resizeDebounceHandle);
+    this.resizeDebounceHandle = window.setTimeout(() => {
+      this.sizeSignature.set(sig);
+      this.resizeDebounceHandle = null;
     }, 120);
   }
 
-  ngOnDestroy() {
-    this.destroyDataStreams();
+  private buildOptions(cfg: IWidgetSvcConfig): void {
+    this.gaugeOptions = {
+      pointerColor: SteelPointerColors.Red,
+      frameVisible: cfg.gauge?.noFrameVisible ?? false,
+      frameDesign: SteelFrameDesign[cfg.gauge?.faceColor ?? 'anthracite'],
+      foregroundVisible: false,
+      size: this.parseSizeFromSignature(this.sizeSignature())
+    };
+  }
+
+  private parseSizeFromSignature(sig: string): number | undefined {
+    if (!sig) return undefined;
+    const parts = sig.split(':');
+    const n = Number(parts[1]);
+    return Number.isFinite(n) ? n : undefined;
+  }
+
+  private createOrRebuildGauge(): void {
+    const canvasId = this.id() + '-canvas';
+    // Release old canvas (steelseries may have inserted its own canvas inside target)
     if (this.gauge) {
-      this.gauge = null;
+      try { this.gauge = null; } catch { /* ignore */ }
     }
-    // Release horizon canvas
-    const canvas = document.getElementById(this.widgetProperties.uuid + '-canvas') as HTMLCanvasElement | null;
-    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
+    try {
+      this.gauge = new steelseries.Horizon(canvasId, this.gaugeOptions);
+      // Apply last known values
+      const cfg = this.runtime.options();
+      if (cfg && this.gauge) {
+        try { this.gauge.setPitchAnimated(cfg.gauge?.invertPitch ? -this.latestPitch : this.latestPitch); } catch { /* ignore */ }
+        try { this.gauge.setRollAnimated(cfg.gauge?.invertRoll ? -this.latestRoll : this.latestRoll); } catch { /* ignore */ }
+      }
+    } catch (e) {
+      console.warn('[WidgetHorizon] Failed to build gauge', e);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Best-effort cleanup: release canvas element
+    const canvas = document.getElementById(this.id() + '-canvas') as HTMLCanvasElement | null;
+    this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: false });
+    this.gauge = null;
   }
 }

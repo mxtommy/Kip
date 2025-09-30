@@ -1,7 +1,5 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <div class="canvas-wrap" [style]="gaugeOptions['frameVisible'] === true ? 'padding: 10px;' : ''" (onResize)="onResized($event)">
-    <canvas [id]="widgetProperties.uuid + '-canvas'" style="z-index: inherit;">
-      Browser does not support canvas element.
-    </canvas>
-  </div>
-</widget-host>
+<div #hWrapper class="canvas-wrap" [style.padding]="gaugeOptions.frameVisible ? '10px' : '0px'">
+  <canvas [id]="id() + '-canvas'" style="z-index: inherit;">
+    Browser does not support canvas element.
+  </canvas>
+</div>
