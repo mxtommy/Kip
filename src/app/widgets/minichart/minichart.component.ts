@@ -120,6 +120,7 @@ export class MinichartComponent implements OnDestroy {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
+
     this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
 
     if (this.verticalChart) {

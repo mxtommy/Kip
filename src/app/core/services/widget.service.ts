@@ -17,6 +17,7 @@ import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.co
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
 import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
+import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -137,7 +138,8 @@ export class WidgetService {
     WidgetLabelComponent: WidgetLabelComponent,
     WidgetIframeComponent: WidgetIframeComponent,
     WidgetHorizonComponent: WidgetHorizonComponent,
-    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent
+    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
+    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
