@@ -158,7 +158,10 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       if (!cfg || !theme) return;
       this.buildGaugeOptions(cfg, theme, scale);
       if (this.viewReady()) {
-        try { this.ngGauge()?.update(this.gaugeOptions); } catch { /* ignore */ }
+        try {
+          this.ngGauge()?.update(this.gaugeOptions);
+          this.applyInitialSize();
+        } catch { /* ignore */ }
       }
     });
 
@@ -209,25 +212,34 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.minValue = scale.min; opt.maxValue = scale.max;
     opt.valueInt = cfg.numInt ?? 1; opt.valueDec = cfg.numDecimal ?? 2;
     opt.title = this.displayName(); opt.fontTitleSize = 40; opt.fontTitle = 'Roboto'; opt.fontTitleWeight = 'bold';
+    // Bar geometry (match legacy defaults)
+    opt.barLength = isVertical ? 80 : 90;
+    opt.barWidth = ticks ? (useNeedle ? 0 : 30) : 60;
     opt.barProgress = true; opt.barBeginCircle = 0; opt.barStrokeWidth = 0; opt.barShadow = 0;
+    // Needle geometry
     opt.needle = !!useNeedle; opt.needleType = useNeedle ? 'arrow' : 'line';
+    opt.needleStart = useNeedle ? (isVertical ? 200 : 155) : -45;
+    opt.needleEnd = useNeedle ? (isVertical ? 175 : 180) : 55;
     opt.needleShadow = true; opt.needleSide = 'both';
     opt.units = cfg.paths?.['gaugePath']?.convertUnitTo; opt.fontUnits = 'Roboto'; opt.fontUnitsWeight = 'normal';
     opt.borders = false; opt.borderOuterWidth = 0; opt.borderMiddleWidth = 0; opt.borderInnerWidth = 0; opt.borderShadowWidth = 0; opt.borderRadius = 0;
+    // Value box
     opt.valueBox = true; opt.valueBoxWidth = 35; opt.valueBoxStroke = 0; opt.valueBoxBorderRadius = 10;
+    opt.colorValueBoxRect = ''; opt.colorValueBoxRectEnd = ''; opt.colorValueBoxShadow = '';
     opt.fontValueSize = 50; opt.fontValue = 'Roboto'; opt.fontValueWeight = 'bold'; opt.valueTextShadow = false;
     opt.fontNumbers = 'Roboto'; opt.fontNumbersWeight = 'normal'; opt.fontUnitsSize = isVertical ? 40 : 35;
     opt.colorTitle = getColors('contrast', theme).dim; opt.colorUnits = getColors('contrast', theme).dim;
-    opt.colorValueBoxBackground = this.theme().background;
+    opt.colorValueBoxBackground = theme.background;
     const palette = getColors(cfg.color, theme);
     // baseline colors
     opt.colorValueText = palette.color;
     if (useNeedle) {
       opt.colorNeedle = palette.color; opt.colorNeedleEnd = palette.color; opt.needleWidth = 45;
+      opt.colorNeedleShadowUp = palette.color; opt.colorNeedleShadowDown = palette.color;
     } else {
       opt.colorBarProgress = palette.color; opt.colorBarProgressEnd = ''; opt.needleWidth = 0;
     }
-    opt.colorPlate = theme.cardColor; opt.colorBar = theme.background;
+    opt.colorPlate = theme.cardColor; opt.colorBar = theme.background; opt.colorBarEnd = ''; opt.colorBarStroke = '0';
     opt.colorMajorTicks = getColors('contrast', theme).dim; opt.colorMinorTicks = getColors('contrast', theme).dim; opt.colorNumbers = getColors('contrast', theme).dim;
     opt.majorTicks = ticks ? scale.majorTicks as unknown as string[] : [];
     opt.majorTicksInt = cfg.numInt ?? 1; opt.majorTicksDec = cfg.numDecimal ?? 2;
@@ -237,11 +249,12 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.numbersMargin = isVertical ? (useNeedle ? -7 : -3) : (useNeedle ? -33 : -5);
     opt.ticksWidth = ticks ? (useNeedle ? (isVertical ? 15 : 10) : 10) : 0;
     opt.ticksPadding = ticks ? (isVertical ? (useNeedle ? 0 : 5) : (useNeedle ? 9 : 8)) : 0;
+    opt.tickSide = 'left';
     opt.animation = true; opt.animationRule = 'linear'; opt.animatedValue = false; opt.animateOnInit = false; opt.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 25;
     opt.highlights = []; opt.highlightsWidth = cfg.gauge?.highlightsWidth;
     // pre-populate highlights if already available
     const h = this.highlights();
-    if (h.length) { opt.highlights = JSON.stringify(h)}
+    if (h.length) { opt.highlights = JSON.stringify(h) as unknown as string; }
   }
 
   ngAfterViewInit(): void {
