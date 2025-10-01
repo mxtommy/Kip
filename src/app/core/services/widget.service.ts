@@ -16,6 +16,8 @@ import { WidgetPositionComponent } from '../../widgets/widget-position/widget-po
 import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
+import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
+
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -134,7 +136,8 @@ export class WidgetService {
     WidgetPositionComponent: WidgetPositionComponent,
     WidgetLabelComponent: WidgetLabelComponent,
     WidgetIframeComponent: WidgetIframeComponent,
-    WidgetHorizonComponent: WidgetHorizonComponent
+    WidgetHorizonComponent: WidgetHorizonComponent,
+    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
