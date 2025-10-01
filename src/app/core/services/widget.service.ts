@@ -18,6 +18,8 @@ import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe
 import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
 import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
 import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
+import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -139,7 +141,9 @@ export class WidgetService {
     WidgetIframeComponent: WidgetIframeComponent,
     WidgetHorizonComponent: WidgetHorizonComponent,
     WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
-    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent
+    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
+    WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
+    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {

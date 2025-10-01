@@ -192,7 +192,6 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
         canvasEl.style.width = size + 'px';
         canvasEl.style.height = size + 'px';
       }
-      console.log(`[Horizon ${this.id()}] COMMIT size -> rebuild ${size}`);
       this.buildOptions(cfg, size);
       this.rebuildGauge();
       this.pendingSize = null; // clear pending after successful commit
@@ -210,7 +209,6 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
       const rect = wrapperEl.getBoundingClientRect();
       const candidate = Math.round(Math.min(rect.width, rect.height));
       const ref = this.pendingSize ?? this.currentSize;
-      console.log(`[Horizon ${this.id()}] RO wrapper css:${Math.round(rect.width)}x${Math.round(rect.height)} ref:${ref} candidate:${candidate}`);
       if (!candidate || candidate < 50) return;
       if (ref && Math.abs(ref - candidate) < 4) {
         // jitter - ignore but still keep timer running
@@ -273,20 +271,13 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
     }
     // No live scale to clear in simplified mode
     try {
-      console.log(`[Horizon ${this.id()}] rebuilding gauge with size option ${this.gaugeOptions?.size}`);
       this.gauge = new steelseries.Horizon(canvasId, this.gaugeOptions);
       // Apply last known values
       const cfg = this.runtime.options();
       if (cfg && this.gauge) {
         this.applyInversions(cfg);
       }
-      const c = document.getElementById(canvasId) as HTMLCanvasElement | null;
-      if (c) {
-        console.log(`[Horizon ${this.id()}] rebuild complete canvas css:${c.clientWidth}x${c.clientHeight} attr:${c.width}x${c.height}`);
-      }
-    } catch {
-      console.log(`[Horizon ${this.id()}] rebuild failed (steelseries missing or error)`);
-    }
+    } catch {/** ignore */ }
   }
 
   private applyInversions(cfg: IWidgetSvcConfig): void {
