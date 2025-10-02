@@ -27,10 +27,6 @@ import { ITheme } from '../../core/services/app-service';
   imports: [NgxResizeObserverModule, GaugesModule]
 })
 export class WidgetGaugeNgLinearComponent implements AfterViewInit {
-  // View refs
-  protected readonly ngGauge = viewChild<LinearGauge>('linearGauge');
-  protected readonly gauge = viewChild('linearGauge', { read: ElementRef });
-
   // Host2 functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
@@ -75,15 +71,17 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     ignoreZones: false
   };
 
+  protected readonly ngGauge = viewChild<LinearGauge>('linearGauge');
+  protected readonly gauge = viewChild('linearGauge', { read: ElementRef });
+
   // Reactive presentation
   protected textValue = '';
   protected value = 0;
   protected gaugeOptions: LinearGaugeOptions = {} as LinearGaugeOptions;
   private viewReady = signal(false);
-  private currentState = signal<States>(States.Normal);
-  private lastAppliedState: States | null = null;
+  private currentState = signal<string>(States.Normal);
 
-  private readonly adjustedScale = computed<IScale>(() => {
+  private adjustedScale = computed<IScale>(() => {
     const cfg = this.runtime.options();
     if (!cfg) return { min: 0, max: 100, majorTicks: [] };
     if (cfg.gauge?.enableTicks) {
@@ -112,8 +110,8 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       if (!cfg || !theme) return;
       const pCfg = cfg.paths?.['gaugePath'];
       if (!pCfg?.path) return;
-      untracked(() => this.streams.observe('gaugePath', pkt => {
-        const raw = (pkt?.data?.value as number) ?? null;
+      untracked(() => this.streams.observe('gaugePath', path => {
+        const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
           this.value = cfg.displayScale.lower;
           this.textValue = '--';
@@ -122,8 +120,9 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
           this.value = clamped;
           if (this.textValue === '--') this.textValue = '';
         }
-        const newState = (pkt?.state ?? States.Normal) as States;
-        if (newState !== this.currentState()) this.currentState.set(newState);
+        if (path.state !== this.currentState()) {
+          this.currentState.set(path.state);
+        }
       }));
     });
 
@@ -140,14 +139,16 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       const hl = this.highlights();
       if (!cfg) return;
       if (!this.viewReady()) return;
-      try {
-        if (!hl.length) {
-          this.ngGauge()?.update({ highlights: [] });
-        } else {
-          const serialized = JSON.stringify(hl) as unknown as string;
-          this.ngGauge()?.update({ highlights: serialized, highlightsWidth: cfg.gauge?.highlightsWidth });
-        }
-      } catch { /* ignore */ }
+      untracked(() => {
+        try {
+          if (!hl.length) {
+            this.ngGauge()?.update({ highlights: [] });
+          } else {
+            const serialized = JSON.stringify(hl) as unknown as string;
+            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: cfg.gauge?.highlightsWidth });
+          }
+        } catch { /* ignore */ }
+      });
     });
 
     // Build / update gauge options when config/theme/scale change
@@ -156,13 +157,15 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       const theme = this.theme();
       const scale = this.adjustedScale();
       if (!cfg || !theme) return;
-      this.buildGaugeOptions(cfg, theme, scale);
-      if (this.viewReady()) {
-        try {
-          this.ngGauge()?.update(this.gaugeOptions);
-          this.applyInitialSize();
-        } catch { /* ignore */ }
-      }
+      untracked(() => {
+        this.buildGaugeOptions(cfg, theme, scale);
+        if (this.viewReady()) {
+          try {
+            this.ngGauge()?.update(this.gaugeOptions);
+            this.applyInitialSize();
+          } catch { /* ignore */ }
+        }
+      });
     });
 
     // Apply state-based colors (after view ready)
@@ -173,33 +176,51 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       if (!cfg || !theme) return;
       if (cfg.ignoreZones) return;
       if (!this.viewReady()) return;
-      if (state === this.lastAppliedState) return;
-      const opt: LinearGaugeOptions = {} as LinearGaugeOptions;
-      const useNeedle = cfg.gauge?.useNeedle;
-      const palette = getColors(cfg.color, theme);
-      switch (state) {
-        case States.Alarm:
-          if (useNeedle) { opt.colorNeedle = theme.zoneAlarm; opt.colorValueText = theme.zoneAlarm; }
-          else { opt.colorBarProgress = theme.zoneAlarm; opt.colorValueText = theme.zoneAlarm; }
-          break;
-        case States.Warn:
-          if (useNeedle) { opt.colorNeedle = theme.zoneWarn; opt.colorValueText = theme.zoneWarn; }
-          else { opt.colorBarProgress = theme.zoneWarn; opt.colorValueText = theme.zoneWarn; }
-          break;
-        case States.Alert:
-          if (useNeedle) { opt.colorNeedle = theme.zoneAlert; opt.colorValueText = theme.zoneAlert; }
-          else { opt.colorBarProgress = theme.zoneAlert; opt.colorValueText = theme.zoneAlert; }
-          break;
-        case States.Emergency:
-          if (useNeedle) { opt.colorNeedle = theme.zoneEmergency; opt.colorValueText = theme.zoneEmergency; }
-          else { opt.colorBarProgress = theme.zoneEmergency; opt.colorValueText = theme.zoneEmergency; }
-          break;
-        default:
-          if (useNeedle) { opt.colorNeedle = palette.color; opt.colorValueText = palette.color; }
-          else { opt.colorBarProgress = palette.color; opt.colorValueText = palette.color; }
-      }
-      try { this.ngGauge()?.update(opt); } catch { /* ignore */ }
-      this.lastAppliedState = state;
+      untracked(() => {
+        const opt: LinearGaugeOptions = {};
+        const useNeedle = cfg.gauge?.useNeedle;
+        const palette = getColors(cfg.color, theme);
+        switch (state) {
+          case States.Alarm:
+            if (useNeedle) {
+              opt.colorNeedle = theme.zoneAlarm;
+              opt.colorValueText = theme.zoneAlarm;
+            } else {
+              opt.colorBarProgress = theme.zoneAlarm;
+              opt.colorValueText = theme.zoneAlarm;
+            }
+            break;
+          case States.Warn:
+            if (useNeedle) {
+              opt.colorNeedle = theme.zoneWarn;
+              opt.colorValueText = theme.zoneWarn;
+            } else {
+              opt.colorBarProgress = theme.zoneWarn;
+              opt.colorValueText = theme.zoneWarn;
+            }
+            break;
+          case States.Alert:
+            if (useNeedle) {
+              opt.colorNeedle = theme.zoneAlert;
+              opt.colorValueText = theme.zoneAlert;
+            } else {
+              opt.colorBarProgress = theme.zoneAlert;
+              opt.colorValueText = theme.zoneAlert;
+            }
+            break;
+          default:
+            if (useNeedle) {
+              opt.colorNeedle = palette.color;
+              opt.colorValueText = palette.color;
+            } else {
+              opt.colorBarProgress = palette.color;
+              opt.colorValueText = palette.color;
+            }
+        }
+        try {
+          this.ngGauge()?.update(opt);
+        } catch { /* ignore */ }
+      });
     });
   }
 
@@ -260,7 +281,9 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.viewReady.set(true);
     this.applyInitialSize();
-    try { this.ngGauge()?.update(this.gaugeOptions); } catch { /* ignore */ }
+    try {
+      this.ngGauge()?.update(this.gaugeOptions);
+    } catch { /* ignore */ }
   }
 
   private applyInitialSize(): void {

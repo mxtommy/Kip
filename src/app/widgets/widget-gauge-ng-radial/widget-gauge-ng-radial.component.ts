@@ -26,12 +26,6 @@ import { ITheme } from '../../core/services/app-service';
   imports: [NgxResizeObserverModule, GaugesModule]
 })
 export class WidgetGaugeNgRadialComponent implements AfterViewInit {
-  // Gauge option setting constant
-  private readonly LINE: string = "line";
-  private readonly ANIMATION_TARGET_NEEDLE: string = "needle";
-
-  readonly ngGauge = viewChild<RadialGauge>('radialGauge');
-  readonly gauge = viewChild('radialGauge', { read: ElementRef });
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
@@ -77,6 +71,13 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     dataTimeout: 5,
     ignoreZones: false
   };
+
+  // Gauge option setting constant
+  private readonly LINE: string = "line";
+  private readonly ANIMATION_TARGET_NEEDLE: string = "needle";
+
+  readonly ngGauge = viewChild<RadialGauge>('radialGauge');
+  readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
   // Reactive state
   protected value = 0;
