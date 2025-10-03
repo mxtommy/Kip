@@ -24,6 +24,7 @@ import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-com
 import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
 import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
+import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -152,6 +153,7 @@ export class WidgetService {
     WidgetFreeboardskComponent: WidgetFreeboardskComponent
     ,WidgetDatetimeComponent: WidgetDatetimeComponent
     ,WidgetDataChartComponent: WidgetDataChartComponent
+    ,WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
