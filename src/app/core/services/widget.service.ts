@@ -20,6 +20,7 @@ import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget
 import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
 import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
 import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -143,7 +144,8 @@ export class WidgetService {
     WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
     WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
     WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
-    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent
+    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
+    WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
