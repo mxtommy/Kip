@@ -25,6 +25,7 @@ import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/wid
 import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -150,10 +151,11 @@ export class WidgetService {
     WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
     WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
     WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
-    WidgetFreeboardskComponent: WidgetFreeboardskComponent
-    ,WidgetDatetimeComponent: WidgetDatetimeComponent
-    ,WidgetDataChartComponent: WidgetDataChartComponent
-    ,WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent
+    WidgetFreeboardskComponent: WidgetFreeboardskComponent,
+    WidgetDatetimeComponent: WidgetDatetimeComponent,
+    WidgetDataChartComponent: WidgetDataChartComponent,
+    WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
+    WidgetAutopilotComponent: WidgetAutopilotComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {

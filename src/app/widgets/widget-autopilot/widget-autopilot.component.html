@@ -1,122 +1,101 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" class="widget-host">
-  <div [style.display]="apGrid()" class="autopilot-grid-container">
-    <!-- Modes row -->
-    <div class="ap-modes">
-      <button mat-flat-button [disabled]="(apState() === 'off-line') || (apMode() === 'off-line')" class="ap-btn ap-btn-ctrlbar" (click)="toggleMenu()">
-        <mat-icon class="svg-icon-ctrlbar">
-          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
-            <text xml:space="preserve"
-              x="50"
-              y="10.7">Mode {{ apMode() | titlecase }} &nbsp;&vellip;</text>
-          </svg>
-        </mat-icon>
-      </button>
-      <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-disengage' : 'ap-btn ap-btn-ctrlbar ap-btn-engage'" (click)="buildAndSendCommand('standby')">
-        <mat-icon class="svg-icon-ctrlbar">
-          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
-            <text xml:space="preserve"
-              x="50.090435"
-              y="10.743966">Disengage</text>
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-     <!-- AP Screen row -->
-    <div class="ap-screen">
-      <app-svg-autopilot
-        [apMode]="apMode()"
-        [targetPilotHeadingTrue]="widgetProperties.config.autopilot.courseDirectionTrue"
-        [autopilotTarget]="autopilotTarget()"
-        [courseXte]="crossTrackError()"
-        [compassHeading]="heading()"
-        [headingDirectionTrue]="widgetProperties.config.autopilot.headingDirectionTrue"
-        [appWindAngle]="windAngleApparent()"
-        [rudderAngle]="rudder()"
-      ></app-svg-autopilot>
-      <div class="ap-screen-overlay" [style.visibility]="countdownOverlayVisibility()">
-        <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-          <text x="50%" y="25" [innerHTML]="countdownOverlayText()" class="svg-element-msg" />
-          <text x="50%" dy="75" [style.visibility]="countDownValue >= 0 ? 'visible' : 'hidden'" style="font-size: 3em" [innerHTML]="countDownValue + 1" class="svg-element-msg" />
+<div [style.display]="apGrid()" class="autopilot-grid-container">
+  <!-- Modes row -->
+  <div class="ap-modes">
+    <button mat-flat-button [disabled]="(apState() === 'off-line') || (apMode() === 'off-line')" class="ap-btn ap-btn-ctrlbar" (click)="toggleMenu()">
+      <mat-icon class="svg-icon-ctrlbar">
+        <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
+          <text xml:space="preserve"
+            x="50"
+            y="10.7">Mode {{ apMode() | titlecase }} &nbsp;&vellip;</text>
         </svg>
-      </div>
-      <div class="ap-screen-overlay ap-error-text" [style.visibility]="errorOverlayVisibility()">
-        <span class="material-icons ap-error-icon">warning</span>
-        <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-          <text x="50%" y="25" [innerHTML]="errorOverlayText()" class="svg-element-msg svg-element-error-txt" />
+      </mat-icon>
+    </button>
+    <button mat-flat-button [disabled]="apEngageBtnDisabled()" [class]="!apEngaged() ? 'ap-btn ap-btn-ctrlbar ap-btn-disengage' : 'ap-btn ap-btn-ctrlbar ap-btn-engage'" (click)="buildAndSendCommand('standby')">
+      <mat-icon class="svg-icon-ctrlbar">
+        <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-element svg-modes">
+          <text xml:space="preserve"
+            x="50.090435"
+            y="10.743966">Disengage</text>
         </svg>
-      </div>
+      </mat-icon>
+    </button>
+  </div>
+    <!-- AP Screen row -->
+  <div class="ap-screen">
+    <app-svg-autopilot
+      [apMode]="apMode()"
+      [targetPilotHeadingTrue]="runtime.options().autopilot.courseDirectionTrue"
+      [autopilotTarget]="autopilotTarget()"
+      [courseXte]="crossTrackError()"
+      [compassHeading]="heading()"
+      [headingDirectionTrue]="runtime.options().autopilot.headingDirectionTrue"
+      [appWindAngle]="windAngleApparent()"
+      [rudderAngle]="rudder()"
+    ></app-svg-autopilot>
+    <div class="ap-screen-overlay" [style.visibility]="countdownOverlayVisibility()">
+      <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        <text x="50%" y="25" [innerHTML]="countdownOverlayText()" class="svg-element-msg" />
+        <text x="50%" dy="75" [style.visibility]="countDownValue >= 0 ? 'visible' : 'hidden'" style="font-size: 3em" [innerHTML]="countDownValue + 1" class="svg-element-msg" />
+      </svg>
     </div>
-    <!-- -1 / +1 buttons row -->
-    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-1')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-1°</text>
-            <path fill="currentColor" stroke="currentColor" d="M 31.033486,35.785143 68.966514,66.630677 M 31.033486,35.640825 68.966514,4.79529" />
-          </svg>
-        </mat-icon>
-      </button>
+    <div class="ap-screen-overlay ap-error-text" [style.visibility]="errorOverlayVisibility()">
+      <span class="material-icons ap-error-icon">warning</span>
+      <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        <text x="50%" y="25" [innerHTML]="errorOverlayText()" class="svg-element-msg svg-element-error-txt" />
+      </svg>
     </div>
-    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+1')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+1°</text>
-            <path fill="currentColor" stroke="currentColor" d="M 68.966514,35.785143 31.033486,66.630677 M 68.966514,35.640825 31.033486,4.79529" />
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-    <!-- -10 / +10 buttons row -->
-    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-10')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-10°</text>
-            <path fill="currentColor" stroke="currentColor" d="M 15.778367,35.785143 53.711395,66.630677 M 15.778367,35.640825 53.711395,4.79529" />
-            <path fill="currentColor" stroke="currentColor" d="M 46.288608,35.785143 84.221633,66.630677 M 46.288608,35.640825 84.221633,4.79529" />
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-    <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+10')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+10°</text>
-            <path fill="currentColor" stroke="currentColor" d="M 84.221633,35.785143 46.288605,66.630677 M 84.221633,35.640825 46.288605,4.79529" />
-            <path fill="currentColor" stroke="currentColor" d="M 53.711392,35.785143 15.778367,66.630677 M 53.711392,35.640825 15.778367,4.79529" />
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-    <!-- Tack buttons row -->
-    <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToPort')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
-            <g transform="scale(-1,1) translate(-100,0)">
-              <path
-                fill="currentColor"
-                style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
-                d="M 90.5,22.5 67.5,45 96,53 Z" />
-              <path
-                fill="none" stroke="currentColor"
-                style="stroke-width:8.45947;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0"
-                d="M 76,31
-                  A 36 38 0 0 0 24,33" />
-              <circle fill="currentColor" cx="14.5" cy="45.25" r="12"/>
-            </g>
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-    <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToStarboard')">
-        <mat-icon class="svg-icon">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
+  </div>
+  <!-- -1 / +1 buttons row -->
+  <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-1')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-1°</text>
+          <path fill="currentColor" stroke="currentColor" d="M 31.033486,35.785143 68.966514,66.630677 M 31.033486,35.640825 68.966514,4.79529" />
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+1')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+1°</text>
+          <path fill="currentColor" stroke="currentColor" d="M 68.966514,35.785143 31.033486,66.630677 M 68.966514,35.640825 31.033486,4.79529" />
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <!-- -10 / +10 buttons row -->
+  <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('-10')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">-10°</text>
+          <path fill="currentColor" stroke="currentColor" d="M 15.778367,35.785143 53.711395,66.630677 M 15.778367,35.640825 53.711395,4.79529" />
+          <path fill="currentColor" stroke="currentColor" d="M 46.288608,35.785143 84.221633,66.630677 M 46.288608,35.640825 84.221633,4.79529" />
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <div [style.display]="adjustHdgBtnVisibility() || (apMode() === 'nav' && this.dodgeModeActive()) ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('+10')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="50.052986" y="98.734871">+10°</text>
+          <path fill="currentColor" stroke="currentColor" d="M 84.221633,35.785143 46.288605,66.630677 M 84.221633,35.640825 46.288605,4.79529" />
+          <path fill="currentColor" stroke="currentColor" d="M 53.711392,35.785143 15.778367,66.630677 M 53.711392,35.640825 15.778367,4.79529" />
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <!-- Tack buttons row -->
+  <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToPort')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
+          <g transform="scale(-1,1) translate(-100,0)">
             <path
               fill="currentColor"
               style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
@@ -125,139 +104,158 @@
               fill="none" stroke="currentColor"
               style="stroke-width:8.45947;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0"
               d="M 76,31
-                 A 36 38 0 0 0 24,33" />
+                A 36 38 0 0 0 24,33" />
             <circle fill="currentColor" cx="14.5" cy="45.25" r="12"/>
-          </svg>
-        </mat-icon>
-      </button>
-    </div>
-    <!-- Route widget -->
-    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-position
-        [id]="nextWptProperties().uuid"
-        [type]="nextWptProperties().type"
-        [theme]="theme()"
-        [config]="nextWptProperties().config"
-        class="embed-widget" />
-    </div>
-    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-datetime
-        [id]="etaProperties().uuid"
-        [type]="etaProperties().type"
-        [theme]="theme()"
-        [config]="etaProperties().config"
-        class="embed-widget" />
-    </div>
-    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-numeric
-        [id]="dtwProperties().uuid"
-        [type]="dtwProperties().type"
-        [theme]="theme()"
-        [config]="dtwProperties().config"
-        class="embed-widget"/>
-    </div>
-    <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-      <widget-numeric
-        [id]="xteProperties().uuid"
-        [type]="xteProperties().type"
-        [theme]="theme()"
-        [config]="xteProperties().config"
-        class="embed-widget" />
-    </div>
-    <!-- Route Button row -->
-    <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
-      @if (widgetProperties.config.autopilot.apiVersion === 'v2') {
-        <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
-          <mat-icon class="svg-icon">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
-              <text xml:space="preserve"
-                x="49.961578"
-                y="86.799866">Dodge</text>
-              <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-                d="M 4.6584699,36.552789 29.229283,58.159051 M 4.6584699,36.451699 29.229283,14.845436" />
-              <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-                d="M 95.34153,36.552789 70.770717,58.159051 M 95.34153,36.451699 70.770717,14.845436" />
-              <text xml:space="preserve"
-                style="font-size:68.6095px"
-                x="50.167503"
-                y="61.058273">!</text>
-            </svg>
-          </mat-icon>
-        </button>
-      }
-    </div>
-    <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
-      <button mat-flat-button [disabled]="apBtnDisabled() || dodgeModeActive()" class="ap-btn" (click)="buildAndSendCommand('route')">
+          </g>
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <div [style.display]="tackBtnVisibility() ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" (click)="buildAndSendCommand('tackToStarboard')">
+      <mat-icon class="svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.894032" y="98.734871">Tack</text>
+          <path
+            fill="currentColor"
+            style="stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
+            d="M 90.5,22.5 67.5,45 96,53 Z" />
+          <path
+            fill="none" stroke="currentColor"
+            style="stroke-width:8.45947;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0"
+            d="M 76,31
+                A 36 38 0 0 0 24,33" />
+          <circle fill="currentColor" cx="14.5" cy="45.25" r="12"/>
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+  <!-- Route widget -->
+  <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
+    <!-- <widget-position
+      [id]="nextWptProperties().uuid"
+      [type]="nextWptProperties().type"
+      [theme]="theme()"
+      [config]="nextWptProperties().config"
+      class="embed-widget" /> -->
+  </div>
+  <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
+  <!--    <widget-datetime
+      [id]="etaProperties().uuid"
+      [type]="etaProperties().type"
+      [theme]="theme()"
+      [config]="etaProperties().config"
+      class="embed-widget" /> -->
+  </div>
+  <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
+    <!-- <widget-numeric
+      [id]="dtwProperties().uuid"
+      [type]="dtwProperties().type"
+      [theme]="theme()"
+      [config]="dtwProperties().config"
+      class="embed-widget"/> -->
+  </div>
+  <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
+     <widget-numeric
+      [id]="xteProperties().uuid"
+      [type]="xteProperties().type"
+      [theme]="theme()"
+      [config]="xteProperties().config"
+      class="embed-widget" />
+  </div>
+  <!-- Route Button row -->
+  <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
+    @if (runtime.options().autopilot.apiVersion === 'v2') {
+      <button mat-flat-button [disabled]="apBtnDisabled()" class="ap-btn" [class.ap-btn-active]="dodgeModeActive()" (click)="toggleDodge()">
         <mat-icon class="svg-icon">
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
-            <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
-            <path
-              fill="currentColor"
-              style="stroke:none"
-              d="M 12.090795,4 V 63.58544 L 71.676235,33.792718 Z" />
-            <path
-              fill="currentColor" stroke="currentColor"
-              style="fill:none;stroke-width:9.90493;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
-              d="M 75.95674,4 V 63.58544" />
+            <text xml:space="preserve"
+              x="49.961578"
+              y="86.799866">Dodge</text>
+            <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+              d="M 4.6584699,36.552789 29.229283,58.159051 M 4.6584699,36.451699 29.229283,14.845436" />
+            <path [style.fill]="dodgeModeActive() ? 'currentColor' : 'none'" [style.stroke]="'currentColor'" style="stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+              d="M 95.34153,36.552789 70.770717,58.159051 M 95.34153,36.451699 70.770717,14.845436" />
+            <text xml:space="preserve"
+              style="font-size:68.6095px"
+              x="50.167503"
+              y="61.058273">!</text>
           </svg>
         </mat-icon>
       </button>
-    </div>
+    }
   </div>
-  @if ((menuOpen())) {
-    <!-- Modes Menu Overlay -->
-    <div class="svg-menu-overlay" tabindex="0" (click)="toggleMenu()" (keyup.enter)="toggleMenu()" (keyup.space)="toggleMenu()" role="button" aria-label="Close menu">
-      <svg [attr.viewBox]="'0 0 240 ' + menuItems().length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
-        <rect x="0" y="0" width="240" [attr.height]="menuItems().length * itemHeight" class="svg-menu-box"/>
-        <ng-container>
-          @for (item of menuItems(); track $index) {
-            <g
-              style="cursor:pointer;"
-              (click)="!item.disabled && onMenuItemClick(item.action)"
-              tabindex="0"
-              (keyup.enter)="!item.disabled && onMenuItemClick(item.action)"
-              (keyup.space)="!item.disabled && onMenuItemClick(item.action)"
-              role="button"
-              [attr.aria-label]="item.label"
+  <div [style.display]="routeBtnVisibility() ? 'block' : 'none'">
+    <button mat-flat-button [disabled]="apBtnDisabled() || dodgeModeActive()" class="ap-btn" (click)="buildAndSendCommand('route')">
+      <mat-icon class="svg-icon">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="svg-element svg-route">
+          <text fill="currentColor" stroke="currentColor" xml:space="preserve" x="49.961578" y="86.799866">Adv Wpt</text>
+          <path
+            fill="currentColor"
+            style="stroke:none"
+            d="M 12.090795,4 V 63.58544 L 71.676235,33.792718 Z" />
+          <path
+            fill="currentColor" stroke="currentColor"
+            style="fill:none;stroke-width:9.90493;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+            d="M 75.95674,4 V 63.58544" />
+        </svg>
+      </mat-icon>
+    </button>
+  </div>
+</div>
+@if ((menuOpen())) {
+  <!-- Modes Menu Overlay -->
+  <div class="svg-menu-overlay" tabindex="0" (click)="toggleMenu()" (keyup.enter)="toggleMenu()" (keyup.space)="toggleMenu()" role="button" aria-label="Close menu">
+    <svg [attr.viewBox]="'0 0 240 ' + menuItems().length * itemHeight" class="svg-menu" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" (keyup.space)="$event.stopPropagation()" role="presentation" aria-label="Menu">
+      <rect x="0" y="0" width="240" [attr.height]="menuItems().length * itemHeight" class="svg-menu-box"/>
+      <ng-container>
+        @for (item of menuItems(); track $index) {
+          <g
+            style="cursor:pointer;"
+            (click)="!item.disabled && onMenuItemClick(item.action)"
+            tabindex="0"
+            (keyup.enter)="!item.disabled && onMenuItemClick(item.action)"
+            (keyup.space)="!item.disabled && onMenuItemClick(item.action)"
+            role="button"
+            [attr.aria-label]="item.label"
+          >
+            <rect
+              x="0"
+              [attr.y]="$index * itemHeight"
+              width="240"
+              [attr.height]="itemHeight"
+              [class]="
+                item.isCancel
+                  ? 'svg-menu-item-cancel'
+                  : item.current
+                    ? 'svg-menu-item-current'
+                    : item.disabled
+                      ? 'svg-menu-item-disabled'
+                      : 'svg-menu-item'
+              "
+            />
+            <text
+              x="120"
+              [attr.y]="($index + 0.65) * itemHeight"
+              [class]="
+                item.isCancel
+                  ? 'svg-menu-item-cancel-text'
+                  : item.current
+                    ? 'svg-menu-item-current-text'
+                    : item.disabled
+                      ? 'svg-menu-item-disabled-text'
+                      : 'svg-menu-item-text'
+              "
             >
-              <rect
-                x="0"
-                [attr.y]="$index * itemHeight"
-                width="240"
-                [attr.height]="itemHeight"
-                [class]="
-                  item.isCancel
-                    ? 'svg-menu-item-cancel'
-                    : item.current
-                      ? 'svg-menu-item-current'
-                      : item.disabled
-                        ? 'svg-menu-item-disabled'
-                        : 'svg-menu-item'
-                "
-              />
-              <text
-                x="120"
-                [attr.y]="($index + 0.65) * itemHeight"
-                [class]="
-                  item.isCancel
-                    ? 'svg-menu-item-cancel-text'
-                    : item.current
-                      ? 'svg-menu-item-current-text'
-                      : item.disabled
-                        ? 'svg-menu-item-disabled-text'
-                        : 'svg-menu-item-text'
-                "
-              >
-                {{ item.current ? '\u2713 ' : '' }}{{ item.label }}
-              </text>
-            </g>
-          }
-        </ng-container>
-      </svg>
-    </div>
-  }
-  @if (!dashboard.isDashboardStatic()) {
-    <div class="widgetOverlay">
-    </div>
-  }
-</widget-host>
+              {{ item.current ? '\u2713 ' : '' }}{{ item.label }}
+            </text>
+          </g>
+        }
+      </ng-container>
+    </svg>
+  </div>
+}
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay">
+  </div>
+}
