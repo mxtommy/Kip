@@ -1,4 +1,4 @@
-import { Directive, computed, output, signal } from '@angular/core';
+import { Directive, computed, effect, input, output, signal, untracked } from '@angular/core';
 import { cloneDeep, merge } from 'lodash-es';
 import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
@@ -12,8 +12,12 @@ import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
  * either source reference changes, reducing downstream signal churn.
  */
 export class WidgetRuntimeDirective {
+  // Manual config input (optional override, typically for embedded hardcoded widgets. See widget-autopilot)
+  public config = input<IWidgetSvcConfig | undefined>();
+
+  // Default config input (typically from widget manifest DEFAULT_CONFIG)
+  protected defaultConfig = signal<IWidgetSvcConfig | undefined>(undefined);
   protected runtimeConfig = output<IWidgetSvcConfig | undefined>();
-  public defaultConfig = signal<IWidgetSvcConfig | undefined>(undefined);
 
   // Internal runtime config
   private _runtimeConfig = signal<IWidgetSvcConfig | undefined>(undefined);
@@ -57,19 +61,28 @@ export class WidgetRuntimeDirective {
     return keys.length ? keys[0] : undefined;
   });
 
+  constructor() {
+    effect(() => {
+      const conf = this.config();
+      untracked(() => {
+        if (conf) this.setRuntimeConfig(conf);
+      });
+    });
+  }
+
   /** Retrieve a single path config safely from current merged options. */
-  public getPathCfg(pathKey: string) {
+  public getPathCfg(pathKey: string): string | undefined {
     const cfg = this.options();
     return cfg?.paths?.[pathKey];
   }
 
   /** Set (replace) the user runtime portion of the configuration. */
-  public setRuntimeConfig(cfg: IWidgetSvcConfig | undefined) {
+  public setRuntimeConfig(cfg: IWidgetSvcConfig | undefined): void {
     this._runtimeConfig.set(cfg);
   }
 
   /** Seed both default and saved configs (called once by Host2 before child creation). */
-  public initialize(defaultCfg: IWidgetSvcConfig | undefined, savedCfg: IWidgetSvcConfig | undefined) {
+  public initialize(defaultCfg: IWidgetSvcConfig | undefined, savedCfg: IWidgetSvcConfig | undefined): void {
     if (defaultCfg) this.defaultConfig.set(defaultCfg);
     if (savedCfg) this._runtimeConfig.set(savedCfg);
   }
