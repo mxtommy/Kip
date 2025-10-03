@@ -47,7 +47,7 @@ import {
   IV2ApiEndpoints,
   TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
-import { WidgetNumericViewComponent } from '../widget-numeric/widget-numeric.component';
+import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
 
 interface MenuItem {
   label: string;
@@ -107,7 +107,7 @@ const DEFAULTS = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericViewComponent, WidgetDatetimeComponent],
+    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
 })
 export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
   private readonly _requests = inject(SignalkRequestsService);
