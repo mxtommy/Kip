@@ -1,7 +1,7 @@
 import { DashboardService } from './../../core/services/dashboard.service';
 import { AuthenticationService } from './../../core/services/authentication.service';
 import { AppSettingsService } from './../../core/services/app-settings.service';
-import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, signal, computed } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, signal } from '@angular/core';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { Subscription } from 'rxjs';
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
@@ -16,6 +16,12 @@ import { ITheme } from '../../core/services/app-service';
   imports: [SafePipe]
 })
 export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
+  public id = input<string>();
+  public type = input<string>();
+  public theme = input<ITheme | null>();
+
+  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
+
   private appSettings = inject(AppSettingsService);
   private auth = inject(AuthenticationService);
   protected dashboard = inject(DashboardService);
@@ -24,24 +30,10 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   public disableWidgetShell = input<boolean>(false);
   private _authTokenSubscription: Subscription = null;
 
-  public id = input<string>();
-  public type = input<string>();
-  public theme = input<ITheme | null>();
-
-  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
-
   private viewReady = signal(false);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    displayName: 'Freeboard-SK',
-    filterSelfPaths: false,
-    paths: {},
-    enableTimeout: false,
-    dataTimeout: 5,
-    color: 'contrast'
   };
-
-  protected displayName = computed(() => this.runtime?.options()?.displayName);
 
   constructor() {
     effect(() => {

@@ -1,28 +1,59 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
+import { Component, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, computed, untracked } from '@angular/core';
 import { formatDate } from '@angular/common';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-datetime',
   templateUrl: './widget-datetime.component.html',
   styleUrls: ['./widget-datetime.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule]
+  imports: [NgxResizeObserverModule]
 })
-export class WidgetDatetimeComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
+export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  private readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective);
+
+  // Static DEFAULT_CONFIG for Host2
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Time Label',
+    filterSelfPaths: true,
+    paths: {
+      gaugePath: {
+        description: 'Date / Time',
+        path: null,
+        source: null,
+        pathType: 'Date',
+        isPathConfigurable: true,
+        sampleTime: 1000
+      }
+    },
+    dateFormat: 'dd/MM/yyyy HH:mm:ss',
+    dateTimezone: 'Atlantic/Azores',
+    color: 'contrast',
+    enableTimeout: false,
+    dataTimeout: 5
+  };
+
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
   private canvas = inject(CanvasService);
+
+
   private cssWidth = 0;
   private cssHeight = 0;
-  protected dataValue: string | null = null;
+  protected dataValue = signal<string | null>(null);
   private _timeZoneGTM = "";
   private isDestroyed = false; // guard against callbacks after destroyed
   protected labelColor = signal<string>(undefined);
@@ -30,39 +61,38 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
   private maxTextWidth = 0;
   private maxTextHeight = 0;
 
+  protected displayName = computed(() => this.runtime.options()?.displayName);
+  protected dateFormat = computed(() => this.runtime.options()?.dateFormat);
+  protected dateTimezone = computed(() => this.runtime.options()?.dateTimezone);
+
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'Time Label',
-      filterSelfPaths: true,
-      paths: {
-        'gaugePath': {
-          description: 'String Data',
-          path: null,
-          source: null,
-          pathType: 'Date',
-          isPathConfigurable: true,
-          sampleTime: 500
-        }
-      },
-      dateFormat: 'dd/MM/yyyy HH:mm:ss',
-      dateTimezone: 'Atlantic/Azores',
-      color: 'contrast',
-      enableTimeout: false,
-      dataTimeout: 5
-    };
-
     effect(() => {
-      if (this.theme()) {
-        this.setColors();
-        this.drawWidget();
-      }
+      const cfg = this.runtime.options();
+      const theme = this.theme();
+      if (!cfg || !theme) return;
+      untracked(() => {
+        this.applyColors();
+        const pathCfg = cfg.paths?.['gaugePath'];
+        if (!pathCfg?.path) return; // wait for path
+        this._timeZoneGTM = this.getGMTOffset(this.dateTimezone());
+        // Subscribe once per config change
+        this.streams.observe('gaugePath', pkt => {
+          this.dataValue.set(pkt?.data?.value as string ?? null);
+          this.drawWidget();
+        });
+      });
     });
-  }
 
-  ngOnInit() {
-    this.validateConfig();
+    // React to theme / color changes
+    effect(() => {
+      const theme = this.theme();
+      const cfg = this.runtime.options();
+      if (!theme || !cfg) return;
+      untracked(() => {
+        this.applyColors();
+        this.drawWidget();
+      });
+    });
   }
 
   ngAfterViewInit(): void {
@@ -79,34 +109,12 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
       }
     });
     if (this.isDestroyed) return;
-    this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
-    this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
+    this.cssHeight = Math.floor(this.canvasElement.getBoundingClientRect().height);
+    this.cssWidth = Math.floor(this.canvasElement.getBoundingClientRect().width);
     this.maxTextWidth = Math.floor(this.canvasElement.width * 0.85);
     this.maxTextHeight = Math.floor(this.canvasElement.height * 0.70);
-    this.startWidget();
-  }
-
-  protected startWidget(): void {
-    this._timeZoneGTM = this.getGMTOffset(this.widgetProperties.config.dateTimezone);
-    this.unsubscribeDataStream();
-    this.setColors();
-    this.observeDataStream('gaugePath', newValue => {
-      this.dataValue = newValue.data.value;
-      this.drawWidget();
-    });
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
+    this.applyColors();
     this.drawWidget();
-  }
-
-  ngOnDestroy() {
-    this.isDestroyed = true;
-    this.destroyDataStreams();
-    try { this.canvas.unregisterCanvas(this.canvasElement); }
-    catch { /* ignore */ }
   }
 
   private getGMTOffset(timeZone: string): string {
@@ -125,9 +133,19 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     }
   }
 
-  private setColors(): void {
-    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
+  private applyColors(): void {
+    const cfg = this.runtime.options();
+    const theme = this.theme();
+    if (!cfg || !theme) return;
+    this.labelColor.set(getColors(cfg.color, theme).dim);
+    this.valueColor = getColors(cfg.color, theme).color;
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
+    try {
+      this.canvas.unregisterCanvas(this.canvasElement);
+    } catch { /* ignore */ }
   }
   /* ******************************************************************************************* */
   /*                                  Canvas                                                     */
@@ -141,16 +159,16 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
     if (!this.titleBitmap ||
       this.titleBitmap.width !== this.canvasElement.width ||
       this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== this.widgetProperties.config.displayName
+      this.titleBitmapText !== `${this.displayName()}-${this.runtime.options().color}`
     ) {
       this.titleBitmap = this.canvas.createTitleBitmap(
-        this.widgetProperties.config.displayName,
+        this.displayName(),
         this.labelColor(),
         'normal',
         this.cssWidth,
         this.cssHeight
       );
-      this.titleBitmapText = this.widgetProperties.config.displayName;
+      this.titleBitmapText = `${this.displayName()}-${this.runtime.options().color}`;
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
@@ -163,11 +181,12 @@ export class WidgetDatetimeComponent extends BaseWidgetComponent implements Afte
 
     let valueText: string;
 
-    if (isNaN(Date.parse(this.dataValue))) {
+    const cur = this.dataValue();
+    if (!cur || isNaN(Date.parse(cur))) {
       valueText = '--';
     } else {
       try {
-        valueText = formatDate(this.dataValue, this.widgetProperties.config.dateFormat, 'en-US', this._timeZoneGTM);
+        valueText = formatDate(cur, this.dateFormat(), 'en-US', this._timeZoneGTM);
       } catch (error) {
         valueText = error;
         console.log('[Date Time Widget]: ' + error);

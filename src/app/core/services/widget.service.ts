@@ -22,6 +22,7 @@ import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radi
 import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
 import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
+import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -148,6 +149,7 @@ export class WidgetService {
     WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
     WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
     WidgetFreeboardskComponent: WidgetFreeboardskComponent
+    ,WidgetDatetimeComponent: WidgetDatetimeComponent
   };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
