@@ -59,6 +59,8 @@ export type IPathArray = Record<
   IWidgetPath
 >;
 
+
+
 /**
  * This interface defines all possible Widget configuration settings.
  * Usage: Widgets for configuration storage and Widget Manager service.

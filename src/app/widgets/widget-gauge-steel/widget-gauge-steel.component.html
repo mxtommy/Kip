@@ -1,22 +1,18 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
+<div class="wrapper">
   <gauge-steel
-    [widgetUUID]="widgetProperties.uuid"
-    [subType]="widgetProperties.config.gauge.subType"
-    [barGauge]="widgetProperties.config.gauge.digitalMeter"
-
-    [radialSize]="widgetProperties.config.gauge.radialSize"
-
-    [backgroundColor]="widgetProperties.config.gauge.backgroundColor"
-    [frameColor]="widgetProperties.config.gauge.faceColor"
-
-    [minValue]="widgetProperties.config.displayScale.lower"
-    [maxValue]="widgetProperties.config.displayScale.upper"
-    [decimals]="widgetProperties.config.numDecimal"
-
-    [zones]="this.zones"
-    [title]="widgetProperties.config.displayName"
-    [units]="widgetProperties.config.paths['gaugePath'].convertUnitTo"
-    [value]="dataValue"
-    [themeColors]="this.theme()"
+    [widgetUUID]="id()"
+    [subType]="runtime.options()?.gauge?.subType"
+    [barGauge]="runtime.options()?.gauge?.digitalMeter"
+    [radialSize]="runtime.options()?.gauge?.radialSize"
+    [backgroundColor]="runtime.options()?.gauge?.backgroundColor"
+    [frameColor]="runtime.options()?.gauge?.faceColor"
+    [minValue]="runtime.options()?.displayScale?.lower"
+    [maxValue]="runtime.options()?.displayScale?.upper"
+    [decimals]="runtime.options()?.numDecimal"
+    [zones]="zones()"
+    [title]="displayName()"
+    [units]="runtime.options()?.paths?.['gaugePath']?.convertUnitTo"
+    [value]="dataValue()"
+    [themeColors]="theme()"
   ></gauge-steel>
-</widget-host>
+</div>

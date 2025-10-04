@@ -55,7 +55,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
-  protected readonly isDashboardStatic = toSignal(this._dashboard.isDashboardStatic$);
   protected dashboardVisible = signal<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
   private scheduledOpen: number | null = null;
@@ -103,7 +102,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     effect(() => {
-      const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
       const sidenavOpen = this.notificationsSidenavOpened();
 
       // If sidenav is open, immediately close overlay and cancel any scheduled open

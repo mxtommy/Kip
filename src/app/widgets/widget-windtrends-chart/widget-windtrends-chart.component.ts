@@ -1,13 +1,14 @@
 import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
+import { UnitsService } from '../../core/services/units.service';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { ITheme } from '../../core/services/app-service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
 Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
@@ -29,14 +30,26 @@ interface IDataSetRow {
 
 @Component({
   selector: 'widget-windtrends-chart',
-  imports: [WidgetHostComponent],
   templateUrl: './widget-windtrends-chart.component.html',
   styleUrl: './widget-windtrends-chart.component.scss'
 })
-export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetWindTrendsChartComponent implements OnDestroy {
+  // Host2 functional inputs
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+  // Runtime directive (merged config) provided by Host2
+  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
+  // Static default config consumed by Host2 runtime merge
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    filterSelfPaths: true,
+    color: 'contrast',
+    timeScale: 'Last 30 Minutes'
+  };
   private readonly ngZone = inject(NgZone);
   private readonly _dataset = inject(DatasetService);
   private readonly canvasService = inject(CanvasService);
+  private readonly unitsService = inject(UnitsService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
@@ -57,7 +70,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     }
   }
   public lineChartType: ChartType = 'line';
-  private chart;
+  private chart: Chart<keyof ChartTypeRegistry, { x: number; y: number; }[], unknown>;
   private _dsDirectionSub: Subscription = null;
   private _dsSpeedSub: Subscription = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
@@ -80,29 +93,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   private readonly UNIT_FONT_SIZE = 28;
   private readonly UNIT_PADDING = 8;            // px between speed value and 'kts'
 
-  // Helper: robust near-equality to avoid suppressing non-target ticks
-  private nearlyEqual(a: number, b: number, eps = 1e-6): boolean {
-    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
-    const scale = Math.max(1, Math.max(Math.abs(a), Math.abs(b)));
-    return Math.abs(a - b) <= eps * scale;
-  }
-
-  // Helper: resolve tick color from scale ticks.color (string or function)
-  private resolveTickColor(chart: Chart, scale: Scale, tickValue: number): string {
-    const ticksOpt = (scale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks;
-    const col = ticksOpt?.color;
-    if (typeof col === 'function') {
-      const resolved = (col as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale, tick: { value: tickValue } });
-      return resolved ?? Chart.defaults.color as string;
-    }
-    return typeof col === 'string' ? col : (Chart.defaults.color as string);
-  }
-
-  // Helper: y position for top scale labels relative to an axis scale
-  private axisTopLabelY(scale: Scale): number {
-    const pos = (scale.options as { position?: string })?.position;
-    return pos === 'top' ? (scale.top + 4) : (scale.bottom + 2);
-  }
   // Paint background under grid lines (chartArea only) so it appears beneath grids
   private gridBackgroundPlugin = {
     id: 'xSpeedGridBackground',
@@ -295,88 +285,80 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   };
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      filterSelfPaths: true,
-      color: "contrast",
-      timeScale: "Last 30 Minutes"
-    };
-
+    // Theme or config color changes -> restyle chart
     effect(() => {
-      if (this.theme()) {
-        if (this.datasetConfig) {
+      const theme = this.theme();
+      const cfg = this.runtime?.options();
+      if (!theme || !cfg) return;
+      untracked(() => {
+        if (this.datasetConfig && this.chart) {
           this.setChartOptions();
           this.setDatasetsColors();
+          this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
         }
+      });
+    });
+
+    // Config lifecycle (timeScale or color): recreate datasets when timeScale changes
+    effect(() => {
+      const cfg = this.runtime?.options();
+      if (!cfg) return;
+      const needsDataset = !this.datasetConfig || this.datasetConfig.timeScaleFormat !== cfg.timeScale;
+      if (needsDataset) {
+        this.removeServiceDatasets();
+        this.createServiceDataset();
+        this.startWidget();
+      } else if (this.chart) {
+        // color-only change already handled above, but ensure labels updated
+        this.setChartOptions();
       }
     });
   }
 
-  ngOnInit(): void {
-    this.validateConfig();
-    this.createServiceDataset();
+
+  private startWidget(): void {
+    // Guard until canvas view is ready
+    if (!this.widgetDataChart()) return;
+    this.datasetConfig = this._dataset.getDatasetConfig(`${this.id()}-twd`);
+    this.dataSourceInfo = this._dataset.getDataSourceInfo(`${this.id()}-twd`);
+    if (!this.datasetConfig) return;
+    this.createDatasets();
+    this.setChartOptions();
+    if (!this.chart) {
+      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+        type: this.lineChartType,
+        data: this.lineChartData,
+        options: this.lineChartOptions,
+        plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
+      });
+      this.ngZone.runOutsideAngular(() => this.chart?.update());
+    } else {
+      this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
+    }
+    this.startStreaming();
   }
 
-  ngAfterViewInit(): void {
-    this.startWidget();
-  }
-
-  protected startWidget(): void {
-    this.datasetConfig = this._dataset.getDatasetConfig(`${this.widgetProperties.uuid}-twd`);
-    this.dataSourceInfo = this._dataset.getDataSourceInfo(`${this.widgetProperties.uuid}-twd`);
-
-    if (this.datasetConfig) {
-      this.createDatasets();
-      this.setChartOptions();
-
-      if (!this.chart) {
-        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
-          type: this.lineChartType,
-          data: this.lineChartData,
-          options: this.lineChartOptions,
-          plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
-        });
-        // Render once so initial axes and plugin drawings appear before data
-        this.ngZone.runOutsideAngular(() => {
-          this.chart?.update();
-        });
-      } else {
-        this.ngZone.runOutsideAngular(() => {
-          this.chart?.update('quiet');
-        });
-      }
-
-      this.startStreaming();
-    }
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    // remove dataset if they exists and recreate
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-twd`).length > 0) {
-      this._dataset.remove(`${this.widgetProperties.uuid}-twd`);
-    }
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-tws`).length > 0) {
-      this._dataset.remove(`${this.widgetProperties.uuid}-tws`);
-    }
-    this.createServiceDataset();
-    this.startWidget();
+  private removeServiceDatasets(): void {
+    const ids = [`${this.id()}-twd`, `${this.id()}-tws`];
+    ids.forEach(uuid => {
+      if (this._dataset.list().some(ds => ds.uuid === uuid)) this._dataset.remove(uuid);
+    });
   }
 
   private createServiceDataset(): void {
-    if (this.widgetProperties.config.timeScale === '') return;
+    const cfg = this.runtime?.options();
+    if (!cfg || cfg.timeScale === '') return;
     const pathDirection = "self.environment.wind.directionTrue";
     const pathSpeed = "self.environment.wind.speedTrue";
     const source = "default";
 
     // Create datasets if it does not exist
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-twd`).length === 0) {
-      this._dataset.create(pathDirection, source, this.widgetProperties.config.timeScale as TimeScaleFormat, 30, `windtrends-${this.widgetProperties.uuid}`, true, false, `${this.widgetProperties.uuid}-twd`);
+    if (this._dataset.list().filter(ds => ds.uuid === `${this.id()}-twd`).length === 0) {
+      this._dataset.create(pathDirection, source, cfg.timeScale as TimeScaleFormat, 30, `windtrends-${this.id()}`, true, false, `${this.id()}-twd`);
     }
 
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.widgetProperties.uuid}-tws`).length === 0) {
-      this._dataset.create(pathSpeed, source, this.widgetProperties.config.timeScale as TimeScaleFormat, 30, `speedtrends-${this.widgetProperties.uuid}`, true, false, `${this.widgetProperties.uuid}-tws`);
+    if (this._dataset.list().filter(ds => ds.uuid === `${this.id()}-tws`).length === 0) {
+      this._dataset.create(pathSpeed, source, cfg.timeScale as TimeScaleFormat, 30, `speedtrends-${this.id()}`, true, false, `${this.id()}-tws`);
     }
   }
 
@@ -569,8 +551,6 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         font: { size: 35 },
         color: this.getThemeColors().chartLabel
       },
-      annotation: {
-      },
       legend: { display: false }
     }
 
@@ -729,8 +709,8 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     this._dsDirectionSub?.unsubscribe();
     this._dsSpeedSub?.unsubscribe();
 
-    const batchThenLiveDir$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.widgetProperties.uuid}-twd`);
-    const batchThenLiveSpd$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.widgetProperties.uuid}-tws`);
+  const batchThenLiveDir$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-twd`);
+  const batchThenLiveSpd$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-tws`);
 
     this._dsDirectionSub = batchThenLiveDir$?.subscribe(dsPointOrBatch => {
       if (Array.isArray(dsPointOrBatch)) {
@@ -742,7 +722,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         }
       }
       this.updateChartAfterDataChange();
-      this.ngZone.runOutsideAngular(() => { this.chart?.update('quiet'); });
+      this.ngZone.runOutsideAngular(() => { this.chart?.update('none'); });
     });
 
     this._dsSpeedSub = batchThenLiveSpd$?.subscribe(dsPointOrBatch => {
@@ -755,7 +735,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
         }
       }
       this.updateChartAfterDataChange();
-      this.ngZone.runOutsideAngular(() => { this.chart?.update('quiet'); });
+      this.ngZone.runOutsideAngular(() => { this.chart?.update('none'); });
     });
   }
 
@@ -1024,7 +1004,7 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
   }
 
   private getThemeColors(): IChartColors {
-    const widgetColor = this.widgetProperties.config.color;
+  const widgetColor = this.runtime?.options()?.color;
     const colors: IChartColors = {
       valueLine: null,
       valueFill: null,
@@ -1112,8 +1092,31 @@ export class WidgetWindTrendsChartComponent extends BaseWidgetComponent implemen
     return colors;
   }
 
+  // Helper: robust near-equality to avoid suppressing non-target ticks
+  private nearlyEqual(a: number, b: number, eps = 1e-6): boolean {
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+    const scale = Math.max(1, Math.max(Math.abs(a), Math.abs(b)));
+    return Math.abs(a - b) <= eps * scale;
+  }
+
+  // Helper: resolve tick color from scale ticks.color (string or function)
+  private resolveTickColor(chart: Chart, scale: Scale, tickValue: number): string {
+    const ticksOpt = (scale.options as unknown as { ticks?: { color?: string | ((ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined) } }).ticks;
+    const col = ticksOpt?.color;
+    if (typeof col === 'function') {
+      const resolved = (col as (ctx: { chart: Chart; scale: Scale; tick: { value: number } }) => string | undefined)({ chart, scale, tick: { value: tickValue } });
+      return resolved ?? Chart.defaults.color as string;
+    }
+    return typeof col === 'string' ? col : (Chart.defaults.color as string);
+  }
+
+  // Helper: y position for top scale labels relative to an axis scale
+  private axisTopLabelY(scale: Scale): number {
+    const pos = (scale.options as { position?: string })?.position;
+    return pos === 'top' ? (scale.top + 4) : (scale.bottom + 2);
+  }
+
   ngOnDestroy(): void {
-    this.destroyDataStreams();
     this._dsDirectionSub?.unsubscribe();
     this._dsSpeedSub?.unsubscribe();
     // we need to destroy when moving Pages to remove Chart Objects

@@ -27,7 +27,6 @@ interface IDataSetRow {
 
 @Component({
   selector: 'minichart',
-  standalone: true,
   imports: [],
   templateUrl: './minichart.component.html',
   styleUrls: ['./minichart.component.scss'],
@@ -120,6 +119,7 @@ export class MinichartComponent implements OnDestroy {
   private setChartOptions() {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
+
 
     this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
 

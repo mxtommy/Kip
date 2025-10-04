@@ -22,19 +22,14 @@
  *
  * @requires HttpClient, Angular Signals
  */
-import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
 import { MatBadgeModule } from '@angular/material/badge';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
-import { WidgetPositionComponent } from '../widget-position/widget-position.component';
-import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
-import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
 import { isEqual } from 'lodash-es';
@@ -48,6 +43,10 @@ import {
   IV2ApiEndpoints,
   TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
+import { ITheme } from '../../core/services/app-service';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { WidgetEmbeddedComponent } from '../../core/components/widget-embedded/widget-embedded.component';
 
 interface MenuItem {
   label: string;
@@ -107,9 +106,174 @@ const DEFAULTS = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-    imports: [WidgetHostComponent, SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
+    imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetEmbeddedComponent],
 })
-export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnInit, OnDestroy {
+export class WidgetAutopilotComponent implements OnInit, OnDestroy {
+  // Host2 functional inputs (provided by widget-host2 wrapper)
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Static default config consumed by runtime merge
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    filterSelfPaths: true,
+    paths: {
+      "autopilotState": {
+        description: "Autopilot State",
+        path: "self.steering.autopilot.state",
+        source: "default",
+        pathType: "string",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        convertUnitTo: "",
+        sampleTime: 500
+      },
+      "autopilotMode": {
+        description: "Autopilot Mode",
+        path: "self.steering.autopilot.mode",
+        source: "default",
+        pathType: "string",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        convertUnitTo: "",
+        sampleTime: 500
+      },
+      "autopilotEngaged": {
+        description: "Autopilot Engaged",
+        path: 'self.steering.autopilot.engaged',
+        source: 'default',
+        pathType: "boolean",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        convertUnitTo: "",
+        sampleTime: 500
+      },
+      "autopilotV2Target": {
+        description: "Autopilot API v2 Target",
+        path: 'self.steering.autopilot.target',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        sampleTime: 500
+      },
+      "autopilotTargetHeading": {
+        description: "Autopilot Target Magnetic Heading",
+        path: 'self.steering.autopilot.target.headingMagnetic',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        sampleTime: 500
+      },
+      "autopilotTargetWindHeading": {
+        description: "Autopilot Target Apparent Wind Angle",
+        path: 'self.steering.autopilot.target.windAngleApparent',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        sampleTime: 500
+      },
+      "rudderAngle": {
+        description: "Rudder Angle",
+        path: 'self.steering.rudderAngle',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        sampleTime: 500
+      },
+      "courseXte": {
+        description: "Cross Track Error",
+        path: "self.navigation.course.calcValues.crossTrackError",
+        source: "default",
+        pathType: "number",
+        isPathConfigurable: false,
+        convertUnitTo: "m",
+        showPathSkUnitsFilter: true,
+        pathRequired: false,
+        pathSkUnitsFilter: 'm',
+        sampleTime: 500
+      },
+      "headingMag": {
+        description: "Magnetic Heading",
+        path: 'self.navigation.headingMagnetic',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+        pathRequired: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        showConvertUnitTo: false,
+        sampleTime: 500
+      },
+      "headingTrue": {
+        description: "True Heading",
+        path: 'self.navigation.headingTrue',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+        pathRequired: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        showConvertUnitTo: false,
+        sampleTime: 500
+      },
+      "windAngleApparent": {
+        description: "Apparent Wind Angle",
+        path: 'self.environment.wind.angleApparent',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+        pathRequired: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        showConvertUnitTo: false,
+        sampleTime: 500
+      },
+      "windAngleTrueWater": {
+        description: "Wind Angle True Water",
+        path: 'self.environment.wind.angleTrueWater',
+        source: 'default',
+        pathType: "number",
+        convertUnitTo: "deg",
+        isPathConfigurable: true,
+        pathRequired: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 'rad',
+        showConvertUnitTo: false,
+        sampleTime: 500
+      }
+    },
+    autopilot : { // Will be set during API detection in widget Options
+      invertRudder: true,
+      headingDirectionTrue: false,
+      courseDirectionTrue: false,
+      apiVersion: null,
+      instanceId: null,
+      pluginId: null,
+      modes: null // Default modes for V1
+    },
+    enableTimeout: false,
+    dataTimeout: 5,
+  };
+
+  // Exposed for template access (displayName)
+  protected readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective, { optional: true });
+
   private readonly _requests = inject(SignalkRequestsService);
   private readonly http = inject(HttpClient);
   protected readonly dashboard = inject(DashboardService);
@@ -145,12 +309,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
-
   protected readonly apEngageBtnDisabled = computed(() => {
     const state = this.apState();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const engaged = this.apEngaged();
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
 
     if (!apiVersion) return true;
 
@@ -163,10 +326,9 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     }
     return true;
   });
-
   protected readonly apBtnDisabled = computed(() => {
     const engaged = this.apEngaged();
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
 
     if (apiVersion === "v1") {
       return this.apMode() === 'standby' ? true : false;
@@ -216,8 +378,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   // Mode Menu
   protected menuItems = computed<MenuItem[]>(() => {
     const mode = this.apMode();
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
-    const plugin = this.widgetProperties.config.autopilot.pluginId;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const plugin = this.runtime.options().autopilot.pluginId;
     let menuItems: MenuItem[] = [];
 
     untracked(() => {
@@ -401,166 +563,25 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }, {equal: isEqual});
 
   constructor() {
-    super();
+    effect(() => {
+      const cfg = this.runtime?.options();
+      if (!cfg) return;
+      untracked(() => {
+        // Cancel any ongoing HTTP requests
+        this.cancelAllHttpRequests();
 
-    this.defaultConfig = {
-      filterSelfPaths: true,
-      paths: {
-        "autopilotState": {
-          description: "Autopilot State",
-          path: "self.steering.autopilot.state",
-          source: "default",
-          pathType: "string",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          convertUnitTo: "",
-          sampleTime: 500
-        },
-        "autopilotMode": {
-          description: "Autopilot Mode",
-          path: "self.steering.autopilot.mode",
-          source: "default",
-          pathType: "string",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          convertUnitTo: "",
-          sampleTime: 500
-        },
-        "autopilotEngaged": {
-          description: "Autopilot Engaged",
-          path: 'self.steering.autopilot.engaged',
-          source: 'default',
-          pathType: "boolean",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          convertUnitTo: "",
-          sampleTime: 500
-        },
-        "autopilotV2Target": {
-          description: "Autopilot API v2 Target",
-          path: 'self.steering.autopilot.target',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "autopilotTargetHeading": {
-          description: "Autopilot Target Magnetic Heading",
-          path: 'self.steering.autopilot.target.headingMagnetic',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "autopilotTargetWindHeading": {
-          description: "Autopilot Target Apparent Wind Angle",
-          path: 'self.steering.autopilot.target.windAngleApparent',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "rudderAngle": {
-          description: "Rudder Angle",
-          path: 'self.steering.rudderAngle',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          sampleTime: 500
-        },
-        "courseXte": {
-          description: "Cross Track Error",
-          path: "self.navigation.course.calcValues.crossTrackError",
-          source: "default",
-          pathType: "number",
-          isPathConfigurable: false,
-          convertUnitTo: "m",
-          showPathSkUnitsFilter: true,
-          pathRequired: false,
-          pathSkUnitsFilter: 'm',
-          sampleTime: 500
-        },
-        "headingMag": {
-          description: "Magnetic Heading",
-          path: 'self.navigation.headingMagnetic',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: true,
-          pathRequired: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          showConvertUnitTo: false,
-          sampleTime: 500
-        },
-        "headingTrue": {
-          description: "True Heading",
-          path: 'self.navigation.headingTrue',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: true,
-          pathRequired: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          showConvertUnitTo: false,
-          sampleTime: 500
-        },
-        "windAngleApparent": {
-          description: "Apparent Wind Angle",
-          path: 'self.environment.wind.angleApparent',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: true,
-          pathRequired: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          showConvertUnitTo: false,
-          sampleTime: 500
-        },
-        "windAngleTrueWater": {
-          description: "Wind Angle True Water",
-          path: 'self.environment.wind.angleTrueWater',
-          source: 'default',
-          pathType: "number",
-          convertUnitTo: "deg",
-          isPathConfigurable: true,
-          pathRequired: false,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: 'rad',
-          showConvertUnitTo: false,
-          sampleTime: 500
-        }
-      },
-      autopilot : { // Will be set during API detection in widget Options
-        invertRudder: true,
-        headingDirectionTrue: false,
-        courseDirectionTrue: false,
-        apiVersion: null,
-        instanceId: null,
-        pluginId: null,
-        modes: null // Default modes for V1
-      },
-      enableTimeout: false,
-      dataTimeout: 5,
-    };
+        // Clear any error or message overlays
+        this.isPersistentError = false;
+        this.errorOverlayVisibility.set("hidden");
+        this.errorOverlayText.set("");
+        this.apEngaged.set(null);
+
+        this.startWidget();
+      });
+    });
   }
 
   ngOnInit() {
-    this.validateConfig();
     this.startWidget();
   }
 
@@ -572,13 +593,12 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       state: ''
     };
 
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
-    const instanceId = this.widgetProperties.config.autopilot.instanceId;
-    const pluginId = this.widgetProperties.config.autopilot.pluginId;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const instanceId = this.runtime.options().autopilot.instanceId;
+    const pluginId = this.runtime.options().autopilot.pluginId;
 
     // Helper for persistent error state
     const setPersistentError = (message: string) => {
-      this.unsubscribeDataStream();
       console.error(`[Autopilot Widget] ${message}`);
       this.displayApError(err);
       this.isPersistentError = true;
@@ -586,8 +606,6 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
       this.apState.set('off-line');
       this.apEngaged.set(false);
     };
-
-    this.unsubscribeDataStream();
 
     if (!apiVersion) {
       setPersistentError('Not configured with autopilot API version, skipping initialization');
@@ -633,25 +651,11 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   protected isV2CommandSupported(command: string): boolean {
-    return this.widgetProperties.config.autopilot.modes.includes(command);
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    // Cancel any ongoing HTTP requests
-    this.cancelAllHttpRequests();
-
-    // Clear any error or message overlays
-    this.isPersistentError = false;
-    this.errorOverlayVisibility.set("hidden");
-    this.errorOverlayText.set("");
-    this.apEngaged.set(null);
-
-    this.startWidget();
+    return this.runtime.options().autopilot.modes.includes(command);
   }
 
   private startV2Subscriptions(): void {
-    this.observeDataStream('autopilotState', newValue => {
+    this.streams.observe('autopilotState', newValue => {
       if (newValue.data?.value) {
         this.apState.set(newValue.data.value);
       } else {
@@ -659,7 +663,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot state is null or not available');
       }
     });
-    this.observeDataStream('autopilotMode', newValue => {
+    this.streams.observe('autopilotMode', newValue => {
       if (newValue.data?.value) {
         this.apMode.set(newValue.data.value);
       } else {
@@ -667,7 +671,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot mode is null or not available');
       }
     });
-    this.observeDataStream('autopilotEngaged', newValue => {
+    this.streams.observe('autopilotEngaged', newValue => {
       if (newValue.data?.value != null) {
         this.apEngaged.set(newValue.data.value as boolean);
       } else {
@@ -675,7 +679,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot engaged is null or not available');
       }
     });
-    this.observeDataStream('autopilotV2Target', newValue => {
+    this.streams.observe('autopilotV2Target', newValue => {
       if (newValue.data?.value) {
         this.autopilotTarget.set(newValue.data.value);
       } else {
@@ -689,8 +693,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private startV1Subscriptions(): void {
     // For V1, we use this single legacy path
-    this.widgetProperties.config.paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
-    this.observeDataStream('autopilotMode', newValue => {
+    this.runtime.options().paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
+    this.streams.observe('autopilotMode', newValue => {
       if (newValue.data?.value) {
         this.apMode.set(newValue.data.value);
       } else {
@@ -698,8 +702,8 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         console.warn('[Autopilot Widget] Autopilot V1 mode state is null or not available');
       }
     });
-    this.observeDataStream('autopilotTargetHeading', newValue => this.autopilotTargetHeading.set(newValue.data.value != null ? newValue.data.value : 0));
-    this.observeDataStream('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading.set(newValue.data.value != null ? newValue.data.value : 0));
+    this.streams.observe('autopilotTargetHeading', newValue => this.autopilotTargetHeading.set(newValue.data.value != null ? newValue.data.value : 0));
+    this.streams.observe('autopilotTargetWindHeading', newValue => this.autopilotTargetWindHeading.set(newValue.data.value != null ? newValue.data.value : 0));
 
     this.startDataSubscription();
 
@@ -710,28 +714,28 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private startDataSubscription(): void {
-    this.observeDataStream('courseXte', newValue => this.crossTrackError.set(newValue.data.value != null ? newValue.data.value : 0));
-    this.observeDataStream('rudderAngle', newValue => {
+    this.streams.observe('courseXte', newValue => this.crossTrackError.set(newValue.data.value != null ? newValue.data.value : 0));
+    this.streams.observe('rudderAngle', newValue => {
         if (newValue.data.value === null) {
           this.rudder.set(null);
         } else {
-          this.rudder.set(this.widgetProperties.config.autopilot.invertRudder ? -newValue.data.value : newValue.data.value);
+          this.rudder.set(this.runtime.options().autopilot.invertRudder ? -newValue.data.value : newValue.data.value);
         }
       }
     );
 
-    if (this.widgetProperties.config.autopilot.headingDirectionTrue) {
-      this.observeDataStream('headingTrue', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
+    if (this.runtime.options().autopilot.headingDirectionTrue) {
+      this.streams.observe('headingTrue', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
     } else {
-      this.observeDataStream('headingMag', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
+      this.streams.observe('headingMag', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
     }
 
-    this.observeDataStream('windAngleApparent', newValue => this.windAngleApparent.set(newValue.data.value != null ? newValue.data.value : 0));
+    this.streams.observe('windAngleApparent', newValue => this.windAngleApparent.set(newValue.data.value != null ? newValue.data.value : 0));
   }
 
   private subscribePutResponse(): void {
     this._requests.subscribeRequest().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
+      if (requestResult.widgetUUID == this.id()) {
         this.commandReceived(requestResult);
       }
     });
@@ -791,7 +795,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private routeCommand(cmd: string, cmdAction: IV1CommandDefinition): void {
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
     if (apiVersion === 'v2') {
       if (cmd === 'route' && this.apMode() === 'nav') {
         cmd = 'advanceWaypoint';
@@ -806,13 +810,13 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         statusCode: 400,
         statusCodeDescription: 'Unsupported Command',
         message: `Command path '${cmdAction.path}' is not supported in the current API version`,
-        widgetUUID: this.widgetProperties.uuid
+        widgetUUID: this.id()
       } as skRequest);
     }
   }
 
   private sendV1Command(cmdAction: IV1CommandDefinition): void {
-    this._requests.putRequest(cmdAction["path"], cmdAction["value"], this.widgetProperties.uuid);
+    this._requests.putRequest(cmdAction["path"], cmdAction["value"], this.id());
     console.log("AP Action:\n" + JSON.stringify(cmdAction));
   }
 
@@ -933,7 +937,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
           statusCode: 400,
           statusCodeDescription: 'Unknown Command',
           message: `V2 command '${cmd}' is not supported`,
-          widgetUUID: this.widgetProperties.uuid
+          widgetUUID: this.id()
         } as skRequest);
     }
   }
@@ -983,7 +987,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         statusCode: 500,
         statusCodeDescription: 'V2 Command Failed',
         message: `Failed to execute ${method} ${cmd.path}`,
-        widgetUUID: this.widgetProperties.uuid
+        widgetUUID: this.id()
       } as skRequest);
 
       return {
@@ -1011,20 +1015,20 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
   }
 
   private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
-    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
+    if (this.runtime.options().autopilot.apiVersion === 'v2') {
       this.sendV2Command(operation, {value: direction});
     } else {
       // Fall back to V1
       if (operation !== 'tack') return;
       // console.log(`[Autopilot Widget] Executing V1 tack to ${direction}`);
       const cmdAction = COMMANDS[direction === 'port' ? 'tackToPort' : 'tackToStarboard'];
-      this._requests.putRequest(cmdAction.path, cmdAction.value, this.widgetProperties.uuid);
+      this._requests.putRequest(cmdAction.path, cmdAction.value, this.id());
     }
   }
 
   // V2 Absolute Target Method (class only - no UI yet)
   protected setAbsoluteTarget(heading: number): void {
-    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
+    if (this.runtime.options().autopilot.apiVersion === 'v2') {
       this.sendV2Command('target_heading', {"value": heading, "units": "deg"});
     } else {
       console.error('[Autopilot Widget] Absolute target only available in V2 API');
@@ -1033,7 +1037,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   // V2 Dodge Method (class only - no UI yet)
   protected toggleDodge(): void {
-    if (this.widgetProperties.config.autopilot.apiVersion === 'v2') {
+    if (this.runtime.options().autopilot.apiVersion === 'v2') {
       this.sendV2Command('dodge');
     } else {
       console.warn('[Autopilot Widget] Dodge mode only available in V2 API');
@@ -1041,7 +1045,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         statusCode: 400,
         statusCodeDescription: 'V2 API Required',
         message: 'Dodge mode only available in V2 API',
-        widgetUUID: this.widgetProperties.uuid
+        widgetUUID: this.id()
       } as skRequest);
     }
   }
@@ -1156,7 +1160,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
 
   private parseMenuItems(menuItems: MenuItem[], mode: string): MenuItem[] {
     // Set enabled/disabled state for each mode menu item based
-    const apiVersion = this.widgetProperties.config.autopilot.apiVersion;
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
     const parsedMenuItems = menuItems.map(item => {
       if (item.isCancel) return { ...item, current: false, disabled: false };
 
@@ -1180,7 +1184,7 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
         }
       } else if (apiVersion === 'v2') {
         // For V2, check if the action is in the capabilities
-        enabled = this.widgetProperties.config.autopilot.modes.includes(item.action);
+        enabled = this.runtime.options().autopilot.modes.includes(item.action);
       }
       return {
         ...item,
@@ -1200,8 +1204,5 @@ export class WidgetAutopilotComponent extends BaseWidgetComponent implements OnI
     clearTimeout(this.handleConfirmActionTimeout);
     clearTimeout(this.handleDisplayErrorTimeout);
     clearTimeout(this.handleMessageTimeout);
-
-    // Clean up data streams
-    this.destroyDataStreams();
   }
 }

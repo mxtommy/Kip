@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -9,38 +9,13 @@ import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-
-import { WidgetTextComponent } from '../../../widgets/widget-text/widget-text.component';
-import { WidgetNumericComponent } from '../../../widgets/widget-numeric/widget-numeric.component';
-import { WidgetDatetimeComponent } from '../../../widgets/widget-datetime/widget-datetime.component';
-import { WidgetBooleanSwitchComponent } from '../../../widgets/widget-boolean-switch/widget-boolean-switch.component';
-import { WidgetAutopilotComponent } from '../../../widgets/widget-autopilot/widget-autopilot.component';
-import { WidgetDataChartComponent } from '../../../widgets/widget-data-chart/widget-data-chart.component';
-import { WidgetFreeboardskComponent } from '../../../widgets/widget-freeboardsk/widget-freeboardsk.component';
-import { WidgetGaugeNgCompassComponent } from '../../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
-import { WidgetGaugeNgLinearComponent } from '../../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
-import { WidgetGaugeNgRadialComponent } from '../../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
-import { WidgetSteelGaugeComponent } from '../../../widgets/widget-gauge-steel/widget-gauge-steel.component';
-import { WidgetIframeComponent } from '../../../widgets/widget-iframe/widget-iframe.component';
-import { WidgetPositionComponent } from '../../../widgets/widget-position/widget-position.component';
-import { WidgetRaceTimerComponent } from '../../../widgets/widget-race-timer/widget-race-timer.component';
-import { WidgetRacerLineComponent } from '../../../widgets/widget-racer-line/widget-racer-line.component';
-import { WidgetRacerTimerComponent } from '../../../widgets/widget-racer-timer/widget-racer-timer.component';
-import { WidgetSimpleLinearComponent } from '../../../widgets/widget-simple-linear/widget-simple-linear.component';
-import { WidgetTutorialComponent } from '../../../widgets/widget-tutorial/widget-tutorial.component';
-import { WidgetWindComponent } from '../../../widgets/widget-windsteer/widget-windsteer.component';
-import { WidgetLabelComponent } from '../../../widgets/widget-label/widget-label.component';
-import { WidgetSliderComponent } from '../../../widgets/widget-slider/widget-slider.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { WidgetRacesteerComponent } from '../../../widgets/widget-racesteer/widget-racesteer.component';
 import { DatasetService } from '../../services/data-set.service';
-import { WidgetWindTrendsChartComponent } from '../../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
-import { WidgetHorizonComponent } from '../../../widgets/widget-horizon/widget-horizon.component';
-import { WidgetHeelGaugeComponent } from '../../../widgets/widget-heel-gauge/widget-heel-gauge.component';
+import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 
@@ -65,7 +40,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _dataset = inject(DatasetService);
   protected readonly _router = inject(Router);
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
-  protected readonly isDashboardStatic = toSignal(this.dashboard.isDashboardStatic$, { initialValue: true });
+  protected isDashboardStatic = computed(() => this.dashboard.isDashboardStatic());
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
@@ -87,35 +62,22 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
-      WidgetNumericComponent,
-      WidgetTextComponent,
-      WidgetDatetimeComponent,
-      WidgetBooleanSwitchComponent,
-      WidgetSimpleLinearComponent,
-      WidgetGaugeNgLinearComponent,
-      WidgetGaugeNgRadialComponent,
-      WidgetGaugeNgCompassComponent,
-      WidgetSteelGaugeComponent,
-      WidgetFreeboardskComponent,
-      WidgetAutopilotComponent,
-      WidgetDataChartComponent,
-      WidgetRacerLineComponent,
-      WidgetRacerTimerComponent,
-      WidgetRaceTimerComponent,
-      WidgetIframeComponent,
-      WidgetTutorialComponent,
-      WidgetWindComponent,
-      WidgetRacesteerComponent,
-      WidgetPositionComponent,
-      WidgetLabelComponent,
-      WidgetSliderComponent,
-      WidgetWindTrendsChartComponent,
-      WidgetHorizonComponent,
-      WidgetHeelGaugeComponent
+      WidgetHost2Component
     ]);
+
+    effect(() => {
+      const isStatic = this.dashboard.isDashboardStatic();
+      if (this._previousIsStaticState !== isStatic) {
+        this._previousIsStaticState = isStatic;
+        try {
+          this._gridstack().grid.setStatic(isStatic);
+        } catch { /* ignore if grid not ready */ }
+      }
+    });
   }
 
   ngAfterViewInit(): void {
+    this._gridstack().grid?.setStatic(this._previousIsStaticState);
     this.resizeGridColumns();
     this.setupResizeObserver();
     this._uiEvent.addHotkeyListener(
@@ -143,19 +105,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         });
       }
     } catch { /* ignore grid hook errors */ }
-
-    this.dashboard.isDashboardStatic$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((isStatic) => {
-      if (isStatic) {
-        this._gridstack().grid.setStatic(isStatic);
-        if (isStatic !== this._previousIsStaticState) {
-          this.saveDashboard();
-          this._previousIsStaticState = isStatic;
-        }
-      } else {
-        this._gridstack().grid.setStatic(isStatic);
-        this._previousIsStaticState = isStatic;
-      }
-    });
 
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
@@ -283,6 +232,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected saveLayoutChanges(): void {
     this.dashboard.setStaticDashboard(true);
+    this.saveDashboard();
     this.dashboard.notifyLayoutEditSaved();
   }
 
@@ -318,7 +268,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               minW: widget.minWidth,
               minH: widget.minHeight,
               id: ID,
-              selector: widget.selector,
+              selector: "widget-host2",
               input: {
                 widgetProperties: {
                   type: widget.selector,
@@ -418,7 +368,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected editDashboard(): void {
-    this.dashboard.toggleStaticDashboard();
+    this.dashboard.isDashboardStatic.set(false);
   }
 
   protected navigateToHelp(): void {

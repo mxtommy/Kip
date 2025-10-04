@@ -42,8 +42,9 @@ KIP Instrument MFD is an advanced and versatile marine instrumentation package d
   - _To be defined._
 - **Build & Serve:**  
   - `npm run dev` for development server.
-  - `npm run build-dev` for development build.
-  - `npm run build-prod` for production build.
+  - `npm run build:dev` for KIP only development build.
+  - `npm run build:prod` for KIP only production build.
+  - `npm run build:all` for KIP and KIP plugin production build.
 
 ---
 

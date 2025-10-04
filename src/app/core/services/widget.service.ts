@@ -1,5 +1,32 @@
 import { inject, Injectable } from '@angular/core';
+import { Type } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
+import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
+import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
+import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
+import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
+import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
+import { WidgetSliderComponent } from '../../widgets/widget-slider/widget-slider.component';
+import { WidgetSimpleLinearComponent } from '../../widgets/widget-simple-linear/widget-simple-linear.component';
+import { WidgetRacesteerComponent } from '../../widgets/widget-racesteer/widget-racesteer.component';
+import { WidgetRacerTimerComponent } from '../../widgets/widget-racer-timer/widget-racer-timer.component';
+import { WidgetRacerLineComponent } from '../../widgets/widget-racer-line/widget-racer-line.component';
+import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
+import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
+import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
+import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
+import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
+import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
+import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
+import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
+import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
+import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
+import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
+
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -78,7 +105,6 @@ export interface WidgetDescription {
    */
   componentClassName: string;
 }
-
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   isDependencyValid: boolean;
   pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
@@ -90,6 +116,37 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  // Cache for selector -> component Type resolutions to avoid repeated definition scans
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeMap: Record<string, Type<any>> = {
+    WidgetNumericComponent: WidgetNumericComponent,
+    WidgetTextComponent: WidgetTextComponent,
+    WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
+    WidgetWindComponent: WidgetWindComponent,
+    WidgetTutorialComponent: WidgetTutorialComponent,
+    WidgetSliderComponent: WidgetSliderComponent,
+    WidgetSimpleLinearComponent: WidgetSimpleLinearComponent,
+    WidgetRacesteerComponent: WidgetRacesteerComponent,
+    WidgetRacerTimerComponent: WidgetRacerTimerComponent,
+    WidgetRacerLineComponent: WidgetRacerLineComponent,
+    WidgetRaceTimerComponent: WidgetRaceTimerComponent,
+    WidgetPositionComponent: WidgetPositionComponent,
+    WidgetLabelComponent: WidgetLabelComponent,
+    WidgetIframeComponent: WidgetIframeComponent,
+    WidgetHorizonComponent: WidgetHorizonComponent,
+    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
+    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
+    WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
+    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
+    WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
+    WidgetFreeboardskComponent: WidgetFreeboardskComponent,
+    WidgetDatetimeComponent: WidgetDatetimeComponent,
+    WidgetDataChartComponent: WidgetDataChartComponent,
+    WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
+    WidgetAutopilotComponent: WidgetAutopilotComponent
+  };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -340,6 +397,19 @@ export class WidgetService {
       componentClassName: 'WidgetIframeComponent',
     },
     {
+      name: 'Tutorial',
+      description: 'An instructional widget that guides new users through basic navigation, gestures, and dashboard editing steps.',
+      icon: 'helpWidget',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 6,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-tutorial',
+      componentClassName: 'WidgetTutorialComponent'
+    },
+    {
       name: 'Racesteer',
       description: 'A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.',
       icon: 'racesteeringWidget',
@@ -412,6 +482,44 @@ export class WidgetService {
 
   get categories(): string[] {
     return this._widgetCategories;
+  }
+
+  /**
+   * Resolves a widget's runtime component Type from its selector.
+   *
+   * Flow:
+   *  1. Locate the widget definition whose `selector` matches the provided string.
+   *  2. Look up the definition's `componentClassName` inside `_componentTypeMap`.
+   *  3. Return the component Type if the widget has been migrated; otherwise `undefined`.
+   *
+   * Host2 will fall back to a safe default (currently Numeric) when `undefined` is returned.
+   * This allows incremental migration without breaking existing dashboard configs.
+   *
+   * NOTE: We intentionally keep this lightweight instead of using dynamic `import()` to
+   * preserve tree‑shaking.
+   *
+   * @param selector Dashboard widget type / selector (e.g. `widget-numeric`).
+   * @returns Angular component Type or undefined if not yet migrated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public getComponentType(selector: string): Type<any> | undefined {
+    // Only return cached value if it's a defined component Type; avoid sticky undefined caching
+    const cached = this._componentTypeCache.get(selector);
+    if (cached) return cached;
+
+    const def = this._widgetDefinition.find(w => w.selector === selector);
+    if (!def) return undefined;
+
+    const resolved = this._componentTypeMap[def.componentClassName];
+    if (!resolved) {
+      // Do NOT cache undefined so that adding a new mapping later in dev picks it up without reload
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        console.warn('[WidgetService] No component mapping for', def.componentClassName);
+      }
+      return undefined;
+    }
+    this._componentTypeCache.set(selector, resolved);
+    return resolved;
   }
 
   /**

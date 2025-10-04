@@ -1,0 +1,195 @@
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatCardModule } from '@angular/material/card';
+import { GestureDirective } from '../../directives/gesture.directive';
+import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
+import type { NgCompInputs } from 'gridstack/dist/angular';
+import { BaseWidget } from 'gridstack/dist/angular';
+import { WidgetStreamsDirective } from '../../directives/widget-streams.directive';
+import { WidgetMetadataDirective } from '../../directives/widget-metadata.directive';
+import { WidgetRuntimeDirective } from '../../directives/widget-runtime.directive';
+import { DialogService } from '../../services/dialog.service';
+import { DashboardService } from '../../services/dashboard.service';
+import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widget-host-bottom-sheet.component';
+import { WidgetService } from '../../services/widget.service';
+import { AppService } from '../../services/app-service';
+
+// Base shape expected from view components (optional defaultConfig)
+// NOTE: Widgets may expose a static DEFAULT_CONFIG to avoid temporary instantiation.
+// If absent, Host2 will create & immediately destroy a temp instance to read instance.defaultConfig.
+interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
+
+@Component({
+  selector: 'widget-host2',
+  imports: [MatCardModule, MatBottomSheetModule, GestureDirective],
+  templateUrl: './widget-host2.component.html',
+  styleUrl: './widget-host2.component.scss',
+  hostDirectives: [
+    { directive: WidgetStreamsDirective },
+    { directive: WidgetMetadataDirective },
+    { directive: WidgetRuntimeDirective }
+  ]
+})
+
+/**
+ * Host2 is the parent component for all dashboard widgets. It's objective
+ * is to abstract away the complexities of widget instantiation and management
+ * and make widget creation seamless as much as possible.
+ *
+ * Host2 is responsible for:
+ * 1. Discovering the concrete widget view component from `WidgetService`.
+ * 2. Obtaining default configuration (prefers static DEFAULT_CONFIG, else ephemeral instance).
+ * 3. Initializing runtime directive with (default + saved passed by gridstack)
+ *    config BEFORE child creation so streams/metadata directives can diff/attach immediately.
+ * 4. Creating the child component and supplying minimal structural inputs.
+ * 5. Applying diff-based data & metadata configs (no wholesale resets) via directives.
+ * 6. Persisting the merged runtime config during serialize for Gridstack state.
+ */
+export class WidgetHost2Component extends BaseWidget implements OnInit {
+  // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
+  @Input({ required: true }) protected widgetProperties!: IWidget;
+  // Mark static:true so the outlet is available during ngOnInit allowing
+  // runtime initialization + child creation before the first stability check.
+  @ViewChild('childOutlet', { read: ViewContainerRef, static: true }) private outlet!: ViewContainerRef;
+  private readonly _dialog = inject(DialogService);
+  protected readonly _dashboard = inject(DashboardService);
+  private readonly _bottomSheet = inject(MatBottomSheet);
+  private readonly _streams = inject(WidgetStreamsDirective, { optional: true });
+  private readonly _meta = inject(WidgetMetadataDirective, { optional: true });
+  private readonly _runtime = inject(WidgetRuntimeDirective, { optional: true });
+  private readonly _widgetService = inject(WidgetService);
+  private readonly _app = inject(AppService);
+  protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
+  private childRef: ComponentRef<WidgetViewComponentBase>;
+  private compType: Type<WidgetViewComponentBase>
+
+  constructor() {
+    super();
+
+    effect(() => {
+      const theme = this.theme();
+      if (this.childRef) {
+        this.childRef.setInput('theme', theme);
+      }
+    });
+  }
+
+  /**
+   * Gridstack persistence hook. Ensures we always write the merged runtime options
+   * (default + user) so external dashboard storage stays in sync.
+   * Falls back to an empty object to avoid Gridstack serializing `undefined`.
+   * @returns Gridstack input mapping containing updated `widgetProperties`.
+   */
+  public override serialize(): NgCompInputs {
+    const merged = this._runtime?.options();
+    if (merged) {
+      this.widgetProperties.config = merged;
+    } else if (!this.widgetProperties.config) {
+      // As a final fallback ensure config is at least an empty object to avoid Gridstack persisting undefined
+      this.widgetProperties.config = {} as IWidgetSvcConfig;
+    }
+    return { widgetProperties: this.widgetProperties as IWidget } as NgCompInputs;
+  }
+
+  ngOnInit(): void {
+    const type = this.widgetProperties.type;
+    if (!type) return;
+    this.compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+
+    // Try static DEFAULT_CONFIG pattern first.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let defaultCfg: IWidgetSvcConfig | undefined = this.compType && (this.compType as any).DEFAULT_CONFIG;
+    if (!defaultCfg && this.compType && this.outlet) {
+      // Fallback: temporary instance solely to read instance defaultConfig, then destroy.
+      const tempRef = this.outlet.createComponent(this.compType);
+      defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
+      tempRef.destroy();
+    }
+
+    // Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
+    this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
+    const merged = this._runtime?.options();
+    if (merged) this.widgetProperties.config = merged;
+    // Initial diff-based streams wiring (registrations occur when child calls observe)
+    this._streams?.applyStreamsConfigDiff?.(merged);
+    this._meta?.applyMetaConfigDiff?.(merged);
+
+    // Create the child component BEFORE first change detection completes so its
+    if (this.outlet && this.compType) {
+      this.childRef = this.outlet.createComponent(this.compType);
+      this.childRef.setInput('id', this.widgetProperties.uuid);
+      this.childRef.setInput('type', this.widgetProperties.type);
+      // Pass current theme value; ongoing updates handled by effect in ctor.
+      this.childRef.setInput('theme', this.theme());
+    }
+  }
+
+  /**
+   * Apply a new user-edited config (e.g., from options dialog):
+   * - Updates runtime merged options
+   * - Triggers diff-based reconfiguration for streams & metadata
+   * @param cfg New user configuration fragment (already validated) or undefined to re-emit existing.
+   */
+  private applyRuntimeConfig(cfg?: IWidgetSvcConfig): void {
+    if (cfg) {
+      // Update widget config
+      this._runtime?.setRuntimeConfig?.(cfg);
+    }
+    const runtimeCfg = this._runtime.options();
+    if (runtimeCfg) {
+      this.widgetProperties.config = runtimeCfg;
+    }
+
+    // Diff-based streams config (avoids full reset storm)
+    this._streams?.applyStreamsConfigDiff?.(runtimeCfg);
+    this._meta?.applyMetaConfigDiff?.(runtimeCfg);
+  }
+
+  /**
+   * Open the widget options dialog (skips when dashboard is static).
+   * @param e Event used to stop propagation (click/context menu/etc.).
+   */
+  public openWidgetOptions(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
+    if (!this._dashboard.isDashboardStatic()) {
+      if (!this.widgetProperties) return;
+      this._dialog.openWidgetOptions({
+        title: 'Widget Options',
+        config: this.widgetProperties.config,
+        confirmBtnText: 'Save',
+        cancelBtnText: 'Cancel'
+      }).afterClosed().subscribe(result => {
+        if (result) {
+          this.applyRuntimeConfig(result);
+        }
+      });
+    }
+  }
+
+  /**
+   * Open the bottom sheet for widget management (delete / duplicate actions).
+   * @param e Event used to stop propagation.
+   */
+  public openBottomSheet(e: Event | CustomEvent): void {
+    (e as Event).stopPropagation();
+    if (!this._dashboard.isDashboardStatic()) {
+      const isLinuxFirefox = typeof navigator !== 'undefined' &&
+        /Linux/.test(navigator.platform) &&
+        /Firefox/.test(navigator.userAgent);
+      const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
+      sheetRef.afterDismissed().subscribe((action) => {
+        switch (action) {
+          case 'delete':
+            this._dashboard.deleteWidget(this.widgetProperties.uuid);
+            break;
+          case 'duplicate':
+            this._dashboard.duplicateWidget(this.widgetProperties.uuid);
+            break;
+          default:
+            break;
+        }
+      });
+    }
+  }
+}

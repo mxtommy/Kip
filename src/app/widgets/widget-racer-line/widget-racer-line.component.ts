@@ -1,259 +1,218 @@
-import { MatIconModule } from '@angular/material/icon';
-import { AfterViewInit, Component, DestroyRef, effect, ElementRef, inject, OnDestroy, OnInit, signal, untracked, viewChild } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { States } from '../../core/interfaces/signalk-interfaces';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
+import { Component, AfterViewInit, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input } from '@angular/core';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { IWidgetSvcConfig, IPathArray } from '../../core/interfaces/widgets-interface';
 import { CanvasService } from '../../core/services/canvas.service';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { MatButtonModule } from '@angular/material/button';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-racer-line',
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule, MatButtonModule, MatIconModule]
+  imports: [MatButtonModule, MatIconModule]
 })
-export class WidgetRacerLineComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
-  private signalk = inject(SignalkRequestsService);
-  protected readonly dashboard = inject(DashboardService);
+export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
+  // Functional inputs (Host2 contract)
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Host2 directives/services
+  protected readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective);
   private readonly canvas = inject(CanvasService);
-  private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  private canvasElement: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  protected readonly dashboard = inject(DashboardService);
+  private readonly signalk = inject(SignalkRequestsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Static config from legacy defaultConfig
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'DTS',
+    filterSelfPaths: true,
+    playBeeps: true,
+    convertUnitTo: 'm',
+    convertUnitToGroup: 'Length',
+    numDecimal: 0,
+    ignoreZones: true,
+    color: 'contrast',
+    enableTimeout: false,
+    dataTimeout: 5,
+    paths: {
+      dtsPath: {
+        description: 'Distance to Start Line',
+        path: 'self.navigation.racing.distanceStartline',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: 'm',
+        showPathSkUnitsFilter: true,
+        pathSkUnitsFilter: 'm',
+        sampleTime: 500
+      },
+      lineLengthPath: {
+        description: 'Length of the start line',
+        path: 'self.navigation.racing.startLineLength',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: 'm',
+        showPathSkUnitsFilter: true,
+        pathSkUnitsFilter: 'm',
+        sampleTime: 1000
+      },
+      lineBiasPath: {
+        description: 'Bias of the start line to starboard end',
+        path: 'self.navigation.racing.stbLineBias',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: 'm',
+        showPathSkUnitsFilter: true,
+        pathSkUnitsFilter: 'm',
+        sampleTime: 1000
+      }
+    }
+  };
+
+  // Canvas refs
+  private canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
+  private canvasElement: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
   private cssWidth = 0;
   private cssHeight = 0;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
-  private dtsValue: number = null;
-  private lengthValue: number = null;
-  private biasValue: number = null;
-  protected labelColor = signal<string>(undefined);
-  private valueColor: string = undefined;
-  private dtsColor: string = undefined;
+
+  // State
+  private dtsValue: number | null = null;
+  private lengthValue: number | null = null;
+  private biasValue: number | null = null;
+  protected labelColor = signal<string>('');
+  private valueColor = '';
+  private dtsColor = '';
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-
   protected portBiasValue = signal<string>('');
   protected lineLengthValue = signal<string>('');
   protected stbBiasValue = signal<string>('');
-  protected infoFontSize = '1em';
-
-  private initCompleted = false;
-  private isDestroyed = false; // guard against callbacks after destroyed
-  protected mode = 0;
-
-  private readonly destroyRef = inject(DestroyRef);
+  protected mode = signal<number>(0);
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'DTS',
-      filterSelfPaths: true,
-      playBeeps: true,
-      convertUnitTo: 'm',
-      convertUnitToGroup: 'Length',
-      numDecimal: 0,
-      ignoreZones: true,
-      color: 'contrast',
-      enableTimeout: false,
-      dataTimeout: 5,
-      paths: {
-        'dtsPath': {
-          description: 'Distance to Start Line',
-          path: 'self.navigation.racing.distanceStartline',
-          source: 'default',
-          pathType: 'number',
-          pathRequired: false,
-          isPathConfigurable: false,
-          convertUnitTo: 'm',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: 'm',
-          sampleTime: 500
-        },
-        'lineLengthPath': {
-          description: 'Length of the start line',
-          path: 'self.navigation.racing.startLineLength',
-          source: 'default',
-          pathType: 'number',
-          pathRequired: false,
-          isPathConfigurable: false,
-          convertUnitTo: 'm',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: 'm',
-          sampleTime: 1000
-        },
-        'lineBiasPath': {
-          description: 'Bias of the start line to starboard end',
-          path: 'self.navigation.racing.stbLineBias',
-          source: 'default',
-          pathType: 'number',
-          pathRequired: false,
-          isPathConfigurable: false,
-          convertUnitTo: 'm',
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: 'm',
-          sampleTime: 1000
-        }
-      }
-    };
-
+    // Theme/palette effect
     effect(() => {
-      if (this.theme()) {
-        if (!this.initCompleted) return;
-        untracked(() => {
-          this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-          this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
-          this.drawWidget();
-        });
+      const cfg = this.runtime.options();
+      const theme = this.theme();
+      if (!cfg || !theme) return;
+      untracked(() => {
+        const palette = getColors(cfg.color, theme);
+        this.labelColor.set(palette.dim);
+        this.valueColor = palette.color;
+        this.draw();
+      });
+    });
+
+    // Observe dtsPath
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pathCfg = (cfg.paths as IPathArray | undefined)?.['dtsPath'];
+      if (!pathCfg?.path) return;
+      untracked(() => this.streams.observe('dtsPath', pkt => {
+        this.dtsValue = pkt?.data?.value ?? null;
+        this.updateDtsColor();
+        this.draw();
+      }));
+    });
+
+    // Observe lineLengthPath
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pathCfg = (cfg.paths as IPathArray | undefined)?.['lineLengthPath'];
+      if (!pathCfg?.path) return;
+      untracked(() => this.streams.observe('lineLengthPath', pkt => {
+        this.lengthValue = pkt?.data?.value ?? null;
+        this.drawLenBias();
+        this.draw();
+      }));
+    });
+
+    // Observe lineBiasPath
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pathCfg = (cfg.paths as IPathArray | undefined)?.['lineBiasPath'];
+      if (!pathCfg?.path) return;
+      untracked(() => this.streams.observe('lineBiasPath', pkt => {
+        this.biasValue = pkt?.data?.value ?? null;
+        this.drawLenBias();
+      }));
+    });
+
+    // Request feedback beep
+    this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      if (result.widgetUUID === this.id()) {
+        if (result.statusCode === 200) this.beep(600, 20);
       }
     });
   }
 
-  ngOnInit(): void {
-    this.validateConfig();
-    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
-  }
-
+  // Canvas lifecycle
   ngAfterViewInit(): void {
-    this.initCompleted = true;
-
-    this.canvasElement = this.canvasMainRef().nativeElement;
-    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvasElement = this.canvasRef().nativeElement;
+    this.ctx = this.canvasElement.getContext('2d');
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true,
       onResize: (w, h) => {
-        this.cssWidth = w;
-        this.cssHeight = h;
+        this.cssWidth = w; this.cssHeight = h;
         this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
         this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
-        this.drawWidget();
-      },
+        this.draw();
+      }
     });
-    if (this.isDestroyed) return;
     this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
     this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
     this.maxValueTextWidth = Math.floor(this.cssWidth * 0.95);
     this.maxValueTextHeight = Math.floor(this.cssHeight * 0.95);
-    this.startWidget();
+    this.draw();
   }
 
-  protected startWidget(): void {
-    this.widgetProperties.config.paths['dtsPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
-    this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
-    this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo = this.widgetProperties.config.convertUnitTo || 'm';
-    this.unsubscribeDataStream();
-    this.dtsValue = null;
-    this.lengthValue = null;
-    this.biasValue = null;
-
-    this.drawUnit();
-    this.observeDataStream('dtsPath', newValue => {
-      this.dtsValue = newValue.data.value;
-      if (this.widgetProperties.config.ignoreZones) {
-        if (!this.dtsValue) {
-          this.dtsColor = this.valueColor;
-        } else if (this.dtsValue < 0) {
-          this.dtsColor = this.theme().zoneAlarm;
-        } else if (this.dtsValue < 10) {
-          this.dtsColor = this.theme().zoneWarn;
-        } else if (this.dtsValue < 20) {
-          this.dtsColor = this.theme().zoneAlert;
-        } else {
-          this.dtsColor = this.valueColor;
-        }
-      } else {
-        switch (newValue.state) {
-          case States.Alarm:
-            this.dtsColor = this.theme().zoneAlarm;
-            break;
-          case States.Warn:
-            this.dtsColor = this.theme().zoneWarn;
-            break;
-          case States.Alert:
-            this.dtsColor = this.theme().zoneAlert;
-            break;
-          default:
-            this.dtsColor = this.valueColor;
-            break;
-        }
-      }
-      this.drawWidget()
-    });
-
-    this.observeDataStream('lineLengthPath', newValue => {
-      this.lengthValue = newValue.data.value;
-      this.drawWidget()
-    });
-
-    this.observeDataStream('lineBiasPath', newValue => {
-      this.biasValue = newValue.data.value;
-      this.drawLenBias();
-    });
-
-    this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(requestResult => {
-      if (requestResult.widgetUUID === this.widgetProperties.uuid) {
-        if (requestResult.statusCode === 200) {
-          this.beep(600, 20)
-        } else {
-          this.app.sendSnackbarNotification(`Please check the Signalk-racer plugin installation/configuration. Error: ${requestResult.message}`, 0, false);
-        }
-      }
-    });
+  // Interaction methods
+  public toggleMode(): void {
+    this.mode.update(v => (v + 1) % 4);
+    this.draw();
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
+  public setLineEnd(end: string): string {
+    return this.signalk.putRequest('navigation.racing.setStartLine', { end, position: 'bow' }, this.id());
   }
 
-  protected beep(frequency = 440, duration = 100) {
-    if (this.widgetProperties.config.playBeeps) {
-      const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+  public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
+    return this.signalk.putRequest('navigation.racing.setStartLine', { end, delta, rotate: rotateRadians || null }, this.id());
+  }
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+  public toRadians(deg: number): number | null {
+    return deg ? deg * (Math.PI / 180) : null;
+  }
 
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency; // Hz
-      gainNode.gain.value = 0.1; // volume
-
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + duration / 1000);
+  // Drawing helpers
+  private draw(): void {
+    if (!this.ctx || !this.canvasElement) return;
+    const cfg = this.runtime.options();
+    if (!this.titleBitmap || !cfg || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== cfg.displayName) {
+      const name = cfg?.displayName || 'DTS';
+      this.titleBitmap = this.canvas.createTitleBitmap(name, this.labelColor(), 'normal', this.cssWidth, this.cssHeight);
+      this.titleBitmapText = name;
     }
-  }
-
-  private drawWidget(): void {
-    if (!this.canvasCtx) return;
-
-    if (!this.titleBitmap ||
-      this.titleBitmap.width !== this.canvasElement.width ||
-      this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== this.widgetProperties.config.displayName
-    ) {
-      this.titleBitmap = this.canvas.createTitleBitmap(
-        this.widgetProperties.config.displayName,
-        this.labelColor(),
-        'normal',
-        this.cssWidth,
-        this.cssHeight
-      );
-      this.titleBitmapText = this.widgetProperties.config.displayName;
-    }
-
-    this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
-
-    if (this.titleBitmap && this.titleBitmap.width > 0 && this.titleBitmap.height > 0) {
-      this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
-    }
+    this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
+    if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     this.drawDToLine();
     this.drawLenBias();
     this.drawUnit();
@@ -262,7 +221,7 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   private drawDToLine(): void {
     const valueText = this.getValueText();
     this.canvas.drawText(
-      this.canvasCtx,
+      this.ctx,
       valueText,
       Math.floor(this.cssWidth / 2),
       Math.floor((this.cssHeight / 2) * 1.3),
@@ -274,16 +233,15 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private getValueText(): string {
-    if (this.dtsValue === null) {
-      return '--';
-    }
-    return this.dtsValue.toFixed(this.widgetProperties.config.numDecimal);
+    if (this.dtsValue === null) return '--';
+    const cfg = this.runtime.options();
+    return this.dtsValue.toFixed(cfg?.numDecimal ?? 0);
   }
 
   private drawUnit(): void {
-    const unit = this.widgetProperties.config.paths['dtsPath'].convertUnitTo;
+    const unit = (this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo || 'm';
     this.canvas.drawText(
-      this.canvasCtx,
+      this.ctx,
       unit,
       Math.floor(this.cssWidth - 10 * this.canvas.scaleFactor),
       Math.floor(this.cssHeight - 7 * this.canvas.scaleFactor),
@@ -297,63 +255,68 @@ export class WidgetRacerLineComponent extends BaseWidgetComponent implements Aft
   }
 
   private drawLenBias(): void {
-    if (this.widgetProperties.config.paths['lineLengthPath'].path !== '' && this.lengthValue) {
-      let unit = this.widgetProperties.config.paths['lineLengthPath'].convertUnitTo;
-      if (unit === 'feet')
-        unit = '′';
-      this.lineLengthValue.set(`―${this.applyDecorations(this.lengthValue.toFixed(this.widgetProperties.config.numDecimal))}${unit}―`);
+    const cfg = this.runtime.options(); if (!cfg) return;
+    if ((cfg.paths as IPathArray)['lineLengthPath'].path && this.lengthValue != null) {
+      let unit = (cfg.paths as IPathArray)['lineLengthPath'].convertUnitTo;
+      if (unit === 'feet') unit = '′';
+      this.lineLengthValue.set(`―${this.applyDecorations(this.lengthValue.toFixed(cfg.numDecimal))}${unit}―`);
     }
-    if (this.widgetProperties.config.paths['lineBiasPath'].path !== '' && this.biasValue) {
-      let unit = this.widgetProperties.config.paths['lineBiasPath'].convertUnitTo;
-      if (unit === 'feet')
-        unit = '′';
+    if ((cfg.paths as IPathArray)['lineBiasPath'].path && this.biasValue != null) {
+      let unit = (cfg.paths as IPathArray)['lineBiasPath'].convertUnitTo;
+      if (unit === 'feet') unit = '′';
       if (this.biasValue < 0) {
-        this.portBiasValue.set('+' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit);
-        this.stbBiasValue.set(this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit);
+        this.portBiasValue.set('+' + (-this.biasValue).toFixed(cfg.numDecimal) + unit);
+        this.stbBiasValue.set(this.biasValue.toFixed(cfg.numDecimal) + unit);
       } else {
-        this.portBiasValue.set(' ' + (-this.biasValue).toFixed(this.widgetProperties.config.numDecimal) + unit);
-        this.stbBiasValue.set(' +' + this.biasValue.toFixed(this.widgetProperties.config.numDecimal) + unit);
+        this.portBiasValue.set(' ' + (-this.biasValue).toFixed(cfg.numDecimal) + unit);
+        this.stbBiasValue.set(' +' + this.biasValue.toFixed(cfg.numDecimal) + unit);
       }
     }
   }
 
-  private applyDecorations(txtValue: string): string {
-    // apply decoration when required
-    switch (this.widgetProperties.config.paths['dtsPath'].convertUnitTo) {
+  private applyDecorations(txt: string): string {
+    switch ((this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo) {
       case 'percent':
       case 'percentraw':
-        txtValue += '%';
-        break;
+        return txt + '%';
       default:
-        break;
+        return txt;
     }
-    return txtValue;
   }
 
-  public toggleMode(): void {
-    this.mode = (this.mode + 1) % 4;
-    this.drawWidget();
+  private updateDtsColor(): void {
+    const theme = this.theme(); const cfg = this.runtime.options();
+    if (!theme || !cfg) return;
+    if (cfg.ignoreZones) {
+      if (!this.dtsValue) this.dtsColor = this.valueColor;
+      else if (this.dtsValue < 0) this.dtsColor = theme.zoneAlarm;
+      else if (this.dtsValue < 10) this.dtsColor = theme.zoneWarn;
+      else if (this.dtsValue < 20) this.dtsColor = theme.zoneAlert;
+      else this.dtsColor = this.valueColor;
+    } else {
+      // Placeholder for potential state-driven colors (legacy used path states)
+      this.dtsColor = this.valueColor;
+    }
   }
 
-  public setLineEnd(end: string): string {
-    const requestId = this.signalk.putRequest('navigation.racing.setStartLine', { end, position: 'bow' }, this.widgetProperties.uuid);
-    return requestId;
+  private beep(frequency = 440, duration = 100) {
+    if (!this.runtime.options()?.playBeeps) return;
+    const AudioCtx = (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+    const audioCtx = new AudioCtx();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+    gainNode.gain.value = 0.1;
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration / 1000);
   }
 
-  public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
-    const requestId = this.signalk.putRequest('navigation.racing.setStartLine',
-      { end, delta, rotate: rotateRadians ? rotateRadians : null },
-      this.widgetProperties.uuid);
-    return requestId;
-  }
-
-  protected toRadians(degrees: number): number | null {
-    return degrees ? degrees * (Math.PI / 180) : null;
-  }
-
-  ngOnDestroy() {
-    this.isDestroyed = true;
-    this.destroyDataStreams();
-    this.canvas.releaseCanvas(this.canvasElement, { clear: true, removeFromDom: true });
+  ngOnDestroy(): void {
+    try {
+      if (this.canvasElement) this.canvas.unregisterCanvas(this.canvasElement);
+    } catch { /* ignore */ }
   }
 }

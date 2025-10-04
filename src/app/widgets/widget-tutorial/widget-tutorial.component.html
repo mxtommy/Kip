@@ -1,117 +1,115 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig()">
-  <div class="tutorial-container">
-    @if (dashboard.isDashboardStatic()) {
-      <h3>Getting Started</h3>
-      <p>Welcome to KIP! Here are some basic gestures to help you navigate the application:</p>
-      <table class="nav-table">
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Touch</th>
-            <th>Mouse</th>
-            <th>Keyboard Shortcuts</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Open Actions menu</td>
-            <td>Swipe left</td>
-            <td>Click, drag left, and release</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8592;</kbd> (Left Arrow)</td>
-          </tr>
-          <tr>
-            <td>Open Notification menu</td>
-            <td>Swipe right</td>
-            <td>Click, drag right, and release</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8594;</kbd> (Right Arrow)</td>
-          </tr>
-          <tr>
-            <td>Cycle through dashboards</td>
-            <td>Swipe up/down</td>
-            <td>Click, drag up/down, and release</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8593;</kbd>/<kbd style="font-size: x-large;">&#8595;</kbd> (Up/Down Arrow)</td>
-          </tr>
-          <tr>
-            <td>Toggle Fullscreen</td>
-            <td>N/A</td>
-            <td>N/A</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd></td>
-          </tr>
-          <tr>
-            <td>Toggle Night mode</td>
-            <td>N/A</td>
-            <td>N/A</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>N</kbd></td>
-          </tr>
-          <tr>
-            <td>Toggle dashboard edit mode</td>
-            <td>N/A</td>
-            <td>N/A</td>
-            <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd></td>
-          </tr>
-        </tbody>
-      </table>
-      <i>Note that the words Touch and Tap are synonymous with mouse click.</i><br/><br/>
-      <h3>Log in to Signal K</h3>
-      <p>
-        The first step is to configure Signal K server authentication
-        (<i>a pre-existing Signal K server username and password is required</i>).
-        Use the table above to find the gesture, mouse or keyboard shortcut to open the Actions menu, then select <strong>Settings</strong>.
-        Toggle <strong>Login to server</strong> and enter your Signal K credentials.
-      </p>
-      <ul>
-        <li>
-          <strong>Why log in?</strong> Logging in allows KIP to do two things: 1) to send commands to Signal K and 2) to save its configuration on the server so it can be shared between multiple devices. It is the recommended method to use KIP.
-        </li>
-        <li>
-          If you don’t have a Signal K account, ask your Signal K administrator, access the Signal K Admin Settings / Users page and create a user or check your server’s documentation for setup instructions.
-        </li>
-        <li>
-          After entering your credentials, select <strong>Login</strong> or <strong>Connect</strong>. If successful, your connection status will update and live data will appear in KIP.
-        </li>
-        <li>
-          If you see an error, double-check your username and password, and make sure your device is on the same network as your Signal K server.
-        </li>
-      </ul>
-      <h3>Option 1: Load Demonstration Dashboards</h3>
-      <p>
-        Try the sample dashboards using data from your server:
-        <br/>
-        <button mat-raised-button style="margin-left: 15px;" (click)="loadDemoConfig()">Load Demo</button>
-      </p>
-      <h3>Option 2: Create Your Own Layout</h3>
-      <p>
-        The text you are reading is actually a full screen widget in a dashboard.
-        Dashboards are "Locked" by default to prevent accidental modifications.
-        To edit a dashboard, swipe left and hit the bottom unlock menu button.
-        You can later add and manage dashboards using the Dashboards page from
-        the Actions menu.
-      </p>
-      <p><strong>Try editing the Dashboard now to receive further instructions!</strong></p>
-    } @else {
-      <h2>Changing Layouts</h2>
-      Follow these simple steps to learn how to change your dashboard layout:
-      <ol>
-        <li>Resize this Tutorial widget using the now visible dashed borders or corners arrows. Resize it so
-        it does not take up all the screen. You need free space in your dashboard to add more widgets.
-        You can delete this Tutorial widget later when you are done with the instructions.</li>
-        <li>Touch & Hold or Click & Hold in an empty area to open the Add Widget selection panel.</li>
-        <li>Choose a widget from the selection panel to add it to the dashboard.</li>
-      </ol>
+<div class="tutorial-container">
+  @if (dashboard.isDashboardStatic()) {
+    <h3>Getting Started</h3>
+    <p>Welcome to KIP! Here are some basic gestures to help you navigate the application:</p>
+    <table class="nav-table">
+      <thead>
+        <tr>
+          <th>Actions</th>
+          <th>Touch</th>
+          <th>Mouse</th>
+          <th>Keyboard Shortcuts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Open Actions menu</td>
+          <td>Swipe left</td>
+          <td>Click, drag left, and release</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8592;</kbd> (Left Arrow)</td>
+        </tr>
+        <tr>
+          <td>Open Notification menu</td>
+          <td>Swipe right</td>
+          <td>Click, drag right, and release</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8594;</kbd> (Right Arrow)</td>
+        </tr>
+        <tr>
+          <td>Cycle through dashboards</td>
+          <td>Swipe up/down</td>
+          <td>Click, drag up/down, and release</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd style="font-size: x-large;">&#8593;</kbd>/<kbd style="font-size: x-large;">&#8595;</kbd> (Up/Down Arrow)</td>
+        </tr>
+        <tr>
+          <td>Toggle Fullscreen</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd></td>
+        </tr>
+        <tr>
+          <td>Toggle Night mode</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>N</kbd></td>
+        </tr>
+        <tr>
+          <td>Toggle dashboard edit mode</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td><kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd></td>
+        </tr>
+      </tbody>
+    </table>
+    <i>Note that the words Touch and Tap are synonymous with mouse click.</i><br/><br/>
+    <h3>Log in to Signal K</h3>
+    <p>
+      The first step is to configure Signal K server authentication
+      (<i>a pre-existing Signal K server username and password is required</i>).
+      Use the table above to find the gesture, mouse or keyboard shortcut to open the Actions menu, then select <strong>Settings</strong>.
+      Toggle <strong>Login to server</strong> and enter your Signal K credentials.
+    </p>
+    <ul>
+      <li>
+        <strong>Why log in?</strong> Logging in allows KIP to do two things: 1) to send commands to Signal K and 2) to save its configuration on the server so it can be shared between multiple devices. It is the recommended method to use KIP.
+      </li>
+      <li>
+        If you don’t have a Signal K account, ask your Signal K administrator, access the Signal K Admin Settings / Users page and create a user or check your server’s documentation for setup instructions.
+      </li>
+      <li>
+        After entering your credentials, select <strong>Login</strong> or <strong>Connect</strong>. If successful, your connection status will update and live data will appear in KIP.
+      </li>
+      <li>
+        If you see an error, double-check your username and password, and make sure your device is on the same network as your Signal K server.
+      </li>
+    </ul>
+    <h3>Option 1: Load Demonstration Dashboards</h3>
+    <p>
+      Try the sample dashboards using data from your server:
+      <br/>
+      <button mat-raised-button style="margin-left: 15px;" (click)="loadDemoConfig()">Load Demo</button>
+    </p>
+    <h3>Option 2: Create Your Own Layout</h3>
+    <p>
+      The text you are reading is actually a full screen widget in a dashboard.
+      Dashboards are "Locked" by default to prevent accidental modifications.
+      To edit a dashboard, swipe left and hit the bottom unlock menu button.
+      You can later add and manage dashboards using the Dashboards page from
+      the Actions menu.
+    </p>
+    <p><strong>Try editing the Dashboard now to receive further instructions!</strong></p>
+  } @else {
+    <h2>Changing Layouts</h2>
+    Follow these simple steps to learn how to change your dashboard layout:
+    <ol>
+      <li>Resize this Tutorial widget using the now visible dashed borders or corners arrows. Resize it so
+      it does not take up all the screen. You need free space in your dashboard to add more widgets.
+      You can delete this Tutorial widget later when you are done with the instructions.</li>
+      <li>Touch & Hold or Click & Hold in an empty area to open the Add Widget selection panel.</li>
+      <li>Choose a widget from the selection panel to add it to the dashboard.</li>
+    </ol>
 
-      <h3>Possible widget operations</h3>
-      <ul>
-        <li><strong>Touch and drag</strong> to move widgets</li>
-        <li><strong>Drag corners and sides</strong> to resize widgets</li>
-        <li><strong>Double Tap</strong> on a widget to configure it</li>
-        <li><strong>Press and Hold</strong> on a widget to delete or duplicate widgets</li>
-      </ul>
-      <h2>Exiting dashboard edit mode</h2>
-      <p>Use the Save or Cancel buttons in the lower right corner to either persist
-        your changes or revert changes.</p>
-      <h2>Adding more dashboards</h2>
-      <p>Swipe left and hit the Dashboards button. From this page you can add, rename, order, delete,
-        and duplicate entire dashboards.</p>
-    }
-  </div>
-</widget-host>
+    <h3>Possible widget operations</h3>
+    <ul>
+      <li><strong>Touch and drag</strong> to move widgets</li>
+      <li><strong>Drag corners and sides</strong> to resize widgets</li>
+      <li><strong>Double Tap</strong> on a widget to configure it</li>
+      <li><strong>Press and Hold</strong> on a widget to delete or duplicate widgets</li>
+    </ul>
+    <h2>Exiting dashboard edit mode</h2>
+    <p>Use the Save or Cancel buttons in the lower right corner to either persist
+      your changes or revert changes.</p>
+    <h2>Adding more dashboards</h2>
+    <p>Swipe left and hit the Dashboards button. From this page you can add, rename, order, delete,
+      and duplicate entire dashboards.</p>
+  }
+</div>
