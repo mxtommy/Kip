@@ -14,22 +14,93 @@ Use this quick-start map to be productive in this repo. Prefer these concrete pa
 - Build KIP app and KIP plugin: npm run build:all (outputs KIP to public/ and respects baseHref. Outputs plugin to kip-plugin).
 - Quality: npm run lint, npm test (Karma). E2E (Protractor) is legacy/optional.
 
-## Widget contract (critical)
-- Extend BaseWidgetComponent (src/app/core/utils/base-widget.component.ts) for every widget.
-- Implement startWidget() and updateConfig(config: IWidgetSvcConfig).
-- defaultConfig defines initial config; call validateConfig() to merge new properties into saved configs safely.
-- Subscriptions: observeDataStream('pathKey', next => ...) for values; observeMetaStream() for zones. Cleanup: destroyDataStreams() in ngOnDestroy.
-- Multiple streams: Call observeDataStream once per needed config.paths key. BaseWidget aggregates all under one Subscription; destroyDataStreams() unsubscribes all data and meta streams at once.
-- Units: Always go through UnitsService (convertToUnit, formatWidgetNumberValue). Don’t hardcode conversions/formatting.
-- Define config.paths[pathKey] with: path, pathType ('number' | 'string' | 'Date' | 'boolean'), sampleTime, convertUnitTo, source.
+## Host2 widget contract (critical)
+All widgets now follow the Host2 architecture (legacy BaseWidgetComponent removed).
 
-### observeDataStream features (applied automatically)
-- Auto-creates per-path observables from config.paths via createDataObservable() when first used.
-- Applies sampleTime from the path config consistently to reduce churn.
-- For pathType 'number': performs UnitsService.convertToUnit(convertUnitTo) and optionally timeout+retry.
-- For 'string' | 'Date': applies sampleTime and optional timeout/retry (no unit conversion).
-- For 'boolean': applies sampleTime (no timeout/retry).
-- Global timeouts: enableTimeout + dataTimeout (seconds) at widgetProperties.config level control timeout behavior.
+1. Standalone component with required functional inputs:
+	 ```ts
+	 id = input.required<string>();
+	 type = input.required<string>();
+	 theme = input.required<ITheme | null>();
+	 ```
+2. Provide a static `DEFAULT_CONFIG: IWidgetSvcConfig` fully describing initial config (paths + options).
+3. Inject directives for runtime + streams (and optionally metadata):
+	 ```ts
+	 private runtime = inject(WidgetRuntimeDirective);
+	 private streams = inject(WidgetStreamsDirective);
+	 // optional
+	 // private meta = inject(WidgetMetadataDirective);
+	 ```
+4. Register data observers in a single effect:
+	 ```ts
+	 effect(() => {
+		 const cfg = this.runtime.options();
+		 if (!cfg) return;
+		 untracked(() => {
+			 if (cfg.paths?.numericPath?.path) {
+				 this.streams.observe('numericPath', pkt => this.value.set(pkt?.data?.value ?? null));
+			 }
+			 // repeat for other path keys
+		 });
+	 });
+	 ```
+5. Always guard for missing config or optional paths (check `cfg?.paths?.key?.path`).
+6. Avoid mutating the merged config object; store transient UI state in signals.
+7. Use UnitsService and existing formatting helpers; do not hardcode conversions. Using streams directive handles path unit conversion settings automatically for number types.
+8. Timeout settings honored automatically (`enableTimeout`, `dataTimeout`)—`WidgetStreamsDirective`.
+9. Provide meaningful path keys (e.g. `numericPath`, `headingTrue`, `windSpeed`) and keep them stable.
+10. Destroy logic is usually implicit (streams directive centralizes subscriptions); only tear down custom resources manually if you allocate them (e.g., canvases, animation frames).
+
+### Path definition recap
+Each entry in `DEFAULT_CONFIG.paths`:
+```ts
+someKey: {
+	description: 'User label',
+	path: 'navigation.speedThroughWater',
+	pathType: 'number' | 'string' | 'Date' | 'boolean',
+	convertUnitTo: 'knots',       // For numeric path only. Sets automatic conversion to this unit
+	sampleTime: 1000,              // ms, typical 500+
+	source: null,                 // optional source selection. null = default source
+	isPathConfigurable: true,     // false to hide path in path options UI
+	pathRequired: true,           // set false for optional
+	showPathSkUnitsFilter: false, // Show numeric UI filter support
+	pathSkUnitsFilter: null       // Set and apply a path unit filter (e.g. 'knots' for speed)
+}
+```
+
+### Data stream behavior (via WidgetStreamsDirective)
+- Respects per-path `sampleTime`.
+- Converts units for number paths using UnitsService.
+- Optional timeout logic based on widget config flags.
+- Centralized unsubscribe when host destroys the widget.
+
+### Embedded widgets (composite pattern)
+Use this patterns when a parent widget (e.g. Autopilot) displays other widgets:
+
+#### `<widget-embedded>`
+Supply a complete `widgetProperties` object (no persistence writes):
+```ts
+xteWidgetProps = {
+	uuid: this.id() + '-xte',
+	type: 'widget-numeric',
+	config: {
+		type: 'widget-numeric',
+		title: 'XTE',
+		paths: { numericPath: { description: 'Cross Track Error', path: 'navigation.course.crossTrackError', pathType: 'number', convertUnitTo: 'nm', sampleTime: 1000, isPathConfigurable: false } },
+		numDecimal: 2
+	}
+};
+```
+Template:
+```html
+<widget-embedded [widgetProperties]="xteWidgetProps"></widget-embedded>
+```
+`widget-embedded` internally wires runtime + streams + metadata and instantiates the child.
+
+### Safety patterns
+- Null guard every `runtime.options()` access in effects & template (`runtime.options()?.paths?.key`).
+- Avoid repeated `runtime.options()` chains in template: expose a computed `cfg = computed(() => this.runtime.options())`.
+- For performance, do all `streams.observe` calls in one untracked block.
 
 ## Widget path options (important)
 - pathType: Controls pipeline behavior (see features above). Must be accurate: 'number' | 'string' | 'Date' | 'boolean'.
@@ -62,18 +133,21 @@ Use this quick-start map to be productive in this repo. Prefer these concrete pa
 - Use standalone components, signals, @if/@for; follow .github/instructions/angular.instructions.md for style.
 - Widget config UIs live under src/app/widget-config; path controls use custom validators (no Validators.required). Respect isPathConfigurable and pathRequired.
 
-## Widgets: do this, not that
-- Do: Define a complete defaultConfig (including config.paths) and call validateConfig() before using config. Don’t: Scatter fallback defaults across methods.
-- Do: Use observeDataStream(...) and destroyDataStreams() in ngOnDestroy. Don’t: Manually subscribe to DataService in multiple places without centralized cleanup.
-- Do: Call observeDataStream once per path key; let BaseWidget aggregate subscriptions. Don’t: Manage multiple Subscription instances yourself—destroyDataStreams() handles all.
-- Do: Convert/format with UnitsService and formatWidgetNumberValue(). Don’t: Hardcode unit math (e.g., divide by 0.5144) or toFixed() ignoring widget decimals/min/max.
+## Widgets: do this, not that (Host2)
+- Do: Provide a complete `DEFAULT_CONFIG` with all paths & options. Don’t: Scatter defaults across lifecycle hooks.
+- Do: Centralize `streams.observe` calls in a single effect. Don’t: Register observers in multiple hooks.
+- Do: Keep transient state in signals. Don’t: Mutate merged config objects.
+- Do: Use UnitsService / formatting helpers. Don’t: Hardcode conversion factors.
+- Do: Guard `options()` & path existence. Don’t: Assume presence.
+- Do: Use widget-embedded or inline directives for composites. Don’t: Reintroduce legacy host wrappers.
 
 ## Key files/dirs
-- Core services: src/app/core/services/ (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DataSetService, NotificationsService).
-- Widget base: src/app/core/utils/base-widget.component.ts (subscriptions, units, zones, formatting).
-- Widgets: src/app/widgets/ (e.g., widget-numeric, widget-gauge-ng-*, widget-data-chart, widget-windtrends-chart).
-- Config UI: src/app/widget-config/ (shared config components, validators, modals).
-- Build: angular.json, package.json scripts.
+- Core services: `src/app/core/services/` (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DataSetService, NotificationsService)
+- Directives: `src/app/core/directives/` (widget-runtime, widget-streams, widget-metadata)
+- Widgets: `src/app/widgets/` (e.g., widget-numeric, widget-gauge-ng-*, widget-data-chart, widget-windtrends-chart, widget-autopilot)
+- Embedded host: `src/app/core/components/widget-embedded/`
+- Config UI: `src/app/widget-config/`
+- Build: `angular.json`, `package.json` scripts
 
 ## Debugging
 - Use Data Inspector (src/app/core/components/data-inspector) to verify live paths/metadata.
