@@ -1,5 +1,4 @@
 /**
- * Host2 Linear Gauge (canvas) – migrated from legacy BaseWidgetComponent.
  * Responsibilities:
  *  - Reactive config via WidgetRuntimeDirective
  *  - Data subscription via WidgetStreamsDirective

@@ -119,16 +119,6 @@ export class WidgetService {
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
-  //TODO: remove and clean up this logic once migration is completed
-  /**
-   * Mapping of `componentClassName` (as declared in `_widgetDefinition`) to the concrete
-   * Angular component Type. During the Host2 migration only widgets that have been
-   * refactored into a presentational component get entries here. Adding a new migrated
-   * widget requires:
-   *  1. Import the component here
-   *  2. Add an entry: `ComponentClassName: ComponentClassReference`
-   *  3. Ensure its `selector` and `componentClassName` are defined in `_widgetDefinition`.
-   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeMap: Record<string, Type<any>> = {
     WidgetNumericComponent: WidgetNumericComponent,

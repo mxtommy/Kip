@@ -49,7 +49,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private readonly ngZone = inject(NgZone);
   private readonly _dataset = inject(DatasetService);
   private readonly canvasService = inject(CanvasService);
-  private readonly unitsService = inject(UnitsService); // previously from BaseWidget
+  private readonly unitsService = inject(UnitsService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
