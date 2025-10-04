@@ -1,8 +1,8 @@
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, timer, lastValueFrom, Subscription } from 'rxjs';
-import { filter, map, switchMap, distinctUntilChanged } from "rxjs/operators";
+import { BehaviorSubject, lastValueFrom, Subscription } from 'rxjs';
+import { distinctUntilChanged } from "rxjs/operators";
 
 export interface IAuthorizationToken {
   expiry: number;
@@ -15,6 +15,7 @@ const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
 const validateTokenEndpoint = 'auth/validate';
 const tokenRenewalBuffer = 60; // nb of seconds before token expiration
+const MAX_TIMEOUT_MS = 2147483647; // Maximum safe delay for setTimeout (~24.8 days)
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +30,7 @@ export class AuthenticationService implements OnDestroy {
   public authToken$ = this._authToken$.asObservable();
   private connectionEndpointSubscription: Subscription = null;
   private authTokenSubscription: Subscription = null;
+  private renewalTimerId: ReturnType<typeof setTimeout> | null = null; // Node & browser compatible handle
   private isRenewingToken = false; // Prevent overlapping renewals
 
   // Network connection
@@ -60,20 +62,20 @@ export class AuthenticationService implements OnDestroy {
       }
     }
 
-    // Token Subject subscription to handle token expiration and renewal
-    this.authTokenSubscription = this._authToken$.pipe(
-      filter((token: IAuthorizationToken) => !!token && token.expiry !== null), // Ensure token and expiry exist
-      distinctUntilChanged((prev, curr) => prev.expiry === curr.expiry), // Only react to changes in the token
-      map((token: IAuthorizationToken) => {
-        const expirationDate = this.getTokenExpirationDate(token.expiry, tokenRenewalBuffer);
-        const duration = expirationDate.getTime() - Date.now(); // Calculate duration in milliseconds
-        console.log(`[Authentication Service] Token refresh timer set for ${duration} ms (Token Expiry: ${expirationDate.toISOString()})`);
-        return Math.max(duration, 0); // Ensure duration is not negative
-      }),
-      switchMap((duration: number) => timer(duration)) // Set timer for the calculated duration
-    ).subscribe(() => {
-      this.handleTokenRenewal();
-    });
+    // Token Subject subscription (react only when expiry changes) to schedule chunked renewal timer
+    this.authTokenSubscription = this._authToken$
+      .pipe(distinctUntilChanged((prev, curr) => prev?.expiry === curr?.expiry))
+      .subscribe(token => {
+        // Clear any previous scheduled timer
+        if (this.renewalTimerId) {
+          clearTimeout(this.renewalTimerId);
+          this.renewalTimerId = null;
+        }
+        if (!token || token.expiry == null) {
+          return; // Nothing to schedule (e.g., device token w/out expiry or logout)
+        }
+        this.scheduleRenewalChunk(token);
+      });
 
     // Endpoint connection observer
     this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
@@ -84,6 +86,36 @@ export class AuthenticationService implements OnDestroy {
         this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
       }
     });
+  }
+
+  private scheduleRenewalChunk(token: IAuthorizationToken) {
+    const now = Date.now();
+    const bufferedRenewMs = (token.expiry - tokenRenewalBuffer) * 1000; // ms timestamp when we WANT to renew
+    const remaining = bufferedRenewMs - now;
+
+    if (remaining <= 0) {
+      // We have reached or passed the buffered renewal point
+      this.handleTokenRenewal();
+      return;
+    }
+
+    const delay = Math.min(remaining, MAX_TIMEOUT_MS);
+    if (delay !== remaining) {
+      console.log(`[Authentication Service] Large renewal delay (${remaining} ms). Scheduling first chunk of ${delay} ms.`);
+    } else {
+      console.log(`[Authentication Service] Scheduling token renewal in ${delay} ms (buffered target: ${new Date(bufferedRenewMs).toISOString()})`);
+    }
+
+    this.renewalTimerId = setTimeout(() => {
+      this.renewalTimerId = null;
+      // Re-check conditions; token might have changed
+      const current = this._authToken$.getValue();
+      if (!current || current.expiry !== token.expiry) {
+        // Token changed or removed; new subscription handler will reschedule if needed
+        return;
+      }
+      this.scheduleRenewalChunk(token); // recurse / advance to next chunk or perform renewal
+    }, delay);
   }
 
   private handleTokenRenewal(): void {
@@ -105,11 +137,18 @@ export class AuthenticationService implements OnDestroy {
       console.warn('[Authentication Service] Device Access Token expired. Manual renewal required.');
       this.isRenewingToken = false;
     } else {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const remainingSec = token.expiry - nowSec;
       if (this.isTokenExpired(token.expiry)) {
         console.log('[Authentication Service] User session Token expired. Cannot renew.');
         this.isRenewingToken = false;
+      } else if (remainingSec > tokenRenewalBuffer) {
+        // Premature trigger (e.g., due to large timeout chunk boundary). Reschedule properly.
+        console.log(`[Authentication Service] Renewal trigger fired early; ${remainingSec}s remaining (> buffer ${tokenRenewalBuffer}s). Rescheduling.`);
+        this.isRenewingToken = false;
+        this.scheduleRenewalChunk(token);
       } else {
-        console.log('[Authentication Service] User session Token expires soon. Renewing token...');
+        console.log(`[Authentication Service] User session Token within renewal window (${remainingSec}s remaining). Renewing token...`);
         const connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
         this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
           .then(() => {
@@ -316,5 +355,9 @@ export class AuthenticationService implements OnDestroy {
   ngOnDestroy(): void {
     this.connectionEndpointSubscription?.unsubscribe();
     this.authTokenSubscription?.unsubscribe();
+    if (this.renewalTimerId) {
+      clearTimeout(this.renewalTimerId);
+      this.renewalTimerId = null;
+    }
   }
 }
