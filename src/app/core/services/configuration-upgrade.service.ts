@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash-es';
 import { StorageService, Config } from './storage.service';
 import { AppSettingsService } from './app-settings.service';
 import { IAppConfig, IConfig, IThemeConfig } from '../interfaces/app-settings.interfaces';
-import { v10IConfig, v10IThemeConfig } from '../components/upgrade-config/v10-config-interface';
+import { v10IConfig, v10IThemeConfig } from '../interfaces/v10-config-interface';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard } from './dashboard.service';
 

@@ -58,7 +58,9 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
     // React to displayName changes specifically
     effect(() => {
       const name = this.runtime.options()?.displayName;
-      if (name !== undefined) this.draw();
+      untracked(() => {
+        if (name !== undefined) this.draw();
+      });
     });
   }
 
@@ -82,22 +84,20 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true,
       onResize: (w, h) => {
-        this.cssWidth = w; this.cssHeight = h;
-        this.maxTextWidth = this.cssWidth - 40;
-        this.maxTextHeight = this.cssHeight - 40;
+        this.cssWidth = w;
+        this.cssHeight = h;
         this.draw();
       }
     });
     this.cssHeight = Math.round(this.canvasElement.getBoundingClientRect().height);
     this.cssWidth = Math.round(this.canvasElement.getBoundingClientRect().width);
-    this.maxTextWidth = this.canvasElement.width - 40;
-    this.maxTextHeight = this.canvasElement.height - 40;
     this.draw();
   }
 
   private draw(): void {
     if (!this.ctx || !this.canvasElement) return;
-    const cfg = this.runtime.options(); if (!cfg) return;
+    const cfg = this.runtime.options();
+    if (!cfg) return;
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (!cfg.noBgColor) {
       this.canvas.drawRectangle(this.ctx, 0, 0, this.canvasElement.width, this.canvasElement.height, this.bgColor());
@@ -108,8 +108,8 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
       name,
       Math.floor(this.cssWidth / 2),
       Math.floor(this.cssHeight / 2 + 10),
-      this.maxTextWidth,
-      this.maxTextHeight,
+      this.cssWidth - 40,
+      this.cssHeight - 40,
       'bold',
       this.fgColor()
     );
