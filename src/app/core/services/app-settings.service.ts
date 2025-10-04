@@ -16,8 +16,8 @@ import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
 
 const defaultTheme = '';
-const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
-const configVersion = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
+const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
+const configVersion = 12; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +36,6 @@ export class AppSettingsService {
   private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
   private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
-  private splitShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -65,26 +64,28 @@ export class AppSettingsService {
     } else {
       this.loadConnectionConfig();
 
-      let serverConfig: IConfig;
-
-      if (this.storage.initConfig === null && this.useSharedConfig && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
-        this.resetSettings();
-      } else {
-        serverConfig = this.storage.initConfig;
-      }
-
-      if (serverConfig) {
-        console.log("[AppSettings Service] Remote configuration storage enabled");
-        this.checkConfigUpgradeRequired(false);
-        this.activeConfig = serverConfig;
-        this.pushSettings();
+      if (this.useSharedConfig) {
+        // We are using remote storage
+        if (this.storage.initConfig === null && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
+          this.checkConfigFileVersionUpgradeRequired()
+            .then((fileUpgradeRequired) => {
+              if (fileUpgradeRequired) {
+                this.configUpgrade.set(true);
+              } else {
+                this.resetSettings();
+              }
+            });
+        } else {
+          console.log("[AppSettings Service] Remote configuration storage enabled");
+          this.checkConfigUpgradeRequired(false, this.storage.initConfig.app?.configVersion);
+          this.activeConfig = this.storage.initConfig;
+          this.pushSettings();
+        }
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
         const localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-        if (localStorageConfig.app.configVersion !== configVersion) {
-          this.checkConfigUpgradeRequired(true);
-        }
+        this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
         localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
         this.activeConfig = localStorageConfig;
@@ -98,6 +99,8 @@ export class AppSettingsService {
 
     switch (config.configVersion) {
       case 11:
+        break;
+      case 12:
         break;
       default:
         console.error(`[AppSettings Service] Invalid connectionConfig version ${config.configVersion}. Resetting and loading connection configuration default`);
@@ -121,30 +124,39 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
-  private checkConfigUpgradeRequired(isLocalStorageConfig: boolean): void {
-    if (isLocalStorageConfig) {
-      this.configUpgrade.set(true); // Set the upgrade flag to true
-    } else {
-      this.storage.listConfigs(9).then(async (rootConfigs) => {
-        for (const rootConfig of rootConfigs) {
-          try {
-            // Fetch the full configuration for each rootConfig
-            const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
-
-            // Check if the version is 10
-            if (fullConfig.app?.configVersion === 10) {
-              this.configUpgrade.set(true); // Set the upgrade flag to true
-              console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
-              break; // Exit the loop once a version 10 config is found
-            }
-          } catch (error) {
-            console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
+  private async checkConfigFileVersionUpgradeRequired(): Promise<boolean> {
+    const rootConfigs = await this.storage.listConfigs(9);
+    try {
+      let configFileUpgradeRequired = false;
+      for (const rootConfig of rootConfigs) {
+        // Fetch the full configuration for each rootConfig
+        const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
+        try {
+          // Check if the version is 10
+          if (fullConfig.app?.configVersion === 10) {
+            configFileUpgradeRequired = true; // Set the upgrade flag to true
+            console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
+            break; // Exit the loop once a version 10 config is found
           }
         }
-      })
-      .catch((error) => {
-        console.error("[AppSettings Service] Error fetching configuration data:", error);
-      });
+        catch (error) {
+          console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
+          break;
+        }
+      }
+      return configFileUpgradeRequired;
+    }
+    catch (error) {
+      console.error("[AppSettings Service] Error fetching configuration data:", error);
+      return false;
+    }
+  }
+
+  private checkConfigUpgradeRequired(isLocalStorageConfig: boolean, storageVersion?: number): void {
+    if (storageVersion === configVersion) return;
+    if (storageVersion === 11) {
+      this.configUpgrade.set(true);
+      return;
     }
   }
 
@@ -275,6 +287,11 @@ export class AppSettingsService {
     } else {
       this.saveAppConfigToLocalStorage();
     }
+  }
+
+  // Configuration version
+  public getConfigVersion(): number | undefined {
+    return this.activeConfig.app?.configVersion ?? undefined;
   }
 
   // App config - use by Settings Config Component
