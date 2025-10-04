@@ -64,19 +64,23 @@ export class AppSettingsService {
     } else {
       this.loadConnectionConfig();
 
-      let serverConfig: IConfig;
-
-      if (this.storage.initConfig === null && this.useSharedConfig && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
-        this.resetSettings();
-      } else {
-        serverConfig = this.storage.initConfig;
-      }
-
-      if (serverConfig) {
-        console.log("[AppSettings Service] Remote configuration storage enabled");
-        this.checkConfigUpgradeRequired(false, serverConfig.app?.configVersion);
-        this.activeConfig = serverConfig;
-        this.pushSettings();
+      if (this.useSharedConfig) {
+        // We are using remote storage
+        if (this.storage.initConfig === null && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
+          this.checkConfigFileVersionUpgradeRequired()
+            .then((fileUpgradeRequired) => {
+              if (fileUpgradeRequired) {
+                this.configUpgrade.set(true);
+              } else {
+                this.resetSettings();
+              }
+            });
+        } else {
+          console.log("[AppSettings Service] Remote configuration storage enabled");
+          this.checkConfigUpgradeRequired(false, this.storage.initConfig.app?.configVersion);
+          this.activeConfig = this.storage.initConfig;
+          this.pushSettings();
+        }
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
         const localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
@@ -120,37 +124,39 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
+  private async checkConfigFileVersionUpgradeRequired(): Promise<boolean> {
+    const rootConfigs = await this.storage.listConfigs(9);
+    try {
+      let configFileUpgradeRequired = false;
+      for (const rootConfig of rootConfigs) {
+        // Fetch the full configuration for each rootConfig
+        const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
+        try {
+          // Check if the version is 10
+          if (fullConfig.app?.configVersion === 10) {
+            configFileUpgradeRequired = true; // Set the upgrade flag to true
+            console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
+            break; // Exit the loop once a version 10 config is found
+          }
+        }
+        catch (error) {
+          console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
+          break;
+        }
+      }
+      return configFileUpgradeRequired;
+    }
+    catch (error) {
+      console.error("[AppSettings Service] Error fetching configuration data:", error);
+      return false;
+    }
+  }
+
   private checkConfigUpgradeRequired(isLocalStorageConfig: boolean, storageVersion?: number): void {
     if (storageVersion === configVersion) return;
     if (storageVersion === 11) {
-      // Handle upgrade from version 11 to 12
       this.configUpgrade.set(true);
       return;
-    }
-    // We only support upgrade from file version 9 with config version 10 to current version
-    if (isLocalStorageConfig) {
-      this.configUpgrade.set(true); // Set the upgrade flag to true
-    } else {
-      this.storage.listConfigs(9).then(async (rootConfigs) => {
-        for (const rootConfig of rootConfigs) {
-          try {
-            // Fetch the full configuration for each rootConfig
-            const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
-
-            // Check if the version is 10
-            if (fullConfig.app?.configVersion === 10) {
-              this.configUpgrade.set(true); // Set the upgrade flag to true
-              console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
-              break; // Exit the loop once a version 10 config is found
-            }
-          } catch (error) {
-            console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("[AppSettings Service] Error fetching configuration data:", error);
-      });
     }
   }
 
@@ -285,7 +291,7 @@ export class AppSettingsService {
 
   // Configuration version
   public getConfigVersion(): number | undefined {
-    return this.activeConfig.app.configVersion;
+    return this.activeConfig.app?.configVersion ?? undefined;
   }
 
   // App config - use by Settings Config Component

@@ -72,11 +72,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.appSettingsService.configUpgrade()) {
         const liveVersion = this.appSettingsService.getConfigVersion();
 
-        if (liveVersion === 11) {
-          this._upgrade.fromVersion(liveVersion);
+        if (liveVersion == 11) {
+          this._upgrade.runUpgrade(liveVersion);
         }
 
-        if (liveVersion === 10) {
+        if (!liveVersion) {
           if (!this._upgradeShown) {
             this._upgradeShown = true;
             this._dialog.openFrameDialog({

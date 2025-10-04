@@ -5,6 +5,7 @@ import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { UUID } from '../utils/uuid.util';
+import { DefaultDashboard } from '../../../default-config/config.blank.dashboard';
 import { BehaviorSubject } from 'rxjs';
 
 export interface Dashboard {
@@ -31,30 +32,6 @@ export class DashboardService {
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
   public isDashboardStatic = signal<boolean>(true);
-  public readonly blankDashboard: Dashboard[] = [
-    {
-      id: null,
-      name: 'Dashboard 1',
-      icon: 'dashboard-dashboard',
-      configuration: [
-        {
-          "w": 12,
-          "h": 12,
-          "id": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc",
-          "selector": "widget-tutorial",
-          "input": {
-            "widgetProperties": {
-              "type": "widget-tutorial",
-              "uuid": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc"
-            }
-          },
-          "x": 0,
-          "y": 0
-        }
-      ],
-      collapseSplitShell: false
-    }
-  ];
 
   public readonly layoutEditSaved = signal<number>(0);
   public readonly layoutEditCanceled = signal<number>(0);
@@ -64,7 +41,7 @@ export class DashboardService {
 
     if (!dashboards || dashboards.length === 0) {
       console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
-      const newBlankDashboard = this.blankDashboard.map(dashboard => ({
+      const newBlankDashboard = DefaultDashboard.map(dashboard => ({
         ...dashboard,
         id: UUID.create()
       }));
