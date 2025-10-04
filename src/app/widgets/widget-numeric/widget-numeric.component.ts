@@ -125,15 +125,17 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     effect(() => {
       const cfg = this.runtime?.options();
       if (!cfg) return;
-      if (this.isDestroyed || !this.canvasCtx) return;
-      this.manageDatasetAndChart();
-      if (this.showMiniChart() && this.miniChart()) {
-        this.setMiniChart();
-        this.miniChart().startChart();
-      }
-      this.setColors();
-      this.startWidget();
-      this.drawWidget();
+      untracked(() => {
+        if (this.isDestroyed || !this.canvasCtx) return;
+        this.manageDatasetAndChart();
+        if (this.showMiniChart() && this.miniChart()) {
+          this.setMiniChart();
+          this.miniChart().startChart();
+        }
+        this.setColors();
+        this.startWidget();
+        this.drawWidget();
+      });
     });
   }
 
@@ -234,6 +236,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private drawWidget(): void {
     if (!this.canvasCtx) return;
     const cfg = this.runtime.options();
+    if (!cfg) return;
     const unit = cfg.paths['numericPath'].convertUnitTo;
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;

@@ -1,0 +1,17 @@
+:host {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.widget-container {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+.kip-widget-card-colors {
+  background-color: var(--kip-widget-card-background-color);
+}

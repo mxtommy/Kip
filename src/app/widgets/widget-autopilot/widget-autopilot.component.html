@@ -132,35 +132,23 @@
   </div>
   <!-- Route widget -->
   <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-    <!-- <widget-position
-      [id]="nextWptProperties().uuid"
-      [type]="nextWptProperties().type"
-      [theme]="theme()"
-      [config]="nextWptProperties().config"
-      class="embed-widget" /> -->
+    <widget-embedded
+      [widgetProperties]="nextWptProperties()"
+      class="embed-widget" />
   </div>
   <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-  <!--    <widget-datetime
-      [id]="etaProperties().uuid"
-      [type]="etaProperties().type"
-      [theme]="theme()"
-      [config]="etaProperties().config"
-      class="embed-widget" /> -->
+     <widget-embedded
+      [widgetProperties]="etaProperties()"
+      class="embed-widget" />
   </div>
   <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-    <!-- <widget-numeric
-      [id]="dtwProperties().uuid"
-      [type]="dtwProperties().type"
-      [theme]="theme()"
-      [config]="dtwProperties().config"
-      class="embed-widget"/> -->
+    <widget-embedded
+      [widgetProperties]="dtwProperties()"
+      class="embed-widget"/>
   </div>
   <div [style.display]="routeBtnVisibility() && !this.dodgeModeActive() ? 'block' : 'none'">
-     <widget-numeric
-      [id]="xteProperties().uuid"
-      [type]="xteProperties().type"
-      [theme]="theme()"
-      [config]="xteProperties().config"
+     <widget-embedded
+      [widgetProperties]="xteProperties()"
       class="embed-widget" />
   </div>
   <!-- Route Button row -->

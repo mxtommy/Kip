@@ -43,12 +43,10 @@ import {
   IV2ApiEndpoints,
   TApMode
 } from '../../core/interfaces/signalk-autopilot-interfaces';
-import { WidgetNumericComponent } from '../widget-numeric/widget-numeric.component';
-import { WidgetPositionComponent } from '../widget-position/widget-position.component';
-import { WidgetDatetimeComponent } from "../widget-datetime/widget-datetime.component";
 import { ITheme } from '../../core/services/app-service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { WidgetEmbeddedComponent } from '../../core/components/widget-embedded/widget-embedded.component';
 
 interface MenuItem {
   label: string;
@@ -108,7 +106,7 @@ const DEFAULTS = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-    imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetPositionComponent, WidgetNumericComponent, WidgetDatetimeComponent],
+    imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetEmbeddedComponent],
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // Host2 functional inputs (provided by widget-host2 wrapper)
