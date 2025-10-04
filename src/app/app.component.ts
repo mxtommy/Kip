@@ -25,6 +25,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { DatasetService } from './core/services/data-set.service';
+import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
 
 @Component({
   selector: 'app-root',
@@ -48,6 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);
   private readonly _router = inject(Router);
+  private readonly _upgrade = inject(ConfigurationUpgradeService);
 
   private notificationHowl?: Howl;
   private _upgradeShown = false;
@@ -67,14 +69,24 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      if (!this._upgradeShown && this.appSettingsService.configUpgrade()) {
-        this._upgradeShown = true;
-        this._dialog.openFrameDialog({
-          title: 'Upgrade Instructions',
-          component: 'upgrade-config',
-        }, true)
-          .pipe(takeUntilDestroyed(this._destroyRef))
-          .subscribe();
+      if (this.appSettingsService.configUpgrade()) {
+        const liveVersion = this.appSettingsService.getConfigVersion();
+
+        if (liveVersion === 11) {
+          this._upgrade.fromVersion(liveVersion);
+        }
+
+        if (liveVersion === 10) {
+          if (!this._upgradeShown) {
+            this._upgradeShown = true;
+            this._dialog.openFrameDialog({
+              title: 'Upgrade Instructions',
+              component: 'upgrade-config',
+            }, true)
+              .pipe(takeUntilDestroyed(this._destroyRef))
+              .subscribe();
+          }
+        }
       }
     });
 

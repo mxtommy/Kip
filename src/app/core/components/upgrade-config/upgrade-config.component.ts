@@ -268,10 +268,10 @@ export class UpgradeConfigComponent {
             // Add the widget to the extractedWidgets array
             extractedWidgets.push({
               id: widget.uuid,
-              selector: selector,
+              selector: "widget-host2",
               input: {
                 widgetProperties: {
-                  type: selector, // Same as the selector
+                  type: selector, // Widget type mapping
                   uuid: widget.uuid, // Same as the widget ID
                   config: transformedConfig // Transformed config
                 }

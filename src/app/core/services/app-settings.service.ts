@@ -16,8 +16,8 @@ import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
 
 const defaultTheme = '';
-const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
-const configVersion = 11; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
+const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
+const configVersion = 12; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +36,6 @@ export class AppSettingsService {
   private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
   private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
-  private splitShellCollapsed: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -75,16 +74,14 @@ export class AppSettingsService {
 
       if (serverConfig) {
         console.log("[AppSettings Service] Remote configuration storage enabled");
-        this.checkConfigUpgradeRequired(false);
+        this.checkConfigUpgradeRequired(false, serverConfig.app?.configVersion);
         this.activeConfig = serverConfig;
         this.pushSettings();
       } else {
         console.log("[AppSettings Service] LocalStorage enabled");
         const localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
         localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-        if (localStorageConfig.app.configVersion !== configVersion) {
-          this.checkConfigUpgradeRequired(true);
-        }
+        this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
         localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
         localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
         this.activeConfig = localStorageConfig;
@@ -98,6 +95,8 @@ export class AppSettingsService {
 
     switch (config.configVersion) {
       case 11:
+        break;
+      case 12:
         break;
       default:
         console.error(`[AppSettings Service] Invalid connectionConfig version ${config.configVersion}. Resetting and loading connection configuration default`);
@@ -121,7 +120,14 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
-  private checkConfigUpgradeRequired(isLocalStorageConfig: boolean): void {
+  private checkConfigUpgradeRequired(isLocalStorageConfig: boolean, storageVersion?: number): void {
+    if (storageVersion === configVersion) return;
+    if (storageVersion === 11) {
+      // Handle upgrade from version 11 to 12
+      this.configUpgrade.set(true);
+      return;
+    }
+    // We only support upgrade from file version 9 with config version 10 to current version
     if (isLocalStorageConfig) {
       this.configUpgrade.set(true); // Set the upgrade flag to true
     } else {
@@ -275,6 +281,11 @@ export class AppSettingsService {
     } else {
       this.saveAppConfigToLocalStorage();
     }
+  }
+
+  // Configuration version
+  public getConfigVersion(): number | undefined {
+    return this.activeConfig.app.configVersion;
   }
 
   // App config - use by Settings Config Component
