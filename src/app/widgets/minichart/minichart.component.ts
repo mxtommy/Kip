@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -84,11 +84,14 @@ export class MinichartComponent implements OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.theme()) {
-        if (this.datasetConfig) {
-          this.setChartOptions();
-          this.setDatasetsColors();
-        }
+      const theme = this.theme();
+      if (theme) {
+        untracked(() => {
+          if (this.datasetConfig) {
+            this.setChartOptions();
+            this.setDatasetsColors();
+          }
+        });
       }
     });
   }

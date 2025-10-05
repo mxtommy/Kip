@@ -18,6 +18,12 @@ import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
+interface GridApi {
+  getRow?: () => number;
+  cellHeight?: (val: number) => void;
+  batchUpdate?: () => void;
+  commit?: () => void;
+}
 
 @Component({
   selector: 'dashboard',
@@ -87,7 +93,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     // Hook Gridstack drag lifecycle early to suppress long-press during slow drags
     try {
-      const grid = this._gridstack().grid as unknown as { on: (event: string, cb: (...args: unknown[]) => void) => void };
+      const grid = this._gridstack().grid as { on: (event: string, cb: (...args: unknown[]) => void) => void };
       if (grid && typeof grid.on === 'function') {
         grid.on('dragstart', () => {
           this._uiEvent.isDragging.set(true);
@@ -174,13 +180,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const gridCmp = this._gridstack();
       const baseGrid = gridCmp.grid;
       if (!baseGrid) return;
-      interface GridApi {
-        getRow?: () => number;
-        cellHeight?: (val: number) => void;
-        batchUpdate?: () => void;
-        commit?: () => void;
-      }
-      const grid = baseGrid as unknown as GridApi;
+
+      const grid = baseGrid as GridApi;
       const containerHeight = this._hostEl.nativeElement.clientHeight || window.innerHeight;
       if (containerHeight === this._lastContainerHeight) {
         // Host height unchanged; skip unless first run produced no cell height.
