@@ -65,15 +65,15 @@ export class SvgWindsteerComponent implements OnDestroy {
   private stbdLaylinePrev = 0;
   private portLaylineAnimId: number | null = null;
   private stbdLaylineAnimId: number | null = null;
-  protected closeHauledLinePortPath = "M 500,500 500,500";
-  protected closeHauledLineStbdPath = "M 500,500 500,500";
+  protected closeHauledLinePortPath = signal<string>("M 500,500 500,500");
+  protected closeHauledLineStbdPath = signal<string>("M 500,500 500,500");
   //WindSectors
   private portSectorPrev = { min: 0, mid: 0, max: 0 };
   private stbdSectorPrev = { min: 0, mid: 0, max: 0 };
   private portSectorAnimId: number | null = null;
   private stbdSectorAnimId: number | null = null;
-  protected portWindSectorPath = "";
-  protected stbdWindSectorPath = "";
+  protected portWindSectorPath = signal<string>("");
+  protected stbdWindSectorPath = signal<string>("");
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
 
@@ -218,8 +218,8 @@ export class SvgWindsteerComponent implements OnDestroy {
           if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
           this.portSectorAnimId = null;
           this.stbdSectorAnimId = null;
-          this.portWindSectorPath = 'none';
-          this.stbdWindSectorPath = 'none';
+          this.portWindSectorPath.set('none');
+          this.stbdWindSectorPath.set('none');
           return;
         }
         this.updateWindSectors(true);
@@ -278,9 +278,9 @@ export class SvgWindsteerComponent implements OnDestroy {
     const x = Math.floor(this.RADIUS * Math.sin(radian) + this.CENTER);
     const y = Math.floor((this.RADIUS * Math.cos(radian) * -1) + this.CENTER);
     if (isPort) {
-      this.closeHauledLinePortPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+      this.closeHauledLinePortPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
     } else {
-      this.closeHauledLineStbdPath = `M ${this.CENTER},${this.CENTER} L ${x},${y}`;
+      this.closeHauledLineStbdPath.set(`M ${this.CENTER},${this.CENTER} L ${x},${y}`);
     }
   }
 
@@ -313,8 +313,8 @@ export class SvgWindsteerComponent implements OnDestroy {
         this.animateWindSector(portNew, portNew, true);
         this.animateWindSector(stbdNew, stbdNew, false);
       } else {
-        this.portWindSectorPath = this.computeSectorPath(portNew, true);
-        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+        this.portWindSectorPath.set(this.computeSectorPath(portNew, true));
+        this.stbdWindSectorPath.set(this.computeSectorPath(stbdNew, false));
       }
       this.portSectorPrev = portNew;
       this.stbdSectorPrev = stbdNew;
@@ -328,16 +328,16 @@ export class SvgWindsteerComponent implements OnDestroy {
         this.angleDelta(this.portSectorPrev.mid, portNew.mid) < this.EPS_ANGLE &&
         this.angleDelta(this.portSectorPrev.max, portNew.max) < this.EPS_ANGLE;
       if (smallMove) {
-        this.portWindSectorPath = this.computeSectorPath(portNew, true);
-        this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+        this.portWindSectorPath.set(this.computeSectorPath(portNew, true));
+        this.stbdWindSectorPath.set(this.computeSectorPath(stbdNew, false));
       } else {
         this.animateWindSector(this.portSectorPrev, portNew, true);
         this.animateWindSector(this.stbdSectorPrev, stbdNew, false);
       }
     } else {
       // No animation requested (e.g., heading-only updates)
-      this.portWindSectorPath = this.computeSectorPath(portNew, true);
-      this.stbdWindSectorPath = this.computeSectorPath(stbdNew, false);
+      this.portWindSectorPath.set(this.computeSectorPath(portNew, true));
+      this.stbdWindSectorPath.set(this.computeSectorPath(stbdNew, false));
     }
 
     this.portSectorPrev = portNew;
@@ -354,8 +354,13 @@ export class SvgWindsteerComponent implements OnDestroy {
       this.angleDelta(from.max, to.max) < this.EPS_ANGLE;
     if (smallMove) {
       const path = this.computeSectorPath(to, isPort);
-      if (isPort) this.portWindSectorPath = path; else this.stbdWindSectorPath = path;
-      if (isPort) this.portSectorAnimId = null; else this.stbdSectorAnimId = null;
+
+      if (isPort) this.portWindSectorPath.set(path);
+      else this.stbdWindSectorPath.set(path);
+
+      if (isPort) this.portSectorAnimId = null;
+      else this.stbdSectorAnimId = null;
+
       return;
     }
 
@@ -365,7 +370,7 @@ export class SvgWindsteerComponent implements OnDestroy {
       this.ANIMATION_DURATION,
       (current) => {
         const path = this.computeSectorPath(current, isPort);
-        if (isPort) this.portWindSectorPath = path; else this.stbdWindSectorPath = path;
+        if (isPort) this.portWindSectorPath.set(path); else this.stbdWindSectorPath.set(path);
       },
       () => { if (isPort) this.portSectorAnimId = null; else this.stbdSectorAnimId = null; },
       this.ngZone

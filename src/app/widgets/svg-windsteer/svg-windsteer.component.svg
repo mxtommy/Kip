@@ -406,24 +406,24 @@
       <g id="LayerLayline" [style.display]="closeHauledLineEnabled() ? 'inline' : 'none'">
         <path id="PortLayline"
           [style.display]="appWindAngle() != null ? 'inline' : 'none'"
-          [attr.d]="closeHauledLineStbdPath"
+          [attr.d]="closeHauledLineStbdPath()"
           style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6"
           class="laylines" />
         <path id="StbdLayline"
           [style.display]="appWindAngle() != null ? 'inline' : 'none'"
-          [attr.d]="closeHauledLinePortPath"
+          [attr.d]="closeHauledLinePortPath()"
           class="laylines"
           style="fill:none;stroke-width:5;stroke-dasharray:40, 20;stroke-dashoffset:0;stroke-opacity:0.6" />
       </g>
       <g id="LayerWindShift" [style.display]="windSectorEnabled() ? 'inline' : 'none'">
         <path id="portSectorShift"
-          [style.display]="portWindSectorPath != 'none' ? 'inline' : 'none'"
-          [attr.d]="portWindSectorPath"
+          [style.display]="portWindSectorPath() != 'none' ? 'inline' : 'none'"
+          [attr.d]="portWindSectorPath()"
           class="wind-sector-port"
           style="fill-opacity:0.5;stroke:none" />
         <path id="StbdSectorShift"
-          [style.display]="stbdWindSectorPath != 'none' ? 'inline' : 'none'"
-          [attr.d]="stbdWindSectorPath"
+          [style.display]="stbdWindSectorPath() != 'none' ? 'inline' : 'none'"
+          [attr.d]="stbdWindSectorPath()"
           class="wind-sector-stbd"
           style="fill-opacity:0.5;stroke:none" />
      </g>

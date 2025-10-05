@@ -110,11 +110,11 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   };
 
   constructor() {
+    this.showMiniChart.set(this.runtime.options().showMiniChart);
     effect(() => {
       const theme = this.theme();
 
       untracked(() => {
-        if (!this.runtime?.options()) return
         if (theme) {
           this.setColors();
           this.drawWidget();
@@ -128,14 +128,19 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       untracked(() => {
         if (this.isDestroyed || !this.canvasCtx) return;
         this.manageDatasetAndChart();
-        if (this.showMiniChart() && this.miniChart()) {
-          this.setMiniChart();
-          this.miniChart().startChart();
-        }
         this.setColors();
         this.startWidget();
         this.drawWidget();
       });
+    });
+
+    effect(() => {
+      const show = this.showMiniChart();
+      const chart = this.miniChart();
+      if (!show) return;
+      if (!chart) return; // will re-run when present
+      this.setMiniChart();
+      this.miniChart().startChart();
     });
   }
 
@@ -152,21 +157,12 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         this.drawWidget();
       },
     });
-
-    const opts = this.runtime.options();
-    if (opts) {
-      this.showMiniChart.set(opts.showMiniChart);
-      this.startWidget();
-    }
   }
 
   ngAfterViewInit(): void {
     if (this.isDestroyed) return;
+    this.startWidget();
     this.manageDatasetAndChart();
-    if (this.showMiniChart() && this.miniChart()) {
-      this.setMiniChart();
-      this.miniChart().startChart();
-    }
   }
 
   private calculateMaxMinTextDimensions(): void {
