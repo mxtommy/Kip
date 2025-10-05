@@ -61,7 +61,7 @@ export class WidgetSimpleLinearComponent {
   protected readonly barColorBackground = signal<string>('');
 
   // Computed signal for highlights (zones)
-  protected readonly highlights = computed<IDataHighlight[]>(() => {
+  protected highlights = computed<IDataHighlight[]>(() => {
     const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();

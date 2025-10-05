@@ -1,0 +1,9 @@
+{
+  "schematics": {
+    "create-host2-widget": {
+      "description": "Generate a Host2 KIP widget (component + optional config + service wiring)",
+      "factory": "./create-host2-widget/index#createHost2Widget",
+      "schema": "./create-host2-widget/schema.json"
+    }
+  }
+}
