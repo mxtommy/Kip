@@ -28,7 +28,7 @@
     "ignoreZones": {"type": "boolean", "default": false},
     "displayNameOpt": {"type": "string", "default": "My new widget label"},
     "color": {"type": "string", "default": "contrast"},
-    "updateWidgetService": {"type": "string", "enum": ["none", "append", "by-category"], "default": "by-category"},
+    "registerWidget": {"type": "string", "description": "Register widget in widget.service.ts (choose category or 'no' to skip)", "enum": ["no", "Core", "Gauge", "Component", "Racing"], "default": "Core"},
     "addSpec": {"type": "boolean", "default": true},
     "todoBlock": {"type": "boolean", "default": true},
     "readme": {"type": "boolean", "default": true},

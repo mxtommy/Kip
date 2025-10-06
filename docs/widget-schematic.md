@@ -33,7 +33,7 @@ Only the required flags are `--name`, `--title`, `--description`, and `--icon`. 
 | pathType | number | number|string|boolean|Date |
 | convertUnitTo | unitless | Target display unit (UnitsService) |
 | sampleTime | 1000 | ms between sampled updates |
-| updateWidgetService | by-category | Append or insert by category ordering |
+| registerWidget | Core | Category to register widget under (Core, Gauge, Component, Racing) or 'no' to skip service update |
 | addSpec | true | Generates a basic host test wrapper spec |
 | readme | true | Emits README.md with scaffold notes |
 
@@ -47,10 +47,10 @@ src/app/widgets/widget-<name>/<name>.component.spec.ts (if --addSpec)
 src/app/widgets/widget-<name>/README.md (if --readme)
 ```
 
-The schematic also updates `WidgetService`:
+If `registerWidget` is not set to `no`, the schematic also updates `WidgetService`:
 1. Adds an import for the new component.
 2. Adds the component class to `_componentTypeMap`.
-3. Inserts a widget definition object into `_widgetDefinition` (in-category ordering when `by-category`).
+3. Inserts a widget definition object into `_widgetDefinition` (automatically ordered within its category).
 
 ### After Generation Checklist
 

@@ -7,6 +7,10 @@ const WIDGET_SERVICE = 'src/app/core/services/widget.service.ts';
 
 function createHost2Widget(options) {
   return (tree, ctx) => {
+    // Normalize final decision: registerWidget = 'no' skips service update
+    const registerMode = options.registerWidget === undefined ? 'Core' : options.registerWidget; // default
+    options.registerWidget = registerMode; // ensure downstream templates can access
+
     const nameDashed = strings.dasherize(options.name);
     const selector = `widget-${nameDashed}`;
     const className = `Widget${strings.classify(options.name)}Component`;
@@ -30,16 +34,16 @@ function createHost2Widget(options) {
       specSource ? mergeWith(specSource) : noop(),
       readmeSource ? mergeWith(readmeSource) : noop(),
       stripTemplateSuffixRule(widgetFolder),
-      options.updateWidgetService !== 'none' ? updateWidgetService(selector, className, options) : noop(),
-      logSummary(selector, className, options)
+      registerMode !== 'no' ? updateWidgetService(selector, className, { ...options, category: options.category || registerMode }) : noop(),
+      logSummary(selector, className, registerMode)
     ])(tree, ctx);
   };
 }
 
-function logSummary(selector, className, opts) {
+function logSummary(selector, className, registerMode) {
   return (_t, ctx) => {
     ctx.logger.info(`✔ Created ${selector} (${className})`);
-    if (opts.updateWidgetService !== 'none') ctx.logger.info('✔ WidgetService updated');
+    if (registerMode !== 'no') ctx.logger.info('✔ WidgetService updated');
   };
 }
 

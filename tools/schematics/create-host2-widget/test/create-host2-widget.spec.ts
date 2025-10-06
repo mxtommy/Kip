@@ -23,7 +23,7 @@ describe('create-host2-widget schematic', () => {
       pathKey: 'numericPath', pathDescription: 'Value', pathType: 'number', pathDefault: null, convertUnitTo: 'knots',
       sampleTime: 1000, pathRequired: true, isPathConfigurable: true, showPathSkUnitsFilter: false, pathSkUnitsFilter: null,
       enableTimeout: false, dataTimeout: 0, ignoreZones: false, displayNameOpt: '', color: '',
-      updateWidgetService: 'by-category', addSpec: false, todoBlock: false, readme: false, interactive: false,
+      registerWidget: 'Core', addSpec: false, todoBlock: false, readme: false, interactive: false,
       ...options
     }, appTree);
   }
@@ -60,5 +60,14 @@ describe('create-host2-widget schematic', () => {
     const service = tree.read('src/app/core/services/widget.service.ts')!.toString('utf-8');
     const occurrences = (service.match(/selector: 'widget-alpha'/g) || []).length;
     expect(occurrences).toBe(1);
+  });
+
+  it('skips registration when registerWidget = no', async () => {
+    const tree = await run({ name: 'gamma', title: 'Gamma', registerWidget: 'no' });
+    const service = tree.read('src/app/core/services/widget.service.ts')!.toString('utf-8');
+    expect(service).not.toContain('WidgetGammaComponent');
+    expect(service).not.toContain("selector: 'widget-gamma'");
+    // component file still generated
+    expect(tree.exists('src/app/widgets/widget-gamma/widget-gamma.component.ts')).toBeTrue();
   });
 });
