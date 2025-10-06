@@ -6,7 +6,8 @@
   "properties": {
     "name": {"type": "string", "description": "Widget machine name without widget- prefix (kebab-case). e.g. tides-chart", "minLength": 3},
     "title": {"type": "string", "description": "Default widget display name / title", "minLength": 3},
-    "category": {"type": "string","description": "Add Widget dialog classification category", "enum": ["Core", "Gauge", "Component", "Racing"], "default": "Core"},
+    "registerWidget": {"type": "string", "description": "Register widget in widget.service.ts (choose category or 'no' to skip)", "enum": ["no", "Core", "Gauge", "Component", "Racing"]},
+    "category": {"type": "string","description": "Add Widget dialog classification category", "enum": ["Core", "Gauge", "Component", "Racing"]},
     "description": {"type": "string", "description": "Detailed widget description displayed in the Add Widget dialog"},
     "icon": {"type": "string", "description": "Icon key (SVG symbol id)", "default": "placeholder-svg-icon-id"},
     "minWidth": {"type": "number", "default": 1},
@@ -28,12 +29,11 @@
     "ignoreZones": {"type": "boolean", "default": false},
     "displayNameOpt": {"type": "string", "default": "My new widget label"},
     "color": {"type": "string", "default": "contrast"},
-    "registerWidget": {"type": "string", "description": "Register widget in widget.service.ts (choose category or 'no' to skip)", "enum": ["no", "Core", "Gauge", "Component", "Racing"], "default": "Core"},
     "addSpec": {"type": "boolean", "default": true},
     "todoBlock": {"type": "boolean", "default": true},
     "readme": {"type": "boolean", "default": true},
     "interactive": {"type": "boolean", "default": true}
   },
-  "required": ["name", "title", "description", "icon"],
+  "required": ["name", "title", "icon", "registerWidget"],
   "additionalProperties": false
 }
