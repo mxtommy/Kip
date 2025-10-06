@@ -47,7 +47,10 @@ function updateComponentMap(src, className) {
       break;
     }
     lines.push(`    ${className}: ${className}`);
-    return m.replace(inner, lines.join('\n') + '\n');
+    // Replace inner content, then normalize closing brace indentation to two spaces
+    let replaced = m.replace(inner, lines.join('\n') + '\n');
+    replaced = replaced.replace(/\n *};/, '\n  };');
+    return replaced;
   });
 }
 
@@ -64,7 +67,8 @@ function normalizeDefinitionFormatting(content, baseIndent) {
   rebuilt = rebuilt.replace(/^(\s*){(?=\n)/gm, baseIndent + '{');
   // Collapse any 2+ blank lines to single newline
   rebuilt = rebuilt.replace(/\n{2,}/g, '\n');
-  return rebuilt.trimEnd() + '\n';
+  // Remove any trailing blank lines; do NOT force an extra newline because the array pattern supplies one before the closing ];
+  return rebuilt.replace(/\n\s*$/,'');
 }
 
 function insertDefinitionObject(src, selector, className, opts) {
