@@ -77,7 +77,7 @@ export class <%= className %> implements AfterViewInit {
       const theme = this.theme();
       const cfg = this.runtime.options();
       if (!theme || !cfg) return;
-Ù
+
       untracked(() => {
         // Update title color when theme colors are changed. Themes are either, Dark, Light or Red Night mode.
         // Uses the theme color selected in widget configuration (default is 'contrast') and its variants. Add
