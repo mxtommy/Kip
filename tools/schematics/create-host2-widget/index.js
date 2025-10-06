@@ -1,23 +1,12 @@
-import {
-  Rule, SchematicContext, Tree, apply, url, template, move, mergeWith, chain, noop
-} from '@angular-devkit/schematics';
-import { strings } from '@angular-devkit/core';
-import { appendImport, updateComponentMap, insertDefinitionObject, buildWidgetDefinitionObject as buildWidgetDefinitionObjectUtil, escapeSingle } from './utils/formatting';
-
-interface Options {
-  name: string; title: string; description: string; category: string; icon: string;
-  minWidth: number; minHeight: number; defaultWidth: number; defaultHeight: number;
-  pathKey: string; pathDescription: string; pathType: string; pathDefault: string | null; convertUnitTo: string;
-  sampleTime: number; pathRequired: boolean; isPathConfigurable: boolean; showPathSkUnitsFilter: boolean; pathSkUnitsFilter: string | null;
-  enableTimeout: boolean; dataTimeout: number; ignoreZones: boolean; displayNameOpt: string; color: string;
-  updateWidgetService: 'none' | 'append' | 'by-category'; addSpec: boolean; todoBlock: boolean; readme: boolean; interactive: boolean;
-}
+const { apply, url, template, move, mergeWith, chain, noop } = require('@angular-devkit/schematics');
+const { strings } = require('@angular-devkit/core');
+const { appendImport, updateComponentMap, insertDefinitionObject } = require('./utils/formatting');
 
 const WIDGETS_DIR = 'src/app/widgets';
 const WIDGET_SERVICE = 'src/app/core/services/widget.service.ts';
 
-export function createHost2Widget(options: Options): Rule {
-  return (tree: Tree, ctx: SchematicContext) => {
+function createHost2Widget(options) {
+  return (tree, ctx) => {
     const nameDashed = strings.dasherize(options.name);
     const selector = `widget-${nameDashed}`;
     const className = `Widget${strings.classify(options.name)}Component`;
@@ -25,7 +14,6 @@ export function createHost2Widget(options: Options): Rule {
     if (tree.exists(`${widgetFolder}/${selector}.component.ts`)) {
       throw new Error(`Widget already exists: ${selector}`);
     }
-
     const tplSource = apply(url('./files/widget'), [
       template({ ...strings, ...options, nameDashed, selector, className, pathKey: options.pathKey }),
       move(widgetFolder)
@@ -48,21 +36,20 @@ export function createHost2Widget(options: Options): Rule {
   };
 }
 
-function logSummary(selector: string, className: string, opts: Options): Rule {
+function logSummary(selector, className, opts) {
   return (_t, ctx) => {
     ctx.logger.info(`✔ Created ${selector} (${className})`);
     if (opts.updateWidgetService !== 'none') ctx.logger.info('✔ WidgetService updated');
   };
 }
 
-function updateWidgetService(selector: string, className: string, opts: Options): Rule {
-  return (tree: Tree, ctx: SchematicContext) => {
+function updateWidgetService(selector, className, opts) {
+  return (tree, ctx) => {
     if (!tree.exists(WIDGET_SERVICE)) {
       ctx.logger.warn('WidgetService not found; skipping auto-registration');
       return tree;
     }
-    const src = tree.read(WIDGET_SERVICE)!.toString('utf-8');
-    let updated = src;
+    let updated = tree.read(WIDGET_SERVICE).toString('utf-8');
     const importStatement = `import { ${className} } from '../../widgets/${selector}/${selector}.component';`;
     updated = appendImport(updated, importStatement);
     updated = updateComponentMap(updated, className);
@@ -80,17 +67,15 @@ function updateWidgetService(selector: string, className: string, opts: Options)
     return tree;
   };
 }
-// Re-export for potential external tests (if needed)
-export const _internal = { buildWidgetDefinitionObject: buildWidgetDefinitionObjectUtil, escapeSingle };
 
-function stripTemplateSuffixRule(widgetFolder: string): Rule {
-  return (tree: Tree) => {
-    const visit = (dirPath: string) => {
+function stripTemplateSuffixRule(widgetFolder) {
+  return (tree) => {
+    const visit = (dirPath) => {
       const dir = tree.getDir(dirPath);
       dir.subfiles.forEach(fileName => {
         if (fileName.endsWith('.template')) {
           const fullPath = `${dirPath}/${fileName}`;
-            const newPath = fullPath.replace(/\.template$/, '');
+          const newPath = fullPath.replace(/\.template$/, '');
           const content = tree.read(fullPath);
           if (content) {
             if (!tree.exists(newPath)) tree.create(newPath, content);
@@ -104,3 +89,6 @@ function stripTemplateSuffixRule(widgetFolder: string): Rule {
     return tree;
   };
 }
+
+exports.createHost2Widget = createHost2Widget;
+

@@ -145,7 +145,7 @@ export class WidgetService {
     WidgetDataChartComponent: WidgetDataChartComponent,
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent
-  };
+};
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -160,7 +160,6 @@ export class WidgetService {
       selector: 'widget-numeric',
       componentClassName: 'WidgetNumericComponent'
     },
-
     {
       name: 'Text',
       description: 'Displays text data with a customizable color formatting option.',
@@ -174,7 +173,6 @@ export class WidgetService {
       selector: 'widget-text',
       componentClassName: 'WidgetTextComponent'
     },
-
     {
       name: 'Date & Time',
       description: 'Displays date and time data with fully custom formatting options and timezone correction.',
@@ -188,7 +186,6 @@ export class WidgetService {
       selector: 'widget-datetime',
       componentClassName: 'WidgetDatetimeComponent'
     },
-
     {
       name: 'Position',
       description: 'Displays latitude and longitude for location tracking and navigation.',
@@ -202,7 +199,6 @@ export class WidgetService {
       selector: 'widget-position',
       componentClassName: 'WidgetPositionComponent',
     },
-
     {
       name: 'Static Label',
       description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
@@ -216,7 +212,6 @@ export class WidgetService {
       selector: 'widget-label',
       componentClassName: 'WidgetLabelComponent'
     },
-
     {
       name: 'Switch Panel',
       description: 'A switch panel group with multiple controls including toggle switches, indicator lights, and press buttons for digital switching and other operations.',
@@ -230,7 +225,6 @@ export class WidgetService {
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
     },
-
     {
       name: 'Slider',
       description: 'A range slider that allows users to adjust values, such as controlling lighting intensity from 0% to 100%.',
@@ -244,9 +238,6 @@ export class WidgetService {
       selector: 'widget-slider',
       componentClassName: 'WidgetSliderComponent'
     },
-
-
-
     {
       name: "Compact Linear",
       description: "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
@@ -260,7 +251,6 @@ export class WidgetService {
       selector: 'widget-simple-linear',
       componentClassName: 'WidgetSimpleLinearComponent'
     },
-
     {
       name: 'Linear',
       description: 'A horizontal or vertical linear gauge that supports zone highlighting.',
@@ -274,7 +264,6 @@ export class WidgetService {
       selector: 'widget-gauge-ng-linear',
       componentClassName: 'WidgetGaugeNgLinearComponent'
     },
-
     {
       name: 'Radial',
       description: 'A radial gauge with configurable capacity and measurement dials plus zone highlighting.',
@@ -288,7 +277,6 @@ export class WidgetService {
       selector: 'widget-gauge-ng-radial',
       componentClassName: 'WidgetGaugeNgRadialComponent'
     },
-
     {
       name: 'Compass',
       description: 'A faceplate or card-style rotating compass gauge with multiple cardinal point indicator options.',
@@ -302,7 +290,6 @@ export class WidgetService {
       selector: 'widget-gauge-ng-compass',
       componentClassName: 'WidgetGaugeNgCompassComponent'
     },
-
     {
       name: 'Level Gauge',
       description: 'Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.',
@@ -316,7 +303,6 @@ export class WidgetService {
       selector: 'widget-heel-gauge',
       componentClassName: 'WidgetHeelGaugeComponent'
     },
-
     {
       name: 'Pitch & Roll',
       description: 'Horizon-style attitude indicator showing live pitch and roll degrees with smooth animation—ideal for monitoring trim, heel, and sea-state response.',
@@ -330,7 +316,6 @@ export class WidgetService {
       selector: 'widget-horizon',
       componentClassName: 'WidgetHorizonComponent'
     },
-
     {
       name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
@@ -344,7 +329,6 @@ export class WidgetService {
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
-
     {
       name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',
@@ -358,7 +342,6 @@ export class WidgetService {
       selector: 'widget-wind-steer',
       componentClassName: 'WidgetWindComponent'
     },
-
     {
       name: 'Freeboard-SK',
       description: 'Adds the Freeboard-SK chart plotter as a widget with automatic sign-in to your dashboard.',
@@ -372,7 +355,6 @@ export class WidgetService {
       selector: 'widget-freeboardsk',
       componentClassName: 'WidgetFreeboardskComponent'
     },
-
     {
       name: 'Autopilot Head',
       description: 'Provides typical autopilot controls for Signal K v1 & v2 Autopilot API devices. Requires a compatible hardware-specific Autopilot plugin for full functionality.',
@@ -387,7 +369,6 @@ export class WidgetService {
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
-
     {
       name: 'Realtime Data Chart',
       description: 'Visualizes data on a real-time chart with multiple preconfigured series including actuals, SMA and period overall averages and Min/Max. Requires the KIP Dataset to be configured.',
@@ -401,7 +382,6 @@ export class WidgetService {
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
     },
-
     {
       name: 'Embed Webpage Viewer',
       description: 'Embeds external web-based applications—such as Grafana graphs or other Signal K apps—into your dashboard for seamless integration. Interaction is disabled by default but can be enabled.',
@@ -415,7 +395,6 @@ export class WidgetService {
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
     },
-
     {
       name: 'Tutorial',
       description: 'An instructional widget that guides new users through basic navigation, gestures, and dashboard editing steps.',
@@ -429,7 +408,6 @@ export class WidgetService {
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent'
     },
-
     {
       name: 'Racesteer',
       description: 'A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.',
@@ -443,7 +421,6 @@ export class WidgetService {
       selector: 'widget-racesteer',
       componentClassName: 'WidgetRacesteerComponent'
     },
-
     {
       name: 'Racer - Start Line Insight',
       description: 'Gain a tactical advantage for racing starts: set and adjust the port and starboard ends of the start line, see your distance to the line, the favored end, and how much the line is favored or unfavored. Includes visual integration with Freeboard SK for interactive line adjustment and display.',
@@ -457,7 +434,6 @@ export class WidgetService {
       selector: 'widget-racer-line',
       componentClassName: 'WidgetRacerLineComponent',
     },
-
     {
       name: 'Racer - Start Timer',
       description: 'An advanced racing countdown timer that indicates OCS (On Course Side) status. Set the start line, choose or adjust the duration, or specify the exact start time. Automatically switches to the target dashboard at the start unless over early.',
@@ -471,7 +447,6 @@ export class WidgetService {
       selector: 'widget-racer-timer',
       componentClassName: 'WidgetRacerTimerComponent',
     },
-
     {
       name: 'Wind Trends',
       description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
@@ -485,7 +460,6 @@ export class WidgetService {
       selector: 'widget-windtrends-chart',
       componentClassName: 'WidgetWindTrendsChartComponent'
     },
-
   ];
 
   get kipWidgets(): readonly WidgetDescription[] {
