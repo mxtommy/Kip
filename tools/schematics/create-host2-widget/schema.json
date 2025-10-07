@@ -29,38 +29,6 @@
       ],
       "x-prompt": "Register the widget so it becomes available under the specified category of the Add Widget dialog (or no)"
     },
-    "description": {
-      "type": "string",
-      "default": "My new widget's detailed description. To modify this text, edit your widget's _widgetDefinition array item in src/app/core/services/widget.service.ts. You can also specify the icon id to use."
-    },
-    "icon": {
-      "type": "string",
-      "default": "placeholder-svg-icon-id"
-    },
-    "minWidth": {
-      "type": "number",
-      "default": 1
-    },
-    "minHeight": {
-      "type": "number",
-      "default": 1
-    },
-    "defaultWidth": {
-      "type": "number",
-      "default": 2
-    },
-    "defaultHeight": {
-      "type": "number",
-      "default": 3
-    },
-    "pathKey": {
-      "type": "string",
-      "default": "signalKPath"
-    },
-    "pathDescription": {
-      "type": "string",
-      "default": "My new widget Options path description"
-    },
     "pathType": {
       "type": "string",
       "enum": [
@@ -69,81 +37,36 @@
         "boolean",
         "Date"
       ],
-      "default": "number"
+      "default": "number",
+      "x-prompt": "Path value type (number|string|boolean|Date):"
     },
     "pathDefault": {
       "type": [
         "string",
         "null"
       ],
-      "default": null
-    },
-    "convertUnitTo": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "default": null
-    },
-    "sampleTime": {
-      "type": "number",
-      "default": 1000
-    },
-    "pathRequired": {
-      "type": "boolean",
-      "default": true
-    },
-    "isPathConfigurable": {
-      "type": "boolean",
-      "default": true
-    },
-    "showPathSkUnitsFilter": {
-      "type": "boolean",
-      "default": true
-    },
-    "pathSkUnitsFilter": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "default": null
-    },
-    "enableTimeout": {
-      "type": "boolean",
-      "default": false
-    },
-    "dataTimeout": {
-      "type": "number",
-      "default": 5
+      "default": null,
+      "x-prompt": "Default path value (blank for none):"
     },
     "ignoreZones": {
       "type": "boolean",
-      "default": false
-    },
-    "displayNameOpt": {
-      "type": "string",
-      "default": "My new widget label"
-    },
-    "color": {
-      "type": "string",
-      "default": "contrast"
+      "default": false,
+      "x-prompt": "Ignore zones metadata?"
     },
     "addSpec": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "x-prompt": "Generate spec file?"
     },
     "todoBlock": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "x-prompt": "Include TODO guidance block in component?"
     },
     "readme": {
       "type": "boolean",
-      "default": true
-    },
-    "promptAll": {
-      "type": "boolean",
-      "default": false,
-      "description": "Prompt for all optional fields (replaces relying on --interactive)."
+      "default": true,
+      "x-prompt": "Generate README file?"
     },
     "debugLogging": {
       "type": "boolean",

@@ -19,10 +19,13 @@ npx schematics ./tools/schematics/collection.json:create-host2-widget \
 
 Only the required flags are `--name`, `--title`, `--description`, and `--icon` when running non-interactively. By default `--dry-run=false` is applied via the npm script.
 
-### Prompt Modes
+### Prompting Behavior
 
-1. Default (no `--prompt-all`): Only required options (if missing) are prompted; optional fields use defaults silently.
-2. Full (`--prompt-all`): Prompts for every optional + required value not explicitly specified.
+The schematic now uses Angular schema `x-prompt` for both required and optional fields.
+
+Modes:
+1. Non-interactive (default when values supplied or CLI run without `--interactive`): Only missing required fields will prompt; others use defaults.
+2. Interactive (`--interactive` or `--interactive=true`): Prompts sequentially for every field (required + optional) unless you provided it on the command line.
 
 Flag naming: CLI flags must be kebab-case. Each dashed flag maps to camelCase schema properties (e.g. `--register-widget` → `registerWidget`, `--sample-time` → `sampleTime`). Using camelCase directly (e.g. `--registerWidget`) will fail with an "Unknown argument" error.
 
@@ -32,7 +35,7 @@ Examples:
 npm run generate:widget -- --name depth --title Depth --description "Shows depth" --icon depth-icon --register-widget Core
 
 # Full guided session (asks optional too)
-npm run generate:widget -- --prompt-all --name aws --title "Apparent Wind" --description "Displays apparent wind" --icon wind --register-widget Core
+npm run generate:widget -- --interactive --name aws --title "Apparent Wind" --description "Displays apparent wind" --icon wind --register-widget Core
 
 # Skip service registration
 npm run generate:widget -- --name scratch --title Scratch --description "Sandbox" --icon placeholder --register-widget no
@@ -55,7 +58,7 @@ npm run generate:widget -- --name scratch --title Scratch --description "Sandbox
 | registerWidget (flag: --register-widget) | (none) | Category (Core/Gauge/Component/Racing) or 'no' to skip service update |
 | addSpec | true | Generates a basic host test wrapper spec |
 | readme | true | Emits README.md with scaffold notes |
-| promptAll (flag: --prompt-all) | false | Prompt all optional (replaces --interactive for this purpose) |
+| interactive | false | Use `--interactive` to have the CLI ask for any values you did not supply |
 
 ### What Gets Generated
 

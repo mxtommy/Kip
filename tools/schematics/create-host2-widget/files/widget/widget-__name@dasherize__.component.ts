@@ -24,25 +24,25 @@ export class <%= className %> implements AfterViewInit {
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    displayName: '<%= displayNameOpt %>',
-    color: '<%= color %>',
+    displayName: "My New Widget Label",
+    color: "contrast",
     paths: {
-      '<%= pathKey %>': {
-        description: '<%= pathDescription %>',
+      "signalKPath": {
+        description: "My new widget Options path description",
         path: <%= pathDefault === null ? 'null' : `'${pathDefault}'` %>,
         source: null,
         pathType: '<%= pathType %>',
-        isPathConfigurable: <%= isPathConfigurable %>,
-        pathRequired: <%= pathRequired %>,
-        convertUnitTo: '<%= convertUnitTo %>',
-        showPathSkUnitsFilter: <%= showPathSkUnitsFilter %>,
-        pathSkUnitsFilter: <%= pathSkUnitsFilter === null ? 'null' : `'${pathSkUnitsFilter}'` %>,
-        sampleTime: <%= sampleTime %>
+        isPathConfigurable: true,
+        pathRequired: true,
+        convertUnitTo: null,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: null,
+        sampleTime: 1000
       }
     },
     filterSelfPaths: true,
-    enableTimeout: <%= enableTimeout %>,
-    dataTimeout: <%= dataTimeout %>,
+    enableTimeout: false,
+    dataTimeout: 5,
     // TODO: Signal K Zones support: Uncomment or delete depending on your widget needs.
     // Well known widget Options properties (see IWidgetSvcConfig interface) are
     // automatically included in the widget configuration UI if present in config object.

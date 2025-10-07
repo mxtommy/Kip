@@ -1,7 +1,6 @@
 const { apply, url, template, move, mergeWith, chain, noop } = require('@angular-devkit/schematics');
 const { strings } = require('@angular-devkit/core');
 const { appendImport, updateComponentMap, insertDefinitionObject } = require('./utils/formatting');
-const { promptForOptional } = require('./utils/prompts');
 
 const WIDGETS_DIR = 'src/app/widgets';
 const WIDGET_SERVICE = 'src/app/core/services/widget.service.ts';
@@ -10,20 +9,13 @@ function createHost2Widget(options) {
   return (tree, ctx) => {
     const debug = !!options.debugLogging;
     if (debug) ctx.logger.info('[widget-schematic] Raw options input: ' + JSON.stringify(options));
-    const fullPrompt = options.promptAll === true;
-    options.__fullPrompt = fullPrompt;
-    if (debug) ctx.logger.info('[widget-schematic] fullPrompt=' + fullPrompt + ' (promptAll=' + options.promptAll + ')');
-    const prepareRule = async (_tree) => {
-      // Required prompts handled by x-prompt in schema; optional prompts only if interactive=true
-      if (debug) ctx.logger.info('[widget-schematic] Entering optional prompt phase. fullPrompt=' + fullPrompt + ' registerWidget=' + options.registerWidget);
-      await promptForOptional(options, ctx);
-      if (debug) ctx.logger.info('[widget-schematic] Options after prompting: ' + JSON.stringify(options));
-      return _tree;
-    };
-  // registerWidget is required (schema). Value 'no' means do not update widget.service.ts
-  let registerMode = options.registerWidget;
-  if (typeof registerMode === 'string') registerMode = registerMode.toLowerCase() === 'no' ? 'no' : registerMode; // normalize 'No' -> 'no'
-  if (debug) ctx.logger.info('[widget-schematic] Computed registerMode=' + registerMode);
+    if (debug) ctx.logger.info('[widget-schematic] Using schema x-prompt only (no inquirer).');
+    // Normalize registerWidget (case-insensitive). 'no' => skip service update.
+    const rawReg = (options.registerWidget || '').trim();
+    const lower = rawReg.toLowerCase();
+    const skip = lower === 'no';
+    const normalizedCategory = skip ? 'no' : capitalizeCategory(lower);
+    if (debug) ctx.logger.info(`[widget-schematic] registerWidget raw='${rawReg}' lower='${lower}' => normalized='${normalizedCategory}' skip=${skip}`);
 
     const nameDashed = strings.dasherize(options.name);
     const selector = `widget-${nameDashed}`;
@@ -44,13 +36,12 @@ function createHost2Widget(options) {
     ]) : null;
 
     return chain([
-      prepareRule,
       mergeWith(tplSource),
       specSource ? mergeWith(specSource) : noop(),
       readmeSource ? mergeWith(readmeSource) : noop(),
       stripTemplateSuffixRule(widgetFolder),
-      registerMode !== 'no' ? updateWidgetService(selector, className, { ...options, category: registerMode, debugLogging: debug }) : noop(),
-      logSummary(selector, className, registerMode)
+      !skip ? updateWidgetService(selector, className, { ...options, category: normalizedCategory, debugLogging: debug }) : noop(),
+      logSummary(selector, className, normalizedCategory)
     ])(tree, ctx);
   };
 }
@@ -59,7 +50,18 @@ function logSummary(selector, className, registerMode) {
   return (_t, ctx) => {
     ctx.logger.info(`✔ Created ${selector} (${className})`);
     if (registerMode !== 'no') ctx.logger.info('✔ WidgetService updated');
+    else ctx.logger.info('ℹ Skipped WidgetService update (registerWidget=no)');
   };
+}
+
+function capitalizeCategory(lower) {
+  switch (lower) {
+    case 'core': return 'Core';
+    case 'gauge': return 'Gauge';
+    case 'component': return 'Component';
+    case 'racing': return 'Racing';
+    default: return lower; // includes 'no' or any unexpected value
+  }
 }
 
 function updateWidgetService(selector, className, opts) {
