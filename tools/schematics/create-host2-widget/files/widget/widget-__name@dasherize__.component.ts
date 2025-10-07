@@ -20,8 +20,7 @@ export class <%= className %> implements AfterViewInit {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
-  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    // TODO: Update default configuration values as required. See IWidgetSvcConfig interface for all options.
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = { <%= todoBlock ? "// TODO: Update default configuration values as required. See IWidgetSvcConfig interface for all options." : "" %>
     displayName: "My New Widget Label",
     color: "contrast",
     paths: {
@@ -41,8 +40,7 @@ export class <%= className %> implements AfterViewInit {
     filterSelfPaths: true,
     enableTimeout: false,
     dataTimeout: 5<% if (zonesSupport) { %>,
-    // TODO: Signal K Zones support: delete if disabling zones should not be a widget Option users can configure.
-    ignoreZones: false<% } %>
+    ignoreZones: false<%= todoBlock ? " // TODO: Signal K Zones support: delete if disabling zones should not be a widget Option users can configure." : "" %><% } %>
   };
 
   protected readonly runtime = inject(WidgetRuntimeDirective);
@@ -53,8 +51,7 @@ export class <%= className %> implements AfterViewInit {
   protected titleColor = signal<string | undefined>(undefined);
   protected pathValue = signal<number | null>(null);<% if (zonesSupport) { %>
 
-  // TODO: Signal K Zones support: Sample computed signal for zones highlights. Adjust depending on your widget needs.
-  protected highlights = computed<IDataHighlight[]>(() => {
+  protected highlights = computed<IDataHighlight[]>(() => {<%= todoBlock ? " // TODO: Signal K Zones support: Sample computed signal for zones highlights. Adjust depending on your widget needs." : "" %>
     const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();
@@ -73,22 +70,16 @@ export class <%= className %> implements AfterViewInit {
       if (!theme || !cfg) return;
 
       untracked(() => {
-        // Update title color when theme colors are changed. Themes are either, Dark, Light or Red Night mode.
-        // Uses the theme color selected in widget configuration (default is 'contrast') and its variants. Add
-        // signals to include more colors and variants in your template.
-        this.titleColor.set(getColors(this.runtime.options().color, theme).dim);
+        this.titleColor.set(getColors(this.runtime.options().color, theme).dim);<%= todoBlock ? " // TODO: Themes are either, Dark, Light or Red Night mode. Add signals to include more colors and variants in your template." : "" %>
       });
     });
 
-    effect(() => {
-      // React to widget Options configuration changes.
+    effect(() => {<%= todoBlock ? " // React to widget Options configuration changes." : "" %>
       const cfg = this.runtime.options();
       untracked(() => {
         const pathCfg = cfg.paths['signalKPath'];
         if (pathCfg.path) {
-          this.streams.observe('signalKPath', path => {
-            // Update the signal with the latest path value
-            // and/or do more data processing as required.
+          this.streams.observe('signalKPath', path => {<%= todoBlock ? " // TODO: Update the signal with the latest path value and/or do more data processing as required." : "" %>
             this.pathValue.set(path.data.value);
           });<% if (zonesSupport) { %>
           this.metadata.observe('signalKPath');<% } %>
@@ -98,7 +89,6 @@ export class <%= className %> implements AfterViewInit {
   }
 
   // eslint-disable-next-line @angular-eslint/no-empty-lifecycle-method
-  ngAfterViewInit() {
-    // TODO: Add additional widget logic here (canvas drawing, animations, etc.) here or remove if not needed.
+  ngAfterViewInit() {<%= todoBlock ? " // TODO: Add additional widget logic here (canvas drawing, animations, etc.) here or remove if not needed." : "" %>
   }
 }
