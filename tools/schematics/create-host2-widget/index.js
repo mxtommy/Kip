@@ -31,6 +31,7 @@ function createHost2Widget(options) {
         nameDashed,
         selector,
         className,
+        zonesSupport: !!options.zonesSupport,
         // Hidden defaults
         convertUnitTo: null,
         sampleTime: 1000,
@@ -39,7 +40,7 @@ function createHost2Widget(options) {
       }),
       move(widgetFolder)
     ]);
-    const commonTemplateCtx = { ...strings, ...options, nameDashed, selector, className };
+    const commonTemplateCtx = { ...strings, ...options, nameDashed, selector, className, zonesSupport: !!options.zonesSupport };
     const specSource = options.addSpec ? apply(url('./files/spec'), [
       template(commonTemplateCtx), move(widgetFolder)
     ]) : null;

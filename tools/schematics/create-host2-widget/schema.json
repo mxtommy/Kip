@@ -27,7 +27,7 @@
         "Component",
         "Racing"
       ],
-      "x-prompt": "Register the widget so it becomes available under the specified category of the Add Widget dialog (or no)"
+      "x-prompt": "Register widget and make it available in the widget Add Options dialog (choose category or 'no' to skip):"
     },
     "pathType": {
       "type": "string",
@@ -46,17 +46,18 @@
         "null"
       ],
       "default": null,
-      "x-prompt": "Default path value (blank for none):"
+      "x-prompt": "Type the default Signal K path value for the widget (press enter for no default):"
     },
-    "ignoreZones": {
+    "zonesSupport": {
       "type": "boolean",
       "default": false,
-      "x-prompt": "Ignore zones metadata?"
+      "description": "Enable Signal K Zones metadata support (inject WidgetMetadataDirective and observe zones).",
+      "x-prompt": "Enable Signal K Zones metadata support? (adds metadata directive & zones effect)"
     },
     "addSpec": {
       "type": "boolean",
       "default": true,
-      "x-prompt": "Generate spec file?"
+      "x-prompt": "Generate widget tests file?"
     },
     "todoBlock": {
       "type": "boolean",
@@ -66,7 +67,7 @@
     "readme": {
       "type": "boolean",
       "default": true,
-      "x-prompt": "Generate README file?"
+      "x-prompt": "Generate developer instruction README file in the widget's folder?"
     },
     "debugLogging": {
       "type": "boolean",
