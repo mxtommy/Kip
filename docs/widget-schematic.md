@@ -10,14 +10,33 @@ npx schematics ./tools/schematics/collection.json:create-host2-widget \
   --title "Speed Over Ground" \
   --description "Displays SOG from navigation.speedOverGround" \
   --icon navigation-speed \
-  --category Core \
-  --pathKey numericPath \
-  --pathDescription "Speed Over Ground" \
-  --convertUnitTo knots \
-  --sampleTime 1000
+  --path-key numericPath \
+  --path-description "Speed Over Ground" \
+  --convert-unit-to knots \
+  --sample-time 1000 \
+  --register-widget Core
 ```
 
-Only the required flags are `--name`, `--title`, `--description`, and `--icon`. Others fall back to defaults defined in `schema.json`.
+Only the required flags are `--name`, `--title`, `--description`, and `--icon` when running non-interactively. By default `--dry-run=false` is applied via the npm script.
+
+### Prompt Modes
+
+1. Default (no `--prompt-all`): Only required options (if missing) are prompted; optional fields use defaults silently.
+2. Full (`--prompt-all`): Prompts for every optional + required value not explicitly specified.
+
+Flag naming: CLI flags must be kebab-case. Each dashed flag maps to camelCase schema properties (e.g. `--register-widget` → `registerWidget`, `--sample-time` → `sampleTime`). Using camelCase directly (e.g. `--registerWidget`) will fail with an "Unknown argument" error.
+
+Examples:
+```
+# Minimal required (will prompt for any missing among required)
+npm run generate:widget -- --name depth --title Depth --description "Shows depth" --icon depth-icon --register-widget Core
+
+# Full guided session (asks optional too)
+npm run generate:widget -- --prompt-all --name aws --title "Apparent Wind" --description "Displays apparent wind" --icon wind --register-widget Core
+
+# Skip service registration
+npm run generate:widget -- --name scratch --title Scratch --description "Sandbox" --icon placeholder --register-widget no
+```
 
 ### Important Options (subset)
 
@@ -28,14 +47,15 @@ Only the required flags are `--name`, `--title`, `--description`, and `--icon`. 
 | description | (none) | One-line description for registry |
 | icon | (none) | Icon key placeholder (replace later) |
 | category | Core | One of Core, Gauge, Component, Racing |
-| pathKey | signalKPath | Internal key used for data stream observation |
-| pathDescription | My Path | Shown in config UIs (future) |
-| pathType | number | number|string|boolean|Date |
-| convertUnitTo | unitless | Target display unit (UnitsService) |
-| sampleTime | 1000 | ms between sampled updates |
-| registerWidget | Core | Category to register widget under (Core, Gauge, Component, Racing) or 'no' to skip service update |
+| pathKey (flag: --path-key) | signalKPath | Internal key used for data stream observation |
+| pathDescription (flag: --path-description) | My Path | Shown in config UIs (future) |
+| pathType (flag: --path-type) | number | number|string|boolean|Date |
+| convertUnitTo (flag: --convert-unit-to) | unitless | Target display unit (UnitsService) |
+| sampleTime (flag: --sample-time) | 1000 | ms between sampled updates |
+| registerWidget (flag: --register-widget) | (none) | Category (Core/Gauge/Component/Racing) or 'no' to skip service update |
 | addSpec | true | Generates a basic host test wrapper spec |
 | readme | true | Emits README.md with scaffold notes |
+| promptAll (flag: --prompt-all) | false | Prompt all optional (replaces --interactive for this purpose) |
 
 ### What Gets Generated
 

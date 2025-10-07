@@ -1,15 +1,29 @@
 const { apply, url, template, move, mergeWith, chain, noop } = require('@angular-devkit/schematics');
 const { strings } = require('@angular-devkit/core');
 const { appendImport, updateComponentMap, insertDefinitionObject } = require('./utils/formatting');
+const { promptForOptional } = require('./utils/prompts');
 
 const WIDGETS_DIR = 'src/app/widgets';
 const WIDGET_SERVICE = 'src/app/core/services/widget.service.ts';
 
 function createHost2Widget(options) {
   return (tree, ctx) => {
-    // Normalize final decision: registerWidget = 'no' skips service update
-    const registerMode = options.registerWidget === undefined ? 'Core' : options.registerWidget; // default
-    options.registerWidget = registerMode; // ensure downstream templates can access
+    const debug = !!options.debugLogging;
+    if (debug) ctx.logger.info('[widget-schematic] Raw options input: ' + JSON.stringify(options));
+    const fullPrompt = options.promptAll === true;
+    options.__fullPrompt = fullPrompt;
+    if (debug) ctx.logger.info('[widget-schematic] fullPrompt=' + fullPrompt + ' (promptAll=' + options.promptAll + ')');
+    const prepareRule = async (_tree) => {
+      // Required prompts handled by x-prompt in schema; optional prompts only if interactive=true
+      if (debug) ctx.logger.info('[widget-schematic] Entering optional prompt phase. fullPrompt=' + fullPrompt + ' registerWidget=' + options.registerWidget);
+      await promptForOptional(options, ctx);
+      if (debug) ctx.logger.info('[widget-schematic] Options after prompting: ' + JSON.stringify(options));
+      return _tree;
+    };
+  // registerWidget is required (schema). Value 'no' means do not update widget.service.ts
+  let registerMode = options.registerWidget;
+  if (typeof registerMode === 'string') registerMode = registerMode.toLowerCase() === 'no' ? 'no' : registerMode; // normalize 'No' -> 'no'
+  if (debug) ctx.logger.info('[widget-schematic] Computed registerMode=' + registerMode);
 
     const nameDashed = strings.dasherize(options.name);
     const selector = `widget-${nameDashed}`;
@@ -30,11 +44,12 @@ function createHost2Widget(options) {
     ]) : null;
 
     return chain([
+      prepareRule,
       mergeWith(tplSource),
       specSource ? mergeWith(specSource) : noop(),
       readmeSource ? mergeWith(readmeSource) : noop(),
       stripTemplateSuffixRule(widgetFolder),
-      registerMode !== 'no' ? updateWidgetService(selector, className, { ...options, category: options.category || registerMode }) : noop(),
+      registerMode !== 'no' ? updateWidgetService(selector, className, { ...options, category: registerMode, debugLogging: debug }) : noop(),
       logSummary(selector, className, registerMode)
     ])(tree, ctx);
   };
@@ -53,10 +68,13 @@ function updateWidgetService(selector, className, opts) {
       ctx.logger.warn('WidgetService not found; skipping auto-registration');
       return tree;
     }
+    if (opts.debugLogging) ctx.logger.info('[widget-schematic] Updating WidgetService for ' + className);
     let updated = tree.read(WIDGET_SERVICE).toString('utf-8');
     const importStatement = `import { ${className} } from '../../widgets/${selector}/${selector}.component';`;
     updated = appendImport(updated, importStatement);
+    if (opts.debugLogging) ctx.logger.info('[widget-schematic] After import insertion.');
     updated = updateComponentMap(updated, className);
+    if (opts.debugLogging) ctx.logger.info('[widget-schematic] After component map update.');
     updated = insertDefinitionObject(updated, selector, className, {
       title: opts.title,
       description: opts.description,
@@ -67,6 +85,7 @@ function updateWidgetService(selector, className, opts) {
       defaultWidth: opts.defaultWidth,
       defaultHeight: opts.defaultHeight,
     });
+    if (opts.debugLogging) ctx.logger.info('[widget-schematic] After definition insertion.');
     tree.overwrite(WIDGET_SERVICE, updated);
     return tree;
   };

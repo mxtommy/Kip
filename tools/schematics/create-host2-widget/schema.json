@@ -4,36 +4,157 @@
   "title": "Create Host2 Widget",
   "type": "object",
   "properties": {
-    "name": {"type": "string", "description": "Widget machine name without widget- prefix (kebab-case). e.g. tides-chart", "minLength": 3},
-    "title": {"type": "string", "description": "Default widget display name / title", "minLength": 3},
-    "registerWidget": {"type": "string", "description": "Register widget in widget.service.ts (choose category or 'no' to skip)", "enum": ["no", "Core", "Gauge", "Component", "Racing"]},
-    "category": {"type": "string","description": "Add Widget dialog classification category", "enum": ["Core", "Gauge", "Component", "Racing"]},
-    "description": {"type": "string", "description": "Detailed widget description displayed in the Add Widget dialog"},
-    "icon": {"type": "string", "description": "Icon key (SVG symbol id)", "default": "placeholder-svg-icon-id"},
-    "minWidth": {"type": "number", "default": 1},
-    "minHeight": {"type": "number", "default": 1},
-    "defaultWidth": {"type": "number", "default": 2},
-    "defaultHeight": {"type": "number", "default": 3},
-    "pathKey": {"type": "string", "default": "signalKPath"},
-    "pathDescription": {"type": "string", "default": "My new widget Options path description"},
-    "pathType": {"type": "string", "enum": ["number", "string", "boolean", "Date"], "default": "number"},
-    "pathDefault": {"type": ["string", "null"], "default": null},
-    "convertUnitTo": {"type": ["string", "null"], "default": null},
-    "sampleTime": {"type": "number", "default": 1000},
-    "pathRequired": {"type": "boolean", "default": true},
-    "isPathConfigurable": {"type": "boolean", "default": true},
-    "showPathSkUnitsFilter": {"type": "boolean", "default": true},
-    "pathSkUnitsFilter": {"type": ["string", "null"], "default": null},
-    "enableTimeout": {"type": "boolean", "default": false},
-    "dataTimeout": {"type": "number", "default": 5},
-    "ignoreZones": {"type": "boolean", "default": false},
-    "displayNameOpt": {"type": "string", "default": "My new widget label"},
-    "color": {"type": "string", "default": "contrast"},
-    "addSpec": {"type": "boolean", "default": true},
-    "todoBlock": {"type": "boolean", "default": true},
-    "readme": {"type": "boolean", "default": true},
-    "interactive": {"type": "boolean", "default": true}
+    "name": {
+      "type": "string",
+      "description": "Widget machine name without widget- prefix (kebab-case). e.g. tides-chart",
+      "minLength": 3,
+      "x-prompt": "The widget base name is the Angular component machine name (kebab-case, without widget- prefix which will be added automatically). Using base name tides-chart will create a widget-tides-chart component.\nWidget base name:"
+    },
+    "title": {
+      "type": "string",
+      "description": "Default widget display name / title",
+      "minLength": 3,
+      "default": "Widget Label",
+      "x-prompt": "The widget title is the descriptive title used in the Add Widget dialog.\nWidget title:"
+    },
+    "registerWidget": {
+      "type": "string",
+      "description": "Register widget and make it available in the widget Add Options dialog (choose category or 'no' to skip):",
+      "enum": [
+        "No",
+        "Core",
+        "Gauge",
+        "Component",
+        "Racing"
+      ],
+      "x-prompt": "Register the widget so it becomes available under the specified category of the Add Widget dialog (or no)"
+    },
+    "description": {
+      "type": "string",
+      "default": "My new widget's detailed description. To modify this text, edit your widget's _widgetDefinition array item in src/app/core/services/widget.service.ts. You can also specify the icon id to use."
+    },
+    "icon": {
+      "type": "string",
+      "default": "placeholder-svg-icon-id"
+    },
+    "minWidth": {
+      "type": "number",
+      "default": 1
+    },
+    "minHeight": {
+      "type": "number",
+      "default": 1
+    },
+    "defaultWidth": {
+      "type": "number",
+      "default": 2
+    },
+    "defaultHeight": {
+      "type": "number",
+      "default": 3
+    },
+    "pathKey": {
+      "type": "string",
+      "default": "signalKPath"
+    },
+    "pathDescription": {
+      "type": "string",
+      "default": "My new widget Options path description"
+    },
+    "pathType": {
+      "type": "string",
+      "enum": [
+        "number",
+        "string",
+        "boolean",
+        "Date"
+      ],
+      "default": "number"
+    },
+    "pathDefault": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "convertUnitTo": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "sampleTime": {
+      "type": "number",
+      "default": 1000
+    },
+    "pathRequired": {
+      "type": "boolean",
+      "default": true
+    },
+    "isPathConfigurable": {
+      "type": "boolean",
+      "default": true
+    },
+    "showPathSkUnitsFilter": {
+      "type": "boolean",
+      "default": true
+    },
+    "pathSkUnitsFilter": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "enableTimeout": {
+      "type": "boolean",
+      "default": false
+    },
+    "dataTimeout": {
+      "type": "number",
+      "default": 5
+    },
+    "ignoreZones": {
+      "type": "boolean",
+      "default": false
+    },
+    "displayNameOpt": {
+      "type": "string",
+      "default": "My new widget label"
+    },
+    "color": {
+      "type": "string",
+      "default": "contrast"
+    },
+    "addSpec": {
+      "type": "boolean",
+      "default": true
+    },
+    "todoBlock": {
+      "type": "boolean",
+      "default": true
+    },
+    "readme": {
+      "type": "boolean",
+      "default": true
+    },
+    "promptAll": {
+      "type": "boolean",
+      "default": false,
+      "description": "Prompt for all optional fields (replaces relying on --interactive)."
+    },
+    "debugLogging": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable verbose debug logging for schematic execution (normalization, prompts, service update)."
+    }
   },
-  "required": ["name", "title", "icon", "registerWidget"],
+  "required": [
+    "name",
+    "title",
+    "registerWidget"
+  ],
   "additionalProperties": false
 }
