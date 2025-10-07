@@ -18,12 +18,9 @@ describe('create-host2-widget schematic', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function run(options: Record<string, any>) {
     return runner.runSchematic('create-host2-widget', {
-      name: 'alpha', title: 'Alpha', description: 'Alpha desc', icon: 'placeholder', category: 'Core',
-      minWidth: 1, minHeight: 1, defaultWidth: 2, defaultHeight: 3,
-      pathKey: 'numericPath', pathDescription: 'Value', pathType: 'number', pathDefault: null, convertUnitTo: 'knots',
-      sampleTime: 1000, pathRequired: true, isPathConfigurable: true, showPathSkUnitsFilter: false, pathSkUnitsFilter: null,
-      enableTimeout: false, dataTimeout: 0, ignoreZones: false, displayNameOpt: '', color: '',
-      registerWidget: 'Core', addSpec: false, todoBlock: false, readme: false, interactive: false,
+      name: 'alpha', title: 'Alpha', registerWidget: 'Core',
+      pathType: 'number', pathDefault: null, ignoreZones: false,
+      addSpec: false, todoBlock: false, readme: false,
       ...options
     }, appTree);
   }

@@ -25,14 +25,32 @@ function createHost2Widget(options) {
       throw new Error(`Widget already exists: ${selector}`);
     }
     const tplSource = apply(url('./files/widget'), [
-      template({ ...strings, ...options, nameDashed, selector, className, pathKey: options.pathKey }),
+      template({
+        ...strings,
+        ...options,
+        nameDashed,
+        selector,
+        className,
+        // Hidden defaults
+        convertUnitTo: null,
+        sampleTime: 1000,
+        icon: 'placeholder-icon',
+        description: 'TODO: Add description',
+      }),
       move(widgetFolder)
     ]);
+    const commonTemplateCtx = { ...strings, ...options, nameDashed, selector, className };
     const specSource = options.addSpec ? apply(url('./files/spec'), [
-      template({ ...strings, ...options, nameDashed, selector, className }), move(widgetFolder)
+      template(commonTemplateCtx), move(widgetFolder)
     ]) : null;
     const readmeSource = options.readme ? apply(url('./files/readme'), [
-      template({ ...strings, ...options, nameDashed, selector, className }), move(widgetFolder)
+      template({
+        ...commonTemplateCtx,
+        convertUnitTo: null,
+        sampleTime: 1000,
+        icon: 'placeholder-icon',
+        description: 'TODO: Add description'
+      }), move(widgetFolder)
     ]) : null;
 
     return chain([
@@ -78,14 +96,14 @@ function updateWidgetService(selector, className, opts) {
     updated = updateComponentMap(updated, className);
     if (opts.debugLogging) ctx.logger.info('[widget-schematic] After component map update.');
     updated = insertDefinitionObject(updated, selector, className, {
-      title: opts.title,
-      description: opts.description,
-      icon: opts.icon,
-      category: opts.category,
-      minWidth: opts.minWidth,
-      minHeight: opts.minHeight,
-      defaultWidth: opts.defaultWidth,
-      defaultHeight: opts.defaultHeight,
+      title: opts.title || opts.name || className,
+      description: "TODO: Add description. Description is found in the item related to your widget as an item in array _widgetDefinition, found in file src/app/core/services/widget.service.ts. In this file you can also set the widget icon and other properties.",
+      icon: 'placeholder-icon', // TODO: Replace with proper icon key when you add an icon. See file src/assets/svg/icons.svg
+      category: opts.category || 'Core',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 2,
+      defaultHeight: 2,
     });
     if (opts.debugLogging) ctx.logger.info('[widget-schematic] After definition insertion.');
     tree.overwrite(WIDGET_SERVICE, updated);

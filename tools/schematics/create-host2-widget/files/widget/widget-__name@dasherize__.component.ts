@@ -90,16 +90,16 @@ export class <%= className %> implements AfterViewInit {
       // React to widget Options configuration changes.
       const cfg = this.runtime.options();
       untracked(() => {
-        const pathCfg = cfg.paths['<%= pathKey %>'];
+        const pathCfg = cfg.paths['signalKPath'];
         if (pathCfg.path) {
-          this.streams.observe('<%= pathKey %>', path => {
+          this.streams.observe('signalKPath', path => {
             // Update the signal with the latest path value
             // and/or do more data processing as required.
             this.pathValue.set(path.data.value);
           });
           // TODO: Signal K Zones support: Uncomment or delete depending on your widget needs.
           // Zones updates are emitted in signal this.metadata.zones()
-          //this.metadata.observe('<%= pathKey %>')
+          //this.metadata.observe('signalKPath')
         }
       });
     });
