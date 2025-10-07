@@ -177,6 +177,7 @@
       "versionMismatch": true
     },
     "schematicCollections": [
+      "./tools/schematics/collection.json",
       "@angular-eslint/schematics"
     ],
     "analytics": false

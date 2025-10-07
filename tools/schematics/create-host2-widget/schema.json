@@ -12,14 +12,14 @@
     },
     "title": {
       "type": "string",
-      "description": "Default widget display name / title",
+      "description": "The widget title is the descriptive title used in the Add Widget dialog",
       "minLength": 3,
       "default": "Widget Label",
       "x-prompt": "The widget title is the descriptive title used in the Add Widget dialog.\nWidget title:"
     },
     "registerWidget": {
       "type": "string",
-      "description": "Register widget and make it available in the widget Add Options dialog (choose category or 'no' to skip):",
+      "description": "Register widget and make it available in the widget Add Options dialog",
       "enum": [
         "No",
         "Core",
@@ -31,6 +31,7 @@
     },
     "pathType": {
       "type": "string",
+      "description": "The type of value the Signal K path provides (number|string|boolean|Date)",
       "enum": [
         "number",
         "string",
@@ -46,27 +47,31 @@
         "null"
       ],
       "default": null,
+      "description": "The default Signal K path the widget should use (if any)",
       "x-prompt": "Type the default Signal K path value for the widget (press enter for no default):"
     },
     "zonesSupport": {
       "type": "boolean",
       "default": false,
-      "description": "Enable Signal K Zones metadata support (inject WidgetMetadataDirective and observe zones).",
-      "x-prompt": "Enable Signal K Zones metadata support? (adds metadata directive & zones effect)"
+      "description": "Enable Signal K Zones metadata support.",
+      "x-prompt": "Enable Signal K Zones metadata support?"
     },
     "addSpec": {
       "type": "boolean",
       "default": true,
+      "description": "Generate widget spec (test) file.",
       "x-prompt": "Generate widget tests file?"
     },
     "todoBlock": {
       "type": "boolean",
       "default": true,
+      "description": "Include TODO guidance block in component.",
       "x-prompt": "Include TODO guidance block in component?"
     },
     "readme": {
       "type": "boolean",
       "default": true,
+      "description": "Generate developer instruction README file in the widget's folder.",
       "x-prompt": "Generate developer instruction README file in the widget's folder?"
     },
     "debugLogging": {
