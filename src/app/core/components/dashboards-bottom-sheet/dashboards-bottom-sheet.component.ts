@@ -4,14 +4,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 
 @Component({
-  selector: 'dashboards-manage-bottom-sheet',
+  selector: 'dashboards-bottom-sheet',
   imports: [ MatListModule, MatIconModule ],
-  templateUrl: './dashboards-manage-bottom-sheet.component.html',
-  styleUrl: './dashboards-manage-bottom-sheet.component.scss'
+  templateUrl: './dashboards-bottom-sheet.component.html',
+  styleUrl: './dashboards-bottom-sheet.component.scss'
 })
-export class DashboardsManageBottomSheetComponent {
+export class DashboardsBottomSheetComponent {
   private _bottomSheetRef =
-    inject<MatBottomSheetRef<DashboardsManageBottomSheetComponent>>(MatBottomSheetRef);
+    inject<MatBottomSheetRef<DashboardsBottomSheetComponent>>(MatBottomSheetRef);
   public data: { showCancel?: boolean } = inject<{ showCancel?: boolean }>(MAT_BOTTOM_SHEET_DATA);
   showCancel = !!(this.data && this.data.showCancel);
 
