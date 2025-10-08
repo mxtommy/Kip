@@ -36,7 +36,7 @@ With KIP, you get the **familiar feel of professional Multi-Function Displays** 
 
 ## Installations Showcase
 ![Form factor support](./images/exterior_user_installs.png)
-In addition to the obvious navstation, wall mounted instrument panel and autopilot remote control usecases using PCs, tablets and phones, users have taken KIP into the elements using Raspberry Pi, Pi Zero, rugged tablets and all kinds of low cost AliExpress screens and industry leading, high quality, sunlight readable marine touch screens. KIP'S native remote control feature opens up all kinds of possibilities.
+In addition to the obvious navstation, wall mounted instrument panel and autopilot remote control usecases using PCs, tablets and phones, users have taken KIP into the elements using Raspberry Pi, Pi Zero, rugged tablets and all kinds of low cost AliExpress screens and industry leading, high quality, sunlight readable marine touch screens. KIP's native remote control feature opens up all kinds of possibilities.
 
 ## Read the Help Introduction How-To
 You just installed KIP and you're stuck; read the [Introduction](https://github.com/mxtommy/Kip/blob/master/src/assets/help-docs/welcome.md) help file.
