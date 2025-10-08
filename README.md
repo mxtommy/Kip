@@ -44,7 +44,7 @@ You just installed KIP and you're stuck; read the [Introduction](https://github.
 # Design Goal
 The goal is to replicate and enhance the functionality of modern marine instrumentation displays while providing unmatched customization and flexibility. The design principles include:
 
-- **Full-Screen Utilization**: Ensure the display uses the entire screen without requiring scrolling, maximizing visibility and usability.
+- **Full-Screen Utilization**: Ensure the display uses the entire screen without requiring scrolling, maximizing visibility, usability reducing onscreen control clutter.
 - **Optimized for Readability**: Present data in a large, clear, and easily interpretable format to ensure quick comprehension. Utilize high-contrast color schemes to enhance visibility, especially in bright daylight conditions.
 - **Touchscreen Excellence**: Deliver an intuitive and seamless experience for touchscreen users, with support for gestures like swiping and tapping.
 - **Cross-Device Compatibility**: Guarantee a consistent and responsive experience across phones, tablets, computers, and other devices.
@@ -54,12 +54,12 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 
 ## User Experience
 
-### Controls
+### Interractions
 - Swipe up and down to navigate through your dashboards effortlessly.
 - Swipe left and right to access notifications and other system features quickly.
-- Use keyboard shortcuts for essential features, ensuring fast and efficient navigation across devices.
+- Use keyboard shortcuts for essential features, ensuring fast and efficient navigation across devices types.
 
-### Dashboard Layouts
+### Customyze
 - Effortlessly create and customize dashboards using an intuitive grid layout system.
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
