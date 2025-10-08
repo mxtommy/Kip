@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "CreateHost2WidgetSchema",
+  "title": "Create Host2 Widget",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Widget machine name without widget- prefix (kebab-case). e.g. tides-chart",
+      "minLength": 3,
+      "x-prompt": "The widget base name is the Angular component machine name (kebab-case, without widget- prefix which will be added automatically). Using base name tides-chart will create a widget-tides-chart component.\nWidget base name:"
+    },
+    "title": {
+      "type": "string",
+      "description": "The widget title is the descriptive title used in the Add Widget dialog",
+      "minLength": 3,
+      "default": "Widget Label",
+      "x-prompt": "The widget title is the descriptive title used in the Add Widget dialog.\nWidget title:"
+    },
+    "registerWidget": {
+      "type": "string",
+      "description": "Register widget and make it available in the widget Add Options dialog",
+      "enum": [
+        "No",
+        "Core",
+        "Gauge",
+        "Component",
+        "Racing"
+      ],
+      "x-prompt": "Register widget and make it available in the widget Add Options dialog (choose category or 'no' to skip):"
+    },
+    "pathType": {
+      "type": "string",
+      "description": "The type of value the Signal K path provides (number|string|boolean|Date)",
+      "enum": [
+        "number",
+        "string",
+        "boolean",
+        "Date"
+      ],
+      "default": "number",
+      "x-prompt": "Path value type (number|string|boolean|Date):"
+    },
+    "pathDefault": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "The default Signal K path the widget should use (if any)",
+      "x-prompt": "Type the default Signal K path value for the widget (press enter for no default):"
+    },
+    "zonesSupport": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable Signal K Zones metadata support.",
+      "x-prompt": "Enable Signal K Zones metadata support?"
+    },
+    "addSpec": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate widget spec (test) file.",
+      "x-prompt": "Generate widget tests file?"
+    },
+    "todoBlock": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include TODO guidance block in component.",
+      "x-prompt": "Include TODO guidance block in component?"
+    },
+    "readme": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate developer instruction README file in the widget's folder.",
+      "x-prompt": "Generate developer instruction README file in the widget's folder?"
+    },
+    "debugLogging": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable verbose debug logging for schematic execution (normalization, prompts, service update)."
+    }
+  },
+  "required": [
+    "name",
+    "title",
+    "registerWidget"
+  ],
+  "additionalProperties": false
+}

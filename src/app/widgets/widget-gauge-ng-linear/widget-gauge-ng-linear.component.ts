@@ -88,7 +88,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     }
     return { min: cfg.displayScale.lower, max: cfg.displayScale.upper, majorTicks: [] };
   });
-  private readonly highlights = computed<IDataHighlight[]>(() => {
+  private highlights = computed<IDataHighlight[]>(() => {
     const cfg = this.runtime.options();
     const theme = this.theme();
     if (!cfg || !theme) return [];

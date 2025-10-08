@@ -48,9 +48,12 @@
     "build:dev": "ng build --configuration=dev",
     "build:prod": "ng build --configuration=production",
     "build:all": "npm run build:plugin && npm run build:prod",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "generate:widget": "npx schematics ./tools/schematics/collection.json:create-host2-widget --dry-run=false"
   },
+  "schematics": "tools/schematics/collection.json",
   "devDependencies": {
+    "@angular-devkit/schematics-cli": "^20.1.6",
     "@angular-devkit/build-angular": "^20.1.6",
     "@angular/animations": "20.1.7",
     "@angular/build": "^20.1.6",

@@ -27,7 +27,6 @@ import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 
-
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
 export enum WidgetCategories {
@@ -146,7 +145,7 @@ export class WidgetService {
     WidgetDataChartComponent: WidgetDataChartComponent,
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent
-  };
+};
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -461,19 +460,6 @@ export class WidgetService {
       selector: 'widget-windtrends-chart',
       componentClassName: 'WidgetWindTrendsChartComponent'
     },
-    {
-      name: 'Countdown Timer',
-      description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
-      icon: 'racetimerWidget',
-      minWidth: 3,
-      minHeight: 3,
-      defaultWidth: 3,
-      defaultHeight: 4,
-      category: 'Racing',
-      requiredPlugins: [],
-      selector: 'widget-racetimer',
-      componentClassName: 'WidgetRaceTimerComponent',
-    }
   ];
 
   get kipWidgets(): readonly WidgetDescription[] {
