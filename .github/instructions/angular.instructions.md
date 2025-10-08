@@ -127,7 +127,7 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 3. **Project Setup**: Refer to `README.md` for build commands, dependencies, and environment setup
 
 ### **Integration Notes:**
-- When developing KIP widgets, extend `BaseWidgetComponent` as described in `COPILOT.md` AND follow the Angular v20+ patterns in this file
+- When developing KIP widgets, follow the Host2 widget architecture (signals + `WidgetRuntimeDirective` / `WidgetStreamsDirective` (+ optional `WidgetMetadataDirective`)) and, for new widgets, prefer generating the scaffold via the `create-host2-widget` schematic (see `COPILOT.md` sections 9 & 13)
 - Use signals, standalone components, and modern control flow from this file within the KIP architecture from `COPILOT.md`
 - For theming and colors, always use the KIP theme system described in `COPILOT.md`, not generic CSS approaches
 - All services should follow both the Angular DI patterns here AND the KIP service architecture in `COPILOT.md`
