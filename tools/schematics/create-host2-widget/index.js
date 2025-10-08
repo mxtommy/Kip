@@ -103,8 +103,8 @@ function updateWidgetService(selector, className, opts) {
       category: opts.category || 'Core',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 6,
     });
     if (opts.debugLogging) ctx.logger.info('[widget-schematic] After definition insertion.');
     tree.overwrite(WIDGET_SERVICE, updated);
