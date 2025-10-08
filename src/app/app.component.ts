@@ -16,6 +16,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GestureDirective } from './core/directives/gesture.directive';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
@@ -31,7 +32,7 @@ import { ConfigurationUpgradeService } from './core/services/configuration-upgra
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
@@ -50,6 +51,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _notificationOverlay = inject(NotificationOverlayService);
   private readonly _router = inject(Router);
   private readonly _upgrade = inject(ConfigurationUpgradeService);
+  public readonly upgrade = this._upgrade; // expose for template overlay
 
   private notificationHowl?: Howl;
   private _upgradeShown = false;

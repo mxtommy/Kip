@@ -9,3 +9,22 @@
     <router-outlet class="router-outlet-container" />
   </mat-sidenav-content>
 </mat-sidenav-container>
+
+@if (upgrade.upgrading()) {
+  <div class="config-upgrade-overlay" role="alert" aria-live="polite">
+    <div class="config-upgrade-card">
+      <mat-progress-spinner diameter="46" mode="indeterminate"></mat-progress-spinner>
+      <div class="config-upgrade-text">
+        <h3>Upgrading Configuration…</h3>
+        <p>Please wait a moment while we migrate your dashboards and widgets.</p>
+        @if (upgrade.messages().length) {
+          <ul class="config-upgrade-messages">
+            @for (m of upgrade.messages(); track m) {
+              <li>{{ m }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+}
