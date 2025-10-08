@@ -66,9 +66,10 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
 - Easily switch between multiple user and device configurations profiles for different roles, formfactors or use cases.
 
-![Sidenav Dashboard Access](./images/ActionSidenav.png)
 Sidenav for quick access to all important features.
+![Sidenav Dashboard Access](./images/ActionSidenav.png)
 
+Chartplotter Mode with dashboards
 ![Chartplotter Mode](./images/ChartplotterMode.png)
 
 ## Dashboards and Configuration
