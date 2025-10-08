@@ -122,16 +122,16 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 Get the latest version of KIP to see what's new!
 
 ### Widget Samples
-Gauges
+Gauges sample
 ![Sample Gauges Image](./images/KipGaugeSample1-1024x545.png)
 
-Various
+Various other types of widgets
 ![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
 
-Freeboard-SK Integration with Autopilot
+Freeboard-SK Chartplotter integration with Autopilot widget
 ![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
 
-Grafana Integration
+Grafana integration with other widgets
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
 ## Night Modes
