@@ -64,7 +64,7 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
 - Simply drag dashboards to reorganize them. Double-click any dashboard to open the icon gallery and give each page a unique visual identity.
-- Seamlessly switch between multiple configuration profiles for different roles and devices or use cases.
+- Seamlessly switch between multiple user and device configurations profiles for different roles, formfactors or use cases.
 
 ![Sidenav Dashboard Access](./images/ActionSidenav.png)
 Sidenav for quick access to all important features.
