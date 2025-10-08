@@ -18,3 +18,56 @@ mat-sidenav.sidenav-actions {
   z-index: 1200; // ensure actions sidenav stacks above overlay
   overflow-x: hidden; // Ensure action sidenav content doesn't overflow horizontally
 }
+
+/* Configuration Upgrade Overlay */
+.config-upgrade-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+  z-index: 2000; // above sidenavs & menus
+  pointer-events: all;
+}
+
+.config-upgrade-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+  width: clamp(300px, 60vw, 640px);
+  background: var(--kip-background, #1f1f1f);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  color: var(--kip-contrast-color, #fff);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.55);
+}
+
+.config-upgrade-text h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+
+.config-upgrade-text p {
+  margin: 0 0 10px;
+  font-size: .8rem;
+  opacity: .85;
+}
+
+.config-upgrade-messages {
+  list-style: disc;
+  margin: 0;
+  padding-left: 18px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: .68rem;
+  line-height: 1.25;
+  scrollbar-width: thin;
+}
+
+.config-upgrade-messages li { margin-bottom: 2px; }

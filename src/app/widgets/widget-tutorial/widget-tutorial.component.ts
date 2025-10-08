@@ -4,12 +4,13 @@ import { AppSettingsService } from '../../core/services/app-settings.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'widget-tutorial',
     templateUrl: './widget-tutorial.component.html',
     styleUrls: ['./widget-tutorial.component.scss'],
-    imports: [ MatButton ],
+    imports: [ MatButton, RouterLink ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetTutorialComponent  {

@@ -7,8 +7,8 @@ export const DefaultDashboard: Dashboard[] = [
       icon: 'dashboard-dashboard',
       configuration: [
         {
-          "w": 12,
-          "h": 12,
+          "w": 24,
+          "h": 24,
           "id": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc",
           "selector": "widget-host2",
           "input": {

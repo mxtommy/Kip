@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
-import { GridstackComponent, GridstackModule, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { GridstackComponent, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
@@ -27,8 +27,7 @@ interface GridApi {
 
 @Component({
   selector: 'dashboard',
-  standalone: true,
-  imports: [GridstackModule, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
+  imports: [GridstackComponent, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   host: {
@@ -52,9 +51,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
   private _suppressDrag = false;
   protected readonly gridOptions = signal<NgGridStackOptions>({
+    column: 24,
     margin: 4,
-    minRow: 12,
-    maxRow: 12,
+    minRow: 24,
+    maxRow: 24,
     float: true,
     acceptWidgets: false,
     resizable: { handles: 'all' },
@@ -249,10 +249,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
       const gridCell = this._gridstack().grid.getCellFromPixel({ left: inputX, top: inputY });
-      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 1)
+      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2)
 
       if (isCellEmpty) {
-        if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 2, h: 3 })) {
+        if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
@@ -328,7 +328,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       _gridstack.grid.addWidget(newItem);
     } else {
       newItem.h = 2;
-      newItem.w = 2;
+      newItem.w = 1;
       if (_gridstack.grid.willItFit(newItem)) {
         _gridstack.grid.addWidget(newItem);
       } else {

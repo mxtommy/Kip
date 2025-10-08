@@ -15,7 +15,7 @@ export const DefaultAppConfig: IAppConfig = {
   "notificationConfig": DefaultNotificationConfig,
   "splitShellEnabled": true,
   "splitShellSide": "left",
-  "splitShellWidth": 0.3
+  "splitShellWidth": 0.5
 }
 
 export const DefaultThemeConfig: IThemeConfig = {
