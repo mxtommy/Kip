@@ -88,7 +88,7 @@
     "core-js": "^3.13.1",
     "date-fns": "^2.30.0",
     "eslint": "^9.29.0",
-    "gridstack": "^11.4.0",
+    "gridstack": "^12.3.3",
     "howler": "^2.2.4",
     "jasmine-core": "~4.0.1",
     "jasmine-spec-reporter": "~5.0.0",

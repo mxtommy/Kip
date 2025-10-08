@@ -291,6 +291,7 @@ export class ConfigurationUpgradeService {
       }
       // Iterate dashboards and force widget selector to 'widget-host2'
       let updatedWidgetCount = 0;
+      let dimensionUpdatedCount = 0;
       if (Array.isArray(config.dashboards)) {
         for (const dash of config.dashboards) {
           if (dash && Array.isArray(dash.configuration)) {
@@ -300,6 +301,18 @@ export class ConfigurationUpgradeService {
                   widget.selector = 'widget-host2';
                   updatedWidgetCount++;
                 }
+                // Helper to double a numeric property if > 0
+                const maybeDouble = (prop: string) => {
+                  const val = widget[prop];
+                  if (typeof val === 'number' && val !== 0) {
+                    widget[prop] = val * 2;
+                    dimensionUpdatedCount++;
+                  }
+                };
+                maybeDouble('w');
+                maybeDouble('h');
+                maybeDouble('x');
+                maybeDouble('y');
               }
             }
           }
@@ -307,6 +320,9 @@ export class ConfigurationUpgradeService {
       }
       if (updatedWidgetCount) {
         this.pushMsg(`[Upgrade] Updated ${updatedWidgetCount} widget selector(s) to 'widget-host2' for ${rootConfig.scope}/${rootConfig.name}.`);
+      }
+      if (dimensionUpdatedCount) {
+        this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries for ${rootConfig.scope}/${rootConfig.name}.`);
       }
 
       config.app.configVersion = 12;
@@ -323,24 +339,43 @@ export class ConfigurationUpgradeService {
   }
 
   private upgradeDashboardWidgets(dashboards: Dashboard[]): void {
-      // Iterate dashboards and force widget selector to 'widget-host2'
-      let updatedWidgetCount = 0;
+      // Iterate dashboards:
+      // 1. Force widget selector to 'widget-host2'
+      // 2. Double grid metrics (x,y,w,h) if non-zero (leave zeros untouched)
+      let selectorUpdatedCount = 0;
+      let dimensionUpdatedCount = 0;
       if (Array.isArray(dashboards)) {
         for (const dash of dashboards) {
-          if (dash && Array.isArray(dash.configuration)) {
-            for (const widget of dash.configuration) {
-              if (widget && typeof widget === 'object') {
-                if (widget.selector !== 'widget-host2') {
-                  widget.selector = 'widget-host2';
-                  updatedWidgetCount++;
-                }
-              }
+          if (!dash || !Array.isArray(dash.configuration)) continue;
+          for (const widget of dash.configuration) {
+            if (!widget || typeof widget !== 'object') continue;
+
+            // Ensure selector
+            if (widget.selector !== 'widget-host2') {
+              widget.selector = 'widget-host2';
+              selectorUpdatedCount++;
             }
+
+            // Helper to double a numeric property if > 0
+            const maybeDouble = (prop: string) => {
+              const val = widget[prop];
+              if (typeof val === 'number' && val !== 0) {
+                widget[prop] = val * 2;
+                dimensionUpdatedCount++;
+              }
+            };
+            maybeDouble('w');
+            maybeDouble('h');
+            maybeDouble('x');
+            maybeDouble('y');
           }
         }
       }
-      if (updatedWidgetCount) {
-        this.pushMsg(`[Upgrade] Updated ${updatedWidgetCount} localStorage widget selector(s) to 'widget-host2'.`);
+      if (selectorUpdatedCount) {
+        this.pushMsg(`[Upgrade] Updated ${selectorUpdatedCount} localStorage widget selector(s) to 'widget-host2'.`);
+      }
+      if (dimensionUpdatedCount) {
+        this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries.`);
       }
   }
 
