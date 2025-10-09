@@ -62,10 +62,7 @@ export type IPathArray = Record<
 
 
 /**
- * This interface defines all possible Widget configuration settings.
- * Usage: Widgets for configuration storage and Widget Manager service.
- *
- * Note: Used by IWidget interface.
+ * Defines all possible Widget configuration properties.
  *
  * @export
  * @interface IWidgetSvcConfig
@@ -209,17 +206,21 @@ export interface IWidgetSvcConfig {
   autopilot?: IAutopilotConfig,
 
   /** Used by historical data Widget: Set the data conversion format. */
-  convertUnitTo?: string;
+  convertUnitTo?: string | null;
 
   /** Used to select a group for the convertUnitTo conversion. */
   convertUnitToGroup?: string;
 
-  /** Used by historical data Widget */
-  datasetUUID?: string;
+  /** Datachart widget Dataset option: Path for the dataset */
+  datachartPath?: string | null,
+  /** Datachart widget Dataset option: Source for the dataset */
+  datachartSource?: string | null,
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
-  /** Used by windtrend chart Widget to set datapoint configuration */
+  /** Used by datachart & windtrend chart Widget to set datapoint configuration */
   timeScale?: string;
+  /** Used by datachart & windtrend chart Widget to set period configuration */
+  period?: number;
   /** Specifies if the chart should track against the average dataset instead of the value (default setting) */
   trackAgainstAverage?: boolean;
   /** Specifies which average data points property (1=avg, 2=ema or 3=dema) the chart dataset will be built with */

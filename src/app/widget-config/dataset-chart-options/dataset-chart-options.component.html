@@ -1,30 +1,76 @@
 <div class="display-content tab-content">
-  <div class="widget-options-grid">
-
-    <mat-form-field class="options-grid-span2">
-      <mat-label>Dataset</mat-label>
-      <mat-select
-        placeholder="Select dataset..."
-        [formControl]="datasetUUID()"
-        name="datasetUUID"
-        (selectionChange)="datasetChanged($event)"
+  <div class="flex-container" style="margin-top: 10px;">
+    <mat-form-field class="full-width">
+      <mat-label>
+        Signal K Path
+      </mat-label>
+      <input #pathInput type="text" matInput
+        placeholder="Type to use autocomplete or select from list"
+        [formControl]="datachartPath()"
+        [matAutocomplete]="pathAutoComplete"
         required>
-        @for (ds of availableDataSets; track ds.uuid) {
-          <mat-option [value]="ds.uuid">
-            {{ds.label}}
+      @if (pathInput.value) {
+        <button mat-icon-button matIconSuffix aria-label="Clear" (click)="clearPathInputField()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+      @if (pathInput.validity.valueMissing) {
+        <mat-error>
+          Path is required. Please enter a valid Signal K path.
+        </mat-error>
+      } @else if (datachartPath().errors) {
+        <mat-error>
+          Path not recognized. Please enter a path from the server's published list.
+        </mat-error>
+      }
+      <mat-autocomplete #pathAutoComplete="matAutocomplete" (optionSelected)="changePath($event)">
+        @for (option of filteredNumericPaths(); track option.path) {
+          <mat-option [value]="option.path"  style="min-height: 48px; line-height: 1.15; height: auto; padding: 8px 16px; white-space: normal;">
+            @if (option.meta !== undefined) {
+              <span>{{option.path}}</span>
+              <br>
+              <small class="pathMetaDescription">{{option.meta.description}}</small>
+            } @else {
+              {{option.path}}
+            }
           </mat-option>
         }
-      </mat-select>
+      </mat-autocomplete>
     </mat-form-field>
-
-    <mat-form-field class="options-grid-span2">
-      <mat-label>Display Format</mat-label>
-      <mat-select
+  </div>
+  <div class="flex-container" style="margin-top: 10px;">
+    <mat-checkbox
+      [formControl]="filterSelfPaths()">
+      Restrict to own vessel
+    </mat-checkbox>
+  </div>
+  <div class="flex-container" style="margin-top: 10px;">
+    <div class="flex-field-50">
+      <mat-form-field class="full-width">
+        <mat-label>Source</mat-label>
+        <mat-select
+          placeholder="Select data source"
+          [formControl]="datachartSource()"
+          name="sourceControl"
+          required
+          >
+          @for (source of pathSources(); track source) {
+            <mat-option [value]="source">
+              {{source}}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="flex-field-50">
+      <mat-form-field class="full-width">
+        <mat-label>Display Format</mat-label>
+        <mat-select
           placeholder="Select unit..."
           [formControl]="convertUnitTo()"
           name="convertUnitTo"
           required>
-          @for (group of unitList.conversions; track $index) {
+          @for (group of unitList().conversions; track $index) {
             <mat-optgroup [label]="group.group">
               @for (unit of group.units; track $index) {
                 <mat-option [value]="unit.measure">
@@ -33,7 +79,53 @@
               }
             </mat-optgroup>
           }
-      </mat-select>
-    </mat-form-field>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
+  <br />
+  <p style="margin-top: 10px;">
+    The time scale defines the data sampling rate and overall Dataset level
+    of precision. Select a Time Scale that is targeted to your intended usage.
+    Shorter Time Scales have higher system resources
+    costs, for both the data capture and widget rendering process.
+  </p>
+  <div class="flex-container" style="margin-top: 10px;">
+    <div class="flex-field-50">
+      <mat-form-field class="full-width">
+        <mat-label>Time Scale</mat-label>
+        <mat-select
+          placeholder="Select dataset time scale"
+          [formControl]="timeScale()"
+          name="timeScaleFormat"
+          required>
+          <mat-option value="hour">Hours</mat-option>
+          <mat-option value="minute">Minutes</mat-option>
+          <mat-option value="second">Seconds</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="flex-field-50">
+      <mat-form-field class="full-width">
+        <mat-label>Duration</mat-label>
+        <input matInput type="number"
+          min="1" max="60" step="1"
+          placeholder="Enter or select number..."
+          [formControl]="period()"
+          required>
+      </mat-form-field>
+    </div>
+  </div>
+  <ul>
+    <li>Hours: per minute sampling rate. Intended for long sampling periods when slow
+      refresh rate is acceptable and system resource usage should be minimized. Grafana is
+      a better alternative to this Time Scale.
+    </li>
+    <li>Minutes: per second sampling rate. Meant for trends observations such wind
+      speed, depth, solar power, voltage, etc.
+    </li>
+    <li>Secondes: 200ms sampling rate. Intended for use cases where user may act upon realtime
+      information such as when racing.
+    </li>
+  </ul>
 </div>

@@ -90,6 +90,8 @@ export class AppService {
   private _redNightMode = toSignal(this._settings.getRedNightModeAsO(), { requireSync: true });
   private _environmentMode = toSignal(this._data.subscribePath(this.MODE_PATH, 'default'));
 
+  private previousEnvironmentMode: string | null = null;
+
   public readonly appVersion = signal<string>(packageInfo.version);
   public readonly browserVersion = signal<string>('Unknown');
   public readonly osVersion = signal<string>('Unknown');
@@ -111,10 +113,17 @@ export class AppService {
 
     effect(() => {
       const mode = this._environmentMode().data.value;
-      if (this._useAutoNightMode()) {
-        this.isNightMode.set(mode === "night");
-        this.toggleDayNightMode();
-      }
+
+      untracked(() => {
+        if (this.previousEnvironmentMode === mode) return; // No change in mode
+
+        this.previousEnvironmentMode = mode;
+
+        if (this._useAutoNightMode()) {
+          this.isNightMode.set(mode === "night");
+          this.toggleDayNightMode();
+        }
+      });
     });
 
     effect(() => {

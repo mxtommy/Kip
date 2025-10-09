@@ -288,7 +288,7 @@ export class DatasetService implements OnDestroy {
    * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
-   * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
+   * @param {boolean} [editable]  DEPRECATED -If true, the dataset configuration can be edited by the user. Defaults to true. // TODO: remove this param once Dataset management component is not required anymore
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService

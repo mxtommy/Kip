@@ -49,7 +49,7 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
     styleUrls: ['./path-control-config.component.scss'],
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule, MatHint]
 })
-export class ModalPathControlConfigComponent implements OnInit, OnChanges {
+export class PathControlConfigComponent implements OnInit, OnChanges {
   private readonly _data = inject(DataService);
   private readonly _units = inject(UnitsService);
   private readonly _connection = inject(SignalKConnectionService);
