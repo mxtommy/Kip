@@ -236,8 +236,24 @@ export class ModalWidgetConfigComponent implements OnInit {
     this.formMaster.updateValueAndValidity();
   }
 
+  get datachartPathControl(): UntypedFormControl {
+    return this.formMaster.get('datachartPath') as UntypedFormControl;
+  }
+
+  get datachartSourceControl(): UntypedFormControl {
+    return this.formMaster.get('datachartSource') as UntypedFormControl;
+  }
+
   get convertUnitToControl(): UntypedFormControl {
     return this.formMaster.get('convertUnitTo') as UntypedFormControl;
+  }
+
+  get timeScaleControl(): UntypedFormControl {
+    return this.formMaster.get('timeScale') as UntypedFormControl;
+  }
+
+  get periodControl(): UntypedFormControl {
+    return this.formMaster.get('period') as UntypedFormControl;
   }
 
   get datasetUUIDToControl(): UntypedFormControl {

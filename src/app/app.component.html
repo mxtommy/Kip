@@ -18,8 +18,8 @@
         <h3>Upgrading Configuration…</h3>
         <p>Please wait a moment while we migrate your dashboards and widgets.</p>
         @if (upgrade.messages().length) {
-          <ul class="config-upgrade-messages">
-            @for (m of upgrade.messages(); track m) {
+          <ul #upgradeMessages class="config-upgrade-messages">
+            @for (m of upgrade.messages(); track $index) {
               <li>{{ m }}</li>
             }
           </ul>

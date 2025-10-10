@@ -1,5 +1,5 @@
-import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
-import { Component, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
+import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
+import { Component, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -47,9 +47,14 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Chart Label',
+    color: 'contrast',
     filterSelfPaths: true,
-    convertUnitTo: 'unitless',
-    datasetUUID: null,
+    datachartPath: null,
+    datachartSource: null,
+    convertUnitTo: null,
+    timeScale: 'minute', // second | minute | hour
+    period: 10,
+    numDecimal: 1,
     inverseYAxis: false,
     datasetAverageArray: 'sma', // sma | ema | dema | avg
     showAverageData: true,
@@ -58,7 +63,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     showDatasetMaximumValueLine: false,
     showDatasetAverageValueLine: true,
     showDatasetAngleAverageValueLine: false, // legacy (not currently rendered separately)
-    showLabel: false,
+    showLabel: true,
     showTimeScale: false,
     startScaleAtZero: false,
     verticalChart: false,
@@ -68,8 +73,6 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     enableMinMaxScaleLimit: false,
     yScaleMin: null,
     yScaleMax: null,
-    numDecimal: 1,
-    color: 'contrast'
   };
 
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = { datasets: [] };
@@ -86,26 +89,43 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private currentDatasetUUID: string | null = null;
   private lastVerticalChart: boolean | null = null;
 
+  private pathSignature = computed<string | undefined>(() => {
+    const cfg = this.runtime.options();
+    if (!cfg.datachartPath) {
+      return undefined;
+    }
+    return [cfg.datachartPath, cfg.convertUnitTo, cfg.datachartSource, cfg.timeScale, cfg.period].join('|');
+  });
+  private previousPathSignature: string | undefined = undefined;
+
   constructor() {
-    // Effect: react to config or theme changes
+    // Effect: react to Dataset config changes
+    effect(() => {
+      const sig = this.pathSignature();
+      if (sig !== this.previousPathSignature) {
+        untracked(() => {
+        this.previousPathSignature = sig;
+        this.rebuildForDataset(this.runtime.options());
+        });
+      }
+    });
+
+    // Effect: react to Display config or theme changes
     effect(() => {
       const cfg = this.runtime.options();
       const theme = this.theme();
       if (!cfg || !theme) return;
       untracked(() => {
-        const uuid = cfg.datasetUUID || null;
-        const datasetChanged = uuid !== this.currentDatasetUUID;
         const verticalChanged = this.lastVerticalChart !== null && this.lastVerticalChart !== cfg.verticalChart;
-        if (datasetChanged || verticalChanged) {
-          this.currentDatasetUUID = uuid;
+        if (this.pathSignature() || verticalChanged) {
           this.lastVerticalChart = cfg.verticalChart;
-          this.rebuildForDataset();
+          this.rebuildForDataset(cfg);
         } else if (this.chart) {
           // Styling / axis / annotation toggles / showAverageData
           this.ensureAverageDatasetPresence();
           this.updateAnnotationVisibility();
           this.applyDynamicTrackAverageStyling();
-          this.setChartOptions();
+          this.setChartOptions(cfg);
           this.setDatasetsColors();
           this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
         }
@@ -114,26 +134,27 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // If config already present start now, otherwise first effect run will start
-    this.rebuildForDataset();
+    this.rebuildForDataset(this.runtime.options());
   }
 
-  private rebuildForDataset(): void {
-    const cfg = this.runtime.options();
-    if (!cfg) return;
-    if (!this.widgetDataChart()) return; // wait for view
-    // Cleanup old subscription & chart data
-    this.dsServiceSub?.unsubscribe();
+  private rebuildForDataset(cfg: IWidgetSvcConfig): void {
+    if (!cfg.datachartPath) return; // Widget not yet configured
+    this.dsServiceSub?.unsubscribe(); // Cleanup old subscription & chart data
     this.lineChartData.datasets = [];
-    if (!cfg.datasetUUID) { // nothing selected yet
-      this.chart?.update();
-      return;
+
+    const dsConfig = this.dsService.list().find(ds => ds.uuid === this.id());
+    if (dsConfig?.label !== this.pathSignature()) {
+      this.dsService.remove(this.id());
+      this.dsService.create(cfg.datachartPath, cfg.datachartSource, cfg.timeScale as TimeScaleFormat,cfg.period, this.pathSignature(), true, false, this.id());
     }
-    this.datasetConfig = this.dsService.getDatasetConfig(cfg.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(cfg.datasetUUID);
+
+    if (!this.widgetDataChart()) return; // View not ready yet
+
+    this.datasetConfig = this.dsService.getDatasetConfig(this.id());
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.id());
     if (!this.datasetConfig) return; // dataset not ready yet
-    this.createDatasets();
-    this.setChartOptions();
+    this.createDatasets(cfg);
+    this.setChartOptions(cfg);
     // Always recreate chart instance on rebuild to ensure orientation/scale axis changes apply
     this.chart?.destroy();
     this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
@@ -145,9 +166,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     this.ngZone.runOutsideAngular(() => this.chart?.update());
   }
 
-  private setChartOptions() {
-    const cfg = this.runtime.options();
-    if (!cfg || !this.datasetConfig) return;
+  private setChartOptions(cfg: IWidgetSvcConfig): void {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
     this.lineChartOptions.indexAxis = cfg.verticalChart ? 'y' : 'x';
@@ -367,11 +386,9 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private createDatasets() {
+  private createDatasets(cfg: IWidgetSvcConfig): void {
     let valueFillDirection: string | boolean;
     let averageFillDirection: string | boolean;
-    const cfg = this.runtime.options();
-    if (!cfg) return;
     if (cfg.inverseYAxis && cfg.trackAgainstAverage) {
       valueFillDirection = "start";
       averageFillDirection = false;
@@ -695,9 +712,9 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
 
   private startStreaming(): void {
     const cfg = this.runtime.options();
-    if (!cfg?.datasetUUID) return;
+    if (!cfg?.datachartPath) return;
     this.dsServiceSub?.unsubscribe();
-    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(cfg.datasetUUID);
+    const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(this.id());
     this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
       if (!this.chart) return;
       if (Array.isArray(dsPointOrBatch)) {

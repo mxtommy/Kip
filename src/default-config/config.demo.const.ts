@@ -15,15 +15,6 @@ export const DemoAppConfig: IAppConfig = {
   "splitShellWidth": 0.7,
   "dataSets": [
     {
-      "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-      "path": "self.environment.wind.speedApparent",
-      "pathSource": "default",
-      "period": 1,
-      "baseUnit": "m/s",
-      "label": "self.environment.wind.speedApparent, Source: default, Scale: minute, Period: 1",
-      "timeScaleFormat": "minute"
-    },
-    {
       "uuid": "339698a7-2cff-4ab9-9b50-d8056f971471",
       "path": "self.environment.depth.belowTransducer",
       "pathSource": "default",
@@ -381,8 +372,12 @@ export const DemoDashboardsConfig: Dashboard[] = [
             "config": {
               "displayName": "Chart Label",
               "filterSelfPaths": true,
+              "datachartPath": "self.environment.wind.speedApparent",
+              "datachartSource": "default",
+              "period": 1,
+              "timeScale": "minute",
               "convertUnitTo": "knots",
-              "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+              "timeScaleFormat": "minute",
               "inverseYAxis": false,
               "datasetAverageArray": "sma",
               "showAverageData": true,

@@ -7,6 +7,14 @@ import { v10IConfig, v10IThemeConfig } from '../interfaces/v10-config-interface'
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard } from './dashboard.service';
 
+interface DataChartConfigUpdate {
+  datachartPath: string;
+  datachartSource: string;
+  period: number;
+  timeScale: string;
+  datasetUUID: string;
+}
+
 // NOTE: This service encapsulates the legacy upgrade (fileVersion 9 / configVersion 10 -> 11)
 // and provides an extendable structure for future upgrades (eg. 11 -> 12 handled elsewhere).
 @Injectable({ providedIn: 'root' })
@@ -128,13 +136,16 @@ export class ConfigurationUpgradeService {
         .finally(() => this.upgrading.set(false));
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
+      // LocalStorage upgrade path for config version 11
       const upgradedConfig: IConfig = { app: null, dashboards: null, theme: null };
       upgradedConfig.app = this._settings.getAppConfig();
       upgradedConfig.dashboards = this._settings.getDashboardConfig();
       upgradedConfig.theme = this._settings.getThemeConfig();
 
       upgradedConfig.app.configVersion = this.targetConfigVersion;
+      const datasetInfo = this.extractAppDatasets(upgradedConfig.app);
       this.upgradeDashboardWidgets(upgradedConfig.dashboards);
+      this.migrateDatasetsToDataCharts(datasetInfo, upgradedConfig.dashboards);
 
       localStorage.setItem('appConfig', JSON.stringify(upgradedConfig.app));
       localStorage.setItem('dashboardsConfig', JSON.stringify(upgradedConfig.dashboards));
@@ -150,6 +161,7 @@ export class ConfigurationUpgradeService {
       localStorageConfig.theme = this._settings.loadConfigFromLocalStorage('themeConfig');
 
       const transformedApp = this.transformApp(localStorageConfig.app as IAppConfig);
+      const datasetInfo = this.extractAppDatasets(transformedApp);
       const transformedTheme = this.transformTheme(localStorageConfig.theme);
       const rootSplits = localStorageConfig.layout?.rootSplits || [];
       const splitSets = localStorageConfig.layout?.splitSets || [];
@@ -159,6 +171,8 @@ export class ConfigurationUpgradeService {
         const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
         return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
       });
+
+      this.migrateDatasetsToDataCharts(datasetInfo, dashboards);
 
       localStorage.setItem('appConfig', JSON.stringify(transformedApp));
       localStorage.setItem('dashboardsConfig', JSON.stringify(dashboards));
@@ -227,6 +241,7 @@ export class ConfigurationUpgradeService {
       return null;
     }
     const transformedApp = this.transformApp(config.app as IAppConfig);
+    const datasetInfo = this.extractAppDatasets(transformedApp);
     const transformedTheme = this.transformTheme(config.theme);
     const rootSplits = config.layout?.rootSplits || [];
     const splitSets = config.layout?.splitSets || [];
@@ -235,6 +250,7 @@ export class ConfigurationUpgradeService {
       const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
       return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
     });
+    this.migrateDatasetsToDataCharts(datasetInfo, dashboards);
     const oldConf: v10IConfig = cloneDeep(config);
     oldConf.app.configVersion = 0; // retired
     return {
@@ -243,6 +259,70 @@ export class ConfigurationUpgradeService {
       newConfiguration: { app: transformedApp, theme: transformedTheme, dashboards },
       oldConfiguration: oldConf
     };
+  }
+
+  private extractAppDatasets(transformedApp: IAppConfig): DataChartConfigUpdate[] {
+    if (!transformedApp || !Array.isArray(transformedApp.dataSets)) return [];
+    let updatedDatasetCount = 0;
+
+    // Find indices of datasets to extract and remove
+    const indicesToRemove: number[] = [];
+    const updates: DataChartConfigUpdate[] = [];
+
+    transformedApp.dataSets.forEach((ds, idx) => {
+      if (ds.editable === true || ds.editable === undefined) {
+        updates.push({
+          period: ds.period,
+          datachartPath: ds.path,
+          datachartSource: ds.pathSource,
+          timeScale: ds.timeScaleFormat,
+          datasetUUID: ds.uuid
+        });
+        indicesToRemove.push(idx);
+        updatedDatasetCount++;
+      }
+    });
+
+    // Remove in reverse order to avoid index shifting
+    for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+      transformedApp.dataSets.splice(indicesToRemove[i], 1);
+    }
+
+    if (updatedDatasetCount) {
+      this.pushMsg(`[Upgrade] Retired ${updatedDatasetCount} Dataset(s).`);
+    }
+
+    return updates;
+  }
+
+ private migrateDatasetsToDataCharts(datasetInfo: DataChartConfigUpdate[], dashboards: Dashboard[]): void {
+    if (!Array.isArray(datasetInfo) || datasetInfo.length === 0) return;
+    if (!Array.isArray(dashboards)) return;
+
+    dashboards.forEach(dashboard => {
+      let updatedDatachartCount = 0;
+      if (dashboard && Array.isArray(dashboard.configuration)) {
+        dashboard.configuration.forEach((widget: NgGridStackWidget) => {
+          if (widget && typeof widget === 'object' && widget.input?.widgetProperties?.config) {
+            const dataset = datasetInfo.find(ds => ds.datasetUUID === widget.input?.widgetProperties?.config.datasetUUID);
+            if (dataset) {
+              // Add or replace all dataset properties except 'datasetUUID'
+              Object.entries(dataset).forEach(([key, value]) => {
+                if (key !== 'datasetUUID') {
+                  widget.input.widgetProperties.config[key] = value;
+                }
+              });
+              delete widget.input.widgetProperties.config?.datasetUUID;
+              delete widget.input.widgetProperties.config?.timeScaleFormat;
+              updatedDatachartCount++;
+            }
+          }
+        });
+        if (updatedDatachartCount) {
+          this.pushMsg(`[Upgrade] Migrated ${updatedDatachartCount} Realtime Data Chart widget(s).`);
+        }
+      }
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -270,9 +350,10 @@ export class ConfigurationUpgradeService {
 
   private transformApp(app: IAppConfig): IAppConfig {
     if (!app) return null;
-    app.configVersion = this.targetConfigVersion;
-    app.nightModeBrightness = 0.27;
-    return app;
+    const clone = cloneDeep(app);
+    clone.configVersion = this.targetConfigVersion;
+    clone.nightModeBrightness = 0.27;
+    return clone;
   }
 
   private transformTheme(theme: v10IThemeConfig): IThemeConfig {
@@ -289,6 +370,8 @@ export class ConfigurationUpgradeService {
         this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version 12 config. Skipping.`);
         return null;
       }
+      const datasetInfo = this.extractAppDatasets(config.app);
+      this.migrateDatasetsToDataCharts(datasetInfo, config.dashboards);
       // Iterate dashboards and force widget selector to 'widget-host2'
       let updatedWidgetCount = 0;
       let dimensionUpdatedCount = 0;

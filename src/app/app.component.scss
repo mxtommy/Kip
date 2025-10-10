@@ -63,11 +63,12 @@ mat-sidenav.sidenav-actions {
   list-style: disc;
   margin: 0;
   padding-left: 18px;
-  max-height: 160px;
+  max-height: 180px;
   overflow-y: auto;
   font-size: .68rem;
   line-height: 1.25;
   scrollbar-width: thin;
+  overflow-y: auto;
 }
 
 .config-upgrade-messages li { margin-bottom: 2px; }
