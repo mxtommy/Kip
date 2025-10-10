@@ -11,7 +11,7 @@ import { DataService } from '../../core/services/data.service';
 import { IUnitGroup } from '../../core/services/units.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
-import { IPathMetaData } from '../../core/interfaces/app-interfaces';
+import { IPathMetaData, ISkPathData } from '../../core/interfaces/app-interfaces';
 import { debounceTime } from 'rxjs';
 
 function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
@@ -75,6 +75,11 @@ export class DatasetChartOptionsComponent implements OnInit {
     });
 
     this.datachartPath().setValidators([pathRequiredOrValidMatch(() => this.getPaths())]);
+    if (this.datachartPath()?.value) {
+      const pathObject = this.data.getPathObject(this.datachartPath().value);
+      this.setPathSources(pathObject);
+      this.unitList.set(this.units.getConversionsForPath(this.datachartPath().value));
+    }
     this.setInitFormState();
   }
 
@@ -86,7 +91,7 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.datachartSource().disable();
     }
 
-    if (this.convertUnitTo().value && !reset) {
+    if (this.convertUnitTo().value !== "" && !reset) {
       this.convertUnitTo().enable();
     } else {
       this.convertUnitTo().reset();
@@ -126,7 +131,11 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.setPathUnits();
       return;
     }
+    this.setPathSources(pathObject);
+    this.setPathUnits(pathObject.path);
+  }
 
+  private setPathSources(pathObject: ISkPathData): void {
     if (Object.keys(pathObject.sources).length == 1) {
       this.pathSources.set(['default']);
       this.datachartSource().setValue('default');
@@ -136,8 +145,6 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.datachartSource().reset();
       this.datachartSource().enable();
     }
-
-    this.setPathUnits(pathObject.path);
   }
 
   private setPathUnits(path?: string): void {
