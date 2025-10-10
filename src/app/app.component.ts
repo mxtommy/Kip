@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
@@ -50,8 +50,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);
   private readonly _router = inject(Router);
-  private readonly _upgrade = inject(ConfigurationUpgradeService);
-  public readonly upgrade = this._upgrade; // expose for template overlay
+  protected readonly upgrade = inject(ConfigurationUpgradeService); // expose for template overlay
+
+  private upgradeMessagesRef = viewChild<ElementRef<HTMLUListElement> | undefined>('upgradeMessages');
 
   private notificationHowl?: Howl;
   private _upgradeShown = false;
@@ -75,7 +76,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         const liveVersion = this.appSettingsService.getConfigVersion();
 
         if (liveVersion == 11) {
-          this._upgrade.runUpgrade(liveVersion);
+          this.upgrade.runUpgrade(liveVersion);
         }
 
         if (!liveVersion) {
@@ -89,6 +90,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
               .subscribe();
           }
         }
+      }
+    });
+
+    effect(() => {
+      const msg = this.upgrade.messages();
+      // Only run if the overlay is visible and there are messages
+      if (this.upgrade.upgrading() && msg.length && this.upgradeMessagesRef()) {
+        const ul = this.upgradeMessagesRef().nativeElement;
+        // Scroll to the bottom
+        ul.scrollTop = ul.scrollHeight;
       }
     });
 
