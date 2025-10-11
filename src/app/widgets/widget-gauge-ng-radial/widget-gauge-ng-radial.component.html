@@ -1,7 +1,7 @@
 <radial-gauge
   #radialGauge
   [options]="gaugeOptions"
-  [value]="value"
-  [attr.value-text]="textValue"
+  [value]="value()"
+  [attr.value-text]="textValue()"
   (onResize)="onResized($event)"
 ></radial-gauge>

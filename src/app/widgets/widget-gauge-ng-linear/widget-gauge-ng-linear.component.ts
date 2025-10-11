@@ -74,8 +74,8 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   protected readonly gauge = viewChild('linearGauge', { read: ElementRef });
 
   // Reactive presentation
-  protected textValue = '';
-  protected value = 0;
+  protected textValue = signal('--');
+  protected value = signal(0);
   protected gaugeOptions: LinearGaugeOptions = {} as LinearGaugeOptions;
   private viewReady = signal(false);
   private currentState = signal<string>(States.Normal);
@@ -112,12 +112,12 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       untracked(() => this.streams.observe('gaugePath', path => {
         const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
-          this.value = cfg.displayScale.lower;
-          this.textValue = '--';
+          this.value.set(cfg.displayScale.lower);
+          this.textValue.set('--');
         } else {
           const clamped = Math.min(Math.max(raw, cfg.displayScale.lower), cfg.displayScale.upper);
-          this.value = clamped;
-          if (this.textValue === '--') this.textValue = '';
+          this.value.set(clamped);
+          if (this.textValue() === '--') this.textValue.set('');
         }
         if (path.state !== this.currentState()) {
           this.currentState.set(path.state);

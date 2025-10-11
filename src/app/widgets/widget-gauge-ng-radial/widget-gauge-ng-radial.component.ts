@@ -80,9 +80,9 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
   // Reactive state
-  protected value = 0;
-  protected textValue = '';
-  protected colorStrokeTicks = '';
+  protected value = signal(0);
+  protected textValue = signal('');
+  protected colorStrokeTicks = signal('');
   private readonly adjustedScale = computed<IScale>(() => {
     const cfg = this.runtime.options();
     if (!cfg) return { min: 0, max: 100, majorTicks: [] };
@@ -128,15 +128,15 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
       untracked(() => this.streams.observe('gaugePath', path => {
         const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
-          this.value = cfg.displayScale?.lower ?? 0;
-          this.textValue = '--';
+          this.value.set(cfg.displayScale?.lower ?? 0);
+          this.textValue.set('--');
         } else {
           const lower = cfg.displayScale?.lower ?? 0;
           const upper = cfg.displayScale?.upper ?? lower + 100;
           // clamp
           const clamped = Math.min(Math.max(raw, lower), upper);
-          this.value = clamped;
-          if (this.textValue === '--') this.textValue = '';
+          this.value.set(clamped);
+          if (this.textValue() === '--') this.textValue.set('');
         }
         const newState = (path?.state ?? States.Normal) as States;
         if (newState !== this.state) {
@@ -237,7 +237,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     g.colorBarProgress = getColors(cfg.color, theme).color;
     g.colorNeedle = getColors(cfg.color, theme).dim; g.colorNeedleEnd = getColors(cfg.color, theme).dim;
     g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = getColors(cfg.color, theme).color;
-    this.colorStrokeTicks = theme.contrastDim; g.colorMinorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim; g.colorMajorTicks = theme.contrastDim;
+    this.colorStrokeTicks.set(theme.contrastDim); g.colorMinorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim; g.colorMajorTicks = theme.contrastDim;
     g.colorPlate = g.colorPlateEnd = theme.cardColor; g.colorBar = theme.background;
     g.colorNeedleShadowUp = ''; g.colorNeedleShadowDown = 'black';
     g.colorNeedleCircleInner = g.colorPlate; g.colorNeedleCircleInnerEnd = g.colorPlate; g.colorNeedleCircleOuter = g.colorPlate; g.colorNeedleCircleOuterEnd = g.colorPlate;
