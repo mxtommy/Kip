@@ -23,9 +23,19 @@
   cursor: pointer;
   z-index: 100;
 }
-.layout-action-btn {
-  color: var(--mat-sys-on-primary);
-  background-color: var(--mat-sys-primary);
+.cancel {
+  @include mat.fab-overrides((
+    container-color: var(--mat-sys-primary),
+    foreground-color: var(--mat-sys-background),
+  ));
+}
+
+.save {
+  @include mat.fab-overrides((
+    container-color: var(--mat-sys-primary-fixed),
+    foreground-color: var(--mat-sys-background),
+
+  ));
 }
 
 /* Empty Dashboard State Styles */
