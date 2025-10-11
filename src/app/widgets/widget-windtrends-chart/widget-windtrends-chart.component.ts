@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -10,6 +10,8 @@ import { ITheme } from '../../core/services/app-service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
@@ -50,6 +52,8 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private readonly _dataset = inject(DatasetService);
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
+  private readonly responsive = inject(BreakpointObserver);
+  protected isPhonePortrait: Signal<BreakpointState>;
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
@@ -86,12 +90,19 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private readonly EDGE_SPEED_LABEL_OFFSET = 5; // px left shift for rightmost speed label
   private readonly EDGE_DIR_LABEL_OFFSET = 5;   // px right shift for leftmost direction label
   private readonly TICK_LABEL_FONT_SIZE = 20;
+  private readonly TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE = 11;
   private readonly CENTER_LABEL_FONT_SIZE = 22;
+  private readonly CENTER_LABEL_PHONE_PORTRAIT_FONT_SIZE = 13;
   private readonly SPEED_VALUE_FONT_SIZE = 62;
+  private readonly SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE = 32;
   private readonly TOP_VALUE_Y_OFFSET = 62;     // px above area.top for big top values
+  private readonly TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET = 44;     // px above area.top for big top values
   private readonly TOP_UNIT_Y_OFFSET = 51;      // px above area.top for units
+  private readonly TOP_UNIT_PHONE_PORTRAIT_Y_OFFSET = 38;      // px above area.top for units
   private readonly UNIT_FONT_SIZE = 28;
+  private readonly UNIT_PHONE_PORTRAIT_FONT_SIZE = 14;
   private readonly UNIT_PADDING = 8;            // px between speed value and 'kts'
+  private readonly UNIT_PHONE_PORTRAIT_PADDING = 3;            // px between speed value and 'kts'
 
   // Paint background under grid lines (chartArea only) so it appears beneath grids
   private gridBackgroundPlugin = {
@@ -147,7 +158,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         ctx.restore();
         ctx.save();
         ctx.fillStyle = theme.contrastDim;
-        ctx.font = `bold ${this.CENTER_LABEL_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPhonePortrait().matches ? `bold ${this.CENTER_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.CENTER_LABEL_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         const y = this.axisTopLabelY(scale);
@@ -169,7 +180,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           ctx.save();
           // Match tick label color for xSpeed axis
           ctx.fillStyle = this.resolveTickColor(chart, xSpeedScale, xmax);
-          ctx.font = `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
+          ctx.font = this.isPhonePortrait().matches ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'right';
           ctx.textBaseline = 'top';
           const y = this.axisTopLabelY(xSpeedScale);
@@ -202,7 +213,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           ctx.save();
           // Match tick label color for x axis
           ctx.fillStyle = this.resolveTickColor(chart, xScale, xmin);
-          ctx.font = `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
+          ctx.font = this.isPhonePortrait().matches ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
           const y = this.axisTopLabelY(xScale);
@@ -222,18 +233,18 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         ctx.save();
         ctx.fillStyle = chartColors.chartValue;
         // Draw speed value centered
-        ctx.font = `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPhonePortrait().matches ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const speedText = `${lastSpeed.toFixed(1)}`;
         const speedX = area.left + (area.width / 4);
-        const speedY = area.top - this.TOP_VALUE_Y_OFFSET;
+        const speedY = area.top - (this.isPhonePortrait().matches ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET);
         ctx.fillText(speedText, speedX, speedY);
         // Measure speed text to place unit right after it
         const metrics = ctx.measureText(speedText);
-        const unitX = speedX + (metrics.width / 2) + this.UNIT_PADDING;
-        const unitY = area.top - this.TOP_UNIT_Y_OFFSET;
-        ctx.font = `bold ${this.UNIT_FONT_SIZE}px ${def.family}`;
+        const unitX = speedX + (metrics.width / 2) + (this.isPhonePortrait().matches ? this.UNIT_PHONE_PORTRAIT_PADDING : this.UNIT_PADDING);
+        const unitY = area.top - (this.isPhonePortrait().matches ? this.TOP_UNIT_PHONE_PORTRAIT_Y_OFFSET : this.TOP_UNIT_Y_OFFSET);
+        ctx.font = this.isPhonePortrait().matches ? `bold ${this.UNIT_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.UNIT_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'left';
         ctx.fillText('kts', unitX, unitY);
         ctx.restore();
@@ -247,10 +258,10 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         const dir = this.normalizeAngle(lastDir);
         ctx.save();
         ctx.fillStyle = chartColors.chartValue;
-        ctx.font = `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPhonePortrait().matches ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - this.TOP_VALUE_Y_OFFSET);
+        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - (this.isPhonePortrait().matches ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET));
         ctx.restore();
       }
 
@@ -285,6 +296,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   };
 
   constructor() {
+    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait));
     // Theme or config color changes -> restyle chart
     effect(() => {
       const theme = this.theme();
@@ -394,7 +406,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           includeBounds: true,
           align: 'inner',
           major: { enabled: true },
-          font: { size: 16 },
+          font: this.isPhonePortrait().matches ? { size: 12 } : { size: 16 },
           callback: (value: number) => {
             const ms = Number(value);
             const fmt = this.datasetConfig?.timeScaleFormat;
@@ -452,7 +464,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
             const isCenter = this.nearlyEqual(tickVal, center);
-            return { size: 20, weight: isCenter ? 'bold' : 'normal' };
+            return this.isPhonePortrait().matches ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
@@ -509,7 +521,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
             const isCenter = this.nearlyEqual(tickVal, center);
-            return { size: 20, weight: isCenter ? 'bold' : 'normal' };
+            return this.isPhonePortrait().matches ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
@@ -538,18 +550,18 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       title: {
         display: true,
         align: "end",
-        padding: { top: 3, bottom: 0 },
         text: `TWD `,
-        font: { size: 35, weight: 'normal' },
-        color: this.getThemeColors().chartLabel
+        color: this.getThemeColors().chartLabel,
+        padding: this.isPhonePortrait().matches ? { top: 3, bottom: 0 } : { top: 3, bottom: 0 },
+        font: this.isPhonePortrait().matches ? { size: 16, weight: 'normal' } : { size: 35, weight: 'normal' }
       },
       subtitle: {
         display: true,
         align: "start",
-        padding: { top: -41, bottom: 12 },
-        text: ` TWS`,
-        font: { size: 35 },
-        color: this.getThemeColors().chartLabel
+         text: ` TWS`,
+        color: this.getThemeColors().chartLabel,
+        padding: this.isPhonePortrait().matches ? { top: -18, bottom: 12 } : { top: -41, bottom: 12 },
+        font: this.isPhonePortrait().matches ? { size: 16 } : { size: 35 }
       },
       legend: { display: false }
     }
