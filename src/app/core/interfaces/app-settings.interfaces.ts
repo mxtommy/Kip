@@ -32,6 +32,7 @@ export interface IAppConfig {
   notificationConfig: INotificationConfig;
   splitShellEnabled?: boolean;
   splitShellSide?: 'left' | 'right';
+  splitShellSwipeDisabled?: boolean;
   splitShellWidth?: number;
 }
 

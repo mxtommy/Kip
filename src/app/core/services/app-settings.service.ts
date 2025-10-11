@@ -35,6 +35,7 @@ export class AppSettingsService {
   private instanceName: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
+  private splitShellSwipeDisabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
 
   public proxyEnabled = false;
@@ -265,6 +266,12 @@ export class AppSettingsService {
       this.splitShellSide.next(this.activeConfig.app.splitShellSide);
     }
 
+    if (this.activeConfig.app.splitShellSwipeDisabled === undefined) {
+      this.setSplitShellSwipeDisabled(false);
+    } else {
+      this.splitShellSwipeDisabled.next(this.activeConfig.app.splitShellSwipeDisabled);
+    }
+
     if (this.activeConfig.app.splitShellWidth === undefined) {
       this.setSplitShellWidth(0.3); // default ratio
     } else {
@@ -469,6 +476,23 @@ export class AppSettingsService {
     }
   }
 
+  public getSplitShellSwipeDisabledAsO() {
+    return this.splitShellSwipeDisabled.asObservable();
+  }
+  public getSplitShellSwipeDisabled(): boolean {
+    return this.splitShellSwipeDisabled.getValue();
+  }
+  public setSplitShellSwipeDisabled(enabled: boolean): void {
+    this.splitShellSwipeDisabled.next(enabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
   public getSplitShellWidthAsO() {
     return this.splitShellWidth.asObservable();
   }
@@ -633,7 +657,8 @@ export class AppSettingsService {
       notificationConfig: this.kipKNotificationConfig.getValue(),
       splitShellEnabled: this.splitShellEnabled.getValue(),
       splitShellSide: this.splitShellSide.getValue() ?? 'right',
-      splitShellWidth: this.splitShellWidth.getValue() ?? 380
+      splitShellWidth: this.splitShellWidth.getValue() ?? 380,
+      splitShellSwipeDisabled: this.splitShellSwipeDisabled.getValue()
     }
     return storageObject;
   }

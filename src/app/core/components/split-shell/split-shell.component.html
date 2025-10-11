@@ -18,7 +18,11 @@
         </button>
       </div>
     }
-    <widget-freeboardsk class="fsk-iframe" [type]="freeboardWidgetStub.type" [id]="freeboardWidgetStub.uuid" [disableWidgetShell]="true"/>
+    <widget-freeboardsk class="fsk-iframe"
+      [type]="freeboardWidgetStub.type"
+      [id]="freeboardWidgetStub.uuid"
+      [swipeDisabled]="fskShellSwipeDisabled()"
+      [disableWidgetShell]="true" />
   </div>
   <div class="dash-container">
     <dashboard />

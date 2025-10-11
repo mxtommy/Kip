@@ -143,6 +143,7 @@ export class ConfigurationUpgradeService {
       upgradedConfig.theme = this._settings.getThemeConfig();
 
       upgradedConfig.app.configVersion = this.targetConfigVersion;
+      this.addSplitShellConfigKeys(upgradedConfig.app);
       const datasetInfo = this.extractAppDatasets(upgradedConfig.app);
       this.upgradeDashboardWidgets(upgradedConfig.dashboards);
       this.migrateDatasetsToDataCharts(datasetInfo, upgradedConfig.dashboards);
@@ -247,8 +248,8 @@ export class ConfigurationUpgradeService {
     const splitSets = config.layout?.splitSets || [];
     const widgets = config.widget?.widgets || [];
     const dashboards: Dashboard[] = rootSplits.map((rootSplitUUID: string, i: number) => {
-      const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
-      return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
+    const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
+    return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
     });
     this.migrateDatasetsToDataCharts(datasetInfo, dashboards);
     const oldConf: v10IConfig = cloneDeep(config);
@@ -353,6 +354,10 @@ export class ConfigurationUpgradeService {
     const clone = cloneDeep(app);
     clone.configVersion = this.targetConfigVersion;
     clone.nightModeBrightness = 0.27;
+    clone.splitShellEnabled = false;
+    clone.splitShellSide = "left";
+    clone.splitShellWidth = 0.7;
+    clone.splitShellSwipeDisabled = false;
     return clone;
   }
 
@@ -370,6 +375,7 @@ export class ConfigurationUpgradeService {
         this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version 12 config. Skipping.`);
         return null;
       }
+      this.addSplitShellConfigKeys(config.app);
       const datasetInfo = this.extractAppDatasets(config.app);
       this.migrateDatasetsToDataCharts(datasetInfo, config.dashboards);
       // Iterate dashboards and force widget selector to 'widget-host2'
@@ -419,6 +425,14 @@ export class ConfigurationUpgradeService {
       this.pushError(`[Upgrade Service] Error upgrading ${rootConfig.scope}/${rootConfig.name}: ${(error as Error).message}`);
       return null;
     }
+  }
+
+  private addSplitShellConfigKeys(app: IAppConfig): void {
+    if (!app) return;
+    if (app.splitShellEnabled === undefined) app.splitShellEnabled = false;
+    if (app.splitShellSide === undefined) app.splitShellSide = "left";
+    if (app.splitShellWidth === undefined) app.splitShellWidth = 0.7;
+    if (app.splitShellSwipeDisabled === undefined) app.splitShellSwipeDisabled = false;
   }
 
   private upgradeDashboardWidgets(dashboards: Dashboard[]): void {

@@ -49,6 +49,7 @@ export class SettingsDisplayComponent implements OnInit {
   // Freeboard split shell config
   protected splitShellEnabled = model<boolean>(false);
   protected splitShellSide = model<'left' | 'right'>('left');
+  protected splitShellSwipeDisabled = model<boolean>(false);
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
   readonly LIGHT_THEME_NAME = "light-theme";
@@ -67,6 +68,7 @@ export class SettingsDisplayComponent implements OnInit {
     this.instanceName.set(this._settings.getInstanceName());
     this.splitShellEnabled.set(this._settings.getSplitShellEnabled());
     this.splitShellSide.set(this._settings.getSplitShellSide());
+    this.splitShellSwipeDisabled.set(this._settings.getSplitShellSwipeDisabled());
   }
 
   protected saveAllSettings():void {
@@ -91,6 +93,7 @@ export class SettingsDisplayComponent implements OnInit {
     }
     this._settings.setSplitShellEnabled(this.splitShellEnabled());
     this._settings.setSplitShellSide(this.splitShellSide());
+    this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
 
     this.displayForm().form.markAsPristine();
     this._app.sendSnackbarNotification("Configuration saved", 3000, false);
