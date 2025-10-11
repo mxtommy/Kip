@@ -34,18 +34,18 @@
   <div class="edit-layout-close-icon">
     <button
       mat-fab
-      class="layout-action-btn"
+      class="cancel"
       style="margin-right: 10px"
-      (click)="saveLayoutChanges()"
-    >
-      <mat-icon>done</mat-icon>
-    </button>
-    <button
-      mat-fab
-      class="layout-action-btn"
       (click)="cancelLayoutChanges()"
     >
       <mat-icon>close</mat-icon>
+    </button>
+    <button
+      mat-fab
+      class="save"
+      (click)="saveLayoutChanges()"
+    >
+      <mat-icon>done</mat-icon>
     </button>
   </div>
 } @else {

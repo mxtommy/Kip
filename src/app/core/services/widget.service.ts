@@ -214,7 +214,7 @@ export class WidgetService {
     },
     {
       name: 'Switch Panel',
-      description: 'A switch panel group with multiple controls including toggle switches, indicator lights, and press buttons for digital switching and other operations.',
+      description: 'A Digital Switching panel group with multiple controls including toggle switches, indicator lights, and press buttons to send Signal K paths values and other operations.',
       icon: 'switchpanelWidget',
       minWidth: 1,
       minHeight: 1,
@@ -227,7 +227,7 @@ export class WidgetService {
     },
     {
       name: 'Slider',
-      description: 'A range slider that allows users to adjust values, such as controlling lighting intensity from 0% to 100%.',
+      description: 'A Digital Switching range slider that allows users to adjust values, such as controlling lighting intensity or audio volume from 0% to 100%.',
       icon: 'sliderWidget',
       minWidth: 1,
       minHeight: 1,
