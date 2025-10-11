@@ -254,10 +254,11 @@
           style="fill:none;fill-opacity:0;stroke-width:15;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
           d="M 501.50816,18.016286 V 43.119307"
           id="path177" />
-        <path id="rotatingDialBackplate"
+        <circle
           class="rotating-dial-Backplate"
-          style="display:inline;stroke:none;stroke-width:0.47625;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0"
-          d="M 499.99997,50.208304 A 449.79166,449.79166 0 0 0 50.208304,499.99997 449.79166,449.79166 0 0 0 499.99997,949.79163 449.79166,449.79166 0 0 0 949.79163,499.99997 449.79166,449.79166 0 0 0 499.99997,50.208304 Z m 0,92.604166 a 357.1875,357.1875 0 0 1 357.18749,357.1875 357.1875,357.1875 0 0 1 -357.18749,357.18749 357.1875,357.1875 0 0 1 -357.1875,-357.18749 357.1875,357.1875 0 0 1 357.1875,-357.1875 z" />
+          cx="500"
+          cy="500"
+          r="404" />
         <text
           xml:space="preserve"
           class="contrast-text"

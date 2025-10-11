@@ -409,7 +409,7 @@ export class WidgetService {
       componentClassName: 'WidgetTutorialComponent'
     },
     {
-      name: 'Racesteer',
+      name: 'Racesteer (BETA)',
       description: 'A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.',
       icon: 'racesteeringWidget',
       minWidth: 1,
