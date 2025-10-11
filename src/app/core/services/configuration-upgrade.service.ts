@@ -147,6 +147,7 @@ export class ConfigurationUpgradeService {
       const datasetInfo = this.extractAppDatasets(upgradedConfig.app);
       this.upgradeDashboardWidgets(upgradedConfig.dashboards);
       this.migrateDatasetsToDataCharts(datasetInfo, upgradedConfig.dashboards);
+      this.migrateUseNeedleToEnableNeedle(upgradedConfig.dashboards);
 
       localStorage.setItem('appConfig', JSON.stringify(upgradedConfig.app));
       localStorage.setItem('dashboardsConfig', JSON.stringify(upgradedConfig.dashboards));
@@ -174,6 +175,7 @@ export class ConfigurationUpgradeService {
       });
 
       this.migrateDatasetsToDataCharts(datasetInfo, dashboards);
+      this.migrateUseNeedleToEnableNeedle(dashboards);
 
       localStorage.setItem('appConfig', JSON.stringify(transformedApp));
       localStorage.setItem('dashboardsConfig', JSON.stringify(dashboards));
@@ -248,10 +250,11 @@ export class ConfigurationUpgradeService {
     const splitSets = config.layout?.splitSets || [];
     const widgets = config.widget?.widgets || [];
     const dashboards: Dashboard[] = rootSplits.map((rootSplitUUID: string, i: number) => {
-    const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
-    return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
+      const configuration = this.extractWidgetsFromSplitSets(splitSets, widgets, rootSplitUUID);
+      return { id: rootSplitUUID, name: `Dashboard ${i + 1}`, configuration };
     });
     this.migrateDatasetsToDataCharts(datasetInfo, dashboards);
+    this.migrateUseNeedleToEnableNeedle(dashboards);
     const oldConf: v10IConfig = cloneDeep(config);
     oldConf.app.configVersion = 0; // retired
     return {
@@ -296,7 +299,7 @@ export class ConfigurationUpgradeService {
     return updates;
   }
 
- private migrateDatasetsToDataCharts(datasetInfo: DataChartConfigUpdate[], dashboards: Dashboard[]): void {
+  private migrateDatasetsToDataCharts(datasetInfo: DataChartConfigUpdate[], dashboards: Dashboard[]): void {
     if (!Array.isArray(datasetInfo) || datasetInfo.length === 0) return;
     if (!Array.isArray(dashboards)) return;
 
@@ -369,7 +372,7 @@ export class ConfigurationUpgradeService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async upgradeConfig(rootConfig: Config): Promise<any> {
-    const config:IConfig = await this._storage.getConfig(rootConfig.scope, rootConfig.name);
+    const config: IConfig = await this._storage.getConfig(rootConfig.scope, rootConfig.name);
     try {
       if (config.app.configVersion !== 11) {
         this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version 12 config. Skipping.`);
@@ -378,6 +381,7 @@ export class ConfigurationUpgradeService {
       this.addSplitShellConfigKeys(config.app);
       const datasetInfo = this.extractAppDatasets(config.app);
       this.migrateDatasetsToDataCharts(datasetInfo, config.dashboards);
+      this.migrateUseNeedleToEnableNeedle(config.dashboards);
       // Iterate dashboards and force widget selector to 'widget-host2'
       let updatedWidgetCount = 0;
       let dimensionUpdatedCount = 0;
@@ -427,6 +431,32 @@ export class ConfigurationUpgradeService {
     }
   }
 
+  private migrateUseNeedleToEnableNeedle(dashboards: Dashboard[]): void {
+    if (!Array.isArray(dashboards)) return;
+    interface WidgetHost2 { input?: { widgetProperties?: { config?: unknown } } }
+    interface GaugeCfg { enableNeedle?: boolean; useNeedle?: boolean;[k: string]: unknown }
+    let updatedCount = 0;
+    for (const dash of dashboards) {
+      if (!dash || !Array.isArray(dash.configuration)) continue;
+      for (const w of dash.configuration) {
+        const widget = w as WidgetHost2;
+        const config = widget.input?.widgetProperties?.config as { gauge?: GaugeCfg } | undefined;
+        const gauge = config?.gauge;
+        if (!gauge || typeof gauge !== 'object') continue;
+        if (Object.prototype.hasOwnProperty.call(gauge, 'useNeedle')) {
+          if (gauge.enableNeedle === undefined) {
+            gauge.enableNeedle = Boolean(gauge.useNeedle);
+          } else {
+            gauge.enableNeedle = Boolean(gauge.enableNeedle);
+          }
+          delete gauge.useNeedle;
+          updatedCount++;
+        }
+      }
+    }
+    if (updatedCount) this.pushMsg(`[Upgrade] Renamed gauge.useNeedle -> gauge.enableNeedle on ${updatedCount} widget(s).`);
+  }
+
   private addSplitShellConfigKeys(app: IAppConfig): void {
     if (!app) return;
     if (app.splitShellEnabled === undefined) app.splitShellEnabled = false;
@@ -436,44 +466,44 @@ export class ConfigurationUpgradeService {
   }
 
   private upgradeDashboardWidgets(dashboards: Dashboard[]): void {
-      // Iterate dashboards:
-      // 1. Force widget selector to 'widget-host2'
-      // 2. Double grid metrics (x,y,w,h) if non-zero (leave zeros untouched)
-      let selectorUpdatedCount = 0;
-      let dimensionUpdatedCount = 0;
-      if (Array.isArray(dashboards)) {
-        for (const dash of dashboards) {
-          if (!dash || !Array.isArray(dash.configuration)) continue;
-          for (const widget of dash.configuration) {
-            if (!widget || typeof widget !== 'object') continue;
+    // Iterate dashboards:
+    // 1. Force widget selector to 'widget-host2'
+    // 2. Double grid metrics (x,y,w,h) if non-zero (leave zeros untouched)
+    let selectorUpdatedCount = 0;
+    let dimensionUpdatedCount = 0;
+    if (Array.isArray(dashboards)) {
+      for (const dash of dashboards) {
+        if (!dash || !Array.isArray(dash.configuration)) continue;
+        for (const widget of dash.configuration) {
+          if (!widget || typeof widget !== 'object') continue;
 
-            // Ensure selector
-            if (widget.selector !== 'widget-host2') {
-              widget.selector = 'widget-host2';
-              selectorUpdatedCount++;
-            }
-
-            // Helper to double a numeric property if > 0
-            const maybeDouble = (prop: string) => {
-              const val = widget[prop];
-              if (typeof val === 'number' && val !== 0) {
-                widget[prop] = val * 2;
-                dimensionUpdatedCount++;
-              }
-            };
-            maybeDouble('w');
-            maybeDouble('h');
-            maybeDouble('x');
-            maybeDouble('y');
+          // Ensure selector
+          if (widget.selector !== 'widget-host2') {
+            widget.selector = 'widget-host2';
+            selectorUpdatedCount++;
           }
+
+          // Helper to double a numeric property if > 0
+          const maybeDouble = (prop: string) => {
+            const val = widget[prop];
+            if (typeof val === 'number' && val !== 0) {
+              widget[prop] = val * 2;
+              dimensionUpdatedCount++;
+            }
+          };
+          maybeDouble('w');
+          maybeDouble('h');
+          maybeDouble('x');
+          maybeDouble('y');
         }
       }
-      if (selectorUpdatedCount) {
-        this.pushMsg(`[Upgrade] Updated ${selectorUpdatedCount} localStorage widget selector(s) to 'widget-host2'.`);
-      }
-      if (dimensionUpdatedCount) {
-        this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries.`);
-      }
+    }
+    if (selectorUpdatedCount) {
+      this.pushMsg(`[Upgrade] Updated ${selectorUpdatedCount} localStorage widget selector(s) to 'widget-host2'.`);
+    }
+    if (dimensionUpdatedCount) {
+      this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries.`);
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -489,19 +519,19 @@ export class ConfigurationUpgradeService {
       splitSet.splitAreas.forEach(area => {
         if (area.type === 'widget') {
           const widget = widgetMap.get(area.uuid);
-            if (widget) {
-              if (widget.type === 'WidgetBlank') { return; }
-              if (y + widgetHeight > gridHeight) { issues.push(`No space left for widget: ${widget.uuid}`); return; }
-              const selector = ConfigurationUpgradeService.widgetTypeToSelectorMap[widget.type] || 'widget-unknown';
-              const transformedConfig = this.transformWidget(widget.config, widget.type);
-              extractedWidgets.push({
-                id: widget.uuid,
-                selector: 'widget-host2',
-                input: { widgetProperties: { type: selector, uuid: widget.uuid, config: transformedConfig } },
-                x, y, w: widgetWidth, h: widgetHeight
-              });
-              x += widgetWidth; if (x >= gridWidth) { x = 0; y += widgetHeight; }
-            } else { issues.push(`Missing widget with UUID: ${area.uuid}`); }
+          if (widget) {
+            if (widget.type === 'WidgetBlank') { return; }
+            if (y + widgetHeight > gridHeight) { issues.push(`No space left for widget: ${widget.uuid}`); return; }
+            const selector = ConfigurationUpgradeService.widgetTypeToSelectorMap[widget.type] || 'widget-unknown';
+            const transformedConfig = this.transformWidget(widget.config, widget.type);
+            extractedWidgets.push({
+              id: widget.uuid,
+              selector: 'widget-host2',
+              input: { widgetProperties: { type: selector, uuid: widget.uuid, config: transformedConfig } },
+              x, y, w: widgetWidth, h: widgetHeight
+            });
+            x += widgetWidth; if (x >= gridWidth) { x = 0; y += widgetHeight; }
+          } else { issues.push(`Missing widget with UUID: ${area.uuid}`); }
         } else if (area.type === 'splitSet') { traverseSplitSets(area.uuid); }
       });
     };
@@ -516,5 +546,6 @@ export class ConfigurationUpgradeService {
 
   private pushError(msg: string) {
     this.error.set(msg);
-    this.pushMsg(msg); }
+    this.pushMsg(msg);
+  }
 }

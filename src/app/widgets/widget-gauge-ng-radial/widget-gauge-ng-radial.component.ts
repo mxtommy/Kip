@@ -58,11 +58,12 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     gauge: {
       type: 'ngRadial',
       subType: 'measuring',
-      enableTicks: true,
-      compassUseNumbers: false,
       highlightsWidth: 5,
       scaleStart: 180,
-      barStartPosition: 'left'
+      barStartPosition: 'left',
+      enableTicks: true,
+      enableProgressbar: true,
+      enableNeedle: true
     },
     numInt: 1,
     numDecimal: 0,
@@ -214,6 +215,9 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
     const g = this.gaugeOptions = {} as RadialGaugeOptions;
     g.title = this.displayName();
+    g.minValue = scale.min;
+    g.maxValue = scale.max;
+    g.units = cfg.paths?.['gaugePath']?.convertUnitTo;
     g.highlights = [];
     // Include initial highlights if already available (after view init effect will re-apply).
     const initialHl = this.highlights();
@@ -234,32 +238,41 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     g.animation = true; g.animateOnInit = false; g.animatedValue = false; g.animationRule = 'linear';
     const st = cfg.paths?.['gaugePath']?.sampleTime ?? 500; g.animationDuration = st - 25;
     g.colorBorderShadow = false; g.colorBorderOuter = theme.cardColor; g.colorBorderOuterEnd = ''; g.colorBorderMiddle = theme.cardColor; g.colorBorderMiddleEnd = '';
-    g.colorBarProgress = getColors(cfg.color, theme).color;
-    g.colorNeedle = getColors(cfg.color, theme).dim; g.colorNeedleEnd = getColors(cfg.color, theme).dim;
-    g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = getColors(cfg.color, theme).color;
-    this.colorStrokeTicks.set(theme.contrastDim); g.colorMinorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim; g.colorMajorTicks = theme.contrastDim;
     g.colorPlate = g.colorPlateEnd = theme.cardColor; g.colorBar = theme.background;
-    g.colorNeedleShadowUp = ''; g.colorNeedleShadowDown = 'black';
+
+    g.barProgress = cfg.gauge?.enableProgressbar; g.colorBarProgress = getColors(cfg.color, theme).color;
+    g.colorNeedle = getColors(cfg.color, theme).color; g.colorNeedleEnd = getColors(cfg.color, theme).color;
+    g.needleShadow = true; g.colorNeedleShadowUp = "black"; g.colorNeedleShadowDown = "black";
     g.colorNeedleCircleInner = g.colorPlate; g.colorNeedleCircleInnerEnd = g.colorPlate; g.colorNeedleCircleOuter = g.colorPlate; g.colorNeedleCircleOuterEnd = g.colorPlate;
+
+    g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = getColors(cfg.color, theme).color;
+    this.colorStrokeTicks.set(theme.contrastDim); g.colorMinorTicks = theme.contrastDim;
+    g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
+
     // subtype specific
     if (cfg.gauge?.subType === 'capacity') {
-      g.minValue = scale.min;
-      g.maxValue = scale.max;
-      g.units = cfg.paths?.['gaugePath']?.convertUnitTo;
-      g.fontTitleSize = 40; g.barProgress = true; g.barWidth = 20;
-      g.colorBarProgress = getColors(cfg.color, theme).dim;
+      g.fontTitleSize = 40;
       g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 10; g.valueBoxBorderRadius = 5; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
-      g.ticksAngle = 360; g.startAngle = (cfg.gauge?.scaleStart as number) || 180; g.majorTicks = 0 as unknown as string[]; g.exactTicks = true; g.strokeTicks = false; g.minorTicks = 0; g.numbersMargin = 0; g.fontNumbersSize = 0;
       g.colorMajorTicks = g.colorPlate; g.colorNumbers = g.colorMinorTicks = '' as unknown as string;
-      g.needle = true; g.needleType = this.LINE; g.needleWidth = 2; g.needleShadow = false; g.needleStart = 75; g.needleEnd = 95; g.needleCircleSize = 1; g.needleCircleInner = false; g.needleCircleOuter = false;
+
+      g.barWidth = 20; g.colorBarProgress = getColors(cfg.color, theme).dim;
+      g.needle = cfg.gauge.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 75; g.needleEnd = 95; g.needleCircleSize = 1; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.ticksAngle = 360; g.startAngle = (cfg.gauge?.scaleStart as number) || 180; g.majorTicks = 0 as unknown as string[]; g.exactTicks = true; g.strokeTicks = false; g.minorTicks = 0; g.numbersMargin = 0; g.fontNumbersSize = 0;
       g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0;
-      g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
+
     } else { // measuring
-      g.minValue = scale.min; g.maxValue = scale.max;
-      g.units = cfg.paths?.['gaugePath']?.convertUnitTo; g.fontTitleSize = 24;
-      g.barProgress = true; g.barWidth = 15; g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 100; g.valueBoxBorderRadius = 0; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
-      g.exactTicks = false; g.majorTicks = scale.majorTicks as unknown as string[]; g.minorTicks = 2; g.ticksAngle = 270; g.startAngle = 45; g.barStartPosition = cfg.gauge?.barStartPosition || 'left'; g.strokeTicks = true; g.numbersMargin = 3; g.fontNumbersSize = 15;
-      g.needle = true; g.needleType = this.LINE; g.needleWidth = 2; g.needleShadow = false; g.needleStart = 0; g.needleEnd = 95; g.needleCircleSize = 10; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.fontTitleSize = 24;
+      g.barWidth = 15; g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 100; g.valueBoxBorderRadius = 0; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
+      g.needle = cfg.gauge.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 0; g.needleEnd = 95; g.needleCircleSize = 10; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.ticksAngle = 270; g.startAngle = 45; g.barStartPosition = cfg.gauge?.barStartPosition || 'left';
+      if (cfg.gauge.enableTicks) {
+        g.strokeTicks = true; g.majorTicks = scale.majorTicks as unknown as string[]; g.minorTicks = 2; g.exactTicks = false; g.numbersMargin = 3; g.fontNumbersSize = 15;
+        g.colorMajorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim;
+      } else {
+        g.strokeTicks = false; g.majorTicks = 0 as unknown as string[]; g.minorTicks = 0; g.exactTicks = true; g.numbersMargin = 0; g.fontNumbersSize = 0;
+        g.colorMajorTicks = g.colorPlate; g.colorNumbers = g.colorMinorTicks = '' as unknown as string;
+      }
+
       g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0; g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
     }
   }

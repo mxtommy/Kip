@@ -301,7 +301,8 @@ export const DemoDashboardsConfig: Dashboard[] = [
                 "type": "ngRadial",
                 "subType": "measuring",
                 "enableTicks": true,
-                "compassUseNumbers": false,
+                "enableNeedle": true,
+                "enableProgressbar": true,
                 "highlightsWidth": 5,
                 "scaleStart": 180,
                 "barStartPosition": "left"

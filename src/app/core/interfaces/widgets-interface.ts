@@ -124,14 +124,16 @@ export interface IWidgetSvcConfig {
     subType?: string;
     /** Optional. Should gauge ticks be enabled */
     enableTicks?: boolean;
+    /** Optional. Should gauge show a progress bar */
+    enableProgressbar?: boolean;
+    /** Optional. Should gauge show a needle indicator */
+    enableNeedle?: boolean;
     /** Optional. Units formatting rule name */
     unitLabelFormat?: string;
     /** Optional. Used ny ngGauge when in compass mode */
     compassUseNumbers?: boolean;
     /** Optional. Used ny ngGauge to show/hide value box */
     showValueBox?: boolean;
-    /** Optional. Used by Linear ngGauge to use a needle indicator and no progress bar */
-    useNeedle?: boolean;
     /** Optional. Used by GaugeSteel to set face style */
     backgroundColor?: string;
     /** Optional. Used by GaugeSteel to set face style */

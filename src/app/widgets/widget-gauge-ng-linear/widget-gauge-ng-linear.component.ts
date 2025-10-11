@@ -58,9 +58,9 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     gauge: {
       type: 'ngLinear',
       subType: 'vertical', // vertical | horizontal
-      enableTicks: false,
       highlightsWidth: 5,
-      useNeedle: false
+      enableTicks: true,
+      enableNeedle: false
     },
     numInt: 1,
     numDecimal: 0,
@@ -177,11 +177,11 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       if (!this.viewReady()) return;
       untracked(() => {
         const opt: LinearGaugeOptions = {};
-        const useNeedle = cfg.gauge?.useNeedle;
+        const enableNeedle = cfg.gauge?.enableNeedle;
         const palette = getColors(cfg.color, theme);
         switch (state) {
           case States.Alarm:
-            if (useNeedle) {
+            if (enableNeedle) {
               opt.colorNeedle = theme.zoneAlarm;
               opt.colorValueText = theme.zoneAlarm;
             } else {
@@ -190,7 +190,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
             }
             break;
           case States.Warn:
-            if (useNeedle) {
+            if (enableNeedle) {
               opt.colorNeedle = theme.zoneWarn;
               opt.colorValueText = theme.zoneWarn;
             } else {
@@ -199,7 +199,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
             }
             break;
           case States.Alert:
-            if (useNeedle) {
+            if (enableNeedle) {
               opt.colorNeedle = theme.zoneAlert;
               opt.colorValueText = theme.zoneAlert;
             } else {
@@ -208,7 +208,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
             }
             break;
           default:
-            if (useNeedle) {
+            if (enableNeedle) {
               opt.colorNeedle = palette.color;
               opt.colorValueText = palette.color;
             } else {
@@ -226,7 +226,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
     const opt = this.gaugeOptions = {} as LinearGaugeOptions;
     const isVertical = cfg.gauge?.subType === 'vertical';
-    const useNeedle = cfg.gauge?.useNeedle;
+    const enableNeedle = cfg.gauge?.enableNeedle;
     const ticks = cfg.gauge?.enableTicks;
     // Canvas size (defer dynamic resize until AfterViewInit)
     opt.minValue = scale.min; opt.maxValue = scale.max;
@@ -234,12 +234,12 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.title = this.displayName(); opt.fontTitleSize = 40; opt.fontTitle = 'Roboto'; opt.fontTitleWeight = 'bold';
     // Bar geometry (match legacy defaults)
     opt.barLength = isVertical ? 80 : 90;
-    opt.barWidth = ticks ? (useNeedle ? 0 : 30) : 60;
+    opt.barWidth = ticks ? (enableNeedle ? 0 : 30) : 60;
     opt.barProgress = true; opt.barBeginCircle = 0; opt.barStrokeWidth = 0; opt.barShadow = 0;
     // Needle geometry
-    opt.needle = !!useNeedle; opt.needleType = useNeedle ? 'arrow' : 'line';
-    opt.needleStart = useNeedle ? (isVertical ? 200 : 155) : -45;
-    opt.needleEnd = useNeedle ? (isVertical ? 175 : 180) : 55;
+    opt.needle = !!enableNeedle; opt.needleType = enableNeedle ? 'arrow' : 'line';
+    opt.needleStart = enableNeedle ? (isVertical ? 200 : 155) : -45;
+    opt.needleEnd = enableNeedle ? (isVertical ? 175 : 180) : 55;
     opt.needleShadow = true; opt.needleSide = 'both';
     opt.units = cfg.paths?.['gaugePath']?.convertUnitTo; opt.fontUnits = 'Roboto'; opt.fontUnitsWeight = 'normal';
     opt.borders = false; opt.borderOuterWidth = 0; opt.borderMiddleWidth = 0; opt.borderInnerWidth = 0; opt.borderShadowWidth = 0; opt.borderRadius = 0;
@@ -253,7 +253,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     const palette = getColors(cfg.color, theme);
     // baseline colors
     opt.colorValueText = palette.color;
-    if (useNeedle) {
+    if (enableNeedle) {
       opt.colorNeedle = palette.color; opt.colorNeedleEnd = palette.color; opt.needleWidth = 45;
       opt.colorNeedleShadowUp = palette.color; opt.colorNeedleShadowDown = palette.color;
     } else {
@@ -264,11 +264,11 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.majorTicks = ticks ? scale.majorTicks as unknown as string[] : [];
     opt.majorTicksInt = cfg.numInt ?? 1; opt.majorTicksDec = cfg.numDecimal ?? 2;
     opt.strokeTicks = !!ticks; opt.minorTicks = ticks ? 2 : 0; opt.ticksWidthMinor = ticks ? 6 : 0;
-    opt.numberSide = useNeedle ? 'right' : 'left';
+    opt.numberSide = enableNeedle ? 'right' : 'left';
     opt.fontNumbersSize = ticks ? (isVertical ? 22 : 30) : 0;
-    opt.numbersMargin = isVertical ? (useNeedle ? -7 : -3) : (useNeedle ? -33 : -5);
-    opt.ticksWidth = ticks ? (useNeedle ? (isVertical ? 15 : 10) : 10) : 0;
-    opt.ticksPadding = ticks ? (isVertical ? (useNeedle ? 0 : 5) : (useNeedle ? 9 : 8)) : 0;
+    opt.numbersMargin = isVertical ? (enableNeedle ? -7 : -3) : (enableNeedle ? -33 : -5);
+    opt.ticksWidth = ticks ? (enableNeedle ? (isVertical ? 15 : 10) : 10) : 0;
+    opt.ticksPadding = ticks ? (isVertical ? (enableNeedle ? 0 : 5) : (enableNeedle ? 9 : 8)) : 0;
     opt.tickSide = 'left';
     opt.animation = true; opt.animationRule = 'linear'; opt.animatedValue = false; opt.animateOnInit = false; opt.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 25;
     opt.highlights = []; opt.highlightsWidth = cfg.gauge?.highlightsWidth;
