@@ -1,124 +1,122 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService } from '../../core/services/app-service';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
+import { AppService, ITheme } from '../../core/services/app-service';
+import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
 import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { WidgetTitleComponent } from "../../core/components/widget-title/widget-title.component";
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 
 @Component({
-    selector: 'widget-boolean-switch',
-    templateUrl: './widget-boolean-switch.component.html',
-    styleUrls: ['./widget-boolean-switch.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
+  selector: 'widget-boolean-switch',
+  templateUrl: './widget-boolean-switch.component.html',
+  styleUrls: ['./widget-boolean-switch.component.scss'],
+  imports: [NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
-export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetBooleanSwitchComponent implements OnDestroy {
+  // Host2 functional inputs (provided by widget-host2 wrapper)
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Static default config consumed by runtime merge
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Switch Panel Label',
+    filterSelfPaths: true,
+    // Each control uses a matching path entry by pathID. For Host2 we preserve existing shape.
+    paths: [],
+    enableTimeout: false,
+    dataTimeout: 5,
+    color: 'contrast',
+    putEnable: true,
+    putMomentary: false,
+    multiChildCtrls: []
+  };
+
+  // Exposed for template access (displayName)
+  protected readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
+  private readonly streams = inject(WidgetStreamsDirective, { optional: true });
+
+  // Services / directives
   protected dashboard = inject(DashboardService);
-  private signalkRequestsService = inject(SignalkRequestsService);
-  private appService = inject(AppService);
+  private readonly signalkRequestsService = inject(SignalkRequestsService);
+  private readonly appService = inject(AppService);
+
+  // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
-  private skRequestSub = new Subscription; // Request result observer
-
-  protected labelColor = signal<string>(undefined);
-
-  private nbCtrl: number = null;
-  public ctrlDimensions: IDimensions = { width: 0, height: 0};
+  protected labelColor = signal<string | undefined>(undefined);
+  private nbCtrl: number | null = null;
+  public ctrlDimensions: IDimensions = { width: 0, height: 0 };
+  private skRequestSub = new Subscription();
 
   constructor() {
-      super();
-
-      this.defaultConfig = {
-        displayName: 'Switch Panel Label',
-        filterSelfPaths: true,
-        paths: [],
-        enableTimeout: false,
-        dataTimeout: 5,
-        color: "contrast",
-        putEnable: true,
-        putMomentary: false,
-        multiChildCtrls: []
-      };
-
+    // Effect: theme / label color
     effect(() => {
-      if (this.theme()) {
-        this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-      }
+      const theme = this.theme();
+      const cfg = this.runtime?.options();
+      if (!theme || !cfg) return;
+      untracked(() => {
+        this.labelColor.set(getColors(cfg.color, theme).dim);
+      });
+    });
+
+    // Effect: rebuild controls & register streams when config changes
+    effect(() => {
+      const cfg = this.runtime?.options();
+      if (!cfg) return;
+      const controls = (cfg.multiChildCtrls || []).map(c => ({ ...c, isNumeric: c.isNumeric ?? false }));
+      this.nbCtrl = controls.length;
+      untracked(() => {
+        this.switchControls.set(controls);
+        // Register path observers for each control (idempotent via directive)
+        if (!this.streams) return;
+        controls.forEach(ctrl => {
+          const pathEntry = (cfg.paths as IWidgetPath[] | undefined)?.find(p => p.pathID === ctrl.pathID);
+          if (!pathEntry?.path) return; // guard empty path
+          this.streams.observe(pathEntry.pathID, pkt => {
+            // packet shape: pkt.data.value
+            const val = pkt?.data?.value;
+            if (ctrl.isNumeric) {
+              if ([0, 1, null].includes(val)) {
+                ctrl.value = Boolean(val);
+              }
+            } else {
+              ctrl.value = val;
+            }
+          });
+        });
+      });
+      // subscribe PUT responses (re-init on config change to ensure uuid matches)
+      this.subscribeSKRequest();
     });
   }
 
-  ngOnInit(): void {
-    this.validateConfig();
-  }
-
-  ngAfterViewInit(): void {
-    this.startWidget();
-  }
-
-  protected startWidget(): void {
-    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-    this.nbCtrl = this.widgetProperties.config.multiChildCtrls.length;
-
-    // Build control array
-    this.switchControls.set([]);
-    this.widgetProperties.config.multiChildCtrls.forEach(ctrlConfig => {
-      if (!ctrlConfig.isNumeric) {
-        ctrlConfig.isNumeric = false;
-      }
-        this.switchControls().push({...ctrlConfig});
-      }
-    );
-
-    // Start Observers as path Array
-    this.unsubscribeDataStream();
-    for (const key in this.switchControls()) {
-      if (Object.prototype.hasOwnProperty.call(this.switchControls(), key)) {
-        const path = this.switchControls()[key];
-        this.observeDataStream(key, newValue => {
-          if (path.isNumeric) {
-            if ([0, 1, null].includes(newValue.data.value)) {
-              path.value = Boolean(newValue.data.value);
-            }
-          } else {
-            path.value = newValue.data.value;
-          }
-        });
-      }
-    }
-
-    // Listen to PUT response msg
-    this.skRequestSub?.unsubscribe();
-    this.subscribeSKRequest();
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
-  }
-
   onResized(event: ResizeObserverEntry): void {
-    const calcH: number = event.contentRect.height / this.nbCtrl; // divide by number of instantiated widget
-    const ctrlHeightProportion = (35 * event.contentRect.width / 180); //check control height not over width proportions
-    const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion :  calcH;
-    this.ctrlDimensions = { width: event.contentRect.width, height: h};
+    const nb = this.nbCtrl || 1;
+    const calcH: number = event.contentRect.height / nb;
+    const ctrlHeightProportion = (35 * event.contentRect.width / 180);
+    const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
+    this.ctrlDimensions = { width: event.contentRect.width, height: h };
   }
 
   private subscribeSKRequest(): void {
+    this.skRequestSub?.unsubscribe();
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
-        let errMsg = `Toggle Widget ${this.widgetProperties.config.displayName}: `;
-        if (requestResult.statusCode != 200){
-          if (requestResult.message){
+      // Match widget ID
+      if (requestResult.widgetUUID == this.id()) {
+        const cfg = this.runtime?.options();
+        let errMsg = `Toggle Widget ${cfg?.displayName || 'Switch Panel'}: `;
+        if (requestResult.statusCode != 200) {
+          if (requestResult.message) {
             errMsg += requestResult.message;
           } else {
-            errMsg += requestResult.statusCode + " - " +requestResult.statusCodeDescription;
+            errMsg += requestResult.statusCode + ' - ' + requestResult.statusCodeDescription;
           }
           this.appService.sendSnackbarNotification(errMsg, 0);
         }
@@ -126,26 +124,23 @@ export class WidgetBooleanSwitchComponent extends BaseWidgetComponent implements
     });
   }
 
-  public toggle($event: IDynamicControl): void {
-    const paths = this.widgetProperties.config.paths as IWidgetPath[];
-    const i = paths.findIndex((path: IWidgetPath) => path.pathID == $event.pathID);
-    if($event.isNumeric) {
-      this.signalkRequestsService.putRequest(
-        this.widgetProperties.config.paths[i].path,
-        $event.value ? 1 : 0,
-        this.widgetProperties.uuid
-      );
+  public toggle(ctrl: IDynamicControl): void {
+    const cfg = this.runtime?.options();
+    if (!cfg?.putEnable) return;
+    const paths = cfg.paths as IWidgetPath[] | undefined;
+    if (!paths) return;
+    const i = paths.findIndex(p => p.pathID === ctrl.pathID);
+    if (i < 0) return;
+    const targetPath = paths[i].path;
+    if (!targetPath) return;
+    if (ctrl.isNumeric) {
+      this.signalkRequestsService.putRequest(targetPath, ctrl.value ? 1 : 0, this.id());
     } else {
-      this.signalkRequestsService.putRequest(
-        this.widgetProperties.config.paths[i].path,
-        $event.value,
-        this.widgetProperties.uuid
-      );
+      this.signalkRequestsService.putRequest(targetPath, ctrl.value, this.id());
     }
   }
 
   ngOnDestroy(): void {
-    this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
   }
 }

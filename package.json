@@ -48,9 +48,12 @@
     "build:dev": "ng build --configuration=dev",
     "build:prod": "ng build --configuration=production",
     "build:all": "npm run build:plugin && npm run build:prod",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "generate:widget": "npx schematics ./tools/schematics/collection.json:create-host2-widget --dry-run=false"
   },
+  "schematics": "tools/schematics/collection.json",
   "devDependencies": {
+    "@angular-devkit/schematics-cli": "^20.1.6",
     "@angular-devkit/build-angular": "^20.1.6",
     "@angular/animations": "20.1.7",
     "@angular/build": "^20.1.6",
@@ -85,7 +88,7 @@
     "core-js": "^3.13.1",
     "date-fns": "^2.30.0",
     "eslint": "^9.29.0",
-    "gridstack": "^11.4.0",
+    "gridstack": "^12.3.3",
     "howler": "^2.2.4",
     "jasmine-core": "~4.0.1",
     "jasmine-spec-reporter": "~5.0.0",

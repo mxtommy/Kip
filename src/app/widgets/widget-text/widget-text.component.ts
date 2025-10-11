@@ -1,19 +1,44 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, untracked } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { IPathUpdate } from '../../core/services/data.service';
+import { ITheme } from '../../core/services/app-service';
 
 
 @Component({
   selector: 'widget-text',
   templateUrl: './widget-text.component.html',
   styleUrls: ['./widget-text.component.scss'],
-  imports: [WidgetHostComponent, NgxResizeObserverModule]
+  imports: [NgxResizeObserverModule]
 })
-export class WidgetTextComponent extends BaseWidgetComponent implements AfterViewInit, OnInit, OnDestroy {
+export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme|null>();
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Gauge Label',
+    filterSelfPaths: true,
+    paths: {
+      "stringPath": {
+        description: "String Data",
+        path: null,
+        source: null,
+        pathType: "string",
+        isPathConfigurable: true,
+        sampleTime: 500
+      }
+    },
+    color: 'contrast',
+    enableTimeout: false,
+    dataTimeout: 5
+  };
+  private readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly stream = inject(WidgetStreamsDirective);
+
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
@@ -26,38 +51,33 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   protected labelColor = signal<string>(undefined);
   private valueColor: string = undefined;
   private isDestroyed = false; // guard against callbacks after destroyed
+  private streamRegistered = false;
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'Gauge Label',
-      filterSelfPaths: true,
-      paths: {
-        "stringPath": {
-          description: "String Data",
-          path: null,
-          source: null,
-          pathType: "string",
-          isPathConfigurable: true,
-          sampleTime: 500
+    effect(() => {
+      const theme = this.theme();
+      untracked(() => {
+        const cfg = this.runtime?.options();
+        if (!cfg) return;
+        if (theme) {
+          this.setColors();
+          this.drawWidget();
         }
-      },
-      color: 'contrast',
-      enableTimeout: false,
-      dataTimeout: 5
-    };
+      });
+    });
 
     effect(() => {
-      if (this.theme()) {
-        this.setColors();
-        this.drawWidget();
-      }
+      const cfg = this.runtime?.options();
+      if (!cfg) return;
+      if (this.isDestroyed || !this.canvasCtx) return;
+      this.setColors();
+      this.startWidget();
+      this.drawWidget();
     });
   }
 
   ngOnInit() {
-    this.validateConfig();
+    this.setColors();
   }
 
   ngAfterViewInit(): void {
@@ -77,29 +97,33 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
     this.startWidget();
   }
 
-  protected startWidget(): void {
-    this.unsubscribeDataStream();
-    this.setColors();
-    this.observeDataStream('stringPath', newValue => {
-      this.dataValue = newValue.data.value;
-      this.drawWidget();
-    });
+  private startWidget(): void {
+    this.dataValue = null;
+    if (!this.streamRegistered) {
+      const cfg = this.runtime?.options();
+      if (cfg?.paths?.['stringPath']?.path) {
+        this.stream.observe('stringPath', (newValue: IPathUpdate) => {
+          this.dataValue = newValue.data.value as string;
+          this.drawWidget();
+        });
+        this.streamRegistered = true;
+      } else {
+        this.drawWidget();
+      }
+    }
   }
 
   private setColors(): void {
-    this.labelColor.set(getColors(this.widgetProperties.config.color, this.theme()).dim);
-    this.valueColor = getColors(this.widgetProperties.config.color, this.theme()).color;
+    const cfg = this.runtime?.options();
+    if (!cfg) return;
+    this.labelColor.set(getColors(cfg.color, this.theme()).dim);
+    this.valueColor = getColors(cfg.color, this.theme()).color;
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.startWidget();
-    this.drawWidget();
-  }
+  // Runtime config updates are handled by Host2; effects above re-run on changes.
 
   ngOnDestroy() {
     this.isDestroyed = true;
-    this.destroyDataStreams();
     try { this.canvas.unregisterCanvas(this.canvasElement); }
     catch { /* ignore */ }
   }
@@ -110,19 +134,21 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
   drawWidget() {
     if (!this.canvasCtx) return;
     const titleHeight = Math.floor(this.cssHeight * 0.1);
+    const cfg = this.runtime.options();
+    const bgText = cfg.displayName + '|' + this.labelColor();
     if (!this.titleBitmap ||
       this.titleBitmap.width !== this.canvasElement.width ||
       this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== this.widgetProperties.config.displayName
+      this.titleBitmapText !== bgText
     ) {
       this.titleBitmap = this.canvas.createTitleBitmap(
-        this.widgetProperties.config.displayName,
+        cfg.displayName,
         this.labelColor(),
         'normal',
         this.cssWidth,
         this.cssHeight
       );
-      this.titleBitmapText = this.widgetProperties.config.displayName;
+      this.titleBitmapText = cfg.displayName + '|' + this.labelColor();
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
@@ -130,7 +156,7 @@ export class WidgetTextComponent extends BaseWidgetComponent implements AfterVie
       this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
 
-    const valueText = this.dataValue === null ? '--' : this.dataValue;
+  const valueText = this.dataValue === null ? '--' : this.dataValue;
     const edge = this.canvas.EDGE_BUFFER || 10;
     const availableHeight = Math.max(0, this.cssHeight - titleHeight - 2 * edge);
     const maxWidth = Math.max(0, Math.floor(this.cssWidth - 2 * edge));

@@ -117,7 +117,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
         this._router.navigate(['/settings']);
         break;
       case 'layout':
-        this.dashboard.toggleStaticDashboard();
+        this.dashboard.setStaticDashboard(false);
         break;
       case 'nightMode':
         this.app.isNightMode.set(!this.app.isNightMode());

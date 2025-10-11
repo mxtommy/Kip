@@ -5,390 +5,290 @@
  * Gauge .update() function should ONLY be called after ngAfterViewInit. Used to update
  * instantiated gauge config.
  */
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, effect, viewChild } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, AfterViewInit, ElementRef, effect, viewChild, inject, input, untracked, computed, signal } from '@angular/core';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
-
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
+import { UnitsService } from '../../core/services/units.service';
+import { ITheme } from '../../core/services/app-service';
 
 @Component({
-    selector: 'widget-gauge-ng-radial',
-    templateUrl: './widget-gauge-ng-radial.component.html',
-    styleUrls: ['./widget-gauge-ng-radial.component.scss'],
-    imports: [WidgetHostComponent, NgxResizeObserverModule, GaugesModule]
+  selector: 'widget-gauge-ng-radial',
+  templateUrl: './widget-gauge-ng-radial.component.html',
+  styleUrls: ['./widget-gauge-ng-radial.component.scss'],
+  imports: [NgxResizeObserverModule, GaugesModule]
 })
-export class WidgetGaugeNgRadialComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetGaugeNgRadialComponent implements AfterViewInit {
+  // Functional Host2 inputs
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
+
+  // Host2 directives (applied by host container)
+  private readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective);
+  private readonly metadata = inject(WidgetMetadataDirective);
+  private readonly unitsService = inject(UnitsService);
+
+  // Static default configuration (legacy parity)
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Gauge Label',
+    filterSelfPaths: true,
+    paths: {
+      gaugePath: {
+        description: 'Numeric Data',
+        path: null,
+        source: null,
+        pathType: 'number',
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: true,
+        pathSkUnitsFilter: null,
+        convertUnitTo: 'unitless',
+        sampleTime: 500
+      }
+    },
+    displayScale: { lower: 0, upper: 100, type: 'linear' },
+    gauge: {
+      type: 'ngRadial',
+      subType: 'measuring',
+      enableTicks: true,
+      compassUseNumbers: false,
+      highlightsWidth: 5,
+      scaleStart: 180,
+      barStartPosition: 'left'
+    },
+    numInt: 1,
+    numDecimal: 0,
+    enableTimeout: false,
+    color: 'contrast',
+    dataTimeout: 5,
+    ignoreZones: false
+  };
+
   // Gauge option setting constant
   private readonly LINE: string = "line";
-  private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
+  private readonly ANIMATION_TARGET_NEEDLE: string = "needle";
 
   readonly ngGauge = viewChild<RadialGauge>('radialGauge');
   readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
-  private initCompleted = false;
-  // Gauge text value for value box rendering
-  protected textValue = "";
-  // Gauge value
-  protected value: number = null;
-  private adjustedScale: IScale;
+  // Reactive state
+  protected value = signal(0);
+  protected textValue = signal('');
+  protected colorStrokeTicks = signal('');
+  private readonly adjustedScale = computed<IScale>(() => {
+    const cfg = this.runtime.options();
+    if (!cfg) return { min: 0, max: 100, majorTicks: [] };
+    if (cfg.gauge?.subType === 'capacity') {
+      return { min: cfg.displayScale?.lower ?? 0, max: cfg.displayScale?.upper ?? 100, majorTicks: [] };
+    }
+    // measuring
+    return adjustLinearScaleAndMajorTicks(
+      cfg.displayScale?.lower ?? 0,
+      cfg.displayScale?.upper ?? 100,
+      cfg.gauge?.barStartPosition === 'right'
+    );
+  });
+  private highlights = computed<IDataHighlight[]>(() => {
+    const cfg = this.runtime.options();
+    const theme = this.theme();
+    if (!cfg || !theme) return [];
+    if (cfg.ignoreZones) return [];
+    if (cfg.gauge?.subType !== 'measuring') return []; // only measuring subtype shows bands
+    const zones = this.metadata.zones();
+    if (!zones?.length) return [];
+    const pathCfg = cfg.paths?.['gaugePath'];
+    if (!pathCfg) return [];
+    const scale = this.adjustedScale();
+    const invert = cfg.gauge?.barStartPosition === 'right';
+    this.state = States.Normal;
+    return getHighlights(zones, theme, pathCfg.convertUnitTo, this.unitsService, scale.min, scale.max, invert);
+  });
+  protected displayName = computed(() => this.runtime.options()?.displayName);
 
-  // Gauge options
-  protected gaugeOptions = {} as RadialGaugeOptions;
-  // fix for RadialGauge GaugeOptions object ** missing color-stroke-ticks property
-  protected colorStrokeTicks = "";
-  protected unitName: string = null;
-
-  // Zones support
-  private metaSub: Subscription;
-  private state: string = States.Normal;
+  private state = States.Normal;
+  private viewReady = signal(false);
+  protected gaugeOptions: RadialGaugeOptions = {} as RadialGaugeOptions;
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'Gauge Label',
-      filterSelfPaths: true,
-      paths: {
-        "gaugePath": {
-          description: "Numeric Data",
-          path: null,
-          source: null,
-          pathType: "number",
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: true,
-          pathSkUnitsFilter: null,
-          convertUnitTo: "unitless",
-          sampleTime: 500
-        }
-      },
-      displayScale: {
-        lower: 0,
-        upper: 100,
-        type: "linear"
-      },
-      gauge: {
-        type: 'ngRadial',
-        subType: 'measuring', // capacity, measuring
-        enableTicks: true,
-        compassUseNumbers: false,
-        highlightsWidth: 5,
-        scaleStart: 180,
-        barStartPosition: "left"
-      },
-      numInt: 1,
-      numDecimal: 0,
-      enableTimeout: false,
-      color: "contrast",
-      dataTimeout: 5,
-      ignoreZones: false
-    };
-
+    // Data subscription effect
     effect(() => {
-      if (this.theme()) {
-        if (!this.initCompleted) return;
-        this.startWidget();
-      }
-    });
-  }
-
-  ngOnInit() {
-    this.validateConfig();
-  }
-
-  protected startWidget(): void {
-    this.setGaugeConfig();
-    this.ngGauge().update(this.gaugeOptions);
-
-    this.unsubscribeDataStream();
-    this.unsubscribeMetaStream();
-    this.metaSub?.unsubscribe();
-
-    this.observeDataStream('gaugePath', newValue => {
-      if (!newValue || !newValue.data || newValue.data.value === null) {
-        newValue = {
-          data: {
-            value: 0,
-            timestamp: new Date(),
-          },
-          state: States.Normal // Default state
-        };
-        this.textValue = '--';
-      } else if (this.textValue === '--') {
-          this.textValue = '';
-      }
-
-      // Compound value to displayScale
-      this.value = Math.min(Math.max(newValue.data.value, this.widgetProperties.config.displayScale.lower), this.widgetProperties.config.displayScale.upper);
-
-      if (newValue.state == null) {
-        newValue.state = States.Normal; // Provide a default value for state
-      }
-
-      if (this.state !== newValue.state) {
-        this.state = newValue.state;
-        const option: RadialGaugeOptions = {};
-        if (!this.widgetProperties.config.ignoreZones) {
-          // Set value color: reduce color changes to only warn & alarm states else it too much flickering and not clean
-          switch (newValue.state) {
-            case States.Alarm:
-              option.colorBorderMiddle = this.theme().cardColor;
-              option.colorBarProgress = this.theme().zoneAlarm;
-              option.colorValueText = this.theme().zoneAlarm;
-              break;
-            case States.Warn:
-              option.colorBorderMiddle = this.theme().cardColor;
-              option.colorBarProgress = this.theme().zoneWarn;
-              option.colorValueText = this.theme().zoneWarn;
-              break;
-            case States.Alert:
-              option.colorBorderMiddle = this.theme().cardColor;
-              option.colorBarProgress = this.theme().zoneAlert;
-              option.colorValueText = this.theme().zoneAlert;
-              break;
-            default:
-              option.colorBorderMiddle = this.theme().cardColor;
-              option.colorBarProgress = this.widgetProperties.config.gauge.subType == 'measuring' ? getColors(this.widgetProperties.config.color, this.theme()).color : getColors(this.widgetProperties.config.color, this.theme()).dim;
-              option.colorValueText = getColors(this.widgetProperties.config.color, this.theme()).color;
+      const cfg = this.runtime.options();
+      const theme = this.theme();
+      if (!cfg || !theme) return;
+      const pCfg = cfg.paths?.['gaugePath'];
+      if (!pCfg?.path) return;
+      untracked(() => this.streams.observe('gaugePath', path => {
+        const raw = (path?.data?.value as number) ?? null;
+        if (raw == null) {
+          this.value.set(cfg.displayScale?.lower ?? 0);
+          this.textValue.set('--');
+        } else {
+          const lower = cfg.displayScale?.lower ?? 0;
+          const upper = cfg.displayScale?.upper ?? lower + 100;
+          // clamp
+          const clamped = Math.min(Math.max(raw, lower), upper);
+          this.value.set(clamped);
+          if (this.textValue() === '--') this.textValue.set('');
+        }
+        const newState = (path?.state ?? States.Normal) as States;
+        if (newState !== this.state) {
+          this.state = newState;
+          if (!cfg.ignoreZones && this.ngGauge()) {
+            const option: RadialGaugeOptions = {};
+            switch (newState) {
+              case States.Alarm:
+                option.colorBorderMiddle = theme.cardColor;
+                option.colorBarProgress = theme.zoneAlarm;
+                option.colorValueText = theme.zoneAlarm;
+                break;
+              case States.Warn:
+                option.colorBorderMiddle = theme.cardColor;
+                option.colorBarProgress = theme.zoneWarn;
+                option.colorValueText = theme.zoneWarn;
+                break;
+              case States.Alert:
+                option.colorBorderMiddle = theme.cardColor;
+                option.colorBarProgress = theme.zoneAlert;
+                option.colorValueText = theme.zoneAlert;
+                break;
+              default:
+                option.colorBorderMiddle = theme.cardColor;
+                option.colorBarProgress = cfg.gauge?.subType === 'measuring' ? getColors(cfg.color, theme).color : getColors(cfg.color, theme).dim;
+                option.colorValueText = getColors(cfg.color, theme).color;
+            }
+            try {
+              this.ngGauge()?.update(option);
+            } catch { /* ignore */ }
           }
         }
-        this.ngGauge().update(option);
-      }
+      }));
     });
 
-    const highlights: RadialGaugeOptions = {};
-    highlights.highlights = [];
-    if (!this.widgetProperties.config.ignoreZones) {
-      this.observeMetaStream();
-      this.metaSub = this.zones$.subscribe(zones => {
-        if (zones && zones.length > 0 && this.widgetProperties.config.gauge.subType == "measuring") {
-          const invert = this.widgetProperties.config.gauge.barStartPosition === "right" ? true : false;
-          const gaugeZonesHighlight = getHighlights(zones, this.theme(), this.widgetProperties.config.paths['gaugePath'].convertUnitTo, this.unitsService, this.adjustedScale.min, this.adjustedScale.max, invert);
-          highlights.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
-          highlights.highlights = JSON.stringify(gaugeZonesHighlight, null, 1);
+    // Metadata observation (idempotent) – only when zones not ignored
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg || cfg.ignoreZones) return;
+      untracked(() => this.metadata.observe('gaugePath'));
+    });
+
+    // Push highlights to gauge when they change (imperative update)
+    effect(() => {
+      const cfg = this.runtime.options();
+      const hl = this.highlights();
+      if (!cfg) return;
+      if (!this.viewReady()) return;
+      try {
+        // Some legacy gauges expected JSON string; canvas-gauges accepts array OR JSON string.
+        // To mirror legacy stability we stringify non-empty arrays.
+        if (!hl.length) {
+          this.ngGauge()?.update({ highlights: [] });
         } else {
-          highlights.highlights = [];
+          const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
+          this.ngGauge()?.update({ highlights: serialized, highlightsWidth: cfg.gauge?.highlightsWidth });
         }
-        this.ngGauge().update(highlights);
-      });
-    } else {
-      this.ngGauge().update(highlights);
+      } catch { /* ignore */ }
+    });
+
+    // Gauge option builder effect
+    effect(() => {
+      const cfg = this.runtime.options();
+      const theme = this.theme();
+      // include scale dependency so options rebuild on scale recompute
+      const scale = this.adjustedScale(); // reading for dependency
+      if (!cfg || !theme) return;
+      this.buildGaugeOptions(cfg, theme, scale);
+      if (this.viewReady()) {
+        try { this.ngGauge()?.update(this.gaugeOptions); } catch { /* ignore */ }
+      }
+    });
+  }
+
+  private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
+    const g = this.gaugeOptions = {} as RadialGaugeOptions;
+    g.title = this.displayName();
+    g.highlights = [];
+    // Include initial highlights if already available (after view init effect will re-apply).
+    const initialHl = this.highlights();
+    if (initialHl.length) {
+      g.highlights = JSON.stringify(initialHl) as unknown as string;
+      g.highlightsWidth = cfg.gauge?.highlightsWidth;
     }
-
+    g.fontTitle = 'Roboto';
+    g.fontTitleWeight = 'bold';
+    g.fontUnits = 'Roboto';
+    g.fontUnitsSize = 25;
+    g.fontUnitsWeight = 'normal';
+    g.barStrokeWidth = 0; g.barShadow = 0; g.colorBarStroke = '';
+    g.fontValue = 'Roboto'; g.fontValueWeight = 'bold'; g.valueTextShadow = false; g.colorValueBoxShadow = '';
+    g.fontNumbers = 'Roboto'; g.fontNumbersWeight = 'bold';
+    g.valueInt = cfg.numInt ?? 1; g.valueDec = cfg.numDecimal ?? 2; g.majorTicksInt = g.valueInt; g.majorTicksDec = g.valueDec;
+    g.highlightsWidth = cfg.gauge?.highlightsWidth;
+    g.animation = true; g.animateOnInit = false; g.animatedValue = false; g.animationRule = 'linear';
+    const st = cfg.paths?.['gaugePath']?.sampleTime ?? 500; g.animationDuration = st - 25;
+    g.colorBorderShadow = false; g.colorBorderOuter = theme.cardColor; g.colorBorderOuterEnd = ''; g.colorBorderMiddle = theme.cardColor; g.colorBorderMiddleEnd = '';
+    g.colorBarProgress = getColors(cfg.color, theme).color;
+    g.colorNeedle = getColors(cfg.color, theme).dim; g.colorNeedleEnd = getColors(cfg.color, theme).dim;
+    g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = getColors(cfg.color, theme).color;
+    this.colorStrokeTicks.set(theme.contrastDim); g.colorMinorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim; g.colorMajorTicks = theme.contrastDim;
+    g.colorPlate = g.colorPlateEnd = theme.cardColor; g.colorBar = theme.background;
+    g.colorNeedleShadowUp = ''; g.colorNeedleShadowDown = 'black';
+    g.colorNeedleCircleInner = g.colorPlate; g.colorNeedleCircleInnerEnd = g.colorPlate; g.colorNeedleCircleOuter = g.colorPlate; g.colorNeedleCircleOuterEnd = g.colorPlate;
+    // subtype specific
+    if (cfg.gauge?.subType === 'capacity') {
+      g.minValue = scale.min;
+      g.maxValue = scale.max;
+      g.units = cfg.paths?.['gaugePath']?.convertUnitTo;
+      g.fontTitleSize = 40; g.barProgress = true; g.barWidth = 20;
+      g.colorBarProgress = getColors(cfg.color, theme).dim;
+      g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 10; g.valueBoxBorderRadius = 5; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
+      g.ticksAngle = 360; g.startAngle = (cfg.gauge?.scaleStart as number) || 180; g.majorTicks = 0 as unknown as string[]; g.exactTicks = true; g.strokeTicks = false; g.minorTicks = 0; g.numbersMargin = 0; g.fontNumbersSize = 0;
+      g.colorMajorTicks = g.colorPlate; g.colorNumbers = g.colorMinorTicks = '' as unknown as string;
+      g.needle = true; g.needleType = this.LINE; g.needleWidth = 2; g.needleShadow = false; g.needleStart = 75; g.needleEnd = 95; g.needleCircleSize = 1; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0;
+      g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
+    } else { // measuring
+      g.minValue = scale.min; g.maxValue = scale.max;
+      g.units = cfg.paths?.['gaugePath']?.convertUnitTo; g.fontTitleSize = 24;
+      g.barProgress = true; g.barWidth = 15; g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 100; g.valueBoxBorderRadius = 0; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
+      g.exactTicks = false; g.majorTicks = scale.majorTicks as unknown as string[]; g.minorTicks = 2; g.ticksAngle = 270; g.startAngle = 45; g.barStartPosition = cfg.gauge?.barStartPosition || 'left'; g.strokeTicks = true; g.numbersMargin = 3; g.fontNumbersSize = 15;
+      g.needle = true; g.needleType = this.LINE; g.needleWidth = 2; g.needleShadow = false; g.needleStart = 0; g.needleEnd = 95; g.needleCircleSize = 10; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0; g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
+    }
   }
 
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.setCanvasHight();
-    this.startWidget();
-  }
-
-  private setCanvasHight(): void {
-    const gaugeSize = this.gauge().nativeElement.getBoundingClientRect();
-    const resize: RadialGaugeOptions = {};
-    resize.height = gaugeSize.height;
-    resize.width = gaugeSize.width;
-
-    this.ngGauge().update(resize);
+  private setCanvasSize(): void {
+    const el = this.gauge()?.nativeElement as HTMLElement | null;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const resize: RadialGaugeOptions = { height: rect.height, width: rect.width } as RadialGaugeOptions;
+    try { this.ngGauge()?.update(resize); } catch { /* ignore */ }
   }
 
   ngAfterViewInit(): void {
-    this.setCanvasHight();
-    this.startWidget();
-    this.initCompleted = true;
+    this.viewReady.set(true);
+    this.setCanvasSize();
+
+    // Initial full push
+    try {
+      this.ngGauge()?.update(this.gaugeOptions);
+    } catch { /* ignore */ }
   }
 
   public onResized(event: ResizeObserverEntry): void {
-      const resize: RadialGaugeOptions = {};
-      resize.height = event.contentRect.height;
-      resize.width = event.contentRect.width;
-
-      this.ngGauge().update(resize);
-  }
-
-  private setGaugeConfig(): void {
-    this.gaugeOptions.title = this.widgetProperties.config.displayName ? this.widgetProperties.config.displayName : "";
-    this.gaugeOptions.highlights = [];
-
-    this.gaugeOptions.fontTitle = "Roboto";
-    this.gaugeOptions.fontTitleWeight = "bold";
-    this.gaugeOptions.fontUnits = "Roboto";
-    this.gaugeOptions.fontUnitsSize = 25;
-    this.gaugeOptions.fontUnitsWeight = "normal";
-    this.gaugeOptions.barStrokeWidth = 0;
-    this.gaugeOptions.barShadow = 0;
-    this.gaugeOptions.colorBarStroke = "";
-    this.gaugeOptions.fontValue = "Roboto";
-    this.gaugeOptions.fontValueWeight = "bold";
-    this.gaugeOptions.valueTextShadow = false;
-    this.gaugeOptions.colorValueBoxShadow = "";
-    this.gaugeOptions.fontNumbers = "Roboto";
-    this.gaugeOptions.fontNumbersWeight = "bold";
-
-    this.gaugeOptions.valueInt = this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1;
-    this.gaugeOptions.valueDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
-    this.gaugeOptions.majorTicksInt = this.widgetProperties.config.numInt !== undefined && this.widgetProperties.config.numInt !== null ? this.widgetProperties.config.numInt : 1;
-    this.gaugeOptions.majorTicksDec = this.widgetProperties.config.numDecimal !== undefined && this.widgetProperties.config.numDecimal !== null ? this.widgetProperties.config.numDecimal : 2;
-    this.gaugeOptions.highlightsWidth = this.widgetProperties.config.gauge.highlightsWidth;
-
-    this.gaugeOptions.animation = true;
-    this.gaugeOptions.animateOnInit = false;
-    this.gaugeOptions.animatedValue = false;
-    this.gaugeOptions.animationRule = "linear";
-    this.gaugeOptions.animationDuration = this.widgetProperties.config.paths['gaugePath'].sampleTime - 25; // prevent data and animation delay collisions
-
-    // Borders
-    this.gaugeOptions.colorBorderShadow = false;
-    this.gaugeOptions.colorBorderOuter = this.theme().cardColor;
-    this.gaugeOptions.colorBorderOuterEnd = '';
-    this.gaugeOptions.colorBorderMiddle = this.theme().cardColor;
-    this.gaugeOptions.colorBorderMiddleEnd = '';
-
-    // Progress bar
-    this.gaugeOptions.colorBarProgress = getColors(this.widgetProperties.config.color, this.theme()).color;
-    this.gaugeOptions.colorNeedle = getColors(this.widgetProperties.config.color, this.theme()).dim;
-    this.gaugeOptions.colorNeedleEnd = getColors(this.widgetProperties.config.color, this.theme()).dim;
-    // Labels
-    this.gaugeOptions.colorTitle = this.theme().contrastDim;
-    this.gaugeOptions.colorUnits = this.theme().contrastDim;
-    this.gaugeOptions.colorValueText = getColors(this.widgetProperties.config.color, this.theme()).color;
-    // Ticks
-    this.colorStrokeTicks = this.theme().contrastDim; // missing property in gaugeOptions
-    this.gaugeOptions.colorMinorTicks = this.theme().contrastDim;
-    this.gaugeOptions.colorNumbers = this.theme().contrastDim;
-    this.gaugeOptions.colorMajorTicks = this.theme().contrastDim;
-    // Plate
-    this.gaugeOptions.colorPlate = this.gaugeOptions.colorPlateEnd = this.theme().cardColor;
-    this.gaugeOptions.colorBar = this.theme().background;
-
-    this.gaugeOptions.colorNeedleShadowUp = "";
-    this.gaugeOptions.colorNeedleShadowDown = "black";
-    this.gaugeOptions.colorNeedleCircleInner = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleInnerEnd = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuter = this.gaugeOptions.colorPlate;
-    this.gaugeOptions.colorNeedleCircleOuterEnd = this.gaugeOptions.colorPlate;
-
-    // Radial gauge subType
-    switch(this.widgetProperties.config.gauge.subType) {
-      case "capacity":
-        this.configureCapacityGauge();
-        break;
-      case "measuring":
-        this.configureMeasuringGauge();
-        break;
-      default:
-    }
-  }
-
-  private configureCapacityGauge(): void {
-    this.gaugeOptions.minValue = this.widgetProperties.config.displayScale.lower;
-    this.gaugeOptions.maxValue = this.widgetProperties.config.displayScale.upper;
-    this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-    this.gaugeOptions.fontTitleSize = 40;
-    this.gaugeOptions.barProgress = true;
-    this.gaugeOptions.barWidth = 20;
-
-    this.gaugeOptions.colorBarProgress = getColors(this.widgetProperties.config.color, this.theme()).dim;
-
-    this.gaugeOptions.valueBox = true;
-    this.gaugeOptions.fontValueSize = 60;
-    this.gaugeOptions.valueBoxWidth = 10;
-    this.gaugeOptions.valueBoxBorderRadius = 5;
-    this.gaugeOptions.valueBoxStroke = 0;
-    this.gaugeOptions.colorValueBoxBackground = '';
-    this.gaugeOptions.colorValueBoxRect = '';
-    this.gaugeOptions.colorValueBoxRectEnd = '';
-
-    this.gaugeOptions.ticksAngle = 360;
-    this.gaugeOptions.startAngle = this.widgetProperties.config.gauge.scaleStart || 180;
-    this.gaugeOptions.majorTicks = 0;
-    this.gaugeOptions.exactTicks = true;
-    this.gaugeOptions.strokeTicks = false;
-    this.gaugeOptions.minorTicks = 0;
-    this.gaugeOptions.numbersMargin = 0;
-    this.gaugeOptions.fontNumbersSize = 0;
-
-    this.gaugeOptions.colorMajorTicks = this.gaugeOptions.colorPlate; // canvas gauge bug with MajorTicks; always drawing first tick and using color="" does not work
-    this.gaugeOptions.colorNumbers = this.gaugeOptions.colorMinorTicks = "";
-
-    this.gaugeOptions.needle = true;
-    this.gaugeOptions.needleType = this.LINE;
-    this.gaugeOptions.needleWidth = 2;
-    this.gaugeOptions.needleShadow = false;
-    this.gaugeOptions.needleStart = 75;
-    this.gaugeOptions.needleEnd = 95;
-    this.gaugeOptions.needleCircleSize = 1;
-    this.gaugeOptions.needleCircleInner = false;
-    this.gaugeOptions.needleCircleOuter = false;
-
-    this.gaugeOptions.borders = true;
-    this.gaugeOptions.borderOuterWidth = 2;
-    this.gaugeOptions.borderMiddleWidth = 1;
-    this.gaugeOptions.borderInnerWidth = 0;
-    this.gaugeOptions.borderShadowWidth = 0;
-
-    this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
-    this.gaugeOptions.useMinPath = false;
-  }
-
-  private configureMeasuringGauge(): void {
-    this.adjustedScale = adjustLinearScaleAndMajorTicks(this.widgetProperties.config.displayScale.lower, this.widgetProperties.config.displayScale.upper, this.widgetProperties.config.gauge.barStartPosition === "right" ? true : false);
-
-    this.gaugeOptions.minValue = this.adjustedScale.min;
-    this.gaugeOptions.maxValue = this.adjustedScale.max;
-
-    this.gaugeOptions.units = this.widgetProperties.config.paths['gaugePath'].convertUnitTo;
-    this.gaugeOptions.fontTitleSize = 24;
-
-    this.gaugeOptions.barProgress = true;
-    this.gaugeOptions.barWidth = 15;
-
-    this.gaugeOptions.valueBox = true;
-    this.gaugeOptions.fontValueSize = 60;
-    this.gaugeOptions.valueBoxWidth = 100;
-    this.gaugeOptions.valueBoxBorderRadius = 0;
-    this.gaugeOptions.valueBoxStroke = 0;
-    this.gaugeOptions.colorValueBoxBackground = "";
-
-    this.gaugeOptions.exactTicks = false;
-    this.gaugeOptions.majorTicks = this.adjustedScale.majorTicks;
-    this.gaugeOptions.minorTicks = 2;
-    this.gaugeOptions.ticksAngle = 270;
-    this.gaugeOptions.startAngle = 45;
-    this.gaugeOptions.barStartPosition = this.widgetProperties.config.gauge.barStartPosition || "left";
-    this.gaugeOptions.strokeTicks = true;
-    this.gaugeOptions.numbersMargin = 3;
-    this.gaugeOptions.fontNumbersSize = 15;
-
-    this.gaugeOptions.needle = true;
-    this.gaugeOptions.needleType = this.LINE;
-    this.gaugeOptions.needleWidth = 2;
-    this.gaugeOptions.needleShadow = false;
-    this.gaugeOptions.needleStart = 0;
-    this.gaugeOptions.needleEnd = 95;
-    this.gaugeOptions.needleCircleSize = 10;
-    this.gaugeOptions.needleCircleInner = false;
-    this.gaugeOptions.needleCircleOuter = false;
-
-    this.gaugeOptions.borders = true;
-    this.gaugeOptions.borderOuterWidth = 2;
-    this.gaugeOptions.borderMiddleWidth = 1;
-    this.gaugeOptions.borderInnerWidth = 0;
-    this.gaugeOptions.borderShadowWidth = 0;
-
-    this.gaugeOptions.animationTarget = this.ANIMATION_TARGET_NEEDLE;
-    this.gaugeOptions.useMinPath = false;
-  }
-
-  ngOnDestroy() {
-    this.unsubscribeDataStream();
-    this.unsubscribeMetaStream();
-    this.metaSub?.unsubscribe();
+    const resize: RadialGaugeOptions = {
+      height: event.contentRect.height,
+      width: event.contentRect.width
+    };
+    try {
+      this.ngGauge()?.update(resize);
+    } catch { /* ignore */ }
   }
 }

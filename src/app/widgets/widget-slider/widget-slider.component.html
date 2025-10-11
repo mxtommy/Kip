@@ -1,7 +1,6 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  <widget-title [text]="widgetProperties.config.displayName" [color]="labelColor()"/>
-  <div class="widgets-container" (onResize)="onResized()">
-    <svg width="100%" height="100%" viewBox="0 40 200 40">
+<widget-title [text]="(runtime?.options()?.displayName)" [color]="labelColor()"/>
+<div class="widgets-container" (onResize)="onResized()">
+  <svg width="100%" height="100%" viewBox="0 40 200 40">
       <rect
         class="slider-bg-bar"
         width="160"
@@ -48,10 +47,8 @@
         height="40"
         x="0"
         y="40" />
-    </svg>
-  </div>
+  </svg>
   @if (!dashboard.isDashboardStatic()) {
-    <div class="widgetOverlay">
-    </div>
+    <div class="widgetOverlay"></div>
   }
-</widget-host>
+</div>

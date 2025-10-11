@@ -5,8 +5,8 @@ import { NgGridStackWidget } from 'gridstack/dist/angular';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { UUID } from '../utils/uuid.util';
+import { DefaultDashboard } from '../../../default-config/config.blank.dashboard';
 import { BehaviorSubject } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface Dashboard {
   id: string
@@ -31,33 +31,7 @@ export class DashboardService {
   public readonly activeDashboard = signal<number>(0);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
-  private _isDashboardStatic = new BehaviorSubject<boolean>(true);
-  public isDashboardStatic$ = this._isDashboardStatic.asObservable();
-  public readonly isDashboardStatic = toSignal(this.isDashboardStatic$);
-  public readonly blankDashboard: Dashboard[] = [
-    {
-      id: null,
-      name: 'Dashboard 1',
-      icon: 'dashboard-dashboard',
-      configuration: [
-        {
-          "w": 12,
-          "h": 12,
-          "id": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc",
-          "selector": "widget-tutorial",
-          "input": {
-            "widgetProperties": {
-              "type": "widget-tutorial",
-              "uuid": "d1d58e6f-f8b4-4a72-9597-7f92aa6776fc"
-            }
-          },
-          "x": 0,
-          "y": 0
-        }
-      ],
-      collapseSplitShell: false
-    }
-  ];
+  public isDashboardStatic = signal<boolean>(true);
 
   public readonly layoutEditSaved = signal<number>(0);
   public readonly layoutEditCanceled = signal<number>(0);
@@ -67,7 +41,7 @@ export class DashboardService {
 
     if (!dashboards || dashboards.length === 0) {
       console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
-      const newBlankDashboard = this.blankDashboard.map(dashboard => ({
+      const newBlankDashboard = DefaultDashboard.map(dashboard => ({
         ...dashboard,
         id: UUID.create()
       }));
@@ -77,6 +51,7 @@ export class DashboardService {
     }
 
     effect(() => {
+      // Persist dashboards on any change
       this._settings.saveDashboards(this.dashboards());
     });
   }
@@ -85,7 +60,7 @@ export class DashboardService {
    * Toggles the static/fixed state of the dashboard layout.
    */
   public toggleStaticDashboard(): void {
-    this._isDashboardStatic.next(!this._isDashboardStatic.value);
+    this.isDashboardStatic.set(!this.isDashboardStatic());
   }
 
   /**
@@ -354,7 +329,7 @@ export class DashboardService {
    * @param isStatic Whether the dashboard should be static.
    */
   public setStaticDashboard(isStatic: boolean): void {
-    this._isDashboardStatic.next(isStatic);
+    this.isDashboardStatic.set(isStatic);
   }
 
   public notifyLayoutEditSaved(): void {

@@ -253,11 +253,11 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  onResized(event) {
+  onResized(event: ResizeObserverEntry):void {
     if (event.contentRect.height < 50 || event.contentRect.width < 50) return;
     let signature: string;
     if (this.subType() === 'radial') {
-      const size = Math.min(event.contentRect.height, event.contentRect.width);
+      const size =  Math.floor(Math.min(event.contentRect.height, event.contentRect.width));
       this.gaugeOptions['size'] = size;
       signature = 'radial:' + size;
     } else {

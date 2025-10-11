@@ -1,8 +1,4 @@
-<widget-host class="numeric-wrapper"  [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)">
-  @if (showMiniChart()) {
-    <minichart
-      [theme]="this.theme()"
-      />
-  }
-  <canvas #canvasMainRef class="numeric-canvas"></canvas>
-</widget-host>
+@if (showMiniChart()) {
+  <minichart [theme]="this.theme()" />
+}
+<canvas #canvasMainRef class="numeric-canvas"></canvas>

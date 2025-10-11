@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
+import { Component, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit, input, untracked } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { ITheme } from '../../core/services/app-service';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 
 // Internal helper interfaces
 interface ITickPoint { x1: number; y1: number; x2: number; y2: number; major: boolean; }
@@ -12,11 +12,17 @@ interface ILabelPoint { x: number; y: number; text: string; value: number; }
 @Component({
   selector: 'widget-heel-gauge',
   templateUrl: './widget-heel-gauge.component.html',
-  styleUrls: ['./widget-heel-gauge.component.scss'],
-  imports: [WidgetHostComponent],
+  styleUrls: ['./widget-heel-gauge.component.scss']
 })
+export class WidgetHeelGaugeComponent implements AfterViewInit {
+  // Functional Host2 inputs
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme | null>();
 
-export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+  // Runtime + streams directives (injected)
+  protected readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly streams = inject(WidgetStreamsDirective);
   private readonly ngZone = inject(NgZone);
   // Paths for fine and coarse scales
   private readonly finePathRef = viewChild<ElementRef<SVGPathElement>>('finePath');
@@ -31,12 +37,12 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
     const v = this.angleDeg();
     if (v == null) return '';
     const side = v > 0 ? 'Stbd' : v < 0 ? 'Port' : 'Level';
-    return this.widgetProperties?.config?.gauge.sideLabel ? side : '';
+    return this.runtime.options()?.gauge?.sideLabel ? side : '';
   });
   protected readonly displayValue = computed(() => {
     const v = this.absAngle();
     if (v == null) return '--';
-    const dec = this.widgetProperties?.config?.numDecimal ?? 1;
+    const dec = this.runtime.options()?.numDecimal ?? 1;
     return v.toFixed(dec);
   });
 
@@ -44,8 +50,7 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
   protected readonly pointerTransition = computed(() => {
-    const ms = this.widgetProperties?.config?.paths?.['angle']?.sampleTime ?? 1000;
-    // Slightly shorter than sampling interval for responsiveness
+    const ms = this.runtime.options()?.paths?.['angle']?.sampleTime ?? 1000;
     const duration = Math.max(100, ms * 0.95);
     return `transform ${duration}ms ease-in-out`;
   });
@@ -58,78 +63,103 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   protected readonly coarseInnerTicks = signal<ITickPoint[]>([]);
   protected readonly coarseLabels = signal<ILabelPoint[]>([]);
 
+  protected readonly finePointerTransform = this.makePointerTransform('fine');
+  protected readonly coarsePointerTransform = this.makePointerTransform('coarse');
+  // Display name signal (fallback to Heel)
+  protected readonly displayName = computed(() => this.runtime.options()?.displayName || 'Heel');
+
+  // Static Host2 default config (parity with legacy defaultConfig)
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Heel',
+    filterSelfPaths: true,
+    paths: {
+      angle: {
+        description: 'Heel / Roll / Other Angle',
+        path: 'self.navigation.attitude.roll',
+        source: 'default',
+        pathType: 'number',
+        isPathConfigurable: true,
+        convertUnitTo: 'deg',
+        sampleTime: 1000,
+        pathRequired: true
+      }
+    },
+    gauge: {
+      type: 'angle',
+      invertAngle: false,
+      sideLabel: true
+    },
+    numInt: 2,
+    numDecimal: 0,
+    color: 'contrast',
+    enableTimeout: false,
+    dataTimeout: 5
+  };
+
+  constructor() {
+    // Observe angle path when config present
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg) return;
+      const angleCfg = cfg.paths?.['angle'];
+      if (!angleCfg?.path) return; // nothing to observe if path empty
+      // Establish observation outside reactive tracking of angle updates
+      untracked(() => this.streams.observe('angle', pkt => {
+        const raw = (pkt?.data?.value as number | undefined);
+        if (raw == null) {
+          this.angleDeg.set(null);
+          return;
+        }
+        const inv = cfg.gauge?.invertAngle ? -raw : raw;
+        this.angleDeg.set(inv);
+      }));
+    });
+
+    // Theme + color config effect
+    effect(() => {
+      const t = this.theme();
+      const cfg = this.runtime.options();
+      if (!t || !cfg) return;
+      this.themeColorValue.set(getColors(cfg.color || 'contrast', t).color);
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Build scales once view paths are available
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        const finePath = this.finePathRef()?.nativeElement;
+        const coarsePath = this.coarsePathRef()?.nativeElement;
+        if (finePath) {
+          const s = this.buildScale(finePath, -5, 5, 1, 0.5);
+          this.fineTicks.set(s.ticks);
+          this.fineInnerTicks.set(s.innerTicks);
+          this.fineLabels.set(s.labels);
+        }
+        if (coarsePath) {
+          const s2 = this.buildScale(coarsePath, -40, 40, 10, 5);
+          this.coarseTicks.set(s2.ticks);
+          this.coarseInnerTicks.set(s2.innerTicks);
+          this.coarseLabels.set(s2.labels);
+        }
+        // Initialize to 0° if no data yet so pointers start centered
+        if (this.angleDeg() == null) {
+          this.angleDeg.set(0);
+        }
+        this.ready.set(true);
+      });
+    });
+  }
+
   // Pointer transforms
   private makePointerTransform(scale: 'fine' | 'coarse') {
     return computed(() => this.computePointerTransform(this.angleDeg(), scale));
   }
-  protected readonly finePointerTransform = this.makePointerTransform('fine');
-  protected readonly coarsePointerTransform = this.makePointerTransform('coarse');
 
-  constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: "Heel",
-      filterSelfPaths: true,
-      paths: {
-        "angle": {
-          description: "Heel / Roll / Other Angle",
-          path: "self.navigation.attitude.roll",
-          source: "default",
-          pathType: "number",
-          isPathConfigurable: true,
-          convertUnitTo: "deg",
-          sampleTime: 1000,
-          pathRequired: true
-        }
-      },
-      gauge: {
-        type: 'angle',
-        invertAngle: false,
-        sideLabel: true
-      },
-      numInt: 2,
-      numDecimal: 0,
-      color: "contrast",
-      enableTimeout: false,
-      dataTimeout: 5
-    };
-
-    // Trigger recalculations if theme changes (e.g., for dynamic colors)
-    effect(() => {
-      const t = this.theme();
-      this.setColors(t);
-    });
-  }
-
-  ngOnInit(): void {
-    this.validateConfig();
-    this.startWidget();
-  }
-
-  protected startWidget(): void {
-    this.unsubscribeDataStream();
-  this.unsubscribeMetaStream();
-
-    this.observeDataStream("angle", newValue => {
-      if (!newValue || !newValue.data) {
-        this.angleDeg.set(null);
-        return;
-      }
-      const val = this.widgetProperties.config.gauge.invertAngle ? -newValue.data.value : newValue.data.value;
-      this.angleDeg.set(val);
-    });
-
-  }
-
-  private setColors(theme: ITheme): void {
-  this.themeColorValue.set(getColors(this.widgetProperties.config.color, theme).color);
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.setColors(this.theme());
-    this.startWidget();
+  private setColors(theme: ITheme | null | undefined): void {
+    const cfg = this.runtime.options();
+    if (!theme || !cfg) return;
+    this.themeColorValue.set(getColors(cfg.color || 'contrast', theme).color);
   }
 
   private computePointerTransform(angleValue: number | null, scale: 'fine' | 'coarse'): string {
@@ -200,37 +230,5 @@ export class WidgetHeelGaugeComponent extends BaseWidgetComponent implements OnI
   private pointFromAngle(point: { x: number; y: number }, angle: number, distance: number) {
     const rad = angle * Math.PI / 180;
     return { x: point.x + Math.cos(rad) * distance, y: point.y + Math.sin(rad) * distance };
-  }
-
-  ngAfterViewInit(): void {
-    // Build scales once view paths are available
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        const finePath = this.finePathRef()?.nativeElement;
-        const coarsePath = this.coarsePathRef()?.nativeElement;
-        if (finePath) {
-          const s = this.buildScale(finePath, -5, 5, 1, 0.5);
-          this.fineTicks.set(s.ticks);
-          this.fineInnerTicks.set(s.innerTicks);
-          this.fineLabels.set(s.labels);
-        }
-        if (coarsePath) {
-          const s2 = this.buildScale(coarsePath, -40, 40, 10, 5);
-          this.coarseTicks.set(s2.ticks);
-          this.coarseInnerTicks.set(s2.innerTicks);
-          this.coarseLabels.set(s2.labels);
-        }
-        // Initialize to 0° if no data yet so pointers start centered
-        if (this.angleDeg() == null) {
-          this.angleDeg.set(0);
-        }
-        this.ready.set(true);
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.unsubscribeDataStream();
-    this.unsubscribeMetaStream();
   }
 }

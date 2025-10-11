@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -27,7 +27,6 @@ interface IDataSetRow {
 
 @Component({
   selector: 'minichart',
-  standalone: true,
   imports: [],
   templateUrl: './minichart.component.html',
   styleUrls: ['./minichart.component.scss'],
@@ -85,11 +84,14 @@ export class MinichartComponent implements OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.theme()) {
-        if (this.datasetConfig) {
-          this.setChartOptions();
-          this.setDatasetsColors();
-        }
+      const theme = this.theme();
+      if (theme) {
+        untracked(() => {
+          if (this.datasetConfig) {
+            this.setChartOptions();
+            this.setDatasetsColors();
+          }
+        });
       }
     });
   }
@@ -120,6 +122,7 @@ export class MinichartComponent implements OnDestroy {
   private setChartOptions() {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
+
 
     this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
 

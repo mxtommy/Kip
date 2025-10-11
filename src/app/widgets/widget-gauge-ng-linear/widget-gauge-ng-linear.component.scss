@@ -1,9 +1,15 @@
+:host {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 ::ng-deep linear-gauge {
-display: block;
-position: relative;
-width: 100%;
-height: 100%;
-overflow: clip;
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: clip;
   > canvas {
     display: block;
     position: absolute;

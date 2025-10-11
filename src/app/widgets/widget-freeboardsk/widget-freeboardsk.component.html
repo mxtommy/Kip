@@ -1,5 +1,4 @@
 @if (disableWidgetShell()) {
-  <!-- Shell disabled: render iframe directly -->
   <iframe
     #freeboardSkIframe
     class="freeboardsk-iframe no-shell"
@@ -10,11 +9,7 @@
     sandbox="allow-same-origin allow-scripts allow-forms"
   ></iframe>
 } @else {
-  <widget-host style="overflow: clip;"
-    [(config)]="widgetProperties.config"
-    [id]="widgetProperties.uuid"
-    (configChange)="updateConfig()"
-  >
+  <div class="widget-shell" style="overflow: clip; position: relative; width:100%; height:100%;">
     <iframe
       #freeboardSkIframe
       class="freeboardsk-iframe"
@@ -27,5 +22,5 @@
     @if (!dashboard.isDashboardStatic()) {
       <div class="widgetOverlay"></div>
     }
-  </widget-host>
+  </div>
 }

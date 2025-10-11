@@ -3,7 +3,7 @@
   <mat-dialog-content class="widget-config-dialog-content">
     <mat-tab-group class="tab-group-content">
       <mat-tab label="Display">
-        @if ((widgetConfig?.datasetUUID !== undefined)) {
+        @if ((widgetConfig?.datachartPath !== undefined)) {
           <config-display-chart-options
             class="tab-content"
             [displayName]="displayNameToControl"
@@ -743,17 +743,20 @@
       <!-- End PUT Requests-->
 
       <!-- Charts -->
-      @if ((widgetConfig?.datasetUUID !== undefined)) {
+      @if (widgetConfig?.datachartPath !== undefined) {
         <mat-tab label="Dataset">
           <ng-template mat-tab-label>
-            @if (!formMaster.controls.datasetUUID.valid) {
+            @if (!formMaster.controls.datachartPath.valid) {
             <span class="warning fa fa-exclamation-circle"></span>
             } Dataset
           </ng-template>
           <config-dataset-chart-options
-            [datasetUUID]="datasetUUIDToControl"
+            [filterSelfPaths]="filterSelfPathsToControl"
+            [datachartPath]="datachartPathControl"
+            [datachartSource]="datachartSourceControl"
             [convertUnitTo]="convertUnitToControl"
-          >
+            [timeScale]="timeScaleControl"
+            [period]="periodControl">
           </config-dataset-chart-options>
         </mat-tab>
       }

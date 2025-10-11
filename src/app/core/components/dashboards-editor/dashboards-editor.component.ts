@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogService } from '../../services/dialog.service';
 import { CdkDropList, CdkDrag, CdkDragDrop, CdkDragMove, moveItemInArray } from '@angular/cdk/drag-drop';
-import { DashboardsManageBottomSheetComponent } from '../dashboards-manage-bottom-sheet/dashboards-manage-bottom-sheet.component';
+import { DashboardsBottomSheetComponent } from '../dashboards-bottom-sheet/dashboards-bottom-sheet.component';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { uiEventService } from '../../services/uiEvent.service';
 import { MatRippleModule } from '@angular/material/core';
@@ -57,7 +57,7 @@ export class DashboardsEditorComponent {
     const isLinuxFirefox = typeof navigator !== 'undefined' &&
       /Linux/.test(navigator.platform) &&
       /Firefox/.test(navigator.userAgent);
-    const sheetRef = this._bottomSheet.open(DashboardsManageBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
+    const sheetRef = this._bottomSheet.open(DashboardsBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
     sheetRef.afterDismissed().subscribe((action) => {
       this._sheetOpen = false;
       switch (action) {

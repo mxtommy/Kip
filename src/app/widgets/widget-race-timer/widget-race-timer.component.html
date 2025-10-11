@@ -1,8 +1,4 @@
-<widget-host class="racetimer-wrapper"
-  [(config)]="widgetProperties.config"
-  [id]="widgetProperties.uuid"
-  (configChange)="updateConfig($event)"
->
+<div class="racetimer-wrapper">
   <canvas class="racetimer-canvas" #canvasMainRef></canvas>
   <div class="timerBarContainer">
     <div class="timer-button-groups timer-adjusters-group">
@@ -43,12 +39,12 @@
       </button>
     </div>
     <div class="timer-button-groups timer-countdown-group">
-      @if (!timerRunning) {
+      @if (!timerRunning()) {
         <button mat-flat-button class="timer-start-button button-color-red" (click)="startTimer()">
           Start
         </button>
       }
-      @if (timerRunning) {
+      @if (timerRunning()) {
         <button mat-flat-button class="timer-start-button" (click)="pauseTimer()">
           Pause
         </button>
@@ -58,4 +54,4 @@
       </button>
     </div>
   </div>
-</widget-host>
+</div>

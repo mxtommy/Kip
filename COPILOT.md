@@ -42,8 +42,9 @@ KIP Instrument MFD is an advanced and versatile marine instrumentation package d
   - _To be defined._
 - **Build & Serve:**  
   - `npm run dev` for development server.
-  - `npm run build-dev` for development build.
-  - `npm run build-prod` for production build.
+  - `npm run build:dev` for KIP only development build.
+  - `npm run build:prod` for KIP only production build.
+  - `npm run build:all` for KIP and KIP plugin production build.
 
 ---
 
@@ -154,57 +155,59 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 ---
 
-## 9. Widget Structure, BaseWidgetComponent, and Signal K Zones
-- All widgets must extend `BaseWidgetComponent` to inherit core data, config, and lifecycle logic.
-  - Handles:
-    - Data subscriptions via `DataService` (values and metadata).
-    - Unit conversion via `UnitsService`.
-    - Theme and app-wide utilities via `AppService`.
-    - Config validation and merging with defaults.
-    - Utility for formatting numbers with min/max and decimals.
-    - Abstract methods: `startWidget()` and `updateConfig(config)` must be implemented by each widget.
-  - Provides:
-    - `observeDataStream()` for subscribing to live data.
-    - `unsubscribeDataStream()` and `unsubscribeMetaStream()` for cleanup (call in `ngOnDestroy`).
-    - `formatWidgetNumberValue()` for consistent value formatting.
-    - `validateConfig()` to merge user config with defaults and prevent breaking changes.
-    - `zones$` observable for zone metadata (e.g., to highlight elements in widgets based on data state ie. zone state).
+## 9. Host2 Widget Architecture
 
-  - Zones are a Signal K metadata concept that define value ranges for states like nominal, warning, alarm, and emergency.
-  - The `observeMetaStream()` method in `BaseWidgetComponent` subscribes to zones metadata for a widget's data path, making it available via the `zones$` observable.
+Modern widgets follow a composition pattern built on directives + signals (no inheritance).
 
-- **Widget Path Configuration:**
-  - `isPathConfigurable` and `pathRequired` in `IWidgetPath` control UI and validation.
-  - If `pathRequired` is `true` or undefined, path is required and must be valid.
-  - If `pathRequired` is `false`, path is optional (can be empty or valid).
-  - Non-configurable paths are excluded from config UI and validation.
-- **Custom Validators:**
-  - Path controls use a custom validator to enforce the above rules.
-  - No `Validators.required` is used for path controls; only the custom validator.
-- **UI Feedback:**
-  - The UI uses Angular’s `@if` syntax to show “(optional)” and hints when appropriate.
-  - Error messages are shown for required and invalid paths.
-**Signal K Metadata, Units & Value Conversion:**
-  - Signal K defines a schema with base SI units for all standard paths (e.g., meters, Celsius, Pascals). Plugins can add custom paths, but these are not in the schema and must provide their own metadata (especially units) or the path will be treated as unitless.
-  - Each data path may provide metadata such as units, display names, min/max, etc. This metadata is essential for context-aware UI, validation, and display hints.
-  - KIP uses the base SI units from metadata to map each path to a conversion group in the UnitsService. This enables conversion from the base SI unit to any supported display unit (e.g., meters to feet, Celsius to Fahrenheit) according to user preferences.
-  - The "Format" setting in KIP determines what display format or unit to apply to a value. If no metadata units are present, the value is treated as unitless and any format (or none) can be applied.
-  - The DataService provides access to both values and metadata for each path, supporting both value display and context-aware logic.
+### 9.1 Core Contract
+- Required signal inputs: `id`, `type`, `theme`.
+- Static `DEFAULT_CONFIG` defines all paths, options, and defaults.
+- Inject directives:
+  - `WidgetRuntimeDirective` – merged persisted config (`options()`), id, sizing.
+  - `WidgetStreamsDirective` – path observers (sampling, unit conversion, timeout logic).
+  - `WidgetMetadataDirective` (optional) – zones & metadata; call `observe(pathKey)` when needed.
+- Register all `streams.observe` calls inside one `effect()` using a single `untracked()` block.
+- Use signals for UI state; never mutate merged config object.
+- Optional zones highlights via `getHighlights` utility.
 
-- **Widget Structure:**
-  - Each widget is an Angular component in `src/app/widgets/`, extending `BaseWidgetComponent`.
-  - Widget configuration is defined in `widgetProperties` (implements `IWidget`), with all config stored in `widgetProperties.config`.
-  - Widget config includes paths, display options, min/max, decimals, and more.
-  - All widget configuration logic/UI is handled in `src/app/widget-config/`.
+Minimal pattern:
+```
+effect(() => {
+  const cfg = this.runtime.options();
+  if (!cfg) return;
+  untracked(() => {
+    const p = cfg.paths['signalKPath'];
+    if (p?.path) {
+      this.streams.observe('signalKPath', pkt => this.value.set(pkt?.data?.value ?? null));
+      this.metadata?.observe?.('signalKPath'); // zones optional
+    }
+  });
+});
+```
 
-- **Widget Creation Best Practices:**
-  - Always extend `BaseWidgetComponent` for new widgets.
-  - Implement `startWidget()` to initialize widget-specific logic.
-  - Implement `updateConfig(config)` to handle config changes.
-  - Use `observeDataStream()` to subscribe to data, and `observeMetaStream()` for zones/metadata.
-  - Use `UnitsService` for all value conversions and formatting.
-  - Store all widget state/config in `widgetProperties.config`.
-  - Clean up all subscriptions in `ngOnDestroy` using provided methods.
+### 9.2 Zones
+- Zones classify value ranges (alert/warn/alarm).
+- `path.data.state` may be present even without explicit zones observation.
+- Build visual overlays (gauges/charts) from `metadata.zones()` + theme + display scale using `getHighlights`.
+- Always guard missing `zones`, `theme`, or scale (return empty array when absent).
+
+### 9.3 Path Configuration Rules
+- `isPathConfigurable=false` hides path from UI.
+- `pathRequired=false` allows empty path (no subscription until user sets one).
+- Always null-guard before observing a path.
+
+### 9.4 Metadata, Units & Conversion
+- Signal K schema supplies base SI units; unknown/custom paths might omit units (treat as unitless).
+- Numeric paths with `convertUnitTo` leverage `UnitsService` automatically via streams.
+- Avoid manual conversion logic; extend `UnitsService` if a gap exists.
+
+### 9.5 Best Practices
+- One effect for observer setup.
+- Group observer registrations in a single `untracked()` for performance.
+- Use signals + `computed() or linkedSignal()` for derived values; avoid heavy template expressions.
+- Keep sample times modest (≥1000ms) unless rapid updates are essential.
+- Avoid expensive recalculations inside templates—precompute with `computed() or linkedSignal()`.
+- Use CanvasService for high-DPI text/gauge rendering instead of manual scaling.
 ---
 
 ## 10. KIP Colors, Theming, and Widget Best Practices
@@ -250,7 +253,7 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 ### **Usage Notes:**
 - All Angular development should follow both this COPILOT.md file AND the angular.instructions.md guidelines
 - When conflicts arise, KIP-specific guidelines in this file take precedence over general Angular patterns
-- For widget development, prioritize the BaseWidgetComponent patterns described in this file
+- For widget development, use the Host2 widget architecture (sections 9 & 13) – standalone components + directives (no inheritance)
 - For general Angular coding (components, services, forms, component), follow the modern Angular v20+ patterns in angular.instructions.md
 
 ---
@@ -360,3 +363,103 @@ this.portSectorAnimId = animateSectorTransition(
 
 ---
 
+## 13. create-host2-widget Schematic (Host2 Widget Generator)
+
+The `create-host2-widget` schematic scaffolds a production-ready Host2 widget with optional zones support, tests, and README guidance. It enforces current architectural patterns (signals + directives) and reduces manual registration effort.
+
+### 13.1 When To Use
+Use the schematic for any new widget that:
+- Consumes one (or more, to be added later) Signal K path values.
+- Requires standard lifecycle (config merging, unit conversion, timeout handling) via `WidgetRuntimeDirective` + `WidgetStreamsDirective`.
+- Optionally needs zones metadata visualization.
+
+### 13.2 Invocation Examples
+Minimal (interactive prompts for all options):
+```
+npm run generate:widget
+```
+or
+```
+ng g create-host2-widget
+```
+
+Non-interactive with explicit options:
+```
+npx schematics ./tools/schematics/collection.json:create-host2-widget \
+  --name tides-chart \
+  --title "Tides Chart" \
+  --registerWidget Core \
+  --pathType number \
+  --pathDefault navigation.speedThroughWater \
+  --zonesSupport=false \
+  --addSpec=true \
+  --todoBlock=false \
+  --readme=true
+```
+
+### 13.3 Options Reference
+| Option | Values / Type | Default | Purpose | Notes |
+|--------|---------------|---------|---------|-------|
+| `name` | string (kebab-case) | — (required) | Base name (component selector becomes `widget-<name>`) | Must be unique under `src/app/widgets/` |
+| `title` | string | — (required) | Display title (Add Widget dialog) | Used in WidgetService definition object |
+| `registerWidget` | `Core | Gauge | Component | Racing | No` | — | Auto-register in `widget.service.ts` or skip | `No` (case-insensitive) means skip registration |
+| `pathType` | `number|string|boolean|Date` | `number` | Primary path value type | Influences stream conversion & formatting |
+| `pathDefault` | string/null | `null` | Pre-filled Signal K path | Leave null if unsure |
+| `zonesSupport` | boolean | `false` | Include zones metadata scaffolding | Adds metadata directive & highlights logic placeholder |
+| `addSpec` | boolean | `true` | Generate spec test file | Basic presence test; extend manually |
+| `todoBlock` | boolean | `true` | Include instructional TODO comments | Set false for clean production scaffold |
+| `readme` | boolean | `true` | Generate widget README | Developer-focused quick guide |
+| `debugLogging` | boolean | `false` | Verbose schematic execution logs | Helpful when troubleshooting formatting/registration |
+
+Hidden defaults inserted into templates: `sampleTime=1000`, `convertUnitTo=null`, placeholder icon & description (replace post-gen).
+
+### 13.4 Generated Artifacts
+- `widget-<name>.component.ts|html|scss` – Host2 component & view.
+- Optional `widget-<name>.component.spec.ts` when `--addSpec=true`.
+- Optional `README.md` (widget-local developer instructions) when `--readme=true`.
+- Service registration (import, component map entry, widget definition object) unless `registerWidget=No`.
+
+### 13.5 Post-Generation Checklist
+- Replace placeholder icon (`placeholder-icon`) with an actual symbol id in `src/assets/svg/icons.svg` and update `widget.service.ts` entry.
+- Write a concise, user-facing description in the WidgetService definition object.
+- Adjust `DEFAULT_CONFIG.displayName` and color.
+- Decide whether to keep or remove TODO comments (regen with `--todoBlock=false` once stable).
+- Add any additional paths (with guards) and corresponding `streams.observe` registrations.
+- If zones used: adapt highlight computation (unit, scale bounds, colors) and remove unused scaffolding.
+- Add/expand tests (mock streams, theme, optional zones metadata).
+
+### 13.6 Zones Support Notes
+If `--zonesSupport=true`:
+- `WidgetMetadataDirective` is injected; you must call `metadata.observe('signalKPath')` (or other path key) only if a path is configured.
+- `metadata.zones()` exposes current zones; pass through `getHighlights` with min/max scale & unit for overlays.
+- Always guard: missing path OR zones → return empty highlight array.
+
+### 13.7 Common Pitfalls & Resolutions
+| Pitfall | Cause | Resolution |
+|---------|-------|-----------|
+| Widget not listed in Add dialog | Chose `registerWidget No` or category mismatch | Regenerate OR manually add definition to `widget.service.ts` |
+| Duplicate import/service entry | Manual edits then re-run schematic | Remove redundant lines; schematic guards imports but verify component map |
+| Runtime error in highlights | Accessing undefined scale or wrong path key | Guard `cfg.paths['signalKPath']` and ensure scale present before computing |
+| Units not converting | Missing or null `convertUnitTo` in path config | Add target unit in path definition (number types only) |
+| Tests failing after adding new paths | Spec doesn’t mock added streams | Update spec to provide minimal mock path observation |
+
+### 13.8 Recommended Development Flow
+1. Generate widget with `--todoBlock=true` for guidance.
+2. Implement path observation & basic rendering logic.
+3. Add zones (if required) and verify highlight behavior with test data.
+4. Remove TODO comments (or regenerate clean variant) once stable.
+5. Add additional paths & unit tests (timeout, no-path, zones absent).
+6. Finalize icon & description, then open PR.
+
+### 13.9 Troubleshooting Registration
+If the schematic ran but the widget is missing:
+1. Open `widget.service.ts` and search for your selector (e.g., `widget-tides-chart`).
+2. Confirm: import line, component map entry, and definition object exist.
+3. If absent, re-run with `--debugLogging=true` to inspect logs, or manually paste the generated object from another widget as a template.
+
+### 13.10 Conventions Recap
+- One effect for all observers.
+- Guard optional paths before observing.
+- Signals for state; avoid extraneous change detection.
+- Use `untracked()` when registering observers to prevent superfluous effect retriggers.
+---

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
@@ -16,6 +16,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GestureDirective } from './core/directives/gesture.directive';
 import { MenuActionsComponent } from './core/components/menu-actions/menu-actions.component';
 import { DashboardService } from './core/services/dashboard.service';
@@ -25,12 +26,13 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { DatasetService } from './core/services/data-set.service';
+import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule]
+  imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
@@ -48,6 +50,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);
   private readonly _router = inject(Router);
+  protected readonly upgrade = inject(ConfigurationUpgradeService); // expose for template overlay
+
+  private upgradeMessagesRef = viewChild<ElementRef<HTMLUListElement> | undefined>('upgradeMessages');
 
   private notificationHowl?: Howl;
   private _upgradeShown = false;
@@ -55,7 +60,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
-  protected readonly isDashboardStatic = toSignal(this._dashboard.isDashboardStatic$);
   protected dashboardVisible = signal<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
   private scheduledOpen: number | null = null;
@@ -68,14 +72,34 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      if (!this._upgradeShown && this.appSettingsService.configUpgrade()) {
-        this._upgradeShown = true;
-        this._dialog.openFrameDialog({
-          title: 'Upgrade Instructions',
-          component: 'upgrade-config',
-        }, true)
-          .pipe(takeUntilDestroyed(this._destroyRef))
-          .subscribe();
+      if (this.appSettingsService.configUpgrade()) {
+        const liveVersion = this.appSettingsService.getConfigVersion();
+
+        if (liveVersion == 11) {
+          this.upgrade.runUpgrade(liveVersion);
+        }
+
+        if (!liveVersion) {
+          if (!this._upgradeShown) {
+            this._upgradeShown = true;
+            this._dialog.openFrameDialog({
+              title: 'Upgrade Instructions',
+              component: 'upgrade-config',
+            }, true)
+              .pipe(takeUntilDestroyed(this._destroyRef))
+              .subscribe();
+          }
+        }
+      }
+    });
+
+    effect(() => {
+      const msg = this.upgrade.messages();
+      // Only run if the overlay is visible and there are messages
+      if (this.upgrade.upgrading() && msg.length && this.upgradeMessagesRef()) {
+        const ul = this.upgradeMessagesRef().nativeElement;
+        // Scroll to the bottom
+        ul.scrollTop = ul.scrollHeight;
       }
     });
 
@@ -103,7 +127,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     effect(() => {
-      const shouldShowBadge = this.dashboardVisible() && this.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
       const sidenavOpen = this.notificationsSidenavOpened();
 
       // If sidenav is open, immediately close overlay and cancel any scheduled open

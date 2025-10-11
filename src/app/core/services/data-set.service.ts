@@ -2,8 +2,9 @@ import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
-import { UUID } from'../utils/uuid.util'
+import { UUID } from '../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
+import { NgGridStackWidget } from 'gridstack/dist/angular';
 
 
 export interface IDatasetServiceDatapoint {
@@ -29,7 +30,7 @@ export interface IDatasetServiceDatasetConfig {
   baseUnit: string;         // The path's Signal K base unit type
   timeScaleFormat: TimeScaleFormat;  // Dataset time scale measure.
   period: number;           // Number of datapoints to capture.
-  label:  string;           // label of the historicalData
+  label: string;           // label of the historicalData
   editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
 };
 
@@ -76,10 +77,63 @@ export class DatasetService implements OnDestroy {
   ]);
 
   constructor() {
-    const appSettings = this.appSettings;
-
-    this._svcDatasetConfigs = appSettings.getDataSets();
+    this._svcDatasetConfigs = this.appSettings.getDataSets();
+    this.cleanupDatasets();
     this.startAll();
+  }
+
+  private cleanupDatasets(): void {
+    const cfgVersion = this.appSettings.getAppConfig().configVersion;
+    if (cfgVersion < 12) return; // Cleanup only needed for versions 12 or greater
+
+    const dashboards = this.appSettings.getDashboardConfig();
+
+    // Collect all widget IDs from all dashboards
+    const widgetIds = new Set<string>();
+    dashboards.forEach(dash => {
+      dash.configuration?.forEach((widget: NgGridStackWidget) => {
+        if (widget?.id) widgetIds.add(widget.id);
+      });
+    });
+
+    // Helper to extract windtrends/speedtrends uuid from label
+    function extractTrendsUuid(label: string): string | null {
+      const match = label.match(/^(windtrends|speedtrends)-(.+)$/);
+      return match ? match[2] : null;
+    }
+
+    // Track removed datasets for logging
+    const removed: IDatasetServiceDatasetConfig[] = [];
+
+    // Filter datasets, collecting those removed
+    const filtered = [];
+    for (const ds of this._svcDatasetConfigs) {
+      const label = ds.label || "";
+      let keep = false;
+
+      if (label.startsWith("windtrends-") || label.startsWith("speedtrends-")) {
+        const trendsUuid = extractTrendsUuid(label);
+        keep = !!(trendsUuid && widgetIds.has(trendsUuid));
+      } else if (label.startsWith("simple-chart-")) {
+        keep = widgetIds.has(ds.uuid);
+      } else if ((label.match(/\|/g) || []).length === 4) {
+        keep = widgetIds.has(ds.uuid);
+      }
+
+      if (keep) {
+        filtered.push(ds);
+      } else {
+        removed.push(ds);
+      }
+    }
+
+    if (removed.length) {
+      removed.forEach(ds => {
+        console.warn(`[DatasetService] Cleaned dataset: uuid=${ds.uuid}, label="${ds.label}"`);
+      });
+      this._svcDatasetConfigs = filtered;
+      this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    }
   }
 
   /**
@@ -105,7 +159,7 @@ export class DatasetService implements OnDestroy {
     });
   }
 
-  private createDataSourceConfiguration(dsConf: IDatasetServiceDatasetConfig ): IDatasetServiceDataSource {
+  private createDataSourceConfiguration(dsConf: IDatasetServiceDatasetConfig): IDatasetServiceDataSource {
     const smoothingPeriodFactor = 0.25;
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
@@ -209,10 +263,10 @@ export class DatasetService implements OnDestroy {
       return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
     };
 
-  // Decide how to interpret the dataset values (scalar vs radian domains)
-  const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+    // Decide how to interpret the dataset values (scalar vs radian domains)
+    const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
-  // Subscribe to path data, update historicalData/stats and sends new values to Observers
+    // Subscribe to path data, update historicalData/stats and sends new values to Observers
     dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
       (newValue: IPathUpdate) => {
         if (newValue.data.value === null) return; // we don't need null values
@@ -224,7 +278,7 @@ export class DatasetService implements OnDestroy {
         dataSource.historicalData.push(newValue.data.value);
 
         // Add new datapoint to historicalData
-  const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
         // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
         this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
       }
@@ -288,12 +342,12 @@ export class DatasetService implements OnDestroy {
    * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
-   * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
+   * @param {boolean} [editable]  DEPRECATED -If true, the dataset configuration can be edited by the user. Defaults to true. // TODO: remove this param once Dataset management component is not required anymore
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
    */
-  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string ): string | null {
+  public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string): string | null {
     if (!path || !source || !timeScaleFormat || !period || !label) return null;
     const uuid = forced_id || UUID.create();
 
@@ -363,13 +417,13 @@ export class DatasetService implements OnDestroy {
    * @returns {boolean} True if the dataset was found and removed, false otherwise.
    * @memberof DatasetService
    */
-  public remove(uuid: string, serialize = true ): boolean {
-   if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
+  public remove(uuid: string, serialize = true): boolean {
+    if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
 
     this.stop(uuid);
     console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
-    this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid),1);
+    this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid), 1);
     // stop Subject Observers
     this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
     this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
@@ -487,8 +541,8 @@ export class DatasetService implements OnDestroy {
       data: {
         value: unit === 'rad'
           ? (domain === 'signed'
-              ? this.normalizeToSigned(ds.historicalData[ds.historicalData.length - 1])
-              : this.normalizeToDirection(ds.historicalData[ds.historicalData.length - 1]))
+            ? this.normalizeToSigned(ds.historicalData[ds.historicalData.length - 1])
+            : this.normalizeToDirection(ds.historicalData[ds.historicalData.length - 1]))
           : ds.historicalData[ds.historicalData.length - 1],
         sma: smaCalc,
         ema: null,

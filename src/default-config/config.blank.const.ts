@@ -4,7 +4,7 @@ import { DefaultUnitsConfig } from "./config.blank.units.const";
 import { UUID } from "../app/core/utils/uuid.util";
 
 export const DefaultAppConfig: IAppConfig = {
-  "configVersion": 11,
+  "configVersion": 12,
   "autoNightMode": true,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
@@ -15,7 +15,7 @@ export const DefaultAppConfig: IAppConfig = {
   "notificationConfig": DefaultNotificationConfig,
   "splitShellEnabled": true,
   "splitShellSide": "left",
-  "splitShellWidth": 0.3
+  "splitShellWidth": 0.5
 }
 
 export const DefaultThemeConfig: IThemeConfig = {
@@ -29,7 +29,7 @@ export const defaultConfig: IConfig = {
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {
-  "configVersion": 11,
+  "configVersion": 12,
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,

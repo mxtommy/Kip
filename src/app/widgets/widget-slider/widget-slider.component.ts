@@ -1,6 +1,4 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
-import { BaseWidgetComponent } from '../../core/utils/base-widget.component';
-import { WidgetHostComponent } from '../../core/components/widget-host/widget-host.component';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { Subscription, Subject } from 'rxjs';
@@ -9,18 +7,53 @@ import { SignalkRequestsService } from '../../core/services/signalk-requests.ser
 import { AppService } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
+import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-slider',
-  imports: [ WidgetHostComponent, NgxResizeObserverModule, WidgetTitleComponent ],
+  imports: [ NgxResizeObserverModule, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
   styleUrl: './widget-slider.component.scss'
 })
-export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetSliderComponent implements OnInit, OnDestroy {
+  public id = input.required<string>();
+  public type = input.required<string>();
+  public theme = input.required<ITheme|null>();
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    displayName: 'Slider Label',
+    filterSelfPaths: true,
+    paths: {
+      'gaugePath': {
+        description: 'PUT Supported Numeric Path. IMPORTANT: Format must be set to (base)',
+        path: null,
+        source: null,
+        pathType: 'number',
+        isPathConfigurable: true,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: null,
+        showConvertUnitTo: false,
+        convertUnitTo: null,
+        supportsPut: true,
+        sampleTime: 500
+      }
+    },
+    displayScale: {
+      lower: 0,
+      upper: 1,
+      type: 'linear'
+    },
+    enableTimeout: false,
+    dataTimeout: 5,
+    color: 'contrast'
+  };
+  protected readonly runtime = inject(WidgetRuntimeDirective); // public for template access
+  private readonly streams = inject(WidgetStreamsDirective);
   private svgElement = viewChild.required<ElementRef<SVGElement>>('svgSlider');
-  protected dashboard = inject(DashboardService);
-  private signalkRequestsService = inject(SignalkRequestsService);
-  private appService = inject(AppService);
+  protected readonly dashboard = inject(DashboardService);
+  private readonly signalkRequestsService = inject(SignalkRequestsService);
+  private readonly appService = inject(AppService);
   protected labelColor = signal<string>(undefined)
   protected barColor = signal<string>(undefined);
   private skRequestSub = new Subscription; // Request result observer
@@ -38,69 +71,61 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   private readonly VIEWBOX_WIDTH = 200;
   private readonly LINE_START = 20;
   private readonly LINE_WIDTH = 160;
-  private readonly colorMap = new Map<string, { label: string; bar: string }>([
-    ["contrast", { label: this.theme().contrastDim, bar: this.theme().contrast }],
-    ["blue", { label: this.theme().blueDim, bar: this.theme().blue }],
-    ["green", { label: this.theme().greenDim, bar: this.theme().green }],
-    ["pink", { label: this.theme().pinkDim, bar: this.theme().pink }],
-    ["orange", { label: this.theme().orangeDim, bar: this.theme().orange }],
-    ["purple", { label: this.theme().purpleDim, bar: this.theme().purple }],
-    ["grey", { label: this.theme().greyDim, bar: this.theme().grey }],
-    ["yellow", { label: this.theme().yellowDim, bar: this.theme().yellow }],
-  ]);
+  private colorMap: Map<string, { label: string; bar: string }> | null = null;
 
   private valueChange$ = new Subject<number>();
 
   constructor() {
-    super();
-
-    this.defaultConfig = {
-      displayName: 'Slider Label',
-      filterSelfPaths: true,
-      paths: {
-        'gaugePath': {
-          description: 'PUT Supported Numeric Path. IMPORTANT: Format must be set to (base)',
-          path: null,
-          source: null,
-          pathType: "number",
-          isPathConfigurable: true,
-          showPathSkUnitsFilter: false,
-          pathSkUnitsFilter: null,
-          showConvertUnitTo: false,
-          convertUnitTo: null,
-          supportsPut: true,
-          sampleTime: 500
-        }
-      },
-      displayScale: {
-        lower: 0,
-        upper: 1,
-        type: "linear",
-      },
-      enableTimeout: false,
-      dataTimeout: 5,
-      color: "contrast",
-    };
+    // Theme + color reaction
+    effect(() => {
+      const theme = this.theme();
+      const cfg = this.runtime.options();
+      if (!cfg || !theme) return;
+      untracked(() => {
+        this.ensureColorMap();
+        this.getColors(cfg.color);
+      });
+    });
 
     effect(() => {
-      if (this.theme()) {
-        this.getColors(this.widgetProperties.config.color);
-      }
+      const cfg = this.runtime.options();
+      const path = cfg?.paths?.['gaugePath']?.path;
+      if (!cfg || !path) return; // nothing to observe yet
+
+      untracked(() => {
+        this.calculateLineBounds();
+
+        this.streams.observe('gaugePath', (newValue) => {
+          if (!newValue || !newValue.data) {
+            this.handlePosition = this.mapValueToPosition(cfg.displayScale.lower);
+            return;
+          }
+          this.updateHandlePosition(this.mapValueToPosition(newValue.data.value as number));
+        });
+      });
     });
   }
 
   ngOnInit(): void {
-    this.validateConfig();
+    const cfg = this.runtime.options();
 
-    // Subscribe to value changes with rounding, debouncing, and distinct filtering
+    if (cfg) {
+      this.getColors(cfg.color);
+    }
+
+    this.skRequestSub?.unsubscribe();
+    this.subscribeSKRequest();
+
     this.valueChange$
       .pipe(
         map((value) => {
+          const cfg = this.runtime.options();
+          if (!cfg) return value;
           // Check if the value is within 1% of the lower or upper bounds
-          if (this.isWithinMargin(value, this.widgetProperties.config.displayScale.lower)) {
-            return this.widgetProperties.config.displayScale.lower; // Exact lower bound
-          } else if (this.isWithinMargin(value, this.widgetProperties.config.displayScale.upper)) {
-            return this.widgetProperties.config.displayScale.upper; // Exact upper bound
+          if (this.isWithinMargin(value, cfg.displayScale.lower, cfg)) {
+            return cfg.displayScale.lower; // Exact lower bound
+          } else if (this.isWithinMargin(value, cfg.displayScale.upper, cfg)) {
+            return cfg.displayScale.upper; // Exact upper bound
           }
           return parseFloat(value.toFixed(2)); // Round to 2 decimal places
         }),
@@ -112,45 +137,32 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
       });
   }
 
-  ngAfterViewInit(): void {
-    this.startWidget();
-  }
-
-  protected startWidget(): void {
-    this.unsubscribeDataStream();
-    this.observeDataStream('gaugePath', newValue => {
-      if (!newValue || !newValue.data) {
-        this.handlePosition = this.mapValueToPosition(this.widgetProperties.config.displayScale.lower); // Default to lower bound
-        return;
-      }
-      this.updateHandlePosition(this.mapValueToPosition(newValue.data.value));
-    });
-
-    this.skRequestSub?.unsubscribe();
-    this.subscribeSKRequest();
-  }
-
   private mapValueToPosition(value: number): number {
-    const scaleRange = this.widgetProperties.config.displayScale.upper - this.widgetProperties.config.displayScale.lower;
+    const cfg = this.runtime.options();
+    if (!cfg) return value;
+    const scaleRange = cfg.displayScale.upper - cfg.displayScale.lower;
     const lineRange = this.LINE_WIDTH;
-    return ((value - this.widgetProperties.config.displayScale.lower) / scaleRange) * lineRange + this.LINE_START;
+    return ((value - cfg.displayScale.lower) / scaleRange) * lineRange + this.LINE_START;
   }
 
   private mapPositionToValue(position: number): number {
-    const scaleRange = this.widgetProperties.config.displayScale.upper - this.widgetProperties.config.displayScale.lower;
+    const cfg = this.runtime.options();
+    if (!cfg) return position;
+    const scaleRange = cfg.displayScale.upper - cfg.displayScale.lower;
     const lineRange = this.LINE_WIDTH;
-    return ((position - this.LINE_START) / lineRange) * scaleRange + this.widgetProperties.config.displayScale.lower;
+    return ((position - this.LINE_START) / lineRange) * scaleRange + cfg.displayScale.lower;
   }
 
-  private isWithinMargin(value: number, target: number): boolean {
-    const margin = (this.widgetProperties.config.displayScale.upper - this.widgetProperties.config.displayScale.lower) * 0.01; // 1% margin
+  private isWithinMargin(value: number, target: number, cfg: IWidgetSvcConfig): boolean {
+    const margin = (cfg.displayScale.upper - cfg.displayScale.lower) * 0.01; // 1% margin
     return Math.abs(value - target) <= margin;
   }
 
   private subscribeSKRequest(): void {
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.widgetProperties.uuid) {
-        let errMsg = `Toggle Widget ${this.widgetProperties.config.displayName}: `;
+      if (requestResult.widgetUUID == this.id()) {
+        const cfg = this.runtime.options();
+        let errMsg = `Toggle Widget ${cfg?.displayName}: `;
         if (requestResult.statusCode != 200){
           if (requestResult.message){
             errMsg += requestResult.message;
@@ -164,19 +176,12 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   }
 
   public sendValue(value: unknown): void {
-    const path = this.widgetProperties.config.paths['gaugePath'].path;
+    const path = this.runtime.options()?.paths?.['gaugePath']?.path;
     this.signalkRequestsService.putRequest(
       path,
       value,
-      this.widgetProperties.uuid
+      this.id()
     );
-  }
-
-  protected updateConfig(config: IWidgetSvcConfig): void {
-    this.widgetProperties.config = config;
-    this.getColors(this.widgetProperties.config.color);
-    this.calculateLineBounds(); // Recalculate line bounds on config update
-    this.startWidget();
   }
 
   protected onResized(): void {
@@ -225,10 +230,11 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
         const constrainedX = ((pointerX - this.lineStartPx) / this.lineWidthPx) * this.LINE_WIDTH + this.LINE_START;
         this.updateHandlePosition(constrainedX);
 
-        if (this.handlePosition <= this.LINE_START) {
-          this.pathValue = this.widgetProperties.config.displayScale.lower; // Exact lower bound
-        } else if (this.handlePosition >= this.LINE_START + this.LINE_WIDTH) {
-          this.pathValue = this.widgetProperties.config.displayScale.upper; // Exact upper bound
+        const cfg = this.runtime.options();
+        if (cfg && this.handlePosition <= this.LINE_START) {
+          this.pathValue = cfg.displayScale.lower; // Exact lower bound
+        } else if (cfg && this.handlePosition >= this.LINE_START + this.LINE_WIDTH) {
+          this.pathValue = cfg.displayScale.upper; // Exact upper bound
         } else {
           this.pathValue = this.mapPositionToValue(this.handlePosition);
         }
@@ -256,13 +262,29 @@ export class WidgetSliderComponent extends BaseWidgetComponent implements OnInit
   }
 
   private getColors(color: string): void {
+    this.ensureColorMap();
+    if (!this.colorMap) return;
     const colors = this.colorMap.get(color) || this.colorMap.get("contrast");
     this.labelColor.set(colors.label);
     this.barColor.set(colors.bar);
   }
 
+  private ensureColorMap(): void {
+    const theme = this.theme();
+    if (!theme) return; // inputs not yet set
+    this.colorMap = new Map<string, { label: string; bar: string }>([
+      ["contrast", { label: theme.contrastDim, bar: theme.contrast }],
+      ["blue", { label: theme.blueDim, bar: theme.blue }],
+      ["green", { label: theme.greenDim, bar: theme.green }],
+      ["pink", { label: theme.pinkDim, bar: theme.pink }],
+      ["orange", { label: theme.orangeDim, bar: theme.orange }],
+      ["purple", { label: theme.purpleDim, bar: theme.purple }],
+      ["grey", { label: theme.greyDim, bar: theme.grey }],
+      ["yellow", { label: theme.yellowDim, bar: theme.yellow }],
+    ]);
+  }
+
   ngOnDestroy(): void {
-    this.destroyDataStreams();
     this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
     clearTimeout(this.debounceTimeout);

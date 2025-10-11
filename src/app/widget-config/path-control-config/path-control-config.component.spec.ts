@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ModalPathControlConfigComponent } from './path-control-config.component';
+import { PathControlConfigComponent } from './path-control-config.component';
 
-describe('ModalPathSelectorComponent', () => {
-  let component: ModalPathControlConfigComponent;
-  let fixture: ComponentFixture<ModalPathControlConfigComponent>;
+describe('PathControlConfigComponent', () => {
+  let component: PathControlConfigComponent;
+  let fixture: ComponentFixture<PathControlConfigComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    imports: [ModalPathControlConfigComponent]
+    imports: [PathControlConfigComponent]
 })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ModalPathControlConfigComponent);
+    fixture = TestBed.createComponent(PathControlConfigComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

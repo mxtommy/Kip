@@ -1,9 +1,4 @@
-<widget-host
-  class="timer-wrapper"
-  [(config)]="widgetProperties.config"
-  [id]="widgetProperties.uuid"
-  (configChange)="updateConfig($event)">
-  <div class="filler">
+<div class="filler">
     <canvas #canvasMainRef class="timer-canvas"></canvas>
   </div>
   <div class="buttons-container">
@@ -97,4 +92,3 @@
     <div class="widgetOverlay">
     </div>
   }
-</widget-host>

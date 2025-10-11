@@ -1,5 +1,31 @@
 import { inject, Injectable } from '@angular/core';
+import { Type } from '@angular/core';
 import { SignalkPluginsService } from './signalk-plugins.service';
+import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
+import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
+import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
+import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
+import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
+import { WidgetSliderComponent } from '../../widgets/widget-slider/widget-slider.component';
+import { WidgetSimpleLinearComponent } from '../../widgets/widget-simple-linear/widget-simple-linear.component';
+import { WidgetRacesteerComponent } from '../../widgets/widget-racesteer/widget-racesteer.component';
+import { WidgetRacerTimerComponent } from '../../widgets/widget-racer-timer/widget-racer-timer.component';
+import { WidgetRacerLineComponent } from '../../widgets/widget-racer-line/widget-racer-line.component';
+import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
+import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
+import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
+import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
+import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
+import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
+import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
+import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
+import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
+import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
+import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
+import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
+import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
+import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -78,7 +104,6 @@ export interface WidgetDescription {
    */
   componentClassName: string;
 }
-
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   isDependencyValid: boolean;
   pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
@@ -90,6 +115,37 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
 export class WidgetService {
   private readonly _plugins = inject(SignalkPluginsService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
+  // Cache for selector -> component Type resolutions to avoid repeated definition scans
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _componentTypeMap: Record<string, Type<any>> = {
+    WidgetNumericComponent: WidgetNumericComponent,
+    WidgetTextComponent: WidgetTextComponent,
+    WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
+    WidgetWindComponent: WidgetWindComponent,
+    WidgetTutorialComponent: WidgetTutorialComponent,
+    WidgetSliderComponent: WidgetSliderComponent,
+    WidgetSimpleLinearComponent: WidgetSimpleLinearComponent,
+    WidgetRacesteerComponent: WidgetRacesteerComponent,
+    WidgetRacerTimerComponent: WidgetRacerTimerComponent,
+    WidgetRacerLineComponent: WidgetRacerLineComponent,
+    WidgetRaceTimerComponent: WidgetRaceTimerComponent,
+    WidgetPositionComponent: WidgetPositionComponent,
+    WidgetLabelComponent: WidgetLabelComponent,
+    WidgetIframeComponent: WidgetIframeComponent,
+    WidgetHorizonComponent: WidgetHorizonComponent,
+    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
+    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
+    WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
+    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
+    WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
+    WidgetFreeboardskComponent: WidgetFreeboardskComponent,
+    WidgetDatetimeComponent: WidgetDatetimeComponent,
+    WidgetDataChartComponent: WidgetDataChartComponent,
+    WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
+    WidgetAutopilotComponent: WidgetAutopilotComponent
+};
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -97,8 +153,8 @@ export class WidgetService {
       icon: 'numericWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-numeric',
@@ -110,8 +166,8 @@ export class WidgetService {
       icon: 'textWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-text',
@@ -123,8 +179,8 @@ export class WidgetService {
       icon: 'datetimeWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-datetime',
@@ -136,8 +192,8 @@ export class WidgetService {
       icon: 'positionWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-position',
@@ -149,8 +205,8 @@ export class WidgetService {
       icon: 'labelWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-label',
@@ -162,8 +218,8 @@ export class WidgetService {
       icon: 'switchpanelWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-boolean-switch',
@@ -175,8 +231,8 @@ export class WidgetService {
       icon: 'sliderWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-slider',
@@ -188,8 +244,8 @@ export class WidgetService {
       icon: 'simpleLinearGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-simple-linear',
@@ -201,8 +257,8 @@ export class WidgetService {
       icon: 'linearGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-gauge-ng-linear',
@@ -214,8 +270,8 @@ export class WidgetService {
       icon: 'radialGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-gauge-ng-radial',
@@ -227,8 +283,8 @@ export class WidgetService {
       icon: 'compassGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-gauge-ng-compass',
@@ -240,8 +296,8 @@ export class WidgetService {
       icon: 'level',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-heel-gauge',
@@ -253,8 +309,8 @@ export class WidgetService {
       icon: 'pitchRollGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-horizon',
@@ -266,8 +322,8 @@ export class WidgetService {
       icon: 'steelGauge',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Gauge',
       requiredPlugins: [],
       selector: 'widget-gauge-steel',
@@ -279,8 +335,8 @@ export class WidgetService {
       icon: 'windsteeringWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Component',
       requiredPlugins: [],
       selector: 'widget-wind-steer',
@@ -290,10 +346,10 @@ export class WidgetService {
       name: 'Freeboard-SK',
       description: 'Adds the Freeboard-SK chart plotter as a widget with automatic sign-in to your dashboard.',
       icon: 'freeboardWidget',
-      minWidth: 3,
-      minHeight: 4,
-      defaultWidth: 3,
-      defaultHeight: 7,
+      minWidth: 6,
+      minHeight: 8,
+      defaultWidth: 6,
+      defaultHeight: 14,
       category: 'Component',
       requiredPlugins: ['freeboard-sk', 'tracks', 'resources-provider', 'course-provider'],
       selector: 'widget-freeboardsk',
@@ -303,10 +359,10 @@ export class WidgetService {
       name: 'Autopilot Head',
       description: 'Provides typical autopilot controls for Signal K v1 & v2 Autopilot API devices. Requires a compatible hardware-specific Autopilot plugin for full functionality.',
       icon: 'autopilotWidget',
-      minWidth: 2,
-      minHeight: 7,
-      defaultWidth: 2,
-      defaultHeight: 7,
+      minWidth: 4,
+      minHeight: 14,
+      defaultWidth: 4,
+      defaultHeight: 14,
       category: 'Component',
       requiredPlugins: [],
       optionalPlugins: ['autopilot', 'pypilot-autopilot-provider'],
@@ -317,10 +373,10 @@ export class WidgetService {
       name: 'Realtime Data Chart',
       description: 'Visualizes data on a real-time chart with multiple preconfigured series including actuals, SMA and period overall averages and Min/Max. Requires the KIP Dataset to be configured.',
       icon: 'datachartWidget',
-      minWidth: 1,
-      minHeight: 2,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      minWidth: 2,
+      minHeight: 4,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Component',
       requiredPlugins: [],
       selector: 'widget-data-chart',
@@ -332,12 +388,25 @@ export class WidgetService {
       icon: 'embedWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Component',
       requiredPlugins: [],
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Tutorial',
+      description: 'An instructional widget that guides new users through basic navigation, gestures, and dashboard editing steps.',
+      icon: 'helpWidget',
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 4,
+      defaultHeight: 6,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-tutorial',
+      componentClassName: 'WidgetTutorialComponent'
     },
     {
       name: 'Racesteer',
@@ -345,8 +414,8 @@ export class WidgetService {
       icon: 'racesteeringWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 2,
-      defaultHeight: 3,
+      defaultWidth: 4,
+      defaultHeight: 6,
       category: 'Racing',
       requiredPlugins: ['signalk-polar-performance-plugin'],
       selector: 'widget-racesteer',
@@ -356,10 +425,10 @@ export class WidgetService {
       name: 'Racer - Start Line Insight',
       description: 'Gain a tactical advantage for racing starts: set and adjust the port and starboard ends of the start line, see your distance to the line, the favored end, and how much the line is favored or unfavored. Includes visual integration with Freeboard SK for interactive line adjustment and display.',
       icon: 'racerlineWidget',
-      minWidth: 2,
-      minHeight: 2,
-      defaultWidth: 2,
-      defaultHeight: 2,
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 4,
+      defaultHeight: 4,
       requiredPlugins: ['signalk-racer'],
       category: 'Racing',
       selector: 'widget-racer-line',
@@ -369,10 +438,10 @@ export class WidgetService {
       name: 'Racer - Start Timer',
       description: 'An advanced racing countdown timer that indicates OCS (On Course Side) status. Set the start line, choose or adjust the duration, or specify the exact start time. Automatically switches to the target dashboard at the start unless over early.',
       icon: 'racertimerWidget',
-      minWidth: 2,
-      minHeight: 2,
-      defaultWidth: 2,
-      defaultHeight: 2,
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 4,
+      defaultHeight: 4,
       requiredPlugins: ['signalk-racer'],
       category: 'Racing',
       selector: 'widget-racer-timer',
@@ -382,28 +451,15 @@ export class WidgetService {
       name: 'Wind Trends',
       description: 'Real-time True Wind trends with dual top axes for direction (°) and speed (knots). Displays live values and SMA over the current period’s average.',
       icon: 'windtrendsWidget',
-      minWidth: 5,
-      minHeight: 4,
-      defaultWidth: 5,
-      defaultHeight: 4,
+      minWidth: 10,
+      minHeight: 8,
+      defaultWidth: 10,
+      defaultHeight: 8,
       category: 'Racing',
       requiredPlugins: [],
       selector: 'widget-windtrends-chart',
       componentClassName: 'WidgetWindTrendsChartComponent'
     },
-    {
-      name: 'Countdown Timer',
-      description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
-      icon: 'racetimerWidget',
-      minWidth: 3,
-      minHeight: 3,
-      defaultWidth: 3,
-      defaultHeight: 4,
-      category: 'Racing',
-      requiredPlugins: [],
-      selector: 'widget-racetimer',
-      componentClassName: 'WidgetRaceTimerComponent',
-    }
   ];
 
   get kipWidgets(): readonly WidgetDescription[] {
@@ -412,6 +468,44 @@ export class WidgetService {
 
   get categories(): string[] {
     return this._widgetCategories;
+  }
+
+  /**
+   * Resolves a widget's runtime component Type from its selector.
+   *
+   * Flow:
+   *  1. Locate the widget definition whose `selector` matches the provided string.
+   *  2. Look up the definition's `componentClassName` inside `_componentTypeMap`.
+   *  3. Return the component Type if the widget has been migrated; otherwise `undefined`.
+   *
+   * Host2 will fall back to a safe default (currently Numeric) when `undefined` is returned.
+   * This allows incremental migration without breaking existing dashboard configs.
+   *
+   * NOTE: We intentionally keep this lightweight instead of using dynamic `import()` to
+   * preserve tree‑shaking.
+   *
+   * @param selector Dashboard widget type / selector (e.g. `widget-numeric`).
+   * @returns Angular component Type or undefined if not yet migrated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public getComponentType(selector: string): Type<any> | undefined {
+    // Only return cached value if it's a defined component Type; avoid sticky undefined caching
+    const cached = this._componentTypeCache.get(selector);
+    if (cached) return cached;
+
+    const def = this._widgetDefinition.find(w => w.selector === selector);
+    if (!def) return undefined;
+
+    const resolved = this._componentTypeMap[def.componentClassName];
+    if (!resolved) {
+      // Do NOT cache undefined so that adding a new mapping later in dev picks it up without reload
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        console.warn('[WidgetService] No component mapping for', def.componentClassName);
+      }
+      return undefined;
+    }
+    this._componentTypeCache.set(selector, resolved);
+    return resolved;
   }
 
   /**

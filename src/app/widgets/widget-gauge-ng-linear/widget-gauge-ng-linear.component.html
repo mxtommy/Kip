@@ -1,7 +1,8 @@
-<widget-host [(config)]="widgetProperties.config" [id]="widgetProperties.uuid" (configChange)="updateConfig($event)" #host>
-  <linear-gauge class="linearGauge" id="{{widgetProperties.uuid}}" #linearGauge (onResize)="onResized($event)"
-    [options]="gaugeOptions"
-    [value]="value"
-    [attr.value-text]="textValue"
-    ></linear-gauge>
-</widget-host>
+<linear-gauge
+  class="linearGauge"
+  #linearGauge
+  (onResize)="onResized($event)"
+  [options]="gaugeOptions"
+  [value]="value()"
+  [attr.value-text]="textValue()"
+></linear-gauge>

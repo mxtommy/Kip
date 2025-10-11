@@ -6,8 +6,6 @@ import { SettingsDisplayComponent } from '../display/display.component';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { SettingsConfigComponent } from '../configuration/config.component';
-import { SettingsDatasetsComponent } from '../../datasets/datasets.component';
-
 
 @Component({
     selector: 'tabs',
@@ -22,8 +20,7 @@ import { SettingsDatasetsComponent } from '../../datasets/datasets.component';
       SettingsDisplayComponent,
       SettingsNotificationsComponent,
       SettingsConfigComponent,
-      PageHeaderComponent,
-      SettingsDatasetsComponent
+      PageHeaderComponent
   ]
 })
 export class TabsComponent {

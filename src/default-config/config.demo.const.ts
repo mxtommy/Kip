@@ -4,7 +4,7 @@ import { UUID } from "../app/core/utils/uuid.util"
 
 // Demo Mode config settings file
 export const DemoAppConfig: IAppConfig = {
-  "configVersion": 11,
+  "configVersion": 12,
   "autoNightMode": false,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
@@ -14,15 +14,6 @@ export const DemoAppConfig: IAppConfig = {
   "splitShellSide": "left",
   "splitShellWidth": 0.7,
   "dataSets": [
-    {
-      "uuid": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
-      "path": "self.environment.wind.speedApparent",
-      "pathSource": "default",
-      "period": 1,
-      "baseUnit": "m/s",
-      "label": "self.environment.wind.speedApparent, Source: default, Scale: minute, Period: 1",
-      "timeScaleFormat": "minute"
-    },
     {
       "uuid": "339698a7-2cff-4ab9-9b50-d8056f971471",
       "path": "self.environment.depth.belowTransducer",
@@ -87,10 +78,10 @@ export const DemoDashboardsConfig: Dashboard[] = [
     "icon": "dashboard-sailing",
     "configuration": [
       {
-        "w": 3,
-        "h": 4,
+        "w": 6,
+        "h": 8,
         "id": "339698a7-2cff-4ab9-9b50-d8056f971471",
-        "selector": "widget-numeric",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-numeric",
@@ -130,10 +121,10 @@ export const DemoDashboardsConfig: Dashboard[] = [
         "y": 0
       },
       {
-        "w": 5,
-        "h": 10,
+        "w": 10,
+        "h": 20,
         "id": "a44028e0-dfee-4492-895b-2b03a60f3a69",
-        "selector": "widget-wind-steer",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-wind-steer",
@@ -272,14 +263,14 @@ export const DemoDashboardsConfig: Dashboard[] = [
             }
           }
         },
-        "x": 3,
+        "x": 6,
         "y": 0
       },
       {
-        "w": 4,
-        "h": 6,
+        "w": 8,
+        "h": 12,
         "id": "24406c15-7738-4dc1-a206-7a4862c2931d",
-        "selector": "widget-gauge-ng-radial",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-gauge-ng-radial",
@@ -323,14 +314,14 @@ export const DemoDashboardsConfig: Dashboard[] = [
             }
           }
         },
-        "x": 8,
+        "x": 16,
         "y": 0
       },
       {
-        "w": 3,
-        "h": 4,
+        "w": 6,
+        "h": 8,
         "id": "c6bcaa53-afa1-42c7-ad92-d5f7dba14734",
-        "selector": "widget-numeric",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-numeric",
@@ -367,13 +358,13 @@ export const DemoDashboardsConfig: Dashboard[] = [
           }
         },
         "x": 0,
-        "y": 4
+        "y": 8
       },
       {
-        "w": 4,
-        "h": 6,
+        "w": 8,
+        "h": 12,
         "id": "973c8804-be09-4923-bb5d-48c13b65db69",
-        "selector": "widget-data-chart",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-data-chart",
@@ -381,8 +372,12 @@ export const DemoDashboardsConfig: Dashboard[] = [
             "config": {
               "displayName": "Chart Label",
               "filterSelfPaths": true,
+              "datachartPath": "self.environment.wind.speedApparent",
+              "datachartSource": "default",
+              "period": 1,
+              "timeScale": "minute",
               "convertUnitTo": "knots",
-              "datasetUUID": "afbe4e41-26f5-404f-a55d-9f7b9b76fbd1",
+              "timeScaleFormat": "minute",
               "inverseYAxis": false,
               "datasetAverageArray": "sma",
               "showAverageData": true,
@@ -408,18 +403,18 @@ export const DemoDashboardsConfig: Dashboard[] = [
             }
           }
         },
-        "x": 8,
-        "y": 6
+        "x": 16,
+        "y": 12
       },
       {
         "x": 0,
-        "y": 8,
-        "w": 3,
-        "h": 4,
+        "y": 16,
+        "w": 6,
+        "h": 8,
         "minW": 1,
         "minH": 1,
         "id": "5289a84d-18fd-4ee7-9724-72249af403f2",
-        "selector": "widget-position",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-position",
@@ -459,10 +454,10 @@ export const DemoDashboardsConfig: Dashboard[] = [
         }
       },
       {
-        "w": 5,
-        "h": 2,
+        "w": 10,
+        "h": 4,
         "id": "1a7a3f79-2eb4-4092-a0c3-9a61db8a8586",
-        "selector": "widget-simple-linear",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-simple-linear",
@@ -501,8 +496,8 @@ export const DemoDashboardsConfig: Dashboard[] = [
             }
           }
         },
-        "x": 3,
-        "y": 10
+        "x": 6,
+        "y": 20
       }
     ],
     "collapseSplitShell": true
@@ -515,10 +510,10 @@ export const DemoDashboardsConfig: Dashboard[] = [
       {
         "x": 0,
         "y": 0,
-        "w": 6,
-        "h": 3,
+        "w": 12,
+        "h": 6,
         "id": "26a2a150-5af8-4f1d-aaab-0cb2a406fc17",
-        "selector": "widget-gauge-ng-compass",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-gauge-ng-compass",
@@ -555,12 +550,12 @@ export const DemoDashboardsConfig: Dashboard[] = [
         }
       },
       {
-        "x": 6,
+        "x": 12,
         "y": 0,
-        "w": 6,
-        "h": 3,
+        "w": 12,
+        "h": 6,
         "id": "caf9ca47-fcf6-4736-a314-2b5210edaf03",
-        "selector": "widget-datetime",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-datetime",
@@ -589,11 +584,11 @@ export const DemoDashboardsConfig: Dashboard[] = [
       },
       {
         "x": 0,
-        "y": 3,
-        "w": 12,
-        "h": 9,
+        "y": 6,
+        "w": 24,
+        "h": 18,
         "id": "daa21350-009e-4d99-8209-364f9b99caee",
-        "selector": "widget-autopilot",
+        "selector": "widget-host2",
         "input": {
           "widgetProperties": {
             "type": "widget-autopilot",
@@ -774,7 +769,7 @@ export const DemoConfig: IConfig = {
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 11,
+  "configVersion": 12,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
