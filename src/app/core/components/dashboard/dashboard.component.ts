@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
@@ -73,12 +73,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     effect(() => {
       const isStatic = this.dashboard.isDashboardStatic();
-      if (this._previousIsStaticState !== isStatic) {
-        this._previousIsStaticState = isStatic;
-        try {
-          this._gridstack().grid.setStatic(isStatic);
-        } catch { /* ignore if grid not ready */ }
-      }
+
+      untracked(() => {
+        if (this._previousIsStaticState !== isStatic) {
+          this._previousIsStaticState = isStatic;
+          try {
+            this._gridstack().grid.setStatic(isStatic);
+          } catch { /* ignore if grid not ready */ }
+        }
+      });
     });
   }
 
@@ -213,7 +216,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
    * @memberof DashboardComponent
    */
   private loadDashboard(dashboardId: number): void {
-    const dashboard = this.dashboard.dashboards()[dashboardId];
+    const dashboard = cloneDeep(this.dashboard.dashboards()[dashboardId]);
     const _gridstack = this._gridstack();
     // If grid not yet ready (rare timing race), retry next microtask.
     if (!_gridstack?.grid) {
@@ -222,7 +225,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
     // Synchronous load eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
-    _gridstack.grid.load(dashboard.configuration as NgGridStackWidget[]);
+    _gridstack.grid.load(dashboard.configuration);
     _gridstack.grid.commit();
   }
 

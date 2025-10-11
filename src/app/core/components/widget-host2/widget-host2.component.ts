@@ -1,10 +1,10 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
-import type { NgCompInputs } from 'gridstack/dist/angular';
+import type { NgCompInputs, NgGridStackWidget } from 'gridstack/dist/angular';
 import { BaseWidget } from 'gridstack/dist/angular';
 import { WidgetStreamsDirective } from '../../directives/widget-streams.directive';
 import { WidgetMetadataDirective } from '../../directives/widget-metadata.directive';
@@ -14,6 +14,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widget-host-bottom-sheet.component';
 import { WidgetService } from '../../services/widget.service';
 import { AppService } from '../../services/app-service';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 // Base shape expected from view components (optional defaultConfig)
 // NOTE: Widgets may expose a static DEFAULT_CONFIG to avoid temporary instantiation.
@@ -63,6 +64,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
   private childRef: ComponentRef<WidgetViewComponentBase>;
   private compType: Type<WidgetViewComponentBase>
+  private _hasInitialized = false;
 
   constructor() {
     super();
@@ -70,9 +72,48 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
     effect(() => {
       const theme = this.theme();
       if (this.childRef) {
-        this.childRef.setInput('theme', theme);
+        untracked(() => {
+          this.childRef.setInput('theme', theme);
+        });
       }
     });
+
+    // React to dashboard cancel events: restore saved config without destroying the widget
+    effect(() => {
+      const tick = this._dashboard.layoutEditCanceled();
+      // Ignore before init or if no cancel tick yet
+      if (!this._hasInitialized || !tick) return;
+      untracked(() => {
+        this.reinitFromSavedConfig();
+      });
+    });
+  }
+
+  ngOnInit(): void {
+    const type = this.widgetProperties.type;
+    if (!type) return;
+    this.compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+
+    // Resolve default configuration for this component type using helper
+    const defaultCfg = this.getDefaultConfig();
+
+    // Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
+    this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
+    const merged = this._runtime?.options();
+    if (merged) this.widgetProperties.config = merged;
+    // Initial diff-based streams wiring (registrations occur when child calls observe)
+    this._streams?.applyStreamsConfigDiff?.(merged);
+    this._meta?.applyMetaConfigDiff?.(merged);
+
+    // Create the child component BEFORE first change detection completes so its
+    if (this.outlet && this.compType) {
+      this.childRef = this.outlet.createComponent(this.compType);
+      this.childRef.setInput('id', this.widgetProperties.uuid);
+      this.childRef.setInput('type', this.widgetProperties.type);
+      // Pass current theme value; ongoing updates handled by effect in ctor.
+      this.childRef.setInput('theme', this.theme());
+    }
+    this._hasInitialized = true;
   }
 
   /**
@@ -92,39 +133,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
     return { widgetProperties: this.widgetProperties as IWidget } as NgCompInputs;
   }
 
-  ngOnInit(): void {
-    const type = this.widgetProperties.type;
-    if (!type) return;
-    this.compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
-
-    // Try static DEFAULT_CONFIG pattern first.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let defaultCfg: IWidgetSvcConfig | undefined = this.compType && (this.compType as any).DEFAULT_CONFIG;
-    if (!defaultCfg && this.compType && this.outlet) {
-      // Fallback: temporary instance solely to read instance defaultConfig, then destroy.
-      const tempRef = this.outlet.createComponent(this.compType);
-      defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
-      tempRef.destroy();
-    }
-
-    // Initialize runtime with merged config prior to creating the visual component so streams/meta can bind early.
-    this._runtime?.initialize?.(defaultCfg, this.widgetProperties.config);
-    const merged = this._runtime?.options();
-    if (merged) this.widgetProperties.config = merged;
-    // Initial diff-based streams wiring (registrations occur when child calls observe)
-    this._streams?.applyStreamsConfigDiff?.(merged);
-    this._meta?.applyMetaConfigDiff?.(merged);
-
-    // Create the child component BEFORE first change detection completes so its
-    if (this.outlet && this.compType) {
-      this.childRef = this.outlet.createComponent(this.compType);
-      this.childRef.setInput('id', this.widgetProperties.uuid);
-      this.childRef.setInput('type', this.widgetProperties.type);
-      // Pass current theme value; ongoing updates handled by effect in ctor.
-      this.childRef.setInput('theme', this.theme());
-    }
-  }
-
   /**
    * Apply a new user-edited config (e.g., from options dialog):
    * - Updates runtime merged options
@@ -133,7 +141,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
    */
   private applyRuntimeConfig(cfg?: IWidgetSvcConfig): void {
     if (cfg) {
-      // Update widget config
       this._runtime?.setRuntimeConfig?.(cfg);
     }
     const runtimeCfg = this._runtime.options();
@@ -141,9 +148,64 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       this.widgetProperties.config = runtimeCfg;
     }
 
-    // Diff-based streams config (avoids full reset storm)
     this._streams?.applyStreamsConfigDiff?.(runtimeCfg);
     this._meta?.applyMetaConfigDiff?.(runtimeCfg);
+  }
+
+  /**
+   * Reinitialize runtime from the dashboard's saved config for this widget.
+   * Runs during dashboard cancel flow to restore pre-edit UI state.
+   */
+  private reinitFromSavedConfig(): void {
+    try {
+      const saved = this.getSavedConfigForSelf();
+      // Resolve defaults for this component type
+      const defaultCfg = this.getDefaultConfig();
+      this._runtime?.initialize?.(defaultCfg, cloneDeep(saved));
+      const merged = this._runtime?.options();
+      if (merged) this.widgetProperties.config = merged;
+      this._streams?.applyStreamsConfigDiff?.(merged);
+      this._meta?.applyMetaConfigDiff?.(merged);
+      // console.debug('[Host2] cancel revert applied', this.widgetProperties.uuid, { found: !!saved });
+    } catch {
+      // no-op
+}
+  }
+
+  /**
+   * Lookup the saved configuration for this widget from the active dashboard.
+   * Prefers Angular Gridstack input mapping; falls back to any legacy shape.
+   */
+  private getSavedConfigForSelf(): IWidgetSvcConfig | undefined {
+    try {
+      const dashboards = this._dashboard.dashboards();
+      const activeIdx = this._dashboard.activeDashboard();
+      const dash = dashboards?.[activeIdx];
+      type NodeWithConfig = NgGridStackWidget & {
+        input?: { widgetProperties?: { config?: IWidgetSvcConfig } };
+        widgetProperties?: { config?: IWidgetSvcConfig };
+      };
+      const nodes = (dash?.configuration as NgGridStackWidget[] | undefined) ?? [];
+      const node = nodes.find(n => n?.id === this.widgetProperties.uuid) as NodeWithConfig | undefined;
+      return node?.input?.widgetProperties?.config ?? node?.widgetProperties?.config ?? undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Obtain default configuration for the current component type.
+   * Prefers static DEFAULT_CONFIG; falls back to an ephemeral instance if needed.
+   */
+  private getDefaultConfig(): IWidgetSvcConfig | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let defaultCfg: IWidgetSvcConfig | undefined = this.compType && (this.compType as any).DEFAULT_CONFIG;
+    if (!defaultCfg && this.compType && this.outlet) {
+      const tempRef = this.outlet.createComponent(this.compType);
+      defaultCfg = (tempRef.instance as WidgetViewComponentBase).defaultConfig;
+      tempRef.destroy();
+    }
+    return defaultCfg;
   }
 
   /**
