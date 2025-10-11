@@ -28,6 +28,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('freeboardSkIframe');
   public widgetUrl: string = null;
   public disableWidgetShell = input<boolean>(false);
+  public swipeDisabled = input<boolean>(false);
   private _authTokenSubscription: Subscription = null;
 
   private viewReady = signal(false);
@@ -83,6 +84,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   };
 
   injectSwipeScript() {
+    if (this.swipeDisabled()) return;
     const iframeWindow = this.iframe().nativeElement.contentWindow;
     const iframeDocument = this.iframe().nativeElement.contentDocument;
     if (!iframeDocument || !iframeWindow) {

@@ -12,6 +12,7 @@ export const DemoAppConfig: IAppConfig = {
   "instanceName": "",
   "splitShellEnabled": true,
   "splitShellSide": "left",
+  "splitShellSwipeDisabled": false,
   "splitShellWidth": 0.7,
   "dataSets": [
     {

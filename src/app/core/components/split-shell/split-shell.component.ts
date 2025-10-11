@@ -27,6 +27,7 @@ export class SplitShellComponent implements OnDestroy {
   private originalPanelRatio: number | null = null; // captured when entering edit (non-static) mode
   public panelWidth = signal<number>(0); // derived pixels
   public panelCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
+  protected fskShellSwipeDisabled = toSignal(this._settings.getSplitShellSwipeDisabledAsO());
 
   // Only show toggle on handset (portrait) per requirement
   private handset$ = this.breakpointObserver.observe(Breakpoints.HandsetPortrait);
