@@ -1,4 +1,4 @@
-import { Component, effect, signal, computed, inject, input, untracked, DestroyRef, OnDestroy } from '@angular/core';
+import { Component, effect, signal, computed, inject, input, untracked, OnDestroy } from '@angular/core';
 import { SvgRacesteerComponent } from '../svg-racesteer/svg-racesteer.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -15,7 +15,6 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
   imports: [SvgRacesteerComponent]
 })
 export class WidgetRacesteerComponent implements OnDestroy {
-  // Functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -58,7 +57,6 @@ export class WidgetRacesteerComponent implements OnDestroy {
   // Injected directives
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly streams = inject(WidgetStreamsDirective);
-  private readonly destroyRef = inject(DestroyRef);
 
   // Signals for display state
   protected readonly currentHeading = signal(0);
@@ -87,7 +85,6 @@ export class WidgetRacesteerComponent implements OnDestroy {
   private windSectorSub: Subscription | null = null;
   private historicalWindDirection: IWindDirSample[] = [];
 
-  // Effects: register streams
   constructor() {
     // Heading
     effect(() => {
@@ -152,7 +149,8 @@ export class WidgetRacesteerComponent implements OnDestroy {
         const v = pkt?.data?.value as number | null;
         if (v == null) { this.waypointAngle.set(0); return; }
         const normalized = v < 0 ? 360 + v : v;
-        this.waypointAngle.set(this.addHeading(-this.currentHeading(), normalized));
+        const relative = this.addHeading(-this.currentHeading(), normalized);
+        this.waypointAngle.set(Math.round(relative));
       }));
     });
 
@@ -238,7 +236,8 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('targetVMG', pkt => {
         const v = pkt?.data?.value as number | null;
-        this.targetVMG.set(v == null ? 0 : v);
+        const rounded = v == null ? 0 : Math.round(v * 10) / 10;
+        this.targetVMG.set(rounded);
       }));
     });
 
@@ -251,7 +250,8 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('VMG', pkt => {
         const v = pkt?.data?.value as number | null;
-        this.VMG.set(v == null ? 0 : v);
+        const rounded = v == null ? 0 : Math.round(v * 10) / 10;
+        this.VMG.set(rounded);
       }));
     });
 
@@ -264,7 +264,8 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('vmgToWaypoint', pkt => {
         const v = pkt?.data?.value as number | null;
-        this.vmgToWaypoint.set(v == null ? null : v);
+        const rounded = v == null ? null : Math.round(v * 10) / 10;
+        this.vmgToWaypoint.set(rounded);
       }));
     });
 
