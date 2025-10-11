@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -30,7 +30,8 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
     { directive: WidgetStreamsDirective },
     { directive: WidgetMetadataDirective },
     { directive: WidgetRuntimeDirective }
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 /**

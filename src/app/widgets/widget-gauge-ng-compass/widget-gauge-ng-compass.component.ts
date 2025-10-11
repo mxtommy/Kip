@@ -95,8 +95,8 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   private readonly ANIMATION_TARGET_NEEDLE:string = "needle";
 
   // Data/state
-  protected textValue = '--';
-  protected value = 0;
+  protected textValue = signal('--');
+  protected value = signal(0);
 
   readonly ngGauge = viewChild<RadialGauge>('compassGauge');
   readonly gauge = viewChild('compassGauge', { read: ElementRef });
@@ -126,11 +126,13 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
       untracked(() => this.streams.observe('gaugePath', pkt => {
         let raw = (pkt?.data?.value as number) ?? null;
         if (raw == null) {
-          this.value = 0; this.textValue = '--';
+          this.value.set(0);
+          this.textValue.set('--');
         } else {
           if (this.negToPortPaths.includes(pCfg.path)) raw = convertNegToPortDegree(raw);
           const clamped = Math.min(Math.max(raw, 0), 360);
-          this.value = clamped; this.textValue = clamped.toFixed(0);
+          this.value.set(clamped);
+          this.textValue.set(clamped.toFixed(0));
         }
         const newState = (pkt?.state ?? States.Normal) as States;
         if (newState !== this.currentState()) this.currentState.set(newState);

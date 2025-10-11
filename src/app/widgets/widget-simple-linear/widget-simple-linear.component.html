@@ -1,4 +1,4 @@
-@if (runtime.options(); as cfg) {
+@let cfg = runtime.options();
   <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
     [displayName]="cfg.displayName"
     [displayNameColor]="theme()?.contrastDim"
@@ -12,4 +12,3 @@
     [gaugeMinValue]="cfg.displayScale.lower"
     [highlights]="highlights()"
   ></svg-simple-linear-gauge>
-}

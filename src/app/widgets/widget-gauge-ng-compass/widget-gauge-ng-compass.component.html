@@ -2,7 +2,7 @@
   #compassGauge
   (onResize)="onResized($event)"
   [options]="gaugeOptions"
-  [value]="value"
-  [attr.value-text]="textValue"
+  [value]="value()"
+  [attr.value-text]="textValue()"
   [attr.color-stroke-ticks]="colorStrokeTicks"
 ></radial-gauge>
