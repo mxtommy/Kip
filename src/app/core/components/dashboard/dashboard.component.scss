@@ -16,6 +16,19 @@
   position: relative; /* allow absolute overlay for empty state */
 }
 
+::ng-deep .grid-stack-sub-grid {
+  border: 1px solid var(--kip-contrast-color);
+  border-radius: 8px;
+  div {
+    display: flex;
+    flex-direction: column;
+    .grid-stack {
+      flex: 1 1 auto;
+      min-height: 500px; /* give empty sub-grid a visible drop area */
+    }
+  }
+}
+
 .edit-layout-close-icon {
   position: absolute;
   bottom: 20px;

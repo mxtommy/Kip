@@ -118,6 +118,7 @@ export class WidgetService {
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
+  //TODO: clenup. not needed since Host2 migration was completed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeMap: Record<string, Type<any>> = {
     WidgetNumericComponent: WidgetNumericComponent,
@@ -200,6 +201,19 @@ export class WidgetService {
       componentClassName: 'WidgetPositionComponent',
     },
     {
+      name: 'Group Container',
+      description: 'A container that allows you to group multiple widgets together, helping to organize and clarify your layout effectively.',
+      icon: 'groupWidget',
+      minWidth: 1,
+      minHeight: 1,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Core',
+      requiredPlugins: [],
+      selector: 'group-widget',
+      componentClassName: 'GroupWidgetComponent'
+    },
+    {
       name: 'Static Label',
       description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
       icon: 'labelWidget',
@@ -231,8 +245,8 @@ export class WidgetService {
       icon: 'sliderWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 4,
-      defaultHeight: 6,
+      defaultWidth: 8,
+      defaultHeight: 12,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-slider',

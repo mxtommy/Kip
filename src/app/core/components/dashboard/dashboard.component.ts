@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
-import { GridstackComponent, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
+import { GridstackComponent, NgGridStackNode, NgGridStackWidget, NgGridStackOptions, } from 'gridstack/dist/angular';
 import { GridItemHTMLElement } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
@@ -56,8 +56,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     minRow: 24,
     maxRow: 24,
     float: true,
-    acceptWidgets: false,
     resizable: { handles: 'all' },
+    acceptWidgets: true,
+    subGridDynamic: false,
+    subGridOpts: {
+      float: true,
+      subGridDynamic: true,
+      acceptWidgets: true,
+      column: "auto",
+      cellHeight: 100,
+      minRow: 2,
+      margin: 4,
+      class: 'group-container'
+    },
+    children: []
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
   private _resizeObserver?: ResizeObserver;
@@ -230,7 +242,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected saveDashboard(): void {
-    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
+    const serializedData = this._gridstack().grid.save(false, true) as NgGridStackWidget[] || null;
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
@@ -265,31 +277,53 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe({
-            next: data => {
-              if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
-              const ID = UUID.create();
-              const widget = data as WidgetDescription;
+          }, true).subscribe(data => {
+            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
+const widget = data as WidgetDescription;
+const ID = UUID.create();
+let newWidget = {};
 
-              const newWidget: NgGridStackWidget = {
-                x: gridCell.x,
-                y: gridCell.y,
-                w: widget.defaultWidth,
-                h: widget.defaultHeight,
-                minW: widget.minWidth,
-                minH: widget.minHeight,
-                id: ID,
-                selector: "widget-host2",
-                input: {
-                  widgetProperties: {
-                    type: widget.selector,
-                    uuid: ID,
-                  }
-                }
-              };
-              this._gridstack().grid.addWidget(newWidget);
-            },
-            complete: () => { this._addDialogOpen = false; }
+if (widget.selector === 'group-widget') {
+  newWidget = {
+    x: gridCell.x,
+    y: gridCell.y,
+    w: widget.defaultWidth,
+    h: widget.defaultHeight,
+    id: ID,
+    sizeToContent: false,
+    subGridOpts: {
+      float: true,
+      subGridDynamic: true,
+      acceptWidgets: true,
+      column: "auto",
+      cellHeight: 100,
+      minRow: 2,
+      margin: 4,
+      class: 'group-container',
+
+    },
+    children: [{content: 'allo-toi'}]
+  };
+} else {
+  newWidget = {
+    x: gridCell.x,
+    y: gridCell.y,
+    w: widget.defaultWidth,
+    h: widget.defaultHeight,
+    minW: widget.minWidth,
+    minH: widget.minHeight,
+    id: ID,
+    selector: "widget-host2",
+    input: {
+      widgetProperties: {
+        type: widget.selector,
+        uuid: ID,
+      }
+    }
+  };
+}
+
+this._gridstack().grid.addWidget(newWidget);
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
