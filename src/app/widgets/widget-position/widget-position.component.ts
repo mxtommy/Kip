@@ -131,7 +131,8 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true,
       onResize: (w, h) => {
-        this.cssWidth = w; this.cssHeight = h;
+        this.cssWidth = w;
+        this.cssHeight = h;
         this.calculateFontSizeAndPositions();
         this.draw();
       }

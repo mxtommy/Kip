@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, untracked } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -13,7 +12,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-text',
   templateUrl: './widget-text.component.html',
   styleUrls: ['./widget-text.component.scss'],
-  imports: [NgxResizeObserverModule]
+  imports: []
 })
 export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   public id = input.required<string>();
@@ -38,13 +37,13 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   };
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly stream = inject(WidgetStreamsDirective);
+  private readonly canvas = inject(CanvasService);
 
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
   private canvasElement: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
-  private canvas = inject(CanvasService);
   private cssWidth = 0;
   private cssHeight = 0;
   private dataValue: string | null = null;
@@ -70,9 +69,11 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
       const cfg = this.runtime?.options();
       if (!cfg) return;
       if (this.isDestroyed || !this.canvasCtx) return;
-      this.setColors();
-      this.startWidget();
-      this.drawWidget();
+      untracked(() => {
+        this.setColors();
+        this.startWidget();
+        this.drawWidget();
+      });
     });
   }
 
@@ -88,6 +89,7 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
       onResize: (w, h) => {
         this.cssWidth = w;
         this.cssHeight = h;
+
         this.drawWidget();
       }
     });
@@ -136,11 +138,11 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
     const titleHeight = Math.floor(this.cssHeight * 0.1);
     const cfg = this.runtime.options();
     const bgText = cfg.displayName + '|' + this.labelColor();
+
     if (!this.titleBitmap ||
-      this.titleBitmap.width !== this.canvasElement.width ||
-      this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== bgText
-    ) {
+        this.titleBitmap.width !== this.canvasElement.width ||
+        this.titleBitmap.height !== this.canvasElement.height ||
+        this.titleBitmapText !== bgText) {
       this.titleBitmap = this.canvas.createTitleBitmap(
         cfg.displayName,
         this.labelColor(),
@@ -156,7 +158,7 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
       this.canvasCtx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
 
-  const valueText = this.dataValue === null ? '--' : this.dataValue;
+    const valueText = this.dataValue === null ? '--' : this.dataValue;
     const edge = this.canvas.EDGE_BUFFER || 10;
     const availableHeight = Math.max(0, this.cssHeight - titleHeight - 2 * edge);
     const maxWidth = Math.max(0, Math.floor(this.cssWidth - 2 * edge));

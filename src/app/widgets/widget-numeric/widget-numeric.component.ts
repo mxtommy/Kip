@@ -8,14 +8,13 @@ import { CanvasService } from '../../core/services/canvas.service';
 import { DatasetService } from '../../core/services/data-set.service';
 import { ITheme } from '../../core/services/app-service';
 import { getColors } from '../../core/utils/themeColors.utils';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
   selector: 'widget-numeric',
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
-  imports: [NgxResizeObserverModule, MinichartComponent]
+  imports: [MinichartComponent]
 })
 export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy {
   public id = input.required<string>();
@@ -238,20 +237,10 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     const marginY = 5 * this.canvas.scaleFactor;
     const bgText = cfg.displayName + '|' + unit;
 
-    if (
-      this.backgroundBitmapText === bgText &&
-      this.lastDrawnValue === this.dataValue &&
-      this.lastDrawnMin === this.minValue &&
-      this.lastDrawnMax === this.maxValue
-    ) {
-      return;
-    }
-
     if (!this.backgroundBitmap ||
-      this.backgroundBitmap.width !== this.canvasElement.width ||
-      this.backgroundBitmap.height !== this.canvasElement.height ||
-      this.backgroundBitmapText !== bgText
-    ) {
+        this.backgroundBitmap.width !== this.canvasElement.width ||
+        this.backgroundBitmap.height !== this.canvasElement.height ||
+        this.backgroundBitmapText !== bgText) {
       this.backgroundBitmap = this.canvas.renderStaticToBitmap(
         this.canvasCtx,
         this.cssWidth,
@@ -289,6 +278,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.backgroundBitmap && this.backgroundBitmap.width > 0 && this.backgroundBitmap.height > 0) {
       this.canvasCtx.drawImage(this.backgroundBitmap, 0, 0, this.cssWidth, this.cssHeight);
     }
+
     this.drawValue();
     if (cfg.showMax || cfg.showMin) {
       this.drawMinMax();
