@@ -29,7 +29,7 @@
         </mat-slide-toggle>
         <div style="padding-left: 10px;">
           <br/>
-          <span class="mat-body-medium">Adjust Night Mode Brightness</span>
+          <span [class]="redNightModeToggle.checked ? 'mat-body-medium disable-color' : 'mat-body-medium'">Adjust Night Mode Brightness</span>
           <br/>
           <mat-slider min="0" max="1" step="0.01" [disabled]="redNightModeToggle.checked" discrete>
             <input #inputBrightness matSliderThumb
@@ -70,7 +70,7 @@
         <mat-slide-toggle #isFskShellEnabled class="full-width"
           name="freeboardShellEnabled"
           [(ngModel)]="splitShellEnabled">
-          Enable Freeboard‑SK dual‑panel Chartplotter Mode.
+          Enable Freeboard‑SK dual‑panel Chartplotter mode.
         </mat-slide-toggle>
           <mat-form-field class="optional-field">
             <mat-label>Freeboard-SK panel side</mat-label>
@@ -96,17 +96,17 @@
           </mat-panel-title>
           @if (!isPhonePortrait().matches) {
             <mat-panel-description>
-              Enable remote dashboard management between KIP instances.
+              Configure remote dashboard operations between KIP instances.
             </mat-panel-description>
           }
         </mat-expansion-panel-header>
         <mat-slide-toggle #isRemoteControlCb class="full-width"
           [(ngModel)]="isRemoteControl"
           name="isRemoteControl">
-            Allow this KIP dashboard to be changed remotely by other KIP instances.
+            Allow remote KIP instances to view and control this dashboard.
         </mat-slide-toggle>
         <mat-form-field class="optional-field">
-          <mat-label>Instance Name</mat-label>
+          <mat-label>Name of this instance</mat-label>
           <input matInput
             (ngModelChange)="displayForm.form.markAsDirty()"
             name="instanceName"

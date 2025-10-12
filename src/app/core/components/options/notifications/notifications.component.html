@@ -1,86 +1,87 @@
 <form (ngSubmit)="saveAllSettings()" #notificationsForm="ngForm" id="notificationSetting">
-  <p>Manage notification settings, ensuring operators
-    stay informed about critical events.</p>
+  <p>Configure audio and visual notification settings and stay
+    informed of critical events.</p>
+    <mat-slide-toggle
+      name="disableNotifications"
+      [(ngModel)]="notificationConfig.sound.disableSound">
+        Disable audio
+  </mat-slide-toggle>
+  <br/><br/>
   <mat-slide-toggle
     name="disableNotifications"
     [(ngModel)]="notificationConfig.disableNotifications"
-    (change)="togglePanel($event)"
-    color="primary">
+    (change)="togglePanel($event)">
       Disable Notifications
-    </mat-slide-toggle>
+  </mat-slide-toggle>
   <br/><br/>
-  <mat-accordion>
-    <mat-expansion-panel #statePanel
-      [disabled]="notificationConfig.disableNotifications">
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          Notifications
-        </mat-panel-title>
-        @if (!isPhonePortrait().matches) {
-          <mat-panel-description>
-            Show or hide menu items based on their state
-          </mat-panel-description>
-        }
-      </mat-expansion-panel-header>
-      <mat-checkbox
-        name="showNormalState"
-        [(ngModel)]="notificationConfig.devices.showNormalState">
-        Show <b>Normal</b> state
-      </mat-checkbox>
-      <br/>
-      <mat-checkbox
-        name="showNominalState"
-        [(ngModel)]="notificationConfig.devices.showNominalState">
-        Show <b>Nominal</b> state
-      </mat-checkbox>
-    </mat-expansion-panel>
-    <mat-expansion-panel #soundPanel
-      [disabled]="notificationConfig.disableNotifications">
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          Audio Prompts
-        </mat-panel-title>
-        @if (!isPhonePortrait().matches) {
-          <mat-panel-description>
-            Mute and unmute data state audio prompts
-          </mat-panel-description>
-        }
-      </mat-expansion-panel-header>
-      <mat-checkbox
-        name="=disableSound"
-        [(ngModel)]="notificationConfig.sound.disableSound">
-        Mute <b>all Notifications</b>
-      </mat-checkbox>
-      <br/>
-      <mat-checkbox
-      name="muteAlert"
-        [(ngModel)]="notificationConfig.sound.muteAlert"
-        [disabled]="notificationConfig.sound.disableSound">
-        Mute <b>all Alert</b> state
-      </mat-checkbox>
-      <br/>
-      <mat-checkbox
-      name="muteWarn"
-        [(ngModel)]="notificationConfig.sound.muteWarn"
-        [disabled]="notificationConfig.sound.disableSound">
-        Mute <b>all Warn</b> state
-      </mat-checkbox>
-      <br/>
-      <mat-checkbox
-      name="muteAlarm"
-        [(ngModel)]="notificationConfig.sound.muteAlarm"
-        [disabled]="notificationConfig.sound.disableSound">
-        Mute <b>all Alarm</b> state
-      </mat-checkbox>
-      <br/>
-      <mat-checkbox
-      name="muteEmergency"
-        [(ngModel)]="notificationConfig.sound.muteEmergency"
-        [disabled]="notificationConfig.sound.disableSound">
-        Mute <b>all Emergency</b> state
-      </mat-checkbox>
-    </mat-expansion-panel>
-  </mat-accordion>
+  <div class="notification-accordion">
+    <mat-accordion>
+      <mat-expansion-panel #statePanel
+        [disabled]="notificationConfig.disableNotifications">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            States
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Filter Notifications sidenav items
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-checkbox
+          name="showNormalState"
+          [(ngModel)]="notificationConfig.devices.showNormalState">
+          Show <b>Normal</b> state
+        </mat-checkbox>
+        <br/>
+        <mat-checkbox
+          name="showNominalState"
+          [(ngModel)]="notificationConfig.devices.showNominalState">
+          Show <b>Nominal</b> state
+        </mat-checkbox>
+      </mat-expansion-panel>
+      <mat-expansion-panel #soundPanel
+        [disabled]="notificationConfig.disableNotifications">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Audio
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Override server defined methods
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-checkbox
+        name="muteAlert"
+          [(ngModel)]="notificationConfig.sound.muteAlert"
+          [disabled]="notificationConfig.sound.disableSound">
+          Mute <b>all Alert</b> state
+        </mat-checkbox>
+        <br/>
+        <mat-checkbox
+        name="muteWarn"
+          [(ngModel)]="notificationConfig.sound.muteWarn"
+          [disabled]="notificationConfig.sound.disableSound">
+          Mute <b>all Warn</b> state
+        </mat-checkbox>
+        <br/>
+        <mat-checkbox
+        name="muteAlarm"
+          [(ngModel)]="notificationConfig.sound.muteAlarm"
+          [disabled]="notificationConfig.sound.disableSound">
+          Mute <b>all Alarm</b> state
+        </mat-checkbox>
+        <br/>
+        <mat-checkbox
+        name="muteEmergency"
+          [(ngModel)]="notificationConfig.sound.muteEmergency"
+          [disabled]="notificationConfig.sound.disableSound">
+          Mute <b>all Emergency</b> state
+        </mat-checkbox>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
     <button mat-flat-button type="submit" class="formActionButton" [disabled]="!notificationsForm.form.dirty">Save</button>
