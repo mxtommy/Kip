@@ -90,10 +90,13 @@ export class DatasetService implements OnDestroy {
 
     // Collect all widget IDs from all dashboards
     const widgetIds = new Set<string>();
+
     dashboards.forEach(dash => {
-      dash.configuration?.forEach((widget: NgGridStackWidget) => {
-        if (widget?.id) widgetIds.add(widget.id);
-      });
+      if (dash.configuration?.length) {
+        dash.configuration?.forEach((widget: NgGridStackWidget) => {
+          if (widget?.id) widgetIds.add(widget.id);
+        });
+      }
     });
 
     // Helper to extract windtrends/speedtrends uuid from label
