@@ -161,7 +161,7 @@ export class DashboardsEditorComponent {
     // Avoid passive listener warnings and duplicate opens; no need to preventDefault/stopPropagation here
     if (this._sheetOpen) return;
     // Suppress press if an actual drag movement occurred
-  if (this._dragMoved) return;
+    if (this._dragMoved) return;
     // Cancel pointer sequence so moving while holding does not initiate drag
     this.cancelPointerSequence();
     this.openBottomSheet(index);

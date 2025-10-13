@@ -8,8 +8,8 @@
       cdkDrag
       [cdkDragDisabled]="_sheetOpen || suppressDrag"
       cdkDragBoundary=".dashboard-manage"
-  (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
-  (press)="onPress(index)"
+      (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
+      (press)="onPress(index)"
       (doubletap)="editDashboard(index)"
       tabindex="0">
       <div class="item-index">{{index + 1}}</div>
