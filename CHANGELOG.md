@@ -1,3 +1,20 @@
+# v 4.0.0
+## New features
+- **Next‑gen widget framework**: A simplified component architecture that makes widgets faster to develop, leaner to run, and more consistent to configure — now with an automated widget generator and **AI‑assisted guidance** to get you from idea to working widget in minutes. Want to contribute your first widget? Run `npm run generate:widget` and follow the prompts.
+- Data Chart, streamlined: Dataset configuration now lives directly inside the widget. The separate “Dataset Options” page has been retired for a cleaner flow.
+- Racesteer (beta): Performance‑plugin powered windsteer with real‑time optimal steering cues and on‑the‑fly performance ratios against your polar based on live conditions. Requires a valid polar chart.
+## Improvements
+- Radial Gauge, your way: Hide the needle, progress bar, and ticks independently for ultra‑custom layouts.
+- Snappier gestures on macOS Chrome with responsiveness refinements.
+- Precision layouts with 2× grid resolution for tighter, more accurate arrangements.
+- Chartplotter Mode control: Optional setting to disable KIP gestures over the Freeboard‑SK chart to prevent accidental swipes while moving the chart. Fixes #845.
+- Dashboard editor ergonomics: Cancel/Ok button order now follows platform conventions (Sorry folks. You'll need to rewire your brains. Doctors say it's healthy!).
+- Smarter upgrades: Configuration upgrade service now supports v9 → v12 migrations with a new upgrade activity window.
+- Documentation refresh: Syntax‑highlighted help, a comprehensive Chartplotter Mode guide, and clearer text across Remote Control and Notifications.
+- Authentication reliability: Token renewal logic reworked to avoid Node.js 28‑day timer limits.
+## Fixes
+- Eliminated an occasional “empty dashboard flicker” when dashboards load. Mostly visible on low computing power hardware.
+- Data Trends widget: fixed UI overlap on small screens. Fixes #848.
 # v 3.12.0
 # New Features
 * Chartplotter Mode: A dual‑panel, performance‑tuned split experience that lets you run KIP dashboards and Freeboard‑SK together in one adaptive shell. Keep the chart live while moving between dashboards. Seamless side‑by‑side in landscape, smart vertical stacking in portrait and as always, designed for mobile and touch. Use the per‑dashboard forced collapse option for data‑focused layouts while Freeboard remains active in the background. Drag resize split distribution with commit‑on‑save editing. This feature brings you:
