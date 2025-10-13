@@ -55,6 +55,8 @@ interface CancelHandlerEntry {
 export class GestureDirective {
   // Service-level Chrome/macOS detection
   private readonly isChromeOnMac: boolean;
+  // Firefox detection (used to suppress ghost click after long-press)
+  private readonly isFirefox: boolean;
   // Debug flag: set to true to enable gesture debug logging
   private static readonly DEBUG = false;
   // Static counter for instance IDs (debugging)
@@ -120,6 +122,11 @@ export class GestureDirective {
   private lastTapUpX = 0;
   private lastTapUpY = 0;
   private potentialDoubleTap = false; // set on pointerdown if within interval+slop of last tap up
+  // Prevent native context menu which can abort pointer sequences in Chrome
+  private onContextMenu = (ev: Event) => { ev.preventDefault(); };
+  // Axis lock for more forgiving swipe recognition
+  private lockedAxis: 'x' | 'y' | null = null;
+  private readonly axisLockThreshold = 6; // px of movement before locking axis
 
 
   constructor() {
@@ -130,6 +137,8 @@ export class GestureDirective {
       // Chrome on Mac: userAgent includes 'Chrome' and 'Macintosh', platform includes 'Mac'
       return /Chrome\//.test(ua) && /Mac/.test(platform) && !/Edg\//.test(ua) && !/OPR\//.test(ua);
     })();
+    // detect Firefox to handle post-long-press synthetic click
+    this.isFirefox = /Firefox\//.test(navigator.userAgent);
 
     this._instanceId = ++GestureDirective._instanceCounter;
     this.debug('GestureDirective instance created', { instanceId: this._instanceId });
@@ -148,19 +157,25 @@ export class GestureDirective {
       // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
       el.addEventListener('pointerdown', this.onPointerDown, { passive: false });
       el.addEventListener('pointermove', this.onPointerMove, { passive: true });
+      // raw updates provide higher-fidelity movement in Chrome
+      el.addEventListener('pointerrawupdate', this.onPointerRawUpdate as EventListener, { passive: true } as AddEventListenerOptions);
       el.addEventListener('pointerup', this.onPointerUp, { passive: true });
       el.addEventListener('pointercancel', this.onPointerCancel, { passive: true });
       el.addEventListener('lostpointercapture', this.onPointerCancel, { passive: true });
       // Native mouse dblclick fallback (improves reliability after drag interactions)
       el.addEventListener('dblclick', this.onNativeDblClick, { passive: true });
+      // Block context menu to avoid Chrome aborting pointer sequences
+      el.addEventListener('contextmenu', this.onContextMenu, { passive: false });
 
       this.destroyRef.onDestroy(() => {
         el.removeEventListener('pointerdown', this.onPointerDown);
         el.removeEventListener('pointermove', this.onPointerMove);
+        el.removeEventListener('pointerrawupdate', this.onPointerRawUpdate as EventListener);
         el.removeEventListener('pointerup', this.onPointerUp);
         el.removeEventListener('pointercancel', this.onPointerCancel);
         el.removeEventListener('lostpointercapture', this.onPointerCancel);
         el.removeEventListener('dblclick', this.onNativeDblClick);
+        el.removeEventListener('contextmenu', this.onContextMenu);
         if (this.longPressTimer) {
           window.clearTimeout(this.longPressTimer);
           this.longPressTimer = null;
@@ -203,12 +218,15 @@ export class GestureDirective {
     this.tracking = true;
     this.pressFired = false;
     this.currentPointerType = ev.pointerType || null;
+    this.lockedAxis = null;
 
     // Dynamically adjust gesture thresholds based on pointer type
     switch (ev.pointerType) {
       case 'touch':
-        this._swipeMinDistance = this.swipeMinDistance(); // 30px
-        this._swipeMaxDuration = this.swipeMaxDuration(); // 600ms
+        // Chrome on macOS can coalesce moves and fire pointercancel more often;
+        // slightly relax thresholds to improve detection without causing false positives
+        this._swipeMinDistance = this.isChromeOnMac ? Math.min(25, this.swipeMinDistance()) : this.swipeMinDistance();
+        this._swipeMaxDuration = this.isChromeOnMac ? Math.max(850, this.swipeMaxDuration()) : this.swipeMaxDuration();
         this._longPressMs = this.longPressMs();           // 500ms
         this._doubleTapInterval = this.doubleTapInterval(); // 300ms
         this._tapSlop = this.tapSlop();                   // 20px
@@ -260,6 +278,8 @@ export class GestureDirective {
         const dy = ev.clientY - this.startY;
         if (Math.abs(dx) <= this._pressMoveSlop && Math.abs(dy) <= this._pressMoveSlop) {
           this.debug('longpress recognized', { x: this.startX, y: this.startY });
+          // Firefox: suppress the synthetic click on pointerup that targets the newly opened dialog
+          if (this.isFirefox) this.suppressNextClick(500);
           this.pressFired = true;
           const evt = new CustomEvent('press', { detail: { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } } });
           this.zone.run(() => this.press.emit(evt));
@@ -268,6 +288,32 @@ export class GestureDirective {
       }, this._longPressMs);
     }
   };
+
+  /**
+   * Firefox can synthesize a click on pointerup and retarget it to the element under the pointer.
+   * When a modal/dialog opens in response to long-press, suppress the next click/up so it doesn't
+   * activate controls in the dialog. One-shot suppression with capture listeners.
+   */
+  private suppressNextClick(timeoutMs = 500) {
+    this.debug('suppressNextClick (Firefox)', { timeoutMs });
+    const opts: AddEventListenerOptions = { capture: true, passive: false };
+    // include common mouse/touch/pointer click-related events
+    const types = ['click', 'pointerup', 'mouseup', 'mousedown', 'auxclick', 'touchend', 'touchstart', 'contextmenu'];
+    const cancel = (e: Event) => {
+      this.debug('suppress ghost event', e.type);
+      e.preventDefault();
+      e.stopPropagation();
+      const maybe = e as unknown as { stopImmediatePropagation?: () => void };
+      if (typeof maybe.stopImmediatePropagation === 'function') maybe.stopImmediatePropagation();
+      // do not teardown here; keep suppression active for the whole window to catch both pointerup and click
+    };
+    const teardown = () => {
+      types.forEach(t => document.removeEventListener(t, cancel, opts));
+      window.clearTimeout(timer);
+    };
+    types.forEach(t => document.addEventListener(t, cancel, opts));
+    const timer = window.setTimeout(teardown, timeoutMs);
+  }
 
   private onPointerMove = (ev: PointerEvent) => {
     //this.debug('pointermove', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
@@ -279,6 +325,39 @@ export class GestureDirective {
       window.clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
       this.removeLongpressCancelListeners();
+    }
+    // Establish axis lock when movement exceeds a small threshold to better classify swipes
+    if (!this.lockedAxis) {
+      const dx = ev.clientX - this.startX;
+      const dy = ev.clientY - this.startY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      if (absDx >= this.axisLockThreshold || absDy >= this.axisLockThreshold) {
+        this.lockedAxis = absDx >= absDy ? 'x' : 'y';
+        this.debug('axis locked', { axis: this.lockedAxis, dx, dy });
+      }
+    }
+  };
+
+  // Chrome sends pointerrawupdate for high-frequency movement; mirror pointermove logic for cancellation/axis lock
+  private onPointerRawUpdate = (ev: PointerEvent) => {
+    if (!this.tracking || ev.pointerId !== this.pointerId) return;
+    if (this.pressFired) return;
+    if (this.longPressTimer) {
+      this.debug('longpress cancelled by pointerrawupdate');
+      window.clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+      this.removeLongpressCancelListeners();
+    }
+    if (!this.lockedAxis) {
+      const dx = ev.clientX - this.startX;
+      const dy = ev.clientY - this.startY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      if (absDx >= this.axisLockThreshold || absDy >= this.axisLockThreshold) {
+        this.lockedAxis = absDx >= absDy ? 'x' : 'y';
+        this.debug('axis locked (raw)', { axis: this.lockedAxis, dx, dy });
+      }
     }
   };
 
@@ -296,17 +375,22 @@ export class GestureDirective {
       this.debug('longpress cancelled by pointerup');
       window.clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
+      this.removeLongpressCancelListeners();
     }
 
-    // If longpress was recognized, do NOT reset state here; let the component handle closing.
+    // If longpress was recognized, reset on pointerup so the next gesture can start cleanly
     if (this.pressFired) {
-      this.debug('pointerup after longpress: not resetting gesture state');
+      this.debug('pointerup after longpress: resetting gesture state');
+      this.reset();
       return;
     }
 
     // Swipe detection
     if (duration <= this._swipeMaxDuration) {
-      if (absDx >= this._swipeMinDistance && absDx >= absDy) {
+      if (
+        (this.lockedAxis === 'x' && absDx >= this._swipeMinDistance) ||
+        (!this.lockedAxis && absDx >= this._swipeMinDistance && absDx >= absDy)
+      ) {
         this.debug('swipe detected', { direction: dx > 0 ? 'right' : 'left', dx, dy, duration });
         this.zone.run(() => {
           if (dx > 0) {
@@ -315,7 +399,10 @@ export class GestureDirective {
             this.swipeleft.emit(new CustomEvent('swipeleft', { detail: { dx, dy, duration } }));
           }
         });
-      } else if (absDy >= this._swipeMinDistance && absDy > absDx) {
+      } else if (
+        (this.lockedAxis === 'y' && absDy >= this._swipeMinDistance) ||
+        (!this.lockedAxis && absDy >= this._swipeMinDistance && absDy > absDx)
+      ) {
         this.debug('swipe detected', { direction: dy > 0 ? 'down' : 'up', dx, dy, duration });
         this.zone.run(() => {
           if (dy > 0) {
@@ -367,18 +454,7 @@ export class GestureDirective {
       hasPointerCapture: typeof el.hasPointerCapture === 'function' ? el.hasPointerCapture(ev.pointerId) : undefined,
       documentHidden: document.hidden
     });
-    // Chrome/macOS workaround: ignore pointercancel for mouse if button is still pressed
-    const evWithButtons = ev as PointerEvent & { buttons?: number };
-    if (
-      this.isChromeOnMac &&
-      ev.pointerType === 'mouse' &&
-      ev.pointerId === this.pointerId &&
-      typeof evWithButtons.buttons === 'number' &&
-      evWithButtons.buttons !== 0
-    ) {
-      this.debug('pointercancel ignored on Chrome/macOS: mouse button still pressed');
-      return;
-    }
+    // Always handle pointercancel: clear timers and reset to avoid stuck states (esp. Chrome)
     if (ev.pointerId === this.pointerId) {
       if (this.longPressTimer) {
         this.debug('longpress cancelled by pointercancel');
@@ -451,6 +527,7 @@ export class GestureDirective {
     this.tracking = false;
     this.pressFired = false;
     this.currentPointerType = null;
+    this.lockedAxis = null;
     this.removeLongpressCancelListeners();
     // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
     // Do not call removeSuppression() here – we only clear suppression on real pointer up/cancel
