@@ -66,6 +66,13 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   private childRef: ComponentRef<WidgetViewComponentBase>;
   private compType: Type<WidgetViewComponentBase>
   private _hasInitialized = false;
+  private _sheetOpen = false;
+  private _optionsOpen = false;
+  // Debug helper gated by the same localStorage flag used by gestures directive
+  private isDebugEnabled(): boolean {
+    try { return typeof localStorage !== 'undefined' && localStorage.getItem('kip:gesturesDebug') === '1'; } catch { return false; }
+  }
+  private debug(...args: unknown[]) { if (this.isDebugEnabled()) console.debug('[Host2]', ...args); }
 
   constructor() {
     super();
@@ -170,7 +177,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       // console.debug('[Host2] cancel revert applied', this.widgetProperties.uuid, { found: !!saved });
     } catch {
       // no-op
-}
+    }
   }
 
   /**
@@ -215,7 +222,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
    */
   public openWidgetOptions(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
+    this.debug('openWidgetOptions invoked', { widgetId: this.widgetProperties?.uuid, static: this._dashboard.isDashboardStatic() });
     if (!this._dashboard.isDashboardStatic()) {
+      if (this._optionsOpen) { this.debug('options already open; ignoring'); return; }
+      this._optionsOpen = true;
       if (!this.widgetProperties) return;
       this._dialog.openWidgetOptions({
         title: 'Widget Options',
@@ -223,7 +233,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
         confirmBtnText: 'Save',
         cancelBtnText: 'Cancel'
       }).afterClosed().subscribe(result => {
+        this._optionsOpen = false;
         if (result) {
+          this.debug('options saved', { widgetId: this.widgetProperties?.uuid });
           this.applyRuntimeConfig(result);
         }
       });
@@ -236,12 +248,17 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
    */
   public openBottomSheet(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
+    this.debug('openBottomSheet invoked', { widgetId: this.widgetProperties?.uuid, static: this._dashboard.isDashboardStatic() });
     if (!this._dashboard.isDashboardStatic()) {
+      if (this._sheetOpen) { this.debug('sheet already open; ignoring'); return; }
+      this._sheetOpen = true;
       const isLinuxFirefox = typeof navigator !== 'undefined' &&
         /Linux/.test(navigator.platform) &&
         /Firefox/.test(navigator.userAgent);
       const sheetRef = this._bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
       sheetRef.afterDismissed().subscribe((action) => {
+        this._sheetOpen = false;
+        this.debug('bottom sheet dismissed', { widgetId: this.widgetProperties?.uuid, action });
         switch (action) {
           case 'delete':
             this._dashboard.deleteWidget(this.widgetProperties.uuid);

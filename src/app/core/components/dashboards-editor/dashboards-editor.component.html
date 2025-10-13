@@ -2,12 +2,14 @@
   @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
     <div class="dashboard-card dashboard-item"
       kipGestures
+      [mode]="'editor'"
+      [disableGestures]="_sheetOpen || suppressDrag"
       matRipple
       cdkDrag
       [cdkDragDisabled]="_sheetOpen || suppressDrag"
       cdkDragBoundary=".dashboard-manage"
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
-      (press)="onPress(index, $event)"
+      (press)="onPress(index)"
       (doubletap)="editDashboard(index)"
       tabindex="0">
       <div class="item-index">{{index + 1}}</div>

@@ -170,11 +170,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     } catch { /* ignore if ResizeObserver unsupported */ }
   }
 
-  private handleKeyDown(key: string, event: KeyboardEvent): void {
+  private handleKeyDown(key: string): void {
     if (key === 'arrowdown') {
-      this.previousDashboard(event);
+      this.previousDashboard();
     } else if (key === 'arrowup') {
-      this.nextDashboard(event);
+      this.nextDashboard();
     }
   }
 
@@ -246,8 +246,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.notifyLayoutEditCanceled();
   }
 
+  private _addDialogOpen = false;
+
   protected addNewWidget(e: Event | CustomEvent): void {
     if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
+      if (this._addDialogOpen) {
+        return; // prevent double-open from duplicate press or bubbling
+      }
       const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
@@ -256,31 +261,35 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
       if (isCellEmpty) {
         if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
+          this._addDialogOpen = true;
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe(data => {
-            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
-            const ID = UUID.create();
-            const widget = data as WidgetDescription;
+          }, true).subscribe({
+            next: data => {
+              if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
+              const ID = UUID.create();
+              const widget = data as WidgetDescription;
 
-            const newWidget: NgGridStackWidget = {
-              x: gridCell.x,
-              y: gridCell.y,
-              w: widget.defaultWidth,
-              h: widget.defaultHeight,
-              minW: widget.minWidth,
-              minH: widget.minHeight,
-              id: ID,
-              selector: "widget-host2",
-              input: {
-                widgetProperties: {
-                  type: widget.selector,
-                  uuid: ID,
+              const newWidget: NgGridStackWidget = {
+                x: gridCell.x,
+                y: gridCell.y,
+                w: widget.defaultWidth,
+                h: widget.defaultHeight,
+                minW: widget.minWidth,
+                minH: widget.minHeight,
+                id: ID,
+                selector: "widget-host2",
+                input: {
+                  widgetProperties: {
+                    type: widget.selector,
+                    uuid: ID,
+                  }
                 }
-              }
-            };
-            this._gridstack().grid.addWidget(newWidget);
+              };
+              this._gridstack().grid.addWidget(newWidget);
+            },
+            complete: () => { this._addDialogOpen = false; }
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
@@ -357,15 +366,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  protected nextDashboard(e: Event | CustomEvent): void {
-    (e as Event).preventDefault();
+  protected nextDashboard(): void {
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToNextDashboard();
     }
   }
 
-  protected previousDashboard(e: Event | CustomEvent): void {
-    (e as Event).preventDefault();
+  protected previousDashboard(): void {
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToPreviousDashboard();
     }

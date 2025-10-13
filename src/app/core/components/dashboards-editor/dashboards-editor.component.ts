@@ -53,6 +53,10 @@ export class DashboardsEditorComponent {
   }
 
   protected openBottomSheet(index: number): void {
+    if (this._sheetOpen) {
+      return; // guard against re-entrancy / duplicate opens
+    }
+    this._sheetOpen = true;
     // Detect Linux Firefox for workaround
     const isLinuxFirefox = typeof navigator !== 'undefined' &&
       /Linux/.test(navigator.platform) &&
@@ -153,9 +157,9 @@ export class DashboardsEditorComponent {
     }
   }
 
-  protected onPress(index: number, e: Event | CustomEvent): void {
-    (e as Event).preventDefault();
-    (e as Event).stopPropagation();
+  protected onPress(index: number): void {
+    // Avoid passive listener warnings and duplicate opens; no need to preventDefault/stopPropagation here
+    if (this._sheetOpen) return;
     // Suppress press if an actual drag movement occurred
     if (this._dragMoved) return;
     // Cancel pointer sequence so moving while holding does not initiate drag

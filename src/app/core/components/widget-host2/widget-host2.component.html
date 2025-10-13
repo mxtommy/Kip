@@ -1,4 +1,4 @@
-<mat-card kipGestures appearance="raised" class="widget-container kip-widget-card-colors" [style.border]="_dashboard.isDashboardStatic() ? '1px dashed transparent' : '1px dashed var(--mat-sys-outline)'"
+<mat-card kipGestures [mode]="'press'" appearance="raised" class="widget-container kip-widget-card-colors" [style.border]="_dashboard.isDashboardStatic() ? '1px dashed transparent' : '1px dashed var(--mat-sys-outline)'"
   (doubletap)="openWidgetOptions($event)"
   (press)="openBottomSheet($event)">
   <ng-container #childOutlet></ng-container>

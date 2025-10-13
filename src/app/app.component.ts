@@ -66,9 +66,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly OPEN_DELAY_MS = 300; // should match/ exceed sidenav close animation time
 
   // Stable handler refs (prevent leak from rebinding)
-  private readonly _swipeLeftHandler = (e: Event | CustomEvent) => this.onSwipeLeft(e);
-  private readonly _swipeRightHandler = (e: Event | CustomEvent) => this.onSwipeRight(e);
-  private readonly _hotkeyHandler = (key: string, event: KeyboardEvent) => this.handleKeyDown(key, event);
+  private readonly _swipeLeftHandler = () => this.onSwipeLeft();
+  private readonly _swipeRightHandler = () => this.onSwipeRight();
+  private readonly _hotkeyHandler = (key: string) => this.handleKeyDown(key);
 
   constructor() {
     effect(() => {
@@ -223,13 +223,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private handleKeyDown(key: string, event: KeyboardEvent): void {
+  private handleKeyDown(key: string): void {
     switch (key) {
       case 'arrowright':
-        this.onSwipeRight(event);
+  this.onSwipeRight();
         break;
       case 'arrowleft':
-        this.onSwipeLeft(event);
+  this.onSwipeLeft();
         break;
       case 'escape':
         this.backdropClicked();
@@ -266,9 +266,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected onSwipeRight(e: Event | CustomEvent): void {
+  protected onSwipeRight(): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.actionsSidenavOpened.set(false);
         this.notificationsSidenavOpened.set(true);
@@ -284,9 +283,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.actionsSidenavOpened.update(o => o ? !o : false);
   }
 
-  protected onSwipeLeft(e: Event | CustomEvent): void {
+  protected onSwipeLeft(): void {
     if (this._dashboard.isDashboardStatic() && !this._uiEvent.isDragging()) {
-      (e as Event).preventDefault();
       if (this.isPhonePortrait().matches) {
         this.notificationsSidenavOpened.set(false);
         this.actionsSidenavOpened.set(true);
