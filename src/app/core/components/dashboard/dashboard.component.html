@@ -1,7 +1,7 @@
-<gridstack kipGestures [mode]="'dashboard'" #grid
+<gridstack kipGestures [mode]="'dashboard'" [enableDoubleTap]="false" #grid
   [options]="gridOptions()"
-  (swipeup)="previousDashboard($event)"
-  (swipedown)="nextDashboard($event)"
+  (swipeup)="previousDashboard()"
+  (swipedown)="nextDashboard()"
   (press)="addNewWidget($event)"
   (window:resize)="resizeGridColumns()"
 >

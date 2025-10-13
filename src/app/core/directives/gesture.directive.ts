@@ -67,6 +67,8 @@ export class GestureDirective {
   // Per-lane ownership so press-only hosts don't block global horizontal or dashboard vertical lanes.
   // Each pointerId can be owned independently for: horizontal (h), vertical (v), press/tap (p)
   private static _laneOwners = new Map<number, { h?: number; v?: number; p?: number }>();
+  // Track currently active pointerIds to detect new sequences and clear stale owners
+  private static _activePointers = new Set<number>();
 
   // Config inputs (can be overridden via property binding)
   // Default values for touch; will be dynamically adjusted per pointer type
@@ -204,10 +206,22 @@ export class GestureDirective {
         if (origin === this._instanceId) return;
         if (this.disableGestures()) return; // muted
         // Gate rebroadcast based on mode/flags
-        const allowH = this.modeAllowsHorizontal();
-        const allowV = this.modeAllowsVertical();
-        const allowP = this.modeAllowsPress();
-        const allowDT = this.modeAllowsDoubleTap();
+  const allowH = this.modeAllowsHorizontal();
+  const allowV = this.modeAllowsVertical();
+        let allowP = this.modeAllowsPress();
+        let allowDT = this.modeAllowsDoubleTap();
+        // In dashboard mode, do not rebroadcast press/doubletap that originated from a widget container
+        if (this.mode() === 'dashboard' && (evt.type === 'press' || evt.type === 'doubletap')) {
+          const targetEl = evt.target as Element | null;
+          const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
+            ? (targetEl as Element).closest('.widget-container')
+            : null;
+          // If the event target is within a widget container and this host is not that widget, skip
+          if (widgetEl && widgetEl !== this.host.nativeElement) {
+            allowP = false;
+            allowDT = false;
+          }
+        }
         this.debug('rebroadcast gate', { type: evt.type, allowH, allowV, allowP, allowDT });
         switch (evt.type) {
           case 'press': if (allowP) this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } } >); break;
@@ -309,8 +323,19 @@ export class GestureDirective {
     // If no gestures are allowed in current mode/flags, ignore
     const allowH = this.modeAllowsHorizontal();
     const allowV = this.modeAllowsVertical();
-    const allowPress = this.modeAllowsPress();
-    const allowDT = this.modeAllowsDoubleTap();
+    let allowPress = this.modeAllowsPress();
+    let allowDT = this.modeAllowsDoubleTap();
+    // Prefer child widgets for press/doubletap when inside a widget container on dashboard host
+    if (this.mode() === 'dashboard') {
+      const targetEl = ev.target as Element | null;
+      const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
+        ? (targetEl as Element).closest('.widget-container')
+        : null;
+      if (widgetEl && widgetEl !== this.host.nativeElement) {
+        allowPress = false;
+        allowDT = false;
+      }
+    }
     if (!allowH && !allowV && !allowPress && !allowDT) {
       this.debug('ignoring pointerdown: no gestures enabled for current mode');
       return;
@@ -318,6 +343,15 @@ export class GestureDirective {
     // Try to acquire lanes for this pointer
     const wantP = allowPress || allowDT;
     const ownersMap = (this.constructor as typeof GestureDirective)._laneOwners;
+    const activeSet = (this.constructor as typeof GestureDirective)._activePointers;
+    // If this is the first handler seeing this pointerId for this sequence, clear any stale owners
+    if (!activeSet.has(ev.pointerId)) {
+      activeSet.add(ev.pointerId);
+      if (ownersMap.has(ev.pointerId)) {
+        this.debug('new pointer sequence; clearing stale lane owners', { pointerId: ev.pointerId, prevOwners: ownersMap.get(ev.pointerId) });
+        ownersMap.delete(ev.pointerId);
+      }
+    }
     const owners = ownersMap.get(ev.pointerId) ?? {};
     this.ownedLanes = { h: false, v: false, p: false };
     if (allowH && owners.h === undefined) { owners.h = this._instanceId; this.ownedLanes.h = true; }
@@ -436,16 +470,27 @@ export class GestureDirective {
           // Firefox: suppress the synthetic click on pointerup that targets the newly opened dialog
           // Apply only for touch/pen to avoid interfering with intentional mouse clicks
           if (this.isFirefox && this.currentPointerType !== 'mouse') this.suppressNextClick(500);
-          // Start a short global suppression window so the immediate next click does not schedule another long-press
-          (this.constructor as typeof GestureDirective)._suppressAllGesturesUntil = performance.now() + 600;
+          // Start a short global suppression window so the immediate next tap does not schedule another long-press (touch/pen only)
+          if (this.currentPointerType !== 'mouse') {
+            (this.constructor as typeof GestureDirective)._suppressAllGesturesUntil = performance.now() + 600;
+          }
           this.pressFired = true;
           const detail = { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } };
           this.zone.run(() => this.emitPressEvent(detail));
+          // Immediately reset to release lane owners for this pointer sequence
+          this.reset();
         }
         // Timer has fired; ensure we don't treat it as pending anymore
         this.longPressTimer = null;
         this.removeLongpressCancelListeners();
       }, this._longPressMs);
+    } else {
+      this.debug('longpress not scheduled', {
+        potentialDoubleTap: this.potentialDoubleTap,
+        allowPress,
+        ownedPressLane: this.ownedLanes.p,
+        reason: this.potentialDoubleTap ? 'awaiting doubletap' : (!allowPress ? 'press disabled by mode/flag' : (!this.ownedLanes.p ? 'press lane not owned' : 'unknown'))
+      });
     }
   };
 
@@ -564,6 +609,8 @@ export class GestureDirective {
       pressFired: this.pressFired,
       ownedLanes: this.ownedLanes
     });
+    // Mark pointerId inactive for new sequences to start clean
+    try { (this.constructor as typeof GestureDirective)._activePointers.delete(ev.pointerId); } catch { /* ignore */ }
     const endTime = performance.now();
     const duration = endTime - this.startTime;
     const dx = ev.clientX - this.startX;
@@ -768,6 +815,7 @@ export class GestureDirective {
     this.lockedAxis = null;
     this.ownedLanes = { h: false, v: false, p: false };
     this.removeLongpressCancelListeners();
+    try { if (typeof this.pointerId === 'number') (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId as number); } catch { /* ignore */ }
     // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
     // Do not call removeSuppression() here – we only clear suppression on real pointer up/cancel
   }
@@ -861,6 +909,13 @@ export class GestureDirective {
   }
 
   private emitPressEvent(detail: { x: number; y: number; center?: { x: number; y: number } }) {
+    // Minimal cooldown to avoid duplicate invocations if rebroadcast and direct emit race
+    const now = performance.now();
+    if (now - (this as { _lastPressEmitTs?: number })._lastPressEmitTs! < 80) {
+      this.debug('press emit suppressed by cooldown');
+      return;
+    }
+    (this as { _lastPressEmitTs?: number })._lastPressEmitTs = now;
     (detail as unknown as { __gid?: number }).__gid = this._instanceId;
     const evt = new CustomEvent('press', { detail, bubbles: true, composed: true });
     try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }

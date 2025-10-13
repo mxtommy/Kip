@@ -170,11 +170,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     } catch { /* ignore if ResizeObserver unsupported */ }
   }
 
-  private handleKeyDown(key: string, event: KeyboardEvent): void {
+  private handleKeyDown(key: string): void {
     if (key === 'arrowdown') {
-      this.previousDashboard(event);
+      this.previousDashboard();
     } else if (key === 'arrowup') {
-      this.nextDashboard(event);
+      this.nextDashboard();
     }
   }
 
@@ -366,15 +366,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  protected nextDashboard(e: Event | CustomEvent): void {
-    (e as Event).preventDefault();
+  protected nextDashboard(): void {
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToNextDashboard();
     }
   }
 
-  protected previousDashboard(e: Event | CustomEvent): void {
-    (e as Event).preventDefault();
+  protected previousDashboard(): void {
     if (this.dashboard.isDashboardStatic()) {
       this.dashboard.navigateToPreviousDashboard();
     }
