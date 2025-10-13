@@ -177,7 +177,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       // console.debug('[Host2] cancel revert applied', this.widgetProperties.uuid, { found: !!saved });
     } catch {
       // no-op
-}
+    }
   }
 
   /**

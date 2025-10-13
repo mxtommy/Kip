@@ -268,26 +268,26 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           }, true).subscribe({
             next: data => {
               if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
-            const ID = UUID.create();
-            const widget = data as WidgetDescription;
+              const ID = UUID.create();
+              const widget = data as WidgetDescription;
 
-            const newWidget: NgGridStackWidget = {
-              x: gridCell.x,
-              y: gridCell.y,
-              w: widget.defaultWidth,
-              h: widget.defaultHeight,
-              minW: widget.minWidth,
-              minH: widget.minHeight,
-              id: ID,
-              selector: "widget-host2",
-              input: {
-                widgetProperties: {
-                  type: widget.selector,
-                  uuid: ID,
+              const newWidget: NgGridStackWidget = {
+                x: gridCell.x,
+                y: gridCell.y,
+                w: widget.defaultWidth,
+                h: widget.defaultHeight,
+                minW: widget.minWidth,
+                minH: widget.minHeight,
+                id: ID,
+                selector: "widget-host2",
+                input: {
+                  widgetProperties: {
+                    type: widget.selector,
+                    uuid: ID,
+                  }
                 }
-              }
-            };
-            this._gridstack().grid.addWidget(newWidget);
+              };
+              this._gridstack().grid.addWidget(newWidget);
             },
             complete: () => { this._addDialogOpen = false; }
           });
