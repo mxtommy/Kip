@@ -1,16 +1,19 @@
 /**
  * GestureDirective — design notes
  *
- * Lightweight, standalone gesture recognizer using the Pointer Events API.
- * This section documents the implementation and design goals for maintainers.
+ * Lightweight, standalone gesture recognizer built on Pointer Events. Designed for dashboard widgets and containers.
  *
- * - Runs pointer tracking outside Angular's zone for low-overhead move handling.
- * - Emits high-level gestures via typed DOM CustomEvents so templates and consumers
- *   can read strongly-typed payloads from `event.detail`.
- * - Focuses on single-pointer tracking for dashboard widgets (no multi-touch mix).
- * - Robust long-press cancellation and cleanup to avoid leaked handlers or pointer capture.
+ * Core characteristics
+ * - Runs pointer tracking outside Angular's zone to minimize change detection churn.
+ * - Emits gestures both as Angular outputs and as bubbling DOM CustomEvents (detail payloads are strongly typed).
+ * - Single-pointer recognition only (no multi-touch) with per-pointer-type thresholds (mouse | touch | pen).
+ * - Robust long-press logic with explicit cancellation and teardown to avoid leaked handlers or capture.
+ * - Per-lane ownership (horizontal | vertical | press) to reduce contention across nested hosts.
+ * - Mode/toggle gating (all | horizontal | dashboard | press | editor, plus enablePress/enableDoubleTap), and rebroadcast gating.
+ * - Diagnostics are opt-in and can be toggled at runtime (console helper, localStorage persistence).
  *
- * Supported gestures (emitted events): swipeleft, swiperight, swipeup, swipedown, press, doubletap.
+ * Supported gestures (emitted events):
+ * - swipeleft, swiperight, swipeup, swipedown, press, doubletap
  */
 import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
 
@@ -29,10 +32,15 @@ interface CancelHandlerEntry {
  * press, doubletap.
  *
  * Notes for users:
- *  - The directive sets `touch-action: none` on the host element to reduce native
- *    browser gesture interference. If your layout relies on native scrolling, attach
- *    the directive to an overlay element instead.
- *  - All configuration properties are Angular signals (`input(...)`) and can be bound from templates.
+ *  - Touch-action: the directive sets `touch-action: none` on the host to ensure pointer streams (helps iOS/Safari).
+ *    If the host needs native scroll/zoom, mount the directive on a smaller overlay element instead of the scroller.
+ *  - Context menu: the directive prevents the native contextmenu on the host to avoid pointer sequence aborts.
+ *    If a widget needs right-click, place the directive on a child overlay, not the interactive element itself.
+ *  - Inputs are Angular signals (`input(...)`), so everything is bindable from templates.
+ *  - Pointer capture policy: capture is enabled for touch/pen (to keep continuity across child boundaries),
+ *    and disabled for mouse to preserve native hover/click behaviors in Material/CDK components.
+ *  - Long-press cancel sources: pointermove and lostpointercapture for all pointers; pointerleave/out and window blur
+ *    only for touch/pen (mouse ignores blur to avoid aborting legitimate presses after dialog focus changes).
  *
  * Optional Inputs to adjust recognition. Uses optimal setting per pointer type if not specified:
  *  - `swipeMinDistance` (number) - minimum primary-axis movement in pixels to consider a swipe. Default: 30.
@@ -47,8 +55,12 @@ interface CancelHandlerEntry {
  * @example
  *  <div
  *    kipGestures
+ *    [mode]="'press'"
+ *    [enablePress]="true"
+ *    [enableDoubleTap]="true"
  *    [longPressMs]="500"
- *    (press)="onPress($event)">
+ *    (press)="onPress($event)"
+ *    (doubletap)="onDoubleTap($event)">
  *  </div>
  */
 @Directive({ selector: '[kipGestures]' })
