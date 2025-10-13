@@ -69,6 +69,8 @@ export class ConfigurationUpgradeService {
       // Remote (Signal K) configs
       this._storage.listConfigs(this.legacyFileVersion)
         .then(async (rootConfigs: Config[]) => {
+          // Create backups before transforming
+          await this.backupRemoteSet(rootConfigs, this.legacyFileVersion);
           for (const rootConfig of rootConfigs) {
             const transformedConfig = await this.transformConfig(rootConfig);
             if (!transformedConfig) continue; // skip if not eligible
@@ -103,6 +105,8 @@ export class ConfigurationUpgradeService {
       // Remote (Signal K) configs
       this._storage.listConfigs(11)
         .then(async (rootConfigs: Config[]) => {
+          // Create backups before transforming
+          await this.backupRemoteSet(rootConfigs, 11);
           for (const rootConfig of rootConfigs) {
 
             // Optional throttle / UX pacing: wait 500ms before finalizing this config
@@ -137,6 +141,8 @@ export class ConfigurationUpgradeService {
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
       // LocalStorage upgrade path for config version 11
+      // Create local backups before transforming
+      this.backupLocalV11();
       const upgradedConfig: IConfig = { app: null, dashboards: null, theme: null };
       upgradedConfig.app = this._settings.getAppConfig();
       upgradedConfig.dashboards = this._settings.getDashboardConfig();
@@ -156,6 +162,8 @@ export class ConfigurationUpgradeService {
       this.upgrading.set(false);
     } else {
       // LocalStorage upgrade path for config version 10
+      // Create local backups before transforming
+      this.backupLocalV10();
       const localStorageConfig: v10IConfig = { app: null, widget: null, layout: null, theme: null };
       localStorageConfig.app = this._settings.loadConfigFromLocalStorage('appConfig');
       localStorageConfig.widget = this._settings.loadConfigFromLocalStorage('widgetConfig');
@@ -263,6 +271,64 @@ export class ConfigurationUpgradeService {
       newConfiguration: { app: transformedApp, theme: transformedTheme, dashboards },
       oldConfiguration: oldConf
     };
+  }
+
+  // Create timestamp tag like 20251013-154205
+  private tsTag(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  }
+
+  // Backup a set of remote configs before upgrade (writes a copy under a new name in the same scope)
+  private async backupRemoteSet(rootConfigs: Config[], fileVersion: number): Promise<void> {
+    const ts = this.tsTag();
+    for (const rootConfig of rootConfigs) {
+      try {
+        const cfg = await this._storage.getConfig(rootConfig.scope, rootConfig.name, fileVersion);
+        const backupName = `${rootConfig.name}.backup.${ts}`;
+        await this._storage.setConfig(rootConfig.scope, backupName, cfg, fileVersion);
+        this.pushMsg(`[Backup] Saved ${rootConfig.scope}/${rootConfig.name} as ${backupName} (v${fileVersion}).`);
+      } catch (e) {
+        this.pushError(`[Backup] Failed to back up ${rootConfig.scope}/${rootConfig.name}: ${(e as Error).message}`);
+      }
+    }
+  }
+
+  // Backup the v11 local storage set before upgrade
+  private backupLocalV11(): void {
+    try {
+      const ts = this.tsTag();
+      const app = this._settings.getAppConfig();
+      const dashboards = this._settings.getDashboardConfig();
+      const theme = this._settings.getThemeConfig();
+
+      localStorage.setItem(`appConfig.backup.${ts}`, JSON.stringify(app));
+      localStorage.setItem(`dashboardsConfig.backup.${ts}`, JSON.stringify(dashboards));
+      localStorage.setItem(`themeConfig.backup.${ts}`, JSON.stringify(theme));
+      this.pushMsg('[Backup] Saved local appConfig/dashboardsConfig/themeConfig backups.');
+    } catch (e) {
+      this.pushError('[Backup] Failed to save local v11 backups: ' + (e as Error).message);
+    }
+  }
+
+  // Backup the v10 local storage set before upgrade (includes legacy widget/layout keys)
+  private backupLocalV10(): void {
+    try {
+      const ts = this.tsTag();
+      const app = this._settings.loadConfigFromLocalStorage('appConfig');
+      const widget = this._settings.loadConfigFromLocalStorage('widgetConfig');
+      const layout = this._settings.loadConfigFromLocalStorage('layoutConfig');
+      const theme = this._settings.loadConfigFromLocalStorage('themeConfig');
+
+      localStorage.setItem(`appConfig.backup.${ts}`, JSON.stringify(app));
+      localStorage.setItem(`widgetConfig.backup.${ts}`, JSON.stringify(widget));
+      localStorage.setItem(`layoutConfig.backup.${ts}`, JSON.stringify(layout));
+      localStorage.setItem(`themeConfig.backup.${ts}`, JSON.stringify(theme));
+      this.pushMsg('[Backup] Saved local appConfig/widgetConfig/layoutConfig/themeConfig backups.');
+    } catch (e) {
+      this.pushError('[Backup] Failed to save local v10 backups: ' + (e as Error).message);
+    }
   }
 
   private extractAppDatasets(transformedApp: IAppConfig): DataChartConfigUpdate[] {
