@@ -11,10 +11,10 @@
 - Dashboard editor ergonomics: Cancel/Ok button order now follows platform conventions (Sorry folks. You'll need to rewire your brains. Doctors say it's healthy!).
 - Smarter upgrades: Configuration upgrade service now supports v9 → v12 migrations with a new upgrade activity window.
 - Documentation refresh: Syntax‑highlighted help, a comprehensive Chartplotter Mode guide, and clearer text across Remote Control and Notifications.
-- Authentication reliability: Token renewal logic reworked to avoid Node.js 28‑day timer limits.
 ## Fixes
 - Eliminated an occasional “empty dashboard flicker” when dashboards load. Mostly visible on low computing power hardware.
 - Data Trends widget: fixed UI overlap on small screens. Fixes #848.
+- Authentication reliability: Token renewal logic reworked to avoid Node.js 28‑day timer limits.
 # v 3.12.0
 # New Features
 * Chartplotter Mode: A dual‑panel, performance‑tuned split experience that lets you run KIP dashboards and Freeboard‑SK together in one adaptive shell. Keep the chart live while moving between dashboards. Seamless side‑by‑side in landscape, smart vertical stacking in portrait and as always, designed for mobile and touch. Use the per‑dashboard forced collapse option for data‑focused layouts while Freeboard remains active in the background. Drag resize split distribution with commit‑on‑save editing. This feature brings you:
