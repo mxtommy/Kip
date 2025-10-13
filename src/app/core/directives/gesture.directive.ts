@@ -1009,10 +1009,9 @@ export class GestureDirective {
 // Global debug toggler and boot-time enablement
 (() => {
   try {
-    // Enable via URL param gesturesDebug=1 or persisted localStorage flag
-    const urlHasFlag = typeof location !== 'undefined' && /(?:^|[?&])gesturesDebug=1(?:&|$)/.test(location.search);
+    // Enable via persisted localStorage flag only (URL parameter support removed)
     const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('kip:gesturesDebug') : null;
-    if (urlHasFlag || stored === '1') {
+    if (stored === '1') {
       (GestureDirective as unknown as { DEBUG: boolean }).DEBUG = true;
     }
     // Expose console helper: kipGesturesDebug(true|false) or kipGesturesDebug() to toggle
