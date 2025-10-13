@@ -2,6 +2,8 @@
   @for (dashboard of _dashboard.dashboards(); track dashboard.id; let index = $index) {
     <div class="dashboard-card dashboard-item"
       kipGestures
+      [mode]="'editor'"
+      [disableGestures]="_sheetOpen || suppressDrag"
       matRipple
       cdkDrag
       [cdkDragDisabled]="_sheetOpen || suppressDrag"

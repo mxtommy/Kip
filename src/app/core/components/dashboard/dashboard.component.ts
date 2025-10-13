@@ -246,8 +246,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.notifyLayoutEditCanceled();
   }
 
+  private _addDialogOpen = false;
+
   protected addNewWidget(e: Event | CustomEvent): void {
     if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
+      if (this._addDialogOpen) {
+        return; // prevent double-open from duplicate press or bubbling
+      }
       const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
@@ -256,11 +261,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
       if (isCellEmpty) {
         if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
+          this._addDialogOpen = true;
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe(data => {
-            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
+          }, true).subscribe({
+            next: data => {
+              if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
             const ID = UUID.create();
             const widget = data as WidgetDescription;
 
@@ -281,6 +288,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               }
             };
             this._gridstack().grid.addWidget(newWidget);
+            },
+            complete: () => { this._addDialogOpen = false; }
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);

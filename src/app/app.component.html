@@ -1,4 +1,4 @@
-<mat-sidenav-container kipGestures class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)" (backdropClick)="backdropClicked()">
+<mat-sidenav-container kipGestures [mode]="'horizontal'" [bridgeUiEvents]="true" class="sidenav-container" (swipeleft)="onSwipeLeft($event)" (swiperight)="onSwipeRight($event)" (backdropClick)="backdropClicked()">
   <mat-sidenav class="sidenav-notifications" [(opened)]="notificationsSidenavOpened" (keydown)="escapeKeyPressed($event.key)" mode="over" position="start" autoFocus="true" disableClose>
     <menu-notifications />
   </mat-sidenav>
