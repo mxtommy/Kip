@@ -69,6 +69,8 @@ export class GestureDirective {
   private static _laneOwners = new Map<number, { h?: number; v?: number; p?: number }>();
   // Track currently active pointerIds to detect new sequences and clear stale owners
   private static _activePointers = new Set<number>();
+  // Track instance id -> host element, for diagnostics on lane ownership across instances
+  private static _instanceToEl = new Map<number, HTMLElement>();
 
   // Config inputs (can be overridden via property binding)
   // Default values for touch; will be dynamically adjusted per pointer type
@@ -174,6 +176,8 @@ export class GestureDirective {
 
     this._instanceId = ++GestureDirective._instanceCounter;
     this.debug('GestureDirective instance created', { instanceId: this._instanceId });
+    // Track instance host element for cross-instance ownership diagnostics
+    try { (GestureDirective as typeof GestureDirective)._instanceToEl.set(this._instanceId, this.host.nativeElement); } catch { /* ignore */ }
     this.zone.runOutsideAngular(() => {
       const el = this.host.nativeElement;
       // Disable native touch panning so vertical swipes register as pointer events (iOS Safari)
@@ -277,6 +281,7 @@ export class GestureDirective {
         }
         this.pointerId = null;
         this.tracking = false;
+        try { (GestureDirective as typeof GestureDirective)._instanceToEl.delete(this._instanceId); } catch { /* ignore */ }
       });
     });
   }
@@ -353,6 +358,17 @@ export class GestureDirective {
       }
     }
     const owners = ownersMap.get(ev.pointerId) ?? {};
+    // Diagnostic: if press lane already owned, log relationships between owner/host/target
+    if (owners.p !== undefined) {
+      const ownerId = owners.p;
+      const ownerEl = (this.constructor as typeof GestureDirective)._instanceToEl.get(ownerId!);
+      const hostEl = this.host.nativeElement;
+      const tgt = (ev.target as Element | null) ?? null;
+      const rel = this.ownerRelationshipSummary(ownerEl ?? null, hostEl, tgt);
+      this.debug('pre-acquire owners (press lane already owned)', { owners, ownerId, ownerEl: this.elDesc(ownerEl), hostEl: this.elDesc(hostEl), targetEl: this.elDesc(tgt), rel });
+    } else {
+      this.debug('pre-acquire owners', { owners });
+    }
     this.ownedLanes = { h: false, v: false, p: false };
     if (allowH && owners.h === undefined) { owners.h = this._instanceId; this.ownedLanes.h = true; }
     if (allowV && owners.v === undefined) { owners.v = this._instanceId; this.ownedLanes.v = true; }
@@ -365,7 +381,17 @@ export class GestureDirective {
     });
     // If we didn't acquire any lane, another instance already owns all relevant lanes; ignore
     if (!this.ownedLanes.h && !this.ownedLanes.v && !this.ownedLanes.p) {
-      this.debug('ignoring pointerdown: other instance owns relevant lanes', { owners });
+      // Further diagnostics when press is desired but not owned
+      if (wantP && owners.p !== undefined) {
+        const ownerId = owners.p;
+        const ownerEl = (this.constructor as typeof GestureDirective)._instanceToEl.get(ownerId!);
+        const hostEl = this.host.nativeElement;
+        const tgt = (ev.target as Element | null) ?? null;
+        const rel = this.ownerRelationshipSummary(ownerEl ?? null, hostEl, tgt);
+        this.debug('ignoring pointerdown: press lane not owned', { owners, ownerId, ownerEl: this.elDesc(ownerEl), hostEl: this.elDesc(hostEl), targetEl: this.elDesc(tgt), rel });
+      } else {
+        this.debug('ignoring pointerdown: other instance owns relevant lanes', { owners });
+      }
       return;
     }
 
@@ -473,6 +499,7 @@ export class GestureDirective {
           // Start a short global suppression window so the immediate next tap does not schedule another long-press (touch/pen only)
           if (this.currentPointerType !== 'mouse') {
             (this.constructor as typeof GestureDirective)._suppressAllGesturesUntil = performance.now() + 600;
+            this.debug('set global suppression window after longpress', { until: Math.round((this.constructor as typeof GestureDirective)._suppressAllGesturesUntil) });
           }
           this.pressFired = true;
           const detail = { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } };
@@ -489,7 +516,8 @@ export class GestureDirective {
         potentialDoubleTap: this.potentialDoubleTap,
         allowPress,
         ownedPressLane: this.ownedLanes.p,
-        reason: this.potentialDoubleTap ? 'awaiting doubletap' : (!allowPress ? 'press disabled by mode/flag' : (!this.ownedLanes.p ? 'press lane not owned' : 'unknown'))
+        reason: this.potentialDoubleTap ? 'awaiting doubletap' : (!allowPress ? 'press disabled by mode/flag' : (!this.ownedLanes.p ? 'press lane not owned' : 'unknown')),
+        ownersForPointer: owners
       });
     }
   };
@@ -610,7 +638,10 @@ export class GestureDirective {
       ownedLanes: this.ownedLanes
     });
     // Mark pointerId inactive for new sequences to start clean
-    try { (this.constructor as typeof GestureDirective)._activePointers.delete(ev.pointerId); } catch { /* ignore */ }
+    try {
+      const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(ev.pointerId);
+      this.debug('activePointers delete', { pointerId: ev.pointerId, deleted });
+    } catch { /* ignore */ }
     const endTime = performance.now();
     const duration = endTime - this.startTime;
     const dx = ev.clientX - this.startX;
@@ -751,14 +782,14 @@ export class GestureDirective {
     const handlers: CancelHandlerEntry[] = [
       { type: 'pointermove', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
       { type: 'lostpointercapture', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-      // blur should be attached to window for cross-browser coverage
-      { type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] },
     ];
     // For touch/pen, also cancel on pointerleave/pointerout; for mouse, avoid these to reduce interference with native click/hover
     if (this.currentPointerType !== 'mouse') {
       handlers.push(
         { type: 'pointerleave', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
         { type: 'pointerout', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+        // blur should be attached to window for cross-browser coverage on touch/pen; for mouse, avoid aborting long-press due to focus changes
+        { type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] },
       );
     }
     this.cancelLongpressHandlers = handlers;
@@ -801,10 +832,12 @@ export class GestureDirective {
         const map = (this.constructor as typeof GestureDirective)._laneOwners;
         const owners = map.get(this.pointerId);
         if (owners) {
+          this.debug('releasing lane ownership', { pointerId: this.pointerId, ownersBefore: owners, ownedByThis: this.ownedLanes, instanceId: this._instanceId });
           if (this.ownedLanes.h && owners.h === this._instanceId) delete owners.h;
           if (this.ownedLanes.v && owners.v === this._instanceId) delete owners.v;
           if (this.ownedLanes.p && owners.p === this._instanceId) delete owners.p;
           if (!owners.h && !owners.v && !owners.p) map.delete(this.pointerId); else map.set(this.pointerId, owners);
+          this.debug('lane owners after release', { pointerId: this.pointerId, owners });
         }
       }
     } catch { /* ignore */ }
@@ -815,7 +848,12 @@ export class GestureDirective {
     this.lockedAxis = null;
     this.ownedLanes = { h: false, v: false, p: false };
     this.removeLongpressCancelListeners();
-    try { if (typeof this.pointerId === 'number') (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId as number); } catch { /* ignore */ }
+    try {
+      if (typeof this.pointerId === 'number') {
+        const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId as number);
+        this.debug('activePointers delete (reset)', { pointerId: this.pointerId, deleted });
+      }
+    } catch { /* ignore */ }
     // Do not reset potentialDoubleTap here; it is cleared on pointerup logic or after completion
     // Do not call removeSuppression() here – we only clear suppression on real pointer up/cancel
   }
@@ -919,6 +957,7 @@ export class GestureDirective {
     (detail as unknown as { __gid?: number }).__gid = this._instanceId;
     const evt = new CustomEvent('press', { detail, bubbles: true, composed: true });
     try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
+    this.debug('emitPressEvent', { detail });
     this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
   }
 
@@ -952,6 +991,39 @@ export class GestureDirective {
     // no doubletap in 'horizontal' mode to avoid global capture of taps
     const allows = m === 'all' || m === 'dashboard' || m === 'press' || m === 'editor';
     return allows && this.enableDoubleTap();
+  }
+
+  // ----------- Diagnostics helpers (debug only) -----------
+  private elDesc(el: Element | null | undefined): string | null {
+    if (!el) return null;
+    try {
+      const h = el as HTMLElement;
+      const tag = el.tagName?.toLowerCase?.() ?? 'node';
+      const id = h.id ? `#${h.id}` : '';
+      const clsStr = (h.className && typeof h.className === 'string') ? h.className : '';
+      const cls = clsStr ? '.' + clsStr.split(/\s+/).filter(Boolean).slice(0, 4).join('.') : '';
+      return `${tag}${id}${cls}`;
+    } catch { return 'node'; }
+  }
+
+  private ownerRelationshipSummary(ownerEl: Element | null, hostEl: Element, targetEl: Element | null) {
+    try {
+      const rel = {
+        owner: this.elDesc(ownerEl),
+        host: this.elDesc(hostEl),
+        target: this.elDesc(targetEl),
+        ownerIsConnected: ownerEl ? (ownerEl as HTMLElement).isConnected : null,
+        hostIsConnected: (hostEl as HTMLElement).isConnected,
+        targetIsConnected: targetEl ? (targetEl as HTMLElement).isConnected : null,
+        targetInOwner: ownerEl && targetEl ? ownerEl.contains(targetEl) : null,
+        targetInHost: targetEl ? hostEl.contains(targetEl) : null,
+        ownerInHost: ownerEl ? hostEl.contains(ownerEl) : null,
+        hostInOwner: ownerEl ? ownerEl.contains(hostEl) : null,
+      } as Record<string, unknown>;
+      return rel;
+    } catch {
+      return {};
+    }
   }
 }
 
