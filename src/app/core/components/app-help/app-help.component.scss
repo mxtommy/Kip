@@ -4,10 +4,19 @@
   align-items: center;
 }
 
-.fullpage-header-title {
+.page-icon {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: 15px;
+
+}
+.page-title {
   margin-block-start: 0px;
   margin-block-end: 0px;
-  padding: 18px 24px 13px 24px;
+  padding: 18px 0px 13px 5px;
   color: var(--mat-dialog-subhead-color, var(--mat-sys-on-surface, rgba(0, 0, 0, 0.87)));
   font-family: var(--mat-dialog-subhead-font, var(--mat-sys-headline-small-font, inherit));
   line-height: var(--mat-dialog-subhead-line-height, var(--mat-sys-headline-small-line-height, 1.5rem));

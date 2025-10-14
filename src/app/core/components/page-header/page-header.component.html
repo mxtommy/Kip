@@ -1,11 +1,17 @@
-<div class="fullpage-header">
-  <h6 class="fullpage-header-title">{{pageTitle()}}</h6>
-  <div class="dialog-close-icon">
-    <button mat-icon-button (click)="backPage()">
-      <mat-icon>arrow_back_ios</mat-icon>
-    </button>
-    <button mat-icon-button (click)="closePage()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+<div class="page-icon-container">
+  <mat-icon
+    [svgIcon]="svgIconId()"
+    [style.width.px]="24"
+    [style.height.px]="24"
+    aria-hidden="false">
+  </mat-icon>
+</div>
+<h6 class="page-title">{{pageTitle()}}</h6>
+<div class="dialog-close-icon">
+  <button mat-icon-button (click)="backPage()">
+    <mat-icon>arrow_back_ios</mat-icon>
+  </button>
+  <button mat-icon-button (click)="closePage()">
+    <mat-icon>close</mat-icon>
+  </button>
 </div>

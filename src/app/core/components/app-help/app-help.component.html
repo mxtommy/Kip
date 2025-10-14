@@ -1,5 +1,13 @@
 <div class="fullpage-header">
-  <h6 class="fullpage-header-title">{{ pageTitle }}</h6>
+  <div class="page-icon">
+    <mat-icon
+      svgIcon="help-center"
+      [style.width.px]="24"
+      [style.height.px]="24"
+      aria-hidden="false">
+    </mat-icon>
+    <h6 class="page-title">{{ pageTitle }}</h6>
+  </div>
   <button mat-flat-button [matMenuTriggerFor]="helpMenu" [disabled]="isLoading() || hasError() || helpFiles().length === 0">
     @if (isLoading()) { Loading... } @else { Table of Content }
   </button>

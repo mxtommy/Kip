@@ -11,7 +11,8 @@ import { Router } from '@angular/router';
   styleUrl: './page-header.component.scss'
 })
 export class PageHeaderComponent {
-  protected readonly pageTitle = input<string>();
+  protected readonly pageTitle = input.required<string>();
+  protected readonly svgIconId = input.required<string>();
   private _router = inject(Router);
 
   protected backPage() {
