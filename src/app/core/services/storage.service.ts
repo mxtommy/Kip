@@ -36,6 +36,8 @@ export class StorageService {
   public storageServiceReady$ = new BehaviorSubject<boolean>(false);
   private _isLoggedIn = false;
   private _networkStatus: IEndpointStatus = undefined;
+  // Instrumentation toggle
+  private _logIO = false; // set to false to silence logging
 
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
@@ -160,11 +162,22 @@ export class StorageService {
   public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
     this.ensureReady();
     const base = this.serverEndpoint + scope + "/kip/";
-    const url = base + (forceConfigFileVersion ?? this.configFileVersion) + "/" + configName;
+    const ver = forceConfigFileVersion ?? this.configFileVersion;
+    const url = base + ver + "/" + configName; // URL for fetching config
+
+    if (this._logIO) {
+      // lightweight log before fetch
+      console.debug('[StorageService.getConfig]', { scope, configName, ver, url, isInitLoad: !!isInitLoad });
+    }
 
     try {
       const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url));
-      console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
+      if (this._logIO) {
+        const appVer: unknown = (remoteConfig && typeof remoteConfig === 'object') ? (remoteConfig as IConfig)?.app?.configVersion : undefined;
+        console.debug('[StorageService.getConfig Response]', { scope, configName, ver, appConfigVersion: appVer });
+      } else {
+        console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
+      }
       if (isInitLoad) this.InitConfig = remoteConfig;
       return cloneDeep(remoteConfig);
     } catch (error) {
@@ -191,11 +204,21 @@ export class StorageService {
     this.ensureReady();
 
     const base = this.serverEndpoint + scope + "/kip/";
-    const url = base + (forceConfigFileVersion ?? this.configFileVersion) + "/" + configName;
+    const ver = forceConfigFileVersion ?? this.configFileVersion;
+    const url = base + ver + "/" + configName; // URL for setting config
+
+    if (this._logIO) {
+      const appVer: unknown = config?.app?.configVersion;
+      console.debug('[StorageService.setConfig]', { scope, configName, ver, url, appConfigVersion: appVer });
+    }
 
     try {
       await lastValueFrom(this.http.post<null>(url, config));
-      console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
+      if (this._logIO) {
+        console.debug('[StorageService.setConfig Response]', { scope, configName, ver, url, status: 'ok' });
+      } else {
+        console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
+      }
       return null;
     } catch (error) {
       this.handleError(error as HttpErrorResponse); // throws
@@ -213,10 +236,24 @@ export class StorageService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
     this.ensureReady();
-    let url = this.serverEndpoint + "user/kip/" + this.configFileVersion;
+    const ver = forceConfigFileVersion ?? this.configFileVersion;
+    const url = this.serverEndpoint + "user/kip/" + ver;
     let document;
-    if (forceConfigFileVersion) {
-      url = this.serverEndpoint + "user/kip/" + forceConfigFileVersion;
+    // url already reflects forced version if provided
+
+    // Guard: avoid bumping app.configVersion in older files (e.g., writing 12 into v11)
+    if (ObjType === 'IAppConfig') {
+      const incomingVer: unknown = value?.configVersion;
+      if (typeof incomingVer === 'number' && ver === 11 && incomingVer > 11) {
+        if (this._logIO) {
+          console.warn('[StorageService.patchConfig] Suppressing app.configVersion write into v11 file', {
+            targetFileVersion: ver,
+            incomingAppConfigVersion: incomingVer
+          });
+        }
+        // strip configVersion for upgrades service to take on
+        value.configVersion = 11;
+      }
     }
 
     switch (ObjType) {
@@ -297,6 +334,17 @@ export class StorageService {
     }
 
     const patch: IPatchAction = { url, document };
+    if (this._logIO) {
+      const appVer = ObjType === 'IAppConfig' ? (value?.configVersion) : undefined;
+      const touchesConfigVersion = ObjType === 'IAppConfig' && (typeof appVer !== 'undefined');
+      console.debug('[StorageService.patchConfig]', {
+        ObjType,
+        ver,
+        url,
+        appConfigVersionInValue: appVer,
+        touchesConfigVersion
+      });
+    }
     this.patchQueue$.next(patch);
   }
 
@@ -312,10 +360,8 @@ export class StorageService {
    */
   public patchGlobal(configName: string, scope: string, config: IConfig, operation: string, fileVersion?: number) {
     this.ensureReady();
-    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
-    if (fileVersion) {
-      url = this.serverEndpoint + scope + "/kip/" + fileVersion;
-    }
+    const ver = fileVersion ?? this.configFileVersion;
+  const url = this.serverEndpoint + scope + "/kip/" + ver;
 
     let document;
     switch (operation) {
@@ -351,6 +397,10 @@ export class StorageService {
     }
 
     const patch: IPatchAction = { url, document };
+    if (this._logIO) {
+      const appVer: unknown = config?.app?.configVersion;
+      console.debug('[StorageService.patchGlobal]', { scope, configName, operation, ver, url, appConfigVersionInValue: appVer });
+    }
     this.patchQueue$.next(patch);
   }
 
