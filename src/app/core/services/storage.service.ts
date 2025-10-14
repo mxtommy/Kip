@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -116,38 +117,27 @@ export class StorageService {
       console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
       return null;
     }
-    const url = this.serverEndpoint;
-    let globalUrl = url + "global/kip/" + this.configFileVersion + "/?keys=true";
-    let userUrl = url + "user/kip/" + this.configFileVersion + "/?keys=true";
 
-    if (forceConfigFileVersion) {
-      globalUrl = url + "global/kip/" + forceConfigFileVersion + "/?keys=true";
-      userUrl = url + "user/kip/" + forceConfigFileVersion + "/?keys=true";
+    const base = this.serverEndpoint;
+    const ver = forceConfigFileVersion ?? this.configFileVersion;
+    const globalUrl = `${base}global/kip/${ver}/?keys=true`;
+    const userUrl = `${base}user/kip/${ver}/?keys=true`;
+
+    try {
+      const globalNames = await lastValueFrom(this.http.get<string[]>(globalUrl));
+      for (const cname of globalNames) serverConfigs.push({ scope: 'global', name: cname });
+      console.log(`[Storage Service] Retrieved Global config list`);
+    } catch (error) {
+      this.handleError(error as HttpErrorResponse); // throws
     }
 
-    await lastValueFrom(this.http.get<string[]>(globalUrl))
-      .then((configNames: string[]) => {
-        for (const cname of configNames) {
-          serverConfigs.push({ scope: 'global', name: cname });
-        }
-        console.log(`[Storage Service] Retrieved Global config list`);
-      })
-      .catch(
-        error => {
-          this.handleError(error);
-        });
-
-    await lastValueFrom(this.http.get<string[]>(userUrl))
-      .then((configNames: string[]) => {
-        for (const cname of configNames) {
-          serverConfigs.push({ scope: 'user', name: cname });
-        }
-        console.log(`[Storage Service] Retrieved User config list`);
-      })
-      .catch(
-        error => {
-          this.handleError(error);
-        });
+    try {
+      const userNames = await lastValueFrom(this.http.get<string[]>(userUrl));
+      for (const cname of userNames) serverConfigs.push({ scope: 'user', name: cname });
+      console.log(`[Storage Service] Retrieved User config list`);
+    } catch (error) {
+      this.handleError(error as HttpErrorResponse); // throws
+    }
 
     return serverConfigs;
   }
@@ -169,24 +159,18 @@ export class StorageService {
    */
   public async getConfig(scope: string, configName: string, forceConfigFileVersion?: number, isInitLoad?: boolean): Promise<IConfig> {
     this.ensureReady();
-    let conf: IConfig = null;
-    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion + "/" + configName;
+    const base = this.serverEndpoint + scope + "/kip/";
+    const url = base + (forceConfigFileVersion ?? this.configFileVersion) + "/" + configName;
 
-    if (forceConfigFileVersion) {
-      url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion + "/" + configName;
+    try {
+      const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url));
+      console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
+      if (isInitLoad) this.InitConfig = remoteConfig;
+      return cloneDeep(remoteConfig);
+    } catch (error) {
+      this.handleError(error as HttpErrorResponse); // throws
+      return null; // unreachable
     }
-    await lastValueFrom(this.http.get<IConfig>(url))
-      .then(remoteConfig => {
-        conf = remoteConfig;
-        console.log(`[Storage Service] Retrieved config [${configName}] from [${scope}] scope`);
-        if (isInitLoad) {
-          this.InitConfig = remoteConfig;
-        }
-      })
-      .catch(error => {
-        this.handleError(error);
-      });
-    return conf;
   }
 
   /**
@@ -205,21 +189,18 @@ export class StorageService {
    */
   public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
     this.ensureReady();
-    let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion + "/" + configName;
-    let response = null;
-    if (forceConfigFileVersion) {
-      url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion + "/" + configName;
-    }
-    await lastValueFrom(this.http.post<null>(url, config))
-      .then(x => {
-        console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
-        response = x;
-      })
-      .catch(error => {
-        this.handleError(error);
-      });
 
-    return response;
+    const base = this.serverEndpoint + scope + "/kip/";
+    const url = base + (forceConfigFileVersion ?? this.configFileVersion) + "/" + configName;
+
+    try {
+      await lastValueFrom(this.http.post<null>(url, config));
+      console.log(`[Storage Service] Saved config [${configName}] to [${scope}] scope`);
+      return null;
+    } catch (error) {
+      this.handleError(error as HttpErrorResponse); // throws
+      return null; // unreachable, keeps signature
+    }
   }
 
   /**

@@ -59,7 +59,7 @@ export class ConfigurationUpgradeService {
    * Entry point used by component to trigger upgrade.
    * Decides local vs remote based on StorageService.initConfig (remote present -> remote upgrade).
    */
-  public runUpgrade(version: number): void {
+  public async runUpgrade(version: number): Promise<void> {
     this.error.set(null);
     this.upgrading.set(true);
     this.messages.set([]);
@@ -67,73 +67,65 @@ export class ConfigurationUpgradeService {
 
     if (version === undefined) {
       // Remote (Signal K) configs
-      this._storage.listConfigs(this.legacyFileVersion)
-        .then(async (rootConfigs: Config[]) => {
+        try {
+          const rootConfigs = await this._storage.listConfigs(this.legacyFileVersion);
           for (const rootConfig of rootConfigs) {
             const transformedConfig = await this.transformConfig(rootConfig);
             if (!transformedConfig) continue; // skip if not eligible
 
-            if (transformedConfig.scope === 'global') {
-              try {
-                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.newConfiguration, 'add');
-                this._storage.patchGlobal(transformedConfig.name, transformedConfig.scope, transformedConfig.oldConfiguration, 'replace', this.legacyFileVersion);
-                this.pushMsg(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} upgraded to version ${this.targetConfigVersion}. Old configuration patched to version 0.`);
-              } catch {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}`);
-              }
-            } else {
-              try {
-                await this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.newConfiguration);
-                await this._storage.setConfig(transformedConfig.scope, transformedConfig.name, transformedConfig.oldConfiguration, this.legacyFileVersion);
-                this.pushMsg(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} upgraded to version ${this.targetConfigVersion}. Old configuration patched to version 0.`);
-              } catch (error) {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}: ${(error as Error).message}`);
-              }
+            try {
+              // Write upgraded config to current active file version
+              await this._storage.setConfig(
+                transformedConfig.scope,
+                transformedConfig.name,
+                transformedConfig.newConfiguration
+              );
+              // Retire legacy set in legacy file version
+              await this._storage.setConfig(
+                transformedConfig.scope,
+                transformedConfig.name,
+                transformedConfig.oldConfiguration,
+                this.legacyFileVersion
+              );
+              this.pushMsg(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} upgraded to version ${this.targetConfigVersion}. Old configuration patched to version 0.`);
+            } catch (error) {
+              this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}: ${(error as Error).message}`);
             }
           }
           // After processing remote configs, reload
           setTimeout(() => this._settings.reloadApp(), 1500);
-        })
-        .catch(error => {
+        } catch (error) {
           this.pushError('Error fetching configuration data: ' + (error as Error).message);
-        })
-        .finally(() => this.upgrading.set(false));
+        } finally {
+          this.upgrading.set(false);
+        }
 
     } else if (version === 11 && this._settings.useSharedConfig) {
       // Remote (Signal K) configs
-      this._storage.listConfigs(11)
-        .then(async (rootConfigs: Config[]) => {
+        try {
+          const rootConfigs: Config[] = await this._storage.listConfigs(11);
           for (const rootConfig of rootConfigs) {
-
-            // Optional throttle / UX pacing: wait 500ms before finalizing this config
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const upgradedConfig = await this.upgradeConfig(rootConfig);
+            const upgradedConfig = cloneDeep(await this.upgradeConfig(rootConfig));
             if (!upgradedConfig) continue; // skip if not eligible
 
-            if (upgradedConfig.scope === 'global') {
-              try {
-                this._storage.patchGlobal(upgradedConfig.name, upgradedConfig.scope, upgradedConfig.configuration, 'replace');
-                this.pushMsg(`[Upgrade] Configuration ${upgradedConfig.scope}/${upgradedConfig.name} upgraded to version 12.`);
-              } catch {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}`);
-              }
-            } else {
-              try {
-                await this._storage.setConfig(upgradedConfig.scope, upgradedConfig.name, upgradedConfig.configuration);
-                this.pushMsg(`[Upgrade] Configuration ${upgradedConfig.scope}/${upgradedConfig.name} upgraded to version 12.`);
-              } catch (error) {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}: ${(error as Error).message}`);
-              }
+            try {
+              // Write upgraded config (await to serialize)
+              await this._storage.setConfig(
+                upgradedConfig.scope,
+                upgradedConfig.name,
+                upgradedConfig.configuration
+              );
+              this.pushMsg(`[Upgrade] ${upgradedConfig.scope}/${upgradedConfig.name} -> v${this.targetConfigVersion}.`);
+            } catch (error) {
+              this.pushError(`[Upgrade] Error saving ${upgradedConfig.name}: ${(error as Error).message}`);
             }
           }
           // After processing remote configs, reload
+          this.pushMsg(`[Upgrade] Reloading app to finalize upgrade...`);
           setTimeout(() => this._settings.reloadApp(), 1500);
-        })
-        .catch(error => {
+        } catch (error) {
           this.pushError('Error fetching configuration data: ' + (error as Error).message);
-        })
-        .finally(() => this.upgrading.set(false));
+        }
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
       // LocalStorage upgrade path for config version 11
@@ -372,8 +364,8 @@ export class ConfigurationUpgradeService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async upgradeConfig(rootConfig: Config): Promise<any> {
-    const config: IConfig = await this._storage.getConfig(rootConfig.scope, rootConfig.name);
     try {
+      const config: IConfig = await this._storage.getConfig(rootConfig.scope, rootConfig.name, 11);
       if (config.app.configVersion !== 11) {
         this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version 12 config. Skipping.`);
         return null;
@@ -418,7 +410,7 @@ export class ConfigurationUpgradeService {
         this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries for ${rootConfig.scope}/${rootConfig.name}.`);
       }
 
-      config.app.configVersion = 12;
+      //config.app.configVersion = 12;
 
       return {
         scope: rootConfig.scope,
