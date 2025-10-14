@@ -67,65 +67,65 @@ export class ConfigurationUpgradeService {
 
     if (version === undefined) {
       // Remote (Signal K) configs
-        try {
-          const rootConfigs = await this._storage.listConfigs(this.legacyFileVersion);
-          for (const rootConfig of rootConfigs) {
-            const transformedConfig = await this.transformConfig(rootConfig);
-            if (!transformedConfig) continue; // skip if not eligible
+      try {
+        const rootConfigs = await this._storage.listConfigs(this.legacyFileVersion);
+        for (const rootConfig of rootConfigs) {
+          const transformedConfig = await this.transformConfig(rootConfig);
+          if (!transformedConfig) continue; // skip if not eligible
 
-            try {
-              // Write upgraded config to current active file version
-              await this._storage.setConfig(
-                transformedConfig.scope,
-                transformedConfig.name,
-                transformedConfig.newConfiguration
-              );
-              // Retire legacy set in legacy file version
-              await this._storage.setConfig(
-                transformedConfig.scope,
-                transformedConfig.name,
-                transformedConfig.oldConfiguration,
-                this.legacyFileVersion
-              );
-              this.pushMsg(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} upgraded to version ${this.targetConfigVersion}. Old configuration patched to version 0.`);
-            } catch (error) {
-              this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}: ${(error as Error).message}`);
-            }
+          try {
+            // Write upgraded config to current active file version
+            await this._storage.setConfig(
+              transformedConfig.scope,
+              transformedConfig.name,
+              transformedConfig.newConfiguration
+            );
+            // Retire legacy set in legacy file version
+            await this._storage.setConfig(
+              transformedConfig.scope,
+              transformedConfig.name,
+              transformedConfig.oldConfiguration,
+              this.legacyFileVersion
+            );
+            this.pushMsg(`[Upgrade] Configuration ${transformedConfig.scope}/${transformedConfig.name} upgraded to version ${this.targetConfigVersion}. Old configuration patched to version 0.`);
+          } catch (error) {
+            this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}: ${(error as Error).message}`);
           }
-          // After processing remote configs, reload
-          setTimeout(() => this._settings.reloadApp(), 1500);
-        } catch (error) {
-          this.pushError('Error fetching configuration data: ' + (error as Error).message);
-        } finally {
-          this.upgrading.set(false);
         }
+        // After processing remote configs, reload
+        setTimeout(() => this._settings.reloadApp(), 1500);
+      } catch (error) {
+        this.pushError('Error fetching configuration data: ' + (error as Error).message);
+      } finally {
+        this.upgrading.set(false);
+      }
 
     } else if (version === 11 && this._settings.useSharedConfig) {
       // Remote (Signal K) configs
-        try {
-          const rootConfigs: Config[] = await this._storage.listConfigs(11);
-          for (const rootConfig of rootConfigs) {
-            const upgradedConfig = cloneDeep(await this.upgradeConfig(rootConfig));
-            if (!upgradedConfig) continue; // skip if not eligible
+      try {
+        const rootConfigs: Config[] = await this._storage.listConfigs(11);
+        for (const rootConfig of rootConfigs) {
+          const upgradedConfig = cloneDeep(await this.upgradeConfig(rootConfig));
+          if (!upgradedConfig) continue; // skip if not eligible
 
-            try {
-              // Write upgraded config (await to serialize)
-              await this._storage.setConfig(
-                upgradedConfig.scope,
-                upgradedConfig.name,
-                upgradedConfig.configuration
-              );
-              this.pushMsg(`[Upgrade] ${upgradedConfig.scope}/${upgradedConfig.name} -> v${this.targetConfigVersion}.`);
-            } catch (error) {
-              this.pushError(`[Upgrade] Error saving ${upgradedConfig.name}: ${(error as Error).message}`);
-            }
+          try {
+            // Write upgraded config (await to serialize)
+            await this._storage.setConfig(
+              upgradedConfig.scope,
+              upgradedConfig.name,
+              upgradedConfig.configuration
+            );
+            this.pushMsg(`[Upgrade] ${upgradedConfig.scope}/${upgradedConfig.name} -> v${this.targetConfigVersion}.`);
+          } catch (error) {
+            this.pushError(`[Upgrade] Error saving ${upgradedConfig.name}: ${(error as Error).message}`);
           }
-          // After processing remote configs, reload
-          this.pushMsg(`[Upgrade] Reloading app to finalize upgrade...`);
-          setTimeout(() => this._settings.reloadApp(), 1500);
-        } catch (error) {
-          this.pushError('Error fetching configuration data: ' + (error as Error).message);
         }
+        // After processing remote configs, reload
+        this.pushMsg(`[Upgrade] Reloading app to finalize upgrade...`);
+        setTimeout(() => this._settings.reloadApp(), 1500);
+      } catch (error) {
+        this.pushError('Error fetching configuration data: ' + (error as Error).message);
+      }
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
       // LocalStorage upgrade path for config version 11
@@ -351,7 +351,7 @@ export class ConfigurationUpgradeService {
     clone.nightModeBrightness = 0.27;
     clone.splitShellEnabled = false;
     clone.splitShellSide = "left";
-    clone.splitShellWidth = 0.7;
+    clone.splitShellWidth = 0.5;
     clone.splitShellSwipeDisabled = false;
     return clone;
   }
@@ -410,7 +410,7 @@ export class ConfigurationUpgradeService {
         this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries for ${rootConfig.scope}/${rootConfig.name}.`);
       }
 
-      //config.app.configVersion = 12;
+      config.app.configVersion = 12;
 
       return {
         scope: rootConfig.scope,
@@ -453,7 +453,7 @@ export class ConfigurationUpgradeService {
     if (!app) return;
     if (app.splitShellEnabled === undefined) app.splitShellEnabled = false;
     if (app.splitShellSide === undefined) app.splitShellSide = "left";
-    if (app.splitShellWidth === undefined) app.splitShellWidth = 0.7;
+    if (app.splitShellWidth === undefined) app.splitShellWidth = 0.5;
     if (app.splitShellSwipeDisabled === undefined) app.splitShellSwipeDisabled = false;
   }
 

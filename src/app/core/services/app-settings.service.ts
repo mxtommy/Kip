@@ -36,7 +36,7 @@ export class AppSettingsService {
   private splitShellEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
   private splitShellSwipeDisabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(300);
+  private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(0.5);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -273,7 +273,7 @@ export class AppSettingsService {
     }
 
     if (this.activeConfig.app.splitShellWidth === undefined) {
-      this.setSplitShellWidth(0.3); // default ratio
+      this.setSplitShellWidth(0.5); // default ratio
     } else {
       this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
     }
@@ -657,7 +657,7 @@ export class AppSettingsService {
       notificationConfig: this.kipKNotificationConfig.getValue(),
       splitShellEnabled: this.splitShellEnabled.getValue(),
       splitShellSide: this.splitShellSide.getValue() ?? 'right',
-      splitShellWidth: this.splitShellWidth.getValue() ?? 380,
+      splitShellWidth: this.splitShellWidth.getValue() ?? 0.5,
       splitShellSwipeDisabled: this.splitShellSwipeDisabled.getValue()
     }
     return storageObject;

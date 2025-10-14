@@ -83,6 +83,7 @@ export class DatasetService implements OnDestroy {
   }
 
   private cleanupDatasets(): void {
+    if (this.appSettings.configUpgrade()) return; // Cleanup not needed if configUpgrade is enabled/required
     const cfgVersion = this.appSettings.getAppConfig().configVersion;
     if (cfgVersion < 12) return; // Cleanup only needed for versions 12 or greater
 
