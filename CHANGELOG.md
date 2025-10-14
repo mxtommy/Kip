@@ -12,7 +12,7 @@
 - Precision layouts with 2× grid resolution for tighter, more accurate arrangements.
 - Chartplotter Mode control: Optional setting to disable KIP gestures over the Freeboard‑SK chart to prevent accidental swipes while moving the chart. Fixes #845.
 - Dashboard editor ergonomics: Cancel/Ok button order now follows platform conventions (Sorry folks. You'll need to rewire your brains. Doctors say it's healthy!).
-- Smarter upgrades: Configuration upgrade service now supports v9 → v12 migrations with a new upgrade activity window.
+- Smarter upgrades: Configuration upgrade service now supports v2.12 → v4 config migrations with a new upgrade activity window.
 - Documentation refresh: Syntax‑highlighted help, a comprehensive Chartplotter Mode guide, and clearer text across Remote Control and Notifications.
 ## Fixes
 - Eliminated an occasional “empty dashboard flicker” when dashboards load. Mostly visible on low computing power hardware.
