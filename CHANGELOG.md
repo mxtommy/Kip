@@ -1,3 +1,6 @@
+# v 4.0.1
+## Fixes
+* Configuration upgrade issues creating a Freeboard panel that pushed all widgets out of screen view.
 # v 4.0.0
 ## New features
 - **Next‑gen widget framework**: A simplified component architecture that makes widgets faster to develop, leaner to run, and more consistent to configure — now with an automated widget generator and **AI‑assisted guidance** to get you from idea to working widget in minutes. Want to contribute your first widget? Run `npm run generate:widget` and follow the prompts.
@@ -14,7 +17,7 @@
 ## Fixes
 - Eliminated an occasional “empty dashboard flicker” when dashboards load. Mostly visible on low computing power hardware.
 - Data Trends widget: fixed UI overlap on small screens. Fixes #848.
-- Authentication reliability: Token renewal logic reworked to avoid Node.js 28‑day timer limits.
+- Authentication reliability: Token renewal logic reworked to avoid 24‑day timer limits.
 # v 3.12.0
 # New Features
 * Chartplotter Mode: A dual‑panel, performance‑tuned split experience that lets you run KIP dashboards and Freeboard‑SK together in one adaptive shell. Keep the chart live while moving between dashboards. Seamless side‑by‑side in landscape, smart vertical stacking in portrait and as always, designed for mobile and touch. Use the per‑dashboard forced collapse option for data‑focused layouts while Freeboard remains active in the background. Drag resize split distribution with commit‑on‑save editing. This feature brings you:
