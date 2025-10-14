@@ -8,6 +8,12 @@
           tabindex="0"
           [class.selected]="selectedDisplayButtonId() === display.displayId"
           (click)="displayDashboards(display.displayId)">{{ display.displayName }}</button>
+      } @empty {
+        <button
+          mat-list-item
+          tabindex="0" disabled="true" style="text-align: center">
+          <i>"No Remote"</i>
+        </button>
       }
     </mat-action-list>
   </mat-sidenav>
@@ -32,7 +38,7 @@
       <div class="empty-state-msg" role="status" aria-live="polite">
         <mat-icon class="empty-state-icon" aria-hidden="true" color="primary">cast</mat-icon>
         <div class="copy">
-          <p>Select an available KIP instance in the menu.</p>
+          <p>Select an available remote KIP in the menu.</p>
           <p>To allow remote control of a dashboard, on that KIP device open Options → Display → Remote Control and enable it.</p>
         </div>
       </div>

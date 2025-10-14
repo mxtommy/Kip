@@ -33,13 +33,14 @@ export class RemoteControlComponent implements OnInit {
     return `${this.HOST_URL}/plugins/kip/displays/${this.displayId()}/activeScreen`;
   });
   protected selectedDisplayButtonId = signal<string | null>(null);
+  private appID = "";
 
   ngOnInit(): void {
-    lastValueFrom(
-         this.http.get<IKipDisplayList>(`${this.HOST_URL}/plugins/kip/displays`)
-       ).then(instances => {
-         this.displays.set(instances);
-       });
+    this.appID = this._settings.KipUUID;
+    lastValueFrom(this.http.get<IKipDisplayList>(`${this.HOST_URL}/plugins/kip/displays`))
+      .then(instances => {
+        this.displays.set(instances.filter(d => d.displayId !== this.appID));
+      });
   }
 
   protected displayDashboards(displayId: string | null): void {
