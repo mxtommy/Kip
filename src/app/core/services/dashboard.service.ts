@@ -36,8 +36,6 @@ export class DashboardService {
   public readonly layoutEditSaved = signal<number>(0);
   public readonly layoutEditCanceled = signal<number>(0);
 
-  private serviceStarted = false;
-
   constructor() {
     const dashboards = this._settings.getDashboardConfig();
 
@@ -54,11 +52,8 @@ export class DashboardService {
 
     effect(() => {
       const dashboards = this.dashboards();
-      if (!this.serviceStarted) return;
       this._settings.saveDashboards(dashboards);
     });
-
-    this.serviceStarted = true;
   }
 
   /**
