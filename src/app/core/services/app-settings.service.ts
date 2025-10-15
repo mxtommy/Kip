@@ -64,34 +64,41 @@ export class AppSettingsService {
 
     } else {
       this.loadConnectionConfig();
+      this.startup();
+    }
+  }
 
-      if (this.useSharedConfig) {
-        // We are using remote storage
-        if (this.storage.initConfig === null && this.loginName !== null && this.loginPassword !== null && this.signalkUrl.url !== null ) {
-          this.checkConfigFileVersionUpgradeRequired()
-            .then((fileUpgradeRequired) => {
-              if (fileUpgradeRequired) {
-                this.configUpgrade.set(true);
-              } else {
-                this.resetSettings();
-              }
-            });
-        } else {
-          console.log("[AppSettings Service] Remote configuration storage enabled");
-          this.checkConfigUpgradeRequired(false, this.storage.initConfig.app?.configVersion);
-          this.activeConfig = this.storage.initConfig;
-          this.pushSettings();
+  private async startup(): Promise<void> {
+    if (this.useSharedConfig) {
+      // Remote storage flow
+      const hasCreds = !!this.loginName && !!this.loginPassword && !!this.signalkUrl?.url;
+      if (this.storage.initConfig === null && hasCreds) {
+        try {
+          const fileUpgradeRequired = await this.checkConfigFileVersionUpgradeRequired();
+          if (fileUpgradeRequired) {
+            this.configUpgrade.set(true);
+          } else {
+            this.resetSettings(); // triggers reload when done
+          }
+        } catch (err) {
+          console.error("[AppSettings Service] Startup check failed:", err);
         }
-      } else {
-        console.log("[AppSettings Service] LocalStorage enabled");
-        const localStorageConfig: IConfig = {app: null, theme: null, dashboards: null};
-        localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
-        this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
-        localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
-        localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
-        this.activeConfig = localStorageConfig;
-        this.pushSettings();
+        return;
       }
+
+      console.log("[AppSettings Service] Remote configuration storage enabled");
+      this.checkConfigUpgradeRequired(false, this.storage.initConfig?.app?.configVersion);
+      this.activeConfig = this.storage.initConfig;
+      this.pushSettings();
+    } else {
+      console.log("[AppSettings Service] LocalStorage enabled");
+      const localStorageConfig: IConfig = { app: null, theme: null, dashboards: null };
+      localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
+      this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
+      localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
+      localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
+      this.activeConfig = localStorageConfig;
+      this.pushSettings();
     }
   }
 
@@ -157,7 +164,6 @@ export class AppSettingsService {
     if (storageVersion === configVersion) return;
     if (storageVersion === 11) {
       this.configUpgrade.set(true);
-      return;
     }
   }
 

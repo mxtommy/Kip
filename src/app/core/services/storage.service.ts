@@ -187,9 +187,9 @@ export class StorageService {
   }
 
   /**
-   * Send configuration data to the server Application Data service
-   * with a scope and name and optional file version. The configuration will be saved in the
-   * current Kip app version file number (9.0.0.json) in applicationData subfolder on the server.
+   * Send configuration data to the server's Application Data service
+   * with a scope, name and optional file version. The configuration will be saved using the
+   * current Kip configFile Version setting, unless over written, in applicationData subfolder on the server.
    *
    * @usage If the given ConfigName exists in the provided scope for the same version,
    * the data will be overwritten/replaced, else it will be created on the server.
@@ -197,10 +197,11 @@ export class StorageService {
    * @param {string} scope String value of either 'global' or 'user'
    * @param {string} configName String value of the config name
    * @param {IConfig} config config data to be saved
-   * @return {*}  {null} returns null if operation is successful or raises an error.
+   * @param {number | string} [forceConfigFileVersion] Optional parameter. Forces the
+   * @return {Promise<null>}  {null} returns null if operation is successful or raises an error.
    * @memberof StorageService
    */
-  public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number): Promise<null> {
+  public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number | string): Promise<null> {
     this.ensureReady();
 
     const base = this.serverEndpoint + scope + "/kip/";

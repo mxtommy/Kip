@@ -103,28 +103,40 @@ export class ConfigurationUpgradeService {
     } else if (version === 11 && this._settings.useSharedConfig) {
       // Remote (Signal K) configs
       try {
-        const rootConfigs: Config[] = await this._storage.listConfigs(11);
-        for (const rootConfig of rootConfigs) {
-          const upgradedConfig = cloneDeep(await this.upgradeConfig(rootConfig));
-          if (!upgradedConfig) continue; // skip if not eligible
+        const configsList: Config[] = await this._storage.listConfigs(11);
 
+        for (const item of configsList) {
           try {
-            // Write upgraded config (await to serialize)
+            const config = await this._storage.getConfig(item.scope, item.name, 11);
+            const originalConfig = cloneDeep(config);
+
+            this.pushMsg(`[Upgrade] Saving configuration backup to file ${item.scope}/${item.name}...`);
             await this._storage.setConfig(
-              upgradedConfig.scope,
-              upgradedConfig.name,
-              upgradedConfig.configuration
+              item.scope,
+              item.name,
+              originalConfig,
+              11.99
             );
-            this.pushMsg(`[Upgrade] ${upgradedConfig.scope}/${upgradedConfig.name} -> v${this.targetConfigVersion}.`);
+
+            this.pushMsg(`[Upgrade] ${item.scope}/${item.name} -> v${this.targetConfigVersion}.`);
+            const migratedConfig = this.upgradeConfig(config);
+            if (!migratedConfig) continue; // skip if not eligible
+
+            this.pushMsg(`[Upgrade] Saving upgraded configurations...`);
+            await this._storage.setConfig(
+              item.scope,
+              item.name,
+              migratedConfig
+            );
           } catch (error) {
-            this.pushError(`[Upgrade] Error saving ${upgradedConfig.name}: ${(error as Error).message}`);
+            this.pushError(`[Upgrade] Error upgrading ${item.scope}/${item.name}: ${(error as Error).message}`);
           }
         }
         // After processing remote configs, reload
         this.pushMsg(`[Upgrade] Reloading app to finalize upgrade...`);
         setTimeout(() => this._settings.reloadApp(), 1500);
       } catch (error) {
-        this.pushError('Error fetching configuration data: ' + (error as Error).message);
+        this.pushError('Error fetching configuration data. Aborting upgrade. Details: ' + (error as Error).message);
       }
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
@@ -351,7 +363,7 @@ export class ConfigurationUpgradeService {
     clone.nightModeBrightness = 0.27;
     clone.splitShellEnabled = false;
     clone.splitShellSide = "left";
-    clone.splitShellWidth = 0.5;
+    clone.splitShellWidth = 0.2;
     clone.splitShellSwipeDisabled = false;
     return clone;
   }
@@ -362,12 +374,10 @@ export class ConfigurationUpgradeService {
     return themeConfig;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async upgradeConfig(rootConfig: Config): Promise<any> {
+  private upgradeConfig(config: IConfig): IConfig | null {
     try {
-      const config: IConfig = await this._storage.getConfig(rootConfig.scope, rootConfig.name, 11);
       if (config.app.configVersion !== 11) {
-        this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version 12 config. Skipping.`);
+        this.pushError(`[Upgrade Service] Config version ${config.app.configVersion} upgrade is not supported. Skipping...`);
         return null;
       }
       this.addSplitShellConfigKeys(config.app);
@@ -386,11 +396,12 @@ export class ConfigurationUpgradeService {
                   widget.selector = 'widget-host2';
                   updatedWidgetCount++;
                 }
-                // Helper to double a numeric property if > 0
+                // Helper to safely double a numeric property if > 0 (handles undefined and numeric strings)
                 const maybeDouble = (prop: string) => {
-                  const val = widget[prop];
-                  if (typeof val === 'number' && val !== 0) {
-                    widget[prop] = val * 2;
+                  const raw = widget[prop] as unknown;
+                  const numVal = typeof raw === 'string' ? Number(raw) : (raw as number);
+                  if (Number.isFinite(numVal) && numVal !== 0) {
+                    widget[prop] = numVal * 2;
                     dimensionUpdatedCount++;
                   }
                 };
@@ -398,27 +409,40 @@ export class ConfigurationUpgradeService {
                 maybeDouble('h');
                 maybeDouble('x');
                 maybeDouble('y');
+
+                // If width/height were missing, add them using minW/minH (or 2)
+                if (widget['w'] === undefined || widget['w'] === null) {
+                  const minW = widget['minW'];
+                  const baseW = minW ? minW : 2;
+                  widget['w'] = baseW;
+                  dimensionUpdatedCount++;
+                }
+                if (widget['h'] === undefined || widget['h'] === null) {
+                  const minH = widget['minH'];
+                  const baseH = minH ? minH : 2;
+                  widget['h'] = baseH;
+                  dimensionUpdatedCount++;
+                }
               }
             }
           }
         }
       }
       if (updatedWidgetCount) {
-        this.pushMsg(`[Upgrade] Updated ${updatedWidgetCount} widget selector(s) to 'widget-host2' for ${rootConfig.scope}/${rootConfig.name}.`);
+        this.pushMsg(`[Upgrade] Updated ${updatedWidgetCount} widget selector(s) to 'widget-host2'.`);
       }
       if (dimensionUpdatedCount) {
-        this.pushMsg(`[Upgrade] Doubled grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries for ${rootConfig.scope}/${rootConfig.name}.`);
+        this.pushMsg(`[Upgrade] Doubled widget grid metrics for ${dimensionUpdatedCount} non-zero (w/h/x/y) entries.`);
       }
 
       config.app.configVersion = 12;
 
       return {
-        scope: rootConfig.scope,
-        name: rootConfig.name,
-        configuration: { app: config.app, theme: config.theme, dashboards: config.dashboards }
+        app: config.app, theme: config.theme, dashboards: config.dashboards
       };
+
     } catch (error) {
-      this.pushError(`[Upgrade Service] Error upgrading ${rootConfig.scope}/${rootConfig.name}: ${(error as Error).message}`);
+      this.pushError(`[Upgrade Service] Error upgrading ${config.app.configVersion}: ${(error as Error).message}`);
       return null;
     }
   }
@@ -453,7 +477,7 @@ export class ConfigurationUpgradeService {
     if (!app) return;
     if (app.splitShellEnabled === undefined) app.splitShellEnabled = false;
     if (app.splitShellSide === undefined) app.splitShellSide = "left";
-    if (app.splitShellWidth === undefined) app.splitShellWidth = 0.5;
+    if (app.splitShellWidth === undefined) app.splitShellWidth = 0.2;
     if (app.splitShellSwipeDisabled === undefined) app.splitShellSwipeDisabled = false;
   }
 
@@ -475,11 +499,12 @@ export class ConfigurationUpgradeService {
             selectorUpdatedCount++;
           }
 
-          // Helper to double a numeric property if > 0
+          // Helper to safely double a numeric property if > 0 (handles undefined and numeric strings)
           const maybeDouble = (prop: string) => {
-            const val = widget[prop];
-            if (typeof val === 'number' && val !== 0) {
-              widget[prop] = val * 2;
+            const raw = widget[prop] as unknown;
+            const numVal = typeof raw === 'string' ? Number(raw) : (raw as number);
+            if (Number.isFinite(numVal) && numVal !== 0) {
+              widget[prop] = numVal * 2;
               dimensionUpdatedCount++;
             }
           };
@@ -487,6 +512,22 @@ export class ConfigurationUpgradeService {
           maybeDouble('h');
           maybeDouble('x');
           maybeDouble('y');
+
+          // If width/height were missing, add them using minW/minH (or 2) and scale to new grid (x2)
+          if (widget['w'] === undefined || widget['w'] === null) {
+            const minWRaw = widget['minW'] as unknown;
+            const minW = typeof minWRaw === 'string' ? Number(minWRaw) : (minWRaw as number);
+            const baseW = Number.isFinite(minW) && minW! > 0 ? (minW as number) : 2;
+            widget['w'] = baseW * 2;
+            dimensionUpdatedCount++;
+          }
+          if (widget['h'] === undefined || widget['h'] === null) {
+            const minHRaw = widget['minH'] as unknown;
+            const minH = typeof minHRaw === 'string' ? Number(minHRaw) : (minHRaw as number);
+            const baseH = Number.isFinite(minH) && minH! > 0 ? (minH as number) : 2;
+            widget['h'] = baseH * 2;
+            dimensionUpdatedCount++;
+          }
         }
       }
     }
@@ -504,7 +545,7 @@ export class ConfigurationUpgradeService {
     const extractedWidgets: NgGridStackWidget[] = [];
     const issues: string[] = [];
     let x = 0; let y = 0; // grid cursor
-    const gridWidth = 12; const gridHeight = 12; const widgetWidth = 2; const widgetHeight = 2;
+    const gridWidth = 24; const gridHeight = 24; const widgetWidth = 3; const widgetHeight = 3;
     const traverseSplitSets = (splitSetUUID: string) => {
       const splitSet = splitSets.find(set => set.uuid === splitSetUUID);
       if (!splitSet) { issues.push(`Missing splitSet with UUID: ${splitSetUUID}`); return; }
