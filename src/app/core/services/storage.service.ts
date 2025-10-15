@@ -242,19 +242,12 @@ export class StorageService {
     let document;
     // url already reflects forced version if provided
 
-    // Guard: avoid bumping app.configVersion in older files (e.g., writing 12 into v11)
-    if (ObjType === 'IAppConfig') {
-      const incomingVer: unknown = value?.configVersion;
-      if (typeof incomingVer === 'number' && ver === 11 && incomingVer > 11) {
-        if (this._logIO) {
-          console.warn('[StorageService.patchConfig] Suppressing app.configVersion write into v11 file', {
-            targetFileVersion: ver,
-            incomingAppConfigVersion: incomingVer
-          });
-        }
-        // strip configVersion for upgrades service to take on
-        value.configVersion = 11;
-      }
+    const incomingVer: unknown = value?.configVersion;
+    if (this._logIO) {
+      console.warn('[StorageService.patchConfig] Suppressing app.configVersion write into v11 file', {
+        targetFileVersion: ver,
+        incomingAppConfigVersion: incomingVer
+      });
     }
 
     switch (ObjType) {

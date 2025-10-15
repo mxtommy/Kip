@@ -25,8 +25,8 @@ export interface widgetOperation {
   providedIn: 'root'
 })
 export class DashboardService {
-  private _settings = inject(AppSettingsService);
-  private _router = inject(Router);
+  private readonly _settings = inject(AppSettingsService);
+  private readonly _router = inject(Router);
   public dashboards = signal<Dashboard[]>([], { equal: isEqual });
   public readonly activeDashboard = signal<number>(0);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
@@ -51,8 +51,8 @@ export class DashboardService {
     }
 
     effect(() => {
-      // Persist dashboards on any change
-      this._settings.saveDashboards(this.dashboards());
+      const dashboards = this.dashboards();
+      this._settings.saveDashboards(dashboards);
     });
   }
 

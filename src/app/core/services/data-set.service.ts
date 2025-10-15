@@ -368,9 +368,7 @@ export class DatasetService implements OnDestroy {
     this._svcDatasetConfigs.push(newSvcDataset);
 
     this.start(uuid);
-    if (serialize === true) {
-      this.appSettings.saveDataSets(this._svcDatasetConfigs);
-    }
+    if (serialize === true) this.appSettings.saveDataSets(this._svcDatasetConfigs);
     return uuid;
   }
 
@@ -385,7 +383,7 @@ export class DatasetService implements OnDestroy {
    * @returns {boolean} True if the dataset was updated and restarted, false if not found or unchanged.
    * @memberof DatasetService
    */
-  public edit(datasetConfig: IDatasetServiceDatasetConfig): boolean {
+  public edit(datasetConfig: IDatasetServiceDatasetConfig, serialize = true): boolean {
     const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
     if (!existingConfig) {
       return false; // Dataset not found
@@ -401,7 +399,7 @@ export class DatasetService implements OnDestroy {
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
     this.start(datasetConfig.uuid);
-    this.appSettings.saveDataSets(this._svcDatasetConfigs);
+    if (serialize === true) this.appSettings.saveDataSets(this._svcDatasetConfigs);
     return true;
   }
 
@@ -429,9 +427,7 @@ export class DatasetService implements OnDestroy {
     this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
     this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
 
-    if (serialize === true) {
-      this.appSettings.saveDataSets(this._svcDatasetConfigs);
-    }
+    if (serialize === true) this.appSettings.saveDataSets(this._svcDatasetConfigs);
     return true;
   }
 
