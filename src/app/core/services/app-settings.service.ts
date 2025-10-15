@@ -17,8 +17,7 @@ import { Dashboard } from './dashboard.service';
 
 const defaultTheme = '';
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
-const configVersion = 12; // used to invalidate old configs defined as a property in the configuration object. connectionConfig and appConfig use this same version.
-
+const latestConfigVersion = 12; // used to set the configVersion property in the app config. This is used to manage config upgrades.
 @Injectable({
   providedIn: 'root'
 })
@@ -53,7 +52,7 @@ export class AppSettingsService {
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
   public configUpgrade = signal<boolean>(false);
-
+  private configVersion = undefined; // store actual config version from config version property in config
   constructor() {
     console.log("[AppSettings Service] Service startup...");
     this.storage.activeConfigFileVersion = configFileVersion;
@@ -87,6 +86,7 @@ export class AppSettingsService {
       }
 
       console.log("[AppSettings Service] Remote configuration storage enabled");
+      this.configVersion = this.storage.initConfig?.app?.configVersion;
       this.checkConfigUpgradeRequired(false, this.storage.initConfig?.app?.configVersion);
       this.activeConfig = this.storage.initConfig;
       this.pushSettings();
@@ -94,6 +94,7 @@ export class AppSettingsService {
       console.log("[AppSettings Service] LocalStorage enabled");
       const localStorageConfig: IConfig = { app: null, theme: null, dashboards: null };
       localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
+      this.configVersion = localStorageConfig.app?.configVersion;
       this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
       localStorageConfig.dashboards = this.loadConfigFromLocalStorage("dashboardsConfig");
       localStorageConfig.theme = this.loadConfigFromLocalStorage("themeConfig");
@@ -161,8 +162,7 @@ export class AppSettingsService {
   }
 
   private checkConfigUpgradeRequired(isLocalStorageConfig: boolean, storageVersion?: number): void {
-    if (storageVersion === configVersion) return;
-    if (storageVersion === 11) {
+    if (storageVersion !== latestConfigVersion) {
       this.configUpgrade.set(true);
     }
   }
@@ -204,7 +204,7 @@ export class AppSettingsService {
     }
 
     if(type === 'connectionConfig') {
-      if (config.configVersion !== configVersion) {
+      if (config.configVersion !== latestConfigVersion) {
         console.log(`[AppSettings Service] Invalid ${type} version. Force loading defaults`);
 
         switch (type) {
@@ -652,7 +652,7 @@ export class AppSettingsService {
   private buildAppStorageObject() {
 
     const storageObject: IAppConfig = {
-      configVersion: configVersion,
+      configVersion: this.configVersion,
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
@@ -671,7 +671,7 @@ export class AppSettingsService {
 
   private buildConnectionStorageObject() {
     const storageObject: IConnectionConfig = {
-      configVersion: configVersion,
+      configVersion: this.configVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl.url,
       proxyEnabled: this.proxyEnabled,
@@ -722,7 +722,7 @@ export class AppSettingsService {
     const config: IAppConfig = DefaultAppConfig;
     config.notificationConfig = DefaultNotificationConfig;
     config.unitDefaults = DefaultUnitsConfig;
-    config['configVersion'] = configVersion;
+    config['configVersion'] = latestConfigVersion;
     localStorage.setItem('appConfig', JSON.stringify(config));
     return config;
   }

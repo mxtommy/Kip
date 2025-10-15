@@ -96,8 +96,6 @@ export class ConfigurationUpgradeService {
         setTimeout(() => this._settings.reloadApp(), 1500);
       } catch (error) {
         this.pushError('Error fetching configuration data: ' + (error as Error).message);
-      } finally {
-        this.upgrading.set(false);
       }
 
     } else if (version === 11 && this._settings.useSharedConfig) {

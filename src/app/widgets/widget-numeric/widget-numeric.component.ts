@@ -191,16 +191,16 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     const show = !!cfg.showMiniChart;
     this.showMiniChart.set(show);
     if (!show) {
-      this.dataset.removeIfExists(this.id(), true);
+      this.dataset.removeIfExists(this.id(), false);
       return;
     }
     if (!pathInfo || !pathInfo.path) return;
     const source = pathInfo.source ?? 'default';
     const existing = this.dataset.getDatasetConfig(this.id());
     if (!existing) {
-      this.dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, true, false, this.id());
+      this.dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, false, false, this.id());
     } else if (existing.path !== pathInfo.path || existing.pathSource !== source) {
-      this.dataset.edit({ ...existing, path: pathInfo.path, pathSource: source });
+      this.dataset.edit({ ...existing, path: pathInfo.path, pathSource: source }, false);
     }
   }
 
@@ -350,7 +350,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.dataset.removeIfExists(this.id(), true);
+    this.dataset.removeIfExists(this.id(), false);
     try { this.canvas.unregisterCanvas(this.canvasElement); } catch { /* ignore */ }
   }
 }
