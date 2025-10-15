@@ -1,6 +1,12 @@
+# v 4.0.2
+## Improvements
+* Align page header styles with Freeboard‑SK for better visual integration.
+* Remote Control page: minor UX and UI refinements.
+## Fixes
+* Correct widget sizing after configuration upgrades when width/height were missing in legacy layouts.
 # v 4.0.1
 ## Fixes
-* Configuration upgrade issues creating a Freeboard panel that pushed all widgets out of screen view.
+* Prevent an upgrade edge case that created a stray Freeboard panel and pushed widgets off‑screen.
 # v 4.0.0
 ## New features
 - **Next‑gen widget framework**: A simplified component architecture that makes widgets faster to develop, leaner to run, and more consistent to configure — now with an automated widget generator and **AI‑assisted guidance** to get you from idea to working widget in minutes. Want to contribute your first widget? Run `npm run generate:widget` and follow the prompts.
