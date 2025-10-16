@@ -15,7 +15,8 @@
         height="35"
         x="0"
         y="0"
-        style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1" />
+        pointer-events="all"
+        style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0" />
       <rect
         id="buttonDisabled"
         width="165.02518"
@@ -42,7 +43,8 @@
         id="rect1"
         x="0"
         y="0"
-        style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"/>
+        pointer-events="all"
+        style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0"/>
       <rect
         id="buttonEnabled"
         width="165.02518"
