@@ -41,6 +41,7 @@ import { ReactiveFormsModule, FormGroupDirective, FormGroup } from '@angular/for
 // If a specific spec needs them, it should declare/provide local stubs in that spec.
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
+import { SignalkPluginsService } from './app/core/services/signalk-plugins.service';
 import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
@@ -60,6 +61,18 @@ import {
 // First, initialize the Angular testing environment.
 const testBed = getTestBed();
 testBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
+
+// Narrow, targeted console.error filter to drop noisy MatIcon ':name' lookups only.
+// Keep all other errors visible.
+(() => {
+  const origError = console.error.bind(console);
+  console.error = (...args: unknown[]) => {
+    // Drop messages like: "Error retrieving icon :name! Unable to find icon with the name \":name\""
+    const isMatIconColonNoise = args.some(a => typeof a === 'string' && a.includes('Error retrieving icon :'));
+    if (isMatIconColonNoise) return;
+    origError(...args as []);
+  };
+})();
 class MatBottomSheetRefStub { dismiss(): void { /* noop */ } }
 class MatDialogRefStub { close(): void { /* noop */ } }
 class AppNetworkInitServiceStub { /* noop for tests */ }
@@ -106,6 +119,12 @@ class ConnectionStateMachineStub {
   startWebSocketConnection(): void { /* noop */ }
   onWebSocketConnected(): void { /* noop */ }
   onWebSocketError(): void { /* noop */ }
+}
+
+// Minimal stub for SignalkPluginsService to avoid network fetches in tests
+class SignalkPluginsServiceStub implements Partial<SignalkPluginsService> {
+  async isInstalled(): Promise<boolean> { return false; }
+  async isEnabled(): Promise<boolean> { return false; }
 }
 
 // A robust global AppSettingsService stub exposing both sync getters and observable getters
@@ -269,6 +288,61 @@ class WidgetMetadataDirectiveStub implements Partial<WidgetMetadataDirective> {
 testBed.configureTestingModule({
   imports: [RouterTestingModule, ReactiveFormsModule, MatIconModule],
   providers: [
+    // Register SVG icons and normalize leading-colon icon names at environment init
+    {
+      provide: ENVIRONMENT_INITIALIZER,
+      multi: true,
+      useValue: () => {
+        try {
+          // Ensure we only register once across multiple configureTestingModule calls
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const w = window as any;
+          if (w.__KIP_ICONS_REGISTERED__) return;
+          const iconRegistry = diInject(MatIconRegistry);
+          const sanitizer = diInject(DomSanitizer);
+          // Normalize empty namespace (":name") to default so lookups succeed in tests
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const anyRegistry = iconRegistry as any;
+          if (!anyRegistry.__kipPatched__) {
+            const origGetNamed = iconRegistry.getNamedSvgIcon.bind(iconRegistry);
+            anyRegistry.getNamedSvgIcon = (name: string, namespace?: string) => {
+              if (typeof name === 'string' && name.startsWith(':')) name = name.slice(1);
+              return origGetNamed(name, namespace || undefined);
+            };
+            anyRegistry.__kipPatched__ = true;
+          }
+          const xhr = new XMLHttpRequest();
+          // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
+          xhr.open('GET', '/assets/svg/icons.svg', false);
+          xhr.send(null);
+          if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
+            // Register the whole set in multiple namespaces to match various usages in tests
+            const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
+            // Default (no namespace, svgIcon="name")
+            iconRegistry.addSvgIconSetLiteral(trusted);
+            // App-level namespace commonly used in KIP (svgIcon="kip:name")
+            iconRegistry.addSvgIconSetInNamespace('kip', trusted);
+            // Also support accidental leading-colon usage (svgIcon=":name") by mapping empty namespace
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            iconRegistry.addSvgIconSetInNamespace('', trusted as unknown as any);
+            const svgs = Array.from(doc.querySelectorAll('svg[id]')) as SVGSVGElement[];
+            for (const svg of svgs) {
+              const id = svg.getAttribute('id');
+              if (!id) continue;
+              iconRegistry.addSvgIconLiteral(id, sanitizer.bypassSecurityTrustHtml(svg.outerHTML));
+            }
+            // Mark as registered to avoid rework in subsequent modules
+            w.__KIP_ICONS_REGISTERED__ = true;
+          } else {
+            console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
+          }
+        } catch (err) {
+          console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);
+        }
+      }
+    },
     // HTTP helpers: testing provider is preferred for specs; keep interceptor wiring if some tests rely on it
     provideHttpClient(withInterceptorsFromDi()),
     provideHttpClientTesting(),
@@ -288,6 +362,7 @@ testBed.configureTestingModule({
     // SignalK connection-related stubs to prevent heavy runtime and missing .pipe
     { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
     { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
+  { provide: SignalkPluginsService, useClass: SignalkPluginsServiceStub },
     // Provide a root-level WidgetRuntimeDirective stub to satisfy injections in widget specs
     { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
     // Provide a root-level WidgetStreamsDirective stub for widget/component specs
@@ -303,6 +378,60 @@ testBed.configureTestingModule({
 const GLOBAL_IMPORTS = [RouterTestingModule, ReactiveFormsModule, MatIconModule];
 type GlobalProvider = Provider | import('@angular/core').EnvironmentProviders;
 const GLOBAL_PROVIDERS: GlobalProvider[] = [
+  {
+    provide: ENVIRONMENT_INITIALIZER,
+    multi: true,
+    useValue: () => {
+      try {
+        // Ensure we only register once across multiple configureTestingModule calls
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const w = window as any;
+        if (w.__KIP_ICONS_REGISTERED__) return;
+        const iconRegistry = diInject(MatIconRegistry);
+        const sanitizer = diInject(DomSanitizer);
+        // Normalize empty namespace (":name") to default so lookups succeed in tests
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyRegistry = iconRegistry as any;
+        if (!anyRegistry.__kipPatched__) {
+          const origGetNamed = iconRegistry.getNamedSvgIcon.bind(iconRegistry);
+          anyRegistry.getNamedSvgIcon = (name: string, namespace?: string) => {
+            if (typeof name === 'string' && name.startsWith(':')) name = name.slice(1);
+            return origGetNamed(name, namespace || undefined);
+          };
+          anyRegistry.__kipPatched__ = true;
+        }
+        const xhr = new XMLHttpRequest();
+        // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
+        xhr.open('GET', '/assets/svg/icons.svg', false);
+        xhr.send(null);
+        if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
+          // Register the whole set in multiple namespaces to match various usages in tests
+          const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
+          // Default (no namespace, svgIcon="name")
+          iconRegistry.addSvgIconSetLiteral(trusted);
+          // App-level namespace commonly used in KIP (svgIcon="kip:name")
+          iconRegistry.addSvgIconSetInNamespace('kip', trusted);
+          // Also support accidental leading-colon usage (svgIcon=":name") by mapping empty namespace
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          iconRegistry.addSvgIconSetInNamespace('', trusted as unknown as any);
+          const svgs = Array.from(doc.querySelectorAll('svg[id]')) as SVGSVGElement[];
+          for (const svg of svgs) {
+            const id = svg.getAttribute('id');
+            if (!id) continue;
+            iconRegistry.addSvgIconLiteral(id, sanitizer.bypassSecurityTrustHtml(svg.outerHTML));
+          }
+          // Mark as registered to avoid rework in subsequent modules
+          w.__KIP_ICONS_REGISTERED__ = true;
+        } else {
+          console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
+        }
+      } catch (err) {
+        console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);
+      }
+    }
+  },
   provideHttpClient(withInterceptorsFromDi()),
   provideHttpClientTesting(),
   provideNoopAnimations(),
@@ -317,6 +446,7 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
   { provide: AppSettingsService, useClass: AppSettingsServiceStub },
   { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
   { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
+  { provide: SignalkPluginsService, useClass: SignalkPluginsServiceStub },
   { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
   { provide: WidgetStreamsDirective, useClass: WidgetStreamsDirectiveStub },
   { provide: WidgetMetadataDirective, useClass: WidgetMetadataDirectiveStub },
@@ -346,49 +476,3 @@ tbPatched.configureTestingModule = (moduleDef: PartialTestingModule = {}) => {
 
 // Angular CLI will find and run specs automatically (FindTestsPlugin). No manual __karma__.start().
 console.log('[TEST BOOTSTRAP] Global test environment configured. Waiting for spec auto-discovery...');
-
-// Provide an environment initializer to register the real SVG icon set when the test module is instantiated.
-// This avoids calling TestBed.inject() before specs configure their modules.
-GLOBAL_PROVIDERS.unshift({
-  provide: ENVIRONMENT_INITIALIZER,
-  multi: true,
-  useValue: () => {
-    try {
-      // Ensure we only register once across multiple configureTestingModule calls
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const w = window as any;
-      if (w.__KIP_ICONS_REGISTERED__) return;
-      const iconRegistry = diInject(MatIconRegistry);
-      const sanitizer = diInject(DomSanitizer);
-      const xhr = new XMLHttpRequest();
-      // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
-      xhr.open('GET', '/assets/svg/icons.svg', false);
-      xhr.send(null);
-      if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
-        // Register the whole set in multiple namespaces to match various usages in tests
-        const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
-        // Default (no namespace, svgIcon="name")
-        iconRegistry.addSvgIconSetLiteral(trusted);
-        // App-level namespace commonly used in KIP (svgIcon="kip:name")
-        iconRegistry.addSvgIconSetInNamespace('kip', trusted);
-  // Also support accidental leading-colon usage (svgIcon=":name") by mapping empty namespace
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  iconRegistry.addSvgIconSetInNamespace('', trusted as unknown as any);
-        const svgs = Array.from(doc.querySelectorAll('svg[id]')) as SVGSVGElement[];
-        for (const svg of svgs) {
-          const id = svg.getAttribute('id');
-          if (!id) continue;
-          iconRegistry.addSvgIconLiteral(id, sanitizer.bypassSecurityTrustHtml(svg.outerHTML));
-        }
-        // Mark as registered to avoid rework in subsequent modules
-        w.__KIP_ICONS_REGISTERED__ = true;
-      } else {
-        console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
-      }
-    } catch (err) {
-      console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);
-    }
-  }
-} as Provider);
