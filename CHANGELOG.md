@@ -1,6 +1,7 @@
 # v 4.0.6
 ## Fixes
-* Rare case where changing widget source does not resubscribe to data and a KIP restart is needed.
+* Rare case where changing widget source does not resubscribe to data and reloading the dashboard is needed.
+* Switch Panel not responding to touch with Chrome on some OS/versions when fill color opacity is 0.
 # v 4.0.5
 ## Fixes
 * More Embedded widget overflow causing scrollbar
