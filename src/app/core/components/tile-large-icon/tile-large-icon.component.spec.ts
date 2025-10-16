@@ -14,6 +14,10 @@ describe(' TileLargeIconComponent', () => {
 
     fixture = TestBed.createComponent( TileLargeIconComponent);
     component = fixture.componentInstance;
+    // Provide required inputs before first detectChanges
+    fixture.componentRef.setInput('svgIcon', 'dashboard-dashboard');
+    fixture.componentRef.setInput('iconSize', 48);
+    fixture.componentRef.setInput('label', 'Dashboard');
     fixture.detectChanges();
   });
 

@@ -1,5 +1,4 @@
-import { TestBed, inject } from '@angular/core/testing';
-
+import { TestBed } from '@angular/core/testing';
 import { AppSettingsService } from './app-settings.service';
 
 describe('AppSettingsService', () => {
@@ -9,7 +8,8 @@ describe('AppSettingsService', () => {
     });
   });
 
-  it('should be created', inject([AppSettingsService], (service: AppSettingsService) => {
+  it('should be created', () => {
+    const service = TestBed.inject(AppSettingsService);
     expect(service).toBeTruthy();
-  }));
+  });
 });

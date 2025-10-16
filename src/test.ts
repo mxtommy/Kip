@@ -91,6 +91,13 @@ class SignalKConnectionServiceStub {
 enum ConnectionStateStub { Idle = 0, WebSocketConnecting = 1, Connected = 2, Disconnected = 3, WebSocketError = 4, PermanentFailure = 5 }
 class ConnectionStateMachineStub {
   public state$ = new BehaviorSubject<ConnectionStateStub>(ConnectionStateStub.Idle);
+  // Minimal status$ stream matching the shape AppComponent expects to subscribe to
+  public status$ = new BehaviorSubject<{ state: string; operation: number; message: string; retryCount?: number; maxRetries?: number; timestamp: Date }>({
+    state: 'Disconnected',
+    operation: 0,
+    message: 'Test: not connected',
+    timestamp: new Date()
+  });
   setWebSocketRetryCallback(): void { /* noop */ }
   isFullyConnected(): boolean { return false; }
   startWebSocketConnection(): void { /* noop */ }
