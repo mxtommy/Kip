@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { UntypedFormArray } from '@angular/forms';
 
 import { BooleanMultiControlOptionsComponent } from './boolean-multicontrol-options.component';
 
@@ -14,6 +15,9 @@ describe('BooleanToggleConfigComponent', () => {
 
     fixture = TestBed.createComponent(BooleanMultiControlOptionsComponent);
     component = fixture.componentInstance;
+    // Provide required inputs before first detectChanges
+    const arr = new UntypedFormArray([]);
+    fixture.componentRef.setInput('multiCtrlArray', arr);
     fixture.detectChanges();
   });
 

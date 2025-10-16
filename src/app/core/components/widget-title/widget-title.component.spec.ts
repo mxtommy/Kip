@@ -14,6 +14,11 @@ describe('WidgetTitleComponent', () => {
 
     fixture = TestBed.createComponent(WidgetTitleComponent);
     component = fixture.componentInstance;
+
+    // Provide required inputs before first detectChanges
+    fixture.componentRef.setInput('text', 'Test Title');
+    fixture.componentRef.setInput('color', '#000000');
+
     fixture.detectChanges();
   });
 

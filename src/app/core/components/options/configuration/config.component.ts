@@ -242,6 +242,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.tokenSub.unsubscribe();
+    this.tokenSub?.unsubscribe();
   }
 }

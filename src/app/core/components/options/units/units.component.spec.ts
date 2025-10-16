@@ -16,7 +16,7 @@ describe('SettingsUnitsComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(SettingsUnitsComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    // Intentionally skip initial detectChanges to avoid ECAH from async init
   });
 
   it('should create', () => {

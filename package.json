@@ -41,7 +41,9 @@
   "main": "plugin/index.js",
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
-    "test": "ng test",
+    "test": "CI=1 ng test --watch=false",
+    "test:interactive": "ng test",
+    "test:headless": "CI=1 ng test --browsers=ChromeHeadless --watch=false",
     "lint": "ng lint",
     "dev": "ng serve --configuration=dev --serve-path=/@mxtommy/kip/",
     "build:plugin": "tsc -p ./kip-plugin/tsconfig.plugin.json",

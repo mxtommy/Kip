@@ -14,6 +14,13 @@ describe('WidgetListCardComponent', () => {
 
     fixture = TestBed.createComponent(WidgetListCardComponent);
     component = fixture.componentInstance;
+    // Provide required inputs before first detectChanges
+    fixture.componentRef.setInput('svgIcon', 'dashboard-dashboard');
+    fixture.componentRef.setInput('iconSize', 48);
+    fixture.componentRef.setInput('name', 'Widget Name');
+    fixture.componentRef.setInput('description', 'Widget description');
+    fixture.componentRef.setInput('pluginsStatus', []);
+    fixture.componentRef.setInput('pluginDependencyValid', true);
     fixture.detectChanges();
   });
 
