@@ -41,6 +41,8 @@ export class WidgetStreamsDirective {
   private registrations: { pathName: string; next: (value: IPathUpdate) => void }[] = [];
   // Active subscriptions per path (so we can surgically unsubscribe changed/removed paths)
   private subscriptions = new Map<string, { sub: Subscription; signature: string }>();
+  // Track identity of the cached base observable (path + normalized source) per path key
+  private baseSignatures = new Map<string, string>();
   // Root-level signature (timeout settings) to detect when all paths need pipeline rebuild
   private reset$ = new Subject<void>();
   private rootSignature: string | undefined;
@@ -56,7 +58,14 @@ export class WidgetStreamsDirective {
 
   private computePathSignature(pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string }): string {
     const normalizedPath = this.normalizePath(pathCfg.path) ?? '';
-    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, pathCfg.source || ''].join('|');
+    const src = (pathCfg.source?.trim() || 'default');
+    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, src].join('|');
+  }
+
+  private computeBaseKey(path: string, source?: string): string {
+    const normalizedPath = this.normalizePath(path) ?? '';
+    const src = (source?.trim() || 'default');
+    return `${normalizedPath}|${src}`;
   }
 
   private normalizePath(path: unknown): string | undefined {
@@ -82,13 +91,17 @@ export class WidgetStreamsDirective {
       if (existing) existing.sub.unsubscribe();
       this.subscriptions.delete(pathName);
       this.streams?.delete(pathName);
+      this.baseSignatures.delete(pathName);
       return;
     }
 
-    // Build base observable if missing
+    // Build base observable if missing, or refresh when path/source changed
     this.ensureStreamsMap();
-    if (!this.streams!.has(pathName)) {
-      this.streams!.set(pathName, this.dataService.subscribePath(normalizedPath, pathCfg.source || 'default'));
+    const baseKey = this.computeBaseKey(normalizedPath, pathCfg.source);
+    const currentBaseKey = this.baseSignatures.get(pathName);
+    if (!this.streams!.has(pathName) || currentBaseKey !== baseKey) {
+      this.streams!.set(pathName, this.dataService.subscribePath(normalizedPath, pathCfg.source?.trim() || 'default'));
+      this.baseSignatures.set(pathName, baseKey);
     }
     const base$ = this.streams!.get(pathName)!;
 
@@ -210,6 +223,7 @@ export class WidgetStreamsDirective {
       this.subscriptions.forEach(s => s.sub.unsubscribe());
       this.subscriptions.clear();
       this.streams = undefined;
+      this.baseSignatures.clear();
       this.registrations = [];
       return;
     }
@@ -221,6 +235,7 @@ export class WidgetStreamsDirective {
       if (existing) existing.sub.unsubscribe();
       this.subscriptions.delete(r);
       this.streams?.delete(r);
+      this.baseSignatures.delete(r);
       this.registrations = this.registrations.filter(x => x.pathName !== r);
     }
     const rootChanged = prevRootSig !== newRootSig;
@@ -232,27 +247,26 @@ export class WidgetStreamsDirective {
         if (existing) existing.sub.unsubscribe();
         this.subscriptions.delete(p);
         this.streams?.delete(p);
+        this.baseSignatures.delete(p);
         continue;
       }
       const normalizedCfg = { ...pathCfg, path: normalizedPath };
       const sig = this.computePathSignature(normalizedCfg);
       const existing = this.subscriptions.get(p);
       if (!existing || existing.signature !== sig || rootChanged) {
-        // Rebuild if we have at least one registration; otherwise just refresh base observable
-        const regs = this.registrations.filter(r => r.pathName === p);
-        if (!regs.length) {
-          // Update base observable signature only - no active registrations yet
-          this.ensureStreamsMap();
-          this.streams!.set(p, this.dataService.subscribePath(normalizedPath, pathCfg.source || 'default'));
-          if (existing) {
-            existing.sub.unsubscribe();
-            this.subscriptions.delete(p);
-          }
-        } else {
-          // Should only be one registration per path in this design
-          const reg = regs[0];
-          this.buildAndSubscribe(p, reg.next, cfg, normalizedCfg);
+        // Refresh base for (path|source) change
+        this.ensureStreamsMap();
+        const baseKey = this.computeBaseKey(normalizedPath, pathCfg.source);
+        this.streams!.set(p, this.dataService.subscribePath(normalizedPath, pathCfg.source?.trim() || 'default'));
+        this.baseSignatures.set(p, baseKey);
+
+        // Replace existing subscription if present; otherwise wait for observe()
+        if (existing) {
+          existing.sub.unsubscribe();
+          this.subscriptions.delete(p);
         }
+        const reg = this.registrations.find(r => r.pathName === p);
+        if (reg) this.buildAndSubscribe(p, reg.next, cfg, normalizedCfg);
       }
     }
   }
@@ -304,6 +318,8 @@ export class WidgetStreamsDirective {
    * @param next Callback for processed updates (unit conversion + sampling applied)
    */
   public observe(pathName: string, next: (value: IPathUpdate) => void): void {
+    // Capture previous callback before replacing registration
+    const prevReg = this.registrations.find(r => r.pathName === pathName)?.next;
     // Replace any existing registration for this path (one callback per path)
     this.registrations = this.registrations.filter(r => r.pathName !== pathName);
     this.registrations.push({ pathName, next });
@@ -316,6 +332,7 @@ export class WidgetStreamsDirective {
         existing.sub.unsubscribe();
         this.subscriptions.delete(pathName);
         this.streams?.delete(pathName);
+        this.baseSignatures.delete(pathName);
       }
       return;
     }
@@ -329,6 +346,7 @@ export class WidgetStreamsDirective {
         existing.sub.unsubscribe();
         this.subscriptions.delete(pathName);
         this.streams?.delete(pathName);
+        this.baseSignatures.delete(pathName);
       }
       this.registrations = this.registrations.filter(r => r.pathName !== pathName);
       return;
@@ -337,7 +355,8 @@ export class WidgetStreamsDirective {
     const normalizedCfg = { ...pathCfg, path: normalizedPath };
     const sig = this.computePathSignature(normalizedCfg);
     const existing = this.subscriptions.get(pathName);
-    if (existing && existing.signature === sig) return; // already subscribed with current signature
+    // If signature unchanged but callback changed, rebuild to swap observer; otherwise keep
+    if (existing && existing.signature === sig && prevReg === next) return;
 
     this.buildAndSubscribe(pathName, next, cfg, normalizedCfg);
   }
