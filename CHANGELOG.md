@@ -1,3 +1,6 @@
+# v 4.0.4
+## Fixes
+* More Embedded widget overflow causing scrollbar
 # v 4.0.3
 ## Improvements
 * Automatic configuration backup before upgrade execution.
