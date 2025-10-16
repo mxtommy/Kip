@@ -25,6 +25,8 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -42,13 +44,14 @@ import { ConnectionStateMachine } from './app/core/services/connection-state-mac
 import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
-import { signal } from '@angular/core';
+import { ENVIRONMENT_INITIALIZER, signal, inject as diInject } from '@angular/core';
 import type { IWidgetSvcConfig } from './app/core/interfaces/widgets-interface';
 import type { IAppConfig } from './app/core/interfaces/app-settings.interfaces';
 import type { IUnitDefaults } from './app/core/services/units.service';
 import type { IDatasetServiceDatasetConfig } from './app/core/services/data-set.service';
 // Global provider setup (HttpClient, RouterTestingModule, animation & material stubs, etc.)
 import { getTestBed, TestBed } from '@angular/core/testing';
+import type { Provider } from '@angular/core';
 import {
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting
@@ -264,7 +267,7 @@ class WidgetMetadataDirectiveStub implements Partial<WidgetMetadataDirective> {
 // Consolidated global TestBed configuration to avoid ordering surprises and make
 // global providers explicit in one place.
 testBed.configureTestingModule({
-  imports: [RouterTestingModule, ReactiveFormsModule],
+  imports: [RouterTestingModule, ReactiveFormsModule, MatIconModule],
   providers: [
     // HTTP helpers: testing provider is preferred for specs; keep interceptor wiring if some tests rely on it
     provideHttpClient(withInterceptorsFromDi()),
@@ -297,8 +300,9 @@ testBed.configureTestingModule({
 });
 
 // Monkey-patch TestBed to always merge in our global imports/providers for every spec
-const GLOBAL_IMPORTS = [RouterTestingModule, ReactiveFormsModule];
-const GLOBAL_PROVIDERS = [
+const GLOBAL_IMPORTS = [RouterTestingModule, ReactiveFormsModule, MatIconModule];
+type GlobalProvider = Provider | import('@angular/core').EnvironmentProviders;
+const GLOBAL_PROVIDERS: GlobalProvider[] = [
   provideHttpClient(withInterceptorsFromDi()),
   provideHttpClientTesting(),
   provideNoopAnimations(),
@@ -342,3 +346,49 @@ tbPatched.configureTestingModule = (moduleDef: PartialTestingModule = {}) => {
 
 // Angular CLI will find and run specs automatically (FindTestsPlugin). No manual __karma__.start().
 console.log('[TEST BOOTSTRAP] Global test environment configured. Waiting for spec auto-discovery...');
+
+// Provide an environment initializer to register the real SVG icon set when the test module is instantiated.
+// This avoids calling TestBed.inject() before specs configure their modules.
+GLOBAL_PROVIDERS.unshift({
+  provide: ENVIRONMENT_INITIALIZER,
+  multi: true,
+  useValue: () => {
+    try {
+      // Ensure we only register once across multiple configureTestingModule calls
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const w = window as any;
+      if (w.__KIP_ICONS_REGISTERED__) return;
+      const iconRegistry = diInject(MatIconRegistry);
+      const sanitizer = diInject(DomSanitizer);
+      const xhr = new XMLHttpRequest();
+      // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
+      xhr.open('GET', '/assets/svg/icons.svg', false);
+      xhr.send(null);
+      if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
+        // Register the whole set in multiple namespaces to match various usages in tests
+        const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
+        // Default (no namespace, svgIcon="name")
+        iconRegistry.addSvgIconSetLiteral(trusted);
+        // App-level namespace commonly used in KIP (svgIcon="kip:name")
+        iconRegistry.addSvgIconSetInNamespace('kip', trusted);
+  // Also support accidental leading-colon usage (svgIcon=":name") by mapping empty namespace
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  iconRegistry.addSvgIconSetInNamespace('', trusted as unknown as any);
+        const svgs = Array.from(doc.querySelectorAll('svg[id]')) as SVGSVGElement[];
+        for (const svg of svgs) {
+          const id = svg.getAttribute('id');
+          if (!id) continue;
+          iconRegistry.addSvgIconLiteral(id, sanitizer.bypassSecurityTrustHtml(svg.outerHTML));
+        }
+        // Mark as registered to avoid rework in subsequent modules
+        w.__KIP_ICONS_REGISTERED__ = true;
+      } else {
+        console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
+      }
+    } catch (err) {
+      console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);
+    }
+  }
+} as Provider);
