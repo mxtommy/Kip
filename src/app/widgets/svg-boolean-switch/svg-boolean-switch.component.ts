@@ -9,8 +9,7 @@ export interface IDimensions {
 
 @Component({
     selector: 'app-svg-boolean-switch',
-    templateUrl: './svg-boolean-switch.component.svg',
-    standalone: true
+    templateUrl: './svg-boolean-switch.component.svg'
 })
 export class SvgBooleanSwitchComponent implements DoCheck {
   // eslint-disable-next-line @angular-eslint/no-input-rename

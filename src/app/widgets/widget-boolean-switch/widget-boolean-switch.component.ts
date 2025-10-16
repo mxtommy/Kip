@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -39,7 +39,8 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     multiChildCtrls: []
   };
 
-  // Exposed for template access (displayName)
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
   protected readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private readonly streams = inject(WidgetStreamsDirective, { optional: true });
 
@@ -77,18 +78,30 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
         // Register path observers for each control (idempotent via directive)
         if (!this.streams) return;
         controls.forEach(ctrl => {
-          const pathEntry = (cfg.paths as IWidgetPath[] | undefined)?.find(p => p.pathID === ctrl.pathID);
+          const pathsArr = cfg.paths as IWidgetPath[] | undefined;
+          if (!pathsArr?.length) return;
+          const idx = pathsArr.findIndex(p => p.pathID === ctrl.pathID);
+          if (idx < 0) return; // no matching path entry
+          const pathEntry = pathsArr[idx];
           if (!pathEntry?.path) return; // guard empty path
-          this.streams.observe(pathEntry.pathID, pkt => {
+          // NOTE: WidgetStreamsDirective.observe expects the logical key of cfg.paths.
+          // Since cfg.paths is an array here, keys are '0', '1', ... Use the index as string.
+          this.streams.observe(String(idx), pkt => {
             // packet shape: pkt.data.value
             const val = pkt?.data?.value;
-            if (ctrl.isNumeric) {
-              if ([0, 1, null].includes(val)) {
-                ctrl.value = Boolean(val);
-              }
-            } else {
-              ctrl.value = val;
-            }
+            const nextVal = ctrl.isNumeric
+              ? ([0, 1, null].includes(val) ? Boolean(val) : ctrl.value)
+              : val;
+
+            this.ngZone.run(() => {
+              this.switchControls.update(list => {
+                const i = list.findIndex(c => c.pathID === ctrl.pathID);
+                if (i === -1) return list;
+                const updated = { ...list[i], value: nextVal };
+                return [...list.slice(0, i), updated, ...list.slice(i + 1)];
+              });
+              this.cdr.markForCheck();
+            });
           });
         });
       });
