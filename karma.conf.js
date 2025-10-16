@@ -36,8 +36,9 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
-    autoWatch: true,
-    browsers: ['Chrome'],
-    singleRun: false
+    // In local dev, keep watching; in CI/single-run, close the browser when done
+    autoWatch: !process.env.CI,
+    browsers: process.env.CI ? ['ChromeHeadless'] : ['Chrome'],
+    singleRun: !!process.env.CI
   });
 };
