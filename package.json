@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -94,9 +94,10 @@
     "jasmine-spec-reporter": "~5.0.0",
     "js-quantities": "^1.8.0",
     "karma": "^6.4.4",
+    "karma-spec-reporter": "^0.0.36",
     "karma-chrome-launcher": "~3.1.0",
     "karma-cli": "~2.0.0",
-    "karma-coverage-istanbul-reporter": "^3.0.3",
+  "karma-coverage": "^2.2.0",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.6.0",
     "lodash-es": "^4.17.21",

@@ -52,7 +52,7 @@ export class WidgetStreamsDirective {
     return {
       next: v => next(v),
       error: err => console.error('[Widget] Observer got an error: ' + err),
-      complete: () => {}
+      complete: () => { }
     };
   }
 
@@ -76,7 +76,7 @@ export class WidgetStreamsDirective {
 
   private computeRootSignature(cfg: IWidgetSvcConfig | undefined): string {
     if (!cfg) return 'none';
-    return `timeout:${cfg.enableTimeout?'1':'0'}:${cfg.dataTimeout ?? ''}`;
+    return `timeout:${cfg.enableTimeout ? '1' : '0'}:${cfg.dataTimeout ?? ''}`;
   }
 
   private ensureStreamsMap(): void {
@@ -189,6 +189,8 @@ export class WidgetStreamsDirective {
    */
   public setStreamsConfig(cfg: IWidgetSvcConfig | undefined) {
     this._streamsConfig.set(cfg);
+    // Initialize root signature so first applyStreamsConfigDiff doesn't treat it as changed
+    this.rootSignature = this.computeRootSignature(cfg);
   }
 
   /**
@@ -254,17 +256,13 @@ export class WidgetStreamsDirective {
       const sig = this.computePathSignature(normalizedCfg);
       const existing = this.subscriptions.get(p);
       if (!existing || existing.signature !== sig || rootChanged) {
-        // Refresh base for (path|source) change
-        this.ensureStreamsMap();
-        const baseKey = this.computeBaseKey(normalizedPath, pathCfg.source);
-        this.streams!.set(p, this.dataService.subscribePath(normalizedPath, pathCfg.source?.trim() || 'default'));
-        this.baseSignatures.set(p, baseKey);
-
         // Replace existing subscription if present; otherwise wait for observe()
         if (existing) {
           existing.sub.unsubscribe();
           this.subscriptions.delete(p);
         }
+        // Defer base observable creation/refresh to buildAndSubscribe(), which
+        // will reuse the cached base when base identity (path+source) is unchanged.
         const reg = this.registrations.find(r => r.pathName === p);
         if (reg) this.buildAndSubscribe(p, reg.next, cfg, normalizedCfg);
       }
