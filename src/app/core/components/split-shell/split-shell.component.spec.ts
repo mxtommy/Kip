@@ -6,14 +6,12 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { of } from 'rxjs';
 
 class MockAppSettingsService {
-  private width = 380;
-  private collapsed = false;
+  private ratio = 0.5;
   private side: 'left' | 'right' = 'right';
-  getFreeboardShellSide() { return this.side; }
-  getFreeboardShellWidth() { return this.width; }
-  getFreeboardShellCollapsed() { return this.collapsed; }
-  setFreeboardShellWidth(v: number) { this.width = v; }
-  setFreeboardShellCollapsed(v: boolean) { this.collapsed = v; }
+  getSplitShellSide() { return this.side; }
+  getSplitShellWidth() { return this.ratio; }
+  setSplitShellWidth(v: number) { this.ratio = v; }
+  getSplitShellSwipeDisabledAsO() { return of(false); }
 }
 
 class MockDashboardService {
@@ -38,12 +36,14 @@ describe('FreeboardSplitComponent', () => {
     }).compileComponents();
   });
 
-  it('should create and reflect initial width', () => {
+  it('should create and compute initial width ratio', () => {
     const fixture = TestBed.createComponent(SplitShellComponent);
     const comp = fixture.componentInstance;
     fixture.detectChanges();
     expect(comp).toBeTruthy();
-    expect(comp.panelWidth()).toBe(380);
+    // Width will depend on host size; ensure it computes to a non-negative number
+    expect(typeof comp.panelWidth()).toBe('number');
+    expect(comp.panelWidth()).toBeGreaterThanOrEqual(0);
   });
 
   // TODO: API change: SplitShellComponent no longer exposes toggleCollapse().

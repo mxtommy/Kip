@@ -14,7 +14,8 @@
        id="rect1-5"
        x="0"
        y="0"
-       style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1" />
+       pointer-events="all"
+       style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0" />
     <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
       <text
         id="text1-5"
@@ -50,7 +51,8 @@
       id="rect1"
       x="0"
       y="0"
-      style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"
+      pointer-events="all"
+      style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0"
     />
     <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
       <defs>
