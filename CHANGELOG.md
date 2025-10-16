@@ -1,3 +1,10 @@
+# v 4.0.3
+## Improvements
+* Automatic configuration backup before upgrade execution.
+## Fixes
+* Unresponsive Switch Panel widget
+* Embedded Widget overflow causing scrollbar
+* Migration launched more them once
 # v 4.0.2
 ## Improvements
 * Align page header styles with Freeboard‑SK for better visual integration.
