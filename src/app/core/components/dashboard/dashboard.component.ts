@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, NgGridStackNode, NgGridStackWidget, NgGridStackOptions, } from 'gridstack/dist/angular';
-import { GridItemHTMLElement } from 'gridstack';
+import { GridItemHTMLElement, GridStackOptions } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { UUID } from '../../utils/uuid.util';
@@ -50,6 +50,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _previousIsStaticState = true;
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
   private _suppressDrag = false;
+
+
+  private subGridOptions: GridStackOptions = {
+    cellHeight: 50,
+    column: "auto",
+    acceptWidgets: true,
+    margin: 4,
+    class: 'group-container'
+  };
+
   protected readonly gridOptions = signal<NgGridStackOptions>({
     column: 24,
     margin: 4,
@@ -59,16 +69,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     resizable: { handles: 'all' },
     acceptWidgets: true,
     subGridDynamic: false,
-    subGridOpts: {
-      float: true,
-      subGridDynamic: true,
-      acceptWidgets: true,
-      column: "auto",
-      cellHeight: 100,
-      minRow: 2,
-      margin: 4,
-      class: 'group-container'
-    },
+    subGridOpts: this.subGridOptions,
     children: []
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
@@ -242,7 +243,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected saveDashboard(): void {
-    const serializedData = this._gridstack().grid.save(false, true) as NgGridStackWidget[] || null;
+    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
     this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
   }
 
@@ -273,51 +274,164 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             component: 'select-widget',
           }, true).subscribe(data => {
             if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
-const widget = data as WidgetDescription;
-const ID = UUID.create();
-let newWidget = {};
+            const widget = data as WidgetDescription;
+            const ID = UUID.create();
+            let newWidget: NgGridStackWidget = {};
 
-if (widget.selector === 'group-widget') {
-  newWidget = {
-    x: gridCell.x,
-    y: gridCell.y,
-    w: widget.defaultWidth,
-    h: widget.defaultHeight,
-    id: ID,
-    sizeToContent: false,
-    subGridOpts: {
-      float: true,
-      subGridDynamic: true,
-      acceptWidgets: true,
-      column: "auto",
-      cellHeight: 100,
-      minRow: 2,
-      margin: 4,
-      class: 'group-container',
+            if (widget.selector === 'group-widget') {
+              newWidget = {
+                x: gridCell.x,
+                y: gridCell.y,
+                id: ID,
+                w: 2,
+                h: 2,
+                subGridOpts: {
+                  children: [
 
-    },
-    children: [{content: 'allo-toi'}]
-  };
-} else {
-  newWidget = {
-    x: gridCell.x,
-    y: gridCell.y,
-    w: widget.defaultWidth,
-    h: widget.defaultHeight,
-    minW: widget.minWidth,
-    minH: widget.minHeight,
-    id: ID,
-    selector: "widget-host2",
-    input: {
-      widgetProperties: {
-        type: widget.selector,
-        uuid: ID,
-      }
-    }
-  };
-}
 
-this._gridstack().grid.addWidget(newWidget);
+
+                    {
+                      "x": 10,
+                      "y": 0,
+                      "w": 4,
+                      "h": 6,
+                      "minW": 1,
+                      "minH": 1,
+                      "id": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
+                      "selector": "widget-host2",
+                      "input": {
+                        "widgetProperties": {
+                          "type": "widget-boolean-switch",
+                          "uuid": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
+                          "config": {
+                            "displayName": "Switch Panel Label",
+                            "filterSelfPaths": true,
+                            "paths": [
+                              {
+                                "description": "asdfasdf",
+                                "path": "self.red.autoLights.state",
+                                "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
+                                "source": "default",
+                                "pathType": "boolean",
+                                "isPathConfigurable": true,
+                                "showPathSkUnitsFilter": false,
+                                "pathSkUnitsFilter": null,
+                                "convertUnitTo": null,
+                                "sampleTime": 500,
+                                "supportsPut": true
+                              },
+                              {
+                                "description": "asdddd",
+                                "path": "self.red.autoLights.state",
+                                "pathID": "db475f54-7014-4430-b234-896f264c702e",
+                                "source": "default",
+                                "pathType": "boolean",
+                                "isPathConfigurable": true,
+                                "showPathSkUnitsFilter": false,
+                                "pathSkUnitsFilter": null,
+                                "convertUnitTo": null,
+                                "sampleTime": 500,
+                                "supportsPut": true
+                              }
+                            ],
+                            "enableTimeout": false,
+                            "dataTimeout": 5,
+                            "color": "contrast",
+                            "putEnable": true,
+                            "putMomentary": false,
+                            "multiChildCtrls": [
+                              {
+                                "ctrlLabel": "asdfasdf",
+                                "type": "1",
+                                "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
+                                "color": "contrast",
+                                "isNumeric": false,
+                                "value": null
+                              },
+                              {
+                                "ctrlLabel": "asdddd",
+                                "type": "3",
+                                "pathID": "db475f54-7014-4430-b234-896f264c702e",
+                                "color": "green",
+                                "isNumeric": false,
+                                "value": null
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "x": 15,
+                      "y": 0,
+                      "w": 4,
+                      "h": 6,
+                      "minW": 1,
+                      "minH": 1,
+                      "id": "366f822a-30b1-4753-b226-a90eae1f77e4",
+                      "selector": "widget-host2",
+                      "input": {
+                        "widgetProperties": {
+                          "type": "widget-numeric",
+                          "uuid": "366f822a-30b1-4753-b226-a90eae1f77e4",
+                          "config": {
+                            "displayName": "Gauge Label",
+                            "filterSelfPaths": true,
+                            "paths": {
+                              "numericPath": {
+                                "description": "Numeric Data",
+                                "path": "self.environment.current.drift",
+                                "source": "derived-data",
+                                "pathType": "number",
+                                "isPathConfigurable": true,
+                                "convertUnitTo": "kph",
+                                "showPathSkUnitsFilter": true,
+                                "pathSkUnitsFilter": null,
+                                "sampleTime": 500
+                              }
+                            },
+                            "showMax": false,
+                            "showMin": false,
+                            "numDecimal": 3,
+                            "showMiniChart": true,
+                            "yScaleMin": 0,
+                            "yScaleMax": 10,
+                            "inverseYAxis": false,
+                            "verticalChart": false,
+                            "color": "green",
+                            "enableTimeout": false,
+                            "dataTimeout": 5,
+                            "ignoreZones": false
+                          }
+                        }
+                      }
+                    }
+
+
+
+                  ]
+                },
+              };
+            } else {
+              newWidget = {
+                x: gridCell.x,
+                y: gridCell.y,
+                w: widget.defaultWidth,
+                h: widget.defaultHeight,
+                minW: widget.minWidth,
+                minH: widget.minHeight,
+                id: ID,
+                selector: "widget-host2",
+                input: {
+                  widgetProperties: {
+                    type: widget.selector,
+                    uuid: ID,
+                  }
+                }
+              };
+            }
+
+            this._gridstack().grid.addWidget(newWidget);
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
