@@ -78,7 +78,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _pendingResizeRaf: number | null = null;
   private _lastContainerHeight = 0;
   private _lastCellHeight = 0;
-  private _hasLoadedInitialDashboard = false;
   private _addDialogOpen = false;
 
   constructor() {

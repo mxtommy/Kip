@@ -9,13 +9,13 @@
   <defs id="defs9" />
   <g id="disabled" transform="translate(0,35)" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event, true)">
     <rect
-       width="180"
-       height="35"
-       id="rect1-5"
-       x="0"
-       y="0"
-       pointer-events="all"
-       style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0" />
+      width="180"
+      height="35"
+      id="rect1-5"
+      x="0"
+      y="0"
+      pointer-events="all"
+      style="display:inline;opacity:0.001;fill:black;fill-opacity:0.001;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0" />
     <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
       <text
         id="text1-5"
@@ -52,7 +52,7 @@
       x="0"
       y="0"
       pointer-events="all"
-      style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0"
+      style="display:inline;opacity:0.001;fill:black;fill-opacity:0.001;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0"
     />
     <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
       <defs>

@@ -169,6 +169,8 @@ export class GestureDirective {
   // Axis lock for more forgiving swipe recognition
   private lockedAxis: 'x' | 'y' | null = null;
   private readonly axisLockThreshold = 6; // px of movement before locking axis
+  // Track which element holds pointer capture for this sequence (target-based capture)
+  private captureEl: Element | null = null;
 
   // Move samples ring buffer (used only when debug is enabled)
   private static readonly MOVES_BUFFER_SIZE = 120;
@@ -339,15 +341,16 @@ export class GestureDirective {
         // Ensure any ad-hoc cancel listeners attached to document/element are removed
         this.removeLongpressCancelListeners();
 
-        // Release pointer capture if it was set
+        // Release pointer capture if it was set (target-based capture)
         try {
-          if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
-            el.releasePointerCapture(this.pointerId);
+          if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
+            this.captureEl.releasePointerCapture(this.pointerId);
           }
         } catch {
           /* ignore release errors */
         }
         this.pointerId = null;
+        this.captureEl = null;
         this.tracking = false;
         try { (GestureDirective as typeof GestureDirective)._instanceToEl.delete(this._instanceId); } catch { /* ignore */ }
       });
@@ -385,10 +388,6 @@ export class GestureDirective {
       return;
     }
     if (this.disableGestures()) { return; }
-    // Suppress UA long-press hint/context menu for touch/pen (Android/ChromeOS/iOS Safari)
-    if (ev.pointerType && ev.pointerType !== 'mouse') {
-      try { ev.preventDefault(); } catch { /* ignore */ }
-    }
     this.debug('pointerdown', {
       x: ev.clientX,
       y: ev.clientY,
@@ -474,6 +473,7 @@ export class GestureDirective {
     this.pressFired = false;
     this.currentPointerType = ev.pointerType || null;
     this.lockedAxis = null;
+  this.captureEl = null;
 
     // Reset move samples buffer if debugging
     if (this.isDebugEnabled()) {
@@ -532,14 +532,28 @@ export class GestureDirective {
     this.startX = ev.clientX;
     this.startY = ev.clientY;
     this.startTime = performance.now();
-    // Pointer capture policy:
-    // - Capture for touch/pen on the HOST to keep stream continuity if the pointer briefly leaves a child.
-    // - Do NOT capture for mouse to avoid interfering with native click/hover behavior in Material/CDK widgets.
+    // Pointer capture policy (target-based):
+    // - For touch/pen, capture on the ORIGINAL EVENT TARGET to preserve pointerup delivery to interactive children (e.g., SVG controls),
+    //   while still maintaining stream continuity if the pointer briefly leaves the element.
+    // - For mouse, do NOT capture to preserve native hover/click behavior.
     if (ev.pointerType !== 'mouse') {
+      const tgt = (ev.target as Element | null) ?? null;
+      const capEl: Element = tgt ?? this.host.nativeElement;
       try {
-        this.host.nativeElement.setPointerCapture(ev.pointerId);
-        this.debug('setPointerCapture success', { pointerId: ev.pointerId, pointerType: ev.pointerType });
+        if ('setPointerCapture' in capEl) {
+          capEl.setPointerCapture(ev.pointerId);
+          this.captureEl = capEl;
+          this.debug('setPointerCapture success', {
+            pointerId: ev.pointerId,
+            pointerType: ev.pointerType,
+            captureElement: this.elDesc(capEl as HTMLElement)
+          });
+        } else {
+          this.captureEl = null;
+          this.debug('setPointerCapture unavailable on element');
+        }
       } catch {
+        this.captureEl = null;
         this.debug('setPointerCapture failed', { pointerId: ev.pointerId, pointerType: ev.pointerType });
       }
     }
@@ -548,6 +562,10 @@ export class GestureDirective {
       window.clearTimeout(this.longPressTimer);
     }
     if (!this.potentialDoubleTap && allowPress && this.ownedLanes.p) {
+      // Since we are going to track a possible long-press, suppress UA long-press hint/context menu (touch/pen only)
+      if (this.currentPointerType !== 'mouse') {
+        try { ev.preventDefault(); } catch { /* ignore */ }
+      }
       // Add robust cancellation listeners
       this.addLongpressCancelListeners();
       this.debug('longpress timer scheduled', {
@@ -871,9 +889,8 @@ export class GestureDirective {
     this.debug('reset gesture state');
     // Release pointer capture if still held before clearing pointerId
     try {
-      const el = this.host.nativeElement;
-      if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
-        el.releasePointerCapture(this.pointerId);
+      if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
+        this.captureEl.releasePointerCapture(this.pointerId);
       }
     } catch {
       /* ignore release errors */
@@ -902,6 +919,7 @@ export class GestureDirective {
       }
     } catch { /* ignore */ }
     this.pointerId = null;
+  this.captureEl = null;
     this.tracking = false;
     this.pressFired = false;
     this.currentPointerType = null;
