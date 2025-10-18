@@ -65,12 +65,12 @@ interface CancelHandlerEntry {
  */
 @Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
+  // Debug flag: set to true to enable gesture debug logging
+  private static readonly DEBUG = false;
   // Service-level Chrome/macOS detection
   private readonly isChromeOnMac: boolean;
   // Firefox detection (used to suppress ghost click after long-press)
   private readonly isFirefox: boolean;
-  // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = false;
   // Suppress scheduling new gestures immediately after a long-press fires (ms deadline via performance.now())
   private static _suppressAllGesturesUntil = 0;
   // Static counter for instance IDs (debugging)
@@ -201,6 +201,12 @@ export class GestureDirective {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (el.style as any).webkitTouchCallout = 'none';
         }
+        // Additional suppression to avoid UA long-press hints and selection on Chrome/Android/ChromeOS
+        if (!el.style.userSelect) el.style.userSelect = 'none';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((el.style as any).webkitUserSelect === '') (el.style as any).webkitUserSelect = 'none';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el.style as any).webkitTapHighlightColor = 'transparent';
       }
       // Register in capture phase so we get events before children/libs (reduces re-target/cancel issues)
       // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
@@ -212,7 +218,8 @@ export class GestureDirective {
       // Use capture for touch/pen reliability; for mouse, pointerup in bubble keeps native click working
       el.addEventListener('pointerup', this.onPointerUp, { passive: true });
       el.addEventListener('pointercancel', this.onPointerCancel, { passive: true, capture: true });
-      el.addEventListener('lostpointercapture', this.onPointerCancel, { passive: true, capture: true });
+      // Guard lostpointercapture to avoid aborting valid touch/pen long-press on Chrome/Android/ChromeOS
+      el.addEventListener('lostpointercapture', this.onLostPointerCapture, { passive: true, capture: true });
       // Native mouse dblclick fallback (improves reliability after drag interactions)
       el.addEventListener('dblclick', this.onNativeDblClick, { passive: true });
       // Re-emit bubbling gesture events from children as directive outputs on this host
@@ -222,14 +229,22 @@ export class GestureDirective {
         const origin = (evt.detail as unknown as { __gid?: number })?.__gid;
         if (origin === this._instanceId) return;
         if (this.disableGestures()) return; // muted
+        const targetEl = evt.target as Element | null;
+        const fromChild = !!(targetEl && targetEl !== this.host.nativeElement && this.host.nativeElement.contains(targetEl));
         // Gate rebroadcast based on mode/flags
         const allowH = this.modeAllowsHorizontal();
         const allowV = this.modeAllowsVertical();
         let allowP = this.modeAllowsPress();
         let allowDT = this.modeAllowsDoubleTap();
-        // In dashboard mode, do not rebroadcast press/doubletap that originated from a widget container
-        if (this.mode() === 'dashboard' && (evt.type === 'press' || evt.type === 'doubletap')) {
-          const targetEl = evt.target as Element | null;
+        // Pass-through: if a descendant already recognized press/doubletap, let it bubble up
+        // even when this container's mode disables them (e.g., 'horizontal').
+        if (fromChild && (evt.type === 'press' || evt.type === 'doubletap')) {
+          allowP = allowP || evt.type === 'press';
+          allowDT = allowDT || evt.type === 'doubletap';
+        }
+        // Do not rebroadcast press/doubletap that originated from a widget container
+        // when this host is not that widget container (prevents grid from handling widget press)
+        if ((evt.type === 'press' || evt.type === 'doubletap')) {
           const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
             ? (targetEl as Element).closest('.widget-container')
             : null;
@@ -239,15 +254,55 @@ export class GestureDirective {
             allowDT = false;
           }
         }
-        this.debug('rebroadcast gate', { type: evt.type, allowH, allowV, allowP, allowDT });
-        switch (evt.type) {
-          case 'press': if (allowP) this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>); break;
-          case 'doubletap': if (allowDT) this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>); break;
-          case 'swipeleft': if (allowH) this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swiperight': if (allowH) this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swipeup': if (allowV) this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swipedown': if (allowV) this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-        }
+        this.debug('rebroadcast gate', {
+          type: evt.type,
+          allowH, allowV, allowP, allowDT,
+          fromChild,
+          target: this.elDesc(targetEl ?? undefined),
+          host: this.elDesc(this.host.nativeElement),
+          mode: this.mode()
+        });
+        // Ensure parent outputs run inside Angular so listeners trigger change detection
+        this.zone.run(() => {
+          switch (evt.type) {
+            case 'press':
+              if (allowP) {
+                this.debug('rebroadcast emit: press');
+                this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
+              }
+              break;
+            case 'doubletap':
+              if (allowDT) {
+                this.debug('rebroadcast emit: doubletap');
+                this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
+              }
+              break;
+            case 'swipeleft':
+              if (allowH) {
+                this.debug('rebroadcast emit: swipeleft');
+                this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swiperight':
+              if (allowH) {
+                this.debug('rebroadcast emit: swiperight');
+                this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swipeup':
+              if (allowV) {
+                this.debug('rebroadcast emit: swipeup');
+                this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swipedown':
+              if (allowV) {
+                this.debug('rebroadcast emit: swipedown');
+                this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+          }
+        });
       };
       const rebroadcastOpts: AddEventListenerOptions = { passive: true };
       el.addEventListener('press', rebroadcast as EventListener, rebroadcastOpts);
@@ -267,7 +322,7 @@ export class GestureDirective {
         // pointerup was added without capture; remove without capture
         el.removeEventListener('pointerup', this.onPointerUp);
         el.removeEventListener('pointercancel', this.onPointerCancel, { capture: true } as AddEventListenerOptions);
-        el.removeEventListener('lostpointercapture', this.onPointerCancel, { capture: true } as AddEventListenerOptions);
+        el.removeEventListener('lostpointercapture', this.onLostPointerCapture, { capture: true } as AddEventListenerOptions);
         el.removeEventListener('dblclick', this.onNativeDblClick);
         el.removeEventListener('press', rebroadcast as EventListener, rebroadcastOpts);
         el.removeEventListener('doubletap', rebroadcast as EventListener, rebroadcastOpts);
@@ -330,6 +385,10 @@ export class GestureDirective {
       return;
     }
     if (this.disableGestures()) { return; }
+    // Suppress UA long-press hint/context menu for touch/pen (Android/ChromeOS/iOS Safari)
+    if (ev.pointerType && ev.pointerType !== 'mouse') {
+      try { ev.preventDefault(); } catch { /* ignore */ }
+    }
     this.debug('pointerdown', {
       x: ev.clientX,
       y: ev.clientY,
@@ -343,8 +402,9 @@ export class GestureDirective {
     const allowV = this.modeAllowsVertical();
     let allowPress = this.modeAllowsPress();
     let allowDT = this.modeAllowsDoubleTap();
-    // Prefer child widgets for press/doubletap when inside a widget container on dashboard host
-    if (this.mode() === 'dashboard') {
+    // Prefer child widgets for press/doubletap when the target is inside a widget container and
+    // this host is not that widget container. Applies across modes so widget long-press wins.
+    {
       const targetEl = ev.target as Element | null;
       const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
         ? (targetEl as Element).closest('.widget-container')
@@ -430,24 +490,25 @@ export class GestureDirective {
         this._longPressMs = this.longPressMs();           // 500ms
         this._doubleTapInterval = this.doubleTapInterval(); // 300ms
         this._tapSlop = this.tapSlop();                   // 20px
-        this._pressMoveSlop = this.pressMoveSlop();       // 10px
+        // Relax slop to tolerate tiny panel jitter on Android/ChromeOS/iOS
+        this._pressMoveSlop = Math.max(this.pressMoveSlop(), 16);
         break;
       case 'pen':
         this._swipeMinDistance = 20;
         this._swipeMaxDuration = 500;
-        this._longPressMs = 400;
+        this._longPressMs = 500;
         this._doubleTapInterval = 250;
         this._tapSlop = 10;
-        this._pressMoveSlop = 8;
+        this._pressMoveSlop = 2;
         break;
       case 'mouse':
       default:
         this._swipeMinDistance = 15;
         this._swipeMaxDuration = 400;
-        this._longPressMs = 350;
+        this._longPressMs = 500;
         this._doubleTapInterval = 250;
         this._tapSlop = 8;
-        this._pressMoveSlop = 6;
+        this._pressMoveSlop = 2;
         break;
     }
 
@@ -534,6 +595,16 @@ export class GestureDirective {
         ownersForPointer: owners
       });
     }
+  };
+
+  // Guarded lostpointercapture: ignore during active touch/pen long-press sequences
+  private onLostPointerCapture = (ev: PointerEvent) => {
+    if (ev.pointerId !== this.pointerId) return;
+    if (this.currentPointerType !== 'mouse' && this.longPressTimer) {
+      this.debug('ignore lostpointercapture during active touch/pen long-press');
+      return;
+    }
+    this.onPointerCancel(ev);
   };
 
   /**
@@ -755,7 +826,7 @@ export class GestureDirective {
 
   private addLongpressCancelListeners() {
     this.debug('addLongpressCancelListeners');
-    // Cancel longpress on pointermove, pointerleave, pointerout, lostpointercapture, blur
+    // Cancel longpress only on explicit pointercancel (UA/system), plus window blur for touch/pen
     const cancel = (ev?: Event) => {
       this.debug('longpress cancelled by event', ev?.type);
       if (this.longPressTimer) {
@@ -767,20 +838,12 @@ export class GestureDirective {
     const el = this.host.nativeElement;
     const doc = document;
     const captureOpts: AddEventListenerOptions = { capture: true };
-    // store targets explicitly so removal can be precise
-    // handlers added to element and document
     const handlers: CancelHandlerEntry[] = [
-      { type: 'pointermove', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-      { type: 'lostpointercapture', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      { type: 'pointercancel', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
     ];
-    // For touch/pen, also cancel on pointerleave/pointerout; for mouse, avoid these to reduce interference with native click/hover
+    // For touch/pen, keep a safety net on window blur only
     if (this.currentPointerType !== 'mouse') {
-      handlers.push(
-        { type: 'pointerleave', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-        { type: 'pointerout', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-        // blur should be attached to window for cross-browser coverage on touch/pen; for mouse, avoid aborting long-press due to focus changes
-        { type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] },
-      );
+      handlers.push({ type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] });
     }
     this.cancelLongpressHandlers = handlers;
     for (const entry of this.cancelLongpressHandlers) {

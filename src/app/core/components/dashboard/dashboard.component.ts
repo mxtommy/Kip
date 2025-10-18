@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -78,6 +79,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _lastContainerHeight = 0;
   private _lastCellHeight = 0;
   private _hasLoadedInitialDashboard = false;
+  private _addDialogOpen = false;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -148,22 +150,26 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
 
     this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      const raw = params['id'];
+      let raw = params['id'];
+      if (params['id'] === '' ) {
+        raw = undefined;
+      } else {
+        raw = params['id'];
+      }
+
       const parsed = Number(raw);
       const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
-      if (!isValidNumber) return; // ignore non-numeric params entirely
 
-      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return;
+      if (raw !== undefined && !isValidNumber) return; // ignore have param but is non-numeric params entirely
+      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return; // ignore out-of-bounds IDs
 
       const current = this.dashboard.activeDashboard();
-      const firstLoad = !this._hasLoadedInitialDashboard;
-      // Always force a load on first valid param even if index matches default active index (0)
-      if (firstLoad || parsed !== current) {
-        if (parsed !== current) {
-          this.dashboard.setActiveDashboard(parsed);
-        }
+
+      if (!isNaN(parsed)) {
+        this.dashboard.setActiveDashboard(parsed);
         this.loadDashboard(parsed);
-        this._hasLoadedInitialDashboard = true;
+      } else {
+        this.loadDashboard(current);
       }
     });
   }
@@ -236,7 +242,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       queueMicrotask(() => this.loadDashboard(dashboardId));
       return;
     }
-    // Synchronous load eliminates one-frame empty dashboard flicker.
+    // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
     _gridstack.grid.load(dashboard.configuration);
     _gridstack.grid.commit();
@@ -259,8 +265,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.notifyLayoutEditCanceled();
   }
 
-  private _addDialogOpen = false;
-
   protected addNewWidget(e: Event | CustomEvent): void {
     if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
       if (this._addDialogOpen) {
@@ -278,8 +282,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe(data => {
-            if (!data || typeof data !== 'object') return; //clicked cancel or invalid data
+          }, true)
+          .pipe(finalize(() => { this._addDialogOpen = false; }))
+          .subscribe(data => {
+            if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
             const widget = data as WidgetDescription;
             const ID = UUID.create();
             let newWidget: NgGridStackWidget = {};
