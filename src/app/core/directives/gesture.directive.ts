@@ -341,6 +341,24 @@ export class GestureDirective {
         // Ensure any ad-hoc cancel listeners attached to document/element are removed
         this.removeLongpressCancelListeners();
 
+        // Release lane ownership and clear activePointers if a gesture was in-flight
+        try {
+          if (this.pointerId !== null) {
+            const map = (this.constructor as typeof GestureDirective)._laneOwners;
+            const owners = map.get(this.pointerId);
+            if (owners) {
+              this.debug('onDestroy: releasing lane ownership', { pointerId: this.pointerId, ownersBefore: owners, ownedByThis: this.ownedLanes, instanceId: this._instanceId });
+              if (this.ownedLanes.h && owners.h === this._instanceId) delete owners.h;
+              if (this.ownedLanes.v && owners.v === this._instanceId) delete owners.v;
+              if (this.ownedLanes.p && owners.p === this._instanceId) delete owners.p;
+              if (!owners.h && !owners.v && !owners.p) map.delete(this.pointerId); else map.set(this.pointerId, owners);
+              this.debug('onDestroy: lane owners after release', { pointerId: this.pointerId, owners });
+            }
+            const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId);
+            this.debug('onDestroy: activePointers delete', { pointerId: this.pointerId, deleted });
+          }
+        } catch { /* ignore */ }
+
         // Release pointer capture if it was set (target-based capture)
         try {
           if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
