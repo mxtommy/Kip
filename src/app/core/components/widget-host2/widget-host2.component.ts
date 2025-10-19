@@ -17,7 +17,7 @@ import { AppService } from '../../services/app-service';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 // Base shape expected from view components (optional defaultConfig)
-// NOTE: Widgets may expose a static DEFAULT_CONFIG to avoid temporary instantiation.
+// NOTE: Widgets should expose a static DEFAULT_CONFIG to avoid temporary instantiation.
 // If absent, Host2 will create & immediately destroy a temp instance to read instance.defaultConfig.
 interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
 

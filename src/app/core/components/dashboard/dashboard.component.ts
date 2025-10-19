@@ -17,6 +17,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
+import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -57,7 +58,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     cellHeight: 50,
     column: "auto",
     acceptWidgets: true,
-    margin: 4,
+    subGridDynamic: false,
+    margin: 50,
     class: 'group-container'
   };
 
@@ -69,7 +71,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     float: true,
     resizable: { handles: 'all' },
     acceptWidgets: true,
-    subGridDynamic: false,
+    subGridDynamic: true,
     subGridOpts: this.subGridOptions,
     children: []
   });
@@ -82,7 +84,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
-      WidgetHost2Component
+      WidgetHost2Component,
+      GroupWidgetComponent
     ]);
 
     effect(() => {
@@ -123,7 +126,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         grid.on('resizestart', () => {
           this._uiEvent.isDragging.set(true);
         });
-        grid.on('resizestop', () => {
+        grid.on('resizestop', (event, items) => {
           setTimeout(() => this._uiEvent.isDragging.set(false), 0);
         });
       }
@@ -282,8 +285,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             title: 'Add Widget',
             component: 'select-widget',
           }, true)
-          .pipe(finalize(() => { this._addDialogOpen = false; }))
-          .subscribe(data => {
+          .pipe(finalize(() => { this._addDialogOpen = false; })).subscribe(data => {
             if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
             const widget = data as WidgetDescription;
             const ID = UUID.create();
@@ -293,130 +295,95 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               newWidget = {
                 x: gridCell.x,
                 y: gridCell.y,
-                id: ID,
                 w: 2,
                 h: 2,
+                id: ID,
+                selector: "group-widget",
+                input: {
+                  widgetProperties: {
+                    type: widget.selector,
+                    uuid: ID,
+                    config: {
+                      displayName: "Group Widget",
+                      color: "contrast"
+                    }
+                  }
+                },
                 subGridOpts: {
                   children: [
 
-
-
-                    {
-                      "x": 10,
-                      "y": 0,
-                      "w": 4,
-                      "h": 6,
-                      "minW": 1,
-                      "minH": 1,
-                      "id": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
-                      "selector": "widget-host2",
-                      "input": {
-                        "widgetProperties": {
-                          "type": "widget-boolean-switch",
-                          "uuid": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
-                          "config": {
-                            "displayName": "Switch Panel Label",
-                            "filterSelfPaths": true,
-                            "paths": [
-                              {
-                                "description": "asdfasdf",
-                                "path": "self.red.autoLights.state",
-                                "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
-                                "source": "default",
-                                "pathType": "boolean",
-                                "isPathConfigurable": true,
-                                "showPathSkUnitsFilter": false,
-                                "pathSkUnitsFilter": null,
-                                "convertUnitTo": null,
-                                "sampleTime": 500,
-                                "supportsPut": true
-                              },
-                              {
-                                "description": "asdddd",
-                                "path": "self.red.autoLights.state",
-                                "pathID": "db475f54-7014-4430-b234-896f264c702e",
-                                "source": "default",
-                                "pathType": "boolean",
-                                "isPathConfigurable": true,
-                                "showPathSkUnitsFilter": false,
-                                "pathSkUnitsFilter": null,
-                                "convertUnitTo": null,
-                                "sampleTime": 500,
-                                "supportsPut": true
-                              }
-                            ],
-                            "enableTimeout": false,
-                            "dataTimeout": 5,
-                            "color": "contrast",
-                            "putEnable": true,
-                            "putMomentary": false,
-                            "multiChildCtrls": [
-                              {
-                                "ctrlLabel": "asdfasdf",
-                                "type": "1",
-                                "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
-                                "color": "contrast",
-                                "isNumeric": false,
-                                "value": null
-                              },
-                              {
-                                "ctrlLabel": "asdddd",
-                                "type": "3",
-                                "pathID": "db475f54-7014-4430-b234-896f264c702e",
-                                "color": "green",
-                                "isNumeric": false,
-                                "value": null
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "x": 15,
-                      "y": 0,
-                      "w": 4,
-                      "h": 6,
-                      "minW": 1,
-                      "minH": 1,
-                      "id": "366f822a-30b1-4753-b226-a90eae1f77e4",
-                      "selector": "widget-host2",
-                      "input": {
-                        "widgetProperties": {
-                          "type": "widget-numeric",
-                          "uuid": "366f822a-30b1-4753-b226-a90eae1f77e4",
-                          "config": {
-                            "displayName": "Gauge Label",
-                            "filterSelfPaths": true,
-                            "paths": {
-                              "numericPath": {
-                                "description": "Numeric Data",
-                                "path": "self.environment.current.drift",
-                                "source": "derived-data",
-                                "pathType": "number",
-                                "isPathConfigurable": true,
-                                "convertUnitTo": "kph",
-                                "showPathSkUnitsFilter": true,
-                                "pathSkUnitsFilter": null,
-                                "sampleTime": 500
-                              }
-                            },
-                            "showMax": false,
-                            "showMin": false,
-                            "numDecimal": 3,
-                            "showMiniChart": true,
-                            "yScaleMin": 0,
-                            "yScaleMax": 10,
-                            "inverseYAxis": false,
-                            "verticalChart": false,
-                            "color": "green",
-                            "enableTimeout": false,
-                            "dataTimeout": 5,
-                            "ignoreZones": false
-                          }
-                        }
-                      }
-                    }
+/*
+  {
+    "x": 10,
+    "y": 0,
+    "w": 4,
+    "h": 6,
+    "minW": 1,
+    "minH": 1,
+    "id": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
+    "selector": "widget-host2",
+    "input": {
+      "widgetProperties": {
+        "type": "widget-boolean-switch",
+        "uuid": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
+        "config": {
+          "displayName": "Switch Panel Label",
+          "filterSelfPaths": true,
+          "paths": [
+            {
+              "description": "asdfasdf",
+              "path": "self.red.autoLights.state",
+              "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
+              "source": "default",
+              "pathType": "boolean",
+              "isPathConfigurable": true,
+              "showPathSkUnitsFilter": false,
+              "pathSkUnitsFilter": null,
+              "convertUnitTo": null,
+              "sampleTime": 500,
+              "supportsPut": true
+            },
+            {
+              "description": "asdddd",
+              "path": "self.red.autoLights.state",
+              "pathID": "db475f54-7014-4430-b234-896f264c702e",
+              "source": "default",
+              "pathType": "boolean",
+              "isPathConfigurable": true,
+              "showPathSkUnitsFilter": false,
+              "pathSkUnitsFilter": null,
+              "convertUnitTo": null,
+              "sampleTime": 500,
+              "supportsPut": true
+            }
+          ],
+          "enableTimeout": false,
+          "dataTimeout": 5,
+          "color": "contrast",
+          "putEnable": true,
+          "putMomentary": false,
+          "multiChildCtrls": [
+            {
+              "ctrlLabel": "asdfasdf",
+              "type": "1",
+              "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
+              "color": "contrast",
+              "isNumeric": false,
+              "value": null
+            },
+            {
+              "ctrlLabel": "asdddd",
+              "type": "3",
+              "pathID": "db475f54-7014-4430-b234-896f264c702e",
+              "color": "green",
+              "isNumeric": false,
+              "value": null
+            }
+          ]
+        }
+      }
+    }
+  } */
 
 
 
@@ -540,19 +507,24 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Destroy the Gridstack instance to clean up internal resources
     const _gridstack = this._gridstack();
     if (_gridstack?.grid) {
-      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+      _gridstack.grid.offAll(); // Ensure this cleans up event listeners
+      _gridstack.grid.destroy();
     }
+
     if (this._resizeObserver) {
-      try { this._resizeObserver.disconnect(); } catch { /* ignore */ }
+      try {
+        this._resizeObserver.disconnect();
+      } catch { /* ignore */ }
       this._resizeObserver = undefined;
     }
+
     if (this._pendingResizeRaf !== null) {
       cancelAnimationFrame(this._pendingResizeRaf);
       this._pendingResizeRaf = null;
     }
+
     this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 }

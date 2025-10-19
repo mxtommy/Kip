@@ -66,7 +66,7 @@ interface CancelHandlerEntry {
 @Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
   // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = false;
+  private static readonly DEBUG = true;
   // Service-level Chrome/macOS detection
   private readonly isChromeOnMac: boolean;
   // Firefox detection (used to suppress ghost click after long-press)
@@ -247,13 +247,30 @@ export class GestureDirective {
         // Do not rebroadcast press/doubletap that originated from a widget container
         // when this host is not that widget container (prevents grid from handling widget press)
         if ((evt.type === 'press' || evt.type === 'doubletap')) {
+          const hostEl = this.host.nativeElement as Element;
           const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
             ? (targetEl as Element).closest('.widget-container')
             : null;
           // If the event target is within a widget container and this host is not that widget, skip
-          if (widgetEl && widgetEl !== this.host.nativeElement) {
+          if (widgetEl && widgetEl !== hostEl) {
             allowP = false;
             allowDT = false;
+          }
+          // Additionally: if host is the grid root and the event originated inside a grid item,
+          // suppress rebroadcast so the item's overlay/child can own press/doubletap.
+          const hostIsGridRoot = (hostEl as HTMLElement).classList?.contains('grid-stack') ||
+            (hostEl as HTMLElement).tagName?.toLowerCase() === 'gridstack';
+          const inGridItem = targetEl && typeof (targetEl as Element).closest === 'function'
+            ? (targetEl as Element).closest('.grid-stack-item')
+            : null;
+          if (hostIsGridRoot && inGridItem) {
+            allowP = false;
+            allowDT = false;
+            this.debug('suppress grid-root rebroadcast for press/doubletap inside grid-stack-item', {
+              host: this.elDesc(hostEl as HTMLElement),
+              target: this.elDesc(targetEl ?? undefined),
+              inGridItem: this.elDesc(inGridItem as HTMLElement)
+            });
           }
         }
         this.debug('rebroadcast gate', {
@@ -423,12 +440,29 @@ export class GestureDirective {
     // this host is not that widget container. Applies across modes so widget long-press wins.
     {
       const targetEl = ev.target as Element | null;
+      const hostEl = this.host.nativeElement as Element;
       const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
         ? (targetEl as Element).closest('.widget-container')
         : null;
-      if (widgetEl && widgetEl !== this.host.nativeElement) {
+      if (widgetEl && widgetEl !== hostEl) {
         allowPress = false;
         allowDT = false;
+      }
+      // Additionally: if host is the grid root and the press originates inside a grid item,
+      // let the item's overlay/child own press/doubletap instead of the grid.
+      const hostIsGridRoot = (hostEl as HTMLElement).classList?.contains('grid-stack') ||
+        (hostEl as HTMLElement).tagName?.toLowerCase() === 'gridstack';
+      const inGridItem = targetEl && typeof (targetEl as Element).closest === 'function'
+        ? (targetEl as Element).closest('.grid-stack-item')
+        : null;
+      if (hostIsGridRoot && inGridItem) {
+        allowPress = false;
+        allowDT = false;
+        this.debug('suppress grid-root press/doubletap for event inside grid-stack-item', {
+          host: this.elDesc(hostEl as HTMLElement),
+          target: this.elDesc(targetEl ?? undefined),
+          inGridItem: this.elDesc(inGridItem as HTMLElement)
+        });
       }
     }
     if (!allowH && !allowV && !allowPress && !allowDT) {
