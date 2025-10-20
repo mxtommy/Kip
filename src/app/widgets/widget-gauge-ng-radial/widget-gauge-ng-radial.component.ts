@@ -77,14 +77,14 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   private readonly LINE: string = "line";
   private readonly ANIMATION_TARGET_NEEDLE: string = "needle";
 
-  readonly ngGauge = viewChild<RadialGauge>('radialGauge');
+  readonly ngGauge = viewChild.required<RadialGauge>('radialGauge');
   readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
   // Reactive state
   protected value = signal(0);
   protected textValue = signal('');
   protected colorStrokeTicks = signal('');
-  private readonly adjustedScale = computed<IScale>(() => {
+  private adjustedScale = computed<IScale>(() => {
     const cfg = this.runtime.options();
     if (!cfg) return { min: 0, max: 100, majorTicks: [] };
     if (cfg.gauge?.subType === 'capacity') {
@@ -98,23 +98,22 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     );
   });
   private highlights = computed<IDataHighlight[]>(() => {
+    const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();
+
+    if (!zones?.length) return [];
     if (!cfg || !theme) return [];
     if (cfg.ignoreZones) return [];
     if (cfg.gauge?.subType !== 'measuring') return []; // only measuring subtype shows bands
-    const zones = this.metadata.zones();
-    if (!zones?.length) return [];
+
     const pathCfg = cfg.paths?.['gaugePath'];
-    if (!pathCfg) return [];
     const scale = this.adjustedScale();
     const invert = cfg.gauge?.barStartPosition === 'right';
-    this.state = States.Normal;
     return getHighlights(zones, theme, pathCfg.convertUnitTo, this.unitsService, scale.min, scale.max, invert);
   });
   protected displayName = computed(() => this.runtime.options()?.displayName);
-
-  private state = States.Normal;
+  private pathDataState = signal<States | null>(null);
   private viewReady = signal(false);
   protected gaugeOptions: RadialGaugeOptions = {} as RadialGaugeOptions;
 
@@ -124,51 +123,24 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
       const cfg = this.runtime.options();
       const theme = this.theme();
       if (!cfg || !theme) return;
-      const pCfg = cfg.paths?.['gaugePath'];
-      if (!pCfg?.path) return;
+      if (!cfg.paths?.['gaugePath'].path) return;
+
       untracked(() => this.streams.observe('gaugePath', path => {
+        if (path.state !== this.pathDataState()) {
+          this.pathDataState.set((path.state as States) || null);
+        }
+
         const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
           this.value.set(cfg.displayScale?.lower ?? 0);
           this.textValue.set('--');
         } else {
           const lower = cfg.displayScale?.lower ?? 0;
-          const upper = cfg.displayScale?.upper ?? lower + 100;
+          const upper = cfg.displayScale?.upper ?? 100;
           // clamp
           const clamped = Math.min(Math.max(raw, lower), upper);
           this.value.set(clamped);
           if (this.textValue() === '--') this.textValue.set('');
-        }
-        const newState = (path?.state ?? States.Normal) as States;
-        if (newState !== this.state) {
-          this.state = newState;
-          if (!cfg.ignoreZones && this.ngGauge()) {
-            const option: RadialGaugeOptions = {};
-            switch (newState) {
-              case States.Alarm:
-                option.colorBorderMiddle = theme.cardColor;
-                option.colorBarProgress = theme.zoneAlarm;
-                option.colorValueText = theme.zoneAlarm;
-                break;
-              case States.Warn:
-                option.colorBorderMiddle = theme.cardColor;
-                option.colorBarProgress = theme.zoneWarn;
-                option.colorValueText = theme.zoneWarn;
-                break;
-              case States.Alert:
-                option.colorBorderMiddle = theme.cardColor;
-                option.colorBarProgress = theme.zoneAlert;
-                option.colorValueText = theme.zoneAlert;
-                break;
-              default:
-                option.colorBorderMiddle = theme.cardColor;
-                option.colorBarProgress = cfg.gauge?.subType === 'measuring' ? getColors(cfg.color, theme).color : getColors(cfg.color, theme).dim;
-                option.colorValueText = getColors(cfg.color, theme).color;
-            }
-            try {
-              this.ngGauge()?.update(option);
-            } catch { /* ignore */ }
-          }
         }
       }));
     });
@@ -182,38 +154,107 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
     // Push highlights to gauge when they change (imperative update)
     effect(() => {
-      const cfg = this.runtime.options();
       const hl = this.highlights();
-      if (!cfg) return;
       if (!this.viewReady()) return;
-      try {
-        // Some legacy gauges expected JSON string; canvas-gauges accepts array OR JSON string.
-        // To mirror legacy stability we stringify non-empty arrays.
-        if (!hl.length) {
-          this.ngGauge()?.update({ highlights: [] });
-        } else {
-          const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
-          this.ngGauge()?.update({ highlights: serialized, highlightsWidth: cfg.gauge?.highlightsWidth });
-        }
-      } catch { /* ignore */ }
+
+      untracked(() => {
+        try {
+          if (!hl.length) {
+            this.ngGauge()?.update({ highlights: [] });
+          } else {
+            const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
+            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.runtime.options().gauge?.highlightsWidth });
+          }
+        } catch { /* ignore */ }
+      });
     });
 
     // Gauge option builder effect
     effect(() => {
-      const cfg = this.runtime.options();
       const theme = this.theme();
       // include scale dependency so options rebuild on scale recompute
       const scale = this.adjustedScale(); // reading for dependency
-      if (!cfg || !theme) return;
-      this.buildGaugeOptions(cfg, theme, scale);
-      if (this.viewReady()) {
-        try { this.ngGauge()?.update(this.gaugeOptions); } catch { /* ignore */ }
-      }
+
+      untracked(() => {
+        this.buildGaugeOptions(this.runtime.options(), theme, scale);
+        if (this.viewReady()) {
+          try {
+            this.ngGauge()?.update(this.gaugeOptions);
+          } catch { /* ignore */ }
+        }
+      });
+    });
+
+    // Apply state-based colors (after view ready)
+    effect(() => {
+      const state = this.pathDataState();
+      if (!this.viewReady()) return;
+      untracked(() => {
+        const cfg = this.runtime.options();
+        const theme = this.theme();
+        if (cfg.ignoreZones) return;
+
+        const option: RadialGaugeOptions = {};
+        switch (state) {
+          case States.Alarm:
+            option.colorBorderMiddle = theme.cardColor;
+            option.colorBarProgress = theme.zoneAlarm;
+            option.colorValueText = theme.zoneAlarm;
+            break;
+          case States.Warn:
+            option.colorBorderMiddle = theme.cardColor;
+            option.colorBarProgress = theme.zoneWarn;
+            option.colorValueText = theme.zoneWarn;
+            break;
+          case States.Alert:
+            option.colorBorderMiddle = theme.cardColor;
+            option.colorBarProgress = theme.zoneAlert;
+            option.colorValueText = theme.zoneAlert;
+            break;
+          default:
+            option.colorBorderMiddle = theme.cardColor;
+            option.colorBarProgress = cfg.gauge?.subType === 'measuring' ? getColors(cfg.color, theme).color : getColors(cfg.color, theme).dim;
+            option.colorValueText = getColors(cfg.color, theme).color;
+        }
+        try {
+          this.ngGauge()?.update(option);
+        } catch { /* ignore */}
+      });
     });
   }
 
+  ngAfterViewInit(): void {
+    this.viewReady.set(true);
+    this.setCanvasSize();
+
+    // Initial full push
+    try {
+      this.ngGauge()?.update(this.gaugeOptions);
+    } catch { /* ignore */ }
+  }
+
+  public onResized(event: ResizeObserverEntry): void {
+    const resize: RadialGaugeOptions = {
+      height: event.contentRect.height,
+      width: event.contentRect.width
+    };
+    try {
+      this.ngGauge()?.update(resize);
+    } catch { /* ignore */ }
+  }
+
+  private setCanvasSize(): void {
+    const el = this.gauge()?.nativeElement as HTMLElement | null;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const resize: RadialGaugeOptions = { height: rect.height, width: rect.width } as RadialGaugeOptions;
+    try {
+      this.ngGauge()?.update(resize);
+    } catch { /* ignore */ }
+  }
+
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
-    const g = this.gaugeOptions = {} as RadialGaugeOptions;
+    const g = {} as RadialGaugeOptions;
     g.title = this.displayName();
     g.minValue = scale.min;
     g.maxValue = scale.max;
@@ -275,33 +316,6 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
       g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0; g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
     }
-  }
-
-  private setCanvasSize(): void {
-    const el = this.gauge()?.nativeElement as HTMLElement | null;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const resize: RadialGaugeOptions = { height: rect.height, width: rect.width } as RadialGaugeOptions;
-    try { this.ngGauge()?.update(resize); } catch { /* ignore */ }
-  }
-
-  ngAfterViewInit(): void {
-    this.viewReady.set(true);
-    this.setCanvasSize();
-
-    // Initial full push
-    try {
-      this.ngGauge()?.update(this.gaugeOptions);
-    } catch { /* ignore */ }
-  }
-
-  public onResized(event: ResizeObserverEntry): void {
-    const resize: RadialGaugeOptions = {
-      height: event.contentRect.height,
-      width: event.contentRect.width
-    };
-    try {
-      this.ngGauge()?.update(resize);
-    } catch { /* ignore */ }
+    this.gaugeOptions = g;
   }
 }

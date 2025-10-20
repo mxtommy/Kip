@@ -79,6 +79,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private maxMinMaxTextWidth = 0;
   private maxMinMaxTextHeight = 0;
   private streamRegistered = false;
+  private pathDataState: States | null = null;
   private isDestroyed = false;
 
   private onNumericValue = (newValue: IPathUpdate) => {
@@ -90,19 +91,22 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     }
 
     if (!this.runtime?.options().ignoreZones) {
-      switch (newValue.state) {
-        case States.Alarm:
-          this.valueStateColor = this.theme().zoneAlarm;
-          break;
-        case States.Warn:
-          this.valueStateColor = this.theme().zoneWarn;
-          break;
-        case States.Alert:
-          this.valueStateColor = this.theme().zoneAlert;
-          break;
-        default:
-          this.valueStateColor = this.valueColor;
-          break;
+      if (this.pathDataState !== newValue.state) {
+        this.pathDataState = newValue.state as States;
+        switch (newValue.state) {
+          case States.Alarm:
+            this.valueStateColor = this.theme().zoneAlarm;
+            break;
+          case States.Warn:
+            this.valueStateColor = this.theme().zoneWarn;
+            break;
+          case States.Alert:
+            this.valueStateColor = this.theme().zoneAlert;
+            break;
+          default:
+            this.valueStateColor = this.valueColor;
+            break;
+        }
       }
     }
     this.drawWidget();
@@ -129,6 +133,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         this.manageDatasetAndChart();
         this.setColors();
         this.startWidget();
+        this.pathDataState = null;
         this.drawWidget();
       });
     });

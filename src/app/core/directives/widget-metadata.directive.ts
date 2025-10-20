@@ -4,7 +4,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService } from '../services/data.service';
 import { ISkZone } from '../interfaces/signalk-interfaces';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { WidgetRuntimeDirective } from './widget-runtime.directive';
 
 @Directive({
   selector: '[widget-metadata]',
@@ -60,16 +59,6 @@ export class WidgetMetadataDirective {
    */
   public zones = signal<ISkZone[]>([]);
   /**
-   * Optional config input for standalone usage (non-Host2 widgets).
-   * Host2 widgets should rely on WidgetRuntimeDirective instead.
-   *
-   * @example
-   * ```html
-   * <div widget-metadata [metaConfig]="widgetConfig">
-   * ```
-   */
-  public metaConfig = input<IWidgetSvcConfig>();
-  /**
    * Optional widget input for standalone usage.
    * Typically not needed since config contains all path information.
    *
@@ -83,61 +72,68 @@ export class WidgetMetadataDirective {
   private _metaConfig = signal<IWidgetSvcConfig | undefined>(undefined);
   private readonly dataService = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private reset$ = new Subject<void>();
-  private lastKey: string | undefined;
   private currentSub: Subscription | undefined;
   private pathSignature: string | undefined;
 
   /**
-   * Begin observing metadata for the specified path key.
+   * Begin observing metadata for a path and own the signature gating.
    *
-   * Behavior:
-   * - If pathKey is provided, observes that specific path from config.paths
-   * - If pathKey is omitted, observes the first configured path
-   * - Idempotent: calling with same path multiple times won't create duplicate subscriptions
-   * - Previous subscription is cleanly replaced when path changes
-   * - {@link zones} signal is updated reactively as metadata changes. Widgets can use this
-   * signal in computed/effects to react to zone updates.
+   * Responsibilities:
+   * - Sole authority for path resolution and signature comparison
+   * - Resolves the effective key: `pathKey` if provided and valid, otherwise the first key in `cfg.paths`
+   * - Computes the signature from the resolved path (currently the path string itself)
+   * - Idempotent: if the computed signature matches `pathSignature`, this is a no-op
+   * - On change: stores `pathSignature` and calls {@link subscribePathMeta} to (re)subscribe
    *
-   * Best Practices:
-   * - Call once per path in widget ngOnInit or constructor effect
-   * - Use with config paths that have zones metadata (typically numeric gauge paths)
-   * - No manual cleanup needed; directive handles subscription lifecycle
+   * Notes:
+   * - This method intentionally centralizes all signature logic; downstream helpers do not manage signatures
+   * - If config has no valid paths or the resolved path is empty, it safely no-ops
    *
-   * @param pathKey Optional path key from config.paths. If omitted, uses first available path.
+   * @param pathKey Optional path key from config.paths. If omitted, the first available path is used.
    *
    * @example
    * ```typescript
-   * // Single path observation (most common)
-   * constructor() {
-   *   // Observe default path (first in config.paths)
-   *   this.metadata.observe();
-   *
-   *   // Or observe specific path
-   *   this.metadata.observe('primaryPath');
-   * }
+   * // Typical single-path usage
+   * this.metadata.observe(); // uses first configured path
+   * // Or explicitly select a path key
+   * this.metadata.observe('gaugePath');
    * ```
    */
   public observe(pathKey?: string): void {
-    const cfg = this.runtime?.options() ?? this._metaConfig() ?? this.metaConfig();
+    const cfg = this._metaConfig();
     if (!cfg?.paths || Object.keys(cfg.paths).length === 0) return;
-    const key = pathKey || Object.keys(cfg.paths)[0];
-    this.lastKey = key;
+    const key = pathKey ?? Object.keys(cfg.paths)[0];
     const path = cfg.paths[key]?.path;
     if (!path) return;
-    const sig = path; // simple signature (only path matters for zones)
+
+    // Signature gating handled here (path alone defines zones signature)
+    const sig = path;
     if (this.pathSignature === sig) return; // unchanged
-    this.subscribePathMeta(path, sig);
+
+    // Update signature and (re)subscribe
+    this.pathSignature = sig;
+    this.subscribePathMeta(path);
   }
 
-  private subscribePathMeta(path: string, sig: string): void {
+  /**
+   * Subscribe to Signal K path metadata and update {@link zones}.
+   *
+   * Responsibilities:
+   * - Tear down any existing metadata subscription
+   * - Subscribe to `DataService.getPathMetaObservable(path)` and write to {@link zones}
+   * - Handle lifecycle cleanup via `takeUntil(this.reset$)` and `takeUntilDestroyed(this.destroyRef)`
+   *
+   * Important:
+   * - This method does NOT set or compare signatures; that is owned by {@link observe}
+   * - Callers must ensure signature gating before invoking this method
+   */
+  private subscribePathMeta(path: string): void {
     // Tear down existing if different
     if (this.currentSub) {
       this.currentSub.unsubscribe();
       this.currentSub = undefined;
     }
-    this.pathSignature = sig;
     const sub = this.dataService.getPathMetaObservable(path)
       .pipe(
         takeUntil(this.reset$),
@@ -167,34 +163,27 @@ export class WidgetMetadataDirective {
   }
 
   /**
-   * Apply config changes with diff-based subscription management.
-   * Called automatically by Host2 when widget config is updated.
-   * Only resubscribes if the primary path actually changed.
+   * Apply config changes (store-only) and optionally reconcile observation.
    *
-   * Behavior:
-   * - Compares new path signature against current subscription
-   * - Reuses existing subscription if path unchanged (performance optimization)
-   * - Cleanly tears down and rebuilds subscription when path changes
-   * - Resets zones to empty array if no valid paths in new config
+   * Responsibilities:
+   * - Store the latest config reference in an internal signal
+   * - Do not perform signature math here; defer all gating to {@link observe}
+   * - If we are already observing a path (truthy `pathSignature`), call {@link observe}
+   *   to reconcile with the new config; otherwise, do nothing (no auto-start)
    *
-   * @param cfg New widget config or undefined to clear all subscriptions
+   * Rationale:
+   * - Keeps separation of concerns clear: `observe()` owns (re)subscription and signature logic
+   * - Prevents accidental auto-subscription on first-time config arrival
+   *
+   * @param cfg New widget config or undefined
    * @internal
    */
   public applyMetaConfigDiff(cfg: IWidgetSvcConfig | undefined): void {
     this._metaConfig.set(cfg);
-    if (!cfg?.paths || Object.keys(cfg.paths).length === 0) {
-      this.reset();
-      return;
+    // If already observing a path (signature present), check re-observe
+    if (this.pathSignature) {
+      this.observe();
     }
-    const key = this.lastKey && cfg.paths[this.lastKey] ? this.lastKey : Object.keys(cfg.paths)[0];
-    const newPath = cfg.paths[key]?.path;
-    const newSig = newPath ?? '';
-    if (!newPath) {
-      this.reset();
-      return;
-    }
-    if (this.pathSignature === newSig) return; // unchanged
-    this.subscribePathMeta(newPath, newSig);
   }
 
   /**
