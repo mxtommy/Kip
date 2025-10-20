@@ -89,15 +89,16 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     return { min: cfg.displayScale.lower, max: cfg.displayScale.upper, majorTicks: [] };
   });
   private highlights = computed<IDataHighlight[]>(() => {
+    const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();
+
+    if (!zones?.length) return [];
     if (!cfg || !theme) return [];
     if (cfg.ignoreZones) return [];
-    const zones = this.metadata.zones();
-    if (!zones?.length) return [];
-    const pathCfg = cfg.paths?.['gaugePath'];
-    if (!pathCfg) return [];
-    return getHighlights(zones, theme, pathCfg.convertUnitTo, this.unitsService, this.adjustedScale().min, this.adjustedScale().max);
+
+    if (!cfg.paths?.['gaugePath']) return [];
+    return getHighlights(zones, theme, cfg.paths['gaugePath'].convertUnitTo, this.unitsService, this.adjustedScale().min, this.adjustedScale().max);
   });
   protected displayName = computed(() => this.runtime.options()?.displayName || 'Gauge Label');
 
@@ -107,8 +108,8 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       const cfg = this.runtime.options();
       const theme = this.theme();
       if (!cfg || !theme) return;
-      const pCfg = cfg.paths?.['gaugePath'];
-      if (!pCfg?.path) return;
+      if (!cfg.paths?.['gaugePath'].path) return;
+
       untracked(() => this.streams.observe('gaugePath', path => {
         const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
@@ -134,17 +135,16 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
     // Apply highlights to gauge post-init
     effect(() => {
-      const cfg = this.runtime.options();
       const hl = this.highlights();
-      if (!cfg) return;
       if (!this.viewReady()) return;
+
       untracked(() => {
         try {
           if (!hl.length) {
             this.ngGauge()?.update({ highlights: [] });
           } else {
-            const serialized = JSON.stringify(hl) as unknown as string;
-            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: cfg.gauge?.highlightsWidth });
+            const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
+            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.runtime.options().gauge?.highlightsWidth });
           }
         } catch { /* ignore */ }
       });
@@ -152,12 +152,12 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
     // Build / update gauge options when config/theme/scale change
     effect(() => {
-      const cfg = this.runtime.options();
       const theme = this.theme();
+      // include scale dependency so options rebuild on scale recompute
       const scale = this.adjustedScale();
-      if (!cfg || !theme) return;
+
       untracked(() => {
-        this.buildGaugeOptions(cfg, theme, scale);
+        this.buildGaugeOptions(this.runtime.options(), theme, scale);
         if (this.viewReady()) {
           try {
             this.ngGauge()?.update(this.gaugeOptions);
@@ -169,13 +169,13 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
     // Apply state-based colors (after view ready)
     effect(() => {
-      const cfg = this.runtime.options();
-      const theme = this.theme();
       const state = this.currentState();
-      if (!cfg || !theme) return;
-      if (cfg.ignoreZones) return;
       if (!this.viewReady()) return;
       untracked(() => {
+        const cfg = this.runtime.options();
+        const theme = this.theme();
+        if (cfg.ignoreZones) return;
+
         const opt: LinearGaugeOptions = {};
         const enableNeedle = cfg.gauge?.enableNeedle;
         const palette = getColors(cfg.color, theme);
