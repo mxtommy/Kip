@@ -55,23 +55,21 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
 
   private subGridOptions: GridStackOptions = {
-    cellHeight: 50,
+    cellHeight: "auto",
     column: "auto",
     acceptWidgets: true,
     subGridDynamic: false,
-    margin: 50,
     class: 'group-container'
   };
 
   protected readonly gridOptions = signal<NgGridStackOptions>({
     column: 24,
+    row: 24,
     margin: 4,
-    minRow: 24,
-    maxRow: 24,
     float: true,
     resizable: { handles: 'all' },
     acceptWidgets: true,
-    subGridDynamic: true,
+    subGridDynamic: false,
     subGridOpts: this.subGridOptions,
     children: []
   });
@@ -135,6 +133,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
         this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
+          let subGrid: GridStackOptions = {};
+          if (item.gridstackNode.subGridOpts) {
+            subGrid = item.gridstackNode.subGridOpts;
+          }
+
           if (item.gridstackNode.id === action.id) {
             switch (action.operation) {
               case 'delete':
@@ -281,11 +284,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (isCellEmpty) {
         if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
           this._addDialogOpen = true;
+
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
           }, true)
-          .pipe(finalize(() => { this._addDialogOpen = false; })).subscribe(data => {
+          .pipe(finalize(() => { this._addDialogOpen = false; }))
+          .subscribe(data => {
             if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
             const widget = data as WidgetDescription;
             const ID = UUID.create();
@@ -295,8 +300,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               newWidget = {
                 x: gridCell.x,
                 y: gridCell.y,
-                w: 2,
-                h: 2,
+                w: 3,
+                h: 4,
                 id: ID,
                 selector: "group-widget",
                 input: {
@@ -310,84 +315,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                   }
                 },
                 subGridOpts: {
-                  children: [
-
-/*
-  {
-    "x": 10,
-    "y": 0,
-    "w": 4,
-    "h": 6,
-    "minW": 1,
-    "minH": 1,
-    "id": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
-    "selector": "widget-host2",
-    "input": {
-      "widgetProperties": {
-        "type": "widget-boolean-switch",
-        "uuid": "1b0b692b-f8f1-4acb-b27f-30cc9f594eb0",
-        "config": {
-          "displayName": "Switch Panel Label",
-          "filterSelfPaths": true,
-          "paths": [
-            {
-              "description": "asdfasdf",
-              "path": "self.red.autoLights.state",
-              "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
-              "source": "default",
-              "pathType": "boolean",
-              "isPathConfigurable": true,
-              "showPathSkUnitsFilter": false,
-              "pathSkUnitsFilter": null,
-              "convertUnitTo": null,
-              "sampleTime": 500,
-              "supportsPut": true
-            },
-            {
-              "description": "asdddd",
-              "path": "self.red.autoLights.state",
-              "pathID": "db475f54-7014-4430-b234-896f264c702e",
-              "source": "default",
-              "pathType": "boolean",
-              "isPathConfigurable": true,
-              "showPathSkUnitsFilter": false,
-              "pathSkUnitsFilter": null,
-              "convertUnitTo": null,
-              "sampleTime": 500,
-              "supportsPut": true
-            }
-          ],
-          "enableTimeout": false,
-          "dataTimeout": 5,
-          "color": "contrast",
-          "putEnable": true,
-          "putMomentary": false,
-          "multiChildCtrls": [
-            {
-              "ctrlLabel": "asdfasdf",
-              "type": "1",
-              "pathID": "f8bee116-f91c-463f-9503-8e83e79c4a3e",
-              "color": "contrast",
-              "isNumeric": false,
-              "value": null
-            },
-            {
-              "ctrlLabel": "asdddd",
-              "type": "3",
-              "pathID": "db475f54-7014-4430-b234-896f264c702e",
-              "color": "green",
-              "isNumeric": false,
-              "value": null
-            }
-          ]
-        }
-      }
-    }
-  } */
-
-
-
-                  ]
+                  children: []
                 },
               };
             } else {
@@ -409,7 +337,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               };
             }
 
-            this._gridstack().grid.addWidget(newWidget);
+            const item = this._gridstack().grid.addWidget(newWidget);
+            if (item.gridstackNode.subGrid) {
+              item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+            }
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);

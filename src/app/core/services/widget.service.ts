@@ -201,19 +201,6 @@ export class WidgetService {
       componentClassName: 'WidgetPositionComponent',
     },
     {
-      name: 'Group Container',
-      description: 'A container that allows you to group multiple widgets together, helping to organize and clarify your layout effectively.',
-      icon: 'groupWidget',
-      minWidth: 1,
-      minHeight: 1,
-      defaultWidth: 8,
-      defaultHeight: 6,
-      category: 'Core',
-      requiredPlugins: [],
-      selector: 'group-widget',
-      componentClassName: 'GroupWidgetComponent'
-    },
-    {
       name: 'Static Label',
       description: 'A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.',
       icon: 'labelWidget',
