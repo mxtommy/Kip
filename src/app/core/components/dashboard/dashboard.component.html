@@ -1,4 +1,5 @@
-<gridstack kipGestures [mode]="'dashboard'" [enableDoubleTap]="false" #grid
+@let dashboardStatic = dashboard.isDashboardStatic();
+<gridstack kipGestures [mode]="dashboardStatic ? 'dashboard' : 'editor'" [enablePress]="dashboardStatic ? false : true" [enableDoubleTap]="false" #grid
   [options]="gridOptions()"
   (swipeup)="previousDashboard()"
   (swipedown)="nextDashboard()"
@@ -9,7 +10,7 @@
   <div empty-content class="dashboard-empty-state-container">
     <div class="dashboard-empty-state-action">
       <mat-icon class="empty-state-icon">dashboard</mat-icon>
-      @if (!dashboard.isDashboardStatic()) {
+      @if (!dashboardStatic) {
         <p class="empty-state-text"><strong>Long press/click and hold anywhere</strong> to add widgets</p>
         <mat-icon class="touch-icon">touch_app</mat-icon>
       } @else {
@@ -30,7 +31,7 @@
     </div>
   </div>
 </gridstack>
-@if (!dashboard.isDashboardStatic()) {
+@if (!dashboardStatic) {
   <div class="edit-layout-close-icon">
     <button
       mat-fab

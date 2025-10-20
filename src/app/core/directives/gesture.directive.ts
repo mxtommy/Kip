@@ -65,12 +65,12 @@ interface CancelHandlerEntry {
  */
 @Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
+  // Debug flag: set to true to enable gesture debug logging
+  private static readonly DEBUG = false;
   // Service-level Chrome/macOS detection
   private readonly isChromeOnMac: boolean;
   // Firefox detection (used to suppress ghost click after long-press)
   private readonly isFirefox: boolean;
-  // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = false;
   // Suppress scheduling new gestures immediately after a long-press fires (ms deadline via performance.now())
   private static _suppressAllGesturesUntil = 0;
   // Static counter for instance IDs (debugging)
@@ -169,6 +169,8 @@ export class GestureDirective {
   // Axis lock for more forgiving swipe recognition
   private lockedAxis: 'x' | 'y' | null = null;
   private readonly axisLockThreshold = 6; // px of movement before locking axis
+  // Track which element holds pointer capture for this sequence (target-based capture)
+  private captureEl: Element | null = null;
 
   // Move samples ring buffer (used only when debug is enabled)
   private static readonly MOVES_BUFFER_SIZE = 120;
@@ -201,6 +203,12 @@ export class GestureDirective {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (el.style as any).webkitTouchCallout = 'none';
         }
+        // Additional suppression to avoid UA long-press hints and selection on Chrome/Android/ChromeOS
+        if (!el.style.userSelect) el.style.userSelect = 'none';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((el.style as any).webkitUserSelect === '') (el.style as any).webkitUserSelect = 'none';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el.style as any).webkitTapHighlightColor = 'transparent';
       }
       // Register in capture phase so we get events before children/libs (reduces re-target/cancel issues)
       // pointerdown passive:false so we can preventDefault on iOS if needed to stop native behavior
@@ -212,7 +220,8 @@ export class GestureDirective {
       // Use capture for touch/pen reliability; for mouse, pointerup in bubble keeps native click working
       el.addEventListener('pointerup', this.onPointerUp, { passive: true });
       el.addEventListener('pointercancel', this.onPointerCancel, { passive: true, capture: true });
-      el.addEventListener('lostpointercapture', this.onPointerCancel, { passive: true, capture: true });
+      // Guard lostpointercapture to avoid aborting valid touch/pen long-press on Chrome/Android/ChromeOS
+      el.addEventListener('lostpointercapture', this.onLostPointerCapture, { passive: true, capture: true });
       // Native mouse dblclick fallback (improves reliability after drag interactions)
       el.addEventListener('dblclick', this.onNativeDblClick, { passive: true });
       // Re-emit bubbling gesture events from children as directive outputs on this host
@@ -222,32 +231,97 @@ export class GestureDirective {
         const origin = (evt.detail as unknown as { __gid?: number })?.__gid;
         if (origin === this._instanceId) return;
         if (this.disableGestures()) return; // muted
+        const targetEl = evt.target as Element | null;
+        const fromChild = !!(targetEl && targetEl !== this.host.nativeElement && this.host.nativeElement.contains(targetEl));
         // Gate rebroadcast based on mode/flags
         const allowH = this.modeAllowsHorizontal();
         const allowV = this.modeAllowsVertical();
         let allowP = this.modeAllowsPress();
         let allowDT = this.modeAllowsDoubleTap();
-        // In dashboard mode, do not rebroadcast press/doubletap that originated from a widget container
-        if (this.mode() === 'dashboard' && (evt.type === 'press' || evt.type === 'doubletap')) {
-          const targetEl = evt.target as Element | null;
+        // Pass-through: if a descendant already recognized press/doubletap, let it bubble up
+        // even when this container's mode disables them (e.g., 'horizontal').
+        if (fromChild && (evt.type === 'press' || evt.type === 'doubletap')) {
+          allowP = allowP || evt.type === 'press';
+          allowDT = allowDT || evt.type === 'doubletap';
+        }
+        // Do not rebroadcast press/doubletap that originated from a widget container
+        // when this host is not that widget container (prevents grid from handling widget press)
+        if ((evt.type === 'press' || evt.type === 'doubletap')) {
+          const hostEl = this.host.nativeElement as Element;
           const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
             ? (targetEl as Element).closest('.widget-container')
             : null;
           // If the event target is within a widget container and this host is not that widget, skip
-          if (widgetEl && widgetEl !== this.host.nativeElement) {
+          if (widgetEl && widgetEl !== hostEl) {
             allowP = false;
             allowDT = false;
           }
+          // Additionally: if host is the grid root and the event originated inside a grid item,
+          // suppress rebroadcast so the item's overlay/child can own press/doubletap.
+          const hostIsGridRoot = (hostEl as HTMLElement).classList?.contains('grid-stack') ||
+            (hostEl as HTMLElement).tagName?.toLowerCase() === 'gridstack';
+          const inGridItem = targetEl && typeof (targetEl as Element).closest === 'function'
+            ? (targetEl as Element).closest('.grid-stack-item')
+            : null;
+          if (hostIsGridRoot && inGridItem) {
+            allowP = false;
+            allowDT = false;
+            this.debug('suppress grid-root rebroadcast for press/doubletap inside grid-stack-item', {
+              host: this.elDesc(hostEl as HTMLElement),
+              target: this.elDesc(targetEl ?? undefined),
+              inGridItem: this.elDesc(inGridItem as HTMLElement)
+            });
+          }
         }
-        this.debug('rebroadcast gate', { type: evt.type, allowH, allowV, allowP, allowDT });
-        switch (evt.type) {
-          case 'press': if (allowP) this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>); break;
-          case 'doubletap': if (allowDT) this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>); break;
-          case 'swipeleft': if (allowH) this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swiperight': if (allowH) this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swipeup': if (allowV) this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-          case 'swipedown': if (allowV) this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>); break;
-        }
+        this.debug('rebroadcast gate', {
+          type: evt.type,
+          allowH, allowV, allowP, allowDT,
+          fromChild,
+          target: this.elDesc(targetEl ?? undefined),
+          host: this.elDesc(this.host.nativeElement),
+          mode: this.mode()
+        });
+        // Ensure parent outputs run inside Angular so listeners trigger change detection
+        this.zone.run(() => {
+          switch (evt.type) {
+            case 'press':
+              if (allowP) {
+                this.debug('rebroadcast emit: press');
+                this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
+              }
+              break;
+            case 'doubletap':
+              if (allowDT) {
+                this.debug('rebroadcast emit: doubletap');
+                this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
+              }
+              break;
+            case 'swipeleft':
+              if (allowH) {
+                this.debug('rebroadcast emit: swipeleft');
+                this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swiperight':
+              if (allowH) {
+                this.debug('rebroadcast emit: swiperight');
+                this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swipeup':
+              if (allowV) {
+                this.debug('rebroadcast emit: swipeup');
+                this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+            case 'swipedown':
+              if (allowV) {
+                this.debug('rebroadcast emit: swipedown');
+                this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+              }
+              break;
+          }
+        });
       };
       const rebroadcastOpts: AddEventListenerOptions = { passive: true };
       el.addEventListener('press', rebroadcast as EventListener, rebroadcastOpts);
@@ -267,7 +341,7 @@ export class GestureDirective {
         // pointerup was added without capture; remove without capture
         el.removeEventListener('pointerup', this.onPointerUp);
         el.removeEventListener('pointercancel', this.onPointerCancel, { capture: true } as AddEventListenerOptions);
-        el.removeEventListener('lostpointercapture', this.onPointerCancel, { capture: true } as AddEventListenerOptions);
+        el.removeEventListener('lostpointercapture', this.onLostPointerCapture, { capture: true } as AddEventListenerOptions);
         el.removeEventListener('dblclick', this.onNativeDblClick);
         el.removeEventListener('press', rebroadcast as EventListener, rebroadcastOpts);
         el.removeEventListener('doubletap', rebroadcast as EventListener, rebroadcastOpts);
@@ -284,15 +358,34 @@ export class GestureDirective {
         // Ensure any ad-hoc cancel listeners attached to document/element are removed
         this.removeLongpressCancelListeners();
 
-        // Release pointer capture if it was set
+        // Release lane ownership and clear activePointers if a gesture was in-flight
         try {
-          if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
-            el.releasePointerCapture(this.pointerId);
+          if (this.pointerId !== null) {
+            const map = (this.constructor as typeof GestureDirective)._laneOwners;
+            const owners = map.get(this.pointerId);
+            if (owners) {
+              this.debug('onDestroy: releasing lane ownership', { pointerId: this.pointerId, ownersBefore: owners, ownedByThis: this.ownedLanes, instanceId: this._instanceId });
+              if (this.ownedLanes.h && owners.h === this._instanceId) delete owners.h;
+              if (this.ownedLanes.v && owners.v === this._instanceId) delete owners.v;
+              if (this.ownedLanes.p && owners.p === this._instanceId) delete owners.p;
+              if (!owners.h && !owners.v && !owners.p) map.delete(this.pointerId); else map.set(this.pointerId, owners);
+              this.debug('onDestroy: lane owners after release', { pointerId: this.pointerId, owners });
+            }
+            const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId);
+            this.debug('onDestroy: activePointers delete', { pointerId: this.pointerId, deleted });
+          }
+        } catch { /* ignore */ }
+
+        // Release pointer capture if it was set (target-based capture)
+        try {
+          if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
+            this.captureEl.releasePointerCapture(this.pointerId);
           }
         } catch {
           /* ignore release errors */
         }
         this.pointerId = null;
+        this.captureEl = null;
         this.tracking = false;
         try { (GestureDirective as typeof GestureDirective)._instanceToEl.delete(this._instanceId); } catch { /* ignore */ }
       });
@@ -343,15 +436,33 @@ export class GestureDirective {
     const allowV = this.modeAllowsVertical();
     let allowPress = this.modeAllowsPress();
     let allowDT = this.modeAllowsDoubleTap();
-    // Prefer child widgets for press/doubletap when inside a widget container on dashboard host
-    if (this.mode() === 'dashboard') {
+    // Prefer child widgets for press/doubletap when the target is inside a widget container and
+    // this host is not that widget container. Applies across modes so widget long-press wins.
+    {
       const targetEl = ev.target as Element | null;
+      const hostEl = this.host.nativeElement as Element;
       const widgetEl = targetEl && typeof (targetEl as Element).closest === 'function'
         ? (targetEl as Element).closest('.widget-container')
         : null;
-      if (widgetEl && widgetEl !== this.host.nativeElement) {
+      if (widgetEl && widgetEl !== hostEl) {
         allowPress = false;
         allowDT = false;
+      }
+      // Additionally: if host is the grid root and the press originates inside a grid item,
+      // let the item's overlay/child own press/doubletap instead of the grid.
+      const hostIsGridRoot = (hostEl as HTMLElement).classList?.contains('grid-stack') ||
+        (hostEl as HTMLElement).tagName?.toLowerCase() === 'gridstack';
+      const inGridItem = targetEl && typeof (targetEl as Element).closest === 'function'
+        ? (targetEl as Element).closest('.grid-stack-item')
+        : null;
+      if (hostIsGridRoot && inGridItem) {
+        allowPress = false;
+        allowDT = false;
+        this.debug('suppress grid-root press/doubletap for event inside grid-stack-item', {
+          host: this.elDesc(hostEl as HTMLElement),
+          target: this.elDesc(targetEl ?? undefined),
+          inGridItem: this.elDesc(inGridItem as HTMLElement)
+        });
       }
     }
     if (!allowH && !allowV && !allowPress && !allowDT) {
@@ -414,6 +525,7 @@ export class GestureDirective {
     this.pressFired = false;
     this.currentPointerType = ev.pointerType || null;
     this.lockedAxis = null;
+  this.captureEl = null;
 
     // Reset move samples buffer if debugging
     if (this.isDebugEnabled()) {
@@ -430,24 +542,25 @@ export class GestureDirective {
         this._longPressMs = this.longPressMs();           // 500ms
         this._doubleTapInterval = this.doubleTapInterval(); // 300ms
         this._tapSlop = this.tapSlop();                   // 20px
-        this._pressMoveSlop = this.pressMoveSlop();       // 10px
+        // Relax slop to tolerate tiny panel jitter on Android/ChromeOS/iOS
+        this._pressMoveSlop = Math.max(this.pressMoveSlop(), 16);
         break;
       case 'pen':
         this._swipeMinDistance = 20;
         this._swipeMaxDuration = 500;
-        this._longPressMs = 400;
+        this._longPressMs = 500;
         this._doubleTapInterval = 250;
         this._tapSlop = 10;
-        this._pressMoveSlop = 8;
+        this._pressMoveSlop = 2;
         break;
       case 'mouse':
       default:
         this._swipeMinDistance = 15;
         this._swipeMaxDuration = 400;
-        this._longPressMs = 350;
+        this._longPressMs = 500;
         this._doubleTapInterval = 250;
         this._tapSlop = 8;
-        this._pressMoveSlop = 6;
+        this._pressMoveSlop = 2;
         break;
     }
 
@@ -471,14 +584,28 @@ export class GestureDirective {
     this.startX = ev.clientX;
     this.startY = ev.clientY;
     this.startTime = performance.now();
-    // Pointer capture policy:
-    // - Capture for touch/pen on the HOST to keep stream continuity if the pointer briefly leaves a child.
-    // - Do NOT capture for mouse to avoid interfering with native click/hover behavior in Material/CDK widgets.
+    // Pointer capture policy (target-based):
+    // - For touch/pen, capture on the ORIGINAL EVENT TARGET to preserve pointerup delivery to interactive children (e.g., SVG controls),
+    //   while still maintaining stream continuity if the pointer briefly leaves the element.
+    // - For mouse, do NOT capture to preserve native hover/click behavior.
     if (ev.pointerType !== 'mouse') {
+      const tgt = (ev.target as Element | null) ?? null;
+      const capEl: Element = tgt ?? this.host.nativeElement;
       try {
-        this.host.nativeElement.setPointerCapture(ev.pointerId);
-        this.debug('setPointerCapture success', { pointerId: ev.pointerId, pointerType: ev.pointerType });
+        if ('setPointerCapture' in capEl) {
+          capEl.setPointerCapture(ev.pointerId);
+          this.captureEl = capEl;
+          this.debug('setPointerCapture success', {
+            pointerId: ev.pointerId,
+            pointerType: ev.pointerType,
+            captureElement: this.elDesc(capEl as HTMLElement)
+          });
+        } else {
+          this.captureEl = null;
+          this.debug('setPointerCapture unavailable on element');
+        }
       } catch {
+        this.captureEl = null;
         this.debug('setPointerCapture failed', { pointerId: ev.pointerId, pointerType: ev.pointerType });
       }
     }
@@ -487,6 +614,10 @@ export class GestureDirective {
       window.clearTimeout(this.longPressTimer);
     }
     if (!this.potentialDoubleTap && allowPress && this.ownedLanes.p) {
+      // Since we are going to track a possible long-press, suppress UA long-press hint/context menu (touch/pen only)
+      if (this.currentPointerType !== 'mouse') {
+        try { ev.preventDefault(); } catch { /* ignore */ }
+      }
       // Add robust cancellation listeners
       this.addLongpressCancelListeners();
       this.debug('longpress timer scheduled', {
@@ -534,6 +665,16 @@ export class GestureDirective {
         ownersForPointer: owners
       });
     }
+  };
+
+  // Guarded lostpointercapture: ignore during active touch/pen long-press sequences
+  private onLostPointerCapture = (ev: PointerEvent) => {
+    if (ev.pointerId !== this.pointerId) return;
+    if (this.currentPointerType !== 'mouse' && this.longPressTimer) {
+      this.debug('ignore lostpointercapture during active touch/pen long-press');
+      return;
+    }
+    this.onPointerCancel(ev);
   };
 
   /**
@@ -755,7 +896,7 @@ export class GestureDirective {
 
   private addLongpressCancelListeners() {
     this.debug('addLongpressCancelListeners');
-    // Cancel longpress on pointermove, pointerleave, pointerout, lostpointercapture, blur
+    // Cancel longpress only on explicit pointercancel (UA/system), plus window blur for touch/pen
     const cancel = (ev?: Event) => {
       this.debug('longpress cancelled by event', ev?.type);
       if (this.longPressTimer) {
@@ -767,20 +908,12 @@ export class GestureDirective {
     const el = this.host.nativeElement;
     const doc = document;
     const captureOpts: AddEventListenerOptions = { capture: true };
-    // store targets explicitly so removal can be precise
-    // handlers added to element and document
     const handlers: CancelHandlerEntry[] = [
-      { type: 'pointermove', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-      { type: 'lostpointercapture', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
+      { type: 'pointercancel', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
     ];
-    // For touch/pen, also cancel on pointerleave/pointerout; for mouse, avoid these to reduce interference with native click/hover
+    // For touch/pen, keep a safety net on window blur only
     if (this.currentPointerType !== 'mouse') {
-      handlers.push(
-        { type: 'pointerleave', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-        { type: 'pointerout', handler: cancel, opts: captureOpts, targets: ['el', 'doc'] },
-        // blur should be attached to window for cross-browser coverage on touch/pen; for mouse, avoid aborting long-press due to focus changes
-        { type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] },
-      );
+      handlers.push({ type: 'blur', handler: cancel, opts: captureOpts, targets: ['window'] });
     }
     this.cancelLongpressHandlers = handlers;
     for (const entry of this.cancelLongpressHandlers) {
@@ -808,9 +941,8 @@ export class GestureDirective {
     this.debug('reset gesture state');
     // Release pointer capture if still held before clearing pointerId
     try {
-      const el = this.host.nativeElement;
-      if (this.pointerId !== null && typeof el.releasePointerCapture === 'function') {
-        el.releasePointerCapture(this.pointerId);
+      if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
+        this.captureEl.releasePointerCapture(this.pointerId);
       }
     } catch {
       /* ignore release errors */
@@ -839,6 +971,7 @@ export class GestureDirective {
       }
     } catch { /* ignore */ }
     this.pointerId = null;
+  this.captureEl = null;
     this.tracking = false;
     this.pressFired = false;
     this.currentPointerType = null;

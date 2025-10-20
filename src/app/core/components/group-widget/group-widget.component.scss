@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  height: 15%;
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 15%;
+  right: 0;
+  top: 0;
+  color: transparent;
+  z-index: 21;
+}

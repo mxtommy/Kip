@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
-import { GridstackComponent, NgGridStackNode, NgGridStackOptions, NgGridStackWidget } from 'gridstack/dist/angular';
-import { GridItemHTMLElement } from 'gridstack';
+import { GridstackComponent, NgGridStackNode, NgGridStackWidget, NgGridStackOptions, } from 'gridstack/dist/angular';
+import { GridItemHTMLElement, GridStackOptions } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { UUID } from '../../utils/uuid.util';
@@ -10,12 +10,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
+import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -50,25 +52,38 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _previousIsStaticState = true;
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
   private _suppressDrag = false;
+
+
+  private subGridOptions: GridStackOptions = {
+    cellHeight: "auto",
+    column: "auto",
+    acceptWidgets: true,
+    subGridDynamic: false,
+    class: 'group-container'
+  };
+
   protected readonly gridOptions = signal<NgGridStackOptions>({
     column: 24,
+    row: 24,
     margin: 4,
-    minRow: 24,
-    maxRow: 24,
     float: true,
-    acceptWidgets: false,
     resizable: { handles: 'all' },
+    acceptWidgets: true,
+    subGridDynamic: false,
+    subGridOpts: this.subGridOptions,
+    children: []
   });
   private _boundHandleKeyDown = this.handleKeyDown.bind(this);
   private _resizeObserver?: ResizeObserver;
   private _pendingResizeRaf: number | null = null;
   private _lastContainerHeight = 0;
   private _lastCellHeight = 0;
-  private _hasLoadedInitialDashboard = false;
+  private _addDialogOpen = false;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
-      WidgetHost2Component
+      WidgetHost2Component,
+      GroupWidgetComponent
     ]);
 
     effect(() => {
@@ -109,7 +124,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         grid.on('resizestart', () => {
           this._uiEvent.isDragging.set(true);
         });
-        grid.on('resizestop', () => {
+        grid.on('resizestop', (event, items) => {
           setTimeout(() => this._uiEvent.isDragging.set(false), 0);
         });
       }
@@ -118,6 +133,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
         this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
+          let subGrid: GridStackOptions = {};
+          if (item.gridstackNode.subGridOpts) {
+            subGrid = item.gridstackNode.subGridOpts;
+          }
+
           if (item.gridstackNode.id === action.id) {
             switch (action.operation) {
               case 'delete':
@@ -135,22 +155,26 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
 
     this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      const raw = params['id'];
+      let raw = params['id'];
+      if (params['id'] === '' ) {
+        raw = undefined;
+      } else {
+        raw = params['id'];
+      }
+
       const parsed = Number(raw);
       const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
-      if (!isValidNumber) return; // ignore non-numeric params entirely
 
-      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return;
+      if (raw !== undefined && !isValidNumber) return; // ignore have param but is non-numeric params entirely
+      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return; // ignore out-of-bounds IDs
 
       const current = this.dashboard.activeDashboard();
-      const firstLoad = !this._hasLoadedInitialDashboard;
-      // Always force a load on first valid param even if index matches default active index (0)
-      if (firstLoad || parsed !== current) {
-        if (parsed !== current) {
-          this.dashboard.setActiveDashboard(parsed);
-        }
+
+      if (!isNaN(parsed)) {
+        this.dashboard.setActiveDashboard(parsed);
         this.loadDashboard(parsed);
-        this._hasLoadedInitialDashboard = true;
+      } else {
+        this.loadDashboard(current);
       }
     });
   }
@@ -223,7 +247,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       queueMicrotask(() => this.loadDashboard(dashboardId));
       return;
     }
-    // Synchronous load eliminates one-frame empty dashboard flicker.
+    // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
     _gridstack.grid.load(dashboard.configuration);
     _gridstack.grid.commit();
@@ -246,8 +270,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.notifyLayoutEditCanceled();
   }
 
-  private _addDialogOpen = false;
-
   protected addNewWidget(e: Event | CustomEvent): void {
     if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
       if (this._addDialogOpen) {
@@ -262,16 +284,42 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (isCellEmpty) {
         if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
           this._addDialogOpen = true;
+
           this._dialog.openFrameDialog({
             title: 'Add Widget',
             component: 'select-widget',
-          }, true).subscribe({
-            next: data => {
-              if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
-              const ID = UUID.create();
-              const widget = data as WidgetDescription;
+          }, true)
+          .pipe(finalize(() => { this._addDialogOpen = false; }))
+          .subscribe(data => {
+            if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
+            const widget = data as WidgetDescription;
+            const ID = UUID.create();
+            let newWidget: NgGridStackWidget = {};
 
-              const newWidget: NgGridStackWidget = {
+            if (widget.selector === 'group-widget') {
+              newWidget = {
+                x: gridCell.x,
+                y: gridCell.y,
+                w: 3,
+                h: 4,
+                id: ID,
+                selector: "group-widget",
+                input: {
+                  widgetProperties: {
+                    type: widget.selector,
+                    uuid: ID,
+                    config: {
+                      displayName: "Group Widget",
+                      color: "contrast"
+                    }
+                  }
+                },
+                subGridOpts: {
+                  children: []
+                },
+              };
+            } else {
+              newWidget = {
                 x: gridCell.x,
                 y: gridCell.y,
                 w: widget.defaultWidth,
@@ -287,9 +335,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                   }
                 }
               };
-              this._gridstack().grid.addWidget(newWidget);
-            },
-            complete: () => { this._addDialogOpen = false; }
+            }
+
+            const item = this._gridstack().grid.addWidget(newWidget);
+            if (item.gridstackNode.subGrid) {
+              item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+            }
           });
         } else {
           this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
@@ -387,19 +438,24 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Destroy the Gridstack instance to clean up internal resources
     const _gridstack = this._gridstack();
     if (_gridstack?.grid) {
-      _gridstack.grid.destroy(true); // Ensure this cleans up event listeners and DOM elements
+      _gridstack.grid.offAll(); // Ensure this cleans up event listeners
+      _gridstack.grid.destroy();
     }
+
     if (this._resizeObserver) {
-      try { this._resizeObserver.disconnect(); } catch { /* ignore */ }
+      try {
+        this._resizeObserver.disconnect();
+      } catch { /* ignore */ }
       this._resizeObserver = undefined;
     }
+
     if (this._pendingResizeRaf !== null) {
       cancelAnimationFrame(this._pendingResizeRaf);
       this._pendingResizeRaf = null;
     }
+
     this._uiEvent.removeHotkeyListener(this._boundHandleKeyDown);
   }
 }

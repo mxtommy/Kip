@@ -118,6 +118,7 @@ export class WidgetService {
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
+  //TODO: clenup. not needed since Host2 migration was completed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeMap: Record<string, Type<any>> = {
     WidgetNumericComponent: WidgetNumericComponent,
@@ -231,8 +232,8 @@ export class WidgetService {
       icon: 'sliderWidget',
       minWidth: 1,
       minHeight: 1,
-      defaultWidth: 4,
-      defaultHeight: 6,
+      defaultWidth: 8,
+      defaultHeight: 12,
       category: 'Core',
       requiredPlugins: [],
       selector: 'widget-slider',

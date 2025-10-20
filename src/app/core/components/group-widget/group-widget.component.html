@@ -1,0 +1,11 @@
+<widget-title
+  [text]="runtime.options().displayName"
+  [color]="runtime.options().color">
+</widget-title>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay"
+    kipGestures mode="press"
+    (doubletap)="openWidgetOptions($event)"
+    (press)="openBottomSheet($event)">
+  </div>
+}
