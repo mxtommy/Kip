@@ -3,7 +3,7 @@
 * Return to last active dashboard when leaving Options, Settings and Help
 * Reduce minichart dataset storage churn
 ## Fixes
-* Fixe gauge zones not drawn in initial app load
+* Gauge zones not drawn in initial app load
 * More Switch Panel toggle control not responding to touch on Android Chrome and RPi Chromium
 * Widget Racesteer icon rendering is missing colors
 # v 4.0.6
