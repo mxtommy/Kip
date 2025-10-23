@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked, ChangeDetectionStrategy, inputBinding } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -51,8 +51,6 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
 export class WidgetHost2Component extends BaseWidget implements OnInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
-  // Mark static:true so the outlet is available during ngOnInit allowing
-  // runtime initialization + child creation before the first stability check.
   @ViewChild('childOutlet', { read: ViewContainerRef, static: true }) private outlet!: ViewContainerRef;
   private readonly _dialog = inject(DialogService);
   protected readonly _dashboard = inject(DashboardService);
@@ -76,15 +74,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
 
   constructor() {
     super();
-
-    effect(() => {
-      const theme = this.theme();
-      if (this.childRef) {
-        untracked(() => {
-          this.childRef.setInput('theme', theme);
-        });
-      }
-    });
 
     // React to dashboard cancel events: restore saved config without destroying the widget
     effect(() => {
@@ -115,11 +104,13 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
 
     // Create the child component BEFORE first change detection completes so its
     if (this.outlet && this.compType) {
-      this.childRef = this.outlet.createComponent(this.compType);
-      this.childRef.setInput('id', this.widgetProperties.uuid);
-      this.childRef.setInput('type', this.widgetProperties.type);
-      // Pass current theme value; ongoing updates handled by effect in ctor.
-      this.childRef.setInput('theme', this.theme());
+      this.childRef = this.outlet.createComponent(this.compType, {
+        bindings: [
+          inputBinding('id', () => this.widgetProperties.uuid),
+          inputBinding('type', () => this.widgetProperties.type),
+          inputBinding('theme', this.theme)
+        ]
+      });
     }
     this._hasInitialized = true;
   }
