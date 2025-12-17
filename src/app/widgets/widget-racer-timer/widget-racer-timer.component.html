@@ -4,38 +4,38 @@
   <div class="buttons-container">
     <button mat-flat-button class="button select-button" (click)="toggleMode()">
       <mat-icon class="buttons-svg-icon">
-        <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-          <text xml:space="preserve" x="50" y="9">&vellip;</text>
+        <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+          <text xml:space="preserve" x="40" y="9">&vellip;</text>
         </svg>
       </mat-icon>
     </button>
     @switch(mode()) {
       @case (0) {
         <div class="start-at">
-          <svg width="100%" height="100%" viewBox="0 0 90 12" preserveAspectRatio="xMidYMid meet" class="svg-content svg-start-at">
-            <text xml:space="preserve" x="45" y="10">Start at: {{ startAtTime() }}</text>
+          <svg width="100%" height="100%" viewBox="0 0 80 12" preserveAspectRatio="xMidYMid meet" class="svg-content svg-start-at">
+            <text xml:space="preserve" x="40" y="10">Start at: {{ startAtTime() }}</text>
           </svg>
         </div>
       }
       @case (1) {
         <button mat-flat-button class="button main-button" (click)="sendStartTimerCommand('start')">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">Start</text>
+            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="40" y="11">Start</text>
             </svg>
           </mat-icon>
         </button>
         <button mat-flat-button class="button other-small-button" (click)="adjustStartTime(-60)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">-1m</text>
+            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="40" y="11">-1m</text>
             </svg>
           </mat-icon>
         </button>
         <button mat-flat-button class="button other-small-button" (click)="adjustStartTime(+60)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">+1m</text>
+            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="40" y="11">+1m</text>
             </svg>
           </mat-icon>
         </button>
@@ -57,29 +57,29 @@
       } @case (3) {
         <button mat-flat-button class="button main-small-button" (click)="adjustStartTime(-60)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">-1m</text>
+            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="25" y="11">-1m</text>
             </svg>
           </mat-icon>
         </button>
         <button mat-flat-button class="button other-small-button" (click)="adjustStartTime(-1)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">-1s</text>
+            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="25" y="11">-1s</text>
             </svg>
           </mat-icon>
         </button>
         <button mat-flat-button class="button other-small-button" (click)="adjustStartTime(+1)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">+1s</text>
+            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="25" y="11">+1s</text>
             </svg>
           </mat-icon>
         </button>
         <button mat-flat-button class="button main-small-button" (click)="adjustStartTime(+60)">
           <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text xml:space="preserve" x="50" y="11">+1m</text>
+            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+              <text xml:space="preserve" x="25" y="11">+1m</text>
             </svg>
           </mat-icon>
         </button>

@@ -41,6 +41,15 @@ const start = (server) => {
         INSTANCE: `/displays/:displayId`,
         ACTIVE_SCREEN: `/displays/:displayId/activeScreen`
     };
+    const CONFIG_SCHEMA = {
+        properties: {
+            notifications: {
+                type: 'object',
+                title: 'Remote Control',
+                description: 'This plugin requires no configuration.'
+            }
+        }
+    };
     // Helpers
     function getDisplaySelfPath(displayId, suffix) {
         const tail = suffix ? `.${suffix}` : '';
@@ -80,12 +89,7 @@ const start = (server) => {
             const msg = 'Stopped.';
             server.setPluginStatus(msg);
         },
-        schema: () => {
-            return {
-                type: "object",
-                properties: {}
-            };
-        },
+        schema: () => CONFIG_SCHEMA,
         registerWithRouter(router) {
             server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.ACTIVE_SCREEN}`);
             // Validate/normalize :displayId where present
