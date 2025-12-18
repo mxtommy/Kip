@@ -80,6 +80,30 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
         showPathSkUnitsFilter: true,
         pathSkUnitsFilter: 'm',
         sampleTime: 1000
+      },
+      startLineNamePath: {
+        description: 'The current named start line',
+        path: 'self.navigation.racing.lines.startLineName',
+        source: 'default',
+        pathType: 'string',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: null,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: null,
+        sampleTime: 1000
+      },
+      linesPath: {
+        description: 'The known named lines',
+        path: 'self.navigation.racing.lines.lines',
+        source: 'default',
+        pathType: null,
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: null,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: null,
+        sampleTime: 1000
       }
     }
   };
@@ -102,6 +126,9 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private dtsColor = '';
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
+  private displayLineIndex: number = 0;
+  private lines: string[] = [];
+  private startLineName: string = null;
   protected portBiasValue = signal<string>('');
   protected lineLengthValue = signal<string>('');
   protected stbBiasValue = signal<string>('');
@@ -156,6 +183,46 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
       }));
     });
 
+    // Observe Start Line Name
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pathCfg = (cfg.paths as IPathArray | undefined)?.['startLineNamePath'];
+      if (!pathCfg?.path) return;
+      untracked(() => this.streams.observe('startLineNamePath', pkt => {
+        console.log('startLineName: ' + JSON.stringify(pkt ?? 'no data'));
+        this.startLineName = pkt?.data?.value ?? null;
+        this.displayLineIndex = 0;
+        for (let i = 0; i < this.lines.length; i++) {
+          if (this.lines[i] === this.startLineName) {
+            this.displayLineIndex = i;
+            break;
+          }
+        }
+        this.draw();
+      }));
+    });
+
+    // Observe lines
+    effect(() => {
+      const cfg = this.runtime.options(); if (!cfg) return;
+      const pathCfg = (cfg.paths as IPathArray | undefined)?.['linesPath'];
+      if (!pathCfg?.path) return;
+      untracked(() => this.streams.observe('linesPath', pkt => {
+        console.log('lines: '  + JSON.stringify(pkt ?? 'no data'));
+        this.lines = ['Default'];
+        this.displayLineIndex = 0;
+        if (pkt?.data?.value && Array.isArray(pkt.data.value)) {
+          for (const line of pkt.data.value) {
+            if (line.startLineName) {
+              if (line.startLineName === this.startLineName)
+                this.displayLineIndex = this.lines.length;
+              this.lines.push(line.startLineName);
+            }
+          }
+        }
+      }));
+    });
+
     // Request feedback beep
     this.signalk.subscribeRequest().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
       if (result.widgetUUID === this.id()) {
@@ -186,7 +253,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
   // Interaction methods
   public toggleMode(): void {
-    this.mode.update(v => (v + 1) % 4);
+    this.mode.update(v => (v + 1) % 5);
     this.draw();
   }
 
@@ -196,6 +263,30 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
   public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
     return this.signalk.putRequest('navigation.racing.setStartLine', { end, delta, rotate: rotateRadians || null }, this.id());
+  }
+
+  public nextDisplayLineName() {
+    if (++this.displayLineIndex >= this.lines.length)
+      this.displayLineIndex = 0;
+  }
+
+  public getDisplayLineName() : string {
+    return this.lines[this.displayLineIndex] || 'Default';
+  }
+
+  public isDisplayLineCurrent() : boolean {
+    return this.getDisplayLineName() === (this.startLineName || 'Default');
+  }
+
+  public setStartLine(name: string) {
+    const startLineName = (name === 'Default' || !name) ? null : name;
+    this.signalk.putRequest(
+      'navigation.racing.setStartLineName',
+      { startLineName },
+      this.id()
+    );
+    this.mode.set(0);
+    this.draw();
   }
 
   public toRadians(deg: number): number | null {

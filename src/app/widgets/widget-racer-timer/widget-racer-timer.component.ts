@@ -34,6 +34,8 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     filterSelfPaths: true,
     paths: {
       ttsPath: { description: 'Time to the Start in seconds', path: 'self.navigation.racing.timeToStart', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
+      ttlPath: { description: 'Time to sail to the start line in seconds', path: 'self.navigation.racing.timeToLine', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
+      ttbPath: { description: 'Time to delay before sailing to the start line in seconds', path: 'self.navigation.racing.timeToBurn', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
       startTimePath: { description: 'Time of the start', path: 'self.navigation.racing.startTime', source: 'default', pathType: 'Date', pathRequired: false, isPathConfigurable: false, sampleTime: 500 },
       dtsPath: { description: 'Distance to Start Line path, used to determine OCS', path: 'self.navigation.racing.distanceStartline', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 'm', showPathSkUnitsFilter: false, pathSkUnitsFilter: 'm', sampleTime: 500 }
     },
@@ -64,6 +66,8 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   protected labelColor = signal<string>('');
   protected mode = signal<number>(1); // mimic legacy mode state machine
   private ttsValue: number | null = null;
+  private ttlValue: number | null = null;
+  private ttbValue: number | null = null;
   private dtsValue: number | null = null;
   private valueColor = '';
   private valueStateColor = '';
@@ -101,6 +105,32 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
         if (cfg.nextDashboard >= 0 && lastTts === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
           // Navigation handled externally (legacy used router) – could inject Router if needed
         }
+      }));
+    });
+
+    // Stream: TTL
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg) return;
+      const paths = cfg.paths as IPathArray | undefined;
+      const path = paths?.['ttlPath']?.path;
+      if (!path) return;
+      untracked(() => this.streams.observe('ttlPath', pkt => {
+        this.ttlValue = pkt?.data?.value ?? null;
+        this.draw();
+      }));
+    });
+
+    // Stream: TTB
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg) return;
+      const paths = cfg.paths as IPathArray | undefined;
+      const path = paths?.['ttbPath']?.path;
+      if (!path) return;
+      untracked(() => this.streams.observe('ttbPath', pkt => {
+        this.ttbValue = pkt?.data?.value ?? null;
+        this.draw();
       }));
     });
 
@@ -152,7 +182,9 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     this.ctx = this.canvasElement.getContext('2d');
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true, onResize: (w, h) => {
-        this.cssWidth = w; this.cssHeight = h; this.draw();
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.draw();
       }
     });
     // initial dims
@@ -234,20 +266,29 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     } else if (this.mode() === 1 && this.isStartTimerRunning()) this.mode.set(2);
   }
 
+  private toHHMMSS(totalSeconds: number): string {
+    if (totalSeconds == null || isNaN(totalSeconds)) return '--:--';
+    const negative = totalSeconds < 0;
+    if (negative) totalSeconds = -totalSeconds;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const sign = negative ? '-' : '';
+    if (hours === 0)
+      return `${sign}${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
   private getValueText(): string {
-    if (this.ttsValue == null) return '--';
-    const seconds = this.ttsValue;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes >= 60) {
-      const hours = Math.floor(minutes / 60);
-      const mm = Math.floor(minutes % 60);
-      const ss = Math.floor(seconds % 60);
-      return `${hours}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
-    } else {
-      const mm = Math.floor(minutes % 60);
-      const ss = Math.floor(seconds % 60);
-      return `${mm.toString().padStart(1, '0')}:${ss.toString().padStart(2, '0')}`;
-    }
+    return this.toHHMMSS(this.ttsValue);
+  }
+
+  private getTimeToLineText(): string {
+    return this.toHHMMSS(this.ttlValue);
+  }
+
+  private getTimeToBurnText(): string {
+    return this.toHHMMSS(this.ttbValue);
   }
 
   private draw() {
@@ -260,17 +301,71 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
-    const text = this.getValueText();
     this.canvas.drawText(
       this.ctx,
-      text,
+      this.getValueText(),
       Math.floor(this.cssWidth / 2),
-      Math.floor((this.cssHeight / 2) * 1.3),
+      Math.floor(this.cssHeight * 0.75 / 2),
       Math.floor(this.cssWidth * 0.95),
-      Math.floor(this.cssHeight * 0.95),
+      Math.floor(this.cssHeight * 0.75),
       'bold',
-      this.valueStateColor
+      this.valueStateColor,
+      'center',
+      'middle'
     );
+
+    this.canvas.drawText(
+      this.ctx,
+      'TTL',
+      Math.floor(this.cssWidth * 0.025),
+      Math.floor(this.cssHeight - this.cssHeight * 0.15),
+      Math.floor(this.cssWidth * 0.10),
+      Math.floor(this.cssHeight * 0.15),
+      'normal',
+      this.valueStateColor,
+      'left',
+      'middle'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      this.getTimeToLineText(),
+      Math.floor(this.cssWidth * 0.05 + this.cssWidth * 0.10),
+      Math.floor(this.cssHeight - this.cssHeight * 0.025),
+      Math.floor(this.cssWidth * 0.35),
+      Math.floor(this.cssHeight * 0.25),
+      'bold',
+      this.valueStateColor,
+      'left',
+      'bottom'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      this.getTimeToBurnText(),
+      Math.floor(this.cssWidth - this.cssWidth * 0.375),
+      Math.floor(this.cssHeight - this.cssHeight * 0.025),
+      Math.floor(this.cssWidth * 0.35),
+      Math.floor(this.cssHeight * 0.25),
+      'bold',
+      this.valueStateColor,
+      'left',
+      'bottom'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      'TTB',
+      Math.floor(this.cssWidth - this.cssWidth * 0.4),
+      Math.floor(this.cssHeight - this.cssHeight * 0.15),
+      Math.floor(this.cssWidth * 0.10),
+      Math.floor(this.cssHeight * 0.15),
+      'normal',
+      this.valueStateColor,
+      'right',
+      'middle'
+    );
+
   }
 
   private beep(frequency = 440, duration = 100) {
