@@ -11,12 +11,13 @@ import { DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ITheme } from '../../core/services/app-service';
+import {MatTooltipModule} from '@angular/material/tooltip';
 
 @Component({
   selector: 'widget-racer-line',
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
-  imports: [MatButtonModule, MatIconModule]
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   // Functional inputs (Host2 contract)

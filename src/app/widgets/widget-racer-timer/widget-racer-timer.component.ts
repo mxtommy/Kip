@@ -13,12 +13,14 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatInput} from '@angular/material/input';
 
 @Component({
   selector: 'widget-racer-timer',
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
-  imports: [FormsModule, MatButtonModule, MatIconModule]
+  imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, MatInput]
 })
 export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
@@ -237,8 +239,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     if (current === 0 && lastVal !== 0) return true;
     if (current < 10 && current >= 0) return true;
     if (current < 60 && current % 10 === 0) return true;
-    if (current % 60 === 0) return true;
-    return false;
+    return current % 60 === 0;
   }
 
   private beepForValue(v: number) {
@@ -318,7 +319,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
       this.ctx,
       'TTL',
       Math.floor(this.cssWidth * 0.025),
-      Math.floor(this.cssHeight - this.cssHeight * 0.15),
+      Math.floor(this.cssHeight - this.cssHeight * 0.2),
       Math.floor(this.cssWidth * 0.10),
       Math.floor(this.cssHeight * 0.15),
       'normal',
@@ -357,7 +358,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
       this.ctx,
       'TTB',
       Math.floor(this.cssWidth - this.cssWidth * 0.4),
-      Math.floor(this.cssHeight - this.cssHeight * 0.15),
+      Math.floor(this.cssHeight - this.cssHeight * 0.2),
       Math.floor(this.cssWidth * 0.10),
       Math.floor(this.cssHeight * 0.15),
       'normal',
