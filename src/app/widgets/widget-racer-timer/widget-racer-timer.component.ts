@@ -1,18 +1,29 @@
-import { Component, effect, signal, inject, input, untracked, viewChild, ElementRef, DestroyRef, model } from '@angular/core';
-import { AfterViewInit, OnDestroy } from '@angular/core';
-import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
-import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { IPathArray } from '../../core/interfaces/widgets-interface';
-import { ITheme } from '../../core/services/app-service';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { DashboardService } from '../../core/services/dashboard.service';
-import { CanvasService } from '../../core/services/canvas.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getColors } from '../../core/utils/themeColors.utils';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  model,
+  OnDestroy,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core';
+import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
+import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
+import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import {ITheme} from '../../core/services/app-service';
+import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
+import {DashboardService} from '../../core/services/dashboard.service';
+import {CanvasService} from '../../core/services/canvas.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {getColors} from '../../core/utils/themeColors.utils';
+import {FormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatInput} from '@angular/material/input';
 
@@ -36,8 +47,6 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     filterSelfPaths: true,
     paths: {
       ttsPath: { description: 'Time to the Start in seconds', path: 'self.navigation.racing.timeToStart', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
-      ttlPath: { description: 'Time to sail to the start line in seconds', path: 'self.navigation.racing.timeToLine', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
-      ttbPath: { description: 'Time to delay before sailing to the start line in seconds', path: 'self.navigation.racing.timeToBurn', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 's', showConvertUnitTo: false, showPathSkUnitsFilter: false, pathSkUnitsFilter: 's', sampleTime: 500 },
       startTimePath: { description: 'Time of the start', path: 'self.navigation.racing.startTime', source: 'default', pathType: 'Date', pathRequired: false, isPathConfigurable: false, sampleTime: 500 },
       dtsPath: { description: 'Distance to Start Line path, used to determine OCS', path: 'self.navigation.racing.distanceStartline', source: 'default', pathType: 'number', pathRequired: false, isPathConfigurable: false, convertUnitTo: 'm', showPathSkUnitsFilter: false, pathSkUnitsFilter: 'm', sampleTime: 500 }
     },
@@ -68,8 +77,6 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   protected labelColor = signal<string>('');
   protected mode = signal<number>(1); // mimic legacy mode state machine
   private ttsValue: number | null = null;
-  private ttlValue: number | null = null;
-  private ttbValue: number | null = null;
   private dtsValue: number | null = null;
   private valueColor = '';
   private valueStateColor = '';
@@ -107,32 +114,6 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
         if (cfg.nextDashboard >= 0 && lastTts === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
           // Navigation handled externally (legacy used router) – could inject Router if needed
         }
-      }));
-    });
-
-    // Stream: TTL
-    effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
-      const paths = cfg.paths as IPathArray | undefined;
-      const path = paths?.['ttlPath']?.path;
-      if (!path) return;
-      untracked(() => this.streams.observe('ttlPath', pkt => {
-        this.ttlValue = pkt?.data?.value ?? null;
-        this.draw();
-      }));
-    });
-
-    // Stream: TTB
-    effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
-      const paths = cfg.paths as IPathArray | undefined;
-      const path = paths?.['ttbPath']?.path;
-      if (!path) return;
-      untracked(() => this.streams.observe('ttbPath', pkt => {
-        this.ttbValue = pkt?.data?.value ?? null;
-        this.draw();
       }));
     });
 
@@ -268,7 +249,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   }
 
   private toHHMMSS(totalSeconds: number): string {
-    if (totalSeconds == null || isNaN(totalSeconds)) return '--:--';
+    if (totalSeconds == null || isNaN(totalSeconds)) return '-:--';
     const negative = totalSeconds < 0;
     if (negative) totalSeconds = -totalSeconds;
     const hours = Math.floor(totalSeconds / 3600);
@@ -284,14 +265,6 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     return this.toHHMMSS(this.ttsValue);
   }
 
-  private getTimeToLineText(): string {
-    return this.toHHMMSS(this.ttlValue);
-  }
-
-  private getTimeToBurnText(): string {
-    return this.toHHMMSS(this.ttbValue);
-  }
-
   private draw() {
     if (!this.ctx || !this.canvasElement) return;
     if (!this.titleBitmap || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== this.runtime.options()?.displayName) {
@@ -305,68 +278,15 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     this.canvas.drawText(
       this.ctx,
       this.getValueText(),
-      Math.floor(this.cssWidth / 2),
-      Math.floor(this.cssHeight * 0.75 / 2),
+      Math.floor(this.cssWidth * 0.5),
+      Math.floor(this.cssHeight * 0.55),
       Math.floor(this.cssWidth * 0.95),
-      Math.floor(this.cssHeight * 0.75),
+      Math.floor(this.cssHeight * 0.90),
       'bold',
       this.valueStateColor,
       'center',
       'middle'
     );
-
-    this.canvas.drawText(
-      this.ctx,
-      'TTL',
-      Math.floor(this.cssWidth * 0.025),
-      Math.floor(this.cssHeight - this.cssHeight * 0.2),
-      Math.floor(this.cssWidth * 0.10),
-      Math.floor(this.cssHeight * 0.15),
-      'normal',
-      this.valueStateColor,
-      'left',
-      'middle'
-    );
-
-    this.canvas.drawText(
-      this.ctx,
-      this.getTimeToLineText(),
-      Math.floor(this.cssWidth * 0.05 + this.cssWidth * 0.10),
-      Math.floor(this.cssHeight - this.cssHeight * 0.025),
-      Math.floor(this.cssWidth * 0.35),
-      Math.floor(this.cssHeight * 0.25),
-      'bold',
-      this.valueStateColor,
-      'left',
-      'bottom'
-    );
-
-    this.canvas.drawText(
-      this.ctx,
-      this.getTimeToBurnText(),
-      Math.floor(this.cssWidth - this.cssWidth * 0.375),
-      Math.floor(this.cssHeight - this.cssHeight * 0.025),
-      Math.floor(this.cssWidth * 0.35),
-      Math.floor(this.cssHeight * 0.25),
-      'bold',
-      this.valueStateColor,
-      'left',
-      'bottom'
-    );
-
-    this.canvas.drawText(
-      this.ctx,
-      'TTB',
-      Math.floor(this.cssWidth - this.cssWidth * 0.4),
-      Math.floor(this.cssHeight - this.cssHeight * 0.2),
-      Math.floor(this.cssWidth * 0.10),
-      Math.floor(this.cssHeight * 0.15),
-      'normal',
-      this.valueStateColor,
-      'right',
-      'middle'
-    );
-
   }
 
   private beep(frequency = 440, duration = 100) {

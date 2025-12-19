@@ -1,16 +1,27 @@
-import { Component, AfterViewInit, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input } from '@angular/core';
-import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
-import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { IWidgetSvcConfig, IPathArray } from '../../core/interfaces/widgets-interface';
-import { CanvasService } from '../../core/services/canvas.service';
-import { getColors } from '../../core/utils/themeColors.utils';
-import { DashboardService } from '../../core/services/dashboard.service';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DestroyRef } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { ITheme } from '../../core/services/app-service';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  OnDestroy,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core';
+import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
+import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
+import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import {CanvasService} from '../../core/services/canvas.service';
+import {getColors} from '../../core/utils/themeColors.utils';
+import {DashboardService} from '../../core/services/dashboard.service';
+import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {ITheme} from '../../core/services/app-service';
 import {MatTooltipModule} from '@angular/material/tooltip';
 
 @Component({
@@ -105,7 +116,33 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         sampleTime: 1000
-      }
+      },
+      ttlPath: {
+        description: 'Time to sail to the start line in seconds',
+        path: 'self.navigation.racing.timeToLine',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: 's',
+        showConvertUnitTo: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 's',
+        sampleTime: 500
+      },
+      ttbPath: {
+        description: 'Time to delay before sailing to the start line in seconds',
+        path: 'self.navigation.racing.timeToBurn',
+        source: 'default',
+        pathType: 'number',
+        pathRequired: false,
+        isPathConfigurable: false,
+        convertUnitTo: 's',
+        showConvertUnitTo: false,
+        showPathSkUnitsFilter: false,
+        pathSkUnitsFilter: 's',
+        sampleTime: 500
+      },
     }
   };
 
@@ -122,6 +159,8 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private dtsValue: number | null = null;
   private lengthValue: number | null = null;
   private biasValue: number | null = null;
+  private ttlValue: number | null = null;
+  private ttbValue: number | null = null;
   protected labelColor = signal<string>('');
   private valueColor = '';
   private dtsColor = '';
@@ -168,7 +207,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('lineLengthPath', pkt => {
         this.lengthValue = pkt?.data?.value ?? null;
-        this.drawLenBias();
+        this.setLenBias();
         this.draw();
       }));
     });
@@ -180,7 +219,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('lineBiasPath', pkt => {
         this.biasValue = pkt?.data?.value ?? null;
-        this.drawLenBias();
+        this.setLenBias();
       }));
     });
 
@@ -209,7 +248,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
       const pathCfg = (cfg.paths as IPathArray | undefined)?.['linesPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('linesPath', pkt => {
-        console.log('lines: '  + JSON.stringify(pkt ?? 'no data'));
+        console.log('lines: ' + JSON.stringify(pkt ?? 'no data'));
         this.lines = ['Default'];
         this.displayLineIndex = 0;
         if (pkt?.data?.value && Array.isArray(pkt.data.value)) {
@@ -221,6 +260,40 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
             }
           }
         }
+      }));
+    });
+
+    // Stream: TTL
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg) {
+        return;
+      }
+      const paths = cfg.paths as IPathArray | undefined;
+      const path = paths?.['ttlPath']?.path;
+      if (!path) {
+        return;
+      }
+      untracked(() => this.streams.observe('ttlPath', pkt => {
+        this.ttlValue = pkt?.data?.value ?? null;
+        this.draw();
+      }));
+    });
+
+    // Stream: TTB
+    effect(() => {
+      const cfg = this.runtime.options();
+      if (!cfg) {
+        return;
+      }
+      const paths = cfg.paths as IPathArray | undefined;
+      const path = paths?.['ttbPath']?.path;
+      if (!path) {
+        return;
+      }
+      untracked(() => this.streams.observe('ttbPath', pkt => {
+        this.ttbValue = pkt?.data?.value ?? null;
+        this.draw();
       }));
     });
 
@@ -259,11 +332,11 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   }
 
   public setLineEnd(end: string): string {
-    return this.signalk.putRequest('navigation.racing.setStartLine', { end, position: 'bow' }, this.id());
+    return this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.id());
   }
 
   public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
-    return this.signalk.putRequest('navigation.racing.setStartLine', { end, delta, rotate: rotateRadians || null }, this.id());
+    return this.signalk.putRequest('navigation.racing.setStartLine', {end, delta, rotate: rotateRadians || null}, this.id());
   }
 
   public nextDisplayLineName() {
@@ -271,11 +344,11 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
       this.displayLineIndex = 0;
   }
 
-  public getDisplayLineName() : string {
+  public getDisplayLineName(): string {
     return this.lines[this.displayLineIndex] || 'Default';
   }
 
-  public isDisplayLineCurrent() : boolean {
+  public isDisplayLineCurrent(): boolean {
     return this.getDisplayLineName() === (this.startLineName || 'Default');
   }
 
@@ -293,8 +366,6 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   public toRadians(deg: number): number | null {
     return deg ? deg * (Math.PI / 180) : null;
   }
-
-  // Drawing helpers
   private draw(): void {
     if (!this.ctx || !this.canvasElement) return;
     const cfg = this.runtime.options();
@@ -305,23 +376,86 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
-    this.drawDToLine();
-    this.drawLenBias();
-    this.drawUnit();
-  }
 
-  private drawDToLine(): void {
-    const valueText = this.getValueText();
     this.canvas.drawText(
       this.ctx,
-      valueText,
-      Math.floor(this.cssWidth / 2),
-      Math.floor((this.cssHeight / 2) * 1.3),
-      this.maxValueTextWidth,
-      this.maxValueTextHeight,
+      this.getValueText(),
+      Math.floor(this.cssWidth * 0.5),
+      Math.floor(this.cssHeight * 0.325),
+      Math.floor(this.cssWidth * 0.95),
+      Math.floor(this.cssHeight * 0.55),
       'bold',
-      this.dtsColor
+      this.dtsColor,
+      'center',
+      'middle'
     );
+
+    this.canvas.drawText(
+      this.ctx,
+      (this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo || 'm',
+      Math.floor(this.cssWidth * 0.975),
+      Math.floor(this.cssHeight * 0.60),
+      Math.floor(this.cssWidth * 0.95),
+      Math.floor(this.cssHeight * 0.15),
+      'normal',
+      this.dtsColor,
+      'right',
+      'bottom'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      'TTL',
+      Math.floor(this.cssWidth * 0.025),
+      Math.floor(this.cssHeight * 0.7),
+      Math.floor(this.cssWidth * 0.10),
+      Math.floor(this.cssHeight * 0.15),
+      'normal',
+      this.dtsColor,
+      'left',
+      'middle'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      this.getTimeToLineText(),
+      Math.floor(this.cssWidth * 0.15),
+      Math.floor(this.cssHeight - 0.80),
+      Math.floor(this.cssWidth * 0.35),
+      Math.floor(this.cssHeight * 0.35),
+      'bold',
+      this.dtsColor,
+      'left',
+      'bottom'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      'TTB',
+      Math.floor(this.cssWidth * 0.525),
+      Math.floor(this.cssHeight * 0.7),
+      Math.floor(this.cssWidth * 0.10),
+      Math.floor(this.cssHeight * 0.15),
+      'normal',
+      this.dtsColor,
+      'left',
+      'middle'
+    );
+
+    this.canvas.drawText(
+      this.ctx,
+      this.getTimeToBurnText(),
+      Math.floor(this.cssWidth * 0.65),
+      Math.floor(this.cssHeight - 0.80),
+      Math.floor(this.cssWidth * 0.35),
+      Math.floor(this.cssHeight * 0.35),
+      'bold',
+      this.dtsColor,
+      'left',
+      'bottom'
+    );
+
+    this.setLenBias();
   }
 
   private getValueText(): string {
@@ -330,23 +464,27 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
     return this.dtsValue.toFixed(cfg?.numDecimal ?? 0);
   }
 
-  private drawUnit(): void {
-    const unit = (this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo || 'm';
-    this.canvas.drawText(
-      this.ctx,
-      unit,
-      Math.floor(this.cssWidth - 10 * this.canvas.scaleFactor),
-      Math.floor(this.cssHeight - 7 * this.canvas.scaleFactor),
-      Math.floor(this.cssWidth * 0.25),
-      Math.floor(this.cssHeight * 0.15),
-      'bold',
-      this.dtsColor,
-      'end',
-      'alphabetic'
-    );
+  private toHHMMSS(totalSeconds: number): string {
+    if (totalSeconds == null || isNaN(totalSeconds)) return '-:--';
+    const negative = totalSeconds < 0;
+    if (negative) totalSeconds = -totalSeconds;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const sign = negative ? '-' : '';
+    if (hours === 0)
+      return `${sign}${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  private drawLenBias(): void {
+  private getTimeToLineText(): string {
+    return this.toHHMMSS(this.ttlValue);
+  }
+
+  private getTimeToBurnText(): string {
+    return this.toHHMMSS(this.ttbValue);
+  }
+  private setLenBias(): void {
     const cfg = this.runtime.options(); if (!cfg) return;
     if ((cfg.paths as IPathArray)['lineLengthPath'].path && this.lengthValue != null) {
       let unit = (cfg.paths as IPathArray)['lineLengthPath'].convertUnitTo;

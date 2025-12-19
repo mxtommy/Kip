@@ -1,94 +1,97 @@
 <div class="filler">
-    <canvas #canvasMainRef class="timer-canvas"></canvas>
-  </div>
-  <div class="buttons-container">
-    <button mat-flat-button class="button select-button" matTooltip="Select the control mode" (click)="toggleMode()">
-      <mat-icon class="buttons-svg-icon">
-        <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-          <text x="40" y="9">&vellip;</text>
+  <canvas #canvasMainRef class="timer-canvas"></canvas>
+</div>
+<div class="buttons-container">
+  <button mat-flat-button class="button select-button" matTooltip="Select the control mode" (click)="toggleMode()">
+    <mat-icon class="buttons-svg-icon">
+      <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+        <text x="40" y="9">&vellip;</text>
+      </svg>
+    </mat-icon>
+  </button>
+  @switch (mode()) {
+    @case (0) {
+      <div class="start-at">
+        <svg width="100%" height="100%" viewBox="0 0 80 12" preserveAspectRatio="xMidYMid meet" class="svg-content svg-start-at">
+          <text x="40" y="10">Start at: {{ startAtTime() }}</text>
         </svg>
-      </mat-icon>
-    </button>
-    @switch(mode()) {
-      @case (0) {
-        <div class="start-at">
-          <svg width="100%" height="100%" viewBox="0 0 80 12" preserveAspectRatio="xMidYMid meet" class="svg-content svg-start-at">
-            <text x="40" y="10">Start at: {{ startAtTime() }}</text>
-          </svg>
-        </div>
-      }
-      @case (1) {
-        <button mat-flat-button class="button main-button" matTooltip="Start the race timer" (click)="sendStartTimerCommand('start')">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="40" y="11">Start</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button other-small-button" matTooltip="Remove 1 minute from the timer" (click)="adjustStartTime(-60)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="40" y="11">-1m</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button other-small-button" matTooltip="Add 1 minute to the timer" (click)="adjustStartTime(+60)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="40" y="11">+1m</text>
-            </svg>
-          </mat-icon>
-        </button>
-      } @case (2) {
-          <button mat-flat-button class="button main-button" matTooltip="Sync the timer to nearest minute" (click)="sendStartTimerCommand('sync')">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="50" y="11">Sync</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button other-button" matTooltip="Stop and reset the timer" (click)="sendStartTimerCommand('reset')">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="50" y="11">Reset</text>
-            </svg>
-          </mat-icon>
-        </button>
-      } @case (3) {
-        <button mat-flat-button class="button main-small-button" matTooltip="Reduce the timer by 1 minute" (click)="adjustStartTime(-60)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="25" y="11">-1m</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button other-small-button" matTooltip="Reduce the timer by 1 second" (click)="adjustStartTime(-1)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="25" y="11">-1s</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button other-small-button" matTooltip="Increase the timer by 1 second" (click)="adjustStartTime(+1)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="25" y="11">+1s</text>
-            </svg>
-          </mat-icon>
-        </button>
-        <button mat-flat-button class="button main-small-button" matTooltip="Increase the timer by 1 minute" (click)="adjustStartTime(+60)">
-          <mat-icon class="buttons-svg-icon">
-            <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
-              <text x="25" y="11">+1m</text>
-            </svg>
-          </mat-icon>
-        </button>
-      } @case (4) {
-        <input matInput class="set-start-at" type="time" step="1" matTooltip="Set an absolute start time" [(ngModel)]="startAtTimeEdit" (change)="setStartTime()">
-      }
+      </div>
     }
-  </div>
-  @if (!dashboard.isDashboardStatic()) {
-    <div class="widgetOverlay">
-    </div>
+    @case (1) {
+      <button mat-flat-button class="button main-button" matTooltip="Start the race timer" (click)="sendStartTimerCommand('start')">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="40" y="11">Start</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" matTooltip="Remove 1 minute from the timer" (click)="adjustStartTime(-60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="40" y="11">-1m</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" matTooltip="Add 1 minute to the timer" (click)="adjustStartTime(+60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="40" y="11">+1m</text>
+          </svg>
+        </mat-icon>
+      </button>
+    }
+    @case (2) {
+      <button mat-flat-button class="button main-button" matTooltip="Sync the timer to nearest minute" (click)="sendStartTimerCommand('sync')">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="50" y="11">Sync</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-button" matTooltip="Stop and reset the timer" (click)="sendStartTimerCommand('reset')">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 100 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="50" y="11">Reset</text>
+          </svg>
+        </mat-icon>
+      </button>
+    }
+    @case (3) {
+      <button mat-flat-button class="button main-small-button" matTooltip="Reduce the timer by 1 minute" (click)="adjustStartTime(-60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="25" y="11">-1m</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" matTooltip="Reduce the timer by 1 second" (click)="adjustStartTime(-1)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="25" y="11">-1s</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button other-small-button" matTooltip="Increase the timer by 1 second" (click)="adjustStartTime(+1)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="25" y="11">+1s</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button mat-flat-button class="button main-small-button" matTooltip="Increase the timer by 1 minute" (click)="adjustStartTime(+60)">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 50 14" preserveAspectRatio="xMidYMid meet" class="svg-content">
+            <text x="25" y="11">+1m</text>
+          </svg>
+        </mat-icon>
+      </button>
+    }
+    @case (4) {
+      <input matInput class="set-start-at" type="time" step="1" matTooltip="Set an absolute start time" [(ngModel)]="startAtTimeEdit" (change)="setStartTime()">
+    }
   }
+</div>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay">
+  </div>
+}
