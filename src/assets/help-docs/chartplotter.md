@@ -69,7 +69,7 @@ Change side via Settings → Display → “Freeboard‑SK panel side”. This u
 ## Chartplotter Mode vs Freeboard‑SK Widget
 | Aspect | Chartplotter Mode | Freeboard‑SK Widget |
 |--------|------------------|---------------------|
-| Persistence across dashboard switches | Yes (never reloads) | No. (created and destroyed on entering and leaving dashboards containing the widget |
+| Persistence across dashboard switches | Yes (never reloads) | No. (created and destroyed on entering and leaving dashboards containing the widget) |
 | Resize workflow | Drag split + Save/Cancel | Standard widget resize | 
 | Per‑dashboard full‑screen data toggle | Via collapse flag | N/A |
 | Remote dashboard switching continuity | Yes | Yes |
