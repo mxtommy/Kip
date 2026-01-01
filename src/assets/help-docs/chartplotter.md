@@ -70,16 +70,16 @@ Change side via Settings → Display → “Freeboard‑SK panel side”. This u
 | Aspect | Chartplotter Mode | Freeboard‑SK Widget |
 |--------|------------------|---------------------|
 | Persistence across dashboard switches | Yes (never reloads) | No. (created and destroyed on entering and leaving dashboards containing the widget) |
-| Resize workflow | Drag split + Save/Cancel | Standard widget resize | 
-| Per‑dashboard full‑screen data toggle | Via collapse flag | N/A |
-| Remote dashboard switching continuity | Yes | Yes |
+| Size and position workflow | Drag split + Save/Cancel | Standard widget positionning and sizing | 
+| Per‑dashboard full screen data toggle | Via individal dashboard collapse setting | N/A |
+| Remote dashboard chartplotter switching continuity | Yes | Yes |
 | Memory footprint | Higher baseline (Freeboard-SK always resident) | Lower when dashboard lack the widget |
 | Best for | Continuous nav + multi‑dashboard workflow (MFD) | Occasional chart reference |
 
 ---
 
 ## Remote Control Integration
-When another KIP instance changes your active dashboard (Remote Control feature), the chartplotter mode and collapsed dashboard page settings are respected. No special configuration is required.
+When another KIP instance changes your active dashboard (Remote Control feature), the chartplotter mode and collapsed dashboard settings are respected. No special configuration is required.
 
 ---
 
