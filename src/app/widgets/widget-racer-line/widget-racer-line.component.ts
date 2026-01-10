@@ -474,7 +474,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
     const sign = negative ? '-' : '';
     if (hours === 0)
       return `${sign}${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}`;
-    return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${sign}${hours.toString().padStart(1, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
   private getTimeToLineText(): string {
