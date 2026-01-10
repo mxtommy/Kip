@@ -211,7 +211,7 @@ export const DemoDashboardsConfig: Dashboard[] = [
                 },
                 "nextWaypointBearing": {
                   "description": "Next Waypoint True Bearing",
-                  "path": "self.navigation.courseGreatCircle.nextPoint.bearingTrue",
+                  "path": "self.navigation.course.calcValues.bearingTrue",
                   "source": "default",
                   "pathType": "number",
                   "isPathConfigurable": false,
