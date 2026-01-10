@@ -99,7 +99,7 @@ export class WidgetWindComponent implements OnDestroy {
       },
       nextWaypointBearing: {
         description: 'Next Waypoint True Bearing',
-        path: 'self.navigation.courseGreatCircle.nextPoint.bearingTrue',
+        path: 'self.navigation.course.calcValues.bearingTrue',
         source: 'default',
         pathType: 'number',
         isPathConfigurable: false,
