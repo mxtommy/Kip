@@ -279,74 +279,125 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
       const gridCell = this._gridstack().grid.getCellFromPixel({ left: inputX, top: inputY });
-      const isCellEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2)
+      const isMinCellSpaceEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2);
 
-      if (isCellEmpty) {
-        if (this._gridstack().grid.willItFit({ x: gridCell.x, y: gridCell.y, w: 4, h: 6 })) {
-          this._addDialogOpen = true;
+      if (isMinCellSpaceEmpty) {
+        this._addDialogOpen = true;
 
-          this._dialog.openFrameDialog({
-            title: 'Add Widget',
-            component: 'select-widget',
-          }, true)
-          .pipe(finalize(() => { this._addDialogOpen = false; }))
-          .subscribe(data => {
-            if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
-            const widget = data as WidgetDescription;
-            const ID = UUID.create();
-            let newWidget: NgGridStackWidget = {};
+        this._dialog.openFrameDialog({
+          title: 'Add Widget',
+          component: 'select-widget',
+        }, true)
+        .pipe(finalize(() => { this._addDialogOpen = false; }))
+        .subscribe(data => {
+          if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
+          const widget = data as WidgetDescription;
+          const ID = UUID.create();
+          let newWidget: NgGridStackWidget = {};
 
-            if (widget.selector === 'group-widget') {
-              newWidget = {
-                x: gridCell.x,
-                y: gridCell.y,
-                w: 3,
-                h: 4,
-                id: ID,
-                selector: "group-widget",
-                input: {
-                  widgetProperties: {
-                    type: widget.selector,
-                    uuid: ID,
-                    config: {
-                      displayName: "Group Widget",
-                      color: "contrast"
-                    }
-                  }
-                },
-                subGridOpts: {
-                  children: []
-                },
-              };
-            } else {
-              newWidget = {
-                x: gridCell.x,
-                y: gridCell.y,
-                w: widget.defaultWidth,
-                h: widget.defaultHeight,
-                minW: widget.minWidth,
-                minH: widget.minHeight,
-                id: ID,
-                selector: "widget-host2",
-                input: {
-                  widgetProperties: {
-                    type: widget.selector,
-                    uuid: ID,
+          if (widget.selector === 'group-widget') {
+            newWidget = {
+              x: gridCell.x,
+              y: gridCell.y,
+              w: 3,
+              h: 4,
+              id: ID,
+              selector: "group-widget",
+              input: {
+                widgetProperties: {
+                  type: widget.selector,
+                  uuid: ID,
+                  config: {
+                    displayName: "Group Widget",
+                    color: "contrast"
                   }
                 }
-              };
+              },
+              subGridOpts: {
+                children: []
+              },
+            };
+          } else {
+            newWidget = {
+              x: gridCell.x,
+              y: gridCell.y,
+              w: widget.defaultWidth,
+              h: widget.defaultHeight,
+              minW: widget.minWidth,
+              minH: widget.minHeight,
+              id: ID,
+              selector: "widget-host2",
+              input: {
+                widgetProperties: {
+                  type: widget.selector,
+                  uuid: ID,
+                }
+              }
+            };
+          }
+
+          // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
+          const grid = this._gridstack().grid;
+          const minW = Number(widget.minWidth ?? 1);
+          const minH = Number(widget.minHeight ?? 2);
+          const maxW = Number(widget.defaultWidth ?? minW);
+          const maxH = Number(widget.defaultHeight ?? minH);
+
+          const defaultFits =
+            grid.isAreaEmpty(gridCell.x, gridCell.y, maxW, maxH) &&
+            grid.willItFit({ x: gridCell.x, y: gridCell.y, w: maxW, h: maxH } as NgGridStackWidget);
+
+          if (!defaultFits) {
+            const best = this.findBestWidgetSizeAtCell(grid, gridCell.x, gridCell.y, minW, minH, maxW, maxH);
+
+            if (!best) {
+              this._app.sendSnackbarNotification(`Error Adding Widget: Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0);
+              return;
             }
 
-            const item = this._gridstack().grid.addWidget(newWidget);
-            if (item.gridstackNode.subGrid) {
-              item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
-            }
-          });
-        } else {
-          this._app.sendSnackbarNotification('Error Adding Widget: Not enough space at the selected location. Please reorganize the dashboard to free up space or choose a larger empty area.', 0);
+            newWidget.w = best.w;
+            newWidget.h = best.h;
+          }
+
+          const item = this._gridstack().grid.addWidget(newWidget);
+          if (item.gridstackNode.subGrid) {
+            item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+          }
+        });
+      } else {
+        this._app.sendSnackbarNotification('Error Adding Widget: Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0);
+      }
+    }
+  }
+
+  /** Find the biggest size that fits at (x,y), within [min..max]. Prefers larger area, then height, then width. */
+  private findBestWidgetSizeAtCell(grid: { isAreaEmpty: (x: number, y: number, w: number, h: number) => boolean; willItFit: (w: NgGridStackWidget) => boolean; }, x: number, y: number, minW: number, minH: number, maxW: number, maxH: number): { w: number; h: number } | null {
+    const loW = Math.max(1, Math.floor(minW));
+    const loH = Math.max(1, Math.floor(minH));
+    const hiW = Math.max(loW, Math.floor(maxW));
+    const hiH = Math.max(loH, Math.floor(maxH));
+
+    let best: { w: number; h: number; area: number } | null = null;
+
+    for (let w = loW; w <= hiW; w++) {
+      for (let h = loH; h <= hiH; h++) {
+        // Must fit at the chosen cell, and also satisfy gridstack constraints.
+        if (!grid.isAreaEmpty(x, y, w, h)) continue;
+        if (!grid.willItFit({ x, y, w, h } as NgGridStackWidget)) continue;
+
+        const area = w * h;
+        if (
+          !best ||
+          area > best.area ||
+          (area === best.area && h > best.h) ||
+          (area === best.area && h === best.h && w > best.w)
+        ) {
+          best = { w, h, area };
         }
       }
     }
+
+    return best ? { w: best.w, h: best.h } : null;
   }
 
   /** Cancel the active pointer sequence so gridstack won't treat subsequent movement (while still holding) as a drag */
