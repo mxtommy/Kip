@@ -72,6 +72,12 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   protected saveAllSettings():void {
+    const form = this.displayForm();
+    if (!form || form.invalid) {
+      form?.form.markAllAsTouched();
+      this._app.sendSnackbarNotification('Please fill out required fields before saving.', 3000, true);
+      return;
+    }
     this._settings.setAutoNightMode(this.autoNightMode());
     this._settings.setRedNightMode(this.isRedNightMode());
     this._settings.setNightModeBrightness(this.nightBrightness());

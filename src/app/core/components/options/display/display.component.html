@@ -1,7 +1,6 @@
 <form (ngSubmit)="saveAllSettings()" #displayForm="ngForm" id="displaySetting">
   <p>Customize your display settings to improve visibility and adapt to various
     lighting conditions.</p>
-
      <mat-accordion>
       <mat-expansion-panel>
         <mat-expansion-panel-header>
@@ -109,17 +108,20 @@
           <mat-label>Name of this instance</mat-label>
           <input matInput
             (ngModelChange)="displayForm.form.markAsDirty()"
+            #instanceNameModel="ngModel"
             name="instanceName"
             placeholder="Ex. Mast"
             [(ngModel)]="instanceName"
-            [ngModelOptions]="{ standalone: true }"
             [disabled]="!isRemoteControlCb.checked"
-            required>
+            [required]="isRemoteControlCb.checked">
+          @if (isRemoteControlCb.checked && instanceNameModel.invalid && (instanceNameModel.touched || displayForm.submitted)) {
+            <mat-error>This field is required.</mat-error>
+          }
         </mat-form-field>
       </mat-expansion-panel>
     </mat-accordion>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
-    <button mat-flat-button type="submit" class="formActionButton" [disabled]="!displayForm.form.dirty">Save</button>
+    <button mat-flat-button type="submit" class="formActionButton" [disabled]="!displayForm.form.dirty || displayForm.form.invalid">Save</button>
   </div>
 </form>
