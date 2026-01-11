@@ -1,12 +1,13 @@
 import { AppSettingsService } from './app-settings.service';
-import { effect, inject, Injectable, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { DestroyRef, effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
+import { UUID } from '../utils/uuid.util';
+import { BehaviorSubject, distinctUntilChanged, filter, map } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { UUID } from '../utils/uuid.util';
 import { DefaultDashboard } from '../../../default-config/config.blank.dashboard';
-import { BehaviorSubject } from 'rxjs';
 
 export interface Dashboard {
   id: string
@@ -27,8 +28,9 @@ export interface widgetOperation {
 export class DashboardService {
   private readonly _settings = inject(AppSettingsService);
   private readonly _router = inject(Router);
+  private readonly _destroyRef = inject(DestroyRef);
   public dashboards = signal<Dashboard[]>([], { equal: isEqual });
-  public readonly activeDashboard = signal<number>(0);
+  public readonly activeDashboard = signal<number | null>(null);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
   public isDashboardStatic = signal<boolean>(true);
@@ -37,9 +39,9 @@ export class DashboardService {
   public readonly layoutEditCanceled = signal<number>(0);
 
   constructor() {
-    const dashboards = this._settings.getDashboardConfig();
+    const dashboardsConfig = this._settings.getDashboardConfig();
 
-    if (!dashboards || dashboards.length === 0) {
+    if (!dashboardsConfig || dashboardsConfig.length === 0) {
       console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
       const newBlankDashboard = DefaultDashboard.map(dashboard => ({
         ...dashboard,
@@ -47,13 +49,71 @@ export class DashboardService {
       }));
       this.dashboards.set([...newBlankDashboard]);
     } else {
-      this.dashboards.set(this._settings.getDashboardConfig());
+      this.dashboards.set(dashboardsConfig);
     }
+
+    // Initialize active dashboard from current URL snapshot.
+    // If `id` param is missing/invalid, default to 0.
+    const initialRaw = this.getRouteParam('id');
+    if (initialRaw === null || initialRaw === '') {
+      this.setActiveDashboardIndex(0);
+    } else {
+      const initialIdx = Number(initialRaw);
+      if (!isNaN(initialIdx)) {
+        this.setActiveDashboardIndex(initialIdx);
+      }
+    }
+
+    // Subscribe to router events to update active dashboard on URL changes
+    this._router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        map(() => this.getRouteParam('id')),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this._destroyRef)
+      )
+      .subscribe(raw => {
+        if (raw === null || raw === '') return;
+
+        const parsedParam = Number(raw);
+        if (isNaN(parsedParam)) return;
+
+        this.setActiveDashboardIndex(parsedParam);
+      });
 
     effect(() => {
       const dashboards = this.dashboards();
-      this._settings.saveDashboards(dashboards);
+
+      untracked(() => {
+        this._settings.saveDashboards(dashboards);
+      });
     });
+  }
+
+  private getRouteParam(paramName: string): string | null {
+    let route: ActivatedRouteSnapshot | null = this._router.routerState.snapshot.root;
+    while (route) {
+      if (route.paramMap.has(paramName)) return route.paramMap.get(paramName);
+      route = route.firstChild ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * Sets the active dashboard index in the service.
+   * This only updates the internal state and does NOT trigger navigation or URL changes.
+   * @param itemIndex The index of the dashboard to activate.
+   */
+  public setActiveDashboardIndex(itemIndex: number): void {
+    if (itemIndex === this.activeDashboard()) return;
+    // No change if the same dashboard is selected to prevent unnecessary cascading updates
+
+    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
+      this.activeDashboard.set(itemIndex);
+      console.log(`[Dashboard Service] Active dashboard index set to ${itemIndex}`);
+    } else {
+      console.error(`[Dashboard Service] Invalid dashboard ID: ${itemIndex}`);
+    }
   }
 
   /**
@@ -238,22 +298,6 @@ export class DashboardService {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {
       this.activeDashboard.set(this.activeDashboard() - 1);
-    }
-  }
-
-  /**
-   * Sets the active dashboard index in the service.
-   * This only updates the internal state and does NOT trigger navigation or URL changes.
-   * @param itemIndex The index of the dashboard to activate.
-   */
-  public setActiveDashboard(itemIndex: number): void {
-    if (itemIndex === this.activeDashboard()) return;
-    // No change if the same dashboard is selected to prevent unnecessary cascading updates
-
-    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
-      this.activeDashboard.set(itemIndex);
-    } else {
-      console.error(`[Dashboard Service] Invalid dashboard ID: ${itemIndex}`);
     }
   }
 

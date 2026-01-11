@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
@@ -38,7 +38,6 @@ interface GridApi {
   }
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
-  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly _app = inject(AppService);
   private readonly _dialog = inject(DialogService);
   protected readonly dashboard = inject(DashboardService);
@@ -98,6 +97,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
       });
     });
+
+    effect(() => {
+      const activeIdx = this.dashboard.activeDashboard();
+
+      untracked(() => {
+        this.loadDashboard(activeIdx);
+        console.log(`[Dashboard] Loaded dashboard index ${activeIdx}`);
+      });
+    });
   }
 
   ngAfterViewInit(): void {
@@ -151,30 +159,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             }
           }
         });
-      }
-    });
-
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      let raw = params['id'];
-      if (params['id'] === '' ) {
-        raw = undefined;
-      } else {
-        raw = params['id'];
-      }
-
-      const parsed = Number(raw);
-      const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
-
-      if (raw !== undefined && !isValidNumber) return; // ignore have param but is non-numeric params entirely
-      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return; // ignore out-of-bounds IDs
-
-      const current = this.dashboard.activeDashboard();
-
-      if (!isNaN(parsed)) {
-        this.dashboard.setActiveDashboard(parsed);
-        this.loadDashboard(parsed);
-      } else {
-        this.loadDashboard(current);
       }
     });
   }

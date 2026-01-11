@@ -1,7 +1,7 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "title": "KIP Remote Displays API",
         "description": "API endpoints to list KIP displays and control the active screen for a given KIP instance via Signal K self.displays tree.\n\nUsage:\n- List displays:\n  curl -s http://localhost:3000/plugins/kip/displays\n- Read a display's screens:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}\n- Set a display entry:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"displayName\":\"Mast\"}' http://localhost:3000/plugins/kip/displays/{displayId}\n- Get active screen:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen\n- Set active screen:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen",
         "termsOfService": "http://signalk.org/terms/",

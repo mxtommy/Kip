@@ -1,11 +1,11 @@
-import { DestroyRef, effect, inject, Injectable, untracked } from '@angular/core';
+import { effect, inject, Injectable, untracked } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { IV2CommandResponse } from '../interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
 import { AppSettingsService } from './app-settings.service';
 import { DashboardService, Dashboard } from './dashboard.service';
 import { DataService } from './data.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export type DashboardListItem = Omit<Dashboard, 'configuration'>;
 export interface IScreensPayload {
@@ -17,123 +17,139 @@ export interface IScreensPayload {
   providedIn: 'root'
 })
 export class RemoteDashboardsService {
-  private readonly _http = inject(HttpClient);
-  private readonly _settings = inject(AppSettingsService);
-  private readonly _dashboard = inject(DashboardService);
-  private readonly _data = inject(DataService);
-  private readonly _destroyRef = inject(DestroyRef);
-  private readonly _displayName = toSignal(this._settings.getInstanceNameAsO());
-  private readonly _isRemoteControl = toSignal(this._settings.getIsRemoteControlAsO());
-  private readonly PLUGIN_URL = this._settings.signalkUrl.url + '/plugins/kip';
-  private readonly KIP_UUID = this._settings.KipUUID;
+  private readonly http = inject(HttpClient);
+  private readonly settings = inject(AppSettingsService);
+  private readonly dashboard = inject(DashboardService);
+  private readonly data = inject(DataService);
+
+  private readonly KIP_UUID = this.settings.KipUUID;
   private readonly ACTIVE_SCREEN_PATH = `self.displays.${this.KIP_UUID}.activeScreen`;
+
+  private readonly displayName = toSignal(this.settings.getInstanceNameAsO());
+  private readonly isRemoteControl = toSignal(this.settings.getIsRemoteControlAsO());
+  private readonly remoteScreenIdUpdate = toSignal(this.data.subscribePath(this.ACTIVE_SCREEN_PATH, 'default'));
+  private readonly PLUGIN_URL = this.settings.signalkUrl.url + '/plugins/kip';
   private previousIsRemoteControl = false;
-  private isRemoteScreenIdxCleared = true;
+  private appStarted = false;
 
   constructor() {
-    const startupClear = this.setActiveDashboard(this.KIP_UUID, null)
-    // Always clear any stale activeScreen value on startup (independent of remote control flag)
-      .then(() => {
-        console.log('[Remote Dashboards] Startup: cleared stale activeScreen (unconditional)');
-      })
-      .catch(err => {
-        console.warn('[Remote Dashboards] Startup: failed to clear stale activeScreen', err);
-      });
+    // Ensure ordering: clear activeScreen first, then clear screens payload
+    this.setActiveDashboardOnRemote(this.KIP_UUID, null);
+    this.setScreensOnRemote(this.KIP_UUID, null);
+    console.log('[Remote Dashboards] Cleared active dashboard and screens on server');
 
+    // Share dashboards configuration when Remote Control is toggled or when display name changes
     effect(() => {
-      // Whenever the dashboards or display name or remote control setting changes, share the new state with the server
-      const isRemoteControl = this._isRemoteControl();
-      if (!isRemoteControl && !this.previousIsRemoteControl) return;
-      const displayName = this._displayName();
-      const dashboards = this._dashboard.dashboards();
+      const isRemoteControl = this.isRemoteControl();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const displayName = this.displayName();
 
       untracked(() => {
+        if (!isRemoteControl && !this.previousIsRemoteControl) return;
         this.previousIsRemoteControl = isRemoteControl;
         let screensPayload: IScreensPayload = undefined;
         if (!isRemoteControl) {
-          // If remote control is disabled, clear out the displayName, screens and activeScreen on the server
+          // Clear displayName and screens on the server
           screensPayload = null;
+          this.clearActiveDashboardOnServer();
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const dashboardListItems: DashboardListItem[] = dashboards.map(({ configuration, ...rest }) => rest);
-          screensPayload = {
-            displayName: displayName,
-            screens: dashboardListItems
-          };
-          this.isRemoteScreenIdxCleared = false;
+          screensPayload = this.getScreensPayload(this.dashboard.dashboards());
+          const activeDashboard = this.dashboard.activeDashboard()
+          if (activeDashboard !== null) {
+            this.setActiveDashboardOnRemote(this.KIP_UUID, this.dashboard.activeDashboard())
+              .catch((err) => {
+                console.error('[Remote Dashboards] Error sharing active dashboard on Remote Control activation:', err);
+              });
+          }
         }
 
-        // Share the screens configuration with the server
-        this.shareScreens(this.KIP_UUID, screensPayload).then(() => {
-          console.log('[Remote Dashboards] Screen configuration shared');
-        }).catch((err) => {
-          console.error('[Remote Dashboards] Error sharing screen configuration:', err);
-        });
+        this.shareScreens(screensPayload);
       });
     });
 
+    // Push dashboard configuration to remote
     effect(() => {
-      // Whenever the active dashboard changes and remote control is enabled, share the new active dashboard with the server
-      const isRemoteControl = this._isRemoteControl();
-      const activeIdx = this._dashboard.activeDashboard();
+      const dashboards = this.dashboard.dashboards();
+
       untracked(() => {
-        if (isRemoteControl) {
-          this.setActiveDashboard(this.KIP_UUID, activeIdx).then(() => {
-          }).catch((err) => {
+        if (!this.isRemoteControl()) return;
+        const screensPayload = this.getScreensPayload(dashboards);
+        this.shareScreens(screensPayload);
+      });
+    });
+
+    // Push active dashboard to remote
+    effect(() => {
+      const activeIdx = this.dashboard.activeDashboard();
+
+      untracked(() => {
+        if (!this.isRemoteControl()) return;
+        if (activeIdx === null) return;
+
+        this.setActiveDashboardOnRemote(this.KIP_UUID, activeIdx)
+          .catch((err) => {
             console.error('[Remote Dashboards] Error sharing active dashboard:', err);
           });
-        } else {
-          if (!this.isRemoteScreenIdxCleared) {
-            // If remote control was just disabled, clear out the activeScreen on the server
-            this.setActiveDashboard(this.KIP_UUID, null).then(() => {
-              console.log('[Remote Dashboards] Disabled: Cleared active dashboard on server');
-            }).catch((err) => {
-              console.error('[Remote Dashboards] Error clearing active dashboard on server:', err);
-            });
-            this.isRemoteScreenIdxCleared = true;
+        console.log(`[Remote Dashboards] Setting active remote dashboard index to ${activeIdx}`);
+      });
+    });
+
+    // Change active dashboard based on remote updates
+    effect(() => {
+      const remoteUpdate = this.remoteScreenIdUpdate();
+
+      untracked(() => {
+        if (!this.isRemoteControl()) return;
+        //if (!this.appStarted) return;
+        if (remoteUpdate.data.value == null) return;
+        const idx = Number(remoteUpdate.data.value);
+        if (!isNaN(idx) && idx >= 0 && idx < this.dashboard.dashboards().length) {
+          if (this.dashboard.activeDashboard() !== idx) {
+            this.dashboard.setActiveDashboardIndex(idx);
+            console.log(`[Remote Dashboards] Remote request to set active dashboard to ${idx}`);
           }
         }
       });
     });
 
-    // Ensure listener attaches after we attempt to clear stale value so we don't react to it.
-    startupClear.finally(() => this.setupRemoteControlListener());
   }
 
-  private setupRemoteControlListener() {
-    this._settings.getIsRemoteControlAsO()
-      .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe(isRemote => {
-        if (isRemote) {
-          this._data.subscribePath(this.ACTIVE_SCREEN_PATH, 'default')
-            .pipe(takeUntilDestroyed(this._destroyRef))
-            .subscribe(update => {
-              if (update.data.value == null) return;
-              const idx = Number(update.data.value);
-              if (!isNaN(idx) && idx >= 0 && idx < this._dashboard.dashboards().length) {
-                if (this._dashboard.activeDashboard() !== idx) {
-                  console.log(`[Remote Dashboards] Setting active dashboard to ${idx} from remote update`);
-                  this._dashboard.navigateTo(idx);
-                }
-              }
-            });
-        } else {
-          this._data.unsubscribePath(this.ACTIVE_SCREEN_PATH);
-        }
+  private clearActiveDashboardOnServer() {
+    this.setActiveDashboardOnRemote(this.KIP_UUID, null).then(() => {
+      console.log('[Remote Dashboards] Disabled: Cleared active dashboard on server');
+    }).catch((err) => {
+      console.error('[Remote Dashboards] Error clearing active dashboard on server while disabling the feature:', err);
+    });
+  }
+
+  private getScreensPayload(dashboards: Dashboard[]): IScreensPayload {
+    const displayName = this.displayName();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const dashboardListItems: DashboardListItem[] = dashboards.map(({ configuration, ...rest }) => rest);
+    return { displayName: displayName, screens: dashboardListItems };
+  }
+
+  private shareScreens(screens: IScreensPayload): void {
+    this.setScreensOnRemote(this.KIP_UUID, screens)
+      .then(() => {
+        console.log('[Remote Dashboards] Setting screens configuration on remote.');
+      }).catch((err) => {
+        console.error('[Remote Dashboards] Error sharing screen configuration:', err);
       });
   }
 
-  public async setActiveDashboard(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
+  public async setActiveDashboardOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
     const body = screenIdx === null ? null : { screenIdx };
+    console.log('[Remote Dashboards] Writing active dashboard on remote to:', screenIdx);
     return lastValueFrom(
-      this._http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/activeScreen`, body)
+      this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/activeScreen`, body)
     );
   }
 
-  public shareScreens(kipId: string, screensPayload: IScreensPayload): Promise<IV2CommandResponse> {
+  public async setScreensOnRemote(kipId: string, screensPayload: IScreensPayload): Promise<IV2CommandResponse> {
     const body = screensPayload === null ? null : { ...screensPayload };
     return lastValueFrom(
-      this._http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}`, body)
+      this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}`, body)
     );
   }
 }
