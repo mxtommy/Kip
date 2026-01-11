@@ -11,7 +11,10 @@
       (cdkDragStarted)="dragStart()" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="dragEnd()"
       (press)="onPress(index)"
       (doubletap)="editDashboard(index)"
-      tabindex="0">
+      tabindex="0"
+      [attr.aria-label]="dashboard.name"
+      (keydown.enter)="editDashboard(index)"
+      (keydown.space)="onPress(index)">
       <div class="item-index">{{index + 1}}</div>
       <div >
         <mat-icon class="dashboard-icon"
