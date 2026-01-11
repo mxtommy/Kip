@@ -131,7 +131,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         grid.on('resizestart', () => {
           this._uiEvent.isDragging.set(true);
         });
-        grid.on('resizestop', (event, items) => {
+        grid.on('resizestop', () => {
           setTimeout(() => this._uiEvent.isDragging.set(false), 0);
         });
       }

@@ -106,7 +106,7 @@ export class RemoteDashboardsService {
         const idx = Number(changeTo.data.value);
         if (!isNaN(idx) && idx >= 0 && idx < this.dashboard.dashboards().length) {
           if (this.dashboard.activeDashboard() !== idx) {
-            this.dashboard.setActiveDashboardIndex(idx);
+            this.dashboard.navigateTo(idx);
             console.log(`[Remote Dashboards] Executed remote request to change active dashboard to: ${idx}`);
           }
         }

@@ -86,10 +86,6 @@ export class RemoteControlComponent {
     ).then(response => {
       if (response.statusCode !== 200) {
         console.error(`Failed to set active screen: ${response.message}`);
-        // Optionally: revert by reloading the resource
-        this.activeScreen.reload();
-      } else {
-        // Ensure we sync with server truth
         this.activeScreen.reload();
       }
     });
