@@ -3,7 +3,7 @@ import { DestroyRef, effect, inject, Injectable, signal, untracked } from '@angu
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { UUID } from '../utils/uuid.util';
-import { BehaviorSubject, distinctUntilChanged, filter, map } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, filter, map, shareReplay, skip, take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -52,34 +52,33 @@ export class DashboardService {
       this.dashboards.set(dashboardsConfig);
     }
 
-    // Initialize active dashboard from current URL snapshot.
-    // If `id` param is missing/invalid, default to 0.
-    const initialRaw = this.getRouteParam('id');
-    if (initialRaw === null || initialRaw === '') {
-      this.setActiveDashboardIndex(0);
-    } else {
-      const initialIdx = Number(initialRaw);
-      if (!isNaN(initialIdx)) {
-        this.setActiveDashboardIndex(initialIdx);
-      }
-    }
+    // Best-effort immediate init.
+    // If the Router has already completed initial navigation, the snapshot has the param.
+    // If not, we avoid defaulting to 0 prematurely and wait for the first NavigationEnd.
+    this.applyDashboardParam(this.getRouteParam('id'), false);
 
-    // Subscribe to router events to update active dashboard on URL changes
-    this._router.events
+    const navEnd$ = this._router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      shareReplay({ bufferSize: 1, refCount: true }),
+      takeUntilDestroyed(this._destroyRef)
+    );
+
+    // Initialize active dashboard after the first navigation completes.
+    navEnd$
       .pipe(
-        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-        map(() => this.getRouteParam('id')),
-        distinctUntilChanged(),
-        takeUntilDestroyed(this._destroyRef)
+        take(1),
+        map(() => this.getRouteParam('id'))
       )
-      .subscribe(raw => {
-        if (raw === null || raw === '') return;
+      .subscribe(raw => this.applyDashboardParam(raw, true));
 
-        const parsedParam = Number(raw);
-        if (isNaN(parsedParam)) return;
-
-        this.setActiveDashboardIndex(parsedParam);
-      });
+    // Update active dashboard on subsequent URL changes.
+    navEnd$
+      .pipe(
+        skip(1),
+        map(() => this.getRouteParam('id')),
+        distinctUntilChanged()
+      )
+      .subscribe(raw => this.applyDashboardParam(raw, false));
 
     effect(() => {
       const dashboards = this.dashboards();
@@ -97,6 +96,21 @@ export class DashboardService {
       route = route.firstChild ?? null;
     }
     return null;
+  }
+
+  private applyDashboardParam(raw: string | null, defaultToZero: boolean): void {
+    if (raw === null || raw === '') {
+      if (defaultToZero) this.setActiveDashboardIndex(0);
+      return;
+    }
+
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed)) {
+      if (defaultToZero) this.setActiveDashboardIndex(0);
+      return;
+    }
+
+    this.setActiveDashboardIndex(parsed);
   }
 
   /**

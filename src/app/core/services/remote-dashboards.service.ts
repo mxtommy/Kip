@@ -37,6 +37,7 @@ export class RemoteDashboardsService {
     // Ensure ordering: clear activeScreen first, then clear screens payload
     this.setActiveDashboardOnRemote(this.KIP_UUID, null);
     this.setScreensOnRemote(this.KIP_UUID, null);
+    this.clearActiveScreenOnRemote(this.KIP_UUID, null);
     console.log('[Remote Dashboards] Cleaning paths on server');
 
     // Share dashboards configuration when Remote Control is toggled or when display name changes
@@ -88,10 +89,12 @@ export class RemoteDashboardsService {
         if (activeIdx === null) return;
 
         this.setActiveDashboardOnRemote(this.KIP_UUID, activeIdx)
+          .then(() => {
+            console.log(`[Remote Dashboards] Sent new dashboard highlight index ${activeIdx} to server.`);
+          })
           .catch((err) => {
             console.error('[Remote Dashboards] Error sharing active dashboard:', err);
           });
-        console.log(`[Remote Dashboards] Sending new dashboard highlight index ${activeIdx} to server.`);
       });
     });
 
@@ -101,7 +104,6 @@ export class RemoteDashboardsService {
 
       untracked(() => {
         if (!this.isRemoteControl()) return;
-        //if (!this.appStarted) return;
         if (changeTo.data.value == null) return;
         const idx = Number(changeTo.data.value);
         if (!isNaN(idx) && idx >= 0 && idx < this.dashboard.dashboards().length) {
@@ -150,6 +152,13 @@ export class RemoteDashboardsService {
     const body = screensPayload === null ? null : { ...screensPayload };
     return lastValueFrom(
       this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}`, body)
+    );
+  }
+
+  public async clearActiveScreenOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
+    const body = screenIdx === null ? null : { screenIdx };
+    return lastValueFrom(
+      this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/activeScreen`, body)
     );
   }
 }
