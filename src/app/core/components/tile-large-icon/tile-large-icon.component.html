@@ -1,9 +1,18 @@
-<div matRipple [class]="`${compact() ? 'icon-container-compact' : 'icon-container'}`" [class.active-container-accent]="active()">
+<div matRipple
+  tabindex="0"
+  role="button"
+  [attr.aria-pressed]="active()"
+  [attr.aria-label]="iconOnly() ? label() : null"
+  [class]="`${compact() ? 'icon-container-compact' : 'icon-container'}`"
+  [class.active-container-accent]="active()"
+  (keydown.enter)="onKeyboardActivate($event)"
+  (keydown.space)="onKeyboardActivate($event)"
+  >
   <mat-icon [svgIcon]="svgIcon()" [style.width.px]="iconSize()" [style.height.px]="iconSize()" aria-hidden="false"></mat-icon>
   @if (!iconOnly()) {
     <p [class]="`large-icon-tile-label${compact() ? ' compact' : ''}`">{{label()}}</p>
   }
   @if (active()) {
-  <div class="active-accent-bar"></div>
+    <div class="active-accent-bar"></div>
   }
 </div>

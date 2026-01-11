@@ -25,7 +25,6 @@
     } @else if(screens.hasValue()) {
       @for(screen of screens.value(); track screen.id) {
         <tile-large-icon
-          tabindex="0"
           #tile
           [active]="activeScreenIdx() === $index ? true : false"
           [svgIcon]="screen.icon"
