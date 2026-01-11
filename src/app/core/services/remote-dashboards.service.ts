@@ -114,7 +114,6 @@ export class RemoteDashboardsService {
         }
       });
     });
-
   }
 
   private clearActiveDashboardOnServer() {
@@ -141,6 +140,7 @@ export class RemoteDashboardsService {
       });
   }
 
+  // Important API call info - the string screenIdx in { screenIdx } is important as the KIP Plugin looks for this string in the param. Do not change without updating the KIP Plugin.
   public async setActiveDashboardOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
     const body = screenIdx === null ? null : { screenIdx };
     return lastValueFrom(
@@ -155,6 +155,7 @@ export class RemoteDashboardsService {
     );
   }
 
+  // Important API call info - the string screenIdx in { screenIdx } is important as the KIP Plugin looks for this string in the param. Do not change without updating the KIP Plugin.
   public async clearActiveScreenOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
     const body = screenIdx === null ? null : { screenIdx };
     return lastValueFrom(
