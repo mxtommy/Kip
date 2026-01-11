@@ -23,8 +23,7 @@ interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: 
 interface GridApi {
   getRow?: () => number;
   cellHeight?: (val: number) => void;
-  batchUpdate?: () => void;
-  commit?: () => void;
+  batchUpdate?: (flag?: boolean) => void;
 }
 
 @Component({
@@ -207,9 +206,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           return; // nothing changed
         }
         grid.cellHeight(cellHeight as unknown as number);
-        if (grid.batchUpdate && grid.commit) {
+        if (grid.batchUpdate) {
           grid.batchUpdate();
-          grid.commit();
+          grid.batchUpdate(false);
         }
         this._lastContainerHeight = containerHeight;
         this._lastCellHeight = cellHeight;
@@ -234,7 +233,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
     _gridstack.grid.load(dashboard.configuration);
-    _gridstack.grid.commit();
+    _gridstack.grid.batchUpdate(false);
   }
 
   protected saveDashboard(): void {
