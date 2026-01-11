@@ -253,7 +253,7 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.ACTIVE_SCREEN}`, (req, res) => {
-                server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET ACTIVE_SCREEN ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displayId = req.displayId;
                     if (!displayId) {
