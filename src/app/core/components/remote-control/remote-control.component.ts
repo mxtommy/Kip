@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -17,30 +17,56 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './remote-control.component.html',
   styleUrl: './remote-control.component.scss'
 })
-export class RemoteControlComponent implements OnInit {
+export class RemoteControlComponent {
   protected readonly http = inject(HttpClient);
   private readonly _settings = inject(AppSettingsService);
   private readonly HOST_URL = this._settings.signalkUrl.url;
-  protected pageTitle = 'Remote Control';
+
+  protected readonly pageTitle = 'Remote Control';
+  private readonly appID = this._settings.KipUUID;
   private displayId = signal<string | null>(null);
-  protected displays = signal<IKipDisplayList | null>(null);
+  protected selectedDisplayButtonId = signal<string | null>(null);
+
+  private readonly displaysResource = httpResource<IKipDisplayList>(() => {
+    return `${this.HOST_URL}/plugins/kip/displays`;
+  });
+  protected readonly displays = computed<IKipDisplayList | null>(() => {
+    const instances = this.displaysResource.value();
+    if (!instances) return null;
+    return instances.filter(d => d.displayId !== this.appID);
+  });
   protected readonly screens = httpResource<IKipDisplayScreen>(() => {
     if (!this.displayId()) return undefined;
     return `${this.HOST_URL}/plugins/kip/displays/${this.displayId()}`;
   });
+  protected readonly activeScreenIdx = signal<number | null>(null);
   protected readonly activeScreen = httpResource<IKipActiveScreen>(() =>  {
     if (!this.displayId()) return undefined;
-    return `${this.HOST_URL}/plugins/kip/displays/${this.displayId()}/activeScreen`;
+    const url = `${this.HOST_URL}/plugins/kip/displays/${this.displayId()}/screenIndex`;
+    return url;
   });
-  protected selectedDisplayButtonId = signal<string | null>(null);
-  private appID = "";
 
-  ngOnInit(): void {
-    this.appID = this._settings.KipUUID;
-    lastValueFrom(this.http.get<IKipDisplayList>(`${this.HOST_URL}/plugins/kip/displays`))
-      .then(instances => {
-        this.displays.set(instances.filter(d => d.displayId !== this.appID));
+
+  constructor() {
+    this.displaysResource.value();
+    effect(() => {
+      const remoteDisplays = this.displays();
+
+      untracked(() => {
+        if (!remoteDisplays) return;
+        this.displayDashboards(remoteDisplays[0]?.displayId ?? null);
       });
+    });
+
+    // Mirror resource -> signal when the HTTP value arrives/changes
+    effect(() => {
+      const v = this.activeScreen.value();
+
+      untracked(() => {
+      // Adjust this mapping to match your real IKipActiveScreen shape
+      this.activeScreenIdx.set(v  ?? null);
+      });
+    });
   }
 
   protected displayDashboards(displayId: string | null): void {
@@ -49,13 +75,19 @@ export class RemoteControlComponent implements OnInit {
   }
 
   protected setActiveScreen(screenIdx: number): void {
+    // Optimistic UI update
+    this.activeScreenIdx.set(screenIdx);
+
     lastValueFrom(
-        this.http.put<IKipResponse>(`${this.HOST_URL}/plugins/kip/displays/${this.displayId()}/activeScreen`, { screenIdx })
-      ).then(response => {
-        if (response.statusCode !== 200) {
-          console.error(`Failed to set active screen: ${response.message}`);
-        }
-      });
-    this.activeScreen.set(screenIdx);
+      this.http.put<IKipResponse>(
+        `${this.HOST_URL}/plugins/kip/displays/${this.displayId()}/activeScreen`,
+        { screenIdx }
+      )
+    ).then(response => {
+      if (response.statusCode !== 200) {
+        console.error(`Failed to set active screen: ${response.message}`);
+        this.activeScreen.reload();
+      }
+    });
   }
 }

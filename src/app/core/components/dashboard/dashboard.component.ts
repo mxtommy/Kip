@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
 import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
@@ -23,8 +23,7 @@ interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: 
 interface GridApi {
   getRow?: () => number;
   cellHeight?: (val: number) => void;
-  batchUpdate?: () => void;
-  commit?: () => void;
+  batchUpdate?: (flag?: boolean) => void;
 }
 
 @Component({
@@ -38,7 +37,6 @@ interface GridApi {
   }
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
-  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly _app = inject(AppService);
   private readonly _dialog = inject(DialogService);
   protected readonly dashboard = inject(DashboardService);
@@ -98,6 +96,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
       });
     });
+
+    effect(() => {
+      const activeIdx = this.dashboard.activeDashboard();
+
+      untracked(() => {
+        this.loadDashboard(activeIdx);
+      });
+    });
   }
 
   ngAfterViewInit(): void {
@@ -124,7 +130,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         grid.on('resizestart', () => {
           this._uiEvent.isDragging.set(true);
         });
-        grid.on('resizestop', (event, items) => {
+        grid.on('resizestop', () => {
           setTimeout(() => this._uiEvent.isDragging.set(false), 0);
         });
       }
@@ -151,30 +157,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             }
           }
         });
-      }
-    });
-
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      let raw = params['id'];
-      if (params['id'] === '' ) {
-        raw = undefined;
-      } else {
-        raw = params['id'];
-      }
-
-      const parsed = Number(raw);
-      const isValidNumber = raw !== undefined && raw !== '' && !isNaN(parsed);
-
-      if (raw !== undefined && !isValidNumber) return; // ignore have param but is non-numeric params entirely
-      if (parsed < 0 || parsed >= this.dashboard.dashboards().length) return; // ignore out-of-bounds IDs
-
-      const current = this.dashboard.activeDashboard();
-
-      if (!isNaN(parsed)) {
-        this.dashboard.setActiveDashboard(parsed);
-        this.loadDashboard(parsed);
-      } else {
-        this.loadDashboard(current);
       }
     });
   }
@@ -223,9 +205,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           return; // nothing changed
         }
         grid.cellHeight(cellHeight as unknown as number);
-        if (grid.batchUpdate && grid.commit) {
+        if (grid.batchUpdate) {
           grid.batchUpdate();
-          grid.commit();
+          grid.batchUpdate(false);
         }
         this._lastContainerHeight = containerHeight;
         this._lastCellHeight = cellHeight;
@@ -250,7 +232,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
     _gridstack.grid.load(dashboard.configuration);
-    _gridstack.grid.commit();
+    _gridstack.grid.batchUpdate(false);
   }
 
   protected saveDashboard(): void {

@@ -27,6 +27,7 @@ import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { DatasetService } from './core/services/data-set.service';
 import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
+import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
 
 @Component({
   selector: 'app-root',
@@ -40,6 +41,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _app = inject(AppService);
   private readonly _dashboard = inject(DashboardService);
+  private readonly _remoteControl = inject(RemoteDashboardsService);
   private readonly _notifications = inject(NotificationsService);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);

@@ -6,7 +6,6 @@ import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import packageInfo from '../../../../package.json';
-import { RemoteDashboardsService } from './remote-dashboards.service';
 
 /**
  * Snack-bar notification message interface.
@@ -83,7 +82,6 @@ export class AppService {
   private readonly _data = inject(DataService);
   private readonly _iconRegistry = inject(MatIconRegistry);
   private readonly _sanitizer = inject(DomSanitizer);
-  private readonly _remote = inject(RemoteDashboardsService);
   public isNightMode = signal<boolean>(false);
   private _useAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
   private _theme = toSignal(this._settings.getThemeNameAsO(), { requireSync: true });

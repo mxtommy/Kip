@@ -39,7 +39,17 @@ const start = (server) => {
     const API_PATHS = {
         DISPLAYS: `/displays`,
         INSTANCE: `/displays/:displayId`,
-        ACTIVE_SCREEN: `/displays/:displayId/activeScreen`
+        ACTIVE_SCREEN: `/displays/:displayId/screenIndex`,
+        CHANGE_SCREEN: `/displays/:displayId/activeScreen`
+    };
+    const CONFIG_SCHEMA = {
+        properties: {
+            notifications: {
+                type: 'object',
+                title: 'Remote Control',
+                description: 'This plugin requires no configuration.'
+            }
+        }
     };
     // Helpers
     function getDisplaySelfPath(displayId, suffix) {
@@ -80,14 +90,9 @@ const start = (server) => {
             const msg = 'Stopped.';
             server.setPluginStatus(msg);
         },
-        schema: () => {
-            return {
-                type: "object",
-                properties: {}
-            };
-        },
+        schema: () => CONFIG_SCHEMA,
         registerWithRouter(router) {
-            server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.ACTIVE_SCREEN}`);
+            server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.ACTIVE_SCREEN}, ${API_PATHS.CHANGE_SCREEN}`);
             // Validate/normalize :displayId where present
             router.param('displayId', (req, res, next, displayId) => {
                 if (displayId == null)
@@ -179,8 +184,34 @@ const start = (server) => {
                     return sendFail(res, 400, error.message);
                 }
             });
+            router.put(`${API_PATHS.CHANGE_SCREEN}`, async (req, res) => {
+                server.debug(`** PUT ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+                try {
+                    const dottedPath = pathToDotNotation(req.path);
+                    server.debug(`Updating SK path ${dottedPath} with body.screenIdx`);
+                    server.handleMessage(plugin.id, {
+                        updates: [
+                            {
+                                values: [
+                                    {
+                                        path: dottedPath,
+                                        value: req.body.screenIdx !== undefined ? req.body.screenIdx : null
+                                    }
+                                ]
+                            }
+                        ]
+                    }, server_api_1.SKVersion.v1);
+                    return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
+                }
+                catch (error) {
+                    const msg = `HandleMessage failed with errors!`;
+                    server.setPluginError(msg);
+                    server.error(`Error in HandleMessage: ${error}`);
+                    return sendFail(res, 400, error.message);
+                }
+            });
             router.get(API_PATHS.DISPLAYS, (req, res) => {
-                server.debug(`** GET ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET DISPLAY ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displays = getAvailableDisplays();
                     const items = displays && typeof displays === 'object'
@@ -202,7 +233,7 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.INSTANCE}`, (req, res) => {
-                server.debug(`** GET ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET INSTANCE ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displayId = req.displayId;
                     if (!displayId) {
@@ -222,22 +253,42 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.ACTIVE_SCREEN}`, (req, res) => {
-                server.debug(`** GET ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET ACTIVE_SCREEN ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displayId = req.displayId;
                     if (!displayId) {
                         return sendFail(res, 400, 'Missing displayId parameter');
                     }
-                    const node = getDisplaySelfPath(displayId, 'activeScreen');
+                    const node = getDisplaySelfPath(displayId, 'screenIndex');
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const idx = node?.value ?? null;
                     if (idx === undefined) {
-                        return sendFail(res, 404, `Active screen for display ${displayId} not found`);
+                        return sendFail(res, 404, `Active screen for display Id ${displayId} not found in path`);
                     }
                     return sendOk(res, idx);
                 }
                 catch (error) {
                     server.error(`Error reading activeScreen for ${req.params?.displayId}: ${String(error.message || error)}`);
+                    return sendFail(res, 400, error.message);
+                }
+            });
+            router.get(`${API_PATHS.CHANGE_SCREEN}`, (req, res) => {
+                server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+                try {
+                    const changeId = req.changeId;
+                    if (!changeId) {
+                        return sendFail(res, 400, 'Missing changeId parameter');
+                    }
+                    const node = getDisplaySelfPath(changeId, 'activeScreen');
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const idx = node?.value ?? null;
+                    if (idx === undefined) {
+                        return sendFail(res, 404, `Change display screen Id ${changeId} not found in path`);
+                    }
+                    return sendOk(res, idx);
+                }
+                catch (error) {
+                    server.error(`Error reading activeScreen for ${req.params?.changeId}: ${String(error.message || error)}`);
                     return sendFail(res, 400, error.message);
                 }
             });

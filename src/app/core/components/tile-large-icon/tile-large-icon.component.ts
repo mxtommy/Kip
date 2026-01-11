@@ -22,4 +22,16 @@ export class TileLargeIconComponent {
   public iconOnly = input<boolean>(false);
   public compact = input<boolean>(false);
   public active = input<boolean>(false);
+
+  protected onKeyboardActivate(event: Event): void {
+    if (event instanceof KeyboardEvent) {
+      // Space scrolls the page by default.
+      event.preventDefault();
+    } else {
+      // Still prevent default just in case this comes through as a plain Event.
+      event.preventDefault();
+    }
+
+    (event.currentTarget as HTMLElement | null)?.click();
+  }
 }

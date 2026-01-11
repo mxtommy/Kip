@@ -1,12 +1,13 @@
 import { AppSettingsService } from './app-settings.service';
-import { effect, inject, Injectable, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { DestroyRef, effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
+import { UUID } from '../utils/uuid.util';
+import { BehaviorSubject, distinctUntilChanged, filter, map, shareReplay, skip, take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import isEqual from 'lodash-es/isEqual';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { UUID } from '../utils/uuid.util';
 import { DefaultDashboard } from '../../../default-config/config.blank.dashboard';
-import { BehaviorSubject } from 'rxjs';
 
 export interface Dashboard {
   id: string
@@ -27,8 +28,9 @@ export interface widgetOperation {
 export class DashboardService {
   private readonly _settings = inject(AppSettingsService);
   private readonly _router = inject(Router);
+  private readonly _destroyRef = inject(DestroyRef);
   public dashboards = signal<Dashboard[]>([], { equal: isEqual });
-  public readonly activeDashboard = signal<number>(0);
+  public readonly activeDashboard = signal<number | null>(null);
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
   public isDashboardStatic = signal<boolean>(true);
@@ -37,9 +39,9 @@ export class DashboardService {
   public readonly layoutEditCanceled = signal<number>(0);
 
   constructor() {
-    const dashboards = this._settings.getDashboardConfig();
+    const dashboardsConfig = this._settings.getDashboardConfig();
 
-    if (!dashboards || dashboards.length === 0) {
+    if (!dashboardsConfig || dashboardsConfig.length === 0) {
       console.warn('[Dashboard Service] No dashboards found in settings, creating blank dashboard');
       const newBlankDashboard = DefaultDashboard.map(dashboard => ({
         ...dashboard,
@@ -47,13 +49,84 @@ export class DashboardService {
       }));
       this.dashboards.set([...newBlankDashboard]);
     } else {
-      this.dashboards.set(this._settings.getDashboardConfig());
+      this.dashboards.set(dashboardsConfig);
     }
+
+    // Best-effort immediate init.
+    // If the Router has already completed initial navigation, the snapshot has the param.
+    // If not, we avoid defaulting to 0 prematurely and wait for the first NavigationEnd.
+    this.applyDashboardParam(this.getRouteParam('id'), false);
+
+    const navEnd$ = this._router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      shareReplay({ bufferSize: 1, refCount: true }),
+      takeUntilDestroyed(this._destroyRef)
+    );
+
+    // Initialize active dashboard after the first navigation completes.
+    navEnd$
+      .pipe(
+        take(1),
+        map(() => this.getRouteParam('id'))
+      )
+      .subscribe(raw => this.applyDashboardParam(raw, true));
+
+    // Update active dashboard on subsequent URL changes.
+    navEnd$
+      .pipe(
+        skip(1),
+        map(() => this.getRouteParam('id')),
+        distinctUntilChanged()
+      )
+      .subscribe(raw => this.applyDashboardParam(raw, false));
 
     effect(() => {
       const dashboards = this.dashboards();
-      this._settings.saveDashboards(dashboards);
+
+      untracked(() => {
+        this._settings.saveDashboards(dashboards);
+      });
     });
+  }
+
+  private getRouteParam(paramName: string): string | null {
+    let route: ActivatedRouteSnapshot | null = this._router.routerState.snapshot.root;
+    while (route) {
+      if (route.paramMap.has(paramName)) return route.paramMap.get(paramName);
+      route = route.firstChild ?? null;
+    }
+    return null;
+  }
+
+  private applyDashboardParam(raw: string | null, defaultToZero: boolean): void {
+    if (raw === null || raw === '') {
+      if (defaultToZero) this.setActiveDashboardIndex(0);
+      return;
+    }
+
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed)) {
+      if (defaultToZero) this.setActiveDashboardIndex(0);
+      return;
+    }
+
+    this.setActiveDashboardIndex(parsed);
+  }
+
+  /**
+   * Sets the active dashboard index in the service.
+   * This only updates the internal state and does NOT trigger navigation or URL changes.
+   * @param itemIndex The index of the dashboard to activate.
+   */
+  public setActiveDashboardIndex(itemIndex: number): void {
+    if (itemIndex === this.activeDashboard()) return;
+    // No change if the same dashboard is selected to prevent unnecessary cascading updates
+
+    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
+      this.activeDashboard.set(itemIndex);
+    } else {
+      console.error(`[Dashboard Service] Invalid dashboard ID: ${itemIndex}`);
+    }
   }
 
   /**
@@ -238,22 +311,6 @@ export class DashboardService {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {
       this.activeDashboard.set(this.activeDashboard() - 1);
-    }
-  }
-
-  /**
-   * Sets the active dashboard index in the service.
-   * This only updates the internal state and does NOT trigger navigation or URL changes.
-   * @param itemIndex The index of the dashboard to activate.
-   */
-  public setActiveDashboard(itemIndex: number): void {
-    if (itemIndex === this.activeDashboard()) return;
-    // No change if the same dashboard is selected to prevent unnecessary cascading updates
-
-    if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
-      this.activeDashboard.set(itemIndex);
-    } else {
-      console.error(`[Dashboard Service] Invalid dashboard ID: ${itemIndex}`);
     }
   }
 

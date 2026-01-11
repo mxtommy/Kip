@@ -58,7 +58,6 @@
   <div class="menu-item-container" #tileContainer>
     @for (item of menuItems(); let i = $index; track $index) {
       <tile-large-icon
-        tabindex="0"
         #tile
         [active]="item.active"
         [svgIcon]="item.svgIcon"
