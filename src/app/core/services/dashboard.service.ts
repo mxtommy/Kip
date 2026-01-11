@@ -110,7 +110,6 @@ export class DashboardService {
 
     if (itemIndex >= 0 && itemIndex < this.dashboards().length) {
       this.activeDashboard.set(itemIndex);
-      console.log(`[Dashboard Service] Active dashboard index set to ${itemIndex}`);
     } else {
       console.error(`[Dashboard Service] Invalid dashboard ID: ${itemIndex}`);
     }

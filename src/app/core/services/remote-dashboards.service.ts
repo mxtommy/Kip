@@ -37,7 +37,7 @@ export class RemoteDashboardsService {
     // Ensure ordering: clear activeScreen first, then clear screens payload
     this.setActiveDashboardOnRemote(this.KIP_UUID, null);
     this.setScreensOnRemote(this.KIP_UUID, null);
-    console.log('[Remote Dashboards] Cleared active dashboard and screens on server');
+    console.log('[Remote Dashboards] Cleaning paths on server');
 
     // Share dashboards configuration when Remote Control is toggled or when display name changes
     effect(() => {
@@ -91,7 +91,7 @@ export class RemoteDashboardsService {
           .catch((err) => {
             console.error('[Remote Dashboards] Error sharing active dashboard:', err);
           });
-        console.log(`[Remote Dashboards] Setting active dashboard index on remote to: ${activeIdx}`);
+        console.log(`[Remote Dashboards] Sending new dashboard highlight index ${activeIdx} to server.`);
       });
     });
 
@@ -133,7 +133,7 @@ export class RemoteDashboardsService {
   private shareScreens(screens: IScreensPayload): void {
     this.setScreensOnRemote(this.KIP_UUID, screens)
       .then(() => {
-        console.log('[Remote Dashboards] Setting screens configuration on remote.');
+        console.log('[Remote Dashboards] Sending dashboard configurations to server.');
       }).catch((err) => {
         console.error('[Remote Dashboards] Error sharing screen configuration:', err);
       });
@@ -141,7 +141,6 @@ export class RemoteDashboardsService {
 
   public async setActiveDashboardOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
     const body = screenIdx === null ? null : { screenIdx };
-    console.log(`[Remote Dashboards] Writing active dashboard index on remote to: ${screenIdx}`);
     return lastValueFrom(
       this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/screenIndex`, body)
     );

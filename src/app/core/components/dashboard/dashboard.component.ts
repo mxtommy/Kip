@@ -102,7 +102,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
       untracked(() => {
         this.loadDashboard(activeIdx);
-        console.log(`[Dashboard] Loaded dashboard index ${activeIdx}`);
       });
     });
   }
