@@ -34,7 +34,7 @@ export class RemoteDashboardsService {
   private previousIsRemoteControl = false;
 
   constructor() {
-    // Ensure ordering: clear activeScreen first, then clear screens payload
+    // Clear all remote paths on service initialization
     this.setActiveDashboardOnRemote(this.KIP_UUID, null);
     this.setScreensOnRemote(this.KIP_UUID, null);
     this.clearActiveScreenOnRemote(this.KIP_UUID, null);
