@@ -211,7 +211,7 @@ const start = (server) => {
                 }
             });
             router.get(API_PATHS.DISPLAYS, (req, res) => {
-                server.debug(`** GET ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET DISPLAY ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displays = getAvailableDisplays();
                     const items = displays && typeof displays === 'object'
@@ -233,7 +233,7 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.INSTANCE}`, (req, res) => {
-                server.debug(`** GET ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET INSTANCE ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displayId = req.displayId;
                     if (!displayId) {
@@ -253,17 +253,17 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.ACTIVE_SCREEN}`, (req, res) => {
-                server.debug(`** GET ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const displayId = req.displayId;
                     if (!displayId) {
                         return sendFail(res, 400, 'Missing displayId parameter');
                     }
-                    const node = getDisplaySelfPath(displayId, 'activeScreen');
+                    const node = getDisplaySelfPath(displayId, 'screenIndex');
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const idx = node?.value ?? null;
                     if (idx === undefined) {
-                        return sendFail(res, 404, `Active screen for display ${displayId} not found`);
+                        return sendFail(res, 404, `Active screen for display Id ${displayId} not found in path`);
                     }
                     return sendOk(res, idx);
                 }
@@ -273,7 +273,7 @@ const start = (server) => {
                 }
             });
             router.get(`${API_PATHS.CHANGE_SCREEN}`, (req, res) => {
-                server.debug(`** GET ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+                server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
                 try {
                     const changeId = req.changeId;
                     if (!changeId) {
@@ -283,7 +283,7 @@ const start = (server) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const idx = node?.value ?? null;
                     if (idx === undefined) {
-                        return sendFail(res, 404, `Active screen for display ${changeId} not found`);
+                        return sendFail(res, 404, `Change display screen Id ${changeId} not found in path`);
                     }
                     return sendOk(res, idx);
                 }

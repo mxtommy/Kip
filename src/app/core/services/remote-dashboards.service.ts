@@ -23,14 +23,15 @@ export class RemoteDashboardsService {
   private readonly data = inject(DataService);
 
   private readonly KIP_UUID = this.settings.KipUUID;
-  private readonly ACTIVE_SCREEN_PATH = `self.displays.${this.KIP_UUID}.activeScreen`;
+  private readonly ACTIVE_SCREEN_PATH = `self.displays.${this.KIP_UUID}.screenIndex`;
+  private readonly CHANGE_SCREEN_PATH = `self.displays.${this.KIP_UUID}.activeScreen`;
 
   private readonly displayName = toSignal(this.settings.getInstanceNameAsO());
   private readonly isRemoteControl = toSignal(this.settings.getIsRemoteControlAsO());
-  private readonly remoteScreenIdUpdate = toSignal(this.data.subscribePath(this.ACTIVE_SCREEN_PATH, 'default'));
+  private readonly remoteScreenPosition = toSignal(this.data.subscribePath(this.ACTIVE_SCREEN_PATH, 'default'));
+  private readonly changeDashboardTo = toSignal(this.data.subscribePath(this.CHANGE_SCREEN_PATH, 'default'));
   private readonly PLUGIN_URL = this.settings.signalkUrl.url + '/plugins/kip';
   private previousIsRemoteControl = false;
-  private appStarted = false;
 
   constructor() {
     // Ensure ordering: clear activeScreen first, then clear screens payload
@@ -90,23 +91,23 @@ export class RemoteDashboardsService {
           .catch((err) => {
             console.error('[Remote Dashboards] Error sharing active dashboard:', err);
           });
-        console.log(`[Remote Dashboards] Setting active remote dashboard index to ${activeIdx}`);
+        console.log(`[Remote Dashboards] Setting active dashboard index on remote to: ${activeIdx}`);
       });
     });
 
     // Change active dashboard based on remote updates
     effect(() => {
-      const remoteUpdate = this.remoteScreenIdUpdate();
+      const changeTo = this.changeDashboardTo();
 
       untracked(() => {
         if (!this.isRemoteControl()) return;
         //if (!this.appStarted) return;
-        if (remoteUpdate.data.value == null) return;
-        const idx = Number(remoteUpdate.data.value);
+        if (changeTo.data.value == null) return;
+        const idx = Number(changeTo.data.value);
         if (!isNaN(idx) && idx >= 0 && idx < this.dashboard.dashboards().length) {
           if (this.dashboard.activeDashboard() !== idx) {
             this.dashboard.setActiveDashboardIndex(idx);
-            console.log(`[Remote Dashboards] Remote request to set active dashboard to ${idx}`);
+            console.log(`[Remote Dashboards] Executed remote request to change active dashboard to: ${idx}`);
           }
         }
       });
@@ -140,9 +141,9 @@ export class RemoteDashboardsService {
 
   public async setActiveDashboardOnRemote(kipId: string, screenIdx: number | null): Promise<IV2CommandResponse> {
     const body = screenIdx === null ? null : { screenIdx };
-    console.log('[Remote Dashboards] Writing active dashboard on remote to:', screenIdx);
+    console.log(`[Remote Dashboards] Writing active dashboard index on remote to: ${screenIdx}`);
     return lastValueFrom(
-      this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/activeScreen`, body)
+      this.http.put<IV2CommandResponse>(`${this.PLUGIN_URL}/displays/${kipId}/screenIndex`, body)
     );
   }
 
