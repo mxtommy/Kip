@@ -11,9 +11,15 @@ import { ITheme } from '../../core/services/app-service';
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 
-Chart.register(annotationPlugin, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
+Chart.register(annotationPlugin, ChartStreaming, Filler, Title, SubTitle, TimeScale, LinearScale, LineController, PointElement, LineElement,);
 
+interface AnnPlugin {
+  annotation?: {
+    annotations?: Record<string, { value?: number; label?: { content?: string } }>
+  }
+}
 interface IChartColors {
   valueLine: string,
   valueFill: string,
@@ -86,7 +92,6 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private dsServiceSub: Subscription | null = null;
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
-  private currentDatasetUUID: string | null = null;
   private lastVerticalChart: boolean | null = null;
 
   private pathSignature = computed<string | undefined>(() => {
@@ -174,7 +179,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     if (cfg.verticalChart) {
       this.lineChartOptions.scales = {
         y: {
-          type: "time",
+          type: "realtime",
           display: cfg.showTimeScale,
           position: cfg.verticalChart ? "right" : "left",
           suggestedMin: "",
@@ -241,7 +246,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     } else {
       this.lineChartOptions.scales = {
         x: {
-          type: "time",
+          type: "realtime",
           display: cfg.showTimeScale,
           title: {
             display: true,
@@ -382,7 +387,12 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
       },
       legend: {
         display: false
-      }
+      },
+       streaming: {
+        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
+        delay: this.dataSourceInfo.sampleTime,
+        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+       }
     }
   }
 
@@ -727,25 +737,27 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
       } else {
         const valueRow = this.transformDatasetRows([dsPointOrBatch], 0)[0];
         this.chart.data.datasets[0].data.push(valueRow);
-        if (this.chart.data.datasets[0].data.length > (this.dataSourceInfo?.maxDataPoints ?? 0)) {
+        /* if (this.chart.data.datasets[0].data.length > (this.dataSourceInfo?.maxDataPoints ?? 0)) {
           this.chart.data.datasets[0].data.shift();
-        }
+        } */
         if (cfg.showAverageData && this.lineChartData.datasets[1]) {
           const avgRow = this.transformDatasetRows([dsPointOrBatch], cfg.datasetAverageArray)[0];
           this.chart.data.datasets[1].data.push(avgRow);
-          if (this.chart.data.datasets[1].data.length > (this.dataSourceInfo?.maxDataPoints ?? 0)) {
+          /* if (this.chart.data.datasets[1].data.length > (this.dataSourceInfo?.maxDataPoints ?? 0)) {
             this.chart.data.datasets[1].data.shift();
-          }
+          } */
         }
         const trackValue: number = cfg.trackAgainstAverage ? (dsPointOrBatch.data.sma ?? dsPointOrBatch.data.value) : dsPointOrBatch.data.value;
         const convertedTrack = this.unitsService.convertToUnit(cfg.convertUnitTo, trackValue);
-        this.chart.options.plugins.title.text = `${convertedTrack.toFixed(cfg.numDecimal)} ${this.getUnitsLabel()}`;
+
+        this.chart.options.plugins.title.text = `${convertedTrack.toFixed(cfg.numDecimal)} ${this.getUnitsLabel()} `;
+
         const lastAverage = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastAverage);
         const lastMinimum = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastMinimum);
         const lastMaximum = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastMaximum);
-  interface AnnPlugin { annotation?: { annotations?: Record<string, { value?: number; label?: { content?: string } }> } }
-  const plugins = this.chart.options.plugins as unknown as AnnPlugin;
-  const ann = plugins.annotation?.annotations;
+        const plugins = this.chart.options.plugins as unknown as AnnPlugin;
+        const ann = plugins.annotation?.annotations;
+
         if (ann) {
           if (ann.averageLine?.value !== lastAverage) {
             ann.averageLine.value = lastAverage;
