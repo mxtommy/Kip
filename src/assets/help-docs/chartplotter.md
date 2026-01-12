@@ -44,6 +44,8 @@ The transition is automatic; no manual toggle is required. The per‑dashboard c
 2. Drag the split divider and release.
 3. Press **Save** (check icon) to persist globally, or **Cancel** (X) to revert to the previous ratio.
 
+<img src="../../assets/help-docs/img/splitdeviderhandle.png" alt="Resize the split" title="Split handle" width="100%">
+
 Notes:
 - Width changes are only committed on Save (prevents accidental layout shifts).
 - Cancel always restores the original ratio before the edit session began.

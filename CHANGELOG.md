@@ -1,3 +1,25 @@
+# v4.0.8
+## Improvements
+* Enhanced the Remote Control experience:
+  * Automatically selects the first available remote instance.
+  * Supports dashboard tile selection using the Enter and Spacebar keys.
+* Better keyboard support with Enter/Spacebar actions on the:
+  * Dashboard selection in the sidebar navigation.
+  * Dashboard tiles configuration in the Settings page.
+* Improved chart smoothness by reintroducing chart streaming in:
+  * Data Chart widget
+  * Numeric widget’s background chart.
+* Added one-click path copy to clipboard in the Data Inspector, facilitating path pasting in widget configuration.
+* Simplified widget development.
+## Fixes
+* Occasional dashboard jumping when using the Remote Control feature. Fixes #899
+* Issue where switching remote-controlled dashboards while the target was in edit mode could overwrite the dashboard. Fixes #899
+* Updated Windsteer widget “Next Waypoint” indicator path to use the course provider. Fixes #886
+* Fixed Radial, Linear, and Compass widget rendering issues when smaller than 8px.
+* Configurations page layout not fully expanding on large displays. Fixes #874
+* Widgets overlapping others on creation when space was available but smaller than the widget’s minimum size. Fixes #843
+* Fixed form submission required field validation on the Options page Display tab.
+* Added “No configuration is required for this plugin.” to the KIP plugin configuration section to better set expectations.
 # v 4.0.7
 ## Improvements
 * Return to last active dashboard when leaving Options, Settings and Help
