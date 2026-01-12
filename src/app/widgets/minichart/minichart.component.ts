@@ -3,13 +3,15 @@ import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo
 import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
-
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
-import 'chartjs-adapter-date-fns';
 import { ITheme } from '../../core/services/app-service';
 import { UnitsService } from '../../core/services/units.service';
 
-Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale);
+import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import ChartStreaming from '@aziham/chartjs-plugin-streaming';
+
+
+Chart.register(ChartStreaming, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale);
 
 interface IChartColors {
   valueLine: string,
@@ -123,7 +125,6 @@ export class MinichartComponent implements OnDestroy {
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
-
     this.lineChartOptions.indexAxis = this.verticalChart ? 'y' : 'x';
 
     if (this.verticalChart) {
@@ -156,7 +157,7 @@ export class MinichartComponent implements OnDestroy {
           }
         },
         y: {
-          type: "time",
+          type: "realtime",
           display: false,
           title: {
             display: false
@@ -190,7 +191,7 @@ export class MinichartComponent implements OnDestroy {
     } else {
       this.lineChartOptions.scales = {
         x: {
-          type: "time",
+          type: "realtime",
           display: false,
           title: {
             display: false
@@ -253,7 +254,12 @@ export class MinichartComponent implements OnDestroy {
     this.lineChartOptions.plugins = {
       legend: {
         display: false
-      }
+      },
+       streaming: {
+        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
+        delay: this.dataSourceInfo.sampleTime,
+        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+       }
     }
   }
 
@@ -480,21 +486,21 @@ export class MinichartComponent implements OnDestroy {
         // Live: handle new single datapoint
         const valueRow = this.transformDatasetRows([dsPointOrBatch], 0)[0];
         this.chart.data.datasets[0].data.push(valueRow);
-        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
+        /* if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
           this.chart.data.datasets[0].data.shift();
-        }
+        } */
 
         if (this.config.showAverageData) {
           const avgRow = this.transformDatasetRows([dsPointOrBatch], this.config.datasetAverageArray)[0];
           this.chart.data.datasets[1].data.push(avgRow);
-          if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
+          /* if (this.chart.data.datasets[1].data.length > this.dataSourceInfo.maxDataPoints) {
             this.chart.data.datasets[1].data.shift();
-          }
+          } */
         }
       }
 
       this.ngZone.runOutsideAngular(() => {
-        this.chart?.update('quiet');
+        this.chart?.update('none');
       });
     });
   }

@@ -1,5 +1,6 @@
-import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
 import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal } from '@angular/core';
+import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
 import { Subscription } from 'rxjs';
@@ -7,13 +8,13 @@ import { CanvasService } from '../../core/services/canvas.service';
 import { UnitsService } from '../../core/services/units.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { ITheme } from '../../core/services/app-service';
+import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
+import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 
-Chart.register(TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
+Chart.register(ChartStreaming, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
 interface IChartColors {
   valueLine: string,
@@ -327,7 +328,6 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     });
   }
 
-
   private startWidget(): void {
     // Guard until canvas view is ready
     if (!this.widgetDataChart()) return;
@@ -343,7 +343,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         options: this.lineChartOptions,
         plugins: [this.gridBackgroundPlugin, this.centerTickPlugin]
       });
-      this.ngZone.runOutsideAngular(() => this.chart?.update());
+      this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
     } else {
       this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
     }
@@ -563,7 +563,13 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         padding: this.isPhonePortrait().matches ? { top: -18, bottom: 12 } : { top: -41, bottom: 12 },
         font: this.isPhonePortrait().matches ? { size: 16 } : { size: 35 }
       },
-      legend: { display: false }
+      legend: { display: false
+      },
+      streaming: {
+        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
+        delay: this.dataSourceInfo.sampleTime,
+        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+      }
     }
 
     // Cache initial centers/steps for tick styling before first data update
@@ -721,8 +727,8 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     this._dsDirectionSub?.unsubscribe();
     this._dsSpeedSub?.unsubscribe();
 
-  const batchThenLiveDir$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-twd`);
-  const batchThenLiveSpd$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-tws`);
+    const batchThenLiveDir$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-twd`);
+    const batchThenLiveSpd$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-tws`);
 
     this._dsDirectionSub = batchThenLiveDir$?.subscribe(dsPointOrBatch => {
       if (Array.isArray(dsPointOrBatch)) {
