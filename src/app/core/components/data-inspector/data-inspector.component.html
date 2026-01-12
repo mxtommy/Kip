@@ -9,7 +9,16 @@
     <!-- Path Column -->
     <ng-container matColumnDef="path">
       <mat-header-cell class="pathHeader" *matHeaderCellDef mat-sort-header> Path </mat-header-cell>
-      <mat-cell class="pathCell row-cell" *matCellDef="let element"> {{element.path}} </mat-cell>
+      <mat-cell class="pathCell row-cell" *matCellDef="let element">
+        {{element.path}}
+        <button class="copy-btn"
+          matIconButton
+          matTooltip="Copy path"
+          (click)="copyPath(element.path, $event)"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-cell>
     </ng-container>
     <!-- Put Column -->
     <ng-container matColumnDef="supportsPut">

@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 :host {
   display: block;
   height: 100%;
@@ -66,6 +67,13 @@
   flex: 1 1 45%;
   word-break: break-word; /* Breaks words at arbitrary points if needed */
   overflow-wrap: break-word; /* Ensures wrapping for long words */
+}
+
+.copy-btn {
+  padding-left: 10px;
+  @include mat.icon-button-overrides((
+    icon-color: var(--mat-sys-outline)
+  ));
 }
 
 .putCell {

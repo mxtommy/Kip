@@ -1,32 +1,37 @@
-import { MatIconModule } from '@angular/material/icon';
 import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild } from '@angular/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { DataService } from '../../services/data.service';
-import { ISkPathData } from "../../interfaces/app-interfaces";
-import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-row.component';
 import { KeyValuePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { PageHeaderComponent } from '../page-header/page-header.component';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { map, throttleTime } from 'rxjs/operators';
+import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-row.component';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { map, throttleTime,debounceTime } from 'rxjs/operators';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { Clipboard } from '@angular/cdk/clipboard';
 
+import { DataService } from '../../services/data.service';
+import { ISkPathData } from "../../interfaces/app-interfaces";
+import { AppService } from '../../services/app-service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
     selector: 'data-inspector',
     templateUrl: './data-inspector.component.html',
     styleUrls: ['./data-inspector.component.scss'],
-    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatIconModule]
+    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {
-  private dataService = inject(DataService);
-  private destroyRef = inject(DestroyRef);
-  private _responsive = inject(BreakpointObserver);
+  private readonly dataService = inject(DataService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly _responsive = inject(BreakpointObserver);
+  private readonly clipboard = inject(Clipboard);
+  private readonly app = inject(AppService);
   private isPhonePortrait: Signal<BreakpointState>;
   private filterSubject = new Subject<string>();
 
@@ -111,27 +116,39 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  public applyFilter(event: Event) {
+  protected applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.filterSubject.next(filterValue);
   }
 
-  public trackByPath(index: number, item: ISkPathData): string {
+  protected trackByPath(index: number, item: ISkPathData): string {
     return `${item.path}`;
   }
 
-  public trackBySource(index: number, item): string {
+  protected trackBySource(index: number, item): string {
     return `${item.key}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSourceKey(source: { key: any, value: any }): string {
+  protected getSourceKey(source: { key: any, value: any }): string {
     return String(source.key);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSourceValue(item: { key: any, value: any } ): any {
+  protected getSourceValue(item: { key: any, value: any } ): any {
     return item.value.sourceValue;
+  }
+
+  protected copyPath(path: string | null | undefined, ev?: MouseEvent): void {
+    ev?.stopPropagation();
+    if (!path) return;
+
+    const ok = this.clipboard.copy(path);
+    if (ok) {
+      this.app.sendSnackbarNotification('Path copied', 1200, true);
+    } else {
+      this.app.sendSnackbarNotification('Copy failed', 1500);
+    }
   }
 
   ngOnDestroy(): void {
