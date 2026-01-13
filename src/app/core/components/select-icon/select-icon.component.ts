@@ -1,5 +1,5 @@
 import { Component, input, output, signal, effect, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 
 interface IconData {
@@ -8,7 +8,7 @@ interface IconData {
 
 @Component({
   selector: 'select-icon',
-  imports: [CommonModule, MatIconModule],
+  imports: [MatIconModule],
   templateUrl: './select-icon.component.html',
   styleUrl: './select-icon.component.scss'
 })
