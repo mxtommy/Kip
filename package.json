@@ -80,7 +80,7 @@
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^24.1.0",
     "@zakj/no-sleep": "^0.13.5",
-    "angular-eslint": "20.1.1",
+    "angular-eslint": "21.1.0",
     "chart.js": "^4.5.1",
     "@aziham/chartjs-plugin-streaming": "^3.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
