@@ -1,3 +1,15 @@
+# v4.0.9
+## Improvements
+* Racer Line and Timer widgets now include:
+  * Support for named lines (configured in the Racer plugin).
+  * Time To Line and Time To Boat in the Race Line widget.
+  * Clearer button guidance via tooltips and improved label visibility.
+* Enhanced Data Chart widget:
+  * Optional “points only” rendering for the tracked series, improving readability for wrap‑around data (e.g. values that jump from the top to the bottom of the scale).
+  * Data point precision that adapts to the selected time window for a more consistent experience from seconds to hours.
+  * Faster initial value display to reduce the “dead spot” feeling.
+## Fixes
+* Data Chart widget Options: Path form losing previously saved path source.
 # v4.0.8
 ## Improvements
 * Enhanced the Remote Control experience:
