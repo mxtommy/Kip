@@ -105,12 +105,15 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     // Effect: react to Dataset config changes
     effect(() => {
       const sig = this.pathSignature();
-      if (sig !== this.previousPathSignature) {
-        untracked(() => {
-        this.previousPathSignature = sig;
-        this.rebuildForDataset(this.runtime.options());
-        });
-      }
+
+      untracked(() => {
+        if (sig !== this.previousPathSignature) {
+          untracked(() => {
+          this.previousPathSignature = sig;
+          this.rebuildForDataset(this.runtime.options());
+          });
+        }
+      });
     });
 
     // Effect: react to Display config or theme changes

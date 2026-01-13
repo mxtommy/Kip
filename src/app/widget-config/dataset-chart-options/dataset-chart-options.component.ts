@@ -142,7 +142,11 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.datachartSource().enable();
     } else if (Object.keys(pathObject.sources).length > 1) {
       this.pathSources.set(Object.keys(pathObject.sources).sort());
-      this.datachartSource().reset();
+      if(this.datachartSource().value) {
+        this.datachartSource().setValue(this.datachartSource().value);
+      } else {
+        this.datachartSource().reset();
+      }
       this.datachartSource().enable();
     }
   }
