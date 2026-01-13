@@ -1,5 +1,5 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
-import { Subscription, Observable, ReplaySubject, MonoTypeOperatorFunction, interval, withLatestFrom, concat, skip, from } from 'rxjs';
+import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
 import { UUID } from '../utils/uuid.util'
@@ -257,33 +257,41 @@ export class DatasetService implements OnDestroy {
     this.setupServiceSubjectRegistry(newDataSourceConfig.uuid, newDataSourceConfig.maxDataPoints);
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
-    console.log(`[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`);
-
-    // Emit at a regular interval using the last value. We use this and not sampleTime() to make sure that if there is no new data, we still send the last know value. This is to prevent dataset blanks that look ugly on the chart
-    function sampleInterval<IPathData>(period: number): MonoTypeOperatorFunction<IPathData> {
-      return (source) => interval(period).pipe(withLatestFrom(source, (_, value) => value));
-    };
+    console.log(
+      `[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`
+    );
 
     // Decide how to interpret the dataset values (scalar vs radian domains)
     const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
-    // Subscribe to path data, update historicalData/stats and sends new values to Observers
-    dataSource.pathObserverSubscription = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(sampleInterval(newDataSourceConfig.sampleTime)).subscribe(
-      (newValue: IPathUpdate) => {
-        if (newValue.data.value === null) return; // we don't need null values
-
-        // Keep the array to specified size before adding new value
-        if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
-          dataSource.historicalData.shift();
-        }
-        dataSource.historicalData.push(newValue.data.value);
-
-        // Add new datapoint to historicalData
-        const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
-        // Copy object new datapoint so it's not send by reference, then push to Subject so that Observers can receive
-        this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid === dataSource.uuid).rxjsSubject.next(datapoint);
-      }
+    // Share the latest non-null value so we can:
+    // 1) emit immediately on first value (chart isn't blank)
+    // 2) then emit periodically using the latest known value
+    const path$ = this.data.subscribePath(configuration.path, configuration.pathSource).pipe(
+      filter((u: IPathUpdate) => u?.data?.value !== null),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
+
+    const firstValue$ = path$.pipe(take(1));
+
+    const sampled$ = timer(newDataSourceConfig.sampleTime, newDataSourceConfig.sampleTime).pipe(
+      withLatestFrom(path$, (_tick, value) => value)
+    );
+
+    // Subscribe to path data, update historicalData/stats and send new values to Observers
+    dataSource.pathObserverSubscription = merge(firstValue$, sampled$).subscribe((newValue: IPathUpdate) => {
+      // Keep the array to specified size before adding new value
+      if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
+        dataSource.historicalData.shift();
+      }
+      dataSource.historicalData.push(newValue.data.value);
+
+      const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+
+      this._svcSubjectObserverRegistry
+        .find(registration => registration.datasetUuid === dataSource.uuid)
+        .rxjsSubject.next(datapoint);
+    });
   }
 
   /**
