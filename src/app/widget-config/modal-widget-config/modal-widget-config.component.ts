@@ -336,6 +336,10 @@ export class ModalWidgetConfigComponent implements OnInit {
     return this.formMaster.get('trackAgainstAverage') as UntypedFormControl;
   }
 
+  get showDataPointsToControl(): UntypedFormControl {
+    return this.formMaster.get('showDataPoints') as UntypedFormControl;
+  }
+
   get showAverageDataToControl(): UntypedFormControl {
     return this.formMaster.get('showAverageData') as UntypedFormControl;
   }

@@ -37,31 +37,34 @@
   <div class="chart-flex-container">
 
     <div class="flex-item-rounded-card rounded-card-color">
-      <div>
-        <p>Series</p>
-        <mat-form-field style="margin-left: 10px;">
-          <mat-label>Value Decimal Places</mat-label>
-          <input matInput type="number"
-            min="0" max="5"
-            placeholder="Enter or select number..."
-            name="numDecimal"
-            [formControl]="numDecimal()"
-            required>
-        </mat-form-field>
+      <p>Series</p>
+      <mat-form-field style="margin-left: 10px;">
+        <mat-label>Value Decimal Places</mat-label>
+        <input matInput type="number"
+          min="0" max="5"
+          placeholder="Enter or select number..."
+          name="numDecimal"
+          [formControl]="numDecimal()"
+          required>
+      </mat-form-field>
 
-        <mat-checkbox class="full-width" style="margin-top: 10px;"
-          name="showAverageData"
-          [formControl]="showAverageData()"
-          (change)="enableTrackAgainstMovingAverage($event)">
-            Display Moving Average
-        </mat-checkbox>
 
-        <mat-checkbox class="full-width" style="margin-left: 25px;"
-          name="trackAgainstAverage"
-          [formControl]="trackAgainstAverage()">
-            Track Against Moving Average
-        </mat-checkbox>
-      </div>
+      <mat-checkbox class="full-width" style="margin-top: 10px;"
+        name="showDataPoints"
+        [formControl]="showDataPoints()">
+          Display Data Points
+      </mat-checkbox>
+      <mat-checkbox class="full-width"
+        name="showAverageData"
+        [formControl]="showAverageData()"
+        (change)="enableTrackAgainstMovingAverage($event)">
+          Display Moving Average
+      </mat-checkbox>
+      <mat-checkbox class="full-width" style="margin-left: 25px;"
+        name="trackAgainstAverage"
+        [formControl]="trackAgainstAverage()">
+          Track Against Moving Average
+      </mat-checkbox>
       <mat-checkbox
         name="verticalChart"
         [formControl]="verticalChart()">

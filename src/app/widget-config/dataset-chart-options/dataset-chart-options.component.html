@@ -85,10 +85,7 @@
   </div>
   <br />
   <p style="margin-top: 10px;">
-    The time scale defines the data sampling rate and overall Dataset level
-    of precision. Select a Time Scale that is targeted to your intended usage.
-    Shorter Time Scales have higher system resources
-    costs, for both the data capture and widget rendering process.
+    Time scale and duration set how much history the chart shows (the chart window). Data is sampled to keep roughly 120 points across the window; very short windows may show fewer points for performance.
   </p>
   <div class="flex-container" style="margin-top: 10px;">
     <div class="flex-field-50">
@@ -116,16 +113,4 @@
       </mat-form-field>
     </div>
   </div>
-  <ul>
-    <li>Hours: per minute sampling rate. Intended for long sampling periods when slow
-      refresh rate is acceptable and system resource usage should be minimized. A Grafana
-      Embed Webpage Viewer widget is a better alternative to this Time Scale.
-    </li>
-    <li>Minutes: per second sampling rate. Meant for trends observations such wind
-      speed, depth, solar power, voltage, etc.
-    </li>
-    <li>Secondes: 200ms sampling rate. Intended for use cases where user may act upon realtime
-      information such as when racing.
-    </li>
-  </ul>
 </div>

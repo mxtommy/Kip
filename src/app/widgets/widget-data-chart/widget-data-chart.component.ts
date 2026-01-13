@@ -50,7 +50,6 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
-
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Chart Label',
     color: 'contrast',
@@ -63,6 +62,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     numDecimal: 1,
     inverseYAxis: false,
     datasetAverageArray: 'sma', // sma | ema | dema | avg
+    showDataPoints: false,
     showAverageData: true,
     trackAgainstAverage: false,
     showDatasetMinimumValueLine: false,
@@ -80,7 +80,6 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     yScaleMin: null,
     yScaleMax: null,
   };
-
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = { datasets: [] };
   public lineChartOptions: ChartConfiguration['options'] = {
     parsing: false,
@@ -93,7 +92,6 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private lastVerticalChart: boolean | null = null;
-
   private pathSignature = computed<string | undefined>(() => {
     const cfg = this.runtime.options();
     if (!cfg.datachartPath) {
@@ -421,10 +419,10 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
         order: cfg.trackAgainstAverage ? 1 : 0,
         parsing: false,
         tension: 0,
-        pointRadius: 0,
+        pointRadius: cfg.showDataPoints ? (cfg.trackAgainstAverage ? 0 : 1.5) : 0,
         pointHoverRadius: 0,
         pointHitRadius: 0,
-        borderWidth: cfg.trackAgainstAverage ? 0 : 3,
+        borderWidth: cfg.trackAgainstAverage ? 0 : (cfg.showDataPoints ? 0 : 3),
         fill: valueFillDirection,
       }
     );
@@ -437,10 +435,10 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           order: cfg.trackAgainstAverage ? 0 : 1,
           parsing: false,
           tension: 0.4,
-          pointRadius: 0,
+          pointRadius: cfg.showDataPoints ? (cfg.trackAgainstAverage ? 1.5 : 0) : 0,
           pointHoverRadius: 0,
           pointHitRadius: 0,
-          borderWidth: cfg.trackAgainstAverage ? 3 : 0,
+          borderWidth: cfg.trackAgainstAverage ? (cfg.showDataPoints ? 0 : 3) : 0,
           fill: averageFillDirection,
         }
       );

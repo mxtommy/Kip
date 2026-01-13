@@ -29,7 +29,7 @@ export interface IDatasetServiceDatasetConfig {
   pathSource: string;
   baseUnit: string;         // The path's Signal K base unit type
   timeScaleFormat: TimeScaleFormat;  // Dataset time scale measure.
-  period: number;           // Number of datapoints to capture.
+  period: number;           // Window size expressed in units of timeScaleFormat (ignored for "Last *" presets).
   label: string;           // label of the historicalData
   editable?: boolean;       // Whether the dataset is editable, or created with Widgets and not editable by user
 };
@@ -165,6 +165,8 @@ export class DatasetService implements OnDestroy {
 
   private createDataSourceConfiguration(dsConf: IDatasetServiceDatasetConfig): IDatasetServiceDataSource {
     const smoothingPeriodFactor = 0.25;
+    const targetPointsPerWindow = 120;
+    const minSampleTimeMs = 100;
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
       pathObserverSubscription: null,
@@ -174,50 +176,45 @@ export class DatasetService implements OnDestroy {
       historicalData: []
     }
 
-    switch (dsConf.timeScaleFormat) {
-      case "Last 30 Minutes":
-        newDataSourceConfiguration.maxDataPoints = 120; // 30 min * sampleTime
-        newDataSourceConfiguration.sampleTime = 15000; // 15 seconds
-        newDataSourceConfiguration.smoothingPeriod = 50; // moving average points to use
-        break;
+    const windowMs = resolveWindowMs(dsConf.timeScaleFormat, dsConf.period);
 
-      case "Last 5 Minutes":
-        newDataSourceConfiguration.maxDataPoints = 60; // 5 min * sampleTime
-        newDataSourceConfiguration.sampleTime = 5000; // 5 seconds
-        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
-        break;
+    // Target a consistent datapoint density across time windows.
+    // For very small windows, enforce a minimum sampling interval for performance.
+    const derivedSampleTimeMs = windowMs > 0 ? Math.max(minSampleTimeMs, Math.round(windowMs / targetPointsPerWindow)) : 1000;
 
-      case "Last Minute":
-        newDataSourceConfiguration.maxDataPoints = 60; // 1 min * sampleTime
-        newDataSourceConfiguration.sampleTime = 1000; // 1 second
-        newDataSourceConfiguration.smoothingPeriod = 25; // moving average points to use
-        break;
-
-      case "hour":
-        newDataSourceConfiguration.maxDataPoints = dsConf.period * 120; // hours * 60 min
-        newDataSourceConfiguration.sampleTime = 30000; // 30 seconds
-        newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
-        break;
-
-      case "minute":
-        newDataSourceConfiguration.maxDataPoints = dsConf.period * 60; // minutes * 60 sec
-        newDataSourceConfiguration.sampleTime = 1000; // 1 second
-        newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
-        break;
-
-      default:
-        newDataSourceConfiguration.maxDataPoints = dsConf.period * 5; // 5 times per second
-        newDataSourceConfiguration.sampleTime = 200;
-        newDataSourceConfiguration.smoothingPeriod = Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor); // moving average points to use
-        break;
-    }
+    newDataSourceConfiguration.sampleTime = derivedSampleTimeMs;
+    newDataSourceConfiguration.maxDataPoints = Math.max(1, Math.ceil(windowMs / derivedSampleTimeMs));
+    newDataSourceConfiguration.smoothingPeriod = Math.max(1, Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor));
 
     // Enforce minimum of 1 for maxDataPoints to prevent infinite size array
     if (!newDataSourceConfiguration.maxDataPoints || newDataSourceConfiguration.maxDataPoints < 1) {
       newDataSourceConfiguration.maxDataPoints = 1;
     }
 
+    if (!newDataSourceConfiguration.sampleTime || newDataSourceConfiguration.sampleTime < 1) {
+      newDataSourceConfiguration.sampleTime = 1;
+    }
+
     return newDataSourceConfiguration;
+
+    function resolveWindowMs(timeScaleFormat: TimeScaleFormat, period: number): number {
+      switch (timeScaleFormat) {
+        case 'Last Minute':
+          return 60_000;
+        case 'Last 5 Minutes':
+          return 5 * 60_000;
+        case 'Last 30 Minutes':
+          return 30 * 60_000;
+        case 'hour':
+          return Math.max(0, period) * 60 * 60_000;
+        case 'minute':
+          return Math.max(0, period) * 60_000;
+        case 'second':
+          return Math.max(0, period) * 1_000;
+        default:
+          return 0;
+      }
+    }
   }
 
   /**
@@ -343,7 +340,7 @@ export class DatasetService implements OnDestroy {
    * @param {string} path Signal K path of the data to record
    * @param {string} source The path's chosen source
    * @param {TimeScaleFormat} timeScaleFormat The duration of the historicalData: "hour", "minute", "second". See {@link TimeScaleFormat}
-   * @param {number} period The number of data points to capture. For example, if the timeScaleFormat is "hour" and period is 60, then 60 data points will be captured for the hour.
+  * @param {number} period Window size expressed in units of timeScaleFormat (ignored for "Last *" presets).
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
    * @param {boolean} [editable]  DEPRECATED -If true, the dataset configuration can be edited by the user. Defaults to true. // TODO: remove this param once Dataset management component is not required anymore

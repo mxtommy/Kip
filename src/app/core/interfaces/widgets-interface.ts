@@ -219,6 +219,8 @@ export interface IWidgetSvcConfig {
   datachartSource?: string | null,
   /** Specifies which average data points property the chart dataset will be built with. Values can be: avg, sma, ema, ema */
   datasetAverageArray?: string;
+  /** Display chart dataset as data points */
+  showDataPoints?: boolean;
   /** Used by datachart & windtrend chart Widget to set datapoint configuration */
   timeScale?: string;
   /** Used by datachart & windtrend chart Widget to set period configuration */
