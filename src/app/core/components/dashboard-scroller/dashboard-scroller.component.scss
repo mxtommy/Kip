@@ -49,3 +49,31 @@
   border-radius: 50%;
   border: 1px solid var(--mat-sys-outline);
 }
+
+@keyframes fadeInHoldFadeOut {
+  /* 0ms */
+  0% {
+    opacity: 0;
+  }
+
+  /* 100ms / 1350ms = 7.407% */
+  7.407% {
+    opacity: 1;
+  }
+
+  /* (100ms + 250ms) / 1350ms = 25.926% */
+  25.926% {
+    opacity: 1;
+  }
+
+  /* 1350ms */
+  100% {
+    opacity: 0;
+  }
+}
+
+/* apply to the element you want to animate */
+.fade-toast {
+  opacity: 0; /* initial */
+  animation: fadeInHoldFadeOut 1350ms linear forwards;
+}
