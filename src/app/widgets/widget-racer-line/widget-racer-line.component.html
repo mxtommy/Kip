@@ -1,15 +1,17 @@
 <div class="line-wrapper">
-  <div class="filler"><canvas #canvasMainRef class="line-canvas"></canvas></div>
+  <div class="filler">
+    <canvas #canvasMainRef class="line-canvas"></canvas>
+  </div>
   <div class="buttons-container">
-    <button mat-flat-button class="button select-button" (click)="toggleMode()">
+    <button mat-flat-button class="button select-button" matTooltip="Select the control mode" (click)="toggleMode()">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 80 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="9">&vellip;</text>
+          <text x="40" y="9">&vellip;</text>
         </svg>
       </mat-icon>
     </button>
@@ -21,7 +23,7 @@
         viewBox="0 0 70 18"
         preserveAspectRatio="xMidYMid meet"
         class="svg-content pin">
-        <text xml:space="preserve" x="33" y="14">{{ portBiasValue() }}</text>
+        <text x="33" y="14">{{ portBiasValue() }}</text>
       </svg>
     </div>
     <div class="len-bias-container">
@@ -31,7 +33,7 @@
         viewBox="0 0 90 12"
         preserveAspectRatio="xMidYMid meet"
         class="svg-content len-bias">
-        <text xml:space="preserve" x="45" y="9">
+        <text x="45" y="9">
           <tspan class="pin">⚑</tspan>
           {{ lineLengthValue() }}
           <tspan class="boat">⚑</tspan>
@@ -45,13 +47,14 @@
         viewBox="0 0 70 18"
         preserveAspectRatio="xMidYMid meet"
         class="svg-content boat">
-        <text xml:space="preserve" x="33" y="14">{{ stbBiasValue() }}</text>
+        <text x="33" y="14">{{ stbBiasValue() }}</text>
       </svg>
     </div>
     } @case (1) {
     <button
       mat-flat-button
       class="button port-button"
+      matTooltip="Set the port(pin) end of the line to the current position"
       (click)="setLineEnd('port')">
       <mat-icon class="buttons-svg-icon">
         <svg
@@ -60,13 +63,14 @@
           viewBox="0 0 100 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="11">Port End</text>
+          <text x="50" y="11">Port End</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button starboard-button"
+      matTooltip="Set the starboard(boat) end of the line to the current position"
       (click)="setLineEnd('stb')">
       <mat-icon class="buttons-svg-icon">
         <svg
@@ -75,7 +79,7 @@
           viewBox="0 0 100 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="11">Stbd End</text>
+          <text x="50" y="11">Stbd End</text>
         </svg>
       </mat-icon>
     </button>
@@ -83,75 +87,64 @@
     <button
       mat-flat-button
       class="button port-small-button"
+      matTooltip="Increase the line length by 5m at the port(pin) end"
       (click)="adjustLineEnd('port', 5, 0)">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">+5m</text>
+          <text x="25" y="11">+5m</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button port-small-button"
+      matTooltip="Decrease the line length by 5m at the port(pin) end"
       (click)="adjustLineEnd('port', -5, 0)">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">-5m</text>
+          <text x="25" y="11">-5m</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button starboard-small-button"
+      matTooltip="Decrease the line length by 5m at the starboard(boat) end"
+      (click)="adjustLineEnd('stb', -5, 0)">
+      <mat-icon class="buttons-svg-icon">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 50 14"
+          preserveAspectRatio="xMidYMid meet"
+          class="svg-content">
+          <text x="25" y="11">-5m</text>
+        </svg>
+      </mat-icon>
+    </button>
+    <button
+      mat-flat-button
+      class="button starboard-small-button"
+      matTooltip="Increase the line length by 5m at the starboard(boat) end"
       (click)="adjustLineEnd('stb', 5, 0)">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">+5m</text>
-        </svg>
-      </mat-icon>
-    </button>
-    <button
-      mat-flat-button
-      class="button starboard-small-button"
-      (click)="adjustLineEnd('stb', -5, 0)">
-      <mat-icon class="buttons-svg-icon">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 14"
-          preserveAspectRatio="xMidYMid meet"
-          class="svg-content">
-          <text xml:space="preserve" x="50" y="12">-5m</text>
-        </svg>
-      </mat-icon>
-    </button>
-    <button
-      mat-flat-button
-      class="button starboard-small-button"
-      (click)="adjustLineEnd('stb', -5, 0)">
-      <mat-icon class="buttons-svg-icon">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 14"
-          preserveAspectRatio="xMidYMid meet"
-          class="svg-content">
-          <text xml:space="preserve" x="50" y="12">+5m</text>
+          <text x="25" y="11">+5m</text>
         </svg>
       </mat-icon>
     </button>
@@ -159,63 +152,100 @@
     <button
       mat-flat-button
       class="button port-small-button"
+      matTooltip="Rotate the line by moving the port(pin) end 1° clockwise"
       (click)="adjustLineEnd('port', 0, toRadians(1))">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
+          <text x="25" y="11">↑1&deg;</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button port-small-button"
+      matTooltip="Rotate the line by moving the port(pin) end 1° counter-clockwise"
       (click)="adjustLineEnd('port', 0, toRadians(-1))">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
+          <text x="25" y="11">↓1&deg;</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button starboard-small-button"
+      matTooltip="Rotate the line by moving the starboard(boat) end 1° counter-clockwise"
       (click)="adjustLineEnd('stb', 0, toRadians(1))">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">↑1&deg;</text>
+          <text x="25" y="11">↓1&deg;</text>
         </svg>
       </mat-icon>
     </button>
     <button
       mat-flat-button
       class="button starboard-small-button"
+      matTooltip="Rotate the line by moving the starboard(boat) end 1° clockwise"
       (click)="adjustLineEnd('stb', 0, toRadians(-1))">
       <mat-icon class="buttons-svg-icon">
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 100 14"
+          viewBox="0 0 50 14"
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
-          <text xml:space="preserve" x="50" y="12">↓1&deg;</text>
+          <text x="25" y="11">↑1&deg;</text>
         </svg>
       </mat-icon>
     </button>
+    } @case (4) {
+      <button
+        mat-flat-button
+        class="button select-button"
+        matTooltip="Display the next named line"
+        (click)="nextDisplayLineName()">
+        <mat-icon class="buttons-svg-icon">
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 50 14"
+            preserveAspectRatio="xMidYMid meet"
+            class="svg-content">
+            <text x="25" y="11">Line</text>
+          </svg>
+        </mat-icon>
+      </button>
+      <button
+        mat-flat-button
+        class="button {{isDisplayLineCurrent() ? 'line-button-current' : 'line-button'}}"
+        matTooltip="Set the {{ getDisplayLineName()}} line as the current line"
+        (click)="setStartLine(getDisplayLineName())">
+        <mat-icon class="buttons-svg-icon">
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 150 14"
+            preserveAspectRatio="xMidYMid meet"
+            class="svg-content">
+            <text x="75" y="11">{{ getDisplayLineName() }}</text>
+          </svg>
+        </mat-icon>
+      </button>
     } }
   </div>
   @if (!dashboard.isDashboardStatic()) {

@@ -63,6 +63,24 @@
   ));
 }
 
+.line-button {
+  flex: none;
+  width: 58%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-grey-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.line-button-current {
+  flex: none;
+  width: 58%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-orange-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
 .port-button {
   flex: 1 1 auto;
   @include mat.button-overrides((

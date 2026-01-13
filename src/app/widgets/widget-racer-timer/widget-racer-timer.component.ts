@@ -1,24 +1,37 @@
-import { Component, effect, signal, inject, input, untracked, viewChild, ElementRef, DestroyRef, model } from '@angular/core';
-import { AfterViewInit, OnDestroy } from '@angular/core';
-import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
-import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { IPathArray } from '../../core/interfaces/widgets-interface';
-import { ITheme } from '../../core/services/app-service';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { DashboardService } from '../../core/services/dashboard.service';
-import { CanvasService } from '../../core/services/canvas.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getColors } from '../../core/utils/themeColors.utils';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  model,
+  OnDestroy,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core';
+import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
+import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
+import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import {ITheme} from '../../core/services/app-service';
+import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
+import {DashboardService} from '../../core/services/dashboard.service';
+import {CanvasService} from '../../core/services/canvas.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {getColors} from '../../core/utils/themeColors.utils';
+import {FormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatInput} from '@angular/material/input';
 
 @Component({
   selector: 'widget-racer-timer',
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
-  imports: [FormsModule, MatButtonModule, MatIconModule]
+  imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, MatInput]
 })
 export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
@@ -152,7 +165,9 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     this.ctx = this.canvasElement.getContext('2d');
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true, onResize: (w, h) => {
-        this.cssWidth = w; this.cssHeight = h; this.draw();
+        this.cssWidth = w;
+        this.cssHeight = h;
+        this.draw();
       }
     });
     // initial dims
@@ -205,8 +220,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     if (current === 0 && lastVal !== 0) return true;
     if (current < 10 && current >= 0) return true;
     if (current < 60 && current % 10 === 0) return true;
-    if (current % 60 === 0) return true;
-    return false;
+    return current % 60 === 0;
   }
 
   private beepForValue(v: number) {
@@ -234,20 +248,21 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     } else if (this.mode() === 1 && this.isStartTimerRunning()) this.mode.set(2);
   }
 
+  private toHHMMSS(totalSeconds: number): string {
+    if (totalSeconds == null || isNaN(totalSeconds)) return '-:--';
+    const negative = totalSeconds < 0;
+    if (negative) totalSeconds = -totalSeconds;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const sign = negative ? '-' : '';
+    if (hours === 0)
+      return `${sign}${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${sign}${hours.toString().padStart(1, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
   private getValueText(): string {
-    if (this.ttsValue == null) return '--';
-    const seconds = this.ttsValue;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes >= 60) {
-      const hours = Math.floor(minutes / 60);
-      const mm = Math.floor(minutes % 60);
-      const ss = Math.floor(seconds % 60);
-      return `${hours}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
-    } else {
-      const mm = Math.floor(minutes % 60);
-      const ss = Math.floor(seconds % 60);
-      return `${mm.toString().padStart(1, '0')}:${ss.toString().padStart(2, '0')}`;
-    }
+    return this.toHHMMSS(this.ttsValue);
   }
 
   private draw() {
@@ -260,16 +275,17 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);
-    const text = this.getValueText();
     this.canvas.drawText(
       this.ctx,
-      text,
-      Math.floor(this.cssWidth / 2),
-      Math.floor((this.cssHeight / 2) * 1.3),
+      this.getValueText(),
+      Math.floor(this.cssWidth * 0.5),
+      Math.floor(this.cssHeight * 0.55),
       Math.floor(this.cssWidth * 0.95),
-      Math.floor(this.cssHeight * 0.95),
+      Math.floor(this.cssHeight * 0.90),
       'bold',
-      this.valueStateColor
+      this.valueStateColor,
+      'center',
+      'middle'
     );
   }
 
