@@ -1,5 +1,5 @@
 <widget-title [text]="(runtime?.options()?.displayName)" [color]="labelColor()"></widget-title>
-<div class="widgets-container" #widgetContainer (onResize)="onResized($event)">
+<div class="widgets-container" #widgetContainer kipResizeObserver (onResize)="onResized($event)">
   @for (ctrl of switchControls(); track $index) {
     <ng-container>
       @switch (ctrl.type) {

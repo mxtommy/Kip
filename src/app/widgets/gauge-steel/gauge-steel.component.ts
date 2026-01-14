@@ -1,9 +1,9 @@
 import { UnitsService } from './../../core/services/units.service';
 import { Component, OnChanges, SimpleChanges, OnInit, OnDestroy, input, inject, ElementRef, viewChild } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
+import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let steelseries: any; // 3rd party global (loaded from asset in production build)
@@ -64,7 +64,7 @@ export const SteelFrameColors = {
     selector: 'gauge-steel',
     templateUrl: './gauge-steel.component.html',
     styleUrls: ['./gauge-steel.component.scss'],
-    imports: [NgxResizeObserverModule]
+  imports: [KipResizeObserverDirective]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private unitsService = inject(UnitsService);

@@ -1,10 +1,13 @@
-@let _dashboards = dashboards();
 @let _activePage = activePage();
-<div class="page-scroll-title page-scroll-container" [@fadeInOut]="_activePage">
-  <span class="page-label">{{ _dashboards[_activePage].name }}</span>
-</div>
-<div class="page-scroll-page-number page-scroll-container" [@fadeInOut]="_activePage">
-  @for (page of _dashboards; track page.id; let index = $index) {
-    <div class="page-marker" [style.background-color]="_activePage === index ? 'var(--mat-sys-on-surface)' : 'var(--mat-sys-inverse-on-surface)'"></div>
-  }
-</div>
+@let _dashboards = dashboards();  
+
+@if (visible()) {
+  <div class="page-scroll-title page-scroll-container" animate.enter="fade-toast">
+    <span class="page-label">{{ _dashboards[_activePage].name }}</span>
+  </div>
+  <div class="page-scroll-page-number page-scroll-container fade-toast" animate.enter="fade-toast">
+    @for (page of _dashboards; track page.id; let index = $index) {
+      <div class="page-marker" [style.background-color]="_activePage === index ? 'var(--mat-sys-on-surface)' : 'var(--mat-sys-inverse-on-surface)'"></div>
+    }
+  </div>
+}

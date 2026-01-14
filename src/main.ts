@@ -1,9 +1,8 @@
-import { enableProdMode, importProvidersFrom, provideAppInitializer } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { withHashLocation, provideRouter } from '@angular/router';
 import { StorageService } from './app/core/services/storage.service';
 import { provideMarkdown } from 'ngx-markdown';
@@ -33,7 +32,7 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-  importProvidersFrom(BrowserModule),
+  provideZoneChangeDetection(),importProvidersFrom(BrowserModule),
     // Imports Interceptor that capture http requests and inserts authorization
     // Token automatically in every httpClient outbound calls.
     // NOTE: it does not work for WebSockets. Only http/REST calls
@@ -83,7 +82,6 @@ bootstrapApplication(AppComponent, {
     provideMarkdown(),
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
-    provideAnimations(),
     // Ensure CDK Overlay container is created inside the application root so
     // overlays share the same stacking context as the app elements (sidenavs, etc.)
     {

@@ -1,10 +1,9 @@
 import { AfterViewInit, Component, ElementRef, inject, input, OnChanges, SimpleChanges, viewChild, OnDestroy } from '@angular/core';
 import { CanvasService } from '../../services/canvas.service';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 
 @Component({
   selector: 'widget-title',
-  imports: [NgxResizeObserverModule],
+  imports: [],
   templateUrl: './widget-title.component.html',
   styleUrl: './widget-title.component.scss'
 })

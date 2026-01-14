@@ -1,6 +1,5 @@
-import { Component, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { Dashboard } from './../../services/dashboard.service';
-import { trigger, style, animate, transition } from '@angular/animations';
 
 
 @Component({
@@ -9,18 +8,24 @@ import { trigger, style, animate, transition } from '@angular/animations';
   imports: [],
   templateUrl: './dashboard-scroller.component.html',
   styleUrl: './dashboard-scroller.component.scss',
-  animations: [
-    trigger('fadeInOut', [
-      transition(':increment, :decrement', [
-        style({ opacity: 0 }),
-        animate(100, style({ opacity: 1 })),
-        style({ opacity: 1 }),
-        animate('250ms 1000ms', style({ opacity: 0 })),
-      ])
-    ])
-  ]
 })
 export class DashboardScrollerComponent {
   protected activePage = input<number>();
   protected dashboards = input<Dashboard[]>();
+  protected visible = signal(false);
+
+  constructor() {
+    effect(() => {
+      const page = this.activePage();
+
+      if (page === undefined || page === null) {
+        this.visible.set(false);
+        return;
+      }
+
+      // Restart the CSS animation by removing + re-adding the DOM.
+      this.visible.set(false);
+      queueMicrotask(() => this.visible.set(true));
+    });
+  }
 }
