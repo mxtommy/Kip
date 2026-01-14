@@ -6,13 +6,13 @@
  *  - Resize handling and scale recalculation
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { States } from '../../core/interfaces/signalk-interfaces';
+import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
@@ -23,7 +23,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-gauge-ng-linear',
   templateUrl: './widget-gauge-ng-linear.component.html',
   styleUrls: ['./widget-gauge-ng-linear.component.scss'],
-  imports: [NgxResizeObserverModule, GaugesModule]
+  imports: [KipResizeObserverDirective, GaugesModule]
 })
 export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   // Host2 functional inputs

@@ -1,7 +1,6 @@
 import { Component, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, computed, untracked } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -12,7 +11,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-datetime',
   templateUrl: './widget-datetime.component.html',
   styleUrls: ['./widget-datetime.component.scss'],
-  imports: [NgxResizeObserverModule]
+  imports: []
 })
 export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();

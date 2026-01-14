@@ -6,13 +6,13 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, inject, input, untracked, computed, signal } from '@angular/core';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
 import { getColors } from '../../core/utils/themeColors.utils';
+import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
@@ -23,7 +23,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-gauge-ng-radial',
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss'],
-  imports: [NgxResizeObserverModule, GaugesModule]
+  imports: [KipResizeObserverDirective, GaugesModule]
 })
 export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   // Functional Host2 inputs

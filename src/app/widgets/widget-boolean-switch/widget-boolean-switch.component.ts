@@ -1,6 +1,5 @@
 import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService, ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
@@ -12,12 +11,13 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
+import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 
 @Component({
   selector: 'widget-boolean-switch',
   templateUrl: './widget-boolean-switch.component.html',
   styleUrls: ['./widget-boolean-switch.component.scss'],
-  imports: [NgxResizeObserverModule, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
+  imports: [KipResizeObserverDirective, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
 export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Host2 functional inputs (provided by widget-host2 wrapper)

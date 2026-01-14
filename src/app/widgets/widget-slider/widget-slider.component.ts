@@ -1,6 +1,5 @@
 import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { NgxResizeObserverModule } from 'ngx-resize-observer';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
@@ -10,10 +9,11 @@ import { WidgetTitleComponent } from '../../core/components/widget-title/widget-
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { ITheme } from '../../core/services/app-service';
+import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 
 @Component({
   selector: 'widget-slider',
-  imports: [ NgxResizeObserverModule, WidgetTitleComponent ],
+  imports: [ KipResizeObserverDirective, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
   styleUrl: './widget-slider.component.scss'
 })
@@ -54,15 +54,18 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   protected readonly dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
   private readonly appService = inject(AppService);
+  
   protected labelColor = signal<string>(undefined)
   protected barColor = signal<string>(undefined);
+  
   private skRequestSub = new Subscription; // Request result observer
 
   private lineStartPx: number;
   private lineWidthPx: number;
   private lineEndPx: number;
-  private resizeTimeout: NodeJS.Timeout;
-  private debounceTimeout: NodeJS.Timeout;
+
+  private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+  
   protected handlePosition = 20;
   protected pathValue = 0;
   private lineStart = this.handlePosition;
@@ -185,7 +188,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   protected onResized(): void {
-    clearTimeout(this.resizeTimeout);
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
       this.calculateLineBounds(); // Recalculate line bounds on resize
     }, 200); // Adjust debounce time as needed
@@ -287,7 +290,6 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
-    clearTimeout(this.debounceTimeout);
-    clearTimeout(this.resizeTimeout);
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
   }
 }
