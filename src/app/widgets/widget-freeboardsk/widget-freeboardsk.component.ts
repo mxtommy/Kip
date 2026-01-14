@@ -1,13 +1,23 @@
 import { DashboardService } from './../../core/services/dashboard.service';
 import { AuthenticationService, IAuthorizationToken } from './../../core/services/authentication.service';
 import { AppSettingsService } from './../../core/services/app-settings.service';
-import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, untracked } from '@angular/core';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { ITheme } from '../../core/services/app-service';
+import { AppService, ITheme } from '../../core/services/app-service';
 import { toSignal } from '@angular/core/rxjs-interop';
+
+interface FreeboardCommandMessage {
+  settings?: {
+    autoNightMode?: boolean;
+  };
+  commands?: {
+    nightModeEnable?: boolean;
+  };
+};
+
 
 @Component({
   selector: 'widget-freeboardsk',
@@ -19,41 +29,72 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   public id = input<string>();
   public type = input<string>();
   public theme = input<ITheme | null>();
+
   public disableWidgetShell = input<boolean>(false);
   public swipeDisabled = input<boolean>(false);
 
   private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
+  private readonly appSettings = inject(AppSettingsService);
+  private readonly app = inject(AppService);
+  private readonly auth = inject(AuthenticationService);
+  protected readonly dashboard = inject(DashboardService);
 
-  private appSettings = inject(AppSettingsService);
-  private auth = inject(AuthenticationService);
-  protected dashboard = inject(DashboardService);
   protected iframe = viewChild.required<ElementRef<HTMLIFrameElement>>('freeboardSkIframe');
-  public widgetUrl: string = null;
+
   private readonly authToken = toSignal<IAuthorizationToken | null>(this.auth.authToken$, { initialValue: null });
 
-  private viewReady = signal(false);
-
-  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-  };
+  private viewReady = false;
+  private iframeLoaded = false;
+  public widgetUrl: string = null;
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {};
 
   constructor() {
-    effect(() => {
-      const _cfg = this.runtime?.options();
-      void _cfg;
-      const token = this.authToken();
-      const loginToken = token?.token;
-      this.widgetUrl = loginToken
-        ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`
-        : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
-    });
     window.addEventListener('message', this.handleIframeGesture);
+
+    effect(() => {
+      const token = this.authToken();
+
+      untracked(() => {
+        const loginToken = token?.token;
+        this.widgetUrl = loginToken
+          ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`
+          : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
+      });
+    });
+
+    effect(() => {
+      const nightModeEnabled = this.app.isNightMode();
+
+      untracked(() => {
+        if (!this.iframeLoaded || !this.viewReady) return;
+        if(this.appSettings.getRedNightMode()) {
+          this.sendMessage({ commands: { nightModeEnable: nightModeEnabled } });
+        }
+      });
+    });
   }
 
   ngAfterViewInit(): void {
-    this.viewReady.set(true);
-    if (this.iframe) {
-      try { this.iframe().nativeElement.onload = () => this.injectSwipeScript(); } catch { /* ignore */ }
+    this.viewReady = true;
+
+    // Ensure we mark the iframe loaded AND inject gestures.
+    try {
+      this.iframe().nativeElement.onload = () => {
+        this.iframeLoaded = true;
+        this.sendMessage({ settings: { autoNightMode: false } });
+        this.injectSwipeScript();
+      };
+    } catch {
+      /* ignore */
     }
+  }
+
+  private sendMessage(msg: FreeboardCommandMessage, targetOrigin = '*'): void {
+    const window = this.iframe()?.nativeElement?.contentWindow;
+    if (!window) return;
+    if (!this.iframeLoaded) return;
+
+    window.postMessage(msg, targetOrigin);
   }
 
   private injectSwipeScript() {
@@ -81,7 +122,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
     if (!event.data) return;
 
     // Only accept messages originating from this widget's iframe.
-    if (!this.viewReady()) return;
+    if (!this.viewReady) return;
     let iframeWindow: Window | null = null;
     try {
       iframeWindow = this.iframe()?.nativeElement?.contentWindow ?? null;
