@@ -1,4 +1,6 @@
-# COPILOT.md
+# KIP Project Instructions
+
+This file is longer-form reference material. For the canonical, up-to-date KIP coding rules (especially Host2 widgets), follow [.github/copilot-instructions.md](../copilot-instructions.md).
 
 ## 1. Project Overview
 KIP Instrument MFD is an advanced and versatile marine instrumentation package designed to display Signal K data in a modern, customizable dashboard, on boats. It provides real-time visualization of navigation, wind, engine, and other marine data streams offered by Signal K, supporting a wide range of widgets and configuration options. The project aims to deliver a user-friendly, extensible, and visually appealing interface for both professional and recreational marine users.
@@ -69,6 +71,7 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
   - Key methods: `login()`, `logout()`, token management, exposes `isLoggedIn$` observable.
   - Dependencies: SignalKConnectionService, HttpClient.
 
+- **DialogService (`dialog.service.ts`)**
   - Purpose: Centralizes all app dialogs using Angular Material.
   - Dependencies: MatDialog, Dialog components.
   - Usage: Used throughout the app to open modals and dialogs for user interaction.
@@ -157,57 +160,14 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 ## 9. Host2 Widget Architecture
 
-Modern widgets follow a composition pattern built on directives + signals (no inheritance).
+Host2 widget rules are maintained in one place to avoid duplication. Use the canonical Host2 widget contract and patterns from:
 
-### 9.1 Core Contract
-- Required signal inputs: `id`, `type`, `theme`.
-- Static `DEFAULT_CONFIG` defines all paths, options, and defaults.
-- Inject directives:
-  - `WidgetRuntimeDirective` – merged persisted config (`options()`), id, sizing.
-  - `WidgetStreamsDirective` – path observers (sampling, unit conversion, timeout logic).
-  - `WidgetMetadataDirective` (optional) – zones & metadata; call `observe(pathKey)` when needed.
-- Register all `streams.observe` calls inside one `effect()` using a single `untracked()` block.
-- Use signals for UI state; never mutate merged config object.
-- Optional zones highlights via `getHighlights` utility.
+- [.github/copilot-instructions.md](../copilot-instructions.md)
 
-Minimal pattern:
-```
-effect(() => {
-  const cfg = this.runtime.options();
-  if (!cfg) return;
-  untracked(() => {
-    const p = cfg.paths['signalKPath'];
-    if (p?.path) {
-      this.streams.observe('signalKPath', pkt => this.value.set(pkt?.data?.value ?? null));
-      this.metadata?.observe?.('signalKPath'); // zones optional
-    }
-  });
-});
-```
-
-### 9.2 Zones
-- Zones classify value ranges (alert/warn/alarm).
-- `path.data.state` may be present even without explicit zones observation.
-- Build visual overlays (gauges/charts) from `metadata.zones()` + theme + display scale using `getHighlights`.
-- Always guard missing `zones`, `theme`, or scale (return empty array when absent).
-
-### 9.3 Path Configuration Rules
-- `isPathConfigurable=false` hides path from UI.
-- `pathRequired=false` allows empty path (no subscription until user sets one).
-- Always null-guard before observing a path.
-
-### 9.4 Metadata, Units & Conversion
-- Signal K schema supplies base SI units; unknown/custom paths might omit units (treat as unitless).
-- Numeric paths with `convertUnitTo` leverage `UnitsService` automatically via streams.
-- Avoid manual conversion logic; extend `UnitsService` if a gap exists.
-
-### 9.5 Best Practices
-- One effect for observer setup.
-- Group observer registrations in a single `untracked()` for performance.
-- Use signals + `computed() or linkedSignal()` for derived values; avoid heavy template expressions.
-- Keep sample times modest (≥1000ms) unless rapid updates are essential.
-- Avoid expensive recalculations inside templates—precompute with `computed() or linkedSignal()`.
-- Use CanvasService for high-DPI text/gauge rendering instead of manual scaling.
+Quick reminders:
+- Always guard `runtime.options()` and `cfg.paths?.key?.path` before observing.
+- Register all `streams.observe(...)` in a single `effect()` and group subscriptions in one `untracked()` block.
+- Keep transient UI state in signals; do not mutate the merged config object.
 ---
 
 ## 10. KIP Colors, Theming, and Widget Best Practices

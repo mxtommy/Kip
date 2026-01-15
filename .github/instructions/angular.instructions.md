@@ -23,7 +23,7 @@ export class {{ClassName}} {
 }
 ```
 
-```css
+```scss
 .container {
   display: flex;
   flex-direction: column;
@@ -48,7 +48,7 @@ export class {{ClassName}} {
 </section>
 ```
 
-When you update a component, be sure to put the logic in the ts file, the styles in the css file and the html template in the html file.
+When you update a component, be sure to put the logic in the ts file, the styles in the scss file, and the html template in the html file.
 
 ## Resources
 
@@ -110,7 +110,7 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Do not assume globals like (`new Date()`) are available.
+- Avoid non-deterministic work in templates (e.g., calling `new Date()` or `Math.random()` in bindings); compute values in TypeScript and bind to signals/`computed()`.
 - Do not write arrow functions in templates (they are not supported).
 - Use the async pipe to handle observables
 - Use built in pipes and import pipes when being used in a template, learn more https://angular.dev/guide/templates/pipes#

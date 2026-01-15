@@ -45,7 +45,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
 - Use the async pipe to handle observables
-- Do not assume globals like (`new Date()`) are available.
+- Avoid non-deterministic work in templates (e.g., calling `new Date()` or `Math.random()` in bindings); compute values in TypeScript and bind to signals/`computed()`.
 - Do not write arrow functions in templates (they are not supported).
 
 ## Services
