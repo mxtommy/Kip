@@ -163,9 +163,10 @@ export class NotificationsService implements OnDestroy {
   }
 
   private updateValue(msg: ISignalKDataValueUpdate) {
-    const notificationToUpdate = this._notifications.find(item => item.path == msg.path);
-    if (notificationToUpdate) {
-      notificationToUpdate.value = { ...msg.value };
+    const idx = this._notifications.findIndex(item => item.path == msg.path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      this._notifications[idx] = { ...prev, value: { ...msg.value } };
       this.updateNotificationsState();
       this.emitNotifications();
     } else {
@@ -174,9 +175,11 @@ export class NotificationsService implements OnDestroy {
   }
 
   private deleteValue(path: string): void {
-    const notification = this._notifications.find(n => n.path == path);
-    if (notification) {
-      delete notification.value;
+    const idx = this._notifications.findIndex(n => n.path == path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      // Keep the notification entry (and any meta) but remove its live value.
+      this._notifications[idx] = { ...prev, value: undefined };
       this.updateNotificationsState();
       this.emitNotifications();
     } else {
@@ -241,9 +244,10 @@ export class NotificationsService implements OnDestroy {
   }
 
   private processNotificationDeltaMeta(metaDelta: IMeta) {
-    const existing = this._notifications.find(i => i.path == metaDelta.path);
-    if (existing) {
-      existing.meta = metaDelta.meta;
+    const idx = this._notifications.findIndex(i => i.path == metaDelta.path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      this._notifications[idx] = { ...prev, meta: metaDelta.meta };
     } else {
       this._notifications.push({ path: metaDelta.path, meta: metaDelta.meta });
     }
