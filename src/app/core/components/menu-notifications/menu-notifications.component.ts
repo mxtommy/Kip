@@ -37,7 +37,11 @@ export class MenuNotificationsComponent {
 
         return notifications
           .filter(item => item.value && item.value.state && !statesToFilter.includes(item.value.state as States))
-          .filter(item => item.value && item.value.method && item.value.method.includes(Methods.Visual));
+          .filter(item => {
+            const method = item.value?.method;
+            if (!method?.length) return false;
+            return method.includes(Methods.Visual) || method.includes(Methods.Sound);
+          });
       })
     ),
     { requireSync: true, equal: isEqual }
