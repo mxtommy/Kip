@@ -54,6 +54,7 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
         pathID: [newPath.path.pathID],
         source: [newPath.path.source, Validators.required],
         pathType: [newPath.path.pathType],
+        zonesOnlyPaths: [newPath.path.zonesOnlyPaths ?? false],
         isPathConfigurable: [newPath.path.isPathConfigurable],
         showPathSkUnitsFilter: [newPath.path.showPathSkUnitsFilter],
         pathSkUnitsFilter: [newPath.path.pathSkUnitsFilter],

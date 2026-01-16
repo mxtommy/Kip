@@ -1,0 +1,96 @@
+<svg
+   [attr.height]="dimensions().height"
+   [attr.width]="dimensions().width"
+   [attr.viewBox]="viewBox"
+   version="1.1"
+   id="svg9"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient32">
+      <stop
+         style="stop-color:#000000;stop-opacity:0.88486844;"
+         offset="0"
+         id="stop32" />
+      <stop
+         style="stop-color:#f7f7f7;stop-opacity:0.17763157;"
+         offset="1"
+         id="stop33" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient32"
+       id="linearGradient33"
+       x1="7.0431595"
+       y1="17.869596"
+       x2="39.043159"
+       y2="17.869596"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g id="disabled" transform="translate(0,35)">
+    <rect
+       width="180"
+       height="35"
+       id="rect1-5"
+       x="0"
+       y="0"
+       style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1" />
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
+      <text
+        id="text1-5"
+        [attr.fill]="labelColor"
+        style="text-align:center;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        x="47.083984"
+        y="22.636719">
+        {{ data().ctrlLabel }}
+      </text>
+    </svg>
+    <g transform="translate(6,2)" id="disabledToogleControl">
+      <circle
+        cx="18"
+        cy="16"
+        fill="#9f9f9f"
+        id="circle3-7"
+        r="13.5"
+        style="stroke-width:5;stroke:url(#linearGradient33);stroke-opacity:0.2;stroke-dasharray:none" />
+    </g>
+  </g>
+  <g id="enabled">
+    <rect
+      width="180"
+      height="35"
+      id="rect1"
+      x="0"
+      y="0"
+      style="display:inline;opacity:1;fill:black;fill-opacity:0;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1"
+    />
+    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <text filter="url(#glow)"
+        id="text1"
+        [attr.fill]="valueColor"
+        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+        x="47.083984"
+        y="22.636719">{{ data().ctrlLabel }}
+      </text>
+    </svg>
+    <g transform="translate(6,2)" id="enabledToogleControl">
+      <circle filter="url(#glow)"
+        cx="18"
+        cy="16"
+        [attr.fill]="valueColor"
+        id="circle3"
+        r="13.5"
+        style="stroke:url(#linearGradient33);stroke-width:5;stroke-opacity:0.2;stroke-dasharray:none" />
+    </g>
+  </g>
+</svg>

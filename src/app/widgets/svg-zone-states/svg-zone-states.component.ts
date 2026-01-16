@@ -1,13 +1,14 @@
 import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
-import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
+import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
+
 
 @Component({
-    selector: 'app-svg-boolean-switch',
-    templateUrl: './svg-boolean-switch.component.svg'
+    selector: 'app-svg-zone-states',
+    templateUrl: './svg-zone-states.component.svg'
 })
-export class SvgBooleanSwitchComponent implements DoCheck {
+export class SvgZoneStatesComponent implements DoCheck {
   // eslint-disable-next-line @angular-eslint/no-input-rename
   readonly data = input<IDynamicControl>(null, { alias: "controlData" });
   readonly theme = input<ITheme>(null);
@@ -17,15 +18,12 @@ export class SvgBooleanSwitchComponent implements DoCheck {
   private toggleOff = "0 35 180 35";
   private toggleOn = "0 0 180 35";
   private ctrlState: boolean = null;
+  private ctrlColor = '';
   private oldTheme: ITheme = null;
-  private isSwiping = false;
-  private pointerStartX = 0;
-  private pointerStartY = 0;
 
   public viewBox: string = this.toggleOff;
   public labelColor = null;
   public valueColor = null;
-  private ctrlColor = '';
 
   constructor() { }
 
@@ -45,33 +43,6 @@ export class SvgBooleanSwitchComponent implements DoCheck {
       this.oldTheme = theme
       this.getColors(data.color);
     }
-  }
-
-  public onPointerDown(event: PointerEvent): void {
-    this.isSwiping = false;
-    this.pointerStartX = event.clientX;
-    this.pointerStartY = event.clientY;
-  }
-
-  public onPointerMove(event: PointerEvent): void {
-    const deltaX = Math.abs(event.clientX - this.pointerStartX);
-    const deltaY = Math.abs(event.clientY - this.pointerStartY);
-
-    // Mark as swiping if movement exceeds a threshold
-    if (deltaX > 30 || deltaY > 30) {
-      this.isSwiping = true;
-    }
-  }
-
-  public onPointerUp(event: PointerEvent, state: boolean): void {
-    if (this.isSwiping) {
-      // Ignore pointerup if it was a swipe
-      this.isSwiping = false;
-      return;
-    }
-
-    // Handle the toggle action for a tap
-    this.toggle(state);
   }
 
   public toggle(state: boolean): void {

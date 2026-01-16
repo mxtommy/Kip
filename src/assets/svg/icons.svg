@@ -138,6 +138,14 @@
       <circle cx="17" cy="12" r="3" fill="var(--mat-sys-primary)" />
       <path fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7h5c2.76 0 5 2.24 5 5c0 2.76 -2.24 5 -5 5h-10c-2.76 0 -5 -2.24 -5 -5c0 -2.76 2.24 -5 5 -5Z" />
     </svg>
+    <svg id="zonesStatePanel" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14">
+      <path fill="#ffffff" fill-opacity="0.3" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
+      <path fill="var(--mat-sys-primary)" d="M7.96045 13h2.03934c1.65681 0 3.00001 -1.3432 3.00001 -3.00003V4.00043c0 -1.65686 -1.3432 -3 -3.00001 -3H7.96045z" stroke-width="1"></path>
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.96045 13h2.03934c1.65681 0 3.00001 -1.3432 3.00001 -3.00003V4.00043c0 -1.65686 -1.3432 -3 -3.00001 -3H7.96045z" stroke-width="1"></path>
+      <path stroke="#currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.497 4.479a1.023 1.023 0 1 0 2.046 0 1.023 1.023 0 1 0 -2.046 0" stroke-width="1"></path>
+      <path stroke="#currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.457 9.52a1.023 1.023 0 1 0 2.046 0 1.023 1.023 0 1 0 -2.046 0" stroke-width="1"></path>
+    </svg>
     <svg id="labelWidget" stroke-width="2" fill="none" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M7 6V14.5925C7 16.3108 9.02384 17.2291 10.317 16.0976L11 15.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M4 9H10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>

@@ -1,17 +1,15 @@
 import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+//import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService, ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
-import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
-import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
-import { SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
+import { SvgZoneStatesComponent } from '../svg-zone-states/svg-zone-states.component';
 
 export interface IDimensions {
   height: number,
@@ -19,28 +17,27 @@ export interface IDimensions {
 }
 
 @Component({
-  selector: 'widget-boolean-switch',
-  templateUrl: './widget-boolean-switch.component.html',
-  styleUrls: ['./widget-boolean-switch.component.scss'],
-  imports: [KipResizeObserverDirective, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
+  selector: 'widget-zones-state-panel',
+  templateUrl: './widget-zones-state-panel.component.html',
+  styleUrls: ['./widget-zones-state-panel.component.scss'],
+  imports: [KipResizeObserverDirective, SvgZoneStatesComponent, WidgetTitleComponent]
 })
-export class WidgetBooleanSwitchComponent implements OnDestroy {
-  // Host2 functional inputs (provided by widget-host2 wrapper)
+export class WidgetZonesStatePanelComponent implements OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
 
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    displayName: 'Switch Panel Label',
+    displayName: 'Zones State Panel Label',
     filterSelfPaths: true,
     // Each control uses a matching path entry by pathID. For Host2 we preserve existing shape.
     paths: [],
     enableTimeout: false,
     dataTimeout: 5,
     color: 'contrast',
-    zonesOnlyPaths: false,
-    putEnable: true,
+    putEnable: false,
+    zonesOnlyPaths: true,
     putMomentary: false,
     multiChildCtrls: []
   };
@@ -52,11 +49,11 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
 
   // Services / directives
   protected dashboard = inject(DashboardService);
-  private readonly signalkRequestsService = inject(SignalkRequestsService);
+  //private readonly signalkRequestsService = inject(SignalkRequestsService);
   private readonly appService = inject(AppService);
 
   // Reactive state
-  public switchControls = signal<IDynamicControl[]>([]);
+  public zonesControls = signal<IDynamicControl[]>([]);
   protected labelColor = signal<string | undefined>(undefined);
   private nbCtrl: number | null = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0 };
@@ -80,7 +77,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
       const controls = (cfg.multiChildCtrls || []).map(c => ({ ...c, isNumeric: c.isNumeric ?? false }));
       this.nbCtrl = controls.length;
       untracked(() => {
-        this.switchControls.set(controls);
+        this.zonesControls.set(controls);
         // Register path observers for each control (idempotent via directive)
         if (!this.streams) return;
         controls.forEach(ctrl => {
@@ -100,7 +97,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
               : val;
 
             this.ngZone.run(() => {
-              this.switchControls.update(list => {
+              this.zonesControls.update(list => {
                 const i = list.findIndex(c => c.pathID === ctrl.pathID);
                 if (i === -1) return list;
                 const updated = { ...list[i], value: nextVal };
@@ -112,7 +109,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
         });
       });
       // subscribe PUT responses (re-init on config change to ensure uuid matches)
-      this.subscribeSKRequest();
+      //this.subscribeSKRequest();
     });
   }
 
@@ -124,7 +121,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     this.ctrlDimensions = { width: event.contentRect.width, height: h };
   }
 
-  private subscribeSKRequest(): void {
+  /* private subscribeSKRequest(): void {
     this.skRequestSub?.unsubscribe();
     this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
       // Match widget ID
@@ -157,7 +154,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     } else {
       this.signalkRequestsService.putRequest(targetPath, ctrl.value, this.id());
     }
-  }
+  } */
 
   ngOnDestroy(): void {
     this.skRequestSub?.unsubscribe();

@@ -1,0 +1,25 @@
+.widgets-container {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15%;
+  height: 85%;
+  width: 100%;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.svg-widget {
+  display: flex;
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
+}

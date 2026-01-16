@@ -25,6 +25,7 @@ import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/wid
 import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
@@ -145,6 +146,7 @@ export class WidgetService {
     WidgetDatetimeComponent: WidgetDatetimeComponent,
     WidgetDataChartComponent: WidgetDataChartComponent,
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
+    WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
@@ -225,6 +227,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
+    },
+    {
+      name: 'Zones State Panel',
+      description: 'Displays the data state (severity and message) of the paths Zones (based on Signal K path metadata configuration).',
+      icon: 'zonesStatePanel',
+      minWidth: 1,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 6,
+      category: 'Core',
+      requiredPlugins: [],
+      selector: 'widget-zones-state-panel',
+      componentClassName: 'WidgetZonesStatePanelComponent'
     },
     {
       name: 'Slider',

@@ -434,13 +434,16 @@ export class DataService implements OnDestroy {
       .map(item => item.path);
   }
 
-  public getPathsAndMetaByType(valueType: string, supportsPutOnly?: boolean, selfOnly?: boolean): IPathMetaData[] {
+  public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
     return this._skData
       .filter(item => {
         const typeMatches = item.type === valueType;
         const selfMatches = !selfOnly || item.path.startsWith("self");
         const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true : true;
-        return typeMatches && selfMatches && supportsPutMatches;
+        const hasZonesMatches = hasZones === true
+          ? Array.isArray(item.meta?.zones) && item.meta.zones.length > 0
+          : true;
+        return typeMatches && selfMatches && supportsPutMatches && hasZonesMatches;
       })
       .map(item => ({ path: item.path, meta: item.meta }));
   }
