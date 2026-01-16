@@ -13,8 +13,8 @@ export const splitShellGuard: CanMatchFn = (route: Route, segments: UrlSegment[]
   const url = '/' + segments.map(s => s.path).join('/');
 
   // Routes we map:
-  // /dashboard/:id -> /dashboard-split/:id when enabled
-  // /dashboard-split/:id -> /dashboard/:id when disabled
+  // /dashboard/:id -> /chartplotter/:id when enabled
+  // /chartplotter/:id -> /dashboard/:id when disabled
   const isSplit = url.startsWith('/chartplotter');
   const isDash = url.startsWith('/dashboard');
 
