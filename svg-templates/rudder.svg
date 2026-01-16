@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="452"
+   height="25"
+   viewBox="0 0 452 25"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   sodipodi:docname="rudder.svg"
+   inkscape:export-filename="rudder_plain.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="1.6693792"
+     inkscape:cx="190.48998"
+     inkscape:cy="60.20202"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     id="layerRudder"
+     style="display:inline"
+     transform="translate(-48.722977,53.399956)">
+    <rect
+       style="display:inline;opacity:1;fill:#48b438;fill-opacity:1;stroke:none;stroke-width:2.00436;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rudderAnglePrt"
+       width="226"
+       height="14.987642"
+       x="274.72299"
+       y="-53.399956" />
+    <rect
+       style="display:inline;opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:2.00436;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rudderAngleStb"
+       width="226"
+       height="14.987642"
+       x="-274.72299"
+       y="-53.399956"
+       transform="scale(-1,1)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="LayerBox">
+    <g
+       id="g7661"
+       style="display:inline"
+       transform="translate(-48.736057,-72.908313)">
+      <rect
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.28406;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7491"
+         width="450.71594"
+         height="14.947294"
+         x="49.505619"
+         y="73.550346" />
+      <rect
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.42544;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7491-8-1-1"
+         width="142.77309"
+         height="14.864282"
+         x="275.58313"
+         y="73.621033" />
+      <rect
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.42544;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7491-8-1-1-1"
+         width="142.77309"
+         height="14.864282"
+         x="132.81004"
+         y="73.621033" />
+      <rect
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.42544;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7491-8-1-1-1-0"
+         width="142.77309"
+         height="14.864282"
+         x="59.827667"
+         y="73.621033" />
+      <rect
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.42544;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7491-8-1-1-1-6"
+         width="142.77309"
+         height="14.864282"
+         x="347.1264"
+         y="73.621033" />
+    </g>
+    <text
+       id="text7612"
+       y="24.869791"
+       x="147.68391"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.869791"
+         x="147.68391"
+         id="tspan7610">10°</tspan></text>
+    <text
+       id="text7616"
+       y="24.869791"
+       x="77.511391"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.869791"
+         x="77.511391"
+         id="tspan7614">20°</tspan></text>
+    <text
+       id="text7620"
+       y="24.864582"
+       x="5.045588"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.864582"
+         x="5.045588"
+         id="tspan7618">30°</tspan></text>
+    <text
+       id="text7612-4"
+       y="24.869791"
+       x="292.04724"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.869791"
+         x="292.04724"
+         id="tspan7610-0">10°</tspan></text>
+    <text
+       id="text7616-8"
+       y="24.869791"
+       x="363.67792"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.869791"
+         x="363.67792"
+         id="tspan7614-7">20°</tspan></text>
+    <text
+       id="text7620-7"
+       y="24.864582"
+       x="435.08456"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.864582"
+         x="435.08456"
+         id="tspan7618-0">30°</tspan></text>
+    <text
+       id="text7612-7"
+       y="24.875"
+       x="208.01556"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         y="24.875"
+         x="208.01556"
+         id="tspan7610-08">Rudder</tspan></text>
+  </g>
+</svg>

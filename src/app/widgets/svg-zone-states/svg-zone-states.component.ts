@@ -1,4 +1,4 @@
-import { Component, DoCheck, input, output } from '@angular/core';
+import { Component, DoCheck, input, output, signal } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
@@ -16,87 +16,75 @@ export class SvgZoneStatesComponent implements DoCheck {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff = "0 35 180 35";
-  private toggleOn = "0 0 180 35";
-  private ctrlState: string | undefined = undefined;
-  private ctrlColor = '';
   private oldTheme: ITheme = null;
 
-  public viewBox: string = this.toggleOff;
-  public labelColor = null;
-  public valueColor = null;
+  public ctrlStateColor = signal<string>(null);
+  public messageTxtColor = signal<string>(null);
 
-  constructor() { }
+  constructor() {
+  }
 
   ngDoCheck(): void {
     const data = this.data();
 
-    const nextState = data.notificationState;
-    if (nextState !== this.ctrlState) {
-      this.ctrlState = nextState;
-      this.viewBox = this.isActiveState(nextState) ? this.toggleOn : this.toggleOff;
-    }
-
-    if(data.color != this.ctrlColor) {
-      this.ctrlColor = data.color;
-      this.getColors(data.color);
-    }
-
     const theme = this.theme();
-    if (this.oldTheme != theme) {
-      this.oldTheme = theme
-      this.getColors(data.color);
-    }
-  }
 
-  public toggle(state: boolean): void {
-    const data = this.data();
-    data.value = state;
-    this.toggleClick.emit(data);
-  }
-
-  private isActiveState(state: string | undefined): boolean {
-    return !!state && state !== States.Normal && state !== States.Nominal;
-  }
-
-  private getColors(color: string): void {
-    switch (color) {
-      case "contrast":
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
+    switch (data.notificationState) {
+      case States.Emergency:
+        this.ctrlStateColor.set(theme.zoneEmergency);
+        this.messageTxtColor.set(theme.background);
         break;
-      case "blue":
-        this.labelColor = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
+      case States.Alarm:
+        this.ctrlStateColor.set(theme.zoneAlarm);
+        this.messageTxtColor.set(theme.background);
         break;
-      case "green":
-        this.labelColor = this.theme().greenDim;
-        this.valueColor = this.theme().green;
+      case States.Warn:
+        this.ctrlStateColor.set(theme.zoneWarn);
+        this.messageTxtColor.set(theme.background);
         break;
-      case "pink":
-        this.labelColor = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
-        break;
-      case "orange":
-        this.labelColor = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
-        break;
-      case "purple":
-        this.labelColor = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
-        break;
-      case "grey":
-        this.labelColor = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
-        break;
-      case "yellow":
-        this.labelColor = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
+      case States.Alert:
+        this.ctrlStateColor.set(theme.zoneAlert);
+        this.messageTxtColor.set(theme.background);
         break;
       default:
-        this.labelColor = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
+        this.ctrlStateColor.set(theme.background);
+        this.messageTxtColor.set(this.getColors(data.color) || theme.contrast);
         break;
     }
+  }
+
+  private getColors(color: string): string {
+    const theme = this.theme();
+    let chosenColor = "";
+    switch (color) {
+      case "contrast":
+        chosenColor = theme.contrast;
+        break;
+      case "blue":
+        chosenColor = theme.blue;
+        break;
+      case "green":
+        chosenColor = theme.green;
+        break;
+      case "pink":
+        chosenColor = theme.pink;
+        break;
+      case "orange":
+        chosenColor = theme.orange;
+        break;
+      case "purple":
+        chosenColor = theme.purple;
+        break;
+      case "grey":
+        chosenColor = theme.grey;
+        break;
+      case "yellow":
+        chosenColor = theme.yellow;
+        break;
+      default:
+        chosenColor = theme.contrast;
+        break;
+    }
+    return chosenColor;
   }
 }

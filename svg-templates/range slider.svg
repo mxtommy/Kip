@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 35 180 35"
+   version="1.1"
+   id="svg9"
+   sodipodi:docname="range slider.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="3.2867554"
+     inkscape:cx="90.971176"
+     inkscape:cy="-8.5190399"
+     inkscape:window-width="1440"
+     inkscape:window-height="773"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="enabledToogleControl" />
+  <defs
+     id="defs9">
+    <linearGradient
+       id="swatch19"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#00d000;stop-opacity:1;"
+         offset="0"
+         id="stop20" />
+    </linearGradient>
+    <linearGradient
+       id="swatch7"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop8" />
+    </linearGradient>
+  </defs>
+  <g
+     id="enabled"
+     transform="translate(0,35)">
+    <rect
+       width="150"
+       height="3.7"
+       rx="1.2839279"
+       fill="#008000"
+       id="rect3"
+       x="15.000001"
+       y="15.65"
+       style="display:inline;stroke-width:1.57143"
+       inkscape:label="range-rail" />
+    <g
+       transform="translate(20.65,1.2278171)"
+       id="enabledToogleControl"
+       inkscape:label="slider-control">
+      <circle
+         cx="22.1"
+         cy="16.272182"
+         fill="#ffffff"
+         id="circle3"
+         style="display:inline;fill:#4d4d4d;fill-opacity:1;stroke:#8c8c8c;stroke-width:0.9;stroke-dasharray:none;stroke-opacity:1"
+         inkscape:label="circle-outter-button"
+         r="12" />
+      <circle
+         cx="22.1"
+         cy="16.272182"
+         fill="#ffffff"
+         id="circle3-3"
+         style="display:inline;fill:#ffffff;fill-opacity:1;stroke:#e6e6e6;stroke-width:1.2;stroke-dasharray:none;stroke-opacity:0.97"
+         inkscape:label="circle-inner-button"
+         r="10.8" />
+    </g>
+  </g>
+</svg>

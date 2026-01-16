@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="tackPort.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   inkscape:export-filename="tackPort_plain.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="4.0797835"
+     inkscape:cx="57.110874"
+     inkscape:cy="57.723652"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.7023px;line-height:0px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.25206;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     x="49.894032"
+     y="98.734871"
+     id="text3"><tspan
+       sodipodi:role="line"
+       id="tspan3"
+       x="49.894032"
+       y="98.734871"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.7023px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.25206">Tack</tspan></text>
+  <path
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     d="M 12.512809,30.561249 28.414641,41.670318 8.7808256,51.708321 Z"
+     id="path6"
+     sodipodi:nodetypes="cccc" />
+  <path
+     id="path7"
+     style="stroke:#000000;stroke-width:2.86366;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+     d="m 94.531167,45.533345 a 8.5515804,8.0601101 0 0 1 -8.55158,8.06011 8.5515804,8.0601101 0 0 1 -8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,-8.06011 8.5515804,8.0601101 0 0 1 8.55158,8.06011 z" />
+  <path
+     id="path8"
+     style="fill:none;stroke:#000000;stroke-width:8.45947;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+     d="M 19.881053,36.470039 A 36.704643,37.635372 0 0 1 54.605189,19.909133 36.704643,37.635372 0 0 1 84.80548,44.055681" />
+</svg>
