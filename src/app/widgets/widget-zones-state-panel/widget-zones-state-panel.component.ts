@@ -1,15 +1,14 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Subscription } from 'rxjs';
-//import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService, ITheme } from '../../core/services/app-service';
+import { Component, effect, inject, input, signal, untracked, ChangeDetectorRef, NgZone } from '@angular/core';
+import { ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
-import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 import { SvgZoneStatesComponent } from '../svg-zone-states/svg-zone-states.component';
+import { INotification, NotificationsService } from '../../core/services/notifications.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface IDimensions {
   height: number,
@@ -22,7 +21,7 @@ export interface IDimensions {
   styleUrls: ['./widget-zones-state-panel.component.scss'],
   imports: [KipResizeObserverDirective, SvgZoneStatesComponent, WidgetTitleComponent]
 })
-export class WidgetZonesStatePanelComponent implements OnDestroy {
+export class WidgetZonesStatePanelComponent {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -45,19 +44,16 @@ export class WidgetZonesStatePanelComponent implements OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
   protected readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
-  private readonly streams = inject(WidgetStreamsDirective, { optional: true });
-
-  // Services / directives
-  protected dashboard = inject(DashboardService);
-  //private readonly signalkRequestsService = inject(SignalkRequestsService);
-  private readonly appService = inject(AppService);
+  private readonly notificationsService = inject(NotificationsService);
+  protected readonly dashboard = inject(DashboardService);
 
   // Reactive state
+  protected notifications = toSignal<INotification[]>(this.notificationsService.observeNotifications());
   public zonesControls = signal<IDynamicControl[]>([]);
   protected labelColor = signal<string | undefined>(undefined);
+  private pathIdToNotificationPath = new Map<string, string>();
   private nbCtrl: number | null = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0 };
-  private skRequestSub = new Subscription();
 
   constructor() {
     // Effect: theme / label color
@@ -70,46 +66,75 @@ export class WidgetZonesStatePanelComponent implements OnDestroy {
       });
     });
 
-    // Effect: rebuild controls & register streams when config changes
+    // Effect: rebuild controls and paths when config changes
     effect(() => {
       const cfg = this.runtime?.options();
       if (!cfg) return;
-      const controls = (cfg.multiChildCtrls || []).map(c => ({ ...c, isNumeric: c.isNumeric ?? false }));
-      this.nbCtrl = controls.length;
       untracked(() => {
+        const controls = (cfg.multiChildCtrls || []).map(c => ({ ...c, isNumeric: c.isNumeric ?? false }));
+        this.nbCtrl = controls.length;
         this.zonesControls.set(controls);
-        // Register path observers for each control (idempotent via directive)
-        if (!this.streams) return;
-        controls.forEach(ctrl => {
-          const pathsArr = cfg.paths as IWidgetPath[] | undefined;
-          if (!pathsArr?.length) return;
-          const idx = pathsArr.findIndex(p => p.pathID === ctrl.pathID);
-          if (idx < 0) return; // no matching path entry
-          const pathEntry = pathsArr[idx];
-          if (!pathEntry?.path) return; // guard empty path
-          // NOTE: WidgetStreamsDirective.observe expects the logical key of cfg.paths.
-          // Since cfg.paths is an array here, keys are '0', '1', ... Use the index as string.
-          this.streams.observe(String(idx), pkt => {
-            // packet shape: pkt.data.value
-            const val = pkt?.data?.value;
-            const nextVal = ctrl.isNumeric
-              ? ([0, 1, null].includes(val) ? Boolean(val) : ctrl.value)
-              : val;
 
-            this.ngZone.run(() => {
-              this.zonesControls.update(list => {
-                const i = list.findIndex(c => c.pathID === ctrl.pathID);
-                if (i === -1) return list;
-                const updated = { ...list[i], value: nextVal };
-                return [...list.slice(0, i), updated, ...list.slice(i + 1)];
-              });
-              this.cdr.markForCheck();
-            });
+        const pathsArr = cfg.paths as IWidgetPath[] | undefined;
+        if (!pathsArr?.length) return;
+
+        this.pathIdToNotificationPath.clear();
+        for (const p of pathsArr) {
+          if (!p?.pathID || !p?.path) continue;
+
+          // Widget configs store the path under the vessel context (e.g. `self....`).
+          // Notification deltas from Signal K use the notification base path (e.g. `notifications....`).
+          // Normalize so controls can match incoming notification paths.
+          const normalizedPath = p.path.replace(/^self(\.|$)/, 'notifications$1');
+          this.pathIdToNotificationPath.set(p.pathID, normalizedPath);
+        }
+      });
+    });
+
+    // Effect: update controls from notifications as they change
+    effect(() => {
+      const notifs = this.notifications();
+
+      untracked(() => {
+        if (!this.pathIdToNotificationPath.size || !notifs?.length) return;
+
+        const notifByPath = new Map<string, (typeof notifs)[number]>();
+        for (const n of notifs) {
+          if (n?.path) notifByPath.set(n.path, n);
+        }
+
+        this.ngZone.run(() => {
+          let didChange = false;
+
+          this.zonesControls.update(list => {
+            let nextList: IDynamicControl[] | null = null;
+
+            for (let i = 0; i < list.length; i++) {
+              const ctrl = list[i];
+              const notificationPath = this.pathIdToNotificationPath.get(ctrl.pathID);
+              const notification = notificationPath ? notifByPath.get(notificationPath) : undefined;
+              if (!notification) continue;
+
+              const state = notification?.value?.['state'] as string | undefined;
+              const message = notification?.value?.['message'] as string | undefined;
+
+              if (ctrl.notificationState === state && ctrl.notificationMessage === message) continue;
+
+              if (!nextList) nextList = [...list];
+              nextList[i] = {
+                ...ctrl,
+                notificationState: state,
+                notificationMessage: message,
+              };
+              didChange = true;
+            }
+
+            return nextList ?? list;
           });
+
+          if (didChange) this.cdr.markForCheck();
         });
       });
-      // subscribe PUT responses (re-init on config change to ensure uuid matches)
-      //this.subscribeSKRequest();
     });
   }
 
@@ -119,44 +144,5 @@ export class WidgetZonesStatePanelComponent implements OnDestroy {
     const ctrlHeightProportion = (35 * event.contentRect.width / 180);
     const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h };
-  }
-
-  /* private subscribeSKRequest(): void {
-    this.skRequestSub?.unsubscribe();
-    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      // Match widget ID
-      if (requestResult.widgetUUID == this.id()) {
-        const cfg = this.runtime?.options();
-        let errMsg = `Toggle Widget ${cfg?.displayName || 'Switch Panel'}: `;
-        if (requestResult.statusCode != 200) {
-          if (requestResult.message) {
-            errMsg += requestResult.message;
-          } else {
-            errMsg += requestResult.statusCode + ' - ' + requestResult.statusCodeDescription;
-          }
-          this.appService.sendSnackbarNotification(errMsg, 0);
-        }
-      }
-    });
-  }
-
-  public toggle(ctrl: IDynamicControl): void {
-    const cfg = this.runtime?.options();
-    if (!cfg?.putEnable) return;
-    const paths = cfg.paths as IWidgetPath[] | undefined;
-    if (!paths) return;
-    const i = paths.findIndex(p => p.pathID === ctrl.pathID);
-    if (i < 0) return;
-    const targetPath = paths[i].path;
-    if (!targetPath) return;
-    if (ctrl.isNumeric) {
-      this.signalkRequestsService.putRequest(targetPath, ctrl.value ? 1 : 0, this.id());
-    } else {
-      this.signalkRequestsService.putRequest(targetPath, ctrl.value, this.id());
-    }
-  } */
-
-  ngOnDestroy(): void {
-    this.skRequestSub?.unsubscribe();
   }
 }

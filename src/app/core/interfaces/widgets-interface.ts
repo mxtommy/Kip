@@ -319,6 +319,11 @@ export interface IDynamicControl {
   /** The value of the control */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
+
+  /** Optional notification state when this control is driven by Signal K notifications. */
+  notificationState?: string;
+  /** Optional notification message when this control is driven by Signal K notifications. */
+  notificationMessage?: string;
   /** The color of the control */
   color: string;
   /** If the control should use numeric path instead of boolean */

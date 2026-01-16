@@ -2,6 +2,7 @@ import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
+import { States } from '../../core/interfaces/signalk-interfaces';
 
 
 @Component({
@@ -17,7 +18,7 @@ export class SvgZoneStatesComponent implements DoCheck {
 
   private toggleOff = "0 35 180 35";
   private toggleOn = "0 0 180 35";
-  private ctrlState: boolean = null;
+  private ctrlState: string | undefined = undefined;
   private ctrlColor = '';
   private oldTheme: ITheme = null;
 
@@ -29,10 +30,13 @@ export class SvgZoneStatesComponent implements DoCheck {
 
   ngDoCheck(): void {
     const data = this.data();
-    if (data.value != this.ctrlState) {
-      this.ctrlState = data.value;
-      this.viewBox = data.value ? this.toggleOn : this.toggleOff;
+
+    const nextState = data.notificationState;
+    if (nextState !== this.ctrlState) {
+      this.ctrlState = nextState;
+      this.viewBox = this.isActiveState(nextState) ? this.toggleOn : this.toggleOff;
     }
+
     if(data.color != this.ctrlColor) {
       this.ctrlColor = data.color;
       this.getColors(data.color);
@@ -49,6 +53,10 @@ export class SvgZoneStatesComponent implements DoCheck {
     const data = this.data();
     data.value = state;
     this.toggleClick.emit(data);
+  }
+
+  private isActiveState(state: string | undefined): boolean {
+    return !!state && state !== States.Normal && state !== States.Nominal;
   }
 
   private getColors(color: string): void {
