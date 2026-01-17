@@ -61,43 +61,8 @@ export class SvgZoneStatesComponent {
             break;
         }
 
-        this.ctrlLabelColor.set(this.getColors(data.color));
+        this.ctrlLabelColor.set(getColors(data.color, theme).color);
       });
     });
-  }
-
-  private getColors(color: string): string {
-    const theme = this.theme();
-    let chosenColor = "";
-    switch (color) {
-      case "contrast":
-        chosenColor = theme.contrast;
-        break;
-      case "blue":
-        chosenColor = theme.blue;
-        break;
-      case "green":
-        chosenColor = theme.green;
-        break;
-      case "pink":
-        chosenColor = theme.pink;
-        break;
-      case "orange":
-        chosenColor = theme.orange;
-        break;
-      case "purple":
-        chosenColor = theme.purple;
-        break;
-      case "grey":
-        chosenColor = theme.grey;
-        break;
-      case "yellow":
-        chosenColor = theme.yellow;
-        break;
-      default:
-        chosenColor = theme.contrast;
-        break;
-    }
-    return chosenColor;
   }
 }
