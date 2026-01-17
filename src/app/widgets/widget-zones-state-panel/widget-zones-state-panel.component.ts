@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, ChangeDetectorRef, NgZone } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -52,8 +52,18 @@ export class WidgetZonesStatePanelComponent {
   public zonesControls = signal<IDynamicControl[]>([]);
   protected labelColor = signal<string | undefined>(undefined);
   private pathIdToNotificationPath = new Map<string, string>();
-  private nbCtrl: number | null = null;
-  public ctrlDimensions: IDimensions = { width: 0, height: 0 };
+  private readonly hostSize = signal<IDimensions | null>(null);
+  public readonly ctrlDimensions = computed<IDimensions>(() => {
+    const size = this.hostSize();
+    if (!size) return { width: 0, height: 0 };
+
+    const nb = Math.max(1, this.zonesControls().length);
+    const calcH = size.height / nb;
+    const ctrlHeightProportion = (70 * size.width / 180);
+    const h = Math.min(ctrlHeightProportion, calcH);
+
+    return { width: size.width, height: h };
+  });
 
   constructor() {
     // Effect: theme / label color
@@ -73,7 +83,6 @@ export class WidgetZonesStatePanelComponent {
       if (!cfg) return;
       untracked(() => {
         const controls = (cfg.multiChildCtrls || []).map(c => ({ ...c, isNumeric: c.isNumeric ?? false }));
-        this.nbCtrl = controls.length;
         this.zonesControls.set(controls);
 
         const pathsArr = cfg.paths as IWidgetPath[] | undefined;
@@ -89,6 +98,10 @@ export class WidgetZonesStatePanelComponent {
           const normalizedPath = p.path.replace(/^self(\.|$)/, 'notifications$1');
           this.pathIdToNotificationPath.set(p.pathID, normalizedPath);
         }
+
+        // Config changed: re-apply the current notification snapshot so controls update
+        // immediately (no need to wait for the next notification delta).
+        this.applyNotificationsSnapshot(this.notifications());
       });
       this.cdr.markForCheck()
     });
@@ -97,54 +110,53 @@ export class WidgetZonesStatePanelComponent {
     effect(() => {
       const notifs = this.notifications();
 
-      untracked(() => {
-        if (!this.pathIdToNotificationPath.size || !notifs?.length) return;
+      untracked(() => this.applyNotificationsSnapshot(notifs));
+    });
+  }
 
-        const notifByPath = new Map<string, (typeof notifs)[number]>();
-        for (const n of notifs) {
-          if (n?.path) notifByPath.set(n.path, n);
+  private applyNotificationsSnapshot(notifs: INotification[] | undefined): void {
+    if (!this.pathIdToNotificationPath.size || !notifs?.length) return;
+
+    const notifByPath = new Map<string, INotification>();
+    for (const n of notifs) {
+      if (n?.path) notifByPath.set(n.path, n);
+    }
+
+    this.ngZone.run(() => {
+      let didChange = false;
+
+      this.zonesControls.update(list => {
+        let nextList: IDynamicControl[] | null = null;
+
+        for (let i = 0; i < list.length; i++) {
+          const ctrl = list[i];
+          const notificationPath = this.pathIdToNotificationPath.get(ctrl.pathID);
+          const notification = notificationPath ? notifByPath.get(notificationPath) : undefined;
+          if (!notification) continue;
+
+          const state = notification.value?.['state'] as string | undefined;
+          const message = notification.value?.['message'] as string | undefined;
+
+          if (ctrl.notificationState === state && ctrl.notificationMessage === message) continue;
+
+          if (!nextList) nextList = [...list];
+          nextList[i] = {
+            ...ctrl,
+            notificationState: state,
+            notificationMessage: message,
+          };
+          didChange = true;
         }
 
-        this.ngZone.run(() => {
-          let didChange = false;
-
-          this.zonesControls.update(list => {
-            let nextList: IDynamicControl[] | null = null;
-
-            for (let i = 0; i < list.length; i++) {
-              const ctrl = list[i];
-              const notificationPath = this.pathIdToNotificationPath.get(ctrl.pathID);
-              const notification = notificationPath ? notifByPath.get(notificationPath) : undefined;
-              if (!notification) continue;
-
-              const state = notification?.value?.['state'] as string | undefined;
-              const message = notification?.value?.['message'] as string | undefined;
-
-              if (ctrl.notificationState === state && ctrl.notificationMessage === message) continue;
-
-              if (!nextList) nextList = [...list];
-              nextList[i] = {
-                ...ctrl,
-                notificationState: state,
-                notificationMessage: message,
-              };
-              didChange = true;
-            }
-
-            return nextList ?? list;
-          });
-
-          if (didChange) this.cdr.markForCheck();
-        });
+        return nextList ?? list;
       });
+
+      if (didChange) this.cdr.markForCheck();
     });
   }
 
   onResized(event: ResizeObserverEntry): void {
-    const nb = this.nbCtrl || 1;
-    const calcH: number = event.contentRect.height / nb;
-    const ctrlHeightProportion = (70 * event.contentRect.width / 180);
-    const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
-    this.ctrlDimensions = { width: event.contentRect.width, height: h };
+    this.hostSize.set({ width: event.contentRect.width, height: event.contentRect.height });
+    this.cdr.markForCheck();
   }
 }
