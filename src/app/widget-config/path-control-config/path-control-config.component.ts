@@ -172,7 +172,9 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
         supportsPUT = compare(this._connection.skServerVersion, '2.12.0', ">=") ? pathFormGroup.value.supportsPut : false;
       }
     }
-    return this._data.getPathsAndMetaByType(pathType, supportsPUT, filterSelfPaths).sort();
+
+    const zonesOnlyPaths = pathFormGroup.value.zonesOnlyPaths ?? false;
+    return this._data.getPathsAndMetaByType(pathType, supportsPUT, zonesOnlyPaths, filterSelfPaths).sort();
   }
 
   public filterPaths(searchString: string) {

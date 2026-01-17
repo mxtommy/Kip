@@ -1,19 +1,26 @@
 <mat-list class="menu-item-container">
   @for(menuItem of menuNotifications(); track menuItem.path) {
   <div class="notification-container">
-    @switch (menuItem.value.state) { @case ("nominal") {
-    <mat-icon>info</mat-icon>
-    } @case ("normal") {
-    <mat-icon>info</mat-icon>
-    } @case ("alert") {
-    <mat-icon class="icon-alert-color">report</mat-icon>
-    } @case ("warn") {
-    <mat-icon class="icon-warn-color">warning</mat-icon>
-    } @case ("alarm") {
-    <mat-icon class="icon-alarm-color">error</mat-icon>
-    } @case ("emergency") {
-    <mat-icon class="icon-emergency-color">emergency_home</mat-icon>
-    } }
+    @switch (menuItem.value.state) {
+      @case ("nominal") {
+        <mat-icon>info</mat-icon>
+      }
+      @case ("normal") {
+        <mat-icon>info</mat-icon>
+      }
+      @case ("alert") {
+        <mat-icon class="icon-alert-color">report</mat-icon>
+      }
+      @case ("warn") {
+        <mat-icon class="icon-warn-color">warning</mat-icon>
+      }
+      @case ("alarm") {
+        <mat-icon class="icon-alarm-color">error</mat-icon>
+      }
+      @case ("emergency") {
+        <mat-icon class="icon-emergency-color">emergency_home</mat-icon>
+      }
+    }
     <div class="notification-title">{{ menuItem.value.state }}</div>
     <div class="notification-path scrollable-text">
       {{ menuItem.path | slice : 14 }}

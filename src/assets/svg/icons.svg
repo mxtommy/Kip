@@ -135,8 +135,22 @@
       <path fill="var(--mat-sys-primary)" d="M13.5 14a.47.47 0 0 1-.35-.15l-1-1a.5.5 0 0 1-.15-.35V11c0-.28.22-.5.5-.5s.5.22.5.5v1.29l.85.85c.2.2.2.51 0 .71c-.1.1-.23.15-.35.15" />
     </svg>
     <svg id="switchpanelWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-      <circle cx="17" cy="12" r="3" fill="var(--mat-sys-primary)" />
-      <path fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7h5c2.76 0 5 2.24 5 5c0 2.76 -2.24 5 -5 5h-10c-2.76 0 -5 -2.24 -5 -5c0 -2.76 2.24 -5 5 -5Z" />
+      <g id="top" transform="translate(0,6.5)">
+        <circle cx="7" cy="12" r="3" fill="var(--mat-sys-primary)" />
+        <path fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7h5c2.76 0 5 2.24 5 5c0 2.76 -2.24 5 -5 5h-10c-2.76 0 -5 -2.24 -5 -5c0 -2.76 2.24 -5 5 -5Z" />
+      </g>
+      <g id="bottom" transform="translate(0,-6.5)">
+        <circle cx="17" cy="12" r="3" fill="var(--mat-sys-primary)" />
+        <path fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7h5c2.76 0 5 2.24 5 5c0 2.76 -2.24 5 -5 5h-10c-2.76 0 -5 -2.24 -5 -5c0 -2.76 2.24 -5 5 -5Z" />
+      </g>
+    </svg>
+    <svg id="zonesStatePanel" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14">
+      <path fill="#ffffff" fill-opacity="0.3" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
+      <path fill="var(--mat-sys-primary)" d="M7.96045 13h2.03934c1.65681 0 3.00001 -1.3432 3.00001 -3.00003V4.00043c0 -1.65686 -1.3432 -3 -3.00001 -3H7.96045z" stroke-width="1"></path>
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.96045 13h2.03934c1.65681 0 3.00001 -1.3432 3.00001 -3.00003V4.00043c0 -1.65686 -1.3432 -3 -3.00001 -3H7.96045z" stroke-width="1"></path>
+      <path stroke="#currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.497 4.479a1.023 1.023 0 1 0 2.046 0 1.023 1.023 0 1 0 -2.046 0" stroke-width="1"></path>
+      <path stroke="#currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.457 9.52a1.023 1.023 0 1 0 2.046 0 1.023 1.023 0 1 0 -2.046 0" stroke-width="1"></path>
     </svg>
     <svg id="labelWidget" stroke-width="2" fill="none" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M7 6V14.5925C7 16.3108 9.02384 17.2291 10.317 16.0976L11 15.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
@@ -291,12 +305,13 @@
         <polygon fill="var(--mat-sys-background)" fill-opacity="1" points="160,180 110,210 160,90 210,210 "></polygon>
         <polygon fill="var(--mat-sys-background)" fill-opacity="1" points="160,180 110,210 160,90 "></polygon>
     </svg>
-    <svg id="positionWidget" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+    <svg id="positionWidget" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960">
       <path fill="currentColor" d="M440-42v-80q-125-14-214.5-103.5T122-440H42v-80h80q14-125 103.5-214.5T440-838v-80h80v80q125 14 214.5 103.5T838-520h80v80h-80q-14 125-103.5 214.5T520-122v80h-80Zm40-158q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-120q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400Zm0-80Z"/>
     </svg>
     <svg id="sliderWidget" width="256px" height="256px" viewBox="-0.75 -0.75 16.50 16.50" xmlns="http://www.w3.org/2000/svg">
-      <g stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" stroke-width="0.06"/>
+      <g stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" stroke-width="1"/>
       <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M10.3004 7.49991C10.3004 8.4943 9.49426 9.30041 8.49988 9.30041C7.50549 9.30041 6.69938 8.4943 6.69938 7.49991C6.69938 6.50553 7.50549 5.69942 8.49988 5.69942C9.49426 5.69942 10.3004 6.50553 10.3004 7.49991ZM11.205 8C10.9699 9.28029 9.84816 10.2504 8.49988 10.2504C7.1516 10.2504 6.0299 9.28029 5.79473 8H0.5C0.223858 8 0 7.77614 0 7.5C0 7.22386 0.223858 7 0.5 7H5.7947C6.0298 5.71962 7.15154 4.74942 8.49988 4.74942C9.84822 4.74942 10.9699 5.71962 11.2051 7H14.5C14.7761 7 15 7.22386 15 7.5C15 7.77614 14.7761 8 14.5 8H11.205Z" />
+      <circle cx="8.5" cy="7.5" r="1.5" fill="var(--mat-sys-primary)" />
     </svg>
     <svg id="dashboard-beating-starboard" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <g id="g9" transform="matrix(-0.70710678,0.70710678,0.70710678,0.70710678,8.8211956,-6.2237242)">

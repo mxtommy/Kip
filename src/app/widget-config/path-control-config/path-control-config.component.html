@@ -87,36 +87,38 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="sampleTimeField">
-        <mat-form-field class="fields" appearance="outline" floatLabel="always">
-          <mat-label>Sample Time</mat-label>
-          <input matInput type="number"
-            placeholder="Sample time in milliseconds"
-            formControlName="sampleTime"
-            required>
-        </mat-form-field>
-      </div>
-      <div class="unitField">
-        @if ((pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === undefined) || (pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === true)) {
-          <mat-form-field class="fields">
-            <mat-label>Display Format</mat-label>
-            <mat-select
-                placeholder="Select unit"
-                formControlName="convertUnitTo"
-                required>
-                @for (group of unitList.conversions; track $index) {
-                  <mat-optgroup [label]="group.group">
-                    @for (unit of group.units; track $index) {
-                      <mat-option [value]="unit.measure">
-                        {{unit.description}}
-                      </mat-option>
-                    }
-                  </mat-optgroup>
-                }
-            </mat-select>
+      @if (!pathFormGroup().value.zonesOnlyPaths) {
+        <div class="sampleTimeField">
+          <mat-form-field class="fields" appearance="outline" floatLabel="always">
+            <mat-label>Sample Time</mat-label>
+            <input matInput type="number"
+              placeholder="Sample time in milliseconds"
+              formControlName="sampleTime"
+              required>
           </mat-form-field>
-        }
-      </div>
+        </div>
+        <div class="unitField">
+          @if ((pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === undefined) || (pathFormGroup().value.pathType === 'number' && pathFormGroup().value.showConvertUnitTo === true)) {
+            <mat-form-field class="fields">
+              <mat-label>Display Format</mat-label>
+              <mat-select
+                  placeholder="Select unit"
+                  formControlName="convertUnitTo"
+                  required>
+                  @for (group of unitList.conversions; track $index) {
+                    <mat-optgroup [label]="group.group">
+                      @for (unit of group.units; track $index) {
+                        <mat-option [value]="unit.measure">
+                          {{unit.description}}
+                        </mat-option>
+                      }
+                    </mat-optgroup>
+                  }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+      }
     </div>
   </div>
 }

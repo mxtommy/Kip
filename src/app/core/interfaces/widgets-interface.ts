@@ -168,7 +168,8 @@ export interface IWidgetSvcConfig {
 
   /** Used by Widgets that support zones: Indicates if SK metadata zones should be applied or not */
   ignoreZones?: boolean;
-
+  /** Used by Widgets that support zones: If true, only paths that have at least one zones array item defined in SK metadata will be listed for selection */
+  zonesOnlyPaths?: boolean;
   /** Option for widget that supports Signal K PUT command */
   putEnable?: boolean;
   /** Option for widget that supports Signal K PUT command */
@@ -318,6 +319,11 @@ export interface IDynamicControl {
   /** The value of the control */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
+
+  /** Optional notification state when this control is driven by Signal K notifications. */
+  notificationState?: string;
+  /** Optional notification message when this control is driven by Signal K notifications. */
+  notificationMessage?: string;
   /** The color of the control */
   color: string;
   /** If the control should use numeric path instead of boolean */
@@ -398,6 +404,8 @@ export interface IWidgetPath {
    * @see TWidgetPathType
    */
   pathType: TWidgetPathType;
+  /** If true, only lists paths that have at least one metadata zones array item */
+  zonesOnlyPaths?: boolean;
   /** Only lists paths that support PUT action. Defaults to false */
   supportsPut?: boolean;
   /**

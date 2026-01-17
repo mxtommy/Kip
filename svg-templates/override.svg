@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="override.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   inkscape:export-filename="override_plain.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="3.6417008"
+     inkscape:cx="60.960527"
+     inkscape:cy="62.058915"
+     inkscape:window-width="1248"
+     inkscape:window-height="773"
+     inkscape:window-x="197"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24px;line-height:0px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.25206;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     x="49.961578"
+     y="86.799866"
+     id="text3"><tspan
+       sodipodi:role="line"
+       id="tspan3"
+       x="49.961578"
+       y="86.799866"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:24px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.25206">Override</tspan></text>
+  <path
+     id="path4"
+     style="fill:none;stroke:#000000;stroke-width:5.31694;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     d="M 2.6584699,36.552789 29.229283,58.159051 M 2.6584699,36.451699 29.229283,14.845436" />
+  <path
+     id="path1"
+     style="fill:none;stroke:#000000;stroke-width:5.31694;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     d="M 97.34153,36.552789 70.770717,58.159051 M 97.34153,36.451699 70.770717,14.845436" />
+  <text
+     xml:space="preserve"
+     style="font-weight:bold;font-size:68.6095px;line-height:0px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';text-align:center;text-anchor:middle;fill:#000000;stroke-width:9.80136;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+     x="50.167503"
+     y="61.058273"
+     id="text1"><tspan
+       sodipodi:role="line"
+       id="tspan1"
+       x="50.167503"
+       y="61.058273"
+       style="stroke-width:9.80136">!</tspan></text>
+</svg>

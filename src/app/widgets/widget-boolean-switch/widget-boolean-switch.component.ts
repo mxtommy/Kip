@@ -5,13 +5,18 @@ import { AppService, ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
-import { IDimensions, SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
+import { SvgBooleanSwitchComponent } from '../svg-boolean-switch/svg-boolean-switch.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
+
+export interface IDimensions {
+  height: number,
+  width: number
+}
 
 @Component({
   selector: 'widget-boolean-switch',
@@ -34,6 +39,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     enableTimeout: false,
     dataTimeout: 5,
     color: 'contrast',
+    zonesOnlyPaths: false,
     putEnable: true,
     putMomentary: false,
     multiChildCtrls: []

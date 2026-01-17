@@ -1,0 +1,19 @@
+<widget-title [text]="(runtime?.options()?.displayName)" [color]="labelColor()"></widget-title>
+<div class="widgets-container" #widgetContainer kipResizeObserver (onResize)="onResized($event)">
+  @for (ctrl of zonesControls(); track $index) {
+    <ng-container>
+      @switch (ctrl.type) {
+        @case ("4") {
+          <app-svg-zone-states class="svg-widget"
+            [controlData]="ctrl"
+            [theme]="theme()"
+            [dimensions]="ctrlDimensions()">
+          </app-svg-zone-states>
+        }
+      }
+    </ng-container>
+  }
+</div>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay"></div>
+}

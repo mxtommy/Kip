@@ -29,6 +29,7 @@ export interface IAddNewPathObject {
 export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   private fb = inject(UntypedFormBuilder);
   readonly multiCtrlArray = input.required<UntypedFormArray>();
+  readonly zonesOnlyPaths = input.required<boolean>();
   public readonly addPath = output<IAddNewPathObject>();
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
@@ -53,10 +54,10 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
     this.multiCtrlArray().push(
       this.fb.group({
         ctrlLabel: [null, Validators.required],
-        type: ['1', Validators.required],
+        type: [this.zonesOnlyPaths() ? '4' : '1', Validators.required],
         pathID:[newUUID],
         color:['contrast'],
-        isNumeric: [false],
+        isNumeric: [this.zonesOnlyPaths() ? true : false],
         value:[null]
       }
     ));
@@ -70,15 +71,16 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         path: null,
         pathID: newUUID,
         source: 'default',
-        pathType: 'boolean',
-        supportsPut: true,
+        pathType: this.zonesOnlyPaths() ? 'number' : 'boolean',
+        zonesOnlyPaths: this.zonesOnlyPaths(),
+        supportsPut: !this.zonesOnlyPaths(),
         isPathConfigurable: true,
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         convertUnitTo: null,
         sampleTime: 500
       },
-      ctrlType: 1
+      ctrlType: this.zonesOnlyPaths() ? 4 : 3 // 4 = Zones State, 3 = indicator
     };
 
     this.addPath.emit(newPath);

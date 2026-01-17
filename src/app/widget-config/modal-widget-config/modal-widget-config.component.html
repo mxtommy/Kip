@@ -641,6 +641,7 @@
             </div>
             <boolean-multicontrol-options
               [multiCtrlArray]="multiChildCtrlsToControl"
+              [zonesOnlyPaths]="widgetConfig?.zonesOnlyPaths ?? false"
               (addPath)="addPathGroup($event)"
               (updatePath)="updatePath($event)"
               (delPath)="deletePath($event)"

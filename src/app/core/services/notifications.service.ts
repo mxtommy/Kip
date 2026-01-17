@@ -138,33 +138,50 @@ export class NotificationsService implements OnDestroy {
     this.updateNotificationsState();
   }
 
+  private emitNotifications(): void {
+    // Emit a new array reference so signal-based consumers (toSignal/computed/effect)
+    // are notified even when we mutate the internal array in-place.
+    this._notifications$.next([...this._notifications]);
+  }
+
+  /**
+   * Stream of all known notification entries keyed by Signal K path.
+   *
+   * Notes:
+   * - The array may contain entries with only `meta` (no `value`) when a notification was deleted
+   *   but metadata has been received.
+   * - Consumers should treat emitted arrays/items as read-only.
+   */
   public observeNotifications(): Observable<INotification[]> {
-    return this._notifications$;
+    return this._notifications$.asObservable();
   }
 
   private addValue(msg: ISignalKDataValueUpdate) {
     this._notifications.push({ path: msg.path, value: msg.value });
     this.updateNotificationsState();
-    this._notifications$.next(this._notifications);
+    this.emitNotifications();
   }
 
   private updateValue(msg: ISignalKDataValueUpdate) {
-    const notificationToUpdate = this._notifications.find(item => item.path == msg.path);
-    if (notificationToUpdate) {
-      notificationToUpdate.value = { ...msg.value };
+    const idx = this._notifications.findIndex(item => item.path == msg.path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      this._notifications[idx] = { ...prev, value: { ...msg.value } };
       this.updateNotificationsState();
-      this._notifications$.next(this._notifications);
+      this.emitNotifications();
     } else {
       console.log("[Notification Service] Update path not found for: " + msg.path);
     }
   }
 
   private deleteValue(path: string): void {
-    const notification = this._notifications.find(n => n.path == path);
-    if (notification) {
-      delete notification.value;
+    const idx = this._notifications.findIndex(n => n.path == path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      // Keep the notification entry (and any meta) but remove its live value.
+      this._notifications[idx] = { ...prev, value: undefined };
       this.updateNotificationsState();
-      this._notifications$.next(this._notifications);
+      this.emitNotifications();
     } else {
       console.log("[Notification Service] Notification to delete not found for: " + path);
     }
@@ -227,13 +244,14 @@ export class NotificationsService implements OnDestroy {
   }
 
   private processNotificationDeltaMeta(metaDelta: IMeta) {
-    const existing = this._notifications.find(i => i.path == metaDelta.path);
-    if (existing) {
-      existing.meta = metaDelta.meta;
+    const idx = this._notifications.findIndex(i => i.path == metaDelta.path);
+    if (idx >= 0) {
+      const prev = this._notifications[idx];
+      this._notifications[idx] = { ...prev, meta: metaDelta.meta };
     } else {
       this._notifications.push({ path: metaDelta.path, meta: metaDelta.meta });
     }
-    this._notifications$.next(this._notifications);
+    this.emitNotifications();
   }
 
   private getNotificationSeverity(message: INotification): { aSev: number; vSev: number } {
@@ -259,14 +277,33 @@ export class NotificationsService implements OnDestroy {
     return { aSev, vSev };
   }
 
+  /**
+   * Sends a Signal K PUT to update the notification method(s) for the given notification path.
+   *
+   * The method array typically contains `Methods.Sound` and/or `Methods.Visual`.
+   *
+   * @param path Notification base path (e.g. `notifications.xxx.yyy`).
+   * @param method Method list to apply.
+   */
   public setSkMethod(path: string, method: TMethod[]) {
     this.requests.putRequest(`${path}.method`, method, UUID.create());
   }
 
+  /**
+   * Sends a Signal K PUT to update the notification state for the given notification path.
+   *
+   * @param path Notification base path (e.g. `notifications.xxx.yyy`).
+   * @param state Signal K state string (see `States`).
+   */
   public setSkState(path: string, state: string) {
     this.requests.putRequest(`${path}.state`, state, UUID.create());
   }
 
+  /**
+   * Stream of aggregated alarm info used by the UI for badges/visual state.
+   *
+   * Derived from the current notifications list, user settings, and mute state.
+   */
   public observerNotificationsInfo(): Observable<INotificationInfo> {
     return this._alarmsInfo$.pipe(
       map((info: IAlarmInfo) => {
@@ -307,6 +344,11 @@ export class NotificationsService implements OnDestroy {
     return player;
   }
 
+  /**
+   * Mutes/unmutes the currently playing alarm sound (if any).
+   *
+   * Also updates the emitted alarm summary (`isMuted`) and may influence computed audio severity.
+   */
   mutePlayer(state: boolean) {
     if (this._activeAlarmSoundtrack != null && this._activeAlarmSoundtrack !== 1000) {
       const p = this._players.get(this._activeAlarmSoundtrack);
@@ -316,6 +358,12 @@ export class NotificationsService implements OnDestroy {
     this.updateNotificationsState();
   }
 
+  /**
+   * Switches the active looping alarm track.
+   *
+   * Track ids map to: 1000=stop/silent, 1001=alert, 1002=warn, 1003=alarm, 1004=emergency.
+   * This stops the previously active Howler instance (but keeps it cached for reuse).
+   */
   playAlarm(trackId: number) {
     if (this._activeAlarmSoundtrack === trackId) return;
 
@@ -339,10 +387,19 @@ export class NotificationsService implements OnDestroy {
 
   // --------------------------------------------------------------------------
 
+  /**
+   * Stream of the current notification configuration used by this service.
+   * Emits whenever settings are changed.
+   */
   public observeNotificationConfiguration(): Observable<INotificationConfig> {
     return this._notificationConfig$.asObservable();
   }
 
+  /**
+   * Cleans up subscriptions and unloads cached Howler players.
+   *
+   * Called by Angular when the service is destroyed (typically app teardown).
+   */
   ngOnDestroy(): void {
     this._notificationSettingsSubscription?.unsubscribe();
     this._resetServiceSubscription?.unsubscribe();

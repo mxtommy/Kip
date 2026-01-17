@@ -207,8 +207,17 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!url) return false;
     // Normalize trailing slash
     const path = url.split('?')[0].replace(/\/+$/, '');
-    // Matches /dashboard and /dashboard/<id>
-    return path === '/dashboard' || /^\/dashboard(\/\d+)?$/.test(path) || path === '/';
+    // Matches dashboard-like views where the notification badge overlay is allowed.
+    // - / (root)
+    // - /dashboard and /dashboard/<id>
+    // - /chartplotter and /chartplotter/<id>
+    return (
+      path === '/' ||
+      path === '/dashboard' ||
+      /^\/dashboard(\/\d+)?$/.test(path) ||
+      path === '/chartplotter' ||
+      /^\/chartplotter(\/\d+)?$/.test(path)
+    );
   }
 
   ngOnInit() {
