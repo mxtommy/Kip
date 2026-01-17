@@ -2,7 +2,7 @@
 ## New Features
 * Zones State Panel widget: monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each Zone States control uses KIP’s color-coded Zone severity and prominent status message to spot warnings/alarms early without digging through notification menus. Powered by Signal K metadata zone configuration. Fixes #873
 ## Improvements
-* Better chartplotter mode with automatic night/day mode and manual night mode button applying to both Freeboard SK and KIP.
+* Better chartplotter mode with automatic night/day mode and manual night mode button applying to both Freeboard SK and KIP. Requires Freedoard SK version above v2.19.6.
 * Ability to hide widget label for Switch Panel Group and the new Zone States Panel.
 * Framework and dependency updates to stay current.
 ## Fixes
