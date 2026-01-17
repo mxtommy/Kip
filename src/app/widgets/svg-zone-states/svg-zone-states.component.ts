@@ -3,6 +3,7 @@ import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
 import { States } from '../../core/interfaces/signalk-interfaces';
+import { getColors } from "../../core/utils/themeColors.utils";
 
 
 @Component({
@@ -56,7 +57,7 @@ export class SvgZoneStatesComponent {
             break;
           default:
             this.ctrlStateColor.set(theme.background);
-            this.messageTxtColor.set(theme.contrastDim);
+            this.messageTxtColor.set(getColors(data.color, theme).dim);
             break;
         }
 

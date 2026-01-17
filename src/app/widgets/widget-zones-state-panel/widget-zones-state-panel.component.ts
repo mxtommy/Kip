@@ -59,7 +59,7 @@ export class WidgetZonesStatePanelComponent {
 
     const nb = Math.max(1, this.zonesControls().length);
     const calcH = size.height / nb;
-    const ctrlHeightProportion = (70 * size.width / 180);
+    const ctrlHeightProportion = (75 * size.width / 180);
     const h = Math.min(ctrlHeightProportion, calcH);
 
     return { width: size.width, height: h };

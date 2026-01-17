@@ -1,7 +1,7 @@
 <svg
    [attr.height]="dimensions().height"
    [attr.width]="dimensions().width"
-   viewBox="0 0 180 70"
+   viewBox="0 0 180 75"
    version="1.1"
    id="svg9"
    xmlns="http://www.w3.org/2000/svg"
@@ -10,7 +10,7 @@
   <g id="zoneStateCtrl">
     <rect id="touchRect"
       width="180"
-      height="70"
+      height="75"
       x="0"
       y="0"
       pointer-events="all"
@@ -29,27 +29,27 @@
       x="6"
       y="22"
       width="168"
-      height="38"
+      height="43"
       rx="3.5"
       fill="none"
       [attr.stroke]="ctrlLabelColor()"
-      style="display:inline;opacity:1;mix-blend-mode:normals;stroke-width:1;stroke-dasharray:none;stroke-opacity:0.4" />
+      style="display:inline;opacity:1;mix-blend-mode:normals;stroke-width:1;stroke-dasharray:none;stroke-opacity:0.65" />
 
     <rect id="innerRect"
       x="7"
       y="23"
       width="166"
-      height="36"
+      height="41"
       rx="3.5"
       [attr.fill]="ctrlStateColor()"
       [class.emergency-blink-fill]="shouldEmergencyBlink()"
       [class.alarm-blink-fill]="shouldAlarmBlink()"
       style="display:inline;opacity:1;mix-blend-mode:normal;stroke:none;stroke-width:0;" />
-      <foreignObject x="7" y="23" width="166" height="36">
+      <foreignObject x="7" y="23" width="166" height="41">
         <div
           xmlns="http://www.w3.org/1999/xhtml"
           [style.color]="messageTxtColor()"
-          style="width:166px;height:36px;display:flex;align-items:center;justify-content:center; font-weight:regular;font-size:14px;line-height:1.1;text-align:center;overflow:hidden;word-break:break-word;white-space:normal;">
+          style="width:166px;height:41px;display:flex;align-items:center;justify-content:center; font-weight:regular;font-size:12px;line-height:1.1;text-align:center;overflow:hidden;word-break:break-word;white-space:normal;padding:2px">
           {{ data().notificationMessage }}
         </div>
       </foreignObject>
