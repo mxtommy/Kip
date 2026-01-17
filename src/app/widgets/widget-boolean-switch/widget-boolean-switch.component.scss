@@ -10,6 +10,18 @@
   z-index: 20;
 }
 
+.widgets-container-no-title {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 3px 0px 0px 0px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  z-index: 20;
+}
+
 .svg-widget {
   display: flex;
 }

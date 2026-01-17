@@ -1,5 +1,8 @@
-<widget-title [text]="(runtime?.options()?.displayName)" [color]="labelColor()"></widget-title>
-<div class="widgets-container" #widgetContainer kipResizeObserver (onResize)="onResized($event)">
+@let cfg = this.runtime?.options();
+@if (cfg?.showLabel) {
+  <widget-title [text]="(cfg?.displayName)" [color]="labelColor()"></widget-title>
+}
+<div [class]="noTitleClass()" #widgetContainer kipResizeObserver (onResize)="onResized($event)">
   @for (ctrl of zonesControls(); track $index) {
     <ng-container>
       @switch (ctrl.type) {
