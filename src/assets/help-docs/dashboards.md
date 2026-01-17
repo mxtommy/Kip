@@ -64,6 +64,7 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Date & Time** – Shows date and time with custom formatting and timezone correction.
 - **Position** – Displays latitude and longitude for location tracking and navigation.
 - **Static Label** – Add customizable labels to organize and clarify your dashboard layout.
+- **Zones State Panel**: Monitor the health/state of path data. Each panel control displays path data severity and status messages (driven by Signal K metadata zones).
 - **Switch Panel** – Group of toggle switches, indicator lights, and press buttons for digital switching and operations.
 - **Slider** – Range slider for adjusting values (e.g. lighting intensity).
 - **Compact Linear** – Simple horizontal linear gauge with a large value label and modern look.
