@@ -38,7 +38,7 @@ import { UnitsService } from "../services/units.service";
 export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: string, unitsService: UnitsService, lowerScale: number, upperScale: number, invert = false): IDataHighlight[] {
   let gaugeZonesHighlight: IDataHighlight[] = [];
   // Sort zones based on lower value
-  const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);
+  const sortedZones = [...zones].sort((a, b) => (a.lower ?? -Infinity) - (b.lower ?? -Infinity));
   for (const zone of sortedZones) {
     let lower: number = null;
     let upper: number = null;
@@ -64,17 +64,30 @@ export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: st
         color = "rgba(0,0,0,0)";
     }
 
-    lower = unitsService.convertToUnit(convertUnitTo, zone.lower);
-    upper = unitsService.convertToUnit(convertUnitTo, zone.upper);
+    // Signal K metadata zones may omit bounds:
+    // - missing lower => (-infinity .. upper)
+    // - missing upper => (lower .. +infinity)
+    if (zone.lower == null) {
+      lower = lowerScale;
+    } else {
+      lower = unitsService.convertToUnit(convertUnitTo, zone.lower);
+    }
+
+    if (zone.upper == null) {
+      upper = upperScale;
+    } else {
+      upper = unitsService.convertToUnit(convertUnitTo, zone.upper);
+    }
+
+    // If unit conversion fails, skip this zone.
+    if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
+      continue;
+    }
 
     // Skip zones that are completely outside the gauge range
     if (upper < lowerScale || lower > upperScale) {
       continue;
     }
-
-    // If lower or upper are null, set them to displayScale min or max
-    lower = lower !== null ? lower : lowerScale;
-    upper = upper !== null ? upper : upperScale;
 
     // Ensure lower does not go below min
     lower = Math.max(lower, lowerScale);
