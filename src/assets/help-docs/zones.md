@@ -55,6 +55,29 @@ You can **Silence** or **Resolve** notifications.
   
   By default, the Notifications menu is hidden; when a notification arrives, a prominent button appears in the lower-right corner to alert you of changes in notifications. Tap or click this button to open the menu, or swipe right to access it at any time.
 
+- **Zones State Panel:**
+
+  The Zones State Panel widget is the fastest way to keep tabs on many “is something wrong?” values at once. Instead of hunting through the Notifications menu, you get an always-visible, color-coded status board where each row/control reflects the current Signal K **zone severity** and message for a path.
+
+  #### When it’s most useful
+  - **Engine room / systems dashboard:** coolant temp, oil pressure, alternator temp, battery state-of-charge, inverter load.
+  - **Grounding / shallow-water watch:** depth warnings that stand out immediately when they cross your configured thresholds.
+  - **Reefer / liveaboard monitoring:** fridge/freezer temperatures, cabin humidity, tank levels—quickly catch drift before it becomes a problem.
+  - **“Pre-start checklist” panel:** confirm critical sensors are nominal before departing (GPS fix, wind sensor alive, charging online).
+
+  #### Why it helps
+  - **At-a-glance awareness:** zone colors make severity obvious, even from across the cockpit.
+  - **Less notification fatigue:** you can choose to avoid spamming the Notifications menu while still getting clear, persistent visual state in the dashboard.
+  - **Leverages your existing zone work:** once zones are defined in Signal K metadata, you can reuse them across widgets.
+
+  #### Quick setup
+  1. In Signal K **Data Browser**, enable **Meta Data** and add **zones** (and optional **methods/messages**) for the paths you care about.
+  2. In KIP, add a **Zones State Panel** widget to a systems dashboard.
+  3. Configure each panel/control with the paths you want to monitor.
+  4. Optionally hide the widget label (useful for compact “status strip” dashboards).
+
+  > **Tip:** If you want the Zones State Panel to be your primary “status board”, consider leaving the **visual** method off for non-critical zones to keep the Notifications menu focused on the items you truly need to acknowledge.
+
 - **Individual Widgets:**  
   Widgets such as **Numeric**, **Simple Linear**, **Linear**, **Radial**, and **Steel Style** visually highlight relevant data ranges according to their configured zones and integrate notification states into their display. You can configure each widget to ignore zones if desired.
 

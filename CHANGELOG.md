@@ -1,3 +1,13 @@
+# v4.1.0
+## New Features
+* Zones State Panel widget: monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each Zone States control uses KIP’s color-coded Zone severity and prominent status message to spot warnings/alarms early without digging through notification menus. Powered by Signal K metadata zone configuration. Fixes #873
+## Improvements
+* Better chartplotter mode with automatic night/day mode and manual night mode button applying to both Freeboard SK and KIP.
+* Ability to hide widget label for Switch Panel Group and the new Zone States Panel.
+* Framework and dependency updates to stay current.
+## Fixes
+* Fix chartplotter mode notification badge not displaying.
+* Fix some controls are too bright in red night mode.
 # v4.0.9
 ## Improvements
 * Racer Line and Timer widgets now include:
