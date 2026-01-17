@@ -50,7 +50,7 @@
       <circle
         cx="18"
         cy="16"
-        fill="#9f9f9f"
+        [attr.fill]="labelColor"
         id="circle3-7"
         r="13.5"
         style="stroke-width:5;stroke:url(#linearGradient33);stroke-opacity:0.2;stroke-dasharray:none" />

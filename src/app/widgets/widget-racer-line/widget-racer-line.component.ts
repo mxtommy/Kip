@@ -154,6 +154,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private cssHeight = 0;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
+  private titleBitmapColor: string | null = null;
 
   // State
   private dtsValue: number | null = null;
@@ -369,10 +370,12 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private draw(): void {
     if (!this.ctx || !this.canvasElement) return;
     const cfg = this.runtime.options();
-    if (!this.titleBitmap || !cfg || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== cfg.displayName) {
-      const name = cfg?.displayName || 'DTS';
-      this.titleBitmap = this.canvas.createTitleBitmap(name, this.labelColor(), 'normal', this.cssWidth, this.cssHeight);
+    const name = cfg?.displayName || 'DTS';
+    const titleColor = this.labelColor();
+    if (!this.titleBitmap || !cfg || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== name || this.titleBitmapColor !== titleColor) {
+      this.titleBitmap = this.canvas.createTitleBitmap(name, titleColor, 'normal', this.cssWidth, this.cssHeight);
       this.titleBitmapText = name;
+      this.titleBitmapColor = titleColor;
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);

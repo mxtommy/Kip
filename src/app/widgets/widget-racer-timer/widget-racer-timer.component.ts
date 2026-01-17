@@ -72,6 +72,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   private cssHeight = 0;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
+  private titleBitmapColor: string | null = null;
 
   // Signals
   protected labelColor = signal<string>('');
@@ -267,11 +268,13 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
 
   private draw() {
     if (!this.ctx || !this.canvasElement) return;
-    if (!this.titleBitmap || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== this.runtime.options()?.displayName) {
-      const cfg = this.runtime.options();
-      const name = cfg?.displayName || 'TTS';
-      this.titleBitmap = this.canvas.createTitleBitmap(name, this.labelColor(), 'normal', this.cssWidth, this.cssHeight);
+    const cfg = this.runtime.options();
+    const name = cfg?.displayName || 'TTS';
+    const titleColor = this.labelColor();
+    if (!this.titleBitmap || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== name || this.titleBitmapColor !== titleColor) {
+      this.titleBitmap = this.canvas.createTitleBitmap(name, titleColor, 'normal', this.cssWidth, this.cssHeight);
       this.titleBitmapText = name;
+      this.titleBitmapColor = titleColor;
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     if (this.titleBitmap) this.ctx.drawImage(this.titleBitmap, 0, 0, this.cssWidth, this.cssHeight);

@@ -34,11 +34,12 @@
          id="rect3-4"
          x="0"
          y="5"
-         style="stroke-width:1.57144;fill:#9f9f9f;fill-opacity:0.97216702" />
+         [attr.fill]="labelColor"
+         style="stroke-width:1.57144;fill-opacity:0.97216702" />
       <circle
         cx="11.5"
         cy="16"
-        fill="#ffffff"
+        [attr.fill]="labelColor"
         id="circle3-7"
         r="10"
         style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
@@ -85,7 +86,7 @@
       <circle
          cx="26.5"
          cy="16"
-         fill="#ffffff"
+         [attr.fill]="valueColor"
          id="circle3"
          r="10"
          style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
