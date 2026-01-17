@@ -60,15 +60,38 @@
                 </mat-checkbox>
               }
               @if ((widgetConfig?.displayName !== undefined)) {
-                <mat-form-field class="options-grid-span2">
-                  <mat-label>Widget Label</mat-label>
-                  <input
-                    matInput
-                    placeholder="Enter a label to display"
-                    name="displayName"
-                    formControlName="displayName"
-                  />
-                </mat-form-field>
+                @if (widgetConfig?.showLabel !== undefined) {
+                  <div class="flex-container options-grid-span2">
+                    <div class="panel-group">
+                      <mat-form-field class="full-width">
+                        <mat-label>Widget Label</mat-label>
+                        <input
+                          matInput
+                          placeholder="Enter a label to display"
+                          name="displayName"
+                          formControlName="displayName"
+                        />
+                      </mat-form-field>
+                    </div>
+                    <div class="panel-group">
+                      <mat-checkbox class="full-width"
+                        name="showLabel"
+                        formControlName="showLabel">
+                          Show Label
+                      </mat-checkbox>
+                    </div>
+                  </div>
+                } @else {
+                  <mat-form-field class="options-grid-span2">
+                    <mat-label>Widget Label</mat-label>
+                    <input
+                      matInput
+                      placeholder="Enter a label to display"
+                      name="displayName"
+                      formControlName="displayName"
+                    />
+                  </mat-form-field>
+                }
               }
               @if (formMaster.get('displayScale')) {
                 <mat-form-field formGroupName="displayScale" appearance="outline">

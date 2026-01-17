@@ -75,6 +75,8 @@ export interface IWidgetSvcConfig {
   shortName?: string;
   /** The long display name for display. NOTE: This property can be overwritten by metadata. */
   longName?: string;
+  /** Display widget displayName */
+  showLabel?: boolean;
   //timeout?: number;     // NOT IMPLEMENTED:tells the consumer how long it should consider the value valid
   /** This object provides information regarding the recommended type and extent of the scale used for displaying values. NOTE: This property can be overwritten by metadata. */
   displayScale?: {
@@ -238,8 +240,6 @@ export interface IWidgetSvcConfig {
   showDatasetAverageValueLine?: boolean;
   /** Display chart dataset angle average value line */
   showDatasetAngleAverageValueLine?: boolean;
-  /** Display widget title */
-  showLabel?: boolean;
   /** Used by historical data Widget */
   animateGraph?: boolean;
   /** Display chart time (x axis) scale */

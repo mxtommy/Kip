@@ -29,6 +29,7 @@ export class WidgetZonesStatePanelComponent {
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Zones State Panel Label',
+    showLabel: true,
     filterSelfPaths: true,
     // Each control uses a matching path entry by pathID. For Host2 we preserve existing shape.
     paths: [],
@@ -51,6 +52,10 @@ export class WidgetZonesStatePanelComponent {
   protected notifications = toSignal<INotification[]>(this.notificationsService.observeNotifications());
   public zonesControls = signal<IDynamicControl[]>([]);
   protected labelColor = signal<string | undefined>(undefined);
+  protected noTitleClass = computed<string>(() => {
+    const cfg = this.runtime?.options();
+    return (cfg?.showLabel === false) ? 'widgets-container-no-title' : 'widgets-container';
+  });
   private pathIdToNotificationPath = new Map<string, string>();
   private readonly hostSize = signal<IDimensions | null>(null);
   public readonly ctrlDimensions = computed<IDimensions>(() => {

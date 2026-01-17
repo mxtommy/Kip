@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { AppService, ITheme } from '../../core/services/app-service';
@@ -33,6 +33,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Switch Panel Label',
+    showLabel: true,
     filterSelfPaths: true,
     // Each control uses a matching path entry by pathID. For Host2 we preserve existing shape.
     paths: [],
@@ -58,6 +59,10 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
   protected labelColor = signal<string | undefined>(undefined);
+  protected noTitleClass = computed<string>(() => {
+    const cfg = this.runtime?.options();
+    return (cfg?.showLabel === false) ? 'widgets-container-no-title' : 'widgets-container';
+  });
   private nbCtrl: number | null = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0 };
   private skRequestSub = new Subscription();
