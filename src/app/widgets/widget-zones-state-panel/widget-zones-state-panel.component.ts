@@ -64,6 +64,7 @@ export class WidgetZonesStatePanelComponent {
       untracked(() => {
         this.labelColor.set(getColors(cfg.color, theme).dim);
       });
+      this.cdr.markForCheck()
     });
 
     // Effect: rebuild controls and paths when config changes
@@ -89,6 +90,7 @@ export class WidgetZonesStatePanelComponent {
           this.pathIdToNotificationPath.set(p.pathID, normalizedPath);
         }
       });
+      this.cdr.markForCheck()
     });
 
     // Effect: update controls from notifications as they change
@@ -141,7 +143,7 @@ export class WidgetZonesStatePanelComponent {
   onResized(event: ResizeObserverEntry): void {
     const nb = this.nbCtrl || 1;
     const calcH: number = event.contentRect.height / nb;
-    const ctrlHeightProportion = (35 * event.contentRect.width / 180);
+    const ctrlHeightProportion = (70 * event.contentRect.width / 180);
     const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h };
   }
