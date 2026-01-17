@@ -62,11 +62,11 @@ export class WidgetSimpleLinearComponent {
 
   // Computed signal for highlights (zones)
   protected highlights = computed<IDataHighlight[]>(() => {
-    const zones = this.metadata.zones();
     const cfg = this.runtime.options();
     const theme = this.theme();
     if (!cfg || !theme) return [];
     if (cfg.ignoreZones || !this.metadata) return [];
+    const zones = this.metadata.zones();
     if (!zones?.length) return [];
 
     const unit = cfg.paths['gaugePath'].convertUnitTo;
@@ -126,10 +126,19 @@ export class WidgetSimpleLinearComponent {
       untracked(() => {
         this.barColorBackground.set(theme.background);
         const palette = getColors(cfg.color, theme);
-        // Set baseline colors (may be overridden by zone state effect above)
+        // Set baseline colors (and recompute any zone-derived color on theme changes)
         if (cfg.ignoreZones) {
           this.barColor.set(palette.color);
-        } else if (!this.lastState) { // no state yet
+        } else if (this.lastState) {
+          switch (this.lastState) {
+            case States.Alarm: this.barColor.set(theme.zoneAlarm); break;
+            case States.Warn: this.barColor.set(theme.zoneWarn); break;
+            case States.Alert: this.barColor.set(theme.zoneAlert); break;
+            case States.Nominal: this.barColor.set(theme.zoneNominal); break;
+            default: this.barColor.set(palette.color); break;
+          }
+        } else {
+          // no state yet
           this.barColor.set(palette.color);
         }
         // Gradient: choose a dimmer role when available; fallback to same color

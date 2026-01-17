@@ -31,6 +31,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
   private cssHeight = 0;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
+  private titleBitmapColor: string | null = null;
 
   // Render metrics
   private maxTextWidth = 0;
@@ -160,10 +161,18 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
     if (!this.ctx || !this.canvasElement) return;
     const cfg = this.runtime.options();
     if (!cfg) return;
-    if (!this.titleBitmap || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== cfg.displayName) {
-      const name = cfg.displayName || 'Position';
-      this.titleBitmap = this.canvas.createTitleBitmap(name, this.labelColor(), 'normal', this.cssWidth, this.cssHeight);
+    const name = cfg.displayName || 'Position';
+    const titleColor = this.labelColor();
+    if (
+      !this.titleBitmap ||
+      this.titleBitmap.width !== this.canvasElement.width ||
+      this.titleBitmap.height !== this.canvasElement.height ||
+      this.titleBitmapText !== name ||
+      this.titleBitmapColor !== titleColor
+    ) {
+      this.titleBitmap = this.canvas.createTitleBitmap(name, titleColor, 'normal', this.cssWidth, this.cssHeight);
       this.titleBitmapText = name;
+      this.titleBitmapColor = titleColor;
     }
     this.canvas.clearCanvas(this.ctx, this.cssWidth, this.cssHeight);
     // Draw the title bitmap at the top. Request an explicit target size in

@@ -188,7 +188,8 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           title: {
             display: true,
             text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
-            align: "center"
+            align: "center",
+            color: this.getThemeColors().averageChartLine
           },
           time: {
             unit: this.datasetConfig.timeScaleFormat as TimeUnit,
@@ -228,7 +229,8 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           title: {
             display: false,
             text: "Value Axis",
-            align: "center"
+            align: "center",
+            color: this.getThemeColors().averageChartLine
           },
           ticks: {
             maxTicksLimit: 8,
@@ -252,7 +254,8 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           title: {
             display: true,
             text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
-            align: "center"
+            align: "center",
+            color: this.getThemeColors().averageChartLine
           },
           time: {
             unit: this.datasetConfig.timeScaleFormat as TimeUnit,
@@ -291,7 +294,8 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           title: {
             display: false,
             text: "Value Axis",
-            align: "center"
+            align: "center",
+            color: this.getThemeColors().averageChartLine
           },
           ticks: {
             maxTicksLimit: 8,

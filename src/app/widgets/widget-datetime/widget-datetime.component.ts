@@ -47,6 +47,7 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   private canvasCtx: CanvasRenderingContext2D;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
+  private titleBitmapColor: string | null = null;
   private canvas = inject(CanvasService);
 
 
@@ -151,23 +152,26 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   /* ******************************************************************************************* */
   private drawWidget(): void {
     if (!this.canvasCtx) return;
-    // Only recreate the title bitmap if the title text or full canvas size changes.
+    // Only recreate the title bitmap if the title text, title color, or full canvas size changes.
     // Note: the offscreen bitmap returned by createTitleBitmap is backed by
     // device pixels (width/height === css * devicePixelRatio), so compare
     // against the full canvas device-pixel dimensions.
+    const titleColor = this.labelColor();
     if (!this.titleBitmap ||
       this.titleBitmap.width !== this.canvasElement.width ||
       this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== `${this.displayName()}-${this.runtime.options().color}`
+      this.titleBitmapText !== `${this.displayName()}-${this.runtime.options().color}` ||
+      this.titleBitmapColor !== titleColor
     ) {
       this.titleBitmap = this.canvas.createTitleBitmap(
         this.displayName(),
-        this.labelColor(),
+        titleColor,
         'normal',
         this.cssWidth,
         this.cssHeight
       );
       this.titleBitmapText = `${this.displayName()}-${this.runtime.options().color}`;
+      this.titleBitmapColor = titleColor;
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);
