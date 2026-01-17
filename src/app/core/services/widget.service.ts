@@ -230,7 +230,7 @@ export class WidgetService {
     },
     {
       name: 'Zones State Panel',
-      description: 'Displays the data state (severity and message) of the paths Zones (based on Signal K path metadata configuration).',
+      description: "Displays the data state (severity and message) of the path's Zones (based on Signal K path metadata configuration).",
       icon: 'zonesStatePanel',
       minWidth: 1,
       minHeight: 2,
