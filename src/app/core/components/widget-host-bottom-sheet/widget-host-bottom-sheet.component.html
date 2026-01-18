@@ -1,7 +1,15 @@
 <mat-action-list>
   <button mat-list-item (click)="clickAction('duplicate')">
-    <mat-icon matListItemIcon>content_copy</mat-icon>
+    <mat-icon matListItemIcon>add_to_photos</mat-icon>
     <span>Duplicate</span>
+  </button>
+  <button mat-list-item (click)="clickAction('copy')">
+    <mat-icon matListItemIcon>content_copy</mat-icon>
+    <span>Copy</span>
+  </button>
+  <button mat-list-item (click)="clickAction('cut')">
+    <mat-icon matListItemIcon>content_cut</mat-icon>
+    <span>Cut</span>
   </button>
   <button mat-list-item (click)="clickAction('delete')">
     <mat-icon matListItemIcon>delete_forever</mat-icon>

@@ -9,6 +9,7 @@ import { AppService } from '../../services/app-service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { uiEventService } from '../../services/uiEvent.service';
@@ -18,6 +19,7 @@ import { Router } from '@angular/router';
 import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
+import { DashboardClipboardBottomSheetComponent } from '../dashboard-clipboard-bottom-sheet/dashboard-clipboard-bottom-sheet.component';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -39,6 +41,7 @@ interface GridApi {
 export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _app = inject(AppService);
   private readonly _dialog = inject(DialogService);
+  private readonly _bottomSheet = inject(MatBottomSheet);
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
@@ -77,6 +80,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private _lastContainerHeight = 0;
   private _lastCellHeight = 0;
   private _addDialogOpen = false;
+  private _clipboardSheetOpen = false;
 
   constructor() {
     GridstackComponent.addComponentToSelectorType([
@@ -151,6 +155,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 break;
               case 'duplicate':
                 this.duplicateWidget(item);
+                break;
+              case 'copy':
+                this.dashboard.setWidgetClipboardFromNode(item.gridstackNode as NgGridStackWidget);
+                break;
+              case 'cut':
+                this.dashboard.setWidgetClipboardFromNode(item.gridstackNode as NgGridStackWidget);
+                this.deleteWidget(item);
                 break;
               default:
                 break;
@@ -254,7 +265,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected addNewWidget(e: Event | CustomEvent): void {
     if (!this.dashboard.isDashboardStatic() && (e as CustomEvent).detail !== undefined) {
-      if (this._addDialogOpen) {
+      if (this._addDialogOpen || this._clipboardSheetOpen) {
         return; // prevent double-open from duplicate press or bubbling
       }
       const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
@@ -264,92 +275,122 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const isMinCellSpaceEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2);
 
       if (isMinCellSpaceEmpty) {
-        this._addDialogOpen = true;
-
-        this._dialog.openFrameDialog({
-          title: 'Add Widget',
-          component: 'select-widget',
-        }, true)
-        .pipe(finalize(() => { this._addDialogOpen = false; }))
-        .subscribe(data => {
-          if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
-          const widget = data as WidgetDescription;
-          const ID = UUID.create();
-          let newWidget: NgGridStackWidget = {};
-
-          if (widget.selector === 'group-widget') {
-            newWidget = {
-              x: gridCell.x,
-              y: gridCell.y,
-              w: 3,
-              h: 4,
-              id: ID,
-              selector: "group-widget",
-              input: {
-                widgetProperties: {
-                  type: widget.selector,
-                  uuid: ID,
-                  config: {
-                    displayName: "Group Widget",
-                    color: "contrast"
-                  }
-                }
-              },
-              subGridOpts: {
-                children: []
-              },
-            };
-          } else {
-            newWidget = {
-              x: gridCell.x,
-              y: gridCell.y,
-              w: widget.defaultWidth,
-              h: widget.defaultHeight,
-              minW: widget.minWidth,
-              minH: widget.minHeight,
-              id: ID,
-              selector: "widget-host2",
-              input: {
-                widgetProperties: {
-                  type: widget.selector,
-                  uuid: ID,
-                }
-              }
-            };
-          }
-
-          // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
-          const grid = this._gridstack().grid;
-          const minW = Number(widget.minWidth ?? 1);
-          const minH = Number(widget.minHeight ?? 2);
-          const maxW = Number(widget.defaultWidth ?? minW);
-          const maxH = Number(widget.defaultHeight ?? minH);
-
-          const defaultFits =
-            grid.isAreaEmpty(gridCell.x, gridCell.y, maxW, maxH) &&
-            grid.willItFit({ x: gridCell.x, y: gridCell.y, w: maxW, h: maxH } as NgGridStackWidget);
-
-          if (!defaultFits) {
-            const best = this.findBestWidgetSizeAtCell(grid, gridCell.x, gridCell.y, minW, minH, maxW, maxH);
-
-            if (!best) {
-              this._app.sendSnackbarNotification(`Error Adding Widget: Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0);
-              return;
-            }
-
-            newWidget.w = best.w;
-            newWidget.h = best.h;
-          }
-
-          const item = this._gridstack().grid.addWidget(newWidget);
-          if (item.gridstackNode.subGrid) {
-            item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
-          }
-        });
+        if (this.dashboard.widgetClipboard()) {
+          this.openClipboardBottomSheet(gridCell.x, gridCell.y);
+          return;
+        }
+        this.openAddWidgetDialog(gridCell.x, gridCell.y);
       } else {
         this._app.sendSnackbarNotification('Error Adding Widget: Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0);
       }
     }
+  }
+
+  private openClipboardBottomSheet(x: number, y: number): void {
+    if (this._clipboardSheetOpen) return;
+    this._clipboardSheetOpen = true;
+    const sheetRef = this._bottomSheet.open(DashboardClipboardBottomSheetComponent);
+    sheetRef.afterDismissed().subscribe(action => {
+      this._clipboardSheetOpen = false;
+      switch (action) {
+        case 'paste':
+          this.pasteCopiedWidget(x, y);
+          break;
+        case 'clear':
+          this.dashboard.clearWidgetClipboard();
+          break;
+        case 'add':
+          this.openAddWidgetDialog(x, y);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  private openAddWidgetDialog(x: number, y: number): void {
+    this._addDialogOpen = true;
+
+    this._dialog.openFrameDialog({
+      title: 'Add Widget',
+      component: 'select-widget',
+    }, true)
+    .pipe(finalize(() => { this._addDialogOpen = false; }))
+    .subscribe(data => {
+      if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
+      const widget = data as WidgetDescription;
+      const ID = UUID.create();
+      let newWidget: NgGridStackWidget = {};
+
+      if (widget.selector === 'group-widget') {
+        newWidget = {
+          x,
+          y,
+          w: 3,
+          h: 4,
+          id: ID,
+          selector: "group-widget",
+          input: {
+            widgetProperties: {
+              type: widget.selector,
+              uuid: ID,
+              config: {
+                displayName: "Group Widget",
+                color: "contrast"
+              }
+            }
+          },
+          subGridOpts: {
+            children: []
+          },
+        };
+      } else {
+        newWidget = {
+          x,
+          y,
+          w: widget.defaultWidth,
+          h: widget.defaultHeight,
+          minW: widget.minWidth,
+          minH: widget.minHeight,
+          id: ID,
+          selector: "widget-host2",
+          input: {
+            widgetProperties: {
+              type: widget.selector,
+              uuid: ID,
+            }
+          }
+        };
+      }
+
+      // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
+      const grid = this._gridstack().grid;
+      const minW = Number(widget.minWidth ?? 1);
+      const minH = Number(widget.minHeight ?? 2);
+      const maxW = Number(widget.defaultWidth ?? minW);
+      const maxH = Number(widget.defaultHeight ?? minH);
+
+      const defaultFits =
+        grid.isAreaEmpty(x, y, maxW, maxH) &&
+        grid.willItFit({ x, y, w: maxW, h: maxH } as NgGridStackWidget);
+
+      if (!defaultFits) {
+        const best = this.findBestWidgetSizeAtCell(grid, x, y, minW, minH, maxW, maxH);
+
+        if (!best) {
+          this._app.sendSnackbarNotification(`Error Adding Widget: Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0);
+          return;
+        }
+
+        newWidget.w = best.w;
+        newWidget.h = best.h;
+      }
+
+      const item = this._gridstack().grid.addWidget(newWidget);
+      if (item.gridstackNode.subGrid) {
+        item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+      }
+    });
   }
 
   /** Find the biggest size that fits at (x,y), within [min..max]. Prefers larger area, then height, then width. */
@@ -429,6 +470,49 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         _gridstack.grid.addWidget(newItem);
       } else {
         this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+      }
+    }
+  }
+
+  protected pasteCopiedWidget(x?: number, y?: number): void {
+    if (this.dashboard.isDashboardStatic()) return;
+
+    const clipboard = this.dashboard.widgetClipboard();
+    const widgetProps = clipboard?.input?.widgetProperties;
+    if (!clipboard || !widgetProps?.type) return;
+
+    const ID = UUID.create();
+    const newItem = {
+      w: clipboard.w,
+      h: clipboard.h,
+      id: ID,
+      selector: clipboard.selector,
+      input: {
+        widgetProperties: {
+          type: widgetProps.type,
+          uuid: ID,
+          config: cloneDeep(widgetProps.config)
+        }
+      }
+    } as NgGridStackWidget;
+
+    if (typeof x === 'number' && typeof y === 'number') {
+      newItem.x = x;
+      newItem.y = y;
+    }
+
+    const _gridstack = this._gridstack();
+    if (_gridstack.grid.willItFit(newItem)) {
+      _gridstack.grid.addWidget(newItem);
+      this.dashboard.clearWidgetClipboard();
+    } else {
+      newItem.h = 2;
+      newItem.w = 1;
+      if (_gridstack.grid.willItFit(newItem)) {
+        _gridstack.grid.addWidget(newItem);
+        this.dashboard.clearWidgetClipboard();
+      } else {
+        this._app.sendSnackbarNotification('Paste failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
       }
     }
   }
