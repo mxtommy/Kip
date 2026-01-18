@@ -32,7 +32,7 @@ export class WidgetMultiStateSwitchComponent {
         description: 'Multi-state control path',
         path: null,
         source: null,
-        pathType: 'number',
+        pathType: 'multiple',
         supportsPut: true,
         isPathConfigurable: true,
         pathRequired: true,

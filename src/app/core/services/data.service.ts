@@ -277,7 +277,7 @@ export class DataService implements OnDestroy {
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
     if (!pathItem) {
-      let pathType: string = typeof (dataPath.value);
+      let pathType: string = typeof(dataPath.value);
       if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
         pathType = "Date";
       }
@@ -437,7 +437,11 @@ export class DataService implements OnDestroy {
   public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
     return this._skData
       .filter(item => {
-        const typeMatches = item.type === valueType;
+        const isRuntimeType = ['string', 'number', 'boolean', 'object', 'undefined', 'function', 'symbol', 'bigint', 'Date']
+          .includes(valueType);
+        const typeMatches = isRuntimeType
+          ? item.type === valueType
+          : item.meta?.type === valueType;
         const selfMatches = !selfOnly || item.path.startsWith("self");
         const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true : true;
         const hasZonesMatches = hasZones === true
@@ -462,7 +466,7 @@ export class DataService implements OnDestroy {
    * that need to know if a path has timed out.
    *
    * @param {string} path The Signal K path to timeout
-   * @param {string} pathType The type of the path value (string, Date, number)
+   * @param {string} pathType The type of the path value (string, Date, number, multiple, etc)
    * @memberof SignalKDataService
    */
   public timeoutPathObservable(path: string, pathType: string): void {
@@ -470,7 +474,7 @@ export class DataService implements OnDestroy {
     if (pathRegister) {
       let timeoutValue: IPathUpdate;
 
-      if (['string', 'Date', 'number'].includes(pathType)) {
+      if (['string', 'Date', 'number', 'multiple'].includes(pathType)) {
         timeoutValue = {
           data: {
             value: null,

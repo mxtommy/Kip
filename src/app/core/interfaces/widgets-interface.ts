@@ -17,7 +17,7 @@ export enum ControlType {
  * - 'Date'
  * - null
  */
-export type TWidgetPathType = 'number' | 'string' | 'boolean' | 'Date' | null;
+export type TWidgetPathType = 'number' | 'string' | 'boolean' | 'Date' | 'multiple' | null;
 
 /**
  * KIP Dynamic Widgets interface.
