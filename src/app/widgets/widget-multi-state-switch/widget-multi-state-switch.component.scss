@@ -1,0 +1,74 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.multi-state-switch {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 6px;
+  padding: 6px;
+
+  &.no-title {
+    padding-top: 8px;
+  }
+}
+
+.control {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--kip-widget-card-background-color);
+  border: 1px solid var(--kip-contrast-dim-color);
+}
+
+.state-button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--kip-contrast-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
+}
+
+.state-button + .state-button {
+  border-left: 1px solid var(--kip-contrast-dim-color);
+}
+
+.state-button.is-selected {
+  background: var(--multi-state-accent, var(--kip-blue-color));
+  color: var(--kip-contrast-color);
+}
+
+.state-button.is-off {
+  opacity: 0.7;
+}
+
+.state-button:focus-visible {
+  outline: 2px solid var(--multi-state-accent, var(--kip-blue-color));
+  outline-offset: -2px;
+}
+
+.state-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.empty-state {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kip-contrast-dim-color);
+  font-size: 0.9rem;
+  padding: 12px;
+  text-align: center;
+}

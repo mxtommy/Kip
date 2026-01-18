@@ -144,6 +144,12 @@
         <path fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7h5c2.76 0 5 2.24 5 5c0 2.76 -2.24 5 -5 5h-10c-2.76 0 -5 -2.24 -5 -5c0 -2.76 2.24 -5 5 -5Z" />
       </g>
     </svg>
+    <svg id="multiStateSwitchWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <rect x="2" y="6" width="20" height="12" rx="6" fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-width="1.5" />
+      <circle cx="7" cy="12" r="2" fill="var(--mat-sys-primary)" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <circle cx="17" cy="12" r="2" fill="currentColor" />
+    </svg>
     <svg id="zonesStatePanel" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14">
       <path fill="#ffffff" fill-opacity="0.3" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
       <path fill="var(--mat-sys-primary)" d="M7.96045 13h2.03934c1.65681 0 3.00001 -1.3432 3.00001 -3.00003V4.00043c0 -1.65686 -1.3432 -3 -3.00001 -3H7.96045z" stroke-width="1"></path>

@@ -176,6 +176,10 @@ export interface ISkMetadata {
   shortName?: string;
   longName?: string;
   description: string;
+  /** Optional Signal K metadata type (e.g. 'multiple' for multi-state controls) */
+  type?: string;
+  /** Optional list of possible values for multi-state control metadata */
+  possibleValues?: ISkPossibleValue[];
   supportsPut?: boolean; // true if the path supports PUT (write) requests
   units: string;        // required if value is present. Describe the SK type of data
   timeout?: number;     // tells the consumer how long it should consider the value valid
@@ -187,6 +191,13 @@ export interface ISkMetadata {
   alarmMethod?: TMethod[];
   emergencyMethod?: TMethod[];
   zones?: ISkZone[];
+}
+
+export interface ISkPossibleValue {
+  title?: string;
+  value: string | number | boolean;
+  abbrev?: string;
+  isOn?: boolean;
 }
 
 export interface ISkDisplayScale {
