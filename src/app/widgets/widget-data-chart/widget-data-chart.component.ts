@@ -205,7 +205,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
             },
           },
           ticks: {
-            autoSkip: false,
+            autoSkip: true,
             color: this.getThemeColors().averageChartLine,
             major: {
               enabled: true
@@ -271,7 +271,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
             },
           },
           ticks: {
-            autoSkip: false,
+            autoSkip: true,
             color: this.getThemeColors().averageChartLine,
             major: {
               enabled: true

@@ -62,7 +62,7 @@ export class DatasetChartOptionsComponent implements OnInit {
   protected pathSources = signal<string[]>([]);
 
   ngOnInit(): void {
-    this.numericPaths.set(this.data.getPathsAndMetaByType('number', false, this.filterSelfPaths().value).sort());
+    this.numericPaths.set(this.data.getPathsAndMetaByType('number', false, false, this.filterSelfPaths().value).sort());
     this.filteredNumericPaths.set(this.numericPaths());
 
     this.datachartPath().valueChanges.pipe(debounceTime(300), takeUntilDestroyed(this._destroyRef)).subscribe(value => {
@@ -91,7 +91,7 @@ export class DatasetChartOptionsComponent implements OnInit {
       this.datachartSource().disable();
     }
 
-    if (this.convertUnitTo().value !== "" && !reset) {
+    if ((this.convertUnitTo().value)  && !reset) {
       this.convertUnitTo().enable();
     } else {
       this.convertUnitTo().reset();
@@ -112,7 +112,7 @@ export class DatasetChartOptionsComponent implements OnInit {
   }
 
   private getPaths(): IPathMetaData[] {
-    return this.data.getPathsAndMetaByType('number', false, this.filterSelfPaths().value).sort();
+    return this.data.getPathsAndMetaByType('number', false, false, this.filterSelfPaths().value).sort();
   }
 
   protected clearPathInputField(): void {

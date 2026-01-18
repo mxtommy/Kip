@@ -19,7 +19,7 @@ export interface Dashboard {
 
 export interface widgetOperation {
   id: string;
-  operation: 'delete' | 'duplicate';
+  operation: 'delete' | 'duplicate' | 'copy' | 'cut';
 }
 
 @Injectable({
@@ -34,6 +34,7 @@ export class DashboardService {
   private _widgetAction = new BehaviorSubject<widgetOperation>(null);
   public widgetAction$ = this._widgetAction.asObservable();
   public isDashboardStatic = signal<boolean>(true);
+  public widgetClipboard = signal<NgGridStackWidget | null>(null);
 
   public readonly layoutEditSaved = signal<number>(0);
   public readonly layoutEditCanceled = signal<number>(0);
@@ -379,6 +380,52 @@ export class DashboardService {
    */
   public duplicateWidget(id: string): void {
     this._widgetAction.next({ id: id, operation: 'duplicate' });
+  }
+
+  /**
+   * Emits a widget copy operation for the widget with the given ID.
+   * @param id The widget ID to copy.
+   */
+  public copyWidget(id: string): void {
+    this._widgetAction.next({ id: id, operation: 'copy' });
+  }
+
+  /**
+   * Emits a widget cut operation for the widget with the given ID.
+   * @param id The widget ID to cut.
+   */
+  public cutWidget(id: string): void {
+    this._widgetAction.next({ id: id, operation: 'cut' });
+  }
+
+  /**
+   * Stores a sanitized widget snapshot for cross-dashboard paste.
+   * @param node The Gridstack widget node to copy.
+   */
+  public setWidgetClipboardFromNode(node: NgGridStackWidget): void {
+    const widgetProps = node?.input?.widgetProperties;
+    const type = widgetProps?.type;
+    if (!type) return;
+
+    this.widgetClipboard.set({
+      w: node.w,
+      h: node.h,
+      selector: node.selector,
+      input: {
+        widgetProperties: {
+          type,
+          uuid: 'clipboard',
+          config: cloneDeep(widgetProps.config)
+        }
+      }
+    } as NgGridStackWidget);
+  }
+
+  /**
+   * Clears the widget clipboard.
+   */
+  public clearWidgetClipboard(): void {
+    this.widgetClipboard.set(null);
   }
 
   /**

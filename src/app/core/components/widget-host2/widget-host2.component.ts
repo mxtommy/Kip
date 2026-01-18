@@ -257,6 +257,12 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
           case 'duplicate':
             this._dashboard.duplicateWidget(this.widgetProperties.uuid);
             break;
+          case 'copy':
+            this._dashboard.copyWidget(this.widgetProperties.uuid);
+            break;
+          case 'cut':
+            this._dashboard.cutWidget(this.widgetProperties.uuid);
+            break;
           default:
             break;
         }

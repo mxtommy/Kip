@@ -1,0 +1,16 @@
+<mat-action-list>
+  <div mat-subheader>Clipboard</div>
+  <button mat-list-item (click)="clickAction('paste')">
+    <mat-icon matListItemIcon>content_paste</mat-icon>
+    <span>Paste</span>
+  </button>
+  <button mat-list-item (click)="clickAction('clear')">
+    <mat-icon matListItemIcon>clear</mat-icon>
+    <span>Clear</span>
+  </button>
+  <div mat-subheader>New Widget</div>
+  <button mat-list-item (click)="clickAction('add')">
+    <mat-icon matListItemIcon>add_circle</mat-icon>
+    <span>Add</span>
+  </button>
+</mat-action-list>
