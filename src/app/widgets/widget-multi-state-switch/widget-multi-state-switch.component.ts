@@ -122,7 +122,12 @@ export class WidgetMultiStateSwitchComponent {
    */
   protected readonly menuWidth = 220;
   protected readonly itemHeight = 50;
-  protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
+  protected readonly itemGap = 1;
+  protected readonly menuHeight = computed(() => {
+    const count = this.sortedOptions().length;
+    if (count <= 0) return 0;
+    return count * this.itemHeight + (count - 1) * this.itemGap;
+  });
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
 

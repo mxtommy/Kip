@@ -24,7 +24,7 @@
         class="svg-menu-item-group"
         [class.is-selected]="isSelected(opt.raw)"
         [class.is-off]="opt.raw.isOn === false"
-        [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'")
+        [attr.transform]="'translate(0 ' + ($index * (itemHeight + itemGap)) + ')'"
         style="cursor:pointer;"
         (click)="selectUi(opt)"
         tabindex="0"
