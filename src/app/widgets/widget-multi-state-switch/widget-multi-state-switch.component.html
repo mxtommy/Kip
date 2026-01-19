@@ -18,13 +18,27 @@
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
         </filter>
+
+        <!-- Inner focus ring (drawn inside the button shape; no outside outline) -->
+        <filter id="focus-inner-ring" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <!-- Border = SourceAlpha - eroded(SourceAlpha) -->
+          <feMorphology in="SourceAlpha" operator="erode" radius="2" result="eroded" />
+          <feComposite in="SourceAlpha" in2="eroded" operator="out" result="border" />
+          <!-- Color the border -->
+          <feFlood flood-color="#ffffff" flood-opacity="0.9" result="ringColor" />
+          <feComposite in="ringColor" in2="border" operator="in" result="ring" />
+          <feMerge>
+            <feMergeNode in="SourceGraphic" />
+            <feMergeNode in="ring" />
+          </feMerge>
+        </filter>
       </defs>
-    @for (opt of sortedOptions(); track opt.raw.value; let isFirst = $first; let isLast = $last) {
+    @for (opt of unselectedOptions(); track opt.raw.value) {
       <g
         class="svg-menu-item-group"
         [class.is-selected]="isSelected(opt.raw)"
         [class.is-off]="opt.raw.isOn === false"
-        [attr.transform]="'translate(0 ' + ($index * (itemHeight + itemGap)) + ')'"
+        [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
         style="cursor:pointer;"
         (click)="selectUi(opt)"
         tabindex="0"
@@ -34,7 +48,7 @@
         [attr.aria-label]="opt.label"
         [attr.aria-pressed]="isSelected(opt.raw)"
       >
-        @if (isFirst && isLast) {
+        @if (opt.index === 0 && opt.index === optionsCount() - 1) {
           <path
             [attr.d]="fullRoundedItemPathD()"
             [attr.fill]="isSelected(opt.raw)
@@ -49,7 +63,7 @@
                     : 'svg-menu-item'
             "
           />
-        } @else if (isFirst) {
+        } @else if (opt.index === 0) {
           <path
             [attr.d]="topRoundedItemPathD()"
             [attr.fill]="isSelected(opt.raw)
@@ -64,7 +78,7 @@
                     : 'svg-menu-item'
             "
           />
-        } @else if (isLast) {
+        } @else if (opt.index === optionsCount() - 1) {
           <path
             [attr.d]="bottomRoundedItemPathD()"
             [attr.fill]="isSelected(opt.raw)
@@ -85,6 +99,110 @@
             y="0"
             [attr.width]="menuWidth"
             [attr.height]="itemHeight"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        }
+        <text
+          [attr.x]="menuWidth / 2"
+          [attr.y]="itemHeight / 2"
+          [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+          [attr.fill]="isSelected(opt.raw)
+                  ? textColor()
+                  : opt.raw.isOn === false
+                    ? textColor()
+                    : textColor()"
+          [class]="isSelected(opt.raw)
+                ? 'svg-menu-item-current-text'
+                : opt.raw.isOn === false
+                  ? 'svg-menu-item-off-text'
+                  : 'svg-menu-item-text'
+          "
+        >
+          {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
+        </text>
+      </g>
+    }
+
+    @for (opt of selectedOptions(); track opt.raw.value) {
+      <g
+        class="svg-menu-item-group"
+        [class.is-selected]="isSelected(opt.raw)"
+        [class.is-off]="opt.raw.isOn === false"
+        [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
+        style="cursor:pointer;"
+        (click)="selectUi(opt)"
+        tabindex="0"
+        (keyup.enter)="selectUi(opt)"
+        (keyup.space)="selectUi(opt)"
+        role="button"
+        [attr.aria-label]="opt.label"
+        [attr.aria-pressed]="isSelected(opt.raw)"
+      >
+        @if (opt.index === 0 && opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="fullRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === 0) {
+          <path
+            [attr.d]="topRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="bottomRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else {
+          <rect
+            x="0"
+            y="0"
+            [attr.width]="menuWidth"
+            [attr.height]="itemHeight"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
             [attr.fill]="isSelected(opt.raw)
                   ? accentColor()
                   : opt.raw.isOn === false

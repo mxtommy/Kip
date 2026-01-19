@@ -27,6 +27,7 @@ interface UiOption {
   raw: ISkPossibleValue;
   label: string;
   comparable: Comparable;
+  index: number;
 }
 
 @Component({
@@ -110,7 +111,7 @@ export class WidgetMultiStateSwitchComponent {
       return av.kind === 'num' ? -1 : 1;
     });
 
-    return mapped;
+    return mapped.map((opt, index) => ({ ...opt, index }));
   });
 
   /**
@@ -123,6 +124,7 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly menuWidth = 220;
   protected readonly itemHeight = 50;
   protected readonly itemGap = 1;
+  protected readonly optionsCount = computed(() => this.sortedOptions().length);
   protected readonly menuHeight = computed(() => {
     const count = this.sortedOptions().length;
     if (count <= 0) return 0;
@@ -130,6 +132,10 @@ export class WidgetMultiStateSwitchComponent {
   });
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
+
+  // Render selected option last so its focus/outline is never covered by later rows in SVG paint order.
+  protected readonly unselectedOptions = computed(() => this.sortedOptions().filter(opt => !this.isSelected(opt.raw)));
+  protected readonly selectedOptions = computed(() => this.sortedOptions().filter(opt => this.isSelected(opt.raw)));
 
   protected readonly fullRoundedItemPathD = computed(() =>
     this.buildRoundedRectPath(this.menuWidth, this.itemHeight, this.cornerRadius, true, true)
