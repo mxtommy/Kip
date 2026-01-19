@@ -1,8 +1,8 @@
-import { Directive, DestroyRef, inject, input, signal } from '@angular/core';
+import { Directive, DestroyRef, inject, input, signal, computed } from '@angular/core';
 import { Subject, takeUntil, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService } from '../services/data.service';
-import { ISkZone } from '../interfaces/signalk-interfaces';
+import { ISkMetadata, ISkPossibleValue, ISkZone } from '../interfaces/signalk-interfaces';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
 @Directive({
@@ -29,6 +29,23 @@ import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
  * 2. Multi-path: Call `observe(pathKey)` for each path requiring zones
  */
 export class WidgetMetadataDirective {
+  /**
+   * Optional widget input for standalone usage.
+   * Typically not needed since config contains all path information.
+   *
+   * @example
+   * ```html
+   * <div widget-metadata [metaWidget]="widgetInstance">
+   * ```
+   */
+  public metaWidget = input<IWidget>();
+  private readonly dataService = inject(DataService);
+  private readonly destroyRef = inject(DestroyRef);
+  private _metaConfig = signal<IWidgetSvcConfig | undefined>(undefined);
+  private _meta = signal<ISkMetadata | null>(null);
+  private reset$ = new Subject<void>();
+  private currentSub: Subscription | undefined;
+  private pathSignature: string | undefined;
   /**
    * Reactive signal containing current zones metadata for the observed path.
    * Emits empty array when no zones are defined or path has no metadata.
@@ -57,25 +74,25 @@ export class WidgetMetadataDirective {
    * });
    * ```
    */
-  public zones = signal<ISkZone[]>([]);
+  public zones = computed<ISkZone[]>(() => {
+    const meta = this._meta();
+    return meta?.zones || [];
+  });
   /**
-   * Optional widget input for standalone usage.
-   * Typically not needed since config contains all path information.
+   * Reactive signal containing `meta.possibleValues` for the observed path.
    *
-   * @example
-   * ```html
-   * <div widget-metadata [metaWidget]="widgetInstance">
-   * ```
+   * This is primarily useful for Signal K "multiple"-type paths where the server provides
+   * a set of allowed values for display and for PUT controls (e.g. multi-state switches).
+   *
+   * Notes:
+   * - Returns an empty array when no metadata has been received, the path has no metadata,
+   *   or the metadata does not include `possibleValues`.
+   * - This recomputes whenever {@link _meta} changes.
    */
-  public metaWidget = input<IWidget>();
-
-  private _metaConfig = signal<IWidgetSvcConfig | undefined>(undefined);
-  private readonly dataService = inject(DataService);
-  private readonly destroyRef = inject(DestroyRef);
-  private reset$ = new Subject<void>();
-  private currentSub: Subscription | undefined;
-  private pathSignature: string | undefined;
-
+  public possibleValues = computed<ISkPossibleValue[]>(() => {
+    const meta = this._meta();
+    return meta?.possibleValues || [];
+  });
   /**
    * Begin observing metadata for a path and own the signature gating.
    *
@@ -140,13 +157,9 @@ export class WidgetMetadataDirective {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(meta => {
-        if (!meta) {
-          this.zones.set([]);
-        } else if (meta.zones) {
-          this.zones.set([...meta.zones]);
-        } else {
-          this.zones.set([]);
-        }
+        // Store the latest metadata snapshot. Downstream computeds (zones/possibleValues)
+        // depend on reference changes to recompute.
+        this._meta.set(meta);
       });
     this.currentSub = sub;
   }
@@ -206,6 +219,8 @@ export class WidgetMetadataDirective {
       this.currentSub = undefined;
     }
     this.pathSignature = undefined;
-    this.zones.set([]);
+
+    // Clear last metadata so computeds recompute to []
+    this._meta.set(null);
   }
 }

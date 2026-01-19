@@ -73,8 +73,10 @@ export class WidgetMultiStateSwitchComponent {
 
   protected readonly dashboard = inject(DashboardService);
   //TODO: remove
-  private readonly dataService = inject(DataService);
-  private readonly appService = inject(AppService);
+  private readonly data = inject(DataService);
+  private readonly app = inject(AppService);
+
+  private readonly skRequest = toSignal(this.signalkRequestsService.subscribeRequest(), { initialValue: null });
 
   protected readonly cfg = computed(() => this.runtime.options());
   protected readonly displayName = computed(() => this.cfg()?.displayName);
@@ -87,10 +89,35 @@ export class WidgetMultiStateSwitchComponent {
 
   protected readonly currentValue = signal<unknown>(null);
 
+    protected readonly sortedOptions = computed<UiOption[]>(() => {
+    const opts = this.options();
+    if (!opts.length) return [];
+
+    const mapped = opts.map(raw => ({
+      raw,
+      label: raw.title || raw.abbrev || String(raw.value),
+      comparable: this.toComparable(raw.value)
+    }));
+
+    mapped.sort((a, b) => {
+      const av = a.comparable;
+      const bv = b.comparable;
+      if (av.kind === 'num' && bv.kind === 'num') return av.value - bv.value;
+      if (av.kind === 'str' && bv.kind === 'str') return av.value.localeCompare(bv.value);
+      // Prefer numeric ordering when mixed types.
+      return av.kind === 'num' ? -1 : 1;
+    });
+
+    return mapped;
+  });
+  protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
+  protected readonly hasOptions = computed(() => this.options().length > 0);
+  protected readonly selectedValue = computed(() => this.currentValue());
+
   protected readonly meta = toSignal(
     toObservable(this.controlPath).pipe(
       distinctUntilChanged(),
-      switchMap(path => (path ? this.dataService.getPathMetaObservable(path) : of(null)))
+      switchMap(path => (path ? this.data.getPathMetaObservable(path) : of(null)))
     ),
     { initialValue: null }
   );
@@ -115,41 +142,12 @@ export class WidgetMultiStateSwitchComponent {
     this.buildRoundedRectPath(this.menuWidth, this.itemHeight, this.cornerRadius, false, true)
   );
 
-  protected readonly sortedOptions = computed<UiOption[]>(() => {
-    const opts = this.options();
-    if (!opts.length) return [];
-
-    const mapped = opts.map(raw => ({
-      raw,
-      label: raw.title || raw.abbrev || String(raw.value),
-      comparable: this.toComparable(raw.value)
-    }));
-
-    mapped.sort((a, b) => {
-      const av = a.comparable;
-      const bv = b.comparable;
-      if (av.kind === 'num' && bv.kind === 'num') return av.value - bv.value;
-      if (av.kind === 'str' && bv.kind === 'str') return av.value.localeCompare(bv.value);
-      // Prefer numeric ordering when mixed types.
-      return av.kind === 'num' ? -1 : 1;
-    });
-
-    return mapped;
-  });
-
-  protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
-
-  protected readonly hasOptions = computed(() => this.options().length > 0);
-  protected readonly selectedValue = computed(() => this.currentValue());
-
   //TODO: remove and use path selection to prevent choosing a non multiple type path
   protected readonly canInteract = computed(() => {
     const cfg = this.cfg();
     const path = this.getControlPath(cfg);
     return Boolean(path && this.hasOptions());
   });
-
-  private readonly skRequest = toSignal(this.signalkRequestsService.subscribeRequest(), { initialValue: null });
 
   constructor() {
     effect(() => {
@@ -173,6 +171,10 @@ export class WidgetMultiStateSwitchComponent {
       }
 
       untracked(() => {
+
+
+
+
         this.streams.observe('controlPath', pkt => {
           this.currentValue.set(pkt?.data?.value ?? null);
         });
@@ -190,7 +192,7 @@ export class WidgetMultiStateSwitchComponent {
         } else {
           errMsg += `${requestResult.statusCode} - ${requestResult.statusCodeDescription}`;
         }
-        this.appService.sendSnackbarNotification(errMsg, 0);
+        this.app.sendSnackbarNotification(errMsg, 0);
       }
     });
   }
