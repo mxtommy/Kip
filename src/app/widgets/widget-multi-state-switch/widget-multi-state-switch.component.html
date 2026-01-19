@@ -5,109 +5,99 @@
 
   <svg
     class="svg-menu"
+    preserveAspectRatio="xMidYMid meet"
     [attr.viewBox]="'0 0 ' + menuWidth + ' ' + (menuHeight() || itemHeight)"
     role="presentation"
     [attr.aria-label]="displayName()"
   >
-    @if (hasOptions()) {
-      <ng-container>
-        @for (opt of sortedOptions(); track opt.raw.value; let isFirst = $first; let isLast = $last) {
-          <g
-            class="svg-menu-item-group"
-            [class.is-disabled]="!canInteract()"
-            [class.is-selected]="isSelected(opt.raw)"
-            [class.is-off]="opt.raw.isOn === false"
-            [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'"
-            style="cursor:pointer;"
-            (click)="canInteract() && selectUi(opt)"
-            tabindex="0"
-            (keyup.enter)="canInteract() && selectUi(opt)"
-            (keyup.space)="canInteract() && selectUi(opt)"
-            role="button"
-            [attr.aria-label]="opt.label"
-            [attr.aria-pressed]="isSelected(opt.raw)"
-          >
-            @if (isFirst && isLast) {
-              <path
-                [attr.d]="fullRoundedItemPathD()"
-                [class]="
-                  !canInteract()
-                    ? 'svg-menu-item-disabled'
-                    : isSelected(opt.raw)
-                      ? 'svg-menu-item-current'
-                      : opt.raw.isOn === false
-                        ? 'svg-menu-item-off'
-                        : 'svg-menu-item'
-                "
-              />
-            } @else if (isFirst) {
-              <path
-                [attr.d]="topRoundedItemPathD()"
-                [class]="
-                  !canInteract()
-                    ? 'svg-menu-item-disabled'
-                    : isSelected(opt.raw)
-                      ? 'svg-menu-item-current'
-                      : opt.raw.isOn === false
-                        ? 'svg-menu-item-off'
-                        : 'svg-menu-item'
-                "
-              />
-            } @else if (isLast) {
-              <path
-                [attr.d]="bottomRoundedItemPathD()"
-                [class]="
-                  !canInteract()
-                    ? 'svg-menu-item-disabled'
-                    : isSelected(opt.raw)
-                      ? 'svg-menu-item-current'
-                      : opt.raw.isOn === false
-                        ? 'svg-menu-item-off'
-                        : 'svg-menu-item'
-                "
-              />
-            } @else {
-              <rect
-                x="0"
-                y="0"
-                [attr.width]="menuWidth"
-                [attr.height]="itemHeight"
-                [class]="
-                  !canInteract()
-                    ? 'svg-menu-item-disabled'
-                    : isSelected(opt.raw)
-                      ? 'svg-menu-item-current'
-                      : opt.raw.isOn === false
-                        ? 'svg-menu-item-off'
-                        : 'svg-menu-item'
-                "
-              />
-            }
-            <text
-              [attr.x]="menuWidth / 2"
-              [attr.y]="itemHeight / 2"
-              [class]="
-                !canInteract()
-                  ? 'svg-menu-item-disabled-text'
-                  : isSelected(opt.raw)
-                    ? 'svg-menu-item-current-text'
-                    : opt.raw.isOn === false
-                      ? 'svg-menu-item-off-text'
-                      : 'svg-menu-item-text'
-              "
-            >
-              {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
-            </text>
-          </g>
+    @for (opt of sortedOptions(); track opt.raw.value; let isFirst = $first; let isLast = $last) {
+      <g
+        class="svg-menu-item-group"
+        [class.is-disabled]="!canInteract()"
+        [class.is-selected]="isSelected(opt.raw)"
+        [class.is-off]="opt.raw.isOn === false"
+        [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'"
+        style="cursor:pointer;"
+        (click)="canInteract() && selectUi(opt)"
+        tabindex="0"
+        (keyup.enter)="canInteract() && selectUi(opt)"
+        (keyup.space)="canInteract() && selectUi(opt)"
+        role="button"
+        [attr.aria-label]="opt.label"
+        [attr.aria-pressed]="isSelected(opt.raw)"
+      >
+        @if (isFirst && isLast) {
+          <path
+            [attr.d]="fullRoundedItemPathD()"
+            [class]="
+              !canInteract()
+                ? 'svg-menu-item-disabled'
+                : isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (isFirst) {
+          <path
+            [attr.d]="topRoundedItemPathD()"
+            [class]="
+              !canInteract()
+                ? 'svg-menu-item-disabled'
+                : isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (isLast) {
+          <path
+            [attr.d]="bottomRoundedItemPathD()"
+            [class]="
+              !canInteract()
+                ? 'svg-menu-item-disabled'
+                : isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else {
+          <rect
+            x="0"
+            y="0"
+            [attr.width]="menuWidth"
+            [attr.height]="itemHeight"
+            [class]="
+              !canInteract()
+                ? 'svg-menu-item-disabled'
+                : isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
         }
-      </ng-container>
-    } @else {
-      <text
-        [attr.x]="menuWidth / 2"
-        [attr.y]="itemHeight / 2"
-        class="empty-state">
-          Path not configured or invalid path.
-      </text>
+        <text
+          [attr.x]="menuWidth / 2"
+          [attr.y]="itemHeight / 2"
+          [class]="
+            !canInteract()
+              ? 'svg-menu-item-disabled-text'
+              : isSelected(opt.raw)
+                ? 'svg-menu-item-current-text'
+                : opt.raw.isOn === false
+                  ? 'svg-menu-item-off-text'
+                  : 'svg-menu-item-text'
+          "
+        >
+          {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
+        </text>
+      </g>
     }
   </svg>
 </div>

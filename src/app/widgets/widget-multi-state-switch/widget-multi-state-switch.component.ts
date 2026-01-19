@@ -108,6 +108,16 @@ export class WidgetMultiStateSwitchComponent {
 
     return mapped;
   });
+
+  /**
+   * Fixed SVG coordinate system (viewBox units).
+   *
+   * The rendered SVG (CSS `width/height: 100%`) will scale uniformly to the
+   * available widget space (see template `preserveAspectRatio`), keeping
+   * item/text proportions consistent as the widget resizes.
+   */
+  protected readonly menuWidth = 240;
+  protected readonly itemHeight = 36;
   protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
@@ -128,8 +138,6 @@ export class WidgetMultiStateSwitchComponent {
     return Boolean(path && this.hasOptions());
   });
 
-  protected readonly menuWidth = 240;
-  protected readonly itemHeight = 36;
   protected readonly cornerRadius = 12;
 
   constructor() {
