@@ -3,72 +3,120 @@
   height: 100%;
 }
 
-.multi-state-switch {
-  display: flex;
-  flex-direction: column;
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
   height: 100%;
-  gap: 6px;
-  padding: 6px;
-
-  &.no-title {
-    padding-top: 8px;
-  }
+  right: 0;
+  bottom: 0;
+  color: transparent;
+  z-index: 21;
 }
 
-.control {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: stretch;
-  border-radius: 10px;
+.widgets-container {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15%;
+  height: 85%;
+  width: 100%;
   overflow: hidden;
-  background: var(--kip-widget-card-background-color);
-  border: 1px solid var(--kip-contrast-dim-color);
+  padding: 15px;
 }
 
-.state-button {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 0;
+.svg-menu {
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  // max-width: 80%;
   background: transparent;
-  color: var(--kip-contrast-color);
-  font-size: 0.95rem;
+  border-radius: 12px;
+  z-index: 20;
+  font-family: Roboto;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-anchor: middle;
+  text-align: center;
+  alignment-baseline: middle;
+}
+
+.svg-menu-box {
+  fill: var(--kip-widget-card-background-color);
+}
+
+.svg-menu-item {
+  fill: transparent;
+}
+
+.svg-menu-item-text {
+  fill: var(--kip-contrast-color);
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
 }
 
-.state-button + .state-button {
-  border-left: 1px solid var(--kip-contrast-dim-color);
+.svg-menu-item-current {
+  fill: var(--multi-state-accent, var(--kip-blue-color));
 }
 
-.state-button.is-selected {
-  background: var(--multi-state-accent, var(--kip-blue-color));
-  color: var(--kip-contrast-color);
+.svg-menu-item-current-text {
+  fill: var(--kip-contrast-color);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
 }
 
-.state-button.is-off {
-  opacity: 0.7;
+.svg-menu-item-disabled {
+  fill: transparent;
 }
 
-.state-button:focus-visible {
-  outline: 2px solid var(--multi-state-accent, var(--kip-blue-color));
-  outline-offset: -2px;
+.svg-menu-item-disabled-text {
+  fill: var(--kip-contrast-dim-color);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
 }
 
-.state-button:disabled {
+.svg-menu-item-off {
+  fill: transparent;
+}
+
+.svg-menu-item-off-text {
+  fill: var(--kip-contrast-dim-color);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
+}
+
+.svg-menu-item-group + .svg-menu-item-group :is(rect, path) {
+  stroke: var(--kip-contrast-dim-color);
+  stroke-width: 1;
+}
+
+.svg-menu-item-group:focus-visible :is(rect, path) {
+  stroke: var(--multi-state-accent, var(--kip-blue-color));
+  stroke-width: 2;
+}
+
+.svg-menu-item-group.is-disabled {
   cursor: not-allowed;
-  opacity: 0.45;
 }
 
 .empty-state {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--kip-contrast-dim-color);
-  font-size: 0.9rem;
-  padding: 12px;
-  text-align: center;
+  fill: var(--mat-sys-on-error);
+  font-size: 14px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
+  pointer-events: none;
 }

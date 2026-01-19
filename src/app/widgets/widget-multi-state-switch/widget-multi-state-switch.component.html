@@ -1,30 +1,117 @@
-<section
-  class="multi-state-switch"
-  [class.no-title]="!showLabel()"
-  [style.--multi-state-accent]="accentColor()"
-  [style.--multi-state-accent-dim]="accentDim()"
->
-  @if (showLabel()) {
-    <widget-title [text]="displayName()" [color]="labelColor()"></widget-title>
-  }
+@if (showLabel()) {
+  <widget-title [text]="displayName()" [color]="labelColor()"></widget-title>
+}
+<div class="widgets-container" role="group" [attr.aria-label]="displayName()">
 
-  <div class="control" role="group" [attr.aria-label]="displayName()">
+  <svg
+    class="svg-menu"
+    [attr.viewBox]="'0 0 ' + menuWidth + ' ' + (menuHeight() || itemHeight)"
+    role="presentation"
+    [attr.aria-label]="displayName()"
+  >
     @if (hasOptions()) {
-      @for (option of options(); track option.value) {
-        <button
-          type="button"
-          class="state-button"
-          [class.is-selected]="isSelected(option)"
-          [class.is-off]="option.isOn === false"
-          [disabled]="!canInteract()"
-          [attr.aria-pressed]="isSelected(option)"
-          (click)="select(option)"
-        >
-          {{ option.title || option.abbrev || option.value }}
-        </button>
-      }
+      <ng-container>
+        @for (opt of sortedOptions(); track opt.raw.value; let isFirst = $first; let isLast = $last) {
+          <g
+            class="svg-menu-item-group"
+            [class.is-disabled]="!canInteract()"
+            [class.is-selected]="isSelected(opt.raw)"
+            [class.is-off]="opt.raw.isOn === false"
+            [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'"
+            style="cursor:pointer;"
+            (click)="canInteract() && selectUi(opt)"
+            tabindex="0"
+            (keyup.enter)="canInteract() && selectUi(opt)"
+            (keyup.space)="canInteract() && selectUi(opt)"
+            role="button"
+            [attr.aria-label]="opt.label"
+            [attr.aria-pressed]="isSelected(opt.raw)"
+          >
+            @if (isFirst && isLast) {
+              <path
+                [attr.d]="fullRoundedItemPathD()"
+                [class]="
+                  !canInteract()
+                    ? 'svg-menu-item-disabled'
+                    : isSelected(opt.raw)
+                      ? 'svg-menu-item-current'
+                      : opt.raw.isOn === false
+                        ? 'svg-menu-item-off'
+                        : 'svg-menu-item'
+                "
+              />
+            } @else if (isFirst) {
+              <path
+                [attr.d]="topRoundedItemPathD()"
+                [class]="
+                  !canInteract()
+                    ? 'svg-menu-item-disabled'
+                    : isSelected(opt.raw)
+                      ? 'svg-menu-item-current'
+                      : opt.raw.isOn === false
+                        ? 'svg-menu-item-off'
+                        : 'svg-menu-item'
+                "
+              />
+            } @else if (isLast) {
+              <path
+                [attr.d]="bottomRoundedItemPathD()"
+                [class]="
+                  !canInteract()
+                    ? 'svg-menu-item-disabled'
+                    : isSelected(opt.raw)
+                      ? 'svg-menu-item-current'
+                      : opt.raw.isOn === false
+                        ? 'svg-menu-item-off'
+                        : 'svg-menu-item'
+                "
+              />
+            } @else {
+              <rect
+                x="0"
+                y="0"
+                [attr.width]="menuWidth"
+                [attr.height]="itemHeight"
+                [class]="
+                  !canInteract()
+                    ? 'svg-menu-item-disabled'
+                    : isSelected(opt.raw)
+                      ? 'svg-menu-item-current'
+                      : opt.raw.isOn === false
+                        ? 'svg-menu-item-off'
+                        : 'svg-menu-item'
+                "
+              />
+            }
+            <text
+              [attr.x]="menuWidth / 2"
+              [attr.y]="itemHeight / 2"
+              [class]="
+                !canInteract()
+                  ? 'svg-menu-item-disabled-text'
+                  : isSelected(opt.raw)
+                    ? 'svg-menu-item-current-text'
+                    : opt.raw.isOn === false
+                      ? 'svg-menu-item-off-text'
+                      : 'svg-menu-item-text'
+              "
+            >
+              {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
+            </text>
+          </g>
+        }
+      </ng-container>
     } @else {
-      <div class="empty-state">No multi-state metadata available.</div>
+      <text
+        [attr.x]="menuWidth / 2"
+        [attr.y]="itemHeight / 2"
+        class="empty-state">
+          Path not configured or invalid path.
+      </text>
     }
+  </svg>
+</div>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay">
   </div>
-</section>
+}
