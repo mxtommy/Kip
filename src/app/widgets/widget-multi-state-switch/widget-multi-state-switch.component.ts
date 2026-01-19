@@ -81,9 +81,13 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly showLabel = computed(() => this.cfg()?.showLabel);
   private readonly controlPath = computed(() => this.getControlPath(this.cfg()));
 
-  protected readonly labelColor = signal<string | undefined>(undefined);
   protected readonly accentColor = signal<string | undefined>(undefined);
   protected readonly accentDim = signal<string | undefined>(undefined);
+  protected readonly accentDimmer = signal<string | undefined>(undefined);
+
+  protected readonly textColor = signal<string | undefined>(undefined);
+  protected readonly textDim = signal<string | undefined>(undefined);
+  protected readonly textDimmer = signal<string | undefined>(undefined);
 
   protected readonly currentValue = signal<unknown>(null);
 
@@ -116,8 +120,8 @@ export class WidgetMultiStateSwitchComponent {
    * available widget space (see template `preserveAspectRatio`), keeping
    * item/text proportions consistent as the widget resizes.
    */
-  protected readonly menuWidth = 240;
-  protected readonly itemHeight = 36;
+  protected readonly menuWidth = 220;
+  protected readonly itemHeight = 50;
   protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
@@ -131,26 +135,28 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly bottomRoundedItemPathD = computed(() =>
     this.buildRoundedRectPath(this.menuWidth, this.itemHeight, this.cornerRadius, false, true)
   );
-  //TODO: remove and use path selection to prevent choosing a non multiple type path
-  protected readonly canInteract = computed(() => {
-    const cfg = this.cfg();
-    const path = this.getControlPath(cfg);
-    return Boolean(path && this.hasOptions());
-  });
 
-  protected readonly cornerRadius = 12;
+  protected readonly cornerRadius = 7;
 
   constructor() {
     effect(() => {
       const theme = this.theme();
-      const cfg = this.cfg();
-      if (!theme || !cfg) return;
+      const wdColor = this.cfg().color;
+      if (!theme || !wdColor) return;
       untracked(() => {
-        const colors = getColors(cfg.color ?? 'contrast', theme);
-        if (!colors) return;
-        this.labelColor.set(colors.dim);
-        this.accentColor.set(colors.color);
-        this.accentDim.set(colors.dim);
+        //getColors(cfg.color ?? 'contrast', theme);
+        this.accentColor.set(getColors(wdColor, theme).color);
+        this.accentDim.set(getColors(wdColor, theme).dim);
+        this.accentDimmer.set(getColors(wdColor, theme).dimmer);
+        if (wdColor === 'contrast') {
+          this.textColor.set(theme.background);
+          this.textDim.set(theme.contrastDim);
+          this.textDimmer.set(theme.contrastDimmer);
+        } else {
+          this.textColor.set(theme.contrast);
+          this.textDim.set(getColors(wdColor, theme).dim);
+          this.textDimmer.set(getColors(wdColor, theme).dimmer);
+        }
       });
     });
 
@@ -186,7 +192,6 @@ export class WidgetMultiStateSwitchComponent {
   }
 
   protected select(option: ISkPossibleValue): void {
-    if (!this.canInteract()) return;
     const path = this.getControlPath(this.cfg());
     if (!path) return;
     this.signalkRequestsService.putRequest(path, option.value, this.id());

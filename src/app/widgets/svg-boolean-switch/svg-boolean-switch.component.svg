@@ -34,8 +34,7 @@
          id="rect3-4"
          x="0"
          y="5"
-         [attr.fill]="labelColor"
-         style="stroke-width:1.57144;fill-opacity:0.97216702" />
+         style="stroke-width:1.57144;fill:var(--mat-sys-outline);fill-opacity:1" />
       <circle
         cx="11.5"
         cy="16"
@@ -78,7 +77,7 @@
          width="37.714306"
          height="22"
          rx="10.999999"
-         [attr.fill]="valueColor"
+         [attr.fill]="labelColor"
          id="rect3"
          x="0"
          y="5"

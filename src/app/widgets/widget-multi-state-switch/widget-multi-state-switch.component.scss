@@ -40,88 +40,69 @@
   alignment-baseline: middle;
 }
 
-.svg-menu-box {
-  fill: var(--kip-widget-card-background-color);
+.svg-menu-item-off {
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-dasharray: none;
+  stroke-opacity: 0.2;
 }
 
-.option-group {
-  stroke: blue;
-  stroke-width: 3px;
+.svg-menu-item {
+  stroke: #ffffff;
+  stroke-width: 2px;
+  stroke-dasharray: none;
+  stroke-opacity: 0.2;
 }
 
-.svg-menu-item-text {
-  fill: var(--kip-contrast-color);
-  font-size: 14px;
-  font-weight: 600;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  alignment-baseline: middle;
-}
+.svg-menu-item-disabled {
 
-.svg-menu-item-current {
-  fill: var(--multi-state-accent, var(--kip-blue-color));
 }
 
 .svg-menu-item-current-text {
-  fill: var(--kip-contrast-color);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: middle;
   alignment-baseline: middle;
 }
 
-.svg-menu-item-disabled {
-  fill: transparent;
-}
-
-.svg-menu-item-disabled-text {
-  fill: var(--kip-contrast-dim-color);
-  font-size: 14px;
+.svg-menu-item-text {
+  font-size: 16px;
   font-weight: 600;
   text-anchor: middle;
   dominant-baseline: middle;
   alignment-baseline: middle;
-}
-
-.svg-menu-item-off {
-  fill: transparent;
-}
-
-.svg-menu-item {
-  fill: transparent;
-  stroke: var(--mat-sys-surface-container-high);
-  stroke-width: 3px;
 }
 
 .svg-menu-item-off-text {
-  fill: var(--kip-contrast-dim-color);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   text-anchor: middle;
   dominant-baseline: middle;
   alignment-baseline: middle;
 }
 
+.svg-menu-item-disabled-text {
+  font-size: 16px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  alignment-baseline: middle;
+}
+
+/* No stroke in default state; elevation is conveyed via SVG filters (shadows). */
 .svg-menu-item-group :is(rect, path) {
-  stroke: var(--mat-sys-surface-container-high);
-  stroke-width: 3px;
+}
+
+.svg-menu-item-group:focus {
+  //outline: none;
 }
 
 .svg-menu-item-group:focus-visible :is(rect, path) {
-  stroke: var(--kip-blue-color);
-  stroke-width: 3px;
+  stroke: red;
+  stroke-width: 2px;
 }
 
 .svg-menu-item-group.is-disabled {
   cursor: not-allowed;
-}
-
-.empty-state {
-  fill: var(--mat-sys-on-error);
-  font-size: 14px;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  alignment-baseline: middle;
-  pointer-events: none;
 }

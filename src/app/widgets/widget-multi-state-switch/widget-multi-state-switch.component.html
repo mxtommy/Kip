@@ -1,5 +1,5 @@
 @if (showLabel()) {
-  <widget-title [text]="displayName()" [color]="labelColor()"></widget-title>
+  <widget-title [text]="displayName()" [color]="accentColor()"></widget-title>
 }
 <div class="widgets-container" role="group" [attr.aria-label]="displayName()">
 
@@ -10,18 +10,26 @@
     role="presentation"
     [attr.aria-label]="displayName()"
   >
+    <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
     @for (opt of sortedOptions(); track opt.raw.value; let isFirst = $first; let isLast = $last) {
       <g
         class="svg-menu-item-group"
-        [class.is-disabled]="!canInteract()"
         [class.is-selected]="isSelected(opt.raw)"
         [class.is-off]="opt.raw.isOn === false"
-        [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'"
+        [attr.transform]="'translate(0 ' + ($index * itemHeight) + ')'")
         style="cursor:pointer;"
-        (click)="canInteract() && selectUi(opt)"
+        (click)="selectUi(opt)"
         tabindex="0"
-        (keyup.enter)="canInteract() && selectUi(opt)"
-        (keyup.space)="canInteract() && selectUi(opt)"
+        (keyup.enter)="selectUi(opt)"
+        (keyup.space)="selectUi(opt)"
         role="button"
         [attr.aria-label]="opt.label"
         [attr.aria-pressed]="isSelected(opt.raw)"
@@ -29,10 +37,12 @@
         @if (isFirst && isLast) {
           <path
             [attr.d]="fullRoundedItemPathD()"
-            [class]="
-              !canInteract()
-                ? 'svg-menu-item-disabled'
-                : isSelected(opt.raw)
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
                   ? 'svg-menu-item-current'
                   : opt.raw.isOn === false
                     ? 'svg-menu-item-off'
@@ -42,10 +52,12 @@
         } @else if (isFirst) {
           <path
             [attr.d]="topRoundedItemPathD()"
-            [class]="
-              !canInteract()
-                ? 'svg-menu-item-disabled'
-                : isSelected(opt.raw)
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
                   ? 'svg-menu-item-current'
                   : opt.raw.isOn === false
                     ? 'svg-menu-item-off'
@@ -55,10 +67,12 @@
         } @else if (isLast) {
           <path
             [attr.d]="bottomRoundedItemPathD()"
-            [class]="
-              !canInteract()
-                ? 'svg-menu-item-disabled'
-                : isSelected(opt.raw)
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
                   ? 'svg-menu-item-current'
                   : opt.raw.isOn === false
                     ? 'svg-menu-item-off'
@@ -71,10 +85,12 @@
             y="0"
             [attr.width]="menuWidth"
             [attr.height]="itemHeight"
-            [class]="
-              !canInteract()
-                ? 'svg-menu-item-disabled'
-                : isSelected(opt.raw)
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
                   ? 'svg-menu-item-current'
                   : opt.raw.isOn === false
                     ? 'svg-menu-item-off'
@@ -85,10 +101,13 @@
         <text
           [attr.x]="menuWidth / 2"
           [attr.y]="itemHeight / 2"
-          [class]="
-            !canInteract()
-              ? 'svg-menu-item-disabled-text'
-              : isSelected(opt.raw)
+          [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+          [attr.fill]="isSelected(opt.raw)
+                  ? textColor()
+                  : opt.raw.isOn === false
+                    ? textColor()
+                    : textColor()"
+          [class]="isSelected(opt.raw)
                 ? 'svg-menu-item-current-text'
                 : opt.raw.isOn === false
                   ? 'svg-menu-item-off-text'
