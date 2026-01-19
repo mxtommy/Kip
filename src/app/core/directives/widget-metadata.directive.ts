@@ -93,6 +93,7 @@ export class WidgetMetadataDirective {
     const meta = this._meta();
     return meta?.possibleValues || [];
   });
+
   /**
    * Begin observing metadata for a path and own the signature gating.
    *

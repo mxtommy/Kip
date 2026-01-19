@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, of, switchMap } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardService } from './../../core/services/dashboard.service';
 import { AppService, ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -9,8 +8,8 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
-import { DataService } from '../../core/services/data.service';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
+import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
 
 interface NumComparable {
   kind: 'num';
@@ -67,13 +66,12 @@ export class WidgetMultiStateSwitchComponent {
     color: 'contrast',
   };
 
-  protected readonly runtime = inject(WidgetRuntimeDirective);
+  private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly streams = inject(WidgetStreamsDirective);
-  private readonly signalkRequestsService = inject(SignalkRequestsService);
+  private readonly meta = inject(WidgetMetadataDirective);
 
+  private readonly signalkRequestsService = inject(SignalkRequestsService);
   protected readonly dashboard = inject(DashboardService);
-  //TODO: remove
-  private readonly data = inject(DataService);
   private readonly app = inject(AppService);
 
   private readonly skRequest = toSignal(this.signalkRequestsService.subscribeRequest(), { initialValue: null });
@@ -89,8 +87,8 @@ export class WidgetMultiStateSwitchComponent {
 
   protected readonly currentValue = signal<unknown>(null);
 
-    protected readonly sortedOptions = computed<UiOption[]>(() => {
-    const opts = this.options();
+  protected readonly sortedOptions = computed<UiOption[]>(() => {
+    const opts = this.meta.possibleValues();
     if (!opts.length) return [];
 
     const mapped = opts.map(raw => ({
@@ -111,26 +109,8 @@ export class WidgetMultiStateSwitchComponent {
     return mapped;
   });
   protected readonly menuHeight = computed(() => this.sortedOptions().length * this.itemHeight);
-  protected readonly hasOptions = computed(() => this.options().length > 0);
+  protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
-
-  protected readonly meta = toSignal(
-    toObservable(this.controlPath).pipe(
-      distinctUntilChanged(),
-      switchMap(path => (path ? this.data.getPathMetaObservable(path) : of(null)))
-    ),
-    { initialValue: null }
-  );
-  protected readonly options = computed<ISkPossibleValue[]>(() => {
-    const meta = this.meta();
-    if (!meta?.possibleValues || !Array.isArray(meta.possibleValues)) return [];
-    if (meta.type && meta.type !== 'multiple') return [];
-    return meta.possibleValues;
-  });
-
-  protected readonly menuWidth = 240;
-  protected readonly itemHeight = 36;
-  protected readonly cornerRadius = 12;
 
   protected readonly fullRoundedItemPathD = computed(() =>
     this.buildRoundedRectPath(this.menuWidth, this.itemHeight, this.cornerRadius, true, true)
@@ -141,13 +121,16 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly bottomRoundedItemPathD = computed(() =>
     this.buildRoundedRectPath(this.menuWidth, this.itemHeight, this.cornerRadius, false, true)
   );
-
   //TODO: remove and use path selection to prevent choosing a non multiple type path
   protected readonly canInteract = computed(() => {
     const cfg = this.cfg();
     const path = this.getControlPath(cfg);
     return Boolean(path && this.hasOptions());
   });
+
+  protected readonly menuWidth = 240;
+  protected readonly itemHeight = 36;
+  protected readonly cornerRadius = 12;
 
   constructor() {
     effect(() => {
@@ -171,13 +154,10 @@ export class WidgetMultiStateSwitchComponent {
       }
 
       untracked(() => {
-
-
-
-
         this.streams.observe('controlPath', pkt => {
           this.currentValue.set(pkt?.data?.value ?? null);
         });
+        this.meta.observe('controlPath');
       });
     });
 
