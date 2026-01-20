@@ -1,0 +1,17 @@
+:host {
+  overflow: hidden;
+}
+
+.widgetIframe {
+  background-color: white;
+  border-radius: var(--mat-card-elevated-container-shape, var(--mat-sys-corner-medium));
+}
+
+.widgetOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  bottom: 0;
+  color: transparent;
+}
