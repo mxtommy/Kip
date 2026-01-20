@@ -62,10 +62,6 @@
   stroke-opacity: 0.2;
 }
 
-.svg-menu-item-disabled {
-
-}
-
 .svg-menu-item-current-text {
   font-size: 1.5rem;
   font-weight: 700;
@@ -88,25 +84,10 @@
   alignment-baseline: middle;
 }
 
-.svg-menu-item-disabled-text {
-  font-weight: 600;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  alignment-baseline: middle;
-}
-
-/* No stroke in default state; elevation is conveyed via SVG filters (shadows). */
-.svg-menu-item-group :is(rect, path) {
-}
-
 .svg-menu-item-group:focus {
   outline: none;
 }
 
 .svg-menu-item-group:focus-visible :is(rect, path) {
   filter: url(#focus-inner-ring);
-}
-
-.svg-menu-item-group.is-disabled {
-  cursor: not-allowed;
 }

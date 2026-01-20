@@ -40,14 +40,15 @@
           [class.is-selected]="isSelected(opt.raw)"
           [class.is-off]="opt.raw.isOn === false"
           [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
-          style="cursor:pointer;"
-          (click)="selectUi(opt)"
-          tabindex="0"
-          (keyup.enter)="selectUi(opt)"
-          (keyup.space)="selectUi(opt)"
+          [style.cursor]="canPut() ? 'pointer' : 'not-allowed'"
+          (click)="canPut() && selectUi(opt)"
+          [attr.tabindex]="canPut() ? 0 : -1"
+          (keyup.enter)="canPut() && selectUi(opt)"
+          (keyup.space)="canPut() && selectUi(opt)"
           role="button"
           [attr.aria-label]="opt.label"
           [attr.aria-pressed]="isSelected(opt.raw)"
+          [attr.aria-disabled]="!canPut()"
         >
         @if (opt.index === 0 && opt.index === optionsCount() - 1) {
           <path
@@ -140,14 +141,15 @@
           [class.is-selected]="isSelected(opt.raw)"
           [class.is-off]="opt.raw.isOn === false"
           [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
-          style="cursor:pointer;"
-          (click)="selectUi(opt)"
-          tabindex="0"
-          (keyup.enter)="selectUi(opt)"
-          (keyup.space)="selectUi(opt)"
+          [style.cursor]="canPut() ? 'pointer' : 'not-allowed'"
+          (click)="canPut() && selectUi(opt)"
+          [attr.tabindex]="canPut() ? 0 : -1"
+          (keyup.enter)="canPut() && selectUi(opt)"
+          (keyup.space)="canPut() && selectUi(opt)"
           role="button"
           [attr.aria-label]="opt.label"
           [attr.aria-pressed]="isSelected(opt.raw)"
+          [attr.aria-disabled]="!canPut()"
         >
         @if (opt.index === 0 && opt.index === optionsCount() - 1) {
           <path

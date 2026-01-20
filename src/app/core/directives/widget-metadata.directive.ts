@@ -78,6 +78,7 @@ export class WidgetMetadataDirective {
     const meta = this._meta();
     return meta?.zones || [];
   });
+
   /**
    * Reactive signal containing `meta.possibleValues` for the observed path.
    *
@@ -92,6 +93,18 @@ export class WidgetMetadataDirective {
   public possibleValues = computed<ISkPossibleValue[]>(() => {
     const meta = this._meta();
     return meta?.possibleValues || [];
+  });
+
+  /**
+   * Reactive signal containing `meta.supportsPut` for the observed path.
+   *
+   * This is primarily useful to determine if the path supports PUT operations.
+   *
+   * - This recomputes whenever {@link _meta} changes.
+   */
+  public supportsPut = computed<boolean>(() => {
+    const meta = this._meta();
+    return meta?.supportsPut || false;
   });
 
   /**

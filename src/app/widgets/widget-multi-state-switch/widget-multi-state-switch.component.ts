@@ -134,6 +134,7 @@ export class WidgetMultiStateSwitchComponent {
   });
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
+  protected readonly canPut = computed(() => this.meta.supportsPut());
 
   // Render selected option last so its focus/outline is never covered by later rows in SVG paint order.
   protected readonly unselectedOptions = computed(() => this.sortedOptions().filter(opt => !this.isSelected(opt.raw)));
