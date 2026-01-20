@@ -10,6 +10,7 @@ import { WidgetStreamsDirective } from '../../core/directives/widget-streams.dir
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
+import { createSwipeGuard } from '../../core/utils/pointer-swipe-guard.util';
 
 interface NumComparable {
   kind: 'num';
@@ -135,6 +136,7 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly hasOptions = computed(() => this.meta.possibleValues().length > 0);
   protected readonly selectedValue = computed(() => this.currentValue());
   protected readonly canPut = computed(() => this.meta.supportsPut());
+  private readonly swipeGuard = createSwipeGuard();
 
   // Render selected option last so its focus/outline is never covered by later rows in SVG paint order.
   protected readonly unselectedOptions = computed(() => this.sortedOptions().filter(opt => !this.isSelected(opt.raw)));
@@ -213,6 +215,26 @@ export class WidgetMultiStateSwitchComponent {
 
   protected selectUi(option: UiOption): void {
     this.select(option.raw);
+  }
+
+  protected onPointerDown(event: PointerEvent): void {
+    if (!this.canPut()) return;
+    this.swipeGuard.onPointerDown(event);
+  }
+
+  protected onPointerMove(event: PointerEvent): void {
+    if (!this.canPut()) return;
+    this.swipeGuard.onPointerMove(event);
+  }
+
+  protected onPointerUp(event: PointerEvent, option: UiOption): void {
+    if (!this.canPut()) return;
+    if (!this.swipeGuard.onPointerUp(event)) return;
+    this.selectUi(option);
+  }
+
+  protected onPointerCancel(event: PointerEvent): void {
+    this.swipeGuard.onPointerCancel(event);
   }
 
   private getControlPath(cfg?: IWidgetSvcConfig): string | null {

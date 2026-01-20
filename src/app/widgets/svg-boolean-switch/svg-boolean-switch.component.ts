@@ -2,6 +2,7 @@ import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
+import { createSwipeGuard } from '../../core/utils/pointer-swipe-guard.util';
 
 @Component({
     selector: 'app-svg-boolean-switch',
@@ -18,9 +19,7 @@ export class SvgBooleanSwitchComponent implements DoCheck {
   private toggleOn = "0 0 180 35";
   private ctrlState: boolean = null;
   private oldTheme: ITheme = null;
-  private isSwiping = false;
-  private pointerStartX = 0;
-  private pointerStartY = 0;
+  private readonly swipeGuard = createSwipeGuard();
 
   public viewBox: string = this.toggleOff;
   public labelColor = null;
@@ -48,30 +47,20 @@ export class SvgBooleanSwitchComponent implements DoCheck {
   }
 
   public onPointerDown(event: PointerEvent): void {
-    this.isSwiping = false;
-    this.pointerStartX = event.clientX;
-    this.pointerStartY = event.clientY;
+    this.swipeGuard.onPointerDown(event);
   }
 
   public onPointerMove(event: PointerEvent): void {
-    const deltaX = Math.abs(event.clientX - this.pointerStartX);
-    const deltaY = Math.abs(event.clientY - this.pointerStartY);
-
-    // Mark as swiping if movement exceeds a threshold
-    if (deltaX > 30 || deltaY > 30) {
-      this.isSwiping = true;
-    }
+    this.swipeGuard.onPointerMove(event);
   }
 
   public onPointerUp(event: PointerEvent, state: boolean): void {
-    if (this.isSwiping) {
-      // Ignore pointerup if it was a swipe
-      this.isSwiping = false;
-      return;
-    }
-
-    // Handle the toggle action for a tap
+    if (!this.swipeGuard.onPointerUp(event)) return;
     this.toggle(state);
+  }
+
+  public onPointerCancel(event: PointerEvent): void {
+    this.swipeGuard.onPointerCancel(event);
   }
 
   public toggle(state: boolean): void {
