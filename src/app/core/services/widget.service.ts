@@ -25,6 +25,7 @@ import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/wid
 import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
+import { WidgetMultiStateSwitchComponent } from '../../widgets/widget-multi-state-switch/widget-multi-state-switch.component';
 import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 
@@ -146,6 +147,7 @@ export class WidgetService {
     WidgetDatetimeComponent: WidgetDatetimeComponent,
     WidgetDataChartComponent: WidgetDataChartComponent,
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
+    WidgetMultiStateSwitchComponent: WidgetMultiStateSwitchComponent,
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent
 };
@@ -227,6 +229,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-boolean-switch',
       componentClassName: 'WidgetBooleanSwitchComponent'
+    },
+    {
+      name: 'Multi-State Switch',
+      description: 'Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.',
+      icon: 'multiStateSwitchWidget',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 4,
+      category: 'Core',
+      requiredPlugins: [],
+      selector: 'widget-multi-state-switch',
+      componentClassName: 'WidgetMultiStateSwitchComponent'
     },
     {
       name: 'Zones State Panel',

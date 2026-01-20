@@ -25,7 +25,7 @@
         x="7.4874101"
         y="4.9874086"
         [attr.fill]="labelColorDisabled"
-        style="display:inline;mix-blend-mode:normal;fill-opacity:0.972549;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:0.2" />
+        style="display:inline;mix-blend-mode:normal;fill-opacity:1;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:0.2" />
       <svg x="12" y="0" width="156" height="35" viewBox="0 0 156 35">
         <text
           id="textDisabled"

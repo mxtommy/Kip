@@ -405,7 +405,6 @@ export class SignalKDeltaService implements OnDestroy {
     });
   }
 
-
   /**
    * Validates if an object can be completely flattened within configured limits.
    * Uses all-or-nothing approach to prevent partial flattening.
@@ -474,7 +473,7 @@ export class SignalKDeltaService implements OnDestroy {
   }
 
   // WebSocket Stream Status observable
-  getDataStreamStatusAsO() {
+  public getDataStreamStatusAsO() {
     return this.streamEndpoint$.asObservable();
   }
 

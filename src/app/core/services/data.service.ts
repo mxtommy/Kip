@@ -235,7 +235,7 @@ export class DataService implements OnDestroy {
       _pathData$: new BehaviorSubject<IPathData>(pathUpdate.data),
       _pathState$: new BehaviorSubject<TState>(pathUpdate.state),
       pathDataUpdate$: new BehaviorSubject<IPathUpdate>(pathUpdate),
-      pathMeta$: new BehaviorSubject<ISkMetadata>(metaUpdate)
+      pathMeta$: new BehaviorSubject<ISkMetadata | null>(metaUpdate ? cloneDeep(metaUpdate) : null)
     };
 
     const combined$ = combineLatest([newPathSubject._pathData$, newPathSubject._pathState$]).pipe(
@@ -277,7 +277,7 @@ export class DataService implements OnDestroy {
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
     if (!pathItem) {
-      let pathType: string = typeof (dataPath.value);
+      let pathType: string = typeof(dataPath.value);
       if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
         pathType = "Date";
       }
@@ -358,19 +358,22 @@ export class DataService implements OnDestroy {
           state: States.Normal,
           defaultSource: undefined,
           sources: {},
-          meta: meta.meta,
+          meta: meta.meta ? cloneDeep(meta.meta) : null,
         };
         this._skData.push(pathObject);
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
           pathObject.type = typeFromUnits(meta.meta.units);
         }
-        pathObject.meta = merge(pathObject.meta, meta.meta);
+        // IMPORTANT: Avoid in-place mutation of the meta object. Consumers using Angular
+        // signals depend on reference changes to trigger recomputation.
+        pathObject.meta = merge({}, pathObject.meta, meta.meta);
       }
 
       const entry = this._pathRegister.find(entry => entry.path === metaPath);
       if (entry) {
-        entry.pathMeta$.next(pathObject.meta);
+        // Emit a snapshot to guarantee a new reference for downstream consumers.
+        entry.pathMeta$.next(pathObject.meta ? cloneDeep(pathObject.meta) : null);
       }
 
       // If full meta tree is active, push the full tree
@@ -437,7 +440,11 @@ export class DataService implements OnDestroy {
   public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
     return this._skData
       .filter(item => {
-        const typeMatches = item.type === valueType;
+        const isRuntimeType = ['string', 'number', 'boolean', 'object', 'undefined', 'function', 'symbol', 'bigint', 'Date']
+          .includes(valueType);
+        const typeMatches = isRuntimeType
+          ? item.type === valueType
+          : item.meta?.type === valueType;
         const selfMatches = !selfOnly || item.path.startsWith("self");
         const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true : true;
         const hasZonesMatches = hasZones === true
@@ -462,7 +469,7 @@ export class DataService implements OnDestroy {
    * that need to know if a path has timed out.
    *
    * @param {string} path The Signal K path to timeout
-   * @param {string} pathType The type of the path value (string, Date, number)
+   * @param {string} pathType The type of the path value (string, Date, number, multiple, etc)
    * @memberof SignalKDataService
    */
   public timeoutPathObservable(path: string, pathType: string): void {
@@ -470,7 +477,7 @@ export class DataService implements OnDestroy {
     if (pathRegister) {
       let timeoutValue: IPathUpdate;
 
-      if (['string', 'Date', 'number'].includes(pathType)) {
+      if (['string', 'Date', 'number', 'multiple'].includes(pathType)) {
         timeoutValue = {
           data: {
             value: null,
@@ -492,6 +499,14 @@ export class DataService implements OnDestroy {
     return this._skNotificationMeta$.asObservable();
   }
 
+  /**
+   * Returns an Observable that emits metadata updates for a registered Signal K path.
+   *
+   * Notes:
+   * - The path must already be registered via {@link subscribePath}; otherwise this returns an Observable that emits `null`.
+   * - If multiple registrations exist for the same path (e.g. different sources), this returns the first match by path.
+   * - The returned Observable completes when the path is unsubscribed via {@link unsubscribePath} (subjects are completed).
+   */
   public getPathMetaObservable(path: string): Observable<ISkMetadata | null> {
     const registration = this._pathRegister.find(registration => registration.path == path);
     return registration?.pathMeta$.asObservable() || of(null);

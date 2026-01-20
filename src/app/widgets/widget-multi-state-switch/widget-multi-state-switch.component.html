@@ -1,0 +1,254 @@
+@if (showLabel()) {
+  <widget-title [text]="displayName()" [color]="accentColor()"></widget-title>
+}
+<div class="widgets-container" role="group" [attr.aria-label]="displayName()">
+
+  <svg
+    class="svg-menu"
+    preserveAspectRatio="xMidYMid meet"
+    [attr.viewBox]="'0 0 ' + (menuWidth + svgPadding * 2) + ' ' + ((menuHeight() || itemHeight) + svgPadding * 2)"
+    role="presentation"
+    [attr.aria-label]="displayName()"
+  >
+    <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- Inner focus ring (drawn inside the button shape; no outside outline) -->
+        <filter id="focus-inner-ring" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <!-- Border = SourceAlpha - eroded(SourceAlpha) -->
+          <feMorphology in="SourceAlpha" operator="erode" radius="2" result="eroded" />
+          <feComposite in="SourceAlpha" in2="eroded" operator="out" result="border" />
+          <!-- Color the border -->
+          <feFlood flood-color="#ffffff" flood-opacity="0.9" result="ringColor" />
+          <feComposite in="ringColor" in2="border" operator="in" result="ring" />
+          <feMerge>
+            <feMergeNode in="SourceGraphic" />
+            <feMergeNode in="ring" />
+          </feMerge>
+        </filter>
+      </defs>
+    <g [attr.transform]="'translate(' + svgPadding + ' ' + svgPadding + ')'">
+      @for (opt of unselectedOptions(); track opt.raw.value) {
+        <g
+          class="svg-menu-item-group"
+          [class.is-selected]="isSelected(opt.raw)"
+          [class.is-off]="opt.raw.isOn === false"
+          [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
+          [style.cursor]="canPut() ? 'pointer' : 'not-allowed'"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event, opt)"
+          (pointercancel)="onPointerCancel($event)"
+          [attr.tabindex]="canPut() ? 0 : -1"
+          (keyup.enter)="canPut() && selectUi(opt)"
+          (keyup.space)="canPut() && selectUi(opt)"
+          role="button"
+          [attr.aria-label]="opt.label"
+          [attr.aria-pressed]="isSelected(opt.raw)"
+          [attr.aria-disabled]="!canPut()"
+        >
+        @if (opt.index === 0 && opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="fullRoundedItemPathD()"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === 0) {
+          <path
+            [attr.d]="topRoundedItemPathD()"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="bottomRoundedItemPathD()"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else {
+          <rect
+            x="0"
+            y="0"
+            [attr.width]="menuWidth"
+            [attr.height]="itemHeight"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        }
+        <text
+          [attr.x]="menuWidth / 2"
+          [attr.y]="itemHeight / 2"
+          [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+          [attr.fill]="isSelected(opt.raw)
+                  ? textColor()
+                  : opt.raw.isOn === false
+                    ? textColor()
+                    : textColor()"
+          [class]="isSelected(opt.raw)
+                ? 'svg-menu-item-current-text'
+                : opt.raw.isOn === false
+                  ? 'svg-menu-item-off-text'
+                  : 'svg-menu-item-text'
+          "
+        >
+          {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
+        </text>
+        </g>
+      }
+
+      @for (opt of selectedOptions(); track opt.raw.value) {
+        <g
+          class="svg-menu-item-group"
+          [class.is-selected]="isSelected(opt.raw)"
+          [class.is-off]="opt.raw.isOn === false"
+          [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
+          [style.cursor]="canPut() ? 'pointer' : 'not-allowed'"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event, opt)"
+          (pointercancel)="onPointerCancel($event)"
+          [attr.tabindex]="canPut() ? 0 : -1"
+          (keyup.enter)="canPut() && selectUi(opt)"
+          (keyup.space)="canPut() && selectUi(opt)"
+          role="button"
+          [attr.aria-label]="opt.label"
+          [attr.aria-pressed]="isSelected(opt.raw)"
+          [attr.aria-disabled]="!canPut()"
+        >
+        @if (opt.index === 0 && opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="fullRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === 0) {
+          <path
+            [attr.d]="topRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else if (opt.index === optionsCount() - 1) {
+          <path
+            [attr.d]="bottomRoundedItemPathD()"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        } @else {
+          <rect
+            x="0"
+            y="0"
+            [attr.width]="menuWidth"
+            [attr.height]="itemHeight"
+            [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+            [attr.fill]="isSelected(opt.raw)
+                  ? accentColor()
+                  : opt.raw.isOn === false
+                    ? accentDim()
+                    : accentDim()"
+            [class]="isSelected(opt.raw)
+                  ? 'svg-menu-item-current'
+                  : opt.raw.isOn === false
+                    ? 'svg-menu-item-off'
+                    : 'svg-menu-item'
+            "
+          />
+        }
+        <text
+          [attr.x]="menuWidth / 2"
+          [attr.y]="itemHeight / 2"
+          [attr.filter]="isSelected(opt.raw) ? 'url(#glow)' : null"
+          [attr.fill]="isSelected(opt.raw)
+                  ? textColor()
+                  : opt.raw.isOn === false
+                    ? textColor()
+                    : textColor()"
+          [class]="isSelected(opt.raw)
+                ? 'svg-menu-item-current-text'
+                : opt.raw.isOn === false
+                  ? 'svg-menu-item-off-text'
+                  : 'svg-menu-item-text'
+          "
+        >
+          {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
+        </text>
+        </g>
+      }
+    </g>
+  </svg>
+</div>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay">
+  </div>
+}
