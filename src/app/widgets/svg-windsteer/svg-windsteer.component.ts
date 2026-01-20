@@ -25,6 +25,7 @@ export class SvgWindsteerComponent implements OnDestroy {
   protected readonly cogIndicator = viewChild.required<ElementRef<SVGGElement>>('cogIndicator');
 
   protected readonly compassHeading = input.required<number>();
+  protected readonly compassModeEnabled = input.required<boolean>();
   protected readonly courseOverGroundAngle = input<number>(undefined);
   protected readonly courseOverGroundEnabled = input.required<boolean>();
   protected readonly trueWindAngle = input.required<number>();

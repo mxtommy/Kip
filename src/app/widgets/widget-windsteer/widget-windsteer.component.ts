@@ -136,6 +136,7 @@ export class WidgetWindComponent implements OnDestroy {
         sampleTime: 1000
       }
     },
+    compassModeEnabled: true,
     windSectorEnable: true,
     windSectorWindowSeconds: 5,
     laylineEnable: true,
@@ -184,7 +185,7 @@ export class WidgetWindComponent implements OnDestroy {
   protected trueWindMidHistoric = signal<number | undefined>(undefined);
   protected trueWindMaxHistoric = signal<number | undefined>(undefined);
 
-  private windSectorObservableSub: Subscription = null;
+  private windSectorObservableSub: Subscription | null = null;
 
   private windSamples: { t: number; u: number; i: number }[] = [];
   private windMinDeque: { i: number; u: number }[] = [];
