@@ -1,3 +1,11 @@
+# v4.2.0
+## New Features
+* Multi State Switch widget: Take control of multi‑mode devices (chargers, inverters, and more) with a clear state list that highlights the active mode and lets you switch states with a tap. Fixes #404
+* Copy and Cut & Paste Widget Between Dashboards: Build dashboards faster by copying existing widgets—including their configuration—across dashboards in seconds. Fixes #554
+## Improvements
+* Minor all Red Night mode theming corrections to save night vision. 
+## Fixes
+* Gauge instrument highlights exceeds gauge scale when zones definition lack upper or lower scale definition. Fixes #871
 # v4.1.0
 ## New Features
 * Zones State Panel widget: monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each Zone States control uses KIP’s color-coded Zone severity and prominent status message to spot warnings/alarms early without digging through notification menus. Powered by Signal K metadata zone configuration. Fixes #873

@@ -104,6 +104,7 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **Zones State Panel**: Monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each control uses KIP’s zone severity colors and status messages (driven by Signal K metadata zones) so warnings and alarms stand out immediately.
 - **Boolean Control Panel**: A switchboard to configure and operate remote devices: light switches, bilge pumps, solenoids, or any Signal K path that supports boolean PUT operations.
 - **Slider**: A versatile control that allows users to adjust values within a defined range by sliding. Commonly used for settings like light intensity, volume control, or any parameter requiring fine-tuned adjustments.
+- **Multi State Switch**: Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.
 - **Simple Linear gauge**: A visual display for electrical numerical data: chargers, MPPT, shunt, etc.
 - **Linear gauge**: Visually display any numerical data on a vertical or horizontal scale: tank and reservoir levels, battery remaining capacity, etc.
 - **Radial gauge**: Visually display any numerical data on a radial scale: boat speed, wind speed, engine RPM, etc.
