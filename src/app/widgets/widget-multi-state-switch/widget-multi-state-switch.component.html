@@ -6,7 +6,7 @@
   <svg
     class="svg-menu"
     preserveAspectRatio="xMidYMid meet"
-    [attr.viewBox]="'0 0 ' + menuWidth + ' ' + (menuHeight() || itemHeight)"
+    [attr.viewBox]="'0 0 ' + (menuWidth + svgPadding * 2) + ' ' + ((menuHeight() || itemHeight) + svgPadding * 2)"
     role="presentation"
     [attr.aria-label]="displayName()"
   >
@@ -33,21 +33,22 @@
           </feMerge>
         </filter>
       </defs>
-    @for (opt of unselectedOptions(); track opt.raw.value) {
-      <g
-        class="svg-menu-item-group"
-        [class.is-selected]="isSelected(opt.raw)"
-        [class.is-off]="opt.raw.isOn === false"
-        [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
-        style="cursor:pointer;"
-        (click)="selectUi(opt)"
-        tabindex="0"
-        (keyup.enter)="selectUi(opt)"
-        (keyup.space)="selectUi(opt)"
-        role="button"
-        [attr.aria-label]="opt.label"
-        [attr.aria-pressed]="isSelected(opt.raw)"
-      >
+    <g [attr.transform]="'translate(' + svgPadding + ' ' + svgPadding + ')'">
+      @for (opt of unselectedOptions(); track opt.raw.value) {
+        <g
+          class="svg-menu-item-group"
+          [class.is-selected]="isSelected(opt.raw)"
+          [class.is-off]="opt.raw.isOn === false"
+          [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
+          style="cursor:pointer;"
+          (click)="selectUi(opt)"
+          tabindex="0"
+          (keyup.enter)="selectUi(opt)"
+          (keyup.space)="selectUi(opt)"
+          role="button"
+          [attr.aria-label]="opt.label"
+          [attr.aria-pressed]="isSelected(opt.raw)"
+        >
         @if (opt.index === 0 && opt.index === optionsCount() - 1) {
           <path
             [attr.d]="fullRoundedItemPathD()"
@@ -130,24 +131,24 @@
         >
           {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
         </text>
-      </g>
-    }
+        </g>
+      }
 
-    @for (opt of selectedOptions(); track opt.raw.value) {
-      <g
-        class="svg-menu-item-group"
-        [class.is-selected]="isSelected(opt.raw)"
-        [class.is-off]="opt.raw.isOn === false"
-        [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
-        style="cursor:pointer;"
-        (click)="selectUi(opt)"
-        tabindex="0"
-        (keyup.enter)="selectUi(opt)"
-        (keyup.space)="selectUi(opt)"
-        role="button"
-        [attr.aria-label]="opt.label"
-        [attr.aria-pressed]="isSelected(opt.raw)"
-      >
+      @for (opt of selectedOptions(); track opt.raw.value) {
+        <g
+          class="svg-menu-item-group"
+          [class.is-selected]="isSelected(opt.raw)"
+          [class.is-off]="opt.raw.isOn === false"
+          [attr.transform]="'translate(0 ' + (opt.index * (itemHeight + itemGap)) + ')'"
+          style="cursor:pointer;"
+          (click)="selectUi(opt)"
+          tabindex="0"
+          (keyup.enter)="selectUi(opt)"
+          (keyup.space)="selectUi(opt)"
+          role="button"
+          [attr.aria-label]="opt.label"
+          [attr.aria-pressed]="isSelected(opt.raw)"
+        >
         @if (opt.index === 0 && opt.index === optionsCount() - 1) {
           <path
             [attr.d]="fullRoundedItemPathD()"
@@ -234,8 +235,9 @@
         >
           {{ isSelected(opt.raw) ? '\u2713 ' : '' }}{{ opt.label }}
         </text>
-      </g>
-    }
+        </g>
+      }
+    </g>
   </svg>
 </div>
 @if (!dashboard.isDashboardStatic()) {

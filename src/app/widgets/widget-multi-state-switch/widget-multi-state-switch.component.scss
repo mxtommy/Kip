@@ -22,7 +22,7 @@
   height: 85%;
   width: 100%;
   overflow: hidden;
-  padding: 15px;
+  padding: 2px;
 }
 
 .svg-menu {
@@ -42,7 +42,7 @@
 
 .svg-menu-item-current {
   stroke: var(--mat-sys-on-background);
-  stroke-width: 2px;
+  stroke-width: 3px;
   stroke-dasharray: none;
   stroke-opacity: 1;
 }

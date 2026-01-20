@@ -124,6 +124,8 @@ export class WidgetMultiStateSwitchComponent {
   protected readonly menuWidth = 220;
   protected readonly itemHeight = 50;
   protected readonly itemGap = 1;
+  // Internal padding in SVG viewBox units (proportional to item height).
+  protected readonly svgPadding = Math.max(1, Math.round(this.itemHeight * 0.2));
   protected readonly optionsCount = computed(() => this.sortedOptions().length);
   protected readonly menuHeight = computed(() => {
     const count = this.sortedOptions().length;
