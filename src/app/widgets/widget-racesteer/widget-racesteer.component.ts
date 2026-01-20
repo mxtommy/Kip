@@ -5,6 +5,7 @@ import { WidgetStreamsDirective } from '../../core/directives/widget-streams.dir
 import { IWidgetSvcConfig, IPathArray } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
 import { interval, Subscription } from 'rxjs';
+import { PolarChartComponent } from '../polar-chart/polar-chart.component';
 
 interface IWindDirSample { timestamp: number; windDirection: number; }
 
@@ -12,7 +13,7 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
   selector: 'widget-racesteer',
   templateUrl: './widget-racesteer.component.html',
   styleUrls: ['./widget-racesteer.component.scss'],
-  imports: [SvgRacesteerComponent]
+  imports: [SvgRacesteerComponent, PolarChartComponent]
 })
 export class WidgetRacesteerComponent implements OnDestroy {
   public id = input.required<string>();
