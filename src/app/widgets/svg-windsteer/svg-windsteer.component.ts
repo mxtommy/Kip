@@ -57,7 +57,7 @@ export class SvgWindsteerComponent implements OnDestroy {
   protected cog: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
 
-  protected headingValue = "--";
+  protected headingValue = signal<string>("--");
   private trueWindHeading = 0;
   protected waypointActive = signal<boolean>(false);
 
@@ -95,14 +95,16 @@ export class SvgWindsteerComponent implements OnDestroy {
     });
 
     effect(() => {
-      const raw = this.compassHeading();
-      const heading = Number.isFinite(raw) ? Math.round(raw as number) : null;
+      const modeEnabled = this.compassModeEnabled();
+      const rawHeading = this.compassHeading();
+      const heading = Number.isFinite(rawHeading) ? Math.round(rawHeading as number) : null;
       if (heading == null) return;
 
       untracked(() => {
+        const dialHeading = modeEnabled ? heading : 0;
         this.compass.oldValue = this.compass.newValue;
-        this.compass.newValue = heading;
-        this.headingValue = heading.toString();
+        this.compass.newValue = dialHeading;
+        this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);
           // Heading affects dial-local geometry for laylines and sectors; refresh without animation
@@ -115,11 +117,13 @@ export class SvgWindsteerComponent implements OnDestroy {
     effect(() => {
       const raw = this.courseOverGroundAngle();
       const cogAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
+      const modeEnabled = this.compassModeEnabled();
       if (cogAngle == null) return;
 
       untracked(() => {
+        const headingOffset = modeEnabled ? this.compass.newValue : 0;
         this.cog.oldValue = this.cog.newValue;
-        this.cog.newValue = cogAngle - this.compass.newValue;
+        this.cog.newValue = cogAngle - headingOffset;
         if (this.cogIndicator()?.nativeElement) {
           animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);
         }
@@ -167,12 +171,14 @@ export class SvgWindsteerComponent implements OnDestroy {
     effect(() => {
       const raw = this.trueWindAngle();
       const trueWindAngle = Number.isFinite(raw as number) ? Math.round(raw as number) : null;
+      const modeEnabled = this.compassModeEnabled();
       if (trueWindAngle == null) return;
 
       untracked(() => {
         this.twa.oldValue = this.twa.newValue;
         this.trueWindHeading = trueWindAngle;
-        this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
+        const headingOffset = modeEnabled ? (this.compass.newValue * -1) : 0;
+        this.twa.newValue = this.addHeading(this.trueWindHeading, headingOffset);
         if (this.twaIndicator()?.nativeElement) {
           animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);
         }
@@ -232,15 +238,20 @@ export class SvgWindsteerComponent implements OnDestroy {
     if (!this.closeHauledLineEnabled()) return;
 
     // Dial-local angle must include heading so that dial rotation (-heading) yields boat-relative result
-    const heading = Number(this.compass.newValue) || 0;
-  const boatBase = Number(this.awa.newValue) || 0;
-  const lay = Number(this.laylineAngle()) || 0;
-  const portLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay * -1));
+    const modeEnabled = this.compassModeEnabled();
+    const heading = modeEnabled ? (Number(this.compass.newValue) || 0) : 0;
+    const boatBase = modeEnabled ? (Number(this.awa.newValue) || 0) : 0;
+    const lay = Number(this.laylineAngle()) || 0;
+    const portLaylineRotate = modeEnabled
+      ? this.addHeading(heading, this.addHeading(boatBase, lay * -1))
+      : this.addHeading(boatBase, lay * -1);
     this.animateLayline(this.portLaylinePrev, portLaylineRotate, true, animate);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-  const stbdLaylineRotate = this.addHeading(heading, this.addHeading(boatBase, lay));
+    const stbdLaylineRotate = modeEnabled
+      ? this.addHeading(heading, this.addHeading(boatBase, lay))
+      : this.addHeading(boatBase, lay);
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false, animate);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }
@@ -422,9 +433,9 @@ export class SvgWindsteerComponent implements OnDestroy {
   }
 
   private computeSectorPath(state: { min: number, mid: number, max: number }, isPort: boolean): string {
-  const lay = Number(this.laylineAngle()) || 0;
+    const lay = Number(this.laylineAngle()) || 0;
     const offset = lay * (isPort ? -1 : 1);
-    const heading = Number(this.compass.newValue) || 0;
+    const heading = this.compassModeEnabled() ? (Number(this.compass.newValue) || 0) : 0;
     // Dial-local = heading + boat-relative (AWA min/mid/max + lay offset)
     const minAngle = this.addHeading(heading, this.addHeading(state.min, offset));
     const midAngle = this.addHeading(heading, this.addHeading(state.mid, offset));

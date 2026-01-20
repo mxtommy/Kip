@@ -566,7 +566,7 @@
       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:106.667px;font-family:Roboto;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke: none;stroke-width:5;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
       x="511.29395"
       y="102.86786">
-      <tspan>{{headingValue}}<tspan>°</tspan>
+      <tspan>{{ headingValue() }}<tspan>°</tspan>
       </tspan>
     </text>
   </g>
