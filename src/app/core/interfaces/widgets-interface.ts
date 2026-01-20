@@ -184,6 +184,8 @@ export interface IWidgetSvcConfig {
   /** Used by date Widget: Time zone value to apply to the data/time value */
   dateTimezone?: string;
 
+  /** Used by wind Widget: when true the compass dial rotates in relation to the vessel heading and all widget data is adjusted accordingly. If false the compass dial remains fixed and data is not adjusted */
+  compassModeEnabled?: boolean;
   /** Used by wind Widget: enable/disable wind sector UI feature */
   windSectorEnable?: boolean;
   /** Used by wind Widget: duration to track wind shift in the sector UI feature */

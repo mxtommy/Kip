@@ -1,5 +1,6 @@
 <svg-windsteer
   [compassHeading]="currentHeading()"
+  [compassModeEnabled]="runtime.options()?.compassModeEnabled"
   [courseOverGroundAngle]="courseOverGroundAngle()"
   [courseOverGroundEnabled]="runtime.options()?.courseOverGroundEnable"
   [trueWindAngle]="trueWindAngle()"

@@ -212,6 +212,15 @@
                 </display-datetime-options>
               }
               <!-- sail gauge stuff -->
+               @if ((widgetConfig?.compassModeEnabled !== undefined)) {
+                <mat-checkbox
+                  class="fields options-grid-span2"
+                  name="compassModeEnabled"
+                  formControlName="compassModeEnabled"
+                >
+                  Enable Advanced Compass Mode
+                </mat-checkbox>
+              }
               @if ((widgetConfig?.laylineEnable !== undefined)) {
                 <mat-checkbox
                   class="fields"
@@ -223,7 +232,7 @@
               }
               @if ((widgetConfig?.laylineEnable !== undefined)) {
                 <mat-form-field>
-                  <mat-label>Vessel Close-hauled Angle</mat-label>
+                  <mat-label>Optimal Close-hauled Angle</mat-label>
                   <input
                     type="number"
                     min="10"
@@ -245,7 +254,7 @@
               }
               @if ((widgetConfig?.windSectorEnable !== undefined)) {
                 <mat-form-field>
-                  <mat-label>Sector Duration</mat-label>
+                  <mat-label>Sector Duration (sec)</mat-label>
                   <input
                     type="number"
                     min="1"
