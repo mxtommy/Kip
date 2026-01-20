@@ -435,11 +435,20 @@ export class SvgWindsteerComponent implements OnDestroy {
   private computeSectorPath(state: { min: number, mid: number, max: number }, isPort: boolean): string {
     const lay = Number(this.laylineAngle()) || 0;
     const offset = lay * (isPort ? -1 : 1);
-    const heading = this.compassModeEnabled() ? (Number(this.compass.newValue) || 0) : 0;
+    const modeEnabled = this.compassModeEnabled();
+    const heading = modeEnabled ? (Number(this.compass.newValue) || 0) : 0;
+    const awaBase = Number(this.awa.newValue) || 0;
     // Dial-local = heading + boat-relative (AWA min/mid/max + lay offset)
-    const minAngle = this.addHeading(heading, this.addHeading(state.min, offset));
-    const midAngle = this.addHeading(heading, this.addHeading(state.mid, offset));
-    const maxAngle = this.addHeading(heading, this.addHeading(state.max, offset));
+    // When compass mode is off, position sectors relative to laylines (remove AWA base)
+    const minAngle = modeEnabled
+      ? this.addHeading(heading, this.addHeading(state.min, offset))
+      : this.addHeading(offset, this.addHeading(state.min, awaBase * -1));
+    const midAngle = modeEnabled
+      ? this.addHeading(heading, this.addHeading(state.mid, offset))
+      : this.addHeading(offset, this.addHeading(state.mid, awaBase * -1));
+    const maxAngle = modeEnabled
+      ? this.addHeading(heading, this.addHeading(state.max, offset))
+      : this.addHeading(offset, this.addHeading(state.max, awaBase * -1));
 
     const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER;
     const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER;
