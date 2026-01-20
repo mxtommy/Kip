@@ -22,6 +22,7 @@ import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radi
 import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
 import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
 import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
+import { WidgetAnchorAlarmComponent } from '../../widgets/widget-anchor-alarm/widget-anchor-alarm.component';
 import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
 import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
 import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
@@ -144,6 +145,7 @@ export class WidgetService {
     WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
     WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
     WidgetFreeboardskComponent: WidgetFreeboardskComponent,
+    WidgetAnchorAlarmComponent: WidgetAnchorAlarmComponent,
     WidgetDatetimeComponent: WidgetDatetimeComponent,
     WidgetDataChartComponent: WidgetDataChartComponent,
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
@@ -412,6 +414,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-data-chart',
       componentClassName: 'WidgetDataChartComponent'
+    },
+    {
+      name: 'Anchor Watch',
+      description: 'Monitors your anchor position and triggers an alarm if you drift outside a configured radius (anchor drag). Set the anchor point, watch radius, and alarm behavior (sound/notification) in the widget config. Requires internet connectivity to view map.',
+      icon: 'anchorWatch',
+      minWidth: 6,
+      minHeight: 8,
+      defaultWidth: 6,
+      defaultHeight: 14,
+      category: 'Component',
+      requiredPlugins: ['anchoralarm'],
+      selector: 'widget-anchor-alarm',
+      componentClassName: 'WidgetAnchorAlarmComponent'
     },
     {
       name: 'Embed Webpage Viewer',
