@@ -232,7 +232,7 @@ export class WidgetService {
     },
     {
       name: 'Multi-State Switch',
-      description: 'A multi-state control that renders multiple options from Signal K metadata and sends PUT requests on selection.',
+      description: 'Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.',
       icon: 'multiStateSwitchWidget',
       minWidth: 2,
       minHeight: 2,

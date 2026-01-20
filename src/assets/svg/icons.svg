@@ -145,10 +145,10 @@
       </g>
     </svg>
     <svg id="multiStateSwitchWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-      <rect x="2" y="6" width="20" height="12" rx="6" fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-width="1.5" />
-      <circle cx="7" cy="12" r="2" fill="var(--mat-sys-primary)" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-      <circle cx="17" cy="12" r="2" fill="currentColor" />
+      <rect x="4" y="1.5" width="16" height="21" rx="4" fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-width="1.5" />
+      <rect x="6.5" y="4" width="11" height="4" fill="var(--mat-sys-primary)" />
+      <rect x="6.5" y="10" width="11" height="4" fill="currentColor" />
+      <rect x="6.5" y="16" width="11" height="4" fill="currentColor" />
     </svg>
     <svg id="zonesStatePanel" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14">
       <path fill="#ffffff" fill-opacity="0.3" d="M6.03934 1H4C2.34315 1 1 2.34315 1 4v5.99955c0 1.65685 1.34315 2.99995 3 2.99995h2.03934z" stroke-width="1"></path>
