@@ -183,3 +183,20 @@ this.portLaylineAnimId = animateAngleTransition(
 ```
 
 See COPILOT.md Section 12 for full rationale, cancellation rules, and future extension ideas.
+
+## Pointer Swipe Guard (tap vs swipe)
+Use the shared swipe guard utility to prevent swipe gestures from triggering click/tap actions on SVG controls.
+
+Utility (core): `src/app/core/utils/pointer-swipe-guard.util.ts`
+
+When to use:
+- Any widget that accepts pointer input and should ignore swipe gestures (e.g., multi-state switch, boolean switch).
+
+Pattern:
+1. Create a guard in the component: `private readonly swipeGuard = createSwipeGuard();`
+2. Wire `pointerdown`, `pointermove`, `pointerup`, and `pointercancel` events.
+3. Trigger action only when `swipeGuard.onPointerUp(...)` returns true.
+
+Notes:
+- The guard uses pointer capture for robust fast drags and releases capture on `pointerup`/`pointercancel`.
+- Default swipe threshold is 30px (override via `createSwipeGuard({ threshold })` if needed).
