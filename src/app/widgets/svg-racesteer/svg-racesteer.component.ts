@@ -137,7 +137,7 @@ export class SvgRacesteerComponent implements OnDestroy {
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
-          this.updateLaylines();
+          //this.updateLaylines();
           this.updateWindSectors();
         }
       });
@@ -145,15 +145,17 @@ export class SvgRacesteerComponent implements OnDestroy {
 
     effect(() => {
       const raw = this.targetAngle();
-      const tackAngle = Number.isFinite(raw) ? Math.round(raw as number) : null;
-      if (tackAngle == null) return;
+      // target angle path automatically switches between tack and Gybe angles calculations. No need to use dedicated beat and gybe angle paths
+      const targetAngle = Number.isFinite(raw) ? Math.round(raw as number) : null;
+      if (targetAngle == null) return;
 
       untracked(() => {
         this.tack.oldValue = this.tack.newValue;
-        this.tack.newValue =  tackAngle;
+        this.tack.newValue =  targetAngle;
         if (this.tackIndicator()?.nativeElement) {
           animateRotation(this.tackIndicator().nativeElement, this.tack.oldValue, this.tack.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
         }
+        this.updateLaylines();
       });
     });
 
@@ -229,16 +231,23 @@ export class SvgRacesteerComponent implements OnDestroy {
   }
 
   private updateLaylines(): void {
+    const raw = this.targetAngle();
+    let targetAngle = Number.isFinite(raw) ? Math.round(raw as number) : null;
+    if (targetAngle == null) return;
+    targetAngle = targetAngle / 2;
     const base = Number(this.twa.newValue);
+
     // Animate Port Layline
-    const portLaylineRotate = this.addHeading(base, this.targetAngle() * -1);
+    const portLaylineRotate = base - targetAngle;
     this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
     this.portLaylinePrev = portLaylineRotate;
 
     // Animate Starboard Layline
-    const stbdLaylineRotate = this.addHeading(base, this.targetAngle());
+    const stbdLaylineRotate = base + targetAngle;
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
     this.stbdLaylinePrev = stbdLaylineRotate;
+
+
   }
 
   private animateLayline(from: number, to: number, isPort: boolean) {
@@ -409,9 +418,9 @@ export class SvgRacesteerComponent implements OnDestroy {
   }
 
   private setWindSectorPath(sector: SectorAngles, isPort: boolean): void {
-    const minAngle = this.addHeading(this.addHeading(sector.min, Number(this.compass.newValue) * -1), this.targetAngle() * (isPort ? -1 : 1));
-    const midAngle = this.addHeading(this.addHeading(sector.mid, Number(this.compass.newValue) * -1), this.targetAngle() * (isPort ? -1 : 1));
-    const maxAngle = this.addHeading(this.addHeading(sector.max, Number(this.compass.newValue) * -1), this.targetAngle() * (isPort ? -1 : 1));
+    const minAngle = this.addHeading(this.addHeading(sector.min, Number(this.compass.newValue) * -1), this.targetAngle() / 2 * (isPort ? -1 : 1));
+    const midAngle = this.addHeading(this.addHeading(sector.mid, Number(this.compass.newValue) * -1), this.targetAngle() / 2 * (isPort ? -1 : 1));
+    const maxAngle = this.addHeading(this.addHeading(sector.max, Number(this.compass.newValue) * -1), this.targetAngle() / 2 * (isPort ? -1 : 1));
 
     const minX = this.RADIUS * Math.sin((minAngle * Math.PI) / 180) + this.CENTER_X;
     const minY = (this.RADIUS * Math.cos((minAngle * Math.PI) / 180) * -1) + this.CENTER_Y;

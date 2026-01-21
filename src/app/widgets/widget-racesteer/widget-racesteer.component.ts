@@ -209,8 +209,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('targetAngle', pkt => {
         const v = pkt?.data?.value as number | null;
-        const normalized = v == null ? 0 : (v < 0 ? 360 + v : v);
-        this.targetAngle.set(normalized);
+        this.targetAngle.set(v);
       }));
     });
 
