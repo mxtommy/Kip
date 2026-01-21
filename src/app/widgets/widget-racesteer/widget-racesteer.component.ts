@@ -98,6 +98,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
         this.currentHeading.set(v == null ? 0 : v);
       }));
     });
+
     // Course over ground
     effect(() => {
       const cfg = this.runtime.options();
@@ -200,7 +201,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       }));
     });
 
-    // Target Angle
+    // Target Angle (switches automatically from beat to run angles depending on boat direction and wind angle)
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg) return;
@@ -209,8 +210,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('targetAngle', pkt => {
         const v = pkt?.data?.value as number | null;
-        const normalized = v == null ? 0 : (v < 0 ? 360 + v : v);
-        this.targetAngle.set(normalized);
+        this.targetAngle.set(v);
       }));
     });
 
@@ -227,7 +227,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       }));
     });
 
-    // Target VMG
+    // Target VMG (switches automatically from beat to run angles depending on boat direction and wind angle)
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg) return;
