@@ -54,18 +54,12 @@ export class SvgRacesteerComponent implements OnDestroy {
   private windSectorsInitialized = false;
   private trueWindHeading = 0;
 
-
-
   protected nextTargetDirection = computed(() => {
     const hdg = this.compassHeading();
     const targetDirection = this.tackTrue();
     if (hdg == null || targetDirection == null) return 0;
     return this.unsignedAngleDelta(hdg, targetDirection);
   });
-
-
-
-
   protected trueWindSpeedDisplay = computed(() => {
     const trueWindSpeed = this.trueWindSpeed();
     if (trueWindSpeed == null) return "--";
@@ -151,7 +145,6 @@ export class SvgRacesteerComponent implements OnDestroy {
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
           animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
-          //this.updateLaylines();
           this.updateWindSectors();
         }
       });
@@ -260,8 +253,6 @@ export class SvgRacesteerComponent implements OnDestroy {
     const stbdLaylineRotate = base + targetAngle;
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
     this.stbdLaylinePrev = stbdLaylineRotate;
-
-
   }
 
   private animateLayline(from: number, to: number, isPort: boolean) {
