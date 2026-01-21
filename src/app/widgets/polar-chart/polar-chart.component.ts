@@ -61,6 +61,33 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
 
   private readonly ngZone = inject(NgZone);
   private chart: Chart<'radar'> | null = null;
+  private readonly angleGridPlugin = {
+    id: 'polarAngleGrid',
+    beforeDraw: (chart: Chart<'radar'>) => {
+      const scale = chart.scales?.r as RadialLinearScale | undefined;
+      if (!scale) return;
+      const ctx = chart.ctx;
+      const centerX = scale.xCenter;
+      const centerY = scale.yCenter;
+      const radius = scale.drawingArea;
+      const angleStep = 30;
+      const rotation = (scale.options.startAngle ?? 0) * (Math.PI / 180);
+
+      ctx.save();
+      ctx.strokeStyle = scale.options.angleLines?.color as string ?? 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = (scale.options.angleLines?.lineWidth as number | undefined) ?? 1;
+      for (let angle = 0; angle < 360; angle += angleStep) {
+        const rad = (angle * Math.PI) / 180 + rotation;
+        const x = centerX + Math.cos(rad) * radius;
+        const y = centerY + Math.sin(rad) * radius;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  };
 
   constructor() {
     effect(() => {
@@ -88,6 +115,7 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
     if (this.chart) return;
     const canvas = this.polarChart()?.nativeElement;
     if (!canvas) return;
+    Chart.register(this.angleGridPlugin);
     const config: ChartConfiguration<'radar'> = {
       type: 'radar',
       data,
@@ -109,13 +137,15 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildChartData(data: PolarData): ChartData<'radar'> {
-    const labels = this.buildLabels(data.rows);
+    const baseLabels = this.buildAngleLabels(10);
+    const labels = this.buildMirroredLabels(baseLabels);
     const palette = this.buildPalette(data.tws.length);
-    const grouped = this.groupRowsByTwa(data.rows);
+    const grouped = this.interpolateRows(data.rows, data.tws.length, baseLabels);
 
     const datasets = data.tws.map((tws, idx) => {
       const values = labels.map(label => {
-        const row = grouped.get(label);
+        const sourceLabel = label <= 180 ? label : 360 - label;
+        const row = grouped.get(sourceLabel);
         if (!row) return null;
         const v = row[idx] ?? 0;
         return v > 0 ? v : null;
@@ -125,9 +155,9 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
         label: `${tws} kn`,
         data: values,
         borderColor: palette[idx].borderColor,
-        backgroundColor: palette[idx].backgroundColor,
-        pointRadius: 0,
-        pointHoverRadius: 2,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4,
         borderWidth: 2
       };
     });
@@ -145,9 +175,12 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
       animation: false,
       scales: {
         r: {
-          angleLines: { color: gridColor },
+          angleLines: { display: false, color: gridColor },
           grid: { color: gridColor },
-          pointLabels: { color: labelColor },
+          pointLabels: {
+            color: labelColor,
+            display: false
+          },
           ticks: { color: labelColor, backdropColor: 'rgba(0, 0, 0, 0)' }
         }
       },
@@ -162,25 +195,68 @@ export class PolarChartComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private buildLabels(rows: PolarDataRow[]): number[] {
-    const set = new Set<number>();
-    rows.forEach(row => set.add(row.twa));
-    return Array.from(set).sort((a, b) => a - b);
+  private buildAngleLabels(step: number): number[] {
+    const labels: number[] = [];
+    for (let angle = 0; angle <= 180; angle += step) {
+      labels.push(Number(angle.toFixed(1)));
+    }
+    return labels;
   }
 
-  private groupRowsByTwa(rows: PolarDataRow[]): Map<number, number[]> {
-    const grouped = new Map<number, number[]>();
+  private buildMirroredLabels(baseLabels: number[]): number[] {
+    if (baseLabels.length === 0) return baseLabels;
+    const withoutEnds = baseLabels.filter((angle, index) => index !== 0 && index !== baseLabels.length - 1);
+    const mirrored = [...withoutEnds].reverse().map(angle => 360 - angle);
+    return [...baseLabels, ...mirrored];
+  }
+
+  private interpolateRows(rows: PolarDataRow[], twsCount: number, labels: number[]): Map<number, number[]> {
+    const pointsByTws: { twa: number; speed: number }[][] = Array.from({ length: twsCount }, () => []);
+
     rows.forEach(row => {
-      const existing = grouped.get(row.twa);
-      if (!existing) {
-        grouped.set(row.twa, [...row.speeds]);
-        return;
-      }
-      row.speeds.forEach((v, idx) => {
-        if ((existing[idx] ?? 0) < v) existing[idx] = v;
+      row.speeds.forEach((speed, idx) => {
+        if (!speed || speed <= 0) return;
+        pointsByTws[idx].push({ twa: row.twa, speed });
       });
     });
+
+    const normalized = pointsByTws.map(points => {
+      const map = new Map<number, number>();
+      points.forEach(point => {
+        const existing = map.get(point.twa);
+        if (existing == null || existing < point.speed) map.set(point.twa, point.speed);
+      });
+      return Array.from(map.entries())
+        .map(([twa, speed]) => ({ twa, speed }))
+        .sort((a, b) => a.twa - b.twa);
+    });
+
+    const grouped = new Map<number, number[]>();
+    labels.forEach(label => {
+      const values = normalized.map(points => this.interpolateSpeed(points, label));
+      grouped.set(label, values);
+    });
     return grouped;
+  }
+
+  private interpolateSpeed(points: { twa: number; speed: number }[], target: number): number {
+    if (!points.length) return 0;
+    if (target <= points[0].twa) return points[0].twa === target ? points[0].speed : 0;
+    if (target >= points[points.length - 1].twa) {
+      return points[points.length - 1].twa === target ? points[points.length - 1].speed : 0;
+    }
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      if (target === a.twa) return a.speed;
+      if (target === b.twa) return b.speed;
+      if (target > a.twa && target < b.twa) {
+        const t = (target - a.twa) / (b.twa - a.twa);
+        return a.speed + (b.speed - a.speed) * t;
+      }
+    }
+    return 0;
   }
 
   private buildPalette(count: number): { borderColor: string; backgroundColor: string }[] {
