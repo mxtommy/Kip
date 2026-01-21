@@ -432,7 +432,7 @@
         class="tack-value"
         x="1072"
         y="175"
-        id="text42">{{ tackTrue() }}<tspan style="font-weight:normal;">°</tspan></text>
+        id="text42">{{ nextTargetDirection() | number:'1.0-0' }} <tspan style="font-weight:normal;">°</tspan></text>
     </g>
     <g id="windVmgCounter">
       <text

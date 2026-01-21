@@ -1,4 +1,5 @@
 import { Component, ElementRef, input, viewChild, signal, effect, computed, untracked, OnDestroy, NgZone, inject, ChangeDetectionStrategy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { animateRotation, animateAngleTransition, animateSectorTransition, type SectorAngles } from '../../core/utils/svg-animate.util';
 
 const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
@@ -12,7 +13,7 @@ interface ISVGRotationObject {
     selector: 'svg-racesteer',
     templateUrl: './svg-racesteer.component.svg',
     styleUrl: './svg-racesteer.component.scss',
-  imports: [],
+  imports: [DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SvgRacesteerComponent implements OnDestroy {
@@ -52,6 +53,19 @@ export class SvgRacesteerComponent implements OnDestroy {
   protected headingValue = signal<string>("--");
   private windSectorsInitialized = false;
   private trueWindHeading = 0;
+
+
+
+  protected nextTargetDirection = computed(() => {
+    const hdg = this.compassHeading();
+    const targetDirection = this.tackTrue();
+    if (hdg == null || targetDirection == null) return 0;
+    return this.unsignedAngleDelta(hdg, targetDirection);
+  });
+
+
+
+
   protected trueWindSpeedDisplay = computed(() => {
     const trueWindSpeed = this.trueWindSpeed();
     if (trueWindSpeed == null) return "--";
@@ -399,6 +413,11 @@ export class SvgRacesteerComponent implements OnDestroy {
   private addHeading(h1 = 0, h2 = 0) {
     const sum = h1 + h2;
     return ((sum % 360) + 360) % 360;
+  }
+
+  private unsignedAngleDelta(a: number, b: number): number {
+    const delta = ((a - b + 540) % 360) - 180;
+    return Math.abs(delta);
   }
 
   private normalizeAngle(angle: number): number {
