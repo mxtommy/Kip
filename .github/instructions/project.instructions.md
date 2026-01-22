@@ -113,7 +113,13 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 - **NotificationsService (`notifications.service.ts`)**
   - Key methods: Notification state management, audio/visual alerts, muting.
-  - Dependencies: AppSettingsService, DataService, SignalkRequestsService, Howler.
+  - Dependencies: AppSettingsService, DataService, SignalkRequestsService.
+
+- **ToastService (`toast.service.ts`)**
+  - Purpose: In-app snackbars using Angular Material.
+  - Key methods: `show(message, duration = 1500, silent = true, action = 'Dismiss', severity = 'message')`.
+  - Dependencies: MatSnackBar, AppSettingsService.
+  - Usage: Use for short, user-visible feedback (login errors, PUT failures, success confirmations). Sound is suppressed when `silent=true` or user sound settings disable audio.
 
 - **CanvasService (`canvas.service.ts`)**
   - Purpose: Provides drawing and rendering utilities for widgets and dashboard components.
