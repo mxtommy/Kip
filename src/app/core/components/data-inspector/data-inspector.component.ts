@@ -145,9 +145,9 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
 
     const ok = this.clipboard.copy(path);
     if (ok) {
-      this.toast.show('Path copied', 1200, true);
+      this.toast.show('Path copied to clipboard', 1000, true, null, 'success');
     } else {
-      this.toast.show('Copy failed', 1500);
+      this.toast.show('Copy to clipboard failed', 1500, false, null, 'error');
     }
   }
 

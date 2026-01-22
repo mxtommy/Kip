@@ -191,21 +191,6 @@ export class WidgetMultiStateSwitchComponent {
         this.meta.observe('controlPath');
       });
     });
-
-    effect(() => {
-      const requestResult = this.skRequest();
-      if (!requestResult || requestResult.widgetUUID !== this.id()) return;
-      const cfg = this.cfg();
-      let errMsg = `Multi-State Switch ${cfg?.displayName || ''}: `;
-      if (requestResult.statusCode !== 200) {
-        if (requestResult.message) {
-          errMsg += requestResult.message;
-        } else {
-          errMsg += `${requestResult.statusCode} - ${requestResult.statusCodeDescription}`;
-        }
-        this.toast.show(errMsg, 0);
-      }
-    });
   }
 
   protected select(option: ISkPossibleValue): void {

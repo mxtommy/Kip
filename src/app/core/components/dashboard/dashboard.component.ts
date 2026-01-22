@@ -281,7 +281,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
         this.openAddWidgetDialog(gridCell.x, gridCell.y);
       } else {
-        this.toast.show('Error Adding Widget: Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0);
+        this.toast.show('Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0, false, null, 'error');
       }
     }
   }
@@ -378,7 +378,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         const best = this.findBestWidgetSizeAtCell(grid, x, y, minW, minH, maxW, maxH);
 
         if (!best) {
-          this.toast.show(`Error Adding Widget: Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0);
+          this.toast.show(`Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0, false, null, 'error');
           return;
         }
 
@@ -469,7 +469,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (_gridstack.grid.willItFit(newItem)) {
         _gridstack.grid.addWidget(newItem);
       } else {
-        this.toast.show('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
       }
     }
   }
@@ -512,7 +512,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         _gridstack.grid.addWidget(newItem);
         this.dashboard.clearWidgetClipboard();
       } else {
-        this.toast.show('Paste failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
       }
     }
   }

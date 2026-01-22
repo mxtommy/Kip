@@ -104,7 +104,7 @@ export class SettingsDisplayComponent implements OnInit {
     this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
 
     this.displayForm().form.markAsPristine();
-    this.toast.show("Configuration saved", 1500, true, null, 'message');
+    this.toast.show("Configuration saved", 0, true, null, 'message');
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {

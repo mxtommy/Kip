@@ -6,6 +6,8 @@
 
 .toast {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 10px;
 }
@@ -26,9 +28,13 @@
   --toast-color: var(--kip-starboard-color);
 }
 .toast .icon {
+  display: inline-flex;
   width: 36px;
   height: 36px;
   font-size: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   @include mat.icon-overrides((
     color: var(--toast-color),
   ));

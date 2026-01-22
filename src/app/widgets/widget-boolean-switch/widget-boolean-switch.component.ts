@@ -117,8 +117,6 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
           });
         });
       });
-      // subscribe PUT responses (re-init on config change to ensure uuid matches)
-      this.subscribeSKRequest();
     });
   }
 
@@ -128,25 +126,6 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     const ctrlHeightProportion = (35 * event.contentRect.width / 180);
     const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h };
-  }
-
-  private subscribeSKRequest(): void {
-    this.skRequestSub?.unsubscribe();
-    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      // Match widget ID
-      if (requestResult.widgetUUID == this.id()) {
-        const cfg = this.runtime?.options();
-        let errMsg = `Toggle Widget ${cfg?.displayName || 'Switch Panel'}: `;
-        if (requestResult.statusCode != 200) {
-          if (requestResult.message) {
-            errMsg += requestResult.message;
-          } else {
-            errMsg += requestResult.statusCode + ' - ' + requestResult.statusCodeDescription;
-          }
-          this.toast.show(errMsg, 0);
-        }
-      }
-    });
   }
 
   public toggle(ctrl: IDynamicControl): void {

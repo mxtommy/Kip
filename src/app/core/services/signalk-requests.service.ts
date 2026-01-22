@@ -194,7 +194,7 @@ export class SignalkRequestsService {
         }
 
         if (this.requests[index].statusCode == 400) {
-          this.toast.show(this.requests[index].message);
+          this.toast.show(this.requests[index].message, 0, false, null, 'error');
           console.log("[Request Service] " + this.requests[index].message );
         }
 
@@ -207,7 +207,7 @@ export class SignalkRequestsService {
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.toast.show(delta.accessRequest.permission + ": Device Access Token received from server.");
+          this.toast.show(delta.accessRequest.permission + ": Device Access Token received from server.", 5000, false, null, 'success');
           console.log(`[Request Service] ${delta.accessRequest.permission}: Device Access Token received`);
           this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
@@ -221,7 +221,7 @@ export class SignalkRequestsService {
         }
 
       } else {
-        this.toast.show("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        this.toast.show("Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message, 0, false, null, 'error');
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
@@ -233,7 +233,7 @@ export class SignalkRequestsService {
         this.requests = []; // flush array to clean values that will become stale post error
       }
     } else {
-      this.toast.show("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
+      this.toast.show("A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta), 0, false, null, 'warn');
       console.error("[Request Service] A Request message that contains an unknown Request ID was received. from delta:\n" + JSON.stringify(delta))
     }
   }

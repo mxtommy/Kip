@@ -59,13 +59,13 @@ export class WidgetLoginComponent implements OnInit {
         this.openUserCredentialModal("Sign in failed: Invalide user/password. Enter valide credentials");
         console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 404) {
-        this.toast.show("Sign in failed: Login API not found at URL. See connection detail status in Configuration/Settings", 5000, false);
+        this.toast.show("Login API not found at URL. See connection detail status in Configuration/Settings", 5000, false, null, 'error');
         console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 0) {
-        this.toast.show("Sign in failed: Cannot reach server at Signal K URL. See connection detail status in Configuration/Settings", 5000, false);
+        this.toast.show("Cannot reach server at Signal K URL. See connection detail status in Configuration/Settings", 5000, false, null, 'error');
         console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at Signal K URL:" + error.message);
       } else {
-        this.toast.show("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
+        this.toast.show("Unknown authentication failure: " + JSON.stringify(error), 5000, false, null, 'error');
         console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
       }
     });
