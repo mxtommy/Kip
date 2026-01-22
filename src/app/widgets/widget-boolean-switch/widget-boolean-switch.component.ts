@@ -1,7 +1,8 @@
 import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService, ITheme } from '../../core/services/app-service';
+import { ITheme } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
@@ -54,7 +55,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Services / directives
   protected dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
-  private readonly appService = inject(AppService);
+  private readonly toast = inject(ToastService);
 
   // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
@@ -116,8 +117,6 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
           });
         });
       });
-      // subscribe PUT responses (re-init on config change to ensure uuid matches)
-      this.subscribeSKRequest();
     });
   }
 
@@ -127,25 +126,6 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     const ctrlHeightProportion = (35 * event.contentRect.width / 180);
     const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
     this.ctrlDimensions = { width: event.contentRect.width, height: h };
-  }
-
-  private subscribeSKRequest(): void {
-    this.skRequestSub?.unsubscribe();
-    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      // Match widget ID
-      if (requestResult.widgetUUID == this.id()) {
-        const cfg = this.runtime?.options();
-        let errMsg = `Toggle Widget ${cfg?.displayName || 'Switch Panel'}: `;
-        if (requestResult.statusCode != 200) {
-          if (requestResult.message) {
-            errMsg += requestResult.message;
-          } else {
-            errMsg += requestResult.statusCode + ' - ' + requestResult.statusCodeDescription;
-          }
-          this.appService.sendSnackbarNotification(errMsg, 0);
-        }
-      }
-    });
   }
 
   public toggle(ctrl: IDynamicControl): void {

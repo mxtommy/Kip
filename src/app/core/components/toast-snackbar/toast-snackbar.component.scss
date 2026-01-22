@@ -1,0 +1,66 @@
+@use '@angular/material' as mat;
+:host {
+  display: block;
+  width: 100%;
+}
+
+.toast {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast[data-severity='info'] {
+  --toast-color: var(--mat-sys-inverse-primary);
+}
+
+.toast[data-severity='warn'] {
+  --toast-color: var(--mat-sys-tertiary);
+}
+
+.toast[data-severity='error'] {
+  --toast-color: var(--mat-sys-error-container);
+}
+
+.toast[data-severity='success'] {
+  --toast-color: var(--kip-starboard-color);
+}
+.toast .icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  font-size: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  @include mat.icon-overrides((
+    color: var(--toast-color),
+  ));
+}
+
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.toast-close {
+  @include mat.icon-button-overrides((
+    icon-color: var(--mat-sys-inverse-on-surface),
+    icon-size: 32px,
+  ));
+  icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}

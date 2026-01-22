@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
 import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
-import { AppService } from '../../../services/app-service';
+import { ToastService } from '../../../services/toast.service';
 import { AppSettingsService } from '../../../services/app-settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../../services/storage.service';
@@ -32,7 +32,7 @@ interface IRemoteConfig {
 export class SettingsConfigComponent implements OnInit, OnDestroy {
   private appSettingsService = inject(AppSettingsService);
   private storageSvc = inject(StorageService);
-  private appService = inject(AppService);
+  private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
   private fb = inject(UntypedFormBuilder);
 
@@ -76,7 +76,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     if(this.hasToken) this.getServerConfigList();
-    // this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
   public getServerConfigList(configFileVersionName?: number) {
@@ -96,10 +95,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
       .catch((error: HttpErrorResponse) => {
         switch (error.status) {
           case 401:
-            this.appService.sendSnackbarNotification("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
+            this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, null, 'error');
             break;
 
-          default: this.appService.sendSnackbarNotification("Error listing server configurations: " + error, 3000, false);
+          default: this.toast.show("Cannot list configurations: " + error, 3000, false, null, 'error' );
             break;
         }
       });
@@ -110,17 +109,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     if (this.supportApplicationData) {
       // Prevent saving with scope 'user' and name 'default'
       if ((scope === 'user' && name === 'default') && !forceSave) {
-        this.appService.sendSnackbarNotification("Saving configuration with scope 'user' and name 'default' is not allowed.", 5000, false);
+        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, null, 'error');
         return;
       }
 
       if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.appService.sendSnackbarNotification(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
+        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1500, true, null, 'success');
         if (!dontRefreshConfigList || undefined) {
           this.getServerConfigList();
         }
       } else {
-        this.appService.sendSnackbarNotification("Error saving configuration to server", 0, false);
+        this.toast.show("Configuration not saved to server", 0, false, null, 'error');
       }
     }
   }
@@ -142,7 +141,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         conf = config
       });
     } catch (error) {
-      this.appService.sendSnackbarNotification("Error retrieving configuration from server: " + error.statusText, 3000, false);
+      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, null, 'error');
       return;
     }
 
@@ -152,7 +151,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.appService.sendSnackbarNotification(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
+    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1500, false, null, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
@@ -231,13 +230,13 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
           }
           this.appSettingsService.reloadApp();
         } catch (error) {
-          this.appService.sendSnackbarNotification("Invalid JSON file", 3000, false);
-          console.error("Invalid JSON file:", error);
+          this.toast.show("File does not contain valid JSON.", 0, false, null, 'error');
+          console.error("Invalid JSON file format:", error);
         }
       };
       reader.readAsText(file); // Read the file as text
     } else {
-      this.appService.sendSnackbarNotification("Please select a valid JSON file", 0, false);
+      this.toast.show("Please select a valid JSON file", 0, false, null, 'error');
     }
   }
 

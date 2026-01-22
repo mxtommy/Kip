@@ -5,7 +5,7 @@ import { GridItemHTMLElement, GridStackOptions } from 'gridstack';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { DashboardScrollerComponent } from "../dashboard-scroller/dashboard-scroller.component";
 import { UUID } from '../../utils/uuid.util';
-import { AppService } from '../../services/app-service';
+import { ToastService } from '../../services/toast.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DialogService } from '../../services/dialog.service';
@@ -39,7 +39,7 @@ interface GridApi {
   }
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
-  private readonly _app = inject(AppService);
+  private readonly toast = inject(ToastService);
   private readonly _dialog = inject(DialogService);
   private readonly _bottomSheet = inject(MatBottomSheet);
   protected readonly dashboard = inject(DashboardService);
@@ -281,7 +281,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
         this.openAddWidgetDialog(gridCell.x, gridCell.y);
       } else {
-        this._app.sendSnackbarNotification('Error Adding Widget: Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0);
+        this.toast.show('Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0, false, null, 'error');
       }
     }
   }
@@ -378,7 +378,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         const best = this.findBestWidgetSizeAtCell(grid, x, y, minW, minH, maxW, maxH);
 
         if (!best) {
-          this._app.sendSnackbarNotification(`Error Adding Widget: Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0);
+          this.toast.show(`Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0, false, null, 'error');
           return;
         }
 
@@ -469,7 +469,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (_gridstack.grid.willItFit(newItem)) {
         _gridstack.grid.addWidget(newItem);
       } else {
-        this._app.sendSnackbarNotification('Duplication failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
       }
     }
   }
@@ -512,7 +512,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         _gridstack.grid.addWidget(newItem);
         this.dashboard.clearWidgetClipboard();
       } else {
-        this._app.sendSnackbarNotification('Paste failed: Insufficient space on the dashboard. Please reorganize to free up space.', 0);
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
       }
     }
   }

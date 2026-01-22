@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, viewChild, signal, Signal, model } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../../services/app-service';
+import { ToastService } from '../../../services/toast.service';
 import { AppSettingsService } from '../../../services/app-settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -31,9 +32,10 @@ import { MatSelectModule } from '@angular/material/select';
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
-  readonly MODE_PATH: string = 'self.environment.mode';
+  private readonly MODE_PATH: string = 'self.environment.mode';
   readonly displayForm = viewChild<NgForm>('displayForm');
   private _app = inject(AppService);
+  private toast = inject(ToastService);
   private _settings = inject(AppSettingsService);
   private _responsive = inject(BreakpointObserver);
   private _plugins = inject(SignalkPluginsService);
@@ -75,7 +77,7 @@ export class SettingsDisplayComponent implements OnInit {
     const form = this.displayForm();
     if (!form || form.invalid) {
       form?.form.markAllAsTouched();
-      this._app.sendSnackbarNotification('Please fill out required fields before saving.', 3000, true);
+      this.toast.show('Please fill out required fields before saving.', 3000, true);
       return;
     }
     this._settings.setAutoNightMode(this.autoNightMode());
@@ -102,7 +104,7 @@ export class SettingsDisplayComponent implements OnInit {
     this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
 
     this.displayForm().form.markAsPristine();
-    this._app.sendSnackbarNotification("Configuration saved", 3000, false);
+    this.toast.show("Configuration saved", 0, true, null, 'message');
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
@@ -118,9 +120,9 @@ export class SettingsDisplayComponent implements OnInit {
         if (seq !== this._pluginCheckSeq) return; // stale response; ignore
         if (!enabled) {
           this.autoNightMode.set(false);
-          this._app.sendSnackbarNotification(
-            "Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
-            0
+          this.toast.show(
+            "To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
+            0, false, null, 'error'
           );
           return;
         }
@@ -141,7 +143,7 @@ export class SettingsDisplayComponent implements OnInit {
    */
   public  validateAutoNightModeSupported(): boolean {
     if (!this._data.getPathObject(this.MODE_PATH)) {
-      this._app.sendSnackbarNotification("Path Error: In Signal K, locate the Derived Data plugin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0);
+      this.toast.show("Locate the Derived Data plugin in the Signal K admin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0, false, null, 'error');
       return false;
     }
     return true;

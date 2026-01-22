@@ -1,22 +1,11 @@
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import packageInfo from '../../../../package.json';
-
-/**
- * Snack-bar notification message interface.
- */
-export interface AppNotification {
-  message: string;
-  action?: string;
-  duration: number;
-  silent: boolean;
-}
-
 
 /**
  * Kip theme hex colors
@@ -64,7 +53,7 @@ export interface ITheme {
   providedIn: 'root'
 })
 export class AppService {
-  readonly MODE_PATH: string = 'self.environment.mode';
+  private readonly MODE_PATH: string = 'self.environment.mode';
   public readonly configurableThemeColors: {label: string, value: string}[] = [
     {label: "Contrast", value: "contrast"},
     {label: "Blue", value: "blue"},
@@ -75,7 +64,6 @@ export class AppService {
     {label: "Purple", value: "purple"},
     {label: "Grey", value: "grey"}
   ];
-  public snackbarAppNotifications = new Subject<AppNotification>(); // for snackbar message
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
   private _cssThemeColorRoles: ITheme = null;
   private readonly _settings = inject(AppSettingsService);
@@ -147,31 +135,6 @@ export class AppService {
     console.log(`** Browser Version: ${this.browserVersion()}`);
     console.log(`** OS Version: ${this.osVersion()}`);
     console.log("***********************************************");
-  }
-
-  /**
-   * Display Kip Snackbar notification.
-   *
-   * @param message Text to be displayed.
-   * @param duration Display duration in milliseconds before automatic dismissal.
-   * Duration value of 0 is indefinite or until use clicks Dismiss button. Defaults
-   *  to 10000 of no value is provided.
-   * @param silent A boolean that defines if the notification should make no sound.
-   * Defaults false.
-   */
-  public sendSnackbarNotification(message: string, duration = 10000, silent = false, action = "Dismiss") {
-    this.snackbarAppNotifications.next({ message: message, duration: duration, silent: silent, action: action });
-  }
-
-  /**
-   * Observable to receive Kip app Snackbar notification. Use in app.component ONLY.
-   *
-   * @usageNotes To send a Snackbar notification, use sendSnackbarNotification().
-   * Notifications are purely client side and have no relationship or
-   * interactions with the Signal K server.
-   */
-  public getSnackbarAppNotifications() {
-    return this.snackbarAppNotifications.asObservable();
   }
 
   private readThemeCssRoleVariables(): void {

@@ -1,9 +1,9 @@
 import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { Subscription, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -53,19 +53,17 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private svgElement = viewChild.required<ElementRef<SVGElement>>('svgSlider');
   protected readonly dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
-  private readonly appService = inject(AppService);
-  
+  private readonly toast = inject(ToastService);
+
   protected labelColor = signal<string>(undefined)
   protected barColor = signal<string>(undefined);
-  
-  private skRequestSub = new Subscription; // Request result observer
 
   private lineStartPx: number;
   private lineWidthPx: number;
   private lineEndPx: number;
 
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-  
+
   protected handlePosition = 20;
   protected pathValue = 0;
   private lineStart = this.handlePosition;
@@ -116,9 +114,6 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
       this.getColors(cfg.color);
     }
 
-    this.skRequestSub?.unsubscribe();
-    this.subscribeSKRequest();
-
     this.valueChange$
       .pipe(
         map((value) => {
@@ -159,23 +154,6 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private isWithinMargin(value: number, target: number, cfg: IWidgetSvcConfig): boolean {
     const margin = (cfg.displayScale.upper - cfg.displayScale.lower) * 0.01; // 1% margin
     return Math.abs(value - target) <= margin;
-  }
-
-  private subscribeSKRequest(): void {
-    this.skRequestSub = this.signalkRequestsService.subscribeRequest().subscribe(requestResult => {
-      if (requestResult.widgetUUID == this.id()) {
-        const cfg = this.runtime.options();
-        let errMsg = `Toggle Widget ${cfg?.displayName}: `;
-        if (requestResult.statusCode != 200){
-          if (requestResult.message){
-            errMsg += requestResult.message;
-          } else {
-            errMsg += requestResult.statusCode + " - " +requestResult.statusCodeDescription;
-          }
-          this.appService.sendSnackbarNotification(errMsg, 0);
-        }
-      }
-    });
   }
 
   public sendValue(value: unknown): void {
@@ -288,7 +266,6 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.skRequestSub?.unsubscribe();
     this.valueChange$.complete(); // Complete the Subject to clean up resources
     if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
   }

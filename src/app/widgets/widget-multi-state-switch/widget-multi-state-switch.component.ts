@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardService } from './../../core/services/dashboard.service';
-import { AppService, ITheme } from '../../core/services/app-service';
+import { ITheme } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ISkPossibleValue } from '../../core/interfaces/signalk-interfaces';
 import { getColors } from '../../core/utils/themeColors.utils';
@@ -74,7 +75,7 @@ export class WidgetMultiStateSwitchComponent {
 
   private readonly signalkRequestsService = inject(SignalkRequestsService);
   protected readonly dashboard = inject(DashboardService);
-  private readonly app = inject(AppService);
+  private readonly toast = inject(ToastService);
 
   private readonly skRequest = toSignal(this.signalkRequestsService.subscribeRequest(), { initialValue: null });
 
@@ -189,21 +190,6 @@ export class WidgetMultiStateSwitchComponent {
         });
         this.meta.observe('controlPath');
       });
-    });
-
-    effect(() => {
-      const requestResult = this.skRequest();
-      if (!requestResult || requestResult.widgetUUID !== this.id()) return;
-      const cfg = this.cfg();
-      let errMsg = `Multi-State Switch ${cfg?.displayName || ''}: `;
-      if (requestResult.statusCode !== 200) {
-        if (requestResult.message) {
-          errMsg += requestResult.message;
-        } else {
-          errMsg += `${requestResult.statusCode} - ${requestResult.statusCodeDescription}`;
-        }
-        this.app.sendSnackbarNotification(errMsg, 0);
-      }
     });
   }
 

@@ -1078,17 +1078,13 @@ export class GestureDirective {
       return;
     }
     (this as { _lastPressEmitTs?: number })._lastPressEmitTs = now;
-    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
-    const evt = new CustomEvent('press', { detail, bubbles: true, composed: true });
-    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
+    const evt = new CustomEvent('press', { detail });
     this.debug('emitPressEvent', { detail });
     this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
   }
 
   private emitDoubleTapEvent(detail: { x: number; y: number; dt: number }) {
-    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
-    const evt = new CustomEvent('doubletap', { detail, bubbles: true, composed: true });
-    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
+    const evt = new CustomEvent('doubletap', { detail });
     this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
   }
 
