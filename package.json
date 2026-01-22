@@ -101,7 +101,7 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.6.0",
     "karma-spec-reporter": "^0.0.36",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "ng-packagr": "^21.0.1",
     "ngx-markdown": "^21.0.1",
     "prismjs": "^1.30.0",
