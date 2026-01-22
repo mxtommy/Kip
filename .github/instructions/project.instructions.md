@@ -113,7 +113,7 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 - **NotificationsService (`notifications.service.ts`)**
   - Key methods: Notification state management, audio/visual alerts, muting.
-  - Dependencies: AppSettingsService, DataService, SignalkRequestsService, Howler.
+  - Dependencies: AppSettingsService, DataService, SignalkRequestsService.
 
 - **CanvasService (`canvas.service.ts`)**
   - Purpose: Provides drawing and rendering utilities for widgets and dashboard components.

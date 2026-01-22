@@ -129,7 +129,7 @@ Template:
 
 ## Project specifics & gotchas
 - Always respect serve path /@mxtommy/kip/ (dev/prod). Assets and routing assume this base.
-- CommonJS deps are explicitly allowed (howler, js-quantities). Avoid introducing new CJS without adding to allowedCommonJsDependencies.
+- CommonJS deps are explicitly allowed (js-quantities). Avoid introducing new CJS without adding to allowedCommonJsDependencies.
 - Use standalone components, signals, @if/@for; follow .github/instructions/angular.instructions.md for style.
 - Widget config UIs live under src/app/widget-config; path controls use custom validators (no Validators.required). Respect isPathConfigurable and pathRequired.
 

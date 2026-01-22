@@ -3,13 +3,11 @@
  */
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
-
 import { AppSettingsService } from "./app-settings.service";
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalkRequestsService } from './signalk-requests.service';
 import { DataService } from './data.service';
-import { Howl } from 'howler';
 import { isEqual } from 'lodash-es';
 import { UUID } from '../utils/uuid.util';
 import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
@@ -74,17 +72,11 @@ export class NotificationsService implements OnDestroy {
   private _notifications$ = new BehaviorSubject<INotification[]>([]);
   private _alarmsInfo$ = new BehaviorSubject<IAlarmInfo>({ audioSev: 0, visualSev: 0, alarmCount: 0, isMuted: false });
 
-  // --- Howler (audio) state (FIXED LEAKS) ------------------------------------
-  // Previous version created a new Howl each track change without unloading; onplayerror
-  // used function() with wrong `this`. We now:
-  // 1. Cache one Howl per track in _players (looping).
-  // 2. Stop (not recreate) when switching tracks; reuse existing instance.
-  // 3. Correct callbacks with arrow functions (lexical this not required).
-  // 4. Unload all players on destroy.
-  private _players = new Map<number, Howl>();
+  // --- HTMLAudioElement (audio) state ----------------------------------------
+  // Cache one player per track id and reuse across switches.
+  private _players = new Map<number, HTMLAudioElement>();
   private _activeAlarmSoundtrack: number = null;
-  private _activeHowlId: number = null;
-  private _isHowlIdMuted = false;
+  private _isMuted = false;
 
   private _lastEmittedValue: IAlarmInfo = null;
 
@@ -214,7 +206,7 @@ export class NotificationsService implements OnDestroy {
       audioSev,
       visualSev,
       alarmCount: activeNotifications,
-      isMuted: this._isHowlIdMuted
+      isMuted: this._isMuted
     };
 
     if (!isEqual(newValue, this._lastEmittedValue)) {
@@ -267,7 +259,7 @@ export class NotificationsService implements OnDestroy {
 
     if (!message.value['method'].includes(Methods.Sound) ||
         this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`] ||
-        this._isHowlIdMuted) {
+        this._isMuted) {
       aSev = 0;
     }
     if (!message.value['method'].includes(Methods.Visual)) {
@@ -318,28 +310,18 @@ export class NotificationsService implements OnDestroy {
     );
   }
 
-  // ---- HOWLER FIXED IMPLEMENTATION -----------------------------------------
-
-  private getPlayer(track: number): Howl {
-    if (this._players.has(track)) return this._players.get(track);
+  private getPlayer(track: number): HTMLAudioElement {
+    const existing = this._players.get(track);
+    if (existing) return existing;
     const name = alarmTrack[track];
     if (!name) {
       console.warn('[Notification Service] Unknown track id', track);
       return this.getPlayer(1000);
     }
-    const player = new Howl({
-      src: [`assets/${name}.mp3`],
-      autoplay: false,
-      preload: true,
-      loop: true,
-      onloaderror: (_id, err) => {
-        console.log("[Notification Service] load error track:", track, err);
-      },
-      onplayerror: (_id, err) => {
-        console.log("[Notification Service] play locked track:", track, err);
-        player.once('unlock', () => player.play());
-      }
-    });
+    const player = new Audio(`assets/${name}.mp3`);
+    player.preload = 'auto';
+    player.loop = true;
+    player.muted = this._isMuted;
     this._players.set(track, player);
     return player;
   }
@@ -352,9 +334,9 @@ export class NotificationsService implements OnDestroy {
   mutePlayer(state: boolean) {
     if (this._activeAlarmSoundtrack != null && this._activeAlarmSoundtrack !== 1000) {
       const p = this._players.get(this._activeAlarmSoundtrack);
-      if (p && this._activeHowlId != null) p.mute(state, this._activeHowlId);
+      if (p) p.muted = state;
     }
-    this._isHowlIdMuted = state;
+    this._isMuted = state;
     this.updateNotificationsState();
   }
 
@@ -362,7 +344,7 @@ export class NotificationsService implements OnDestroy {
    * Switches the active looping alarm track.
    *
    * Track ids map to: 1000=stop/silent, 1001=alert, 1002=warn, 1003=alarm, 1004=emergency.
-   * This stops the previously active Howler instance (but keeps it cached for reuse).
+   * This stops the previously active audio player (but keeps it cached for reuse).
    */
   playAlarm(trackId: number) {
     if (this._activeAlarmSoundtrack === trackId) return;
@@ -370,22 +352,23 @@ export class NotificationsService implements OnDestroy {
     // Stop previous track (do not unload to allow reuse)
     if (this._activeAlarmSoundtrack != null) {
       const prev = this._players.get(this._activeAlarmSoundtrack);
-      prev?.stop();
+      if (prev) {
+        prev.pause();
+        prev.currentTime = 0;
+      }
     }
 
     if (trackId === 1000) {
       this._activeAlarmSoundtrack = 1000;
-      this._activeHowlId = null;
       return;
     }
 
     const player = this.getPlayer(trackId);
     this._activeAlarmSoundtrack = trackId;
-    this._activeHowlId = player.play();
-    player.mute(this._isHowlIdMuted, this._activeHowlId);
+    player.muted = this._isMuted;
+    player.currentTime = 0;
+    void player.play();
   }
-
-  // --------------------------------------------------------------------------
 
   /**
    * Stream of the current notification configuration used by this service.
@@ -395,11 +378,6 @@ export class NotificationsService implements OnDestroy {
     return this._notificationConfig$.asObservable();
   }
 
-  /**
-   * Cleans up subscriptions and unloads cached Howler players.
-   *
-   * Called by Angular when the service is destroyed (typically app teardown).
-   */
   ngOnDestroy(): void {
     this._notificationSettingsSubscription?.unsubscribe();
     this._resetServiceSubscription?.unsubscribe();
@@ -410,10 +388,14 @@ export class NotificationsService implements OnDestroy {
     this._notifications$.complete();
     this._alarmsInfo$.complete();
 
-    // Unload all cached Howl instances
+    // Stop and release all cached audio players
     for (const p of this._players.values()) {
-      try { p.unload(); } catch {
-        // Intentionally ignore errors during Howl unload
+      try {
+        p.pause();
+        p.currentTime = 0;
+        p.src = '';
+      } catch {
+        // ignore audio cleanup errors
       }
     }
     this._players.clear();
