@@ -5,7 +5,7 @@ import { AppSettingsService } from '../../core/services/app-settings.service';
 import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { HttpErrorResponse } from '@angular/common/http';
-import { AppService } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 
 
 @Component({
@@ -17,7 +17,7 @@ import { AppService } from '../../core/services/app-service';
 export class WidgetLoginComponent implements OnInit {
   dialog = inject(MatDialog);
   private auth = inject(AuthenticationService);
-  private appService = inject(AppService);
+  private toast = inject(ToastService);
   private appSettingsService = inject(AppSettingsService);
 
   public connectionConfig: IConnectionConfig = null;
@@ -59,13 +59,13 @@ export class WidgetLoginComponent implements OnInit {
         this.openUserCredentialModal("Sign in failed: Invalide user/password. Enter valide credentials");
         console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 404) {
-        this.appService.sendSnackbarNotification("Sign in failed: Login API not found at URL. See connection detail status in Configuration/Settings", 5000, false);
+        this.toast.show("Sign in failed: Login API not found at URL. See connection detail status in Configuration/Settings", 5000, false);
         console.log("[Setting-SignalK Component] Sign in failed: " + error.error.message);
       } else if (error.status == 0) {
-        this.appService.sendSnackbarNotification("Sign in failed: Cannot reach server at Signal K URL. See connection detail status in Configuration/Settings", 5000, false);
+        this.toast.show("Sign in failed: Cannot reach server at Signal K URL. See connection detail status in Configuration/Settings", 5000, false);
         console.log("[Setting-SignalK Component] Sign in failed: Cannot reach server at Signal K URL:" + error.message);
       } else {
-        this.appService.sendSnackbarNotification("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
+        this.toast.show("Unknown authentication failure: " + JSON.stringify(error), 5000, false);
         console.log("[Setting-SignalK Component] Unknown login error response: " + JSON.stringify(error));
       }
     });

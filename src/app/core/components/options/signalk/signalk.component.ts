@@ -1,6 +1,7 @@
 import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
+import { ToastService } from '../../../services/toast.service';
 import { AppSettingsService } from '../../../services/app-settings.service';
 import { IConnectionConfig } from "../../../interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../../services/signalk-connection.service';
@@ -50,6 +51,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly dialog = inject(MatDialog);
   private readonly appSettingsService = inject(AppSettingsService);
   protected readonly app = inject(AppService);
+  protected readonly toast = inject(ToastService);
   private readonly DataService = inject(DataService);
   private readonly signalKConnectionService = inject(SignalKConnectionService);
   private readonly deltaService = inject(SignalKDeltaService);
@@ -188,7 +190,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       this.isConnecting = false;
       const errorMessage = (error as Error)?.message || 'Unknown validation error';
       console.error('[Settings-SignalK] Server validation failed:', errorMessage);
-      this.app.sendSnackbarNotification(`Connection failed: ${errorMessage}`, 8000, false);
+      this.toast.show(`Connection failed: ${errorMessage}`, 8000, false);
     }
   }
 
@@ -267,7 +269,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     if (e.checked) {
       const version: string = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
-        this.app.sendSnackbarNotification("Configuration sharing requires Signal K version 1.46.2 or better", 0);
+        this.toast.show("Configuration sharing requires Signal K version 1.46.2 or better", 0);
         this.connectionConfig.useSharedConfig = false;
         return;
       }

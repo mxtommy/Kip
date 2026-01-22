@@ -3,7 +3,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -53,11 +53,11 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private svgElement = viewChild.required<ElementRef<SVGElement>>('svgSlider');
   protected readonly dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
-  private readonly appService = inject(AppService);
-  
+  private readonly toast = inject(ToastService);
+
   protected labelColor = signal<string>(undefined)
   protected barColor = signal<string>(undefined);
-  
+
   private skRequestSub = new Subscription; // Request result observer
 
   private lineStartPx: number;
@@ -65,7 +65,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private lineEndPx: number;
 
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-  
+
   protected handlePosition = 20;
   protected pathValue = 0;
   private lineStart = this.handlePosition;
@@ -172,7 +172,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
           } else {
             errMsg += requestResult.statusCode + " - " +requestResult.statusCodeDescription;
           }
-          this.appService.sendSnackbarNotification(errMsg, 0);
+          this.toast.show(errMsg, 0);
         }
       }
     });

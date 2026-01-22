@@ -1,6 +1,8 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { AppSettingsService } from './app-settings.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 
 export interface SnackItem {
   message: string;
@@ -12,14 +14,20 @@ export interface SnackItem {
 @Injectable({ providedIn: 'root' })
 export class ToastService {
   private readonly snackBar = inject(MatSnackBar);
-  private readonly appSettingsService = inject(AppSettingsService);
+  private readonly app = inject(AppSettingsService);
+  private readonly soundDisabled = toSignal(
+    this.app.getNotificationServiceConfigAsO().pipe(
+      map(config => config.sound.disableSound)
+    ),
+    { initialValue: this.app.getNotificationConfig().sound.disableSound }
+  );
   private toastAudio: HTMLAudioElement | null = null;
 
   // last snack for diagnostics/other UI (not a queue)
-  readonly lastSnack = signal<SnackItem | null>(null);
+  public readonly lastSnack = signal<SnackItem | null>(null);
 
   /**
-   * Display a Material snackbar (fire-and-forget).
+   * Display a Material snackbar (fire-and-forget) and return its reference.
    *
    * @param message Text to be displayed.
    * @param duration Display duration in milliseconds before automatic dismissal.
@@ -28,16 +36,17 @@ export class ToastService {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    * @param action Label for the snackbar action button.
+   * @returns MatSnackBarRef you can use to dismiss or observe lifecycle events.
    */
-  public show(message: string, duration = 10000, silent = false, action = 'Dismiss'): void {
+  public show(message: string, duration = 10000, silent = false, action = 'Dismiss'): MatSnackBarRef<unknown> {
     const snack: SnackItem = { message, duration, silent, action };
     this.lastSnack.set(snack);
-    this.snackBar.open(message, action, {
+    const ref = this.snackBar.open(message, action, {
       duration,
       verticalPosition: 'top'
     });
 
-    if (silent || this.appSettingsService.getNotificationConfig().sound.disableSound) return;
+    if (silent || this.soundDisabled()) return ref;
     if (!this.toastAudio) {
       this.toastAudio = new Audio('assets/notification.mp3');
       this.toastAudio.preload = 'auto';
@@ -46,6 +55,7 @@ export class ToastService {
     // restart sound for rapid successive notifications
     this.toastAudio.currentTime = 0;
     void this.toastAudio.play();
+    return ref;
   }
 }
 

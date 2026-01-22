@@ -17,7 +17,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 
 import { DataService } from '../../services/data.service';
 import { ISkPathData } from "../../interfaces/app-interfaces";
-import { AppService } from '../../services/app-service';
+import { ToastService } from '../../services/toast.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -31,7 +31,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly _responsive = inject(BreakpointObserver);
   private readonly clipboard = inject(Clipboard);
-  private readonly app = inject(AppService);
+  private readonly toast = inject(ToastService);
   private isPhonePortrait: Signal<BreakpointState>;
   private filterSubject = new Subject<string>();
 
@@ -145,9 +145,9 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
 
     const ok = this.clipboard.copy(path);
     if (ok) {
-      this.app.sendSnackbarNotification('Path copied', 1200, true);
+      this.toast.show('Path copied', 1200, true);
     } else {
-      this.app.sendSnackbarNotification('Copy failed', 1500);
+      this.toast.show('Copy failed', 1500);
     }
   }
 

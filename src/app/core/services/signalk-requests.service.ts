@@ -7,7 +7,7 @@ import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { AuthenticationService } from './authentication.service';
 import { UUID } from '../utils/uuid.util'
-import { AppService } from './app-service';
+import { ToastService } from './toast.service';
 
 const deltaStatusCodes = {
   200: "The request was successfully.",
@@ -35,7 +35,7 @@ export interface skRequest {
 export class SignalkRequestsService {
   private signalKDeltaService = inject(SignalKDeltaService);
   private appSettingsService = inject(AppSettingsService);
-  private appService = inject(AppService);
+  private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
 
 
@@ -194,7 +194,7 @@ export class SignalkRequestsService {
         }
 
         if (this.requests[index].statusCode == 400) {
-          this.appService.sendSnackbarNotification(this.requests[index].message);
+          this.toast.show(this.requests[index].message);
           console.log("[Request Service] " + this.requests[index].message );
         }
 
@@ -207,7 +207,7 @@ export class SignalkRequestsService {
         }
 
         if ((delta.accessRequest !== undefined) && (delta.accessRequest.token !== undefined)) {
-          this.appService.sendSnackbarNotification(delta.accessRequest.permission + ": Device Access Token received from server.");
+          this.toast.show(delta.accessRequest.permission + ": Device Access Token received from server.");
           console.log(`[Request Service] ${delta.accessRequest.permission}: Device Access Token received`);
           this.auth.setDeviceAccessToken(delta.accessRequest.token);
 
@@ -221,7 +221,7 @@ export class SignalkRequestsService {
         }
 
       } else {
-        this.appService.sendSnackbarNotification("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        this.toast.show("ERROR: Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
         console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
       }
       try {
@@ -233,7 +233,7 @@ export class SignalkRequestsService {
         this.requests = []; // flush array to clean values that will become stale post error
       }
     } else {
-      this.appService.sendSnackbarNotification("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
+      this.toast.show("ERROR: A request message that contains an unknown Request ID was received. Request Delta:\n" + JSON.stringify(delta));
       console.error("[Request Service] A Request message that contains an unknown Request ID was received. from delta:\n" + JSON.stringify(delta))
     }
   }

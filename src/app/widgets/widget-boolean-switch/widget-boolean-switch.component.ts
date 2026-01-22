@@ -1,7 +1,8 @@
 import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
-import { AppService, ITheme } from '../../core/services/app-service';
+import { ITheme } from '../../core/services/app-service';
+import { ToastService } from '../../core/services/toast.service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { SvgBooleanLightComponent } from '../svg-boolean-light/svg-boolean-light.component';
 import { SvgBooleanButtonComponent } from '../svg-boolean-button/svg-boolean-button.component';
@@ -54,7 +55,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Services / directives
   protected dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
-  private readonly appService = inject(AppService);
+  private readonly toast = inject(ToastService);
 
   // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
@@ -142,7 +143,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
           } else {
             errMsg += requestResult.statusCode + ' - ' + requestResult.statusCodeDescription;
           }
-          this.appService.sendSnackbarNotification(errMsg, 0);
+          this.toast.show(errMsg, 0);
         }
       }
     });

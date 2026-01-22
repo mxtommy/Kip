@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 import { AppSettingsService } from '../../../services/app-settings.service';
-import { AppService } from '../../../services/app-service';
+import { ToastService } from '../../../services/toast.service';
 import { IUnitDefaults, UnitsService, IUnit } from '../../../services/units.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -19,7 +19,7 @@ import { KeyValuePipe } from '@angular/common';
 export class SettingsUnitsComponent implements OnInit {
   private units = inject(UnitsService);
   private appSettingsService = inject(AppSettingsService);
-  private appService = inject(AppService);
+  private toast = inject(ToastService);
 
   public unitsFormGroup = new UntypedFormGroup({});
   protected groupUnits: Record<string, IUnit>[] = [];
@@ -45,6 +45,6 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.appSettingsService.setDefaultUnits(this.unitsFormGroup.value);
-    this.appService.sendSnackbarNotification("Configuration saved", 3000, false);
+    this.toast.show("Configuration saved", 3000, false);
   }
 }

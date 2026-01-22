@@ -5,7 +5,6 @@ import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { SignalKDeltaService } from './core/services/signalk-delta.service';
 import { ConnectionStateMachine, IConnectionStatus } from './core/services/connection-state-machine.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MenuNotificationsComponent } from './core/components/menu-notifications/menu-notifications.component';
@@ -35,12 +34,11 @@ import { ToastService } from './core/services/toast.service';
   imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly _snackBar = inject(MatSnackBar);
-  private readonly _toast = inject(ToastService); // force init
   private readonly _deltaService = inject(SignalKDeltaService); // force init
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _dashboard = inject(DashboardService);
   private readonly _remoteControl = inject(RemoteDashboardsService);
+  private readonly toast = inject(ToastService);
   private readonly _notifications = inject(NotificationsService);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
@@ -55,7 +53,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private upgradeMessagesRef = viewChild<ElementRef<HTMLUListElement> | undefined>('upgradeMessages');
 
-  private notificationHowl?: Howl;
   private _upgradeShown = false;
 
   protected actionsSidenavOpened = model<boolean>(false);
@@ -234,23 +231,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const message = connectionStatus.message;
     switch (connectionStatus.operation) {
       case 0:
-        this._toast.show(message, 5000, true);
+        this.toast.show(message, 5000, true);
         break;
       case 1:
       case 2:
         break;
       case 3:
-        this._toast.show(message, 3000, false, "Dismiss");
+        this.toast.show(message, 3000, false, "Dismiss");
         break;
       case 4:
-        this._toast.show(message, 3000, true, "Dismiss");
+        this.toast.show(message, 3000, true, "Dismiss");
         break;
       case 5:
-        this._toast.show(message, 0, false);
+        this.toast.show(message, 0, false);
         break;
       default:
         console.error('[AppComponent] Unknown operation code:', connectionStatus.operation);
-        this._toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false);
+        this.toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false);
     }
   }
 
@@ -289,8 +286,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       this._swipeRightHandler
     );
     this._uiEvent.removeHotkeyListener(this._hotkeyHandler);
-    this.notificationHowl?.unload();
-    this.notificationHowl = undefined;
     // clear any pending scheduled open to avoid orphaned timer running after destroy
     if (this.scheduledOpen) {
       clearTimeout(this.scheduledOpen as unknown as number);
