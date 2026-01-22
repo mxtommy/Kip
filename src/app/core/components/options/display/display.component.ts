@@ -104,7 +104,7 @@ export class SettingsDisplayComponent implements OnInit {
     this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
 
     this.displayForm().form.markAsPristine();
-    this.toast.show("Configuration saved", 3000, false);
+    this.toast.show("Configuration saved", 1500, true, null, 'message');
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
@@ -121,8 +121,8 @@ export class SettingsDisplayComponent implements OnInit {
         if (!enabled) {
           this.autoNightMode.set(false);
           this.toast.show(
-            "Plugin Error: To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
-            0
+            "To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
+            0, false, null, 'error'
           );
           return;
         }
@@ -143,7 +143,7 @@ export class SettingsDisplayComponent implements OnInit {
    */
   public  validateAutoNightModeSupported(): boolean {
     if (!this._data.getPathObject(this.MODE_PATH)) {
-      this.toast.show("Path Error: In Signal K, locate the Derived Data plugin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0);
+      this.toast.show("Locate the Derived Data plugin in the Signal K admin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0, false, null, 'error');
       return false;
     }
     return true;

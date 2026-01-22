@@ -76,7 +76,6 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
     this.supportApplicationData = this.storageSvc.isAppDataSupported;
     if(this.hasToken) this.getServerConfigList();
-    // this.getServerConfigList(1); // See if we have v 1.0.0.json file for upgrade
   }
 
   public getServerConfigList(configFileVersionName?: number) {
@@ -96,10 +95,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
       .catch((error: HttpErrorResponse) => {
         switch (error.status) {
           case 401:
-            this.toast.show("Application Storage Error: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false);
+            this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, null, 'error');
             break;
 
-          default: this.toast.show("Error listing server configurations: " + error, 3000, false);
+          default: this.toast.show("Cannot list configurations: " + error, 3000, false, null, 'error' );
             break;
         }
       });
@@ -110,17 +109,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     if (this.supportApplicationData) {
       // Prevent saving with scope 'user' and name 'default'
       if ((scope === 'user' && name === 'default') && !forceSave) {
-        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 5000, false);
+        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, null, 'error');
         return;
       }
 
       if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 5000, false);
+        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1500, true, null, 'success');
         if (!dontRefreshConfigList || undefined) {
           this.getServerConfigList();
         }
       } else {
-        this.toast.show("Error saving configuration to server", 0, false);
+        this.toast.show("Configuration not saved to server", 0, false, null, 'error');
       }
     }
   }
@@ -142,7 +141,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         conf = config
       });
     } catch (error) {
-      this.toast.show("Error retrieving configuration from server: " + error.statusText, 3000, false);
+      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, null, 'error');
       return;
     }
 
@@ -152,7 +151,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 5000, false);
+    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1500, false, null, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
@@ -231,13 +230,13 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
           }
           this.appSettingsService.reloadApp();
         } catch (error) {
-          this.toast.show("Invalid JSON file", 3000, false);
-          console.error("Invalid JSON file:", error);
+          this.toast.show("File does not contain valid JSON.", 0, false, null, 'error');
+          console.error("Invalid JSON file format:", error);
         }
       };
       reader.readAsText(file); // Read the file as text
     } else {
-      this.toast.show("Please select a valid JSON file", 0, false);
+      this.toast.show("Please select a valid JSON file", 0, false, null, 'error');
     }
   }
 

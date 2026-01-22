@@ -3,12 +3,14 @@ import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { AppSettingsService } from './app-settings.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import { ToastSnackbarComponent, type ToastSeverity, type ToastSnackbarData } from '../components/toast-snackbar/toast-snackbar.component';
 
 export interface SnackItem {
   message: string;
   duration?: number;
   silent?: boolean;
   action?: string;
+  severity?: ToastSeverity;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,16 +38,24 @@ export class ToastService {
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
    * @param action Label for the snackbar action button.
+   * @param severity Severity styling for the snackbar. Defaults to 'message'
+   * - 'message': no icon or title
+   * - 'info': blue info icon and Info title
+   * - 'warn': yellow warning icon and Warning title
+   * - 'error': red error icon and Error title
+   * - 'success': green check icon and Completed title
    * @returns MatSnackBarRef you can use to dismiss or observe lifecycle events.
    */
-  public show(message: string, duration = 10000, silent = false, action = 'Dismiss'): MatSnackBarRef<unknown> {
-    const snack: SnackItem = { message, duration, silent, action };
-    this.lastSnack.set(snack);
-    const ref = this.snackBar.open(message, action, {
+  public show(message: string, duration = 1500, silent = true, action = 'Dismiss', severity: ToastSeverity = 'message'): MatSnackBarRef<ToastSnackbarComponent> {
+    const snack: SnackItem = { message, duration, silent, action, severity };
+    const data: ToastSnackbarData = { message, action, severity };
+    const ref = this.snackBar.openFromComponent(ToastSnackbarComponent, {
       duration,
-      verticalPosition: 'top'
+      verticalPosition: 'top',
+      data
     });
 
+    this.lastSnack.set(snack);
     if (silent || this.soundDisabled()) return ref;
     if (!this.toastAudio) {
       this.toastAudio = new Audio('assets/notification.mp3');

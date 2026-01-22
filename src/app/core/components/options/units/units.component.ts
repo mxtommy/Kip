@@ -45,6 +45,6 @@ export class SettingsUnitsComponent implements OnInit {
 
   submitConfig() {
     this.appSettingsService.setDefaultUnits(this.unitsFormGroup.value);
-    this.toast.show("Configuration saved", 3000, false);
+    this.toast.show("Configuration saved", 1500, true, null, 'message');
   }
 }

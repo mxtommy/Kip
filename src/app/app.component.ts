@@ -237,17 +237,17 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       case 2:
         break;
       case 3:
-        this.toast.show(message, 3000, false, "Dismiss");
+        this.toast.show(message, 3000, false, "Dismiss", 'warn');
         break;
       case 4:
-        this.toast.show(message, 3000, true, "Dismiss");
+        this.toast.show(message, 3000, true, "Dismiss", "info");
         break;
       case 5:
         this.toast.show(message, 0, false);
         break;
       default:
         console.error('[AppComponent] Unknown operation code:', connectionStatus.operation);
-        this.toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false);
+        this.toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false, null, 'error');
     }
   }
 

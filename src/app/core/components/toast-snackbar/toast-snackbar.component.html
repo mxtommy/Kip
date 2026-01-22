@@ -1,0 +1,14 @@
+<section class="toast" [attr.data-severity]="severity()">
+  @if (severity() !== "message") {
+    <mat-icon class="icon">{{ icon() }}</mat-icon>
+  }
+  <div class="toast-body">
+     @if (severity() !== "message") {
+      <div class="toast-title">{{ title() }}</div>
+     }
+    <div matSnackBarLabel>{{ data.message }}</div>
+  </div>
+  <button matIconButton matSnackBarAction class="toast-close" aria-label="Dismiss notification" (click)="dismiss()">
+    <mat-icon>close</mat-icon>
+  </button>
+</section>
