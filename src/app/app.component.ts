@@ -5,8 +5,6 @@ import { AuthenticationService } from './core/services/authentication.service';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { SignalKDeltaService } from './core/services/signalk-delta.service';
 import { ConnectionStateMachine, IConnectionStatus } from './core/services/connection-state-machine.service';
-import { AppService } from './core/services/app-service';
-import { Howl } from 'howler';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +26,7 @@ import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/l
 import { DatasetService } from './core/services/data-set.service';
 import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
 import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
+import { ToastService } from './core/services/toast.service';
 
 @Component({
   selector: 'app-root',
@@ -37,9 +36,9 @@ import { RemoteDashboardsService } from './core/services/remote-dashboards.servi
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _snackBar = inject(MatSnackBar);
+  private readonly _toast = inject(ToastService); // force init
   private readonly _deltaService = inject(SignalKDeltaService); // force init
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
-  private readonly _app = inject(AppService);
   private readonly _dashboard = inject(DashboardService);
   private readonly _remoteControl = inject(RemoteDashboardsService);
   private readonly _notifications = inject(NotificationsService);
@@ -179,28 +178,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this._connectionStateMachine.status$
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe((status: IConnectionStatus) => this.displayConnectionsStatusNotification(status));
-
-    this._app.getSnackbarAppNotifications()
-      .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe(appNotification => {
-        this._snackBar.open(appNotification.message, appNotification.action, {
-          duration: appNotification.duration,
-          verticalPosition: 'top'
-        });
-
-        if (!this.appSettingsService.getNotificationConfig().sound.disableSound && !appNotification.silent) {
-          if (!this.notificationHowl) {
-            this.notificationHowl = new Howl({
-              src: ['assets/notification.mp3'],
-              preload: true,
-              volume: 0.3
-            });
-          }
-          // restart sound for rapid successive notifications
-          this.notificationHowl.stop();
-          this.notificationHowl.play();
-        }
-      });
   }
 
   private isUrlDashboard(url: string | null | undefined): boolean {
@@ -257,23 +234,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const message = connectionStatus.message;
     switch (connectionStatus.operation) {
       case 0:
-        this._app.sendSnackbarNotification(message, 5000, true);
+        this._toast.show(message, 5000, true);
         break;
       case 1:
       case 2:
         break;
       case 3:
-        this._app.sendSnackbarNotification(message, 3000, false, "");
+        this._toast.show(message, 3000, false, "Dismiss");
         break;
       case 4:
-        this._app.sendSnackbarNotification(message, 3000, true, "");
+        this._toast.show(message, 3000, true, "Dismiss");
         break;
       case 5:
-        this._app.sendSnackbarNotification(message, 0, false);
+        this._toast.show(message, 0, false);
         break;
       default:
         console.error('[AppComponent] Unknown operation code:', connectionStatus.operation);
-        this._app.sendSnackbarNotification(`Unknown connection status: ${connectionStatus.state}`, 0, false);
+        this._toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false);
     }
   }
 

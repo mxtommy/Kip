@@ -31,7 +31,7 @@ import { MatSelectModule } from '@angular/material/select';
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
-  readonly MODE_PATH: string = 'self.environment.mode';
+  private readonly MODE_PATH: string = 'self.environment.mode';
   readonly displayForm = viewChild<NgForm>('displayForm');
   private _app = inject(AppService);
   private _settings = inject(AppSettingsService);
