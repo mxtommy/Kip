@@ -12,6 +12,8 @@ export interface DialogComponentData {
   component: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentType?: ComponentType<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any;
 }
 
 export interface DialogNameData {

@@ -1,0 +1,45 @@
+import { Component, inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
+import type { DialogComponentData } from '../../interfaces/dialog-data';
+import type { AisTrack } from '../../services/ais-processing.service';
+
+interface AisDialogPayload {
+  target: AisTrack;
+}
+
+@Component({
+  selector: 'dialog-ais-target',
+  imports: [CommonModule, MatDialogModule],
+  templateUrl: './dialog-ais-target.component.html',
+  styleUrl: './dialog-ais-target.component.scss'
+})
+export class DialogAisTargetComponent {
+  protected data = inject<DialogComponentData>(MAT_DIALOG_DATA);
+
+  protected get payload(): AisDialogPayload | null {
+    return (this.data?.payload as AisDialogPayload) ?? null;
+  }
+
+  protected get target(): AisTrack | null {
+    return this.payload?.target ?? null;
+  }
+
+  protected formatNumber(value: number | null | undefined, fraction = 2): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) return '--';
+    return value.toFixed(fraction);
+  }
+
+  protected formatLatLon(value: number | null | undefined): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) return '--';
+    return value.toFixed(5);
+  }
+
+  protected formatText(value: string | null | undefined): string {
+    return value && value.length ? value : '--';
+  }
+
+  protected formatStatus(value: string | null | undefined): string {
+    return value ? value.toUpperCase() : '--';
+  }
+}
