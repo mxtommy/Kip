@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IPathValueData } from '../interfaces/app-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 
+// AIS processing defaults
 const AIS_DEFAULTS = {
   classA: {
     confirmAfterMsgs: 2,
@@ -86,7 +87,7 @@ const ATON_CONTEXT_PREFIX = 'atons.';
   providedIn: 'root'
 })
 export class AisProcessingService {
-  private readonly delta = inject(SignalKDeltaService);
+  private readonly data = inject(SignalKDeltaService);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly tracks = new Map<string, AisTrack>();
@@ -100,7 +101,7 @@ export class AisProcessingService {
   public readonly ownShip = this._ownShip.asReadonly();
 
   constructor() {
-    this.delta.subscribeDataPathsUpdates()
+    this.data.subscribeDataPathsUpdates()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(update => this.handleDelta(update));
 

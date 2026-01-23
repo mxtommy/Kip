@@ -1,20 +1,25 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+}
 .ais-radar-container {
-  display: flex;
-  flex-direction: column;
+  display: block;
   width: 100%;
   height: 100%;
 }
 
 .ais-radar {
-  flex: 1 1 auto;
   width: 100%;
   height: 100%;
-  background: var(--ais-bg);
+  border-radius: 12px;
+  background: var(--kip-card-background-color);
 }
 
 .radar-rings .ring {
   fill: none;
-  stroke: var(--ais-green-dim);
+  stroke: var(--kip-green-dim-color);
   stroke-width: 1;
 }
 
@@ -26,7 +31,7 @@
 }
 
 .radar-sweep .sweep-line {
-  stroke: var(--ais-green);
+  stroke: var(--kip-green-color);
   stroke-width: 2;
   opacity: 0.5;
 }
@@ -43,11 +48,11 @@
 }
 
 .motion-vector {
-  stroke: var(--ais-contrast-dim);
+  stroke: var(--kip-contrast-dim-color);
 }
 
 .heading-line {
-  stroke: var(--ais-contrast-dim);
+  stroke: var(--kip-contrast-dim-color);
   stroke-dasharray: 3 2;
 }
 
@@ -57,18 +62,18 @@
 
 .target-shape {
   stroke-width: 1.4;
-  stroke: var(--ais-contrast);
+  stroke: var(--kip-contrast-color);
 }
 
 .target-label {
   font-size: 7px;
   text-anchor: middle;
   dominant-baseline: middle;
-  fill: var(--ais-contrast);
+  fill: var(--kip-contrast-color);
 }
 
 .status-confirmed .target-shape {
-  fill: var(--ais-green);
+  fill: var(--kip-green-color);
 }
 
 .status-unconfirmed .target-shape {
@@ -84,27 +89,27 @@
 .class-a.trail,
 .class-a.motion-vector,
 .class-a.heading-line {
-  stroke: var(--ais-green);
+  stroke: var(--kip-green-color);
 }
 
 .class-b .target-shape,
 .class-b.trail,
 .class-b.motion-vector,
 .class-b.heading-line {
-  stroke: var(--ais-green-dim);
+  stroke: var(--kip-green-dim-color);
 }
 
 .type-aton .target-shape {
-  fill: var(--ais-green);
-  stroke: var(--ais-green);
+  fill: var(--kip-green-color);
+  stroke: var(--kip-green-color);
 }
 
 .selected-ring {
   fill: none;
-  stroke: var(--ais-contrast);
+  stroke: var(--kip-contrast-color);
   stroke-width: 2;
   opacity: 0.8;
-  filter: drop-shadow(0 0 6px var(--ais-green));
+  filter: drop-shadow(0 0 6px var(--kip-green-color));
 }
 
 @keyframes radar-sweep {

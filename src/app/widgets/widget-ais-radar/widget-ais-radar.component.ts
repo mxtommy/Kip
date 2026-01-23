@@ -33,7 +33,6 @@ interface RadarSize {
 interface RenderState {
   size: RadarSize;
   cfg: AisRadarConfig;
-  theme: ITheme;
   targets: AisTrack[];
   ownShip: {
     position?: { lat: number; lon: number } | null;
@@ -128,7 +127,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const ownShip = this.ais.ownShip();
       if (!size || !cfg || !theme) return;
       untracked(() => {
-        this.renderState = { size, cfg, theme, targets, ownShip };
+        this.renderState = { size, cfg, targets, ownShip };
       });
     });
   }
@@ -177,7 +176,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private render(): void {
     if (!this.renderState || !this.svg || !this.root) return;
 
-    const { size, cfg, theme, targets, ownShip } = this.renderState;
+    const { size, cfg, targets, ownShip } = this.renderState;
     const width = Math.max(1, size.width);
     const height = Math.max(1, size.height);
     const radius = Math.min(width, height) / 2;
@@ -192,12 +191,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       : 0;
 
     this.svg
-      .attr('viewBox', `${-radius} ${-radius} ${radius * 2} ${radius * 2}`)
-      .style('--ais-green', theme.green)
-      .style('--ais-green-dim', theme.greenDim)
-      .style('--ais-contrast', theme.contrast)
-      .style('--ais-contrast-dim', theme.contrastDim)
-      .style('--ais-bg', theme.background);
+      .attr('viewBox', `${-radius} ${-radius} ${radius * 2} ${radius * 2}`);
 
     this.renderRings(rangeRings, rangeNm, radius);
     this.renderSweep(radius, radarCfg.sweepSeconds ?? 4);
