@@ -1,8 +1,10 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IPathValueData } from '../interfaces/app-interfaces';
-import { SignalKDeltaService } from './signalk-delta.service';
+import { IPathUpdateEvent, IPathValueData } from '../interfaces/app-interfaces';
+import { DataService } from './data.service';
+import { PathDiscoveryService, PathDiscoveryToken } from './path-discovery.service';
+import { ToastService } from './toast.service';
 
 // AIS processing defaults
 const AIS_DEFAULTS = {
@@ -87,8 +89,13 @@ const ATON_CONTEXT_PREFIX = 'atons.';
   providedIn: 'root'
 })
 export class AisProcessingService {
-  private readonly data = inject(SignalKDeltaService);
+  private readonly data = inject(DataService);
+  private readonly discovery = inject(PathDiscoveryService);
+  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private discoveryToken: PathDiscoveryToken | null = null;
+  private readonly trackedPaths = new Set<string>();
 
   private readonly tracks = new Map<string, AisTrack>();
   private readonly contextIndex = new Map<string, string>();
@@ -101,31 +108,100 @@ export class AisProcessingService {
   public readonly ownShip = this._ownShip.asReadonly();
 
   constructor() {
-    this.data.subscribeDataPathsUpdates()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(update => this.handleDelta(update));
+    try {
+      this.discoveryToken = this.discovery.register({
+        id: 'ais-service',
+        patterns: [
+        ],
+        contextTypes: ['self', 'vessels', 'atons'],
+        pathPrefixes: [],
+        pathSuffixes: ['.latitude', '.longitude', '.mmsi', '.name', '.offPosition', '.virtual', '.headingTrue', '.destination', '.courseOverGroundTrue', '.speedOverGround']
+      });
 
-    interval(1000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateTrackStatuses());
+      // Seed tracked paths from discovery snapshot
+      for (const path of this.discovery.activePaths(this.discoveryToken)) {
+        this.trackedPaths.add(path);
+      }
+
+      this.discovery.changes(this.discoveryToken)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(change => {
+          if (change.type === 'add') {
+            this.trackedPaths.add(change.path);
+            return;
+          }
+
+          this.trackedPaths.delete(change.path);
+          this.handlePathRemoval(change.path);
+        });
+
+      this.data.observePathUpdates()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(update => this.handlePathUpdate(update));
+
+      interval(1000)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.updateTrackStatuses());
+    } catch (error) {
+      this.toast.show('AIS discovery registration failed. AIS processing disabled.', 0, false, 'Dismiss', 'error');
+      console.warn('[AIS Processing Service] Path discovery registration failed. AIS processing disabled.', error);
+      this.discoveryToken = null;
+      this.trackedPaths.clear();
+      return;
+    }
   }
 
-  private handleDelta(update: IPathValueData): void {
-    if (!update?.context || !update?.path) return;
+  private handlePathUpdate(event: IPathUpdateEvent): void {
+    if (!event?.fullPath || !event.update) return;
+    if (!this.trackedPaths.has(event.fullPath)) return;
 
-    if (update.context === 'self') {
-      this.applyOwnShipUpdate(update);
+    if (event.fullPath.startsWith('self.')) {
+      this.applyOwnShipUpdate(event.update);
       return;
     }
 
-    if (update.context.startsWith(VESSEL_CONTEXT_PREFIX)) {
-      this.applyAisUpdate(this.buildUpdate(update, 'vessel'));
+    if (event.fullPath.startsWith(VESSEL_CONTEXT_PREFIX)) {
+      this.applyAisUpdate(this.buildUpdate(event.update, 'vessel'));
       return;
     }
 
-    if (update.context.startsWith(ATON_CONTEXT_PREFIX)) {
-      this.applyAisUpdate(this.buildUpdate(update, 'aton'));
+    if (event.fullPath.startsWith(ATON_CONTEXT_PREFIX)) {
+      this.applyAisUpdate(this.buildUpdate(event.update, 'aton'));
     }
+  }
+
+  private handlePathRemoval(fullPath: string): void {
+    if (fullPath.startsWith(VESSEL_CONTEXT_PREFIX) || fullPath.startsWith(ATON_CONTEXT_PREFIX)) {
+      const context = this.extractContext(fullPath);
+      if (context) {
+        this.removeTrackByContext(context);
+      }
+    }
+  }
+
+  private extractContext(fullPath: string): string | null {
+    const prefix = fullPath.startsWith(VESSEL_CONTEXT_PREFIX)
+      ? VESSEL_CONTEXT_PREFIX
+      : fullPath.startsWith(ATON_CONTEXT_PREFIX)
+        ? ATON_CONTEXT_PREFIX
+        : null;
+
+    if (!prefix) return null;
+    const idx = fullPath.indexOf('.', prefix.length);
+    if (idx === -1) return null;
+    return fullPath.slice(0, idx);
+  }
+
+  private removeTrackByContext(context: string): void {
+    const id = this.contextIndex.get(context);
+    if (!id) return;
+    const track = this.tracks.get(id);
+    if (track?.mmsi) {
+      this.removeMmsiIndex(track.mmsi, track.id);
+    }
+    this.tracks.delete(id);
+    this.contextIndex.delete(context);
+    this.updateTargetsSignal();
   }
 
   private buildUpdate(update: IPathValueData, type: AisTargetType): AisUpdate {

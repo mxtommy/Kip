@@ -26,6 +26,16 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
 }
 
 /**
+ * Post-processed Signal K path update emitted by DataService.
+ * - fullPath is normalized with context (self, vessels, atons, etc.)
+ * - update contains the raw delta payload
+ */
+export interface IPathUpdateEvent {
+  fullPath: string;
+  update: IPathValueData;
+}
+
+/**
  * An App data structure that represents a path's complete data structure:
  * Path properties, value, value data type, data sources,
  * data zone state, meta data, etc.

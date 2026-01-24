@@ -1,6 +1,6 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
 import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription } from 'rxjs';
-import { ISkPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
+import { ISkPathData, IPathValueData, IPathMetaData, IMeta, IPathUpdateEvent } from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
 import { cloneDeep, merge } from 'lodash-es';
@@ -106,6 +106,7 @@ export class DataService implements OnDestroy {
   private _skNotificationMsg$ = new Subject<ISignalKDataValueUpdate>();
   private _skNotificationMeta$ = new Subject<IMeta>();
   private _isReset = new Subject<boolean>();
+  private _pathUpdates$ = new Subject<IPathUpdateEvent>();
 
   // Service data variables
   private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
@@ -340,6 +341,12 @@ export class DataService implements OnDestroy {
     if (this._isSkDataFullTreeActive) {
       this._skDataSubject$.next(this._skData);
     }
+
+    // Emit post-processed path update
+    this._pathUpdates$.next({
+      fullPath: updatePath,
+      update: dataPath
+    });
   }
 
   private setMeta(meta: IMeta): void {
@@ -397,14 +404,22 @@ export class DataService implements OnDestroy {
 
   public stopSkMetaFullTree(): void {
     this._isSkMetaFullTreeActive = false;
-    this._dataServiceMetaSubject$.next(null);
-    this._dataServiceMeta = null;
+    this._dataServiceMetaSubject$.next([]);
+    this._dataServiceMeta = [];
   }
 
   public startSkDataFullTree(): Observable<ISkPathData[]> {
     this._isSkDataFullTreeActive = true;
     this._skDataSubject$.next(this._skData);
     return this._skDataSubject$;
+  }
+
+  /**
+   * Returns a stream of post-processed Signal K path updates.
+   * Each event includes a normalized fullPath and the raw delta update payload.
+   */
+  public observePathUpdates(): Observable<IPathUpdateEvent> {
+    return this._pathUpdates$.asObservable();
   }
 
   public stopSkDataFullTree(): void {
@@ -534,5 +549,6 @@ export class DataService implements OnDestroy {
     this._isReset?.complete();
     this._skDataSubject$?.complete();
     this._dataServiceMetaSubject$?.complete();
+    this._pathUpdates$?.complete();
   }
 }
