@@ -104,6 +104,8 @@ export class DataService implements OnDestroy {
 
   // Full skMeta updates for Zones component
   private _dataServiceMeta: IPathMetaData[] = [];
+  /** Map of meta entries by path to dedupe full-tree meta updates. */
+  private _dataServiceMetaByPath = new Map<string, IPathMetaData>();
   private _isSkMetaFullTreeActive = false;
   private _dataServiceMetaSubject$ = new BehaviorSubject<IPathMetaData[]>([]);
 
@@ -116,7 +118,13 @@ export class DataService implements OnDestroy {
   // Service data variables
   private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
   private _skData = new Map<string, ISkPathData>(); // Local map of paths containing received Signal K Data and used to source Observers
+  /** Full-tree cache (mutated in place); subscribers must not rely on array identity changes. */
+  private _skDataArrayCache: ISkPathData[] = [];
+  /** Path -> index lookup for `_skDataArrayCache` to enable O(1) upserts. */
+  private _skDataIndexByPath = new Map<string, number>();
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
+  /** Path -> registrations index for fast lookups during updates. */
+  private _pathRegisterByPath = new Map<string, IPathRegistration[]>();
 
   constructor() {
     // Emit Delta message update counter every second (RxJS based)
@@ -144,9 +152,11 @@ export class DataService implements OnDestroy {
       if (pathItem && pathItem.state !== (msg.value as ISignalKNotification).state) {
         pathItem.state = (msg.value as ISignalKNotification).state;
 
-        const pathRegisterItem = this._pathRegister.find(item => item.path == cleanedPath);
-        if (pathRegisterItem) {
-          pathRegisterItem._pathState$.next(pathItem.state);
+        const pathRegisterItems = this._pathRegisterByPath.get(cleanedPath);
+        if (pathRegisterItems?.length) {
+          for (const registration of pathRegisterItems) {
+            registration._pathState$.next(pathItem.state);
+          }
         }
       }
 
@@ -174,6 +184,8 @@ export class DataService implements OnDestroy {
 
   private resetSignalKData() {
     this._skData = new Map<string, ISkPathData>();
+    this._skDataArrayCache = [];
+    this._skDataIndexByPath.clear();
     this._selfUrn = 'self';
     this._isReset.next(true);
   }
@@ -194,11 +206,22 @@ export class DataService implements OnDestroy {
       // Use splice to remove the item without changing the entire
       // array reference.
       this._pathRegister.splice(index, 1);
+
+      const registrations = this._pathRegisterByPath.get(path);
+      if (registrations) {
+        const updated = registrations.filter(item => item !== registration);
+        if (updated.length) {
+          this._pathRegisterByPath.set(path, updated);
+        } else {
+          this._pathRegisterByPath.delete(path);
+        }
+      }
     }
   }
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
-    const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
+    const registrations = this._pathRegisterByPath.get(path);
+    const matchingPaths = registrations?.find(item => item.path === path && item.source === source);
     if (matchingPaths) {
       return matchingPaths.pathDataUpdate$;
     }
@@ -251,6 +274,11 @@ export class DataService implements OnDestroy {
     newPathSubject.combinedSub = combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
 
     this._pathRegister.push(newPathSubject);
+    if (registrations) {
+      registrations.push(newPathSubject);
+    } else {
+      this._pathRegisterByPath.set(path, [newPathSubject]);
+    }
     return newPathSubject.pathDataUpdate$;
   }
 
@@ -367,7 +395,7 @@ export class DataService implements OnDestroy {
     }
 
     // Update path register Subjects with new data
-    const pathRegisterItems = this._pathRegister.filter(item => item.path === updatePath);
+    const pathRegisterItems = this._pathRegisterByPath.get(updatePath) ?? [];
     if (pathRegisterItems.length) {
       const pathData: IPathData = {
         value: pathItem.pathValue,
@@ -387,7 +415,8 @@ export class DataService implements OnDestroy {
 
     // Push full tree if data-browser or Zones component are observing
     if (this._isSkDataFullTreeActive) {
-      this._skDataSubject$.next(this.getSkDataArray());
+      this.upsertSkDataCache(pathItem);
+      this._skDataSubject$.next(this._skDataArrayCache);
     }
 
     // Emit post-processed path update
@@ -416,6 +445,10 @@ export class DataService implements OnDestroy {
           meta: meta.meta ? cloneDeep(meta.meta) : null,
         };
         this._skData.set(metaPath, pathObject);
+        if (this._isSkDataFullTreeActive) {
+          this.upsertSkDataCache(pathObject);
+          this._skDataSubject$.next(this._skDataArrayCache);
+        }
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
           pathObject.type = typeFromUnits(meta.meta.units);
@@ -425,15 +458,18 @@ export class DataService implements OnDestroy {
         pathObject.meta = merge({}, pathObject.meta, meta.meta);
       }
 
-      const entry = this._pathRegister.find(entry => entry.path === metaPath);
-      if (entry) {
-        // Emit a snapshot to guarantee a new reference for downstream consumers.
-        entry.pathMeta$.next(pathObject.meta ? cloneDeep(pathObject.meta) : null);
+      const entries = this._pathRegisterByPath.get(metaPath);
+      if (entries?.length) {
+        for (const entry of entries) {
+          // Emit a snapshot to guarantee a new reference for downstream consumers.
+          entry.pathMeta$.next(pathObject.meta ? cloneDeep(pathObject.meta) : null);
+        }
       }
 
       // If full meta tree is active, push the full tree
       if (this._isSkMetaFullTreeActive) {
-        this._dataServiceMeta.push({ path: metaPath, meta: pathObject.meta });
+        this._dataServiceMetaByPath.set(metaPath, { path: metaPath, meta: pathObject.meta });
+        this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
         this._dataServiceMetaSubject$.next(this._dataServiceMeta);
       }
     }
@@ -442,9 +478,13 @@ export class DataService implements OnDestroy {
   public startSkMetaFullTree(): Observable<IPathMetaData[]> {
     this._isSkMetaFullTreeActive = true;
 
-    this._dataServiceMeta = this.getSkDataArray()
-      .filter(item => item.meta !== undefined && item.path.startsWith('self.'))
-      .map(item => ({ path: item.path, meta: item.meta }));
+    this._dataServiceMetaByPath.clear();
+    for (const item of this.getSkDataArray()) {
+      if (item.meta !== undefined && item.path.startsWith('self.')) {
+        this._dataServiceMetaByPath.set(item.path, { path: item.path, meta: item.meta });
+      }
+    }
+    this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
 
     this._dataServiceMetaSubject$.next(this._dataServiceMeta);
     return this._dataServiceMetaSubject$;
@@ -454,16 +494,18 @@ export class DataService implements OnDestroy {
     this._isSkMetaFullTreeActive = false;
     this._dataServiceMetaSubject$.next([]);
     this._dataServiceMeta = [];
+    this._dataServiceMetaByPath.clear();
   }
 
   public startSkDataFullTree(): Observable<ISkPathData[]> {
     this._isSkDataFullTreeActive = true;
-    this._skDataSubject$.next(this.getSkDataArray());
+    this.refreshSkDataCache();
+    this._skDataSubject$.next(this._skDataArrayCache);
     return this._skDataSubject$;
   }
 
   private getSkDataArray(): ISkPathData[] {
-    return Array.from(this._skData.values());
+    return this._isSkDataFullTreeActive ? this._skDataArrayCache : Array.from(this._skData.values());
   }
 
   /**
@@ -476,6 +518,24 @@ export class DataService implements OnDestroy {
 
   public stopSkDataFullTree(): void {
     this._isSkDataFullTreeActive = false;
+    this._skDataArrayCache = [];
+    this._skDataIndexByPath.clear();
+  }
+
+  private refreshSkDataCache(): void {
+    this._skDataArrayCache = Array.from(this._skData.values());
+    this._skDataIndexByPath.clear();
+    this._skDataArrayCache.forEach((item, index) => this._skDataIndexByPath.set(item.path, index));
+  }
+
+  private upsertSkDataCache(pathItem: ISkPathData): void {
+    const index = this._skDataIndexByPath.get(pathItem.path);
+    if (index === undefined) {
+      this._skDataIndexByPath.set(pathItem.path, this._skDataArrayCache.length);
+      this._skDataArrayCache.push(pathItem);
+    } else {
+      this._skDataArrayCache[index] = pathItem;
+    }
   }
 
   private setSelfUrn(value: string) {
@@ -613,7 +673,7 @@ export class DataService implements OnDestroy {
    * - The returned Observable completes when the path is unsubscribed via {@link unsubscribePath} (subjects are completed).
    */
   public getPathMetaObservable(path: string): Observable<ISkMetadata | null> {
-    const registration = this._pathRegister.find(registration => registration.path == path);
+    const registration = this._pathRegisterByPath.get(path)?.[0];
     return registration?.pathMeta$.asObservable() || of(null);
   }
 
