@@ -3,7 +3,7 @@ import { Subject, interval, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
-const AIS_DEBUG = true;
+const AIS_DEBUG = false;
 
 // AIS processing defaults
 const AIS_DEFAULTS = {
@@ -38,6 +38,7 @@ export interface AisTrack {
   type: AisTargetType;
   status: AisStatus;
   aisClass: AisClass;
+  conflicted: boolean;
   msgCount: number;
   mmsi: string | null;
   name?: string | null;
@@ -298,39 +299,53 @@ export class AisProcessingService {
   private resolveTrack(update: AisUpdate): AisTrack | null {
     const existingId = this.contextIndex.get(update.context);
     const timestampMs = update.timestampMs;
+    const mmsi = this.isMmsiUpdate(update) ? this.toStringOrNull(update.value) : null;
+    const existing = existingId ? this.tracks.get(existingId) : null;
+
+    if (mmsi) {
+      if (existing && existing.context === update.context) {
+        this.promoteTrackId(existing, mmsi);
+        this.applyMmsi(existing, mmsi);
+        return existing;
+      }
+      const candidates = this.getTracksByMmsi(mmsi);
+      if (!candidates.length) {
+        const created = this.createTrack(update.context, update.type, timestampMs, mmsi);
+        this.contextIndex.set(update.context, created.id);
+        return created;
+      }
+
+      if (this.isPositionUpdate(update)) {
+        const matched = candidates.find(track => this.isPlausibleUpdate(track, update, timestampMs));
+        if (matched) {
+          matched.context = update.context;
+          this.contextIndex.set(update.context, matched.id);
+          return matched;
+        }
+      }
+
+      const forked = this.createTrack(update.context, update.type, timestampMs, mmsi);
+      this.contextIndex.set(update.context, forked.id);
+      this.markConflict(mmsi);
+      return forked;
+    }
 
     if (existingId) {
-      const existing = this.tracks.get(existingId);
       if (!existing) return null;
 
       if (this.isPositionUpdate(update) && !this.isPlausibleUpdate(existing, update, timestampMs)) {
         const forked = this.forkTrack(existing, update.context, update.type, timestampMs);
         this.contextIndex.set(update.context, forked.id);
+        if (forked.mmsi) this.markConflict(forked.mmsi);
         return forked;
       }
 
       return existing;
     }
 
-    const mmsi = this.isMmsiUpdate(update) ? this.toStringOrNull(update.value) : null;
-    if (!mmsi) {
-      const created = this.createTrack(update.context, update.type, timestampMs, null);
-      this.contextIndex.set(update.context, created.id);
-      return created;
-    }
-
-    const candidates = this.getTracksByMmsi(mmsi);
-    const matched = candidates.find(track => this.isPlausibleUpdate(track, update, timestampMs));
-
-    if (matched) {
-      matched.context = update.context;
-      this.contextIndex.set(update.context, matched.id);
-      return matched;
-    }
-
-    const forked = this.createTrack(update.context, update.type, timestampMs, mmsi);
-    this.contextIndex.set(update.context, forked.id);
-    return forked;
+    const created = this.createTrack(update.context, update.type, timestampMs, null);
+    this.contextIndex.set(update.context, created.id);
+    return created;
   }
 
   private forkTrack(base: AisTrack, context: string, type: AisTargetType, timestampMs: number): AisTrack {
@@ -347,6 +362,7 @@ export class AisProcessingService {
       type,
       status: 'unconfirmed',
       aisClass: null,
+      conflicted: false,
       msgCount: 0,
       mmsi,
       position: null,
@@ -369,6 +385,26 @@ export class AisProcessingService {
       idx += 1;
     }
     return `${seed}-${idx}`;
+  }
+
+  private promoteTrackId(track: AisTrack, mmsi: string): void {
+    if (!mmsi || track.id === mmsi) return;
+    const candidate = this.buildTrackId(mmsi);
+    const existing = this.tracks.get(candidate);
+    if (existing && existing !== track) {
+      return;
+    }
+
+    const oldId = track.id;
+    this.tracks.delete(oldId);
+    track.id = candidate;
+    this.tracks.set(track.id, track);
+    this.contextIndex.set(track.context, track.id);
+
+    if (track.mmsi) {
+      this.removeMmsiIndex(track.mmsi, oldId);
+      this.addMmsiIndex(track.mmsi, track.id);
+    }
   }
 
   private applyMmsi(track: AisTrack, value: unknown): void {
@@ -407,6 +443,7 @@ export class AisProcessingService {
   }
 
   private tryConfirm(track: AisTrack, nowMs: number): void {
+    if (track.conflicted) return;
     const defaults = this.getDefaults(track.aisClass);
     const ageSec = track.lastPositionAt ? (nowMs - track.lastPositionAt) / 1000 : Number.POSITIVE_INFINITY;
 
@@ -420,6 +457,8 @@ export class AisProcessingService {
   private updateTrackStatuses(): void {
     const nowMs = Date.now();
     let changed = false;
+
+    changed = this.resolveConflicts(nowMs) || changed;
 
     for (const track of this.tracks.values()) {
       const defaults = this.getDefaults(track.aisClass);
@@ -451,9 +490,13 @@ export class AisProcessingService {
 
       if (track.msgCount >= defaults.confirmAfterMsgs && ageSec <= defaults.confirmMaxAge) {
         if (track.status !== 'confirmed') {
-          track.status = 'confirmed';
-          if (AIS_DEBUG) {
-            console.debug('[AIS] confirmed', { id: track.id, mmsi: track.mmsi, ageSec });
+          if (!track.conflicted) {
+            track.status = 'confirmed';
+            if (AIS_DEBUG) {
+              console.debug('[AIS] confirmed', { id: track.id, mmsi: track.mmsi, ageSec });
+            }
+          } else if (track.status !== 'unconfirmed') {
+            track.status = 'unconfirmed';
           }
           changed = true;
         }
@@ -506,6 +549,52 @@ export class AisProcessingService {
     return aisClass === 'A' ? AIS_DEFAULTS.classA : AIS_DEFAULTS.classB;
   }
 
+  private markConflict(mmsi: string): void {
+    const tracks = this.getTracksByMmsi(mmsi);
+    for (const track of tracks) {
+      track.conflicted = true;
+      if (track.status !== 'unconfirmed') {
+        track.status = 'unconfirmed';
+      }
+    }
+  }
+
+  private resolveConflicts(nowMs: number): boolean {
+    let changed = false;
+    for (const [mmsi, ids] of this.mmsiIndex.entries()) {
+      if (ids.size <= 1) continue;
+      const candidates = this.getTracksByMmsi(mmsi);
+      const stable = candidates
+        .filter(track => track.lastPositionAt)
+        .sort((a, b) => (b.lastPositionAt ?? 0) - (a.lastPositionAt ?? 0))[0] ?? null;
+
+      if (stable) {
+        if (stable.conflicted) {
+          stable.conflicted = false;
+          changed = true;
+        }
+        const prevStatus = stable.status;
+        this.tryConfirm(stable, nowMs);
+        if (stable.status !== prevStatus) {
+          changed = true;
+        }
+      }
+
+      for (const track of candidates) {
+        if (track === stable) continue;
+        const defaults = this.getDefaults(track.aisClass);
+        const ageSec = track.lastPositionAt ? (nowMs - track.lastPositionAt) / 1000 : Number.POSITIVE_INFINITY;
+        if (ageSec > defaults.lostAfter) {
+          if (track.status !== 'lost') {
+            track.status = 'lost';
+            changed = true;
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
   private isMmsiUpdate(update: AisUpdate): boolean {
     return update.path === 'mmsi';
   }
@@ -521,12 +610,14 @@ export class AisProcessingService {
     const nextPosition = this.extractPosition(track.position, update);
     if (!nextPosition) return true;
 
-    const dtHours = Math.max((timestampMs - track.lastPositionAt) / 3600000, 0.0001);
+    const dtMs = timestampMs - track.lastPositionAt;
+    if (dtMs <= 0) return false;
+    const dtHours = dtMs / 3600000;
     const distanceNm = this.distanceNm(track.position, nextPosition);
     const impliedSpeed = distanceNm / dtHours;
-    const maxSpeed = track.aisClass === 'A' ? 70 : 50;
+    const maxSpeed = track.aisClass === 'A' ? 60 : 80;
 
-    return impliedSpeed <= maxSpeed * 2;
+    return impliedSpeed <= maxSpeed;
   }
 
   private extractPosition(current: AisTrackPosition, update: AisUpdate): AisTrackPosition | null {

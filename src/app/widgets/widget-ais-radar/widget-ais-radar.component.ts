@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewEncapsulation, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
@@ -71,7 +71,8 @@ interface VectorLine {
   selector: 'widget-ais-radar',
   imports: [KipResizeObserverDirective],
   templateUrl: './widget-ais-radar.component.html',
-  styleUrl: './widget-ais-radar.component.scss',
+  styleUrls: ['./widget-ais-radar.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
@@ -125,7 +126,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
       const targets = this.ais.targets();
       const ownShip = this.ais.ownShip();
-      if (!size || !cfg || !theme) return;
+      if (!size || !cfg || !theme || !cfg) return;
       untracked(() => {
         this.renderState = { size, cfg, targets, ownShip };
       });
@@ -135,13 +136,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initSvg();
     this.startRenderLoop();
-  }
-
-  ngOnDestroy(): void {
-    if (this.renderFrame) {
-      cancelAnimationFrame(this.renderFrame);
-      this.renderFrame = null;
-    }
   }
 
   protected onResized(event: IKipResizeEvent): void {
@@ -601,5 +595,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     const meters = R * c;
     return meters / 1852;
+  }
+
+  ngOnDestroy(): void {
+    if (this.renderFrame) {
+      cancelAnimationFrame(this.renderFrame);
+      this.renderFrame = null;
+    }
   }
 }

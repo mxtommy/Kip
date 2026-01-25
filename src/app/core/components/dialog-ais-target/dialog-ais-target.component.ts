@@ -11,8 +11,7 @@ interface AisDialogPayload {
 @Component({
   selector: 'dialog-ais-target',
   imports: [CommonModule, MatDialogModule],
-  templateUrl: './dialog-ais-target.component.html',
-  styleUrl: './dialog-ais-target.component.scss'
+  templateUrl: './dialog-ais-target.component.html'
 })
 export class DialogAisTargetComponent {
   protected data = inject<DialogComponentData>(MAT_DIALOG_DATA);
