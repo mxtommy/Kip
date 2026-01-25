@@ -560,11 +560,13 @@ export class DataService implements OnDestroy {
     let normalized = pathPrefix?.trim() ?? '';
     if (normalized.endsWith('.*')) {
       normalized = normalized.slice(0, -1);
+    } else if (normalized.endsWith(':*')) {
+      normalized = normalized.slice(0, -1);
     } else if (normalized.endsWith('*')) {
       normalized = normalized.slice(0, -1);
     }
 
-    if (normalized && !normalized.endsWith('.')) {
+    if (normalized && !normalized.endsWith('.') && !normalized.endsWith(':')) {
       normalized = `${normalized}.`;
     }
 

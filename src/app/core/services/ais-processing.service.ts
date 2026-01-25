@@ -1,10 +1,9 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { interval } from 'rxjs';
+import { Subject, interval, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IPathUpdateEvent, IPathValueData } from '../interfaces/app-interfaces';
-import { DataService } from './data.service';
-import { PathDiscoveryService, PathDiscoveryToken } from './path-discovery.service';
-import { ToastService } from './toast.service';
+import { DataService, IPathUpdateWithPath } from './data.service';
+
+const AIS_DEBUG = true;
 
 // AIS processing defaults
 const AIS_DEFAULTS = {
@@ -25,7 +24,7 @@ const AIS_DEFAULTS = {
 } as const;
 
 type AisClass = 'A' | 'B' | null;
-type AisTargetType = 'vessel' | 'aton';
+type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
 export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost';
 
 export interface AisTrackPosition {
@@ -82,24 +81,33 @@ interface AisUpdate {
   timestampMs: number;
 }
 
-const VESSEL_CONTEXT_PREFIX = 'vessels.';
-const ATON_CONTEXT_PREFIX = 'atons.';
+const AIS_TREE_PREFIXES = [
+  'atons.urn:mrn:imo:mmsi:*',
+  'shore.basestations.urn:mrn:imo:mmsi:*',
+  'vessels.urn:mrn:imo:mmsi:*',
+  'sar.urn:mrn:imo:mmsi:*'
+];
+
+const AIS_CONTEXT_PREFIXES: { prefix: string; type: AisTargetType }[] = [
+  { prefix: 'atons.urn:mrn:imo:mmsi:', type: 'aton' },
+  { prefix: 'shore.basestations.urn:mrn:imo:mmsi:', type: 'basestation' },
+  { prefix: 'vessels.urn:mrn:imo:mmsi:', type: 'vessel' },
+  { prefix: 'sar.urn:mrn:imo:mmsi:', type: 'sar' }
+];
+
+const SELF_NAV_PREFIX = 'self.navigation.*';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AisProcessingService {
   private readonly data = inject(DataService);
-  private readonly discovery = inject(PathDiscoveryService);
-  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
-
-  private discoveryToken: PathDiscoveryToken | null = null;
-  private readonly trackedPaths = new Set<string>();
 
   private readonly tracks = new Map<string, AisTrack>();
   private readonly contextIndex = new Map<string, string>();
   private readonly mmsiIndex = new Map<string, Set<string>>();
+  private readonly targetsDirty$ = new Subject<void>();
 
   private readonly _targets = signal<AisTrack[]>([]);
   private readonly _ownShip = signal<OwnShipState>({});
@@ -108,115 +116,71 @@ export class AisProcessingService {
   public readonly ownShip = this._ownShip.asReadonly();
 
   constructor() {
-    try {
-      this.discoveryToken = this.discovery.register({
-        id: 'ais-service',
-        patterns: [
-        ],
-        contextTypes: ['self', 'vessels', 'atons'],
-        pathPrefixes: [],
-        pathSuffixes: ['.latitude', '.longitude', '.mmsi', '.name', '.offPosition', '.virtual', '.headingTrue', '.destination', '.courseOverGroundTrue', '.speedOverGround']
+    const aisTree$ = merge(...AIS_TREE_PREFIXES.map(prefix => this.data.subscribePathTree(prefix)));
+    aisTree$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => this.handleAisTreeUpdate(event));
+
+    this.data.subscribePathTree(SELF_NAV_PREFIX)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => this.handleOwnShipTreeUpdate(event));
+
+    this.targetsDirty$
+      .pipe(throttleTime(250, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.flushTargetsSignal());
+
+    interval(1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateTrackStatuses());
+  }
+
+  private handleAisTreeUpdate(event: IPathUpdateWithPath): void {
+    const match = this.matchAisContext(event.path);
+    if (!match) return;
+
+    if (AIS_DEBUG) {
+      console.debug('[AIS] update', {
+        context: match.context,
+        path: match.path,
+        type: match.type,
+        value: event.update.data.value
       });
+    }
 
-      // Seed tracked paths from discovery snapshot
-      for (const path of this.discovery.activePaths(this.discoveryToken)) {
-        this.trackedPaths.add(path);
-      }
+    this.applyAisUpdate({
+      context: match.context,
+      type: match.type,
+      path: match.path,
+      value: event.update.data.value,
+      timestampMs: this.toTimestampMs(event.update.data.timestamp)
+    });
+  }
 
-      this.discovery.changes(this.discoveryToken)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(change => {
-          if (change.type === 'add') {
-            this.trackedPaths.add(change.path);
-            return;
-          }
+  private handleOwnShipTreeUpdate(event: IPathUpdateWithPath): void {
+    if (!event.path.startsWith('self.')) return;
+    const path = event.path.slice('self.'.length);
+    this.applyOwnShipUpdate(path, event.update.data.value);
 
-          this.trackedPaths.delete(change.path);
-          this.handlePathRemoval(change.path);
-        });
-
-      this.data.observePathUpdates()
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(update => this.handlePathUpdate(update));
-
-      interval(1000)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.updateTrackStatuses());
-    } catch (error) {
-      this.toast.show('AIS discovery registration failed. AIS processing disabled.', 0, false, 'Dismiss', 'error');
-      console.warn('[AIS Processing Service] Path discovery registration failed. AIS processing disabled.', error);
-      this.discoveryToken = null;
-      this.trackedPaths.clear();
-      return;
+    if (AIS_DEBUG) {
+      //console.debug('[AIS] ownShip', { path, value: event.update.data.value });
     }
   }
 
-  private handlePathUpdate(event: IPathUpdateEvent): void {
-    if (!event?.fullPath || !event.update) return;
-    if (!this.trackedPaths.has(event.fullPath)) return;
-
-    if (event.fullPath.startsWith('self.')) {
-      this.applyOwnShipUpdate(event.update);
-      return;
+  private matchAisContext(fullPath: string): { context: string; path: string; type: AisTargetType } | null {
+    for (const entry of AIS_CONTEXT_PREFIXES) {
+      if (!fullPath.startsWith(entry.prefix)) continue;
+      const idx = fullPath.indexOf('.', entry.prefix.length);
+      if (idx === -1) return null;
+      return {
+        context: fullPath.slice(0, idx),
+        path: fullPath.slice(idx + 1),
+        type: entry.type
+      };
     }
-
-    if (event.fullPath.startsWith(VESSEL_CONTEXT_PREFIX)) {
-      this.applyAisUpdate(this.buildUpdate(event.update, 'vessel'));
-      return;
-    }
-
-    if (event.fullPath.startsWith(ATON_CONTEXT_PREFIX)) {
-      this.applyAisUpdate(this.buildUpdate(event.update, 'aton'));
-    }
+    return null;
   }
 
-  private handlePathRemoval(fullPath: string): void {
-    if (fullPath.startsWith(VESSEL_CONTEXT_PREFIX) || fullPath.startsWith(ATON_CONTEXT_PREFIX)) {
-      const context = this.extractContext(fullPath);
-      if (context) {
-        this.removeTrackByContext(context);
-      }
-    }
-  }
-
-  private extractContext(fullPath: string): string | null {
-    const prefix = fullPath.startsWith(VESSEL_CONTEXT_PREFIX)
-      ? VESSEL_CONTEXT_PREFIX
-      : fullPath.startsWith(ATON_CONTEXT_PREFIX)
-        ? ATON_CONTEXT_PREFIX
-        : null;
-
-    if (!prefix) return null;
-    const idx = fullPath.indexOf('.', prefix.length);
-    if (idx === -1) return null;
-    return fullPath.slice(0, idx);
-  }
-
-  private removeTrackByContext(context: string): void {
-    const id = this.contextIndex.get(context);
-    if (!id) return;
-    const track = this.tracks.get(id);
-    if (track?.mmsi) {
-      this.removeMmsiIndex(track.mmsi, track.id);
-    }
-    this.tracks.delete(id);
-    this.contextIndex.delete(context);
-    this.updateTargetsSignal();
-  }
-
-  private buildUpdate(update: IPathValueData, type: AisTargetType): AisUpdate {
-    return {
-      context: update.context,
-      type,
-      path: update.path,
-      value: update.value,
-      timestampMs: this.toTimestampMs(update.timestamp)
-    };
-  }
-
-  private applyOwnShipUpdate(update: IPathValueData): void {
-    const path = update.path;
-    const value = update.value;
+  private applyOwnShipUpdate(path: string, value: unknown): void {
     const next = { ...this._ownShip() } as OwnShipState;
 
     switch (path) {
@@ -467,6 +431,9 @@ export class AisProcessingService {
         for (const [context, id] of this.contextIndex.entries()) {
           if (id === track.id) this.contextIndex.delete(context);
         }
+        if (AIS_DEBUG) {
+          console.debug('[AIS] removed', { id: track.id, mmsi: track.mmsi, ageSec });
+        }
         changed = true;
         continue;
       }
@@ -474,6 +441,9 @@ export class AisProcessingService {
       if (ageSec > defaults.lostAfter) {
         if (track.status !== 'lost') {
           track.status = 'lost';
+          if (AIS_DEBUG) {
+            console.debug('[AIS] lost', { id: track.id, mmsi: track.mmsi, ageSec });
+          }
           changed = true;
         }
         continue;
@@ -482,10 +452,16 @@ export class AisProcessingService {
       if (track.msgCount >= defaults.confirmAfterMsgs && ageSec <= defaults.confirmMaxAge) {
         if (track.status !== 'confirmed') {
           track.status = 'confirmed';
+          if (AIS_DEBUG) {
+            console.debug('[AIS] confirmed', { id: track.id, mmsi: track.mmsi, ageSec });
+          }
           changed = true;
         }
       } else if (track.status !== 'unconfirmed') {
         track.status = 'unconfirmed';
+        if (AIS_DEBUG) {
+          console.debug('[AIS] unconfirmed', { id: track.id, mmsi: track.mmsi, ageSec });
+        }
         changed = true;
       }
     }
@@ -494,7 +470,14 @@ export class AisProcessingService {
   }
 
   private updateTargetsSignal(): void {
+    this.targetsDirty$.next();
+  }
+
+  private flushTargetsSignal(): void {
     this._targets.set(Array.from(this.tracks.values()));
+    if (AIS_DEBUG) {
+      console.debug('[AIS] flush', { count: this.tracks.size });
+    }
   }
 
   private getTracksByMmsi(mmsi: string): AisTrack[] {
@@ -563,9 +546,9 @@ export class AisProcessingService {
     return null;
   }
 
-  private toTimestampMs(value: string | null | undefined): number {
+  private toTimestampMs(value: Date | string | null | undefined): number {
     if (!value) return Date.now();
-    const ts = Date.parse(value);
+    const ts = value instanceof Date ? value.getTime() : Date.parse(value);
     return Number.isFinite(ts) ? ts : Date.now();
   }
 
