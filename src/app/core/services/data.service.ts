@@ -1,5 +1,5 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
-import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription } from 'rxjs';
+import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription, filter } from 'rxjs';
 import { ISkPathData, IPathValueData, IPathMetaData, IMeta, IPathUpdateEvent } from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -80,6 +80,11 @@ interface IPathRegistration {
 export interface IDeltaUpdate {
   value: number;
   timestamp: number;
+}
+
+export interface IPathUpdateWithPath {
+  path: string;
+  update: IPathUpdate;
 }
 
 @Injectable({
@@ -247,6 +252,49 @@ export class DataService implements OnDestroy {
 
     this._pathRegister.push(newPathSubject);
     return newPathSubject.pathDataUpdate$;
+  }
+
+  /**
+   * Subscribe to all child paths under a prefix (supports wildcard-style prefixes like 'self.electric.battery.*').
+   *
+   * @param {string} pathPrefix Path prefix to match. Use either a literal prefix (e.g. 'self.electric.battery.')
+   * or a wildcard suffix (e.g. 'self.electric.battery.*'). The prefix is normalized to end with a '.'.
+   * @param {string} source Signal K source to read from. Use 'default' to read the pathValue (server priority).
+   * When a specific source is provided, the matching path will emit source-specific values when available.
+   *
+   * @returns Observable emitting the matched path and its current update payload.
+   *
+   * @example
+   * // Receive all battery child updates under self.electric.battery
+  * dataService.subscribePathTree('self.electric.battery.*')
+   *   .subscribe(({ path, update }) => console.log(path, update.data.value));
+   */
+  public subscribePathTree(pathPrefix: string, source = 'default'): Observable<IPathUpdateWithPath> {
+    const normalizedPrefix = this.normalizePathPrefix(pathPrefix);
+
+    return new Observable<IPathUpdateWithPath>(subscriber => {
+      for (const item of this._skData) {
+        if (item.path.startsWith(normalizedPrefix)) {
+          subscriber.next({
+            path: item.path,
+            update: this.buildPathUpdate(item, source)
+          });
+        }
+      }
+
+      const sub = this._pathUpdates$
+        .pipe(filter(update => update.fullPath.startsWith(normalizedPrefix)))
+        .subscribe(update => {
+          const item = this._skData.find(pathObject => pathObject.path === update.fullPath);
+          if (!item) return;
+          subscriber.next({
+            path: item.path,
+            update: this.buildPathUpdate(item, source)
+          });
+        });
+
+      return () => sub.unsubscribe();
+    }).pipe(takeUntilDestroyed(this._destroyRef));
   }
 
   /**
@@ -438,6 +486,44 @@ export class DataService implements OnDestroy {
   private setPathContext(context: string, path: string): string {
     const finalPath = context !== this._selfUrn ? `${context}.${path}` : `${SELFROOTDEF}.${path}`;
     return finalPath;
+  }
+
+  /**
+   * Normalizes a prefix to a canonical dot-terminated form for fast startsWith checks.
+   * Accepts wildcard forms like 'self.electric.battery.*' or 'self.electric.battery*'.
+   */
+  private normalizePathPrefix(pathPrefix: string): string {
+    let normalized = pathPrefix?.trim() ?? '';
+    if (normalized.endsWith('.*')) {
+      normalized = normalized.slice(0, -1);
+    } else if (normalized.endsWith('*')) {
+      normalized = normalized.slice(0, -1);
+    }
+
+    if (normalized && !normalized.endsWith('.')) {
+      normalized = `${normalized}.`;
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Builds a path update payload from cached Signal K path data.
+   * @param {ISkPathData} pathItem Cached path object from _skData.
+   * @param {string} source Source to read from ('default' uses pathValue).
+   */
+  private buildPathUpdate(pathItem: ISkPathData, source: string): IPathUpdate {
+    const useDefault = source === 'default';
+    const value = useDefault ? pathItem.pathValue : pathItem.sources?.[source]?.sourceValue ?? null;
+    const timestamp = useDefault ? pathItem.pathTimestamp : pathItem.sources?.[source]?.sourceTimestamp ?? null;
+
+    return {
+      data: {
+        value,
+        timestamp: timestamp ? new Date(timestamp) : null
+      },
+      state: pathItem.state || States.Normal
+    };
   }
 
   /**
