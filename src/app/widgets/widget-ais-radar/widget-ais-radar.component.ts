@@ -111,7 +111,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private root?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private ringsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private sweepLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private trailsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private vectorsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private targetsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -148,7 +147,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.root = this.svg.append('g').attr('class', 'radar-root');
     this.ringsLayer = this.root.append('g').attr('class', 'radar-rings');
-    this.sweepLayer = this.root.append('g').attr('class', 'radar-sweep');
     this.trailsLayer = this.root.append('g').attr('class', 'radar-trails');
     this.vectorsLayer = this.root.append('g').attr('class', 'radar-vectors');
     this.targetsLayer = this.root.append('g').attr('class', 'radar-targets');
@@ -188,7 +186,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('viewBox', `${-radius} ${-radius} ${radius * 2} ${radius * 2}`);
 
     this.renderRings(rangeRings, rangeNm, radius);
-    this.renderSweep(radius, radarCfg.sweepSeconds ?? 4);
 
     if (!ownShip.position) return;
 
@@ -219,23 +216,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.exit().remove();
   }
 
-  private renderSweep(radius: number, sweepSeconds: number): void {
-    if (!this.sweepLayer) return;
-    const line = this.sweepLayer.selectAll<SVGLineElement, number>('line.sweep-line').data([radius]);
-
-    line.enter()
-      .append('line')
-      .attr('class', 'sweep-line')
-      .merge(line as d3.Selection<SVGLineElement, number, SVGGElement, unknown>)
-      .attr('x1', 0)
-      .attr('y1', 0)
-      .attr('x2', 0)
-      .attr('y2', -radius);
-
-    line.exit().remove();
-
-    this.sweepLayer.style('animation-duration', `${Math.max(1, sweepSeconds)}s`);
-  }
 
   private buildTargets(
     tracks: AisTrack[],
