@@ -3,7 +3,7 @@ import { Subject, interval, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
-const AIS_DEBUG = true;
+const AIS_DEBUG = false;
 
 // AIS processing defaults
 const AIS_DEFAULTS = {

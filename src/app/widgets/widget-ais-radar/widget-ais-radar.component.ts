@@ -174,9 +174,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const radius = Math.min(width, height) / 2;
 
     const radarCfg = (cfg.radar ?? {}) as NonNullable<AisRadarConfig['radar']>;
-    const rangeRings = radarCfg.rangeRings?.length ? radarCfg.rangeRings : [3, 6, 12, 24, 48];
-    const rangeIndex = Math.min(Math.max(radarCfg.rangeIndex ?? 0, 0), rangeRings.length - 1);
-    const rangeNm = rangeRings[rangeIndex] ?? rangeRings[0];
+    const availableRanges = radarCfg.rangeRings?.length ? radarCfg.rangeRings : [3, 6, 12, 24, 48];
+    const rangeIndex = Math.min(Math.max(radarCfg.rangeIndex ?? 0, 0), availableRanges.length - 1);
+    const rangeNm = availableRanges[rangeIndex] ?? availableRanges[0];
+    const ringCount = this.resolveRingCountForRange(rangeNm);
+    const rangeRings = this.buildRangeRings(rangeNm, ringCount);
     const viewMode: ViewMode = radarCfg.viewMode ?? 'course-up';
     const viewRotation = viewMode === 'course-up'
       ? (ownShip.courseOverGroundTrue ?? ownShip.headingTrue ?? 0)
@@ -214,6 +216,41 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('r', d => d.radius);
 
     selection.exit().remove();
+
+    const labelSelection = this.ringsLayer
+      .selectAll<SVGTextElement, { value: number; radius: number }>('text.ring-label')
+      .data(rings, d => d.value.toString());
+
+    labelSelection.enter()
+      .append('text')
+      .attr('class', 'ring-label')
+      .merge(labelSelection as d3.Selection<SVGTextElement, { value: number; radius: number }, SVGGElement, unknown>)
+      .attr('x', d => -d.radius + 6)
+      .attr('y', 0)
+      .attr('text-anchor', 'end')
+      .attr('dominant-baseline', 'middle')
+      .text(d => `${d.value} nm`);
+
+    labelSelection.exit().remove();
+  }
+
+  private resolveRingCountForRange(rangeNm: number): number {
+    const candidates = [4, 5, 6, 3];
+    for (const count of candidates) {
+      const step = rangeNm / count;
+      if (this.isNiceStep(step)) return count;
+    }
+    return 4;
+  }
+
+  private isNiceStep(step: number): boolean {
+    const niceSteps = [0.5, 1, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25];
+    return niceSteps.some(value => Math.abs(step - value) < 1e-6);
+  }
+
+  private buildRangeRings(rangeNm: number, ringCount: number): number[] {
+    const step = rangeNm / ringCount;
+    return Array.from({ length: ringCount }, (_, index) => step * (index + 1));
   }
 
   private buildTargets(

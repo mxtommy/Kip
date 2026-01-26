@@ -447,6 +447,15 @@ widget-ais-radar {
     stroke-width: 1;
   }
 
+  .radar-rings .ring-label {
+    font-size: 9px;
+    fill: var(--kip-contrast-dim-color);
+    opacity: 0.75;
+    paint-order: stroke;
+    stroke: var(--kip-widget-card-background-color);
+    stroke-width: 2;
+  }
+
   .radar-trails .trail {
     fill: none;
     stroke-width: 1;
