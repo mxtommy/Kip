@@ -1,56 +1,43 @@
 @if (target) {
   <div class="ais-dialog">
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Name</div>
-      <div class="ais-dialog__value">{{ formatText(target.name) }}</div>
+      <div class="ais-dialog__label">Name :  {{ formatText(target.name) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">MMSI</div>
-      <div class="ais-dialog__value">{{ formatText(target.mmsi) }}</div>
+      <div class="ais-dialog__label">MMSI :  {{ formatText(target.mmsi) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Callsign</div>
-      <div class="ais-dialog__value">{{ formatText(target.callsign) }}</div>
+      <div class="ais-dialog__label">Callsign :  {{ formatText(target.callsign) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Type</div>
-      <div class="ais-dialog__value">{{ formatText(target.type) }}</div>
+      <div class="ais-dialog__label">Type :  {{ formatText(target.type) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Class</div>
-      <div class="ais-dialog__value">{{ formatText(target.aisClass) }}</div>
+      <div class="ais-dialog__label">Class :  {{ formatText(target.aisClass) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Status</div>
-      <div class="ais-dialog__value">{{ formatStatus(target.status) }}</div>
+      <div class="ais-dialog__label">Status :  {{ formatStatus(target.status) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Lat</div>
-      <div class="ais-dialog__value">{{ formatLatLon(target.position?.lat) }}</div>
+      <div class="ais-dialog__label">Lat :  {{ formatLatLon(target.position?.lat) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Lon</div>
-      <div class="ais-dialog__value">{{ formatLatLon(target.position?.lon) }}</div>
+      <div class="ais-dialog__label">Lon :  {{ formatLatLon(target.position?.lon) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">COG</div>
-      <div class="ais-dialog__value">{{ formatNumber(target.courseOverGroundTrue, 1) }}°</div>
+      <div class="ais-dialog__label">COG :  {{ formatNumber(target.courseOverGroundTrue, 1) }}°</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">SOG</div>
-      <div class="ais-dialog__value">{{ formatNumber(target.speedOverGround, 1) }} kn</div>
+      <div class="ais-dialog__label">SOG :  {{ formatNumber(target.speedOverGround, 1) }} kn</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Heading</div>
-      <div class="ais-dialog__value">{{ formatNumber(target.headingTrue, 1) }}°</div>
+      <div class="ais-dialog__label">Heading :  {{ formatNumber(target.headingTrue, 1) }}°</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Nav State</div>
-      <div class="ais-dialog__value">{{ formatText(target.navState) }}</div>
+      <div class="ais-dialog__label">Nav State :  {{ formatText(target.navState) }}</div>
     </div>
     <div class="ais-dialog__row">
-      <div class="ais-dialog__label">Destination</div>
-      <div class="ais-dialog__value">{{ formatText(target.destination) }}</div>
+      <div class="ais-dialog__label">Destination :  {{ formatText(target.destination) }}</div>
     </div>
   </div>
 } @else {

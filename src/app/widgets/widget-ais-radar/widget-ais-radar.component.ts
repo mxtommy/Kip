@@ -35,7 +35,7 @@ interface RenderState {
   cfg: AisRadarConfig;
   targets: AisTrack[];
   ownShip: {
-    position?: { lat: number; lon: number } | null;
+    position?: { lat: number | null; lon: number | null } | null;
     headingTrue?: number | null;
     courseOverGroundTrue?: number | null;
   };
@@ -92,7 +92,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     radar: {
       viewMode: 'course-up',
       rangeRings: [3, 6, 12, 24, 48],
-      rangeIndex: 2,
+      rangeIndex: 3,
       showTrails: true,
       showMotionVectors: true,
       showHeadingLineClassB: true,
@@ -187,7 +187,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.renderRings(rangeRings, rangeNm, radius);
 
-    if (!ownShip.position) return;
+    if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
     const renderTargets = this.buildTargets(targets, ownShip.position, rangeNm, radius, viewRotation, radarCfg);
     this.renderTrails(renderTargets, rangeNm, radius, viewRotation, radarCfg);
@@ -228,7 +228,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const showUnconfirmed = cfg.showUnconfirmedTargets ?? true;
 
     return tracks
-      .filter(track => Boolean(track.position))
+      .filter(track => Boolean(track.position) && this.hasValidPosition(track.position!))
       .filter(track => (track.status === 'lost' ? showLost : true))
       .filter(track => (track.status === 'unconfirmed' ? showUnconfirmed : true))
       .map(track => {
@@ -276,7 +276,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
 
     const origin = this.renderState?.ownShip.position;
-    if (!origin) return;
+    if (!origin || !this.hasValidPosition(origin)) return;
 
     const now = Date.now();
     const trailSeconds = Math.max(10, cfg.trailSeconds ?? 300);
@@ -535,6 +535,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       x: r * Math.sin(theta),
       y: -r * Math.cos(theta)
     };
+  }
+
+  private hasValidPosition(position: { lat: number | null; lon: number | null }): position is { lat: number; lon: number } {
+    return typeof position.lat === 'number'
+      && Number.isFinite(position.lat)
+      && typeof position.lon === 'number'
+      && Number.isFinite(position.lon);
   }
 
   private offsetPoint(x: number, y: number, angleDeg: number, distance: number) {

@@ -28,8 +28,8 @@ type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
 export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost';
 
 export interface AisTrackPosition {
-  lat: number;
-  lon: number;
+  lat: number | null;
+  lon: number | null;
 }
 
 export interface AisTrack {
@@ -192,10 +192,18 @@ export class AisProcessingService {
         }
         break;
       case 'navigation.position.latitude':
-        next.position = { ...(next.position ?? { lat: 0, lon: 0 }), lat: this.toNumber(value) };
+        {
+          const lat = this.toNumberOrNull(value);
+          if (lat === null) return;
+          next.position = { ...(next.position ?? { lat: null, lon: null }), lat };
+        }
         break;
       case 'navigation.position.longitude':
-        next.position = { ...(next.position ?? { lat: 0, lon: 0 }), lon: this.toNumber(value) };
+        {
+          const lon = this.toNumberOrNull(value);
+          if (lon === null) return;
+          next.position = { ...(next.position ?? { lat: null, lon: null }), lon };
+        }
         break;
       case 'navigation.headingTrue':
         next.headingTrue = this.toNumberOrNull(value);
@@ -272,12 +280,20 @@ export class AisProcessingService {
         track.fromCenter = this.toNumberOrNull(update.value);
         break;
       case 'navigation.position.latitude':
-        track.position = { ...(track.position ?? { lat: 0, lon: 0 }), lat: this.toNumber(update.value) };
-        this.registerPositionReport(track, update.timestampMs);
+        {
+          const lat = this.toNumberOrNull(update.value);
+          if (lat === null) break;
+          track.position = { ...(track.position ?? { lat: null, lon: null }), lat };
+          this.registerPositionReport(track, update.timestampMs);
+        }
         break;
       case 'navigation.position.longitude':
-        track.position = { ...(track.position ?? { lat: 0, lon: 0 }), lon: this.toNumber(update.value) };
-        this.registerPositionReport(track, update.timestampMs);
+        {
+          const lon = this.toNumberOrNull(update.value);
+          if (lon === null) break;
+          track.position = { ...(track.position ?? { lat: null, lon: null }), lon };
+          this.registerPositionReport(track, update.timestampMs);
+        }
         break;
       case 'navigation.position': {
         const position = this.readPositionValue(update.value);
@@ -379,7 +395,7 @@ export class AisProcessingService {
   }
 
   private registerPositionReport(track: AisTrack, timestampMs: number): void {
-    if (!track.position) return;
+    if (!track.position || track.position.lat === null || track.position.lon === null) return;
 
     const lastReport = track.lastPositionReportAt ?? 0;
     if (Math.abs(timestampMs - lastReport) > 500) {
@@ -552,6 +568,7 @@ export class AisProcessingService {
   }
 
   private distanceNm(a: AisTrackPosition, b: AisTrackPosition): number {
+    if (a.lat === null || a.lon === null || b.lat === null || b.lon === null) return 0;
     const R = 6371e3; // meters
     const phi1 = a.lat * Math.PI / 180;
     const phi2 = b.lat * Math.PI / 180;
@@ -568,9 +585,9 @@ export class AisProcessingService {
 
   private readPositionValue(value: unknown): AisTrackPosition | null {
     if (!value || typeof value !== 'object') return null;
-    const lat = this.toNumber((value as { latitude?: unknown }).latitude);
-    const lon = this.toNumber((value as { longitude?: unknown }).longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const lat = this.toNumberOrNull((value as { latitude?: unknown }).latitude);
+    const lon = this.toNumberOrNull((value as { longitude?: unknown }).longitude);
+    if (lat === null || lon === null) return null;
     return { lat, lon };
   }
 }
