@@ -216,7 +216,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.exit().remove();
   }
 
-
   private buildTargets(
     tracks: AisTrack[],
     origin: { lat: number; lon: number },

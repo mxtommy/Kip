@@ -3,7 +3,7 @@ import { Subject, interval, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
-const AIS_DEBUG = false;
+const AIS_DEBUG = true;
 
 // AIS processing defaults
 const AIS_DEFAULTS = {
@@ -183,8 +183,14 @@ export class AisProcessingService {
 
   private applyOwnShipUpdate(path: string, value: unknown): void {
     const next = { ...this._ownShip() } as OwnShipState;
+    const position = this.readPositionValue(value);
 
     switch (path) {
+      case 'navigation.position':
+        if (position) {
+          next.position = position;
+        }
+        break;
       case 'navigation.position.latitude':
         next.position = { ...(next.position ?? { lat: 0, lon: 0 }), lat: this.toNumber(value) };
         break;
@@ -273,6 +279,14 @@ export class AisProcessingService {
         track.position = { ...(track.position ?? { lat: 0, lon: 0 }), lon: this.toNumber(update.value) };
         this.registerPositionReport(track, update.timestampMs);
         break;
+      case 'navigation.position': {
+        const position = this.readPositionValue(update.value);
+        if (position) {
+          track.position = position;
+          this.registerPositionReport(track, update.timestampMs);
+        }
+        break;
+      }
       case 'atonType.id':
         track.atonType = { ...(track.atonType ?? {}), id: this.toNumberOrNull(update.value) };
         break;
@@ -672,5 +686,13 @@ export class AisProcessingService {
     const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     const meters = R * c;
     return meters / 1852;
+  }
+
+  private readPositionValue(value: unknown): AisTrackPosition | null {
+    if (!value || typeof value !== 'object') return null;
+    const lat = this.toNumber((value as { latitude?: unknown }).latitude);
+    const lon = this.toNumber((value as { longitude?: unknown }).longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return { lat, lon };
   }
 }
