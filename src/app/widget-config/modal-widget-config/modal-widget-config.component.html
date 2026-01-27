@@ -609,15 +609,39 @@
                     </mat-select>
                   </mat-form-field>
                   <mat-checkbox
-                    name="showMotionVectors"
-                    formControlName="showMotionVectors">
-                    Show foreword motion vector
+                    name="showCogVectors"
+                    formControlName="showCogVectors">
+                    Show projected course vector
                   </mat-checkbox>
+                  <mat-form-field>
+                    <mat-label>COG Vector Duration (min)</mat-label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      matInput
+                      placeholder="Enter or select duration..."
+                      name="cogVectorsMinutes"
+                      formControlName="cogVectorsMinutes"
+                    />
+                  </mat-form-field>
                   <mat-checkbox
-                    name="showTrails"
-                    formControlName="showTrails">
-                    Show Trails
+                    name="showVesselsTrail"
+                    formControlName="showVesselsTrail">
+                    Show vessels trail
                   </mat-checkbox>
+                  <mat-form-field>
+                    <mat-label>Vessels Trail Duration (min)</mat-label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      matInput
+                      placeholder="Enter or select duration..."
+                      name="vesselsTrailMinutes"
+                      formControlName="vesselsTrailMinutes"
+                    />
+                  </mat-form-field>
                   <mat-checkbox
                     name="showHeadingLineClassB"
                     formControlName="showHeadingLineClassB">

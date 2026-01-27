@@ -77,11 +77,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     ais: {
       viewMode: 'course-up',
       rangeRings: [3, 6, 12, 24, 48],
-      rangeIndex: 4,
+      rangeIndex: 3,
       showVesselsTrail: true,
-      vesselsTrailMinutes: 300,
+      vesselsTrailMinutes: 120,
       showCogVectors: true,
-      cogVectorsMinutes: 10,
+      cogVectorsMinutes: 120,
       showHeadingLineClassB: true,
       showLostTargets: true,
       showUnconfirmedTargets: true,
@@ -176,7 +176,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.root.attr('transform', `scale(${scale})`);
 
-    this.renderRings(rangeRings, rangeNm, radius);
+    this.renderRings(rangeRings, rangeNm, radius, viewRotation);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
@@ -187,7 +187,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.renderSelected(renderTargets, radius);
   }
 
-  private renderRings(rangeRings: number[], rangeNm: number, radius: number): void {
+  private renderRings(rangeRings: number[], rangeNm: number, radius: number, viewRotation: number): void {
     if (!this.ringsLayer) return;
 
     const rings = rangeRings
@@ -206,25 +206,67 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     selection.exit().remove();
 
+    const labelOffset = 12;
+    const labelData = rings.flatMap(ring => ([
+      { key: `${ring.value}-top`, value: ring.value, x: 0, y: -ring.radius + labelOffset },
+      { key: `${ring.value}-bottom`, value: ring.value, x: 0, y: ring.radius - labelOffset }
+    ]));
+
     const labelSelection = this.ringsLayer
-      .selectAll<SVGTextElement, { value: number; radius: number }>('text.ring-label')
-      .data(rings, d => d.value.toString());
+      .selectAll<SVGTextElement, { key: string; value: number; x: number; y: number }>('text.ring-label')
+      .data(labelData, d => d.key);
 
     labelSelection.enter()
       .append('text')
       .attr('class', 'ring-label')
-      .merge(labelSelection as d3.Selection<SVGTextElement, { value: number; radius: number }, SVGGElement, unknown>)
-      .attr('x', d => -d.radius + 6)
-      .attr('y', 0)
-      .attr('text-anchor', 'end')
+      .merge(labelSelection as d3.Selection<SVGTextElement, { key: string; value: number; x: number; y: number }, SVGGElement, unknown>)
+      .attr('x', d => d.x)
+      .attr('y', d => d.y)
+      .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
-      .text(d => `${d.value} nm`);
+      .text(d => `${d.value}`);
 
     labelSelection.exit().remove();
+
+    const northInset = 0; // position on the ring
+    const northAngle = this.wrapDegrees(-viewRotation);
+    const theta = (northAngle * Math.PI) / 180;
+    const northX = (radius - northInset) * Math.sin(theta);
+    const northY = -(radius - northInset) * Math.cos(theta);
+
+    const northSelection = this.ringsLayer
+      .selectAll<SVGTextElement, { x: number; y: number }>('text.ring-north')
+      .data([{ x: northX, y: northY }]);
+
+    northSelection.enter()
+      .append('text')
+      .attr('class', 'ring-north')
+      .merge(northSelection as d3.Selection<SVGTextElement, { x: number; y: number }, SVGGElement, unknown>)
+      .attr('x', d => d.x)
+      .attr('y', d => d.y)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .text('N');
+
+    northSelection.exit().remove();
+
+    const centerSelection = this.ringsLayer
+      .selectAll<SVGCircleElement, { r: number }>('circle.radar-center')
+      .data([{ r: Math.max(3, radius * 0.01) }]);
+
+    centerSelection.enter()
+      .append('circle')
+      .attr('class', 'radar-center')
+      .merge(centerSelection as d3.Selection<SVGCircleElement, { r: number }, SVGGElement, unknown>)
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', d => d.r);
+
+    centerSelection.exit().remove();
   }
 
   private resolveRingCountForRange(rangeNm: number): number {
-    const candidates = [4, 5, 6, 3];
+    const candidates = [4, 5, 3];
     for (const count of candidates) {
       const step = rangeNm / count;
       if (this.isNiceStep(step)) return count;

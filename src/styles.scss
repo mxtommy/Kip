@@ -449,12 +449,25 @@ widget-ais-radar {
   }
 
   .radar-rings .ring-label {
-    font-size: 9px;
+    font-size: 16px;
     fill: var(--kip-contrast-dim-color);
     opacity: 0.75;
     paint-order: stroke;
     stroke: var(--kip-widget-card-background-color);
     stroke-width: 2;
+  }
+
+  .radar-rings .ring-north {
+    font-size: 24px;
+    font-weight: 600;
+    fill: var(--kip-contrast-color);
+    paint-order: stroke;
+    stroke: var(--kip-widget-card-background-color);
+    stroke-width: 2;
+  }
+
+  .radar-rings .radar-center {
+    fill: var(--kip-green-dim-color);
   }
 
   .radar-trails .trail {
