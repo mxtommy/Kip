@@ -10,21 +10,6 @@ import { DialogAisTargetComponent } from '../../core/components/dialog-ais-targe
 
 type ViewMode = 'north-up' | 'course-up';
 
-interface AisRadarConfig extends IWidgetSvcConfig {
-  radar?: {
-    viewMode?: ViewMode;
-    rangeRings?: number[];
-    rangeIndex?: number;
-    showTrails?: boolean;
-    showMotionVectors?: boolean;
-    showHeadingLineClassB?: boolean;
-    showLostTargets?: boolean;
-    showUnconfirmedTargets?: boolean;
-    trailSeconds?: number;
-    sweepSeconds?: number;
-  };
-}
-
 interface RadarSize {
   width: number;
   height: number;
@@ -32,7 +17,7 @@ interface RadarSize {
 
 interface RenderState {
   size: RadarSize;
-  cfg: AisRadarConfig;
+  cfg: IWidgetSvcConfig;
   targets: AisTrack[];
   ownShip: {
     position?: { lat: number | null; lon: number | null } | null;
@@ -89,19 +74,20 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     filterSelfPaths: false,
     enableTimeout: false,
     dataTimeout: 5,
-    radar: {
+    ais: {
       viewMode: 'course-up',
       rangeRings: [3, 6, 12, 24, 48],
-      rangeIndex: 3,
-      showTrails: true,
-      showMotionVectors: true,
+      rangeIndex: 4,
+      showVesselsTrail: true,
+      vesselsTrailMinutes: 300,
+      showCogVectors: true,
+      cogVectorsMinutes: 10,
       showHeadingLineClassB: true,
       showLostTargets: true,
       showUnconfirmedTargets: true,
-      trailSeconds: 300,
-      sweepSeconds: 4
+      showSelf: true
     }
-  } as AisRadarConfig;
+  };
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('radarSvg');
   private readonly hostSize = signal<RadarSize | null>(null);
@@ -121,7 +107,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const size = this.hostSize();
-      const cfg = this.runtime.options() as AisRadarConfig | undefined;
+      const cfg = this.runtime.options();
       const theme = this.theme();
       const targets = this.ais.targets();
       const ownShip = this.ais.ownShip();
@@ -172,8 +158,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const width = Math.max(1, size.width);
     const height = Math.max(1, size.height);
     const radius = Math.min(width, height) / 2;
+    const scale = (Math.min(width, height) - 35) / Math.min(width, height);
 
-    const radarCfg = (cfg.radar ?? {}) as NonNullable<AisRadarConfig['radar']>;
+    const radarCfg = (cfg.ais ?? {}) as NonNullable<IWidgetSvcConfig['ais']>;
     const availableRanges = radarCfg.rangeRings?.length ? radarCfg.rangeRings : [3, 6, 12, 24, 48];
     const rangeIndex = Math.min(Math.max(radarCfg.rangeIndex ?? 0, 0), availableRanges.length - 1);
     const rangeNm = availableRanges[rangeIndex] ?? availableRanges[0];
@@ -186,6 +173,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.svg
       .attr('viewBox', `${-radius} ${-radius} ${radius * 2} ${radius * 2}`);
+
+    this.root.attr('transform', `scale(${scale})`);
 
     this.renderRings(rangeRings, rangeNm, radius);
 
@@ -259,7 +248,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     rangeNm: number,
     radius: number,
     viewRotation: number,
-    cfg: NonNullable<AisRadarConfig['radar']>
+    cfg: NonNullable<IWidgetSvcConfig['ais']>
   ): RenderTarget[] {
     const showLost = cfg.showLostTargets ?? true;
     const showUnconfirmed = cfg.showUnconfirmedTargets ?? true;
@@ -304,10 +293,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     rangeNm: number,
     radius: number,
     viewRotation: number,
-    cfg: NonNullable<AisRadarConfig['radar']>
+    cfg: NonNullable<IWidgetSvcConfig['ais']>
   ): void {
     if (!this.trailsLayer) return;
-    if (!cfg.showTrails) {
+    if (!cfg.showVesselsTrail) {
       this.trailsLayer.selectAll('*').remove();
       return;
     }
@@ -316,11 +305,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     if (!origin || !this.hasValidPosition(origin)) return;
 
     const now = Date.now();
-    const trailSeconds = Math.max(10, cfg.trailSeconds ?? 300);
+    const trailMinutes = Math.max(10, (cfg.vesselsTrailMinutes ?? 300) * 60);
 
     const trailData = targets.map(target => {
       const points = target.raw.trail
-        .filter(point => now - point.ts <= trailSeconds * 1000)
+        .filter(point => now - point.ts <= trailMinutes * 1000)
         .map(point => {
           const distance = this.distanceNm(origin, point);
           const bearing = this.bearingDeg(origin, point);
@@ -355,11 +344,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     rangeNm: number,
     radius: number,
     viewRotation: number,
-    cfg: NonNullable<AisRadarConfig['radar']>
+    cfg: NonNullable<IWidgetSvcConfig['ais']>
   ): void {
     if (!this.vectorsLayer) return;
 
-    const motionEnabled = cfg.showMotionVectors ?? true;
+    const motionEnabled = cfg.showCogVectors ?? true;
     const headingEnabled = cfg.showHeadingLineClassB ?? true;
     const baseSize = Math.max(6, radius * 0.04);
 
@@ -372,7 +361,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const tip = this.offsetPoint(target.x, target.y, heading, baseSize * 0.8);
 
       if (motionEnabled && target.sog !== null) {
-        const distanceNm = (target.sog * 5) / 60;
+        const distanceNm = (target.sog * (cfg.cogVectorsMinutes ?? 5)) / 60;
         const vectorLength = (distanceNm / rangeNm) * radius;
         const end = this.offsetPoint(tip.x, tip.y, heading, vectorLength);
         motionData.push({

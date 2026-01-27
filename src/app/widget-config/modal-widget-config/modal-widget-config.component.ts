@@ -35,6 +35,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private static readonly KEY_GAUGE = 'gauge';
   private static readonly KEY_AUTOPILOT = 'autopilot';
   private static readonly KEY_PATHS = 'paths';
+  private static readonly KEY_AIS = 'ais';
   private static readonly KEY_CONVERT_UNIT_TO = 'convertUnitTo';
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
@@ -93,6 +94,8 @@ export class ModalWidgetConfigComponent implements OnInit {
         } else if (key === ModalWidgetConfigComponent.KEY_GAUGE) {
           groups.addControl(key, this.generateFormGroups(value, key));
         } else if (key === ModalWidgetConfigComponent.KEY_AUTOPILOT) {
+          groups.addControl(key, this.generateFormGroups(value, key));
+        } else if (key === ModalWidgetConfigComponent.KEY_AIS) {
           groups.addControl(key, this.generateFormGroups(value, key));
         } else if (key === ModalWidgetConfigComponent.KEY_PATHS) {
           const pathsValue = value as Record<string, unknown>;

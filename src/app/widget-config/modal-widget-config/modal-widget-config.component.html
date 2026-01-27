@@ -491,9 +491,9 @@
                     required
                   >
                     @for(color of colors; track $index) {
-                    <mat-option value="{{ color.value }}">{{
-                      color.label
-                    }}</mat-option>
+                      <mat-option value="{{ color.value }}">{{
+                        color.label
+                      }}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
@@ -580,6 +580,65 @@
                   }
                 </mat-select>
               </mat-form-field>
+              }
+              @if ((widgetConfig?.ais !== undefined)) {
+                <ng-container formGroupName="ais">
+                  <mat-form-field class="options-grid-span2">
+                    <mat-label>View Mode</mat-label>
+                    <mat-select
+                      placeholder="Select view mode..."
+                      formControlName="viewMode"
+                      name="viewMode"
+                      required>
+                      <mat-option value="north-up">North Up</mat-option>
+                      <mat-option value="course-up">Course Up</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field class="options-grid-span2">
+                    <mat-label>Range</mat-label>
+                    <mat-select
+                      placeholder="Select AIS range..."
+                      formControlName="rangeIndex"
+                      name="rangeIndex"
+                      required>
+                      <mat-option value="0">3 miles</mat-option>
+                      <mat-option value="1">6 miles</mat-option>
+                      <mat-option value="2">12 miles</mat-option>
+                      <mat-option value="3">24 miles</mat-option>
+                      <mat-option value="4">48 miles</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-checkbox
+                    name="showMotionVectors"
+                    formControlName="showMotionVectors">
+                    Show foreword motion vector
+                  </mat-checkbox>
+                  <mat-checkbox
+                    name="showTrails"
+                    formControlName="showTrails">
+                    Show Trails
+                  </mat-checkbox>
+                  <mat-checkbox
+                    name="showHeadingLineClassB"
+                    formControlName="showHeadingLineClassB">
+                    Show Heading Line for Class B targets
+                  </mat-checkbox>
+                  <mat-checkbox
+                    name="showUnconfirmedTargets"
+                    formControlName="showUnconfirmedTargets">
+                    Show Unconfirmed Targets
+                  </mat-checkbox>
+                  <mat-checkbox
+                    name="showLostTargets"
+                    formControlName="showLostTargets">
+                    Show Lost Targets
+                  </mat-checkbox>
+                  <mat-checkbox
+                    name="showUnconfirmedTargets"
+                    formControlName="showUnconfirmedTargets">
+                    Show Unconfirmed Targets
+                  </mat-checkbox>
+                </ng-container>
               }
               <!-- Steelgauge -->
               @if (widgetConfig?.gauge?.type === "steel" || widgetConfig?.gauge?.type === 'horizon') {
