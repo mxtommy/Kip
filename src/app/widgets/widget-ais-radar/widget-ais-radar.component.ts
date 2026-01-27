@@ -101,8 +101,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private vectorsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private targetsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private selectedLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private viewRotationSmoothed: number | null = null;
+  private lastRotationAt: number | null = null;
 
   private renderFrame: number | null = null;
+  private lastRenderAt: number | null = null;
+  private readonly minRenderIntervalMs = 100;
 
   constructor() {
     effect(() => {
@@ -144,7 +148,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private startRenderLoop(): void {
     this.ngZone.runOutsideAngular(() => {
       const loop = () => {
-        this.render();
+        const now = performance.now();
+        if (this.lastRenderAt === null || now - this.lastRenderAt >= this.minRenderIntervalMs) {
+          this.lastRenderAt = now;
+          this.render();
+        }
         this.renderFrame = requestAnimationFrame(loop);
       };
       loop();
@@ -167,8 +175,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const ringCount = this.resolveRingCountForRange(rangeNm);
     const rangeRings = this.buildRangeRings(rangeNm, ringCount);
     const viewMode: ViewMode = radarCfg.viewMode ?? 'course-up';
+    const ownCog = this.toDegreesIfRadians(ownShip.courseOverGroundTrue);
+    const ownHeading = this.toDegreesIfRadians(ownShip.headingTrue);
+    const targetRotation = viewMode === 'course-up'
+      ? (ownCog ?? ownHeading ?? 0)
+      : 0;
     const viewRotation = viewMode === 'course-up'
-      ? (ownShip.courseOverGroundTrue ?? ownShip.headingTrue ?? 0)
+      ? this.smoothRotation(targetRotation)
       : 0;
 
     this.svg
@@ -176,7 +189,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.root.attr('transform', `scale(${scale})`);
 
-    this.renderRings(rangeRings, rangeNm, radius, viewRotation);
+    const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
+    this.renderRings(rangeRings, rangeNm, radius, viewRotation, radarCfg.showSelf ?? true, ownShipRotation);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
@@ -187,7 +201,14 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.renderSelected(renderTargets, radius);
   }
 
-  private renderRings(rangeRings: number[], rangeNm: number, radius: number, viewRotation: number): void {
+  private renderRings(
+    rangeRings: number[],
+    rangeNm: number,
+    radius: number,
+    viewRotation: number,
+    showSelf: boolean,
+    ownShipRotation: number
+  ): void {
     if (!this.ringsLayer) return;
 
     const rings = rangeRings
@@ -228,7 +249,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     labelSelection.exit().remove();
 
-    const northInset = 0; // position on the ring
+    const northInset = -12; // position on the ring
     const northAngle = this.wrapDegrees(-viewRotation);
     const theta = (northAngle * Math.PI) / 180;
     const northX = (radius - northInset) * Math.sin(theta);
@@ -252,7 +273,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const centerSelection = this.ringsLayer
       .selectAll<SVGCircleElement, { r: number }>('circle.radar-center')
-      .data([{ r: Math.max(3, radius * 0.01) }]);
+      .data(showSelf ? [] : [{ r: Math.max(3, radius * 0.01) }]);
 
     centerSelection.enter()
       .append('circle')
@@ -263,6 +284,26 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('r', d => d.r);
 
     centerSelection.exit().remove();
+
+    const ownShipSelection = this.ringsLayer
+      .selectAll<SVGGElement, { size: number }>('g.radar-ownship')
+      .data(showSelf ? [{ size: Math.max(8, radius * 0.04) }] : []);
+
+    const ownShipEnter = ownShipSelection.enter()
+      .append('g')
+      .attr('class', 'radar-ownship');
+
+    ownShipEnter.append('path')
+      .attr('class', 'ownship-shape');
+
+    const ownShipMerged = ownShipEnter.merge(ownShipSelection as d3.Selection<SVGGElement, { size: number }, SVGGElement, unknown>);
+    const shipSymbol = d3.symbol().type(d3.symbolTriangle);
+
+    ownShipMerged.select<SVGPathElement>('path.ownship-shape')
+      .attr('d', d => shipSymbol.size(d.size * d.size)() ?? '')
+      .attr('transform', `rotate(${ownShipRotation}) scale(1, 1.5)`);
+
+    ownShipSelection.exit().remove();
   }
 
   private resolveRingCountForRange(rangeNm: number): number {
@@ -307,7 +348,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const angle = this.wrapDegrees(bearing - viewRotation);
         const { x, y } = this.polarToCartesian(angle, distance, rangeNm, radius);
 
-        const heading = this.wrapDegrees((track.headingTrue ?? track.courseOverGroundTrue ?? 0) - viewRotation);
+        const trackHeading = this.toDegreesIfRadians(track.headingTrue);
+        const trackCog = this.toDegreesIfRadians(track.courseOverGroundTrue);
+        const heading = this.wrapDegrees((trackHeading ?? trackCog ?? 0) - viewRotation);
         const { shape, label, scaleY } = this.resolveShape(track);
 
         return {
@@ -399,13 +442,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     for (const target of targets) {
       if (target.raw.type !== 'vessel') continue;
-      const heading = this.wrapDegrees((target.raw.headingTrue ?? target.raw.courseOverGroundTrue ?? 0) - viewRotation);
-      const tip = this.offsetPoint(target.x, target.y, heading, baseSize * 0.8);
+      const trackHeading = this.toDegreesIfRadians(target.raw.headingTrue);
+      const trackCog = this.toDegreesIfRadians(target.raw.courseOverGroundTrue);
 
-      if (motionEnabled && target.sog !== null) {
-        const distanceNm = (target.sog * (cfg.cogVectorsMinutes ?? 5)) / 60;
+      if (motionEnabled && target.sog !== null && trackCog !== null) {
+        const motionAngle = this.wrapDegrees(trackCog - viewRotation);
+        const tip = this.offsetPoint(target.x, target.y, motionAngle, baseSize * 0.8);
+        const durationSeconds = (cfg.cogVectorsMinutes ?? 5) * 60;
+        const distanceNm = (target.sog * durationSeconds) / 1852;
         const vectorLength = (distanceNm / rangeNm) * radius;
-        const end = this.offsetPoint(tip.x, tip.y, heading, vectorLength);
+        const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
         motionData.push({
           id: target.id,
           x1: tip.x,
@@ -417,7 +463,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       }
 
       if (headingEnabled && target.raw.aisClass === 'B') {
-        const end = this.offsetPoint(target.x, target.y, heading, baseSize * 1.6);
+        const headingAngle = this.wrapDegrees((trackHeading ?? trackCog ?? 0) - viewRotation);
+        const end = this.offsetPoint(target.x, target.y, headingAngle, baseSize * 1.6);
         headingData.push({
           id: target.id,
           x1: target.x,
@@ -547,18 +594,18 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
 
     if (typeName.includes('tanker')) {
-      return { shape: 'triangle', label: 'T', scaleY: 1 };
+      return { shape: 'triangle', label: 'T', scaleY: 1.3 };
     }
 
     if (typeName.includes('fishing')) {
-      return { shape: 'triangle', label: 'F', scaleY: 1 };
+      return { shape: 'triangle', label: 'F', scaleY: 1.3 };
     }
 
     if (typeName.includes('passenger')) {
-      return { shape: 'triangle', label: null, scaleY: 1.4 };
+      return { shape: 'triangle', label: null, scaleY: 1.6 };
     }
 
-    return { shape: 'triangle', label: null, scaleY: 1 };
+    return { shape: 'triangle', label: null, scaleY: 1.3 };
   }
 
   private symbolTypeForShape(shape: RenderTarget['shape']): d3.SymbolType {
@@ -623,6 +670,35 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private wrapDegrees(angle: number): number {
     const normalized = angle % 360;
     return normalized < 0 ? normalized + 360 : normalized;
+  }
+
+  private shortestAngleDelta(from: number, to: number): number {
+    return ((to - from + 540) % 360) - 180;
+  }
+
+  private smoothRotation(targetRotation: number): number {
+    const now = performance.now();
+    if (this.viewRotationSmoothed === null || this.lastRotationAt === null) {
+      this.viewRotationSmoothed = this.wrapDegrees(targetRotation);
+      this.lastRotationAt = now;
+      return this.viewRotationSmoothed;
+    }
+
+    const dt = Math.min(250, Math.max(0, now - this.lastRotationAt));
+    const alpha = Math.min(1, dt / 200);
+    const delta = this.shortestAngleDelta(this.viewRotationSmoothed, targetRotation);
+    this.viewRotationSmoothed = this.wrapDegrees(this.viewRotationSmoothed + delta * alpha);
+    this.lastRotationAt = now;
+    return this.viewRotationSmoothed;
+  }
+
+  private toDegreesIfRadians(value: number | null | undefined): number | null {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    const abs = Math.abs(value);
+    if (abs <= Math.PI * 2 + 0.001) {
+      return (value * 180) / Math.PI;
+    }
+    return value;
   }
 
   private bearingDeg(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {

@@ -470,6 +470,12 @@ widget-ais-radar {
     fill: var(--kip-green-dim-color);
   }
 
+  .radar-rings .radar-ownship .ownship-shape {
+    fill: var(--kip-contrast-color);
+    stroke: var(--kip-contrast-color);
+    stroke-width: 1;
+  }
+
   .radar-trails .trail {
     fill: none;
     stroke-width: 1;
