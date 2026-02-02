@@ -33,8 +33,5 @@ jobs:
     - name: Run tests
       run: npm run test:headless
 
-    - name: Build production
+    - name: Build All (Webapp & Plugin)
       run: npm run build:prod
-
-    - name: Build plugin
-      run: npm run build:plugin
