@@ -7,8 +7,56 @@ import { IKipResizeEvent, KipResizeObserverDirective } from '../../core/directiv
 import { AisProcessingService, AisTrack } from '../../core/services/ais-processing.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { DialogAisTargetComponent } from '../../core/components/dialog-ais-target/dialog-ais-target.component';
+import { UnitsService } from '../../core/services/units.service';
 
 type ViewMode = 'north-up' | 'course-up';
+
+interface AisShipTypeIconRange {
+  min: number;
+  max: number;
+  icon: string;
+}
+
+interface AisBeaconIconPrefix {
+  mmsiPrefix: string;
+  icon: string;
+}
+
+const AIS_VESSEL_ICON_RANGES: AisShipTypeIconRange[] = [
+  { min: 0, max: 9, icon: '' }, // Reserved for future use
+  { min: 10, max: 19, icon: 'assets/svg/vessels/ais_active.svg' }, // Unspecified
+  { min: 20, max: 29, icon: 'assets/svg/vessels/ais_active.svg' }, // Wing-in-ground aircraft
+  { min: 30, max: 30, icon: 'assets/svg/vessels/ais_active.svg' }, // Fishing
+  { min: 31, max: 31, icon: 'assets/svg/vessels/ais_active.svg' }, // Towing
+  { min: 32, max: 32, icon: 'assets/svg/vessels/ais_active.svg' }, // Towing: length exceeds 200m or breadth exceeds 25m
+  { min: 33, max: 33, icon: 'assets/svg/vessels/ais_active.svg' }, // Dredging or underwater ops
+  { min: 34, max: 34, icon: 'assets/svg/vessels/ais_active.svg' }, // Diving ops
+  { min: 35, max: 35, icon: 'assets/svg/vessels/ais_active.svg' }, // Military ops
+  { min: 36, max: 36, icon: 'assets/svg/vessels/ais_active.svg' }, // Sailing
+  { min: 37, max: 37, icon: 'assets/svg/vessels/ais_active.svg' }, // Pleasure Craft
+  { min: 38, max: 39, icon: 'assets/svg/vessels/ais_active.svg' }, // Reserved for future use
+  { min: 40, max: 49, icon: 'assets/svg/vessels/ais_highspeed.svg' }, // High Speed Vessel
+  { min: 50, max: 50, icon: 'assets/svg/vessels/ais_special.svg' }, // Pilot Vessel
+  { min: 51, max: 51, icon: 'assets/svg/vessels/ais_special.svg' }, // Search and Rescue vessel
+  { min: 52, max: 52, icon: 'assets/svg/vessels/ais_special.svg' }, // Tug
+  { min: 53, max: 53, icon: 'assets/svg/vessels/ais_special.svg' }, // Port Tender
+  { min: 54, max: 54, icon: 'assets/svg/vessels/ais_special.svg' }, // Anti-pollution equipment
+  { min: 55, max: 55, icon: 'assets/svg/vessels/ais_special.svg' }, // Law Enforcement
+  { min: 56, max: 56, icon: 'assets/svg/vessels/ais_special.svg' }, // Spare - Local Vessel
+  { min: 57, max: 57, icon: 'assets/svg/vessels/ais_special.svg' }, // Spare - Local Vessel
+  { min: 58, max: 58, icon: 'assets/svg/vessels/ais_special.svg' }, // Medical Transport
+  { min: 59, max: 59, icon: 'assets/svg/vessels/ais_special.svg' }, // Noncombatant ship according to RR Resolution No. 18
+  { min: 60, max: 69, icon: 'assets/svg/vessels/ais_passenger.svg' }, // Passenger Vessel
+  { min: 70, max: 79, icon: 'assets/svg/vessels/ais_cargo.svg' }, // Cargo Vessel
+  { min: 80, max: 89, icon: 'assets/svg/vessels/ais_tanker.svg' }, // Tanker Vessel
+  { min: 90, max: 99, icon: 'assets/svg/vessels/ais_other.svg' } // Other
+];
+
+const AIS_BEACON_ICON_PREFIXES: AisBeaconIconPrefix[] = [
+  { mmsiPrefix: '970', icon: 'assets/svg/vessels/ais_special.svg' }, // SART
+  { mmsiPrefix: '972', icon: 'assets/svg/vessels/ais_special.svg' }, // MOB
+  { mmsiPrefix: '974', icon: 'assets/svg/vessels/ais_special.svg' }  // EPIRB
+];
 
 interface RadarSize {
   width: number;
@@ -38,6 +86,8 @@ interface RenderTarget {
   shape: 'triangle' | 'diamond' | 'circle' | 'square' | 'plus';
   label: string | null;
   scaleY: number;
+  iconHref: string | null;
+  iconScale: number;
   navState: string | null;
   sog: number | null;
   cog: number | null;
@@ -69,6 +119,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private readonly ais = inject(AisProcessingService);
   private readonly dialog = inject(DialogService);
   private readonly ngZone = inject(NgZone);
+  private readonly units = inject(UnitsService);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     filterSelfPaths: false,
@@ -107,6 +158,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private renderFrame: number | null = null;
   private lastRenderAt: number | null = null;
   private readonly minRenderIntervalMs = 100;
+  private readonly iconCache = new Map<string, { signature: string; icon: { href: string | null; scale: number } }>();
 
   constructor() {
     effect(() => {
@@ -352,6 +404,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const trackCog = this.toDegreesIfRadians(track.courseOverGroundTrue);
         const heading = this.wrapDegrees((trackHeading ?? trackCog ?? 0) - viewRotation);
         const { shape, label, scaleY } = this.resolveShape(track);
+        const { href: iconHref, scale: iconScale } = this.resolveIconCached(track);
+        const finalScaleY = iconHref ? 1 : scaleY;
 
         return {
           id: track.id,
@@ -364,10 +418,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
           type: track.type,
           shape,
           label,
-          scaleY,
+          scaleY: finalScaleY,
+          iconHref,
+          iconScale,
           navState: track.navState ?? null,
           sog: track.speedOverGround ?? null,
-          cog: track.courseOverGroundTrue ?? null
+          cog: trackCog ?? null
         } as RenderTarget;
       })
       .filter((target): target is RenderTarget => Boolean(target));
@@ -516,6 +572,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         this.selectTarget(d);
       });
 
+    enter.append('image')
+      .attr('class', 'target-icon');
+
     enter.append('path')
       .attr('class', 'target-shape');
 
@@ -530,7 +589,17 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('transform', d => `translate(${d.x}, ${d.y}) rotate(${d.heading}) scale(1, ${d.scaleY})`)
       .attr('class', d => `target ${this.buildClassName(d)}`);
 
+    merged.select<SVGImageElement>('image.target-icon')
+      .attr('href', d => d.iconHref ?? null)
+      .attr('xlink:href', d => d.iconHref ?? null)
+      .attr('display', d => (d.iconHref ? null : 'none'))
+      .attr('width', d => baseSize * d.iconScale)
+      .attr('height', d => baseSize * d.iconScale)
+      .attr('x', d => -(baseSize * d.iconScale) / 2)
+      .attr('y', d => -(baseSize * d.iconScale) / 2);
+
     merged.select<SVGPathElement>('path.target-shape')
+      .attr('display', d => (d.iconHref ? 'none' : null))
       .attr('d', d => {
         const symbolType = this.symbolTypeForShape(d.shape);
         symbol.type(symbolType).size(baseSize * baseSize * 1.2);
@@ -579,7 +648,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private resolveShape(track: AisTrack): { shape: RenderTarget['shape']; label: string | null; scaleY: number } {
     const navState = (track.navState ?? '').toLowerCase();
-    const typeName = String(track.aisShipType ?? '').toLowerCase();
+    const typeName = String(track.aisShipTypeName ?? track.aisType ?? '').toLowerCase();
 
     if (navState.includes('moored') || navState.includes('anchored')) {
       return { shape: 'diamond', label: null, scaleY: 1 };
@@ -606,6 +675,85 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
 
     return { shape: 'triangle', label: null, scaleY: 1.3 };
+  }
+
+  private resolveIcon(track: AisTrack): { href: string | null; scale: number } {
+    const beaconIcon = this.resolveBeaconIcon(track);
+    if (beaconIcon) return { href: beaconIcon, scale: 2.4 };
+
+    if (track.type === 'aton') {
+      return { href: this.resolveAtonIcon(track), scale: 2 };
+    }
+
+    if (track.type === 'basestation') {
+      return { href: 'assets/svg/atons/basestation.svg', scale: 3 };
+    }
+
+    if (track.type === 'sar') {
+      return { href: 'assets/svg/vessels/ais_special.svg', scale: 2.4 };
+    }
+
+    if (track.type === 'vessel') {
+      return { href: this.resolveVesselIcon(track), scale: 3 };
+    }
+
+    return { href: null, scale: 2.4 };
+  }
+
+  private resolveBeaconIcon(track: AisTrack): string | null {
+    const mmsi = track.mmsi ?? '';
+    for (const entry of AIS_BEACON_ICON_PREFIXES) {
+      if (mmsi.startsWith(entry.mmsiPrefix)) return entry.icon;
+    }
+    return null;
+  }
+
+  private resolveIconCached(track: AisTrack): { href: string | null; scale: number } {
+    const signature = track.mmsi;
+    const cached = this.iconCache.get(track.id);
+    if (cached && cached.signature === signature) return cached.icon;
+
+    const resolved = this.resolveIcon(track);
+    this.iconCache.set(track.id, { signature, icon: resolved });
+    return resolved;
+  }
+
+  private resolveVesselIcon(track: AisTrack): string | null {
+    const navState = (track.navState ?? '').toLowerCase();
+    if (navState.includes('moored') || navState.includes('anchored')) {
+      return 'assets/svg/vessels/ais_inactive.svg';
+    }
+
+    const shipTypeId = track.aisShipTypeId ?? null;
+    const iconFromRange = shipTypeId !== null ? this.resolveIconFromShipTypeId(shipTypeId) : null;
+    if (iconFromRange) return iconFromRange;
+
+    return 'assets/svg/vessels/ais_active.svg';
+  }
+
+  private resolveIconFromShipTypeId(shipTypeId: number): string | null {
+    for (const entry of AIS_VESSEL_ICON_RANGES) {
+      if (shipTypeId >= entry.min && shipTypeId <= entry.max) return entry.icon;
+    }
+    return null;
+  }
+
+  private resolveAtonIcon(track: AisTrack): string | null {
+    const isVirtual = track.atonVirtual ?? false;
+    const prefix = isVirtual ? 'virtual' : 'real';
+    const name = (track.atonType?.name ?? '').toLowerCase();
+
+    if (name.includes('north')) return `assets/svg/atons/${prefix}-north.svg`;
+    if (name.includes('south')) return `assets/svg/atons/${prefix}-south.svg`;
+    if (name.includes('east')) return `assets/svg/atons/${prefix}-east.svg`;
+    if (name.includes('west')) return `assets/svg/atons/${prefix}-west.svg`;
+    if (name.includes('port')) return `assets/svg/atons/${prefix}-port.svg`;
+    if (name.includes('starboard')) return `assets/svg/atons/${prefix}-starboard.svg`;
+    if (name.includes('safe')) return `assets/svg/atons/${prefix}-safe.svg`;
+    if (name.includes('special')) return `assets/svg/atons/${prefix}-special.svg`;
+    if (name.includes('danger')) return `assets/svg/atons/${prefix}-danger.svg`;
+
+    return `assets/svg/atons/${prefix}-aton.svg`;
   }
 
   private symbolTypeForShape(shape: RenderTarget['shape']): d3.SymbolType {
@@ -694,11 +842,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private toDegreesIfRadians(value: number | null | undefined): number | null {
     if (typeof value !== 'number' || !Number.isFinite(value)) return null;
-    const abs = Math.abs(value);
-    if (abs <= Math.PI * 2 + 0.001) {
-      return (value * 180) / Math.PI;
-    }
-    return value;
+    return this.units.convertToUnit('deg', value);
   }
 
   private bearingDeg(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {

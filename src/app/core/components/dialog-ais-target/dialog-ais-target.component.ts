@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import type { DialogComponentData } from '../../interfaces/dialog-data';
 import type { AisTrack } from '../../services/ais-processing.service';
+import { UnitsService } from '../../services/units.service';
 
 interface AisDialogPayload {
   target: AisTrack;
@@ -14,7 +15,8 @@ interface AisDialogPayload {
   templateUrl: './dialog-ais-target.component.html'
 })
 export class DialogAisTargetComponent {
-  protected data = inject<DialogComponentData>(MAT_DIALOG_DATA);
+  private readonly data = inject<DialogComponentData>(MAT_DIALOG_DATA);
+  private readonly units = inject(UnitsService);
 
   protected get payload(): AisDialogPayload | null {
     return (this.data?.payload as AisDialogPayload) ?? null;
@@ -24,9 +26,9 @@ export class DialogAisTargetComponent {
     return this.payload?.target ?? null;
   }
 
-  protected formatNumber(value: number | null | undefined, fraction = 2): string {
-    if (value === null || value === undefined || !Number.isFinite(value)) return '--';
-    return value.toFixed(fraction);
+  protected formatAngle(value: number | null | undefined): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) return null;
+    return this.units.convertToUnit('deg', value).toString();
   }
 
   protected formatLatLon(value: number | null | undefined): string {
