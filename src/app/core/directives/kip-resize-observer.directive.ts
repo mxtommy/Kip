@@ -11,8 +11,7 @@ export interface IKipResizeEvent {
   standalone: true,
 })
 export class KipResizeObserverDirective implements OnDestroy {
-  // Compatibility with ngx-resize-observer output name.
-  @Output('onResize') onResize = new EventEmitter<ResizeObserverEntry>();
+  @Output() resizeChange = new EventEmitter<ResizeObserverEntry>();
   @Output() kipResize = new EventEmitter<IKipResizeEvent>();
 
   private readonly el = inject(ElementRef<HTMLElement>);
@@ -26,7 +25,7 @@ export class KipResizeObserverDirective implements OnDestroy {
         const entry = entries[entries.length - 1];
         const { width, height } = entry.contentRect;
         this.zone.run(() => {
-          this.onResize.emit(entry);
+          this.resizeChange.emit(entry);
           this.kipResize.emit({ width, height, entry });
         });
       });

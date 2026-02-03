@@ -167,7 +167,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private dtsColor = '';
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
-  private displayLineIndex: number = 0;
+  private displayLineIndex = 0;
   private lines: string[] = [];
   private startLineName: string = null;
   protected portBiasValue = signal<string>('');
