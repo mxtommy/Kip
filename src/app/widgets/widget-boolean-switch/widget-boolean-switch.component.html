@@ -2,7 +2,7 @@
 @if (cfg?.showLabel) {
   <widget-title [text]="(cfg?.displayName)" [color]="labelColor()"></widget-title>
 }
-<div [class]="noTitleClass()" #widgetContainer kipResizeObserver (onResize)="onResized($event)">
+<div [class]="noTitleClass()" #widgetContainer kipResizeObserver (resizeChange)="onResized($event)">
   @for (ctrl of switchControls(); track $index) {
     <ng-container>
       @switch (ctrl.type) {

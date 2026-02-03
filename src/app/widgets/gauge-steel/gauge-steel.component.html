@@ -1,4 +1,4 @@
-<div class="wrapper" kipResizeObserver (onResize)="onResized($event)">
+<div class="wrapper" kipResizeObserver (resizeChange)="onResized($event)">
   <canvas id="{{widgetUUID()}}" #gaugeCanvas style="z-index: inherit;">
     Browser does not support canvas element.
   </canvas>

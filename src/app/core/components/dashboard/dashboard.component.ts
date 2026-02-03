@@ -143,10 +143,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
         this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
-          let subGrid: GridStackOptions = {};
+         /*  let subGrid: GridStackOptions = {};
           if (item.gridstackNode.subGridOpts) {
             subGrid = item.gridstackNode.subGridOpts;
-          }
+          } */
 
           if (item.gridstackNode.id === action.id) {
             switch (action.operation) {

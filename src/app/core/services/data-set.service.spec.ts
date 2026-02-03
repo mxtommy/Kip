@@ -1,16 +1,18 @@
 import { TestBed, inject } from '@angular/core/testing';
-
+import { signal } from '@angular/core';
 import { DatasetService, TimeScaleFormat } from './data-set.service';
 import { AppSettingsService } from './app-settings.service';
+import { IAppConfig } from '../interfaces/app-settings.interfaces';
 import { DataService } from './data.service';
+
 
 describe('DatasetService', () => {
   beforeEach(() => {
     const appSettingsMock: Partial<AppSettingsService> = {
       getDataSets: () => [],
       // Skip cleanup logic and avoid any persistence writes.
-      configUpgrade: () => true,
-      getAppConfig: () => ({ configVersion: 999 } as any),
+      configUpgrade: signal(true),
+      getAppConfig: () => ({ configVersion: 999 } as IAppConfig),
       getDashboardConfig: () => [],
       saveDataSets: () => undefined
     };
@@ -43,16 +45,19 @@ describe('DatasetService', () => {
       label: 'test'
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lastMinute = (service as any).createDataSourceConfiguration(mk('Last Minute', 1));
     expect(lastMinute.maxDataPoints).toBe(120);
     expect(lastMinute.sampleTime).toBe(500);
     expect(lastMinute.smoothingPeriod).toBe(30);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lastFive = (service as any).createDataSourceConfiguration(mk('Last 5 Minutes', 1));
     expect(lastFive.maxDataPoints).toBe(120);
     expect(lastFive.sampleTime).toBe(2500);
     expect(lastFive.smoothingPeriod).toBe(30);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sixtyHours = (service as any).createDataSourceConfiguration(mk('hour', 60));
     expect(sixtyHours.maxDataPoints).toBe(120);
     expect(sixtyHours.sampleTime).toBe(1_800_000);
@@ -70,6 +75,7 @@ describe('DatasetService', () => {
       label: 'test'
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cfg = (service as any).createDataSourceConfiguration(ds);
     expect(cfg.sampleTime).toBe(100);
     expect(cfg.maxDataPoints).toBe(10);
