@@ -1,3 +1,13 @@
+# v4.3.0
+## New Features
+* New signalk-anchoralarm-plugin (by Scott Bender) embedded widget to surface its features and make anchor setting and monitoring fast and easy.
+## Improvements
+* Added a Simple Wind mode in Windsteer (a popular request) to mimic classic instruments. Toggle “Enable Advanced Compass Mode” off to lock the dial to +/- 180° and keep indicators stable. Fixes #828
+* New high‑impact snackbar templates with inform/warn/alert layouts, bold colors, and icons that make different app message types instantly recognizable.
+## Fixes
+* Racesteer (beta): corrected tack/gybe angle, indicator reference, and layline calculations for better precision. Fixes #858
+* Fixed occasional double‑fire on long‑press gestures (reduced extra processing).
+* Prevented duplicate app events from async PUT responses (reduced extra processing).
 # v4.2.0
 ## New Features
 * Multi State Switch widget: Take control of multi‑mode devices (chargers, inverters, and more) with a clear state list that highlights the active mode and lets you switch states with a tap. Fixes #404
