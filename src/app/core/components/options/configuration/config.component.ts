@@ -14,9 +14,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
-
 import { RouterLink } from '@angular/router';
-
 
 interface IRemoteConfig {
   scope: string,
@@ -98,7 +96,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
             this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, null, 'error');
             break;
 
-          default: this.toast.show("Cannot list configurations: " + error, 3000, false, null, 'error' );
+          default: this.toast.show("Cannot list configurations: " + error, 0, false, null, 'error' );
             break;
         }
       });
@@ -114,7 +112,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
       }
 
       if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1500, true, null, 'success');
+        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, null, 'success');
         if (!dontRefreshConfigList || undefined) {
           this.getServerConfigList();
         }
@@ -151,7 +149,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1500, false, null, 'success');
+    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, null, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
