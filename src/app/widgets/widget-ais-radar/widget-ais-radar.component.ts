@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, 
 import * as d3 from 'd3';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
+import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IKipResizeEvent, KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 import { AisProcessingService, AisTrack } from '../../core/services/ais-processing.service';
@@ -66,6 +67,7 @@ interface RadarSize {
 interface RenderState {
   size: RadarSize;
   cfg: IWidgetSvcConfig;
+  theme: ITheme;
   targets: AisTrack[];
   ownShip: {
     position?: { lat: number | null; lon: number | null } | null;
@@ -137,7 +139,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       showLostTargets: true,
       showUnconfirmedTargets: true,
       showSelf: true
-    }
+    },
+    color: 'grey'
   };
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('radarSvg');
@@ -169,7 +172,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const ownShip = this.ais.ownShip();
       if (!size || !cfg || !theme || !cfg) return;
       untracked(() => {
-        this.renderState = { size, cfg, targets, ownShip };
+        this.renderState = { size, cfg, theme, targets, ownShip };
       });
     });
   }
@@ -214,7 +217,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private render(): void {
     if (!this.renderState || !this.svg || !this.root) return;
 
-    const { size, cfg, targets, ownShip } = this.renderState;
+    const { size, cfg, theme, targets, ownShip } = this.renderState;
     const width = Math.max(1, size.width);
     const height = Math.max(1, size.height);
     const radius = Math.min(width, height) / 2;
@@ -242,7 +245,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.root.attr('transform', `scale(${scale})`);
 
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
-    this.renderRings(rangeRings, rangeNm, radius, viewRotation, radarCfg.showSelf ?? true, ownShipRotation);
+    const ringColor = getColors(cfg.color, theme).dim;
+    this.renderRings(rangeRings, rangeNm, radius, viewRotation, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
@@ -259,7 +263,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     radius: number,
     viewRotation: number,
     showSelf: boolean,
-    ownShipRotation: number
+    ownShipRotation: number,
+    ringColor: string
   ): void {
     if (!this.ringsLayer) return;
 
@@ -275,11 +280,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .append('circle')
       .attr('class', 'ring')
       .merge(selection as d3.Selection<SVGCircleElement, { value: number; radius: number }, SVGGElement, unknown>)
-      .attr('r', d => d.radius);
+      .attr('r', d => d.radius)
+      .attr('stroke', ringColor);
 
     selection.exit().remove();
 
-    const labelOffset = 12;
+    const labelOffset = 20;
     const labelData = rings.flatMap(ring => ([
       { key: `${ring.value}-top`, value: ring.value, x: 0, y: -ring.radius + labelOffset },
       { key: `${ring.value}-bottom`, value: ring.value, x: 0, y: ring.radius - labelOffset }
@@ -333,7 +339,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .merge(centerSelection as d3.Selection<SVGCircleElement, { r: number }, SVGGElement, unknown>)
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', d => d.r);
+      .attr('r', d => d.r)
+      .attr('fill', ringColor);
 
     centerSelection.exit().remove();
 
@@ -359,12 +366,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private resolveRingCountForRange(rangeNm: number): number {
-    const candidates = [4, 5, 3];
-    for (const count of candidates) {
-      const step = rangeNm / count;
-      if (this.isNiceStep(step)) return count;
-    }
-    return 4;
+    const candidates = [3];
+    return candidates.find(count => this.isNiceStep(rangeNm / count)) ?? 4;
   }
 
   private isNiceStep(step: number): boolean {
@@ -402,7 +405,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
         const trackHeading = this.toDegreesIfRadians(track.headingTrue);
         const trackCog = this.toDegreesIfRadians(track.courseOverGroundTrue);
-        const heading = this.wrapDegrees((trackHeading ?? trackCog ?? 0) - viewRotation);
+        const heading = track.type === 'aton' || track.type === 'basestation' ? 0 : this.wrapDegrees((trackHeading ?? trackCog ?? 0) - viewRotation);
         const { shape, label, scaleY } = this.resolveShape(track);
         const { href: iconHref, scale: iconScale } = this.resolveIconCached(track);
         const finalScaleY = iconHref ? 1 : scaleY;

@@ -444,17 +444,14 @@ widget-ais-radar {
 
   .radar-rings .ring {
     fill: none;
-    stroke: var(--kip-green-dim-color);
-    stroke-width: 1;
+    stroke-width: 1.5;
   }
 
   .radar-rings .ring-label {
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: 300;
     fill: var(--kip-contrast-dim-color);
     opacity: 0.75;
-    paint-order: stroke;
-    stroke: var(--kip-widget-card-background-color);
-    stroke-width: 2;
   }
 
   .radar-rings .ring-north {
@@ -464,10 +461,6 @@ widget-ais-radar {
     paint-order: stroke;
     stroke: var(--kip-widget-card-background-color);
     stroke-width: 2;
-  }
-
-  .radar-rings .radar-center {
-    fill: var(--kip-green-dim-color);
   }
 
   .radar-rings .radar-ownship .ownship-shape {
