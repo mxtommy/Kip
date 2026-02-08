@@ -73,10 +73,10 @@ interface RenderState {
   theme: ITheme;
   targets: AisTrack[];
   ownShip: {
-    position?: AisTrackPosition | null;
-    headingTrue?: number | null;
-    courseOverGroundTrue?: number | null;
-    speedOverGround?: number | null;
+    position?: AisTrackPosition;
+    headingTrue?: number;
+    courseOverGroundTrue?: number;
+    speedOverGround?: number;
   };
 }
 
@@ -87,12 +87,12 @@ interface RenderTarget {
   y: number;
   heading: number;
   status: string;
-  aisClass: string | null;
+  aisClass: string | undefined;
   type: string;
   iconHref: string | null;
   iconScale: number;
-  navState: string | null;
-  sog: number | null;
+  navState: string | undefined;
+  sog: number | undefined;
   cog: number | null;
   className: string;
 }
@@ -114,11 +114,11 @@ interface CachedTargetSeed {
   trackCog: number | null;
   iconHref: string | null;
   iconScale: number;
-  navState: string | null;
+  navState: string | undefined;
   status: string;
-  aisClass: string | null;
+  aisClass: string | undefined;
   type: string;
-  sog: number | null;
+  sog: number | undefined;
  }
 
 interface RingCache {
@@ -454,7 +454,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const activeMmsi = new Set<string>();
     for (const track of tracks) {
       trackIds.add(track.id);
-      if (track.mmsi !== null && track.mmsi !== undefined) {
+      if (track.mmsi !== undefined) {
         activeMmsi.add(String(track.mmsi));
       }
     }
@@ -499,11 +499,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
           trackCog,
           iconHref,
           iconScale,
-          navState: track.navState ?? null,
+          navState: track.navState,
           status: track.status,
           aisClass: track.aisClass,
           type: track.type,
-          sog: track.speedOverGround ?? null
+          sog: track.speedOverGround
         };
         this.targetCache.set(track.id, cached);
       }
@@ -563,7 +563,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     for (const target of targets) {
       if (target.raw.type !== 'vessel') continue;
-      if (motionEnabled && target.sog !== null && target.cog !== null) {
+      if (motionEnabled && typeof target.sog === 'number' && typeof target.cog === 'number') {
         const motionAngle = this.wrapDegrees(target.cog - viewRotation);
         const tip = this.offsetPoint(target.x, target.y, motionAngle, baseSize * 0.8);
         const distanceNm = (target.sog * durationSeconds) / 1852;
@@ -583,8 +583,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     if (cfg.showSelf ?? true) {
       const ownCog = this.toDegreesIfRadians(ownShip.courseOverGroundTrue);
-      const ownSog = ownShip.speedOverGround ?? null;
-      if (ownCog !== null && ownSog !== null) {
+      const ownSog = ownShip.speedOverGround;
+      if (ownCog !== null && typeof ownSog === 'number') {
         const motionAngle = this.wrapDegrees(ownCog - viewRotation);
         const tip = this.offsetPoint(0, 0, motionAngle, baseSize * 0.8);
         const distanceNm = (ownSog * durationSeconds) / 1852;
@@ -729,9 +729,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       console.warn('[AIS Radar Widget] Missing icon mapping', {
         id: track.id,
         type: track.type,
-        aisShipTypeId: track.design?.aisShipType?.id ?? null,
-        aisShipTypeName: track.design?.aisShipType?.name ?? null,
-        mmsi: track.mmsi ?? null
+        aisShipTypeId: track.design?.aisShipType?.id,
+        aisShipTypeName: track.design?.aisShipType?.name,
+        mmsi: track.mmsi
       });
     }
     return { href: 'assets/svg/vessels/ais_unknown.svg', scale: 2.4 };
@@ -761,8 +761,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       return 'assets/svg/vessels/ais_inactive.svg';
     }
 
-    const shipTypeId = track.design?.aisShipType?.id ?? null;
-    const iconFromRange = shipTypeId !== null ? this.resolveIconFromShipTypeId(shipTypeId) : null;
+    const shipTypeId = track.design?.aisShipType?.id;
+    const iconFromRange = typeof shipTypeId === 'number' ? this.resolveIconFromShipTypeId(shipTypeId) : null;
     if (iconFromRange) return iconFromRange;
 
     return 'assets/svg/vessels/ais_active.svg';
@@ -814,7 +814,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     ].join('|');
   }
 
-  private buildClassName(target: { status: string; type: string; aisClass: string | null; navState: string | null; id: string }): string {
+  private buildClassName(target: { status: string; type: string; aisClass: string | undefined; navState: string | undefined; id: string }): string {
     const classes = [
       `status-${target.status}`,
       `type-${target.type}`,
@@ -868,7 +868,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildTrackSignature(track: AisTrack): string {
-    const position = track.position ?? { latitude: null, longitude: null };
+    const position = track.position ?? {};
     const atonName = track.atonType?.name ?? '';
     return [
       track.id,

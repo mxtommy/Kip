@@ -100,10 +100,10 @@ export class DialogAisTargetComponent implements OnDestroy {
 
   protected hasClosestApproach(value: AisTrack['closestApproach'] | null | undefined): boolean {
     if (!value) return false;
-    return value.bearing !== null && value.bearing !== undefined
-      || value.range !== null && value.range !== undefined
-      || value.distance !== null && value.distance !== undefined
-      || value.timeTo !== null && value.timeTo !== undefined;
+    return typeof value.bearing === 'number'
+      || typeof value.range === 'number'
+      || typeof value.distance === 'number'
+      || typeof value.timeTo === 'number';
   }
 
   private startClock(): void {

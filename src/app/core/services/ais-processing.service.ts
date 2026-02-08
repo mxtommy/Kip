@@ -23,14 +23,14 @@ const AIS_DEFAULTS = {
   }
 } as const;
 
-type AisClass = 'A' | 'B' | null;
+type AisClass = 'A' | 'B' | undefined;
 type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
 export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost';
 
 export interface AisTrackPosition {
-  latitude: number | null;
-  longitude: number | null;
-  altitude?: number | null;
+  latitude?: number;
+  longitude?: number;
+  altitude?: number;
 }
 
 export interface AisTrack {
@@ -41,60 +41,60 @@ export interface AisTrack {
   aisClass: AisClass;
   conflicted: boolean;
   msgCount: number;
-  mmsi: string | null;
-  name?: string | null;
-  callsign?: string | null;
-  destination?: string | null;
-  eta?: string | null;
-  imo?: string | null;
+  mmsi?: string;
+  name?: string;
+  callsign?: string;
+  destination?: string;
+  eta?: string;
+  imo?: string;
   design?: {
-    beam?: number | null;
+    beam?: number;
     length?: {
-      overall?: number | null;
-      hull?: number | null;
-      waterline?: number | null;
+      overall?: number;
+      hull?: number;
+      waterline?: number;
     };
     draft?: {
-      maximum?: number | null;
-      minimum?: number | null;
-      current?: number | null;
-      canoe?: number | null;
+      maximum?: number;
+      minimum?: number;
+      current?: number;
+      canoe?: number;
     };
     aisShipType?: {
-      id?: number | null;
-      name?: string | null;
+      id?: number;
+      name?: string;
     };
   };
-  position?: AisTrackPosition | null;
-  positionAlt?: number | null;
-  navState?: string | null;
-  headingTrue?: number | null;
-  courseOverGroundTrue?: number | null;
-  speedOverGround?: number | null;
-  rateOfTurn?: number | null;
-  specialManeuver?: string | null;
-  fromBow?: number | null;
-  fromCenter?: number | null;
-  aisType?: string | null;
-  atonType?: { id?: number | null; name?: string | null } | null;
-  atonVirtual?: boolean | null;
-  atonOffPosition?: boolean | null;
-  lastUpdateAt?: number | null;
-  lastPositionAt?: number | null; // timestamp of last position report
+  position?: AisTrackPosition;
+  positionAlt?: number;
+  navState?: string;
+  headingTrue?: number;
+  courseOverGroundTrue?: number;
+  speedOverGround?: number;
+  rateOfTurn?: number;
+  specialManeuver?: string;
+  fromBow?: number;
+  fromCenter?: number;
+  aisType?: string;
+  atonType?: { id?: number; name?: string };
+  atonVirtual?: boolean;
+  atonOffPosition?: boolean;
+  lastUpdateAt?: number;
+  lastPositionAt?: number; // timestamp of last position report
   // Collision avoidance fields from SignalK AIS Target Prioritizer plugin
   closestApproach?: {
-    distance?: number | null; // NM
-    timeTo?: number | null;   // s
-    range?: number | null;    // NM
-    bearing?: number | null;  // deg
+    distance?: number; // NM
+    timeTo?: number;   // s
+    range?: number;    // NM
+    bearing?: number;  // deg
   };
 }
 
 export interface OwnShipState {
-  position?: AisTrackPosition | null;
-  headingTrue?: number | null;
-  courseOverGroundTrue?: number | null;
-  speedOverGround?: number | null;
+  position?: AisTrackPosition;
+  headingTrue?: number;
+  courseOverGroundTrue?: number;
+  speedOverGround?: number;
 }
 
 interface AisUpdate {
@@ -141,7 +141,12 @@ export class AisProcessingService {
   public readonly ownShip = this._ownShip.asReadonly();
 
   public getBearingTrue(from: AisTrackPosition, to: AisTrackPosition): number | null {
-    if (from.latitude === null || from.longitude === null || to.latitude === null || to.longitude === null) return null;
+    if (
+      typeof from.latitude !== 'number'
+      || typeof from.longitude !== 'number'
+      || typeof to.latitude !== 'number'
+      || typeof to.longitude !== 'number'
+    ) return null;
     const phi1 = from.latitude * Math.PI / 180;
     const phi2 = to.latitude * Math.PI / 180;
     const dLon = (to.longitude - from.longitude) * Math.PI / 180;
@@ -229,26 +234,26 @@ export class AisProcessingService {
         break;
       case 'navigation.position.latitude':
         {
-          const lat = this.toNumberOrNull(value);
-          if (lat === null) return;
-          next.position = { ...(next.position ?? { latitude: null, longitude: null }), latitude: lat };
+          const lat = this.toNumberOrUndefined(value);
+          if (lat === undefined) return;
+          next.position = { ...(next.position ?? {}), latitude: lat };
         }
         break;
       case 'navigation.position.longitude':
         {
-          const lon = this.toNumberOrNull(value);
-          if (lon === null) return;
-          next.position = { ...(next.position ?? { latitude: null, longitude: null }), longitude: lon };
+          const lon = this.toNumberOrUndefined(value);
+          if (lon === undefined) return;
+          next.position = { ...(next.position ?? {}), longitude: lon };
         }
         break;
       case 'navigation.headingTrue':
-        next.headingTrue = this.toNumberOrNull(value);
+        next.headingTrue = this.toNumberOrUndefined(value);
         break;
       case 'navigation.courseOverGroundTrue':
-        next.courseOverGroundTrue = this.toNumberOrNull(value);
+        next.courseOverGroundTrue = this.toNumberOrUndefined(value);
         break;
       case 'navigation.speedOverGround':
-        next.speedOverGround = this.toNumberOrNull(value);
+        next.speedOverGround = this.toNumberOrUndefined(value);
         break;
       default:
         return;
@@ -271,114 +276,114 @@ export class AisProcessingService {
         this.applyMmsi(track, update.value);
         break;
       case 'name':
-        track.name = this.toStringOrNull(update.value);
+        track.name = this.toStringOrUndefined(update.value);
         break;
       case 'communication.callsignVhf':
-        track.callsign = this.toStringOrNull(update.value);
+        track.callsign = this.toStringOrUndefined(update.value);
         break;
       case 'navigation.destination':
-        track.destination = this.toStringOrNull(update.value);
+        track.destination = this.toStringOrUndefined(update.value);
         break;
       case 'navigation.destination.commonName':
-        track.destination = this.toStringOrNull(update.value);
+        track.destination = this.toStringOrUndefined(update.value);
         break;
       case 'navigation.destination.eta':
-        track.eta = this.toStringOrNull(update.value);
+        track.eta = this.toStringOrUndefined(update.value);
         break;
       case 'design.beam':
-        track.design = { ...(track.design ?? {}), beam: this.toNumberOrNull(update.value) };
+        track.design = { ...(track.design ?? {}), beam: this.toNumberOrUndefined(update.value) };
         break;
       case 'design.length.overall':
         track.design = {
           ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), overall: this.toNumberOrNull(update.value) }
+          length: { ...(track.design?.length ?? {}), overall: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.length.hull':
         track.design = {
           ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), hull: this.toNumberOrNull(update.value) }
+          length: { ...(track.design?.length ?? {}), hull: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.length.waterline':
         track.design = {
           ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrNull(update.value) }
+          length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.draft.maximum':
         track.design = {
           ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrNull(update.value) }
+          draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.draft.minimum':
         track.design = {
           ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrNull(update.value) }
+          draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.draft.current':
         track.design = {
           ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrNull(update.value) }
+          draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.draft.canoe':
         track.design = {
           ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrNull(update.value) }
+          draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'registrations.imo':
-        track.imo = this.toStringOrNull(update.value);
+        track.imo = this.toStringOrUndefined(update.value);
         break;
       case 'navigation.courseOverGroundTrue':
-        track.courseOverGroundTrue = this.toNumberOrNull(update.value);
+        track.courseOverGroundTrue = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.headingTrue':
-        track.headingTrue = this.toNumberOrNull(update.value);
+        track.headingTrue = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.rateOfTurn':
-        track.rateOfTurn = this.toNumberOrNull(update.value);
+        track.rateOfTurn = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.specialManeuver':
-        track.specialManeuver = this.toStringOrNull(update.value);
+        track.specialManeuver = this.toStringOrUndefined(update.value);
         break;
       case 'navigation.speedOverGround':
-        track.speedOverGround = this.toNumberOrNull(update.value);
+        track.speedOverGround = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.state':
-        track.navState = this.toStringOrNull(update.value);
+        track.navState = this.toStringOrUndefined(update.value);
         break;
       case 'sensors.ais.class':
         track.aisClass = this.normalizeAisClass(update.value);
         break;
       case 'sensors.ais.fromBow':
-        track.fromBow = this.toNumberOrNull(update.value);
+        track.fromBow = this.toNumberOrUndefined(update.value);
         break;
       case 'sensors.ais.fromCenter':
-        track.fromCenter = this.toNumberOrNull(update.value);
+        track.fromCenter = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.position.latitude':
         {
-          const latitude = this.toNumberOrNull(update.value);
-          if (latitude === null) break;
-          track.position = { ...(track.position ?? { latitude: null, longitude: null }), latitude };
+          const latitude = this.toNumberOrUndefined(update.value);
+          if (latitude === undefined) break;
+          track.position = { ...(track.position ?? {}), latitude };
           this.registerPositionReport(track, update.timestampMs);
         }
         break;
       case 'navigation.position.longitude':
         {
-          const longitude = this.toNumberOrNull(update.value);
-          if (longitude === null) break;
-          track.position = { ...(track.position ?? { latitude: null, longitude: null }), longitude };
+          const longitude = this.toNumberOrUndefined(update.value);
+          if (longitude === undefined) break;
+          track.position = { ...(track.position ?? {}), longitude };
           this.registerPositionReport(track, update.timestampMs);
         }
         break;
       case 'navigation.position.altitude':
         {
-          const altitude = this.toNumberOrNull(update.value);
+          const altitude = this.toNumberOrUndefined(update.value);
           track.positionAlt = altitude;
           if (track.position) {
             track.position = { ...track.position, altitude };
@@ -394,10 +399,10 @@ export class AisProcessingService {
         break;
       }
       case 'atonType.id':
-        track.atonType = { ...(track.atonType ?? {}), id: this.toNumberOrNull(update.value) };
+        track.atonType = { ...(track.atonType ?? {}), id: this.toNumberOrUndefined(update.value) };
         break;
       case 'atonType.name':
-        track.atonType = { ...(track.atonType ?? {}), name: this.toStringOrNull(update.value) };
+        track.atonType = { ...(track.atonType ?? {}), name: this.toStringOrUndefined(update.value) };
         break;
       case 'virtual':
         track.atonVirtual = Boolean(update.value);
@@ -408,26 +413,26 @@ export class AisProcessingService {
       case 'design.aisShipType.id':
         track.design = {
           ...(track.design ?? {}),
-          aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrNull(update.value) }
+          aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrUndefined(update.value) }
         };
         break;
       case 'design.aisShipType.name':
         track.design = {
           ...(track.design ?? {}),
-          aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrNull(update.value) }
+          aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrUndefined(update.value) }
         };
         break;
       case 'navigation.closestApproach.distance':
-        track.closestApproach!.distance = this.toNumberOrNull(update.value);
+        track.closestApproach!.distance = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.closestApproach.timeTo':
-        track.closestApproach!.timeTo = this.toNumberOrNull(update.value);
+        track.closestApproach!.timeTo = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.closestApproach.range':
-        track.closestApproach!.range = this.toNumberOrNull(update.value);
+        track.closestApproach!.range = this.toNumberOrUndefined(update.value);
         break;
       case 'navigation.closestApproach.bearing':
-        track.closestApproach!.bearing = this.toNumberOrNull(update.value);
+        track.closestApproach!.bearing = this.toNumberOrUndefined(update.value);
         break;
       default:
         //console.warn('[AIS] unhandled update path', { path: update.path, value: update.value });
@@ -444,26 +449,26 @@ export class AisProcessingService {
 
     if (existing) return existing;
 
-    const created = this.createTrack(update.context, update.type, timestampMs, null);
+    const created = this.createTrack(update.context, update.type, timestampMs, undefined);
     this.contextIndex.set(update.context, created.id);
     return created;
   }
 
-  private createTrack(context: string, type: AisTargetType, timestampMs: number, mmsi: string | null): AisTrack {
+  private createTrack(context: string, type: AisTargetType, timestampMs: number, mmsi?: string): AisTrack {
     const id = this.buildTrackId(mmsi ?? context);
     const track: AisTrack = {
       id,
       context,
       type,
       status: 'unconfirmed',
-      aisClass: null,
+      aisClass: undefined,
       conflicted: false,
       msgCount: 0,
       mmsi,
-      position: null,
+      position: undefined,
       closestApproach: {},
       lastUpdateAt: timestampMs,
-      lastPositionAt: null
+      lastPositionAt: undefined
     };
 
     this.tracks.set(track.id, track);
@@ -483,7 +488,7 @@ export class AisProcessingService {
   }
 
   private applyMmsi(track: AisTrack, value: unknown): void {
-    const next = this.toStringOrNull(value);
+    const next = this.toStringOrUndefined(value);
     if (!next) return;
 
     const conflicts = this.getTracksByMmsi(next).filter(existing => existing.id !== track.id);
@@ -506,7 +511,11 @@ export class AisProcessingService {
   }
 
   private registerPositionReport(track: AisTrack, timestampMs: number): void {
-    if (!track.position || track.position.latitude === null || track.position.longitude === null) return;
+    if (
+      !track.position
+      || typeof track.position.latitude !== 'number'
+      || typeof track.position.longitude !== 'number'
+    ) return;
 
     if (track.type === 'aton') {
       track.lastPositionAt = timestampMs;
@@ -645,7 +654,7 @@ export class AisProcessingService {
     const raw = typeof value === 'string' ? value.toUpperCase() : '';
     if (raw === 'A') return 'A';
     if (raw === 'B') return 'B';
-    return null;
+    return undefined;
   }
 
   private toTimestampMs(value: Date | string | null | undefined): number {
@@ -654,19 +663,24 @@ export class AisProcessingService {
     return Number.isFinite(ts) ? ts : Date.now();
   }
 
-  private toNumberOrNull(value: unknown): number | null {
+  private toNumberOrUndefined(value: unknown): number | undefined {
     const num = Number(value);
-    return Number.isFinite(num) ? num : null;
+    return Number.isFinite(num) ? num : undefined;
   }
 
-  private toStringOrNull(value: unknown): string | null {
-    if (value === null || value === undefined) return null;
+  private toStringOrUndefined(value: unknown): string | undefined {
+    if (value === null || value === undefined) return undefined;
     const str = String(value).trim();
-    return str.length ? str : null;
+    return str.length ? str : undefined;
   }
 
   private distanceNm(a: AisTrackPosition, b: AisTrackPosition): number {
-    if (a.latitude === null || a.longitude === null || b.latitude === null || b.longitude === null) return 0;
+    if (
+      typeof a.latitude !== 'number'
+      || typeof a.longitude !== 'number'
+      || typeof b.latitude !== 'number'
+      || typeof b.longitude !== 'number'
+    ) return 0;
     const R = 6371e3; // meters
     const phi1 = a.latitude * Math.PI / 180;
     const phi2 = b.latitude * Math.PI / 180;
@@ -686,12 +700,12 @@ export class AisProcessingService {
     return normalized < 0 ? normalized + 360 : normalized;
   }
 
-  private readPositionValue(value: unknown): AisTrackPosition | null {
-    if (!value || typeof value !== 'object') return null;
-    const latitude = this.toNumberOrNull((value as { latitude?: unknown }).latitude);
-    const longitude = this.toNumberOrNull((value as { longitude?: unknown }).longitude);
-    if (latitude === null || longitude === null) return null;
-    const altitude = this.toNumberOrNull((value as { altitude?: unknown }).altitude);
+  private readPositionValue(value: unknown): AisTrackPosition | undefined {
+    if (!value || typeof value !== 'object') return undefined;
+    const latitude = this.toNumberOrUndefined((value as { latitude?: unknown }).latitude);
+    const longitude = this.toNumberOrUndefined((value as { longitude?: unknown }).longitude);
+    if (latitude === undefined || longitude === undefined) return undefined;
+    const altitude = this.toNumberOrUndefined((value as { altitude?: unknown }).altitude);
     return { latitude, longitude, altitude };
   }
 }
