@@ -583,7 +583,7 @@
               }
               @if ((widgetConfig?.ais !== undefined)) {
                 <ng-container formGroupName="ais">
-                  <mat-form-field class="options-grid-span2">
+                  <mat-form-field>
                     <mat-label>View Mode</mat-label>
                     <mat-select
                       placeholder="Select view mode..."
@@ -594,8 +594,8 @@
                       <mat-option value="course-up">Course Up</mat-option>
                     </mat-select>
                   </mat-form-field>
-                  <mat-form-field class="options-grid-span2">
-                    <mat-label>Range</mat-label>
+                  <mat-form-field>
+                    <mat-label>Fully Visible Rings Range</mat-label>
                     <mat-select
                       placeholder="Select AIS range..."
                       formControlName="rangeIndex"
@@ -611,10 +611,10 @@
                   <mat-checkbox
                     name="showCogVectors"
                     formControlName="showCogVectors">
-                    Plot target course vector
+                    Plot target COG vector
                   </mat-checkbox>
                   <mat-form-field>
-                    <mat-label>Course vector Duration (min)</mat-label>
+                    <mat-label>COG plot length (minutes)</mat-label>
                     <input
                       type="number"
                       min="1"
@@ -626,26 +626,9 @@
                     />
                   </mat-form-field>
                   <mat-checkbox
-                    name="showVesselsTrail"
-                    formControlName="showVesselsTrail">
-                    Show target trail
-                  </mat-checkbox>
-                  <mat-form-field>
-                    <mat-label>Trail duration (min)</mat-label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      matInput
-                      placeholder="Enter or select duration..."
-                      name="vesselsTrailMinutes"
-                      formControlName="vesselsTrailMinutes"
-                    />
-                  </mat-form-field>
-                  <mat-checkbox
-                    name="showHeadingLineClassB"
-                    formControlName="showHeadingLineClassB">
-                    Plot Class B course vector
+                    name="showUnconfirmedTargets"
+                    formControlName="showUnconfirmedTargets">
+                    Show unconfirmed targets
                   </mat-checkbox>
                   <mat-checkbox
                     name="showLostTargets"
@@ -653,14 +636,9 @@
                     Show lost targets
                   </mat-checkbox>
                   <mat-checkbox
-                    name="showUnconfirmedTargets"
-                    formControlName="showUnconfirmedTargets">
-                    Show unconfirmed targets
-                  </mat-checkbox>
-                  <mat-checkbox
                     name="showSelf"
                     formControlName="showSelf">
-                    Show own ship symbol
+                    Show own ship icon
                   </mat-checkbox>
                 </ng-container>
               }

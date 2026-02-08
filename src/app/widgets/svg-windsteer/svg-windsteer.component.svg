@@ -568,13 +568,13 @@
       </g>
       <g id="LayerWindShift" [style.display]="windSectorEnabled() ? 'inline' : 'none'">
         <path id="portSectorShift"
-          [style.display]="portWindSectorPath() != 'none' ? 'inline' : 'none'"
-          [attr.d]="portWindSectorPath()"
+          [style.display]="portWindSectorPath() ? 'inline' : 'none'"
+          [attr.d]="portWindSectorPath() || null"
           class="wind-sector-port"
           style="fill-opacity:0.5;stroke:none" />
         <path id="StbdSectorShift"
-          [style.display]="stbdWindSectorPath() != 'none' ? 'inline' : 'none'"
-          [attr.d]="stbdWindSectorPath()"
+          [style.display]="stbdWindSectorPath() ? 'inline' : 'none'"
+          [attr.d]="stbdWindSectorPath() || null"
           class="wind-sector-stbd"
           style="fill-opacity:0.5;stroke:none" />
      </g>

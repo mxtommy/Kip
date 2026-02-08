@@ -225,8 +225,8 @@ export class SvgWindsteerComponent implements OnDestroy {
           if (this.stbdSectorAnimId) cancelAnimationFrame(this.stbdSectorAnimId);
           this.portSectorAnimId = null;
           this.stbdSectorAnimId = null;
-          this.portWindSectorPath.set('none');
-          this.stbdWindSectorPath.set('none');
+          this.portWindSectorPath.set('');
+          this.stbdWindSectorPath.set('');
           return;
         }
         this.updateWindSectors(true);

@@ -625,7 +625,7 @@ export class UnitsService implements OnDestroy {
    * @return {*}  {number} The result of the conversion
    * @memberof UnitsService
    */
-  public convertToUnit(unit: string, value: number): number {
+  public  convertToUnit(unit: string, value: number): number {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
     const num: number = +value; // sometime we get strings here. Weird! Lazy patch.

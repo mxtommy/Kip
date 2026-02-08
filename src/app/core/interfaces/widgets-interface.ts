@@ -292,21 +292,15 @@ export interface IAISRadarConfig {
   rangeRings: number[];
   /** Zero-based index into rangeRings that selects the active range. */
   rangeIndex: number;
-  /** Enable/disable drawing AIS target trails. */
-  showVesselsTrail: boolean;
-  /** Trail history duration in minutes. */
-  vesselsTrailMinutes: number;
   /** Enable/disable drawing AIS motion vectors. */
   showCogVectors: boolean;
   /** COG projection vector duration in minutes. */
   cogVectorsMinutes: number;
-  /** Enable/disable heading line for Class B targets. */
-  showHeadingLineClassB: boolean;
   /** Show targets that are marked as lost. */
   showLostTargets: boolean;
   /** Show targets that are not yet confirmed. */
   showUnconfirmedTargets: boolean;
-  /** Show own ship symbol */
+  /** Show own ship icon */
   showSelf: boolean;
 }
 

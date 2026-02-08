@@ -28,8 +28,8 @@ type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
 export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost';
 
 export interface AisTrackPosition {
-  lat: number | null;
-  lon: number | null;
+  latitude: number | null;
+  longitude: number | null;
   altitude?: number | null;
 }
 
@@ -45,15 +45,26 @@ export interface AisTrack {
   name?: string | null;
   callsign?: string | null;
   destination?: string | null;
-  beam?: number | null;
-  length?: number | null;
-  draft?: number | null;
-  draftMinimum?: number | null;
-  draftCurrent?: number | null;
-  draftCanoe?: number | null;
+  eta?: string | null;
   imo?: string | null;
-  lengthHull?: number | null;
-  lengthWaterline?: number | null;
+  design?: {
+    beam?: number | null;
+    length?: {
+      overall?: number | null;
+      hull?: number | null;
+      waterline?: number | null;
+    };
+    draft?: {
+      maximum?: number | null;
+      minimum?: number | null;
+      current?: number | null;
+      canoe?: number | null;
+    };
+    aisShipType?: {
+      id?: number | null;
+      name?: string | null;
+    };
+  };
   position?: AisTrackPosition | null;
   positionAlt?: number | null;
   navState?: string | null;
@@ -65,15 +76,18 @@ export interface AisTrack {
   fromBow?: number | null;
   fromCenter?: number | null;
   aisType?: string | null;
-  aisShipTypeId?: number | null;
-  aisShipTypeName?: string | null;
   atonType?: { id?: number | null; name?: string | null } | null;
   atonVirtual?: boolean | null;
   atonOffPosition?: boolean | null;
   lastUpdateAt?: number | null;
-  lastPositionAt?: number | null;
-  lastPositionReportAt?: number | null;
-  trail: { lat: number; lon: number; ts: number }[];
+  lastPositionAt?: number | null; // timestamp of last position report
+  // Collision avoidance fields from SignalK AIS Target Prioritizer plugin
+  closestApproach?: {
+    distance?: number | null; // NM
+    timeTo?: number | null;   // s
+    range?: number | null;    // NM
+    bearing?: number | null;  // deg
+  };
 }
 
 export interface OwnShipState {
@@ -117,6 +131,7 @@ export class AisProcessingService {
   private readonly tracks = new Map<string, AisTrack>();
   private readonly contextIndex = new Map<string, string>();
   private readonly mmsiIndex = new Map<string, Set<string>>();
+  private readonly lastPositionReportAt = new Map<string, number>();
   private readonly targetsDirty$ = new Subject<void>();
 
   private readonly _targets = signal<AisTrack[]>([]);
@@ -124,6 +139,18 @@ export class AisProcessingService {
 
   public readonly targets = this._targets.asReadonly();
   public readonly ownShip = this._ownShip.asReadonly();
+
+  public getBearingTrue(from: AisTrackPosition, to: AisTrackPosition): number | null {
+    if (from.latitude === null || from.longitude === null || to.latitude === null || to.longitude === null) return null;
+    const phi1 = from.latitude * Math.PI / 180;
+    const phi2 = to.latitude * Math.PI / 180;
+    const dLon = (to.longitude - from.longitude) * Math.PI / 180;
+
+    const y = Math.sin(dLon) * Math.cos(phi2);
+    const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+    const bearing = Math.atan2(y, x) * 180 / Math.PI;
+    return this.wrapDegrees(bearing);
+  }
 
   constructor() {
     const aisTree$ = merge(...AIS_TREE_PREFIXES.map(prefix => this.data.subscribePathTree(prefix)));
@@ -204,14 +231,14 @@ export class AisProcessingService {
         {
           const lat = this.toNumberOrNull(value);
           if (lat === null) return;
-          next.position = { ...(next.position ?? { lat: null, lon: null }), lat };
+          next.position = { ...(next.position ?? { latitude: null, longitude: null }), latitude: lat };
         }
         break;
       case 'navigation.position.longitude':
         {
           const lon = this.toNumberOrNull(value);
           if (lon === null) return;
-          next.position = { ...(next.position ?? { lat: null, lon: null }), lon };
+          next.position = { ...(next.position ?? { latitude: null, longitude: null }), longitude: lon };
         }
         break;
       case 'navigation.headingTrue':
@@ -235,6 +262,9 @@ export class AisProcessingService {
     if (!track) return;
 
     track.lastUpdateAt = update.timestampMs;
+    if (update.path.startsWith('navigation.closestApproach.') && !track.closestApproach) {
+      track.closestApproach = {};
+    }
 
     switch (update.path) {
       case 'mmsi':
@@ -246,35 +276,59 @@ export class AisProcessingService {
       case 'communication.callsignVhf':
         track.callsign = this.toStringOrNull(update.value);
         break;
-      case 'navigation.destination.commonName':
-        track.destination = this.toStringOrNull(update.value);
-        break;
       case 'navigation.destination':
         track.destination = this.toStringOrNull(update.value);
         break;
+      case 'navigation.destination.commonName':
+        track.destination = this.toStringOrNull(update.value);
+        break;
+      case 'navigation.destination.eta':
+        track.eta = this.toStringOrNull(update.value);
+        break;
       case 'design.beam':
-        track.beam = this.toNumberOrNull(update.value);
+        track.design = { ...(track.design ?? {}), beam: this.toNumberOrNull(update.value) };
         break;
       case 'design.length.overall':
-        track.length = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          length: { ...(track.design?.length ?? {}), overall: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.length.hull':
-        track.lengthHull = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          length: { ...(track.design?.length ?? {}), hull: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.length.waterline':
-        track.lengthWaterline = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.draft.maximum':
-        track.draft = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.draft.minimum':
-        track.draftMinimum = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.draft.current':
-        track.draftCurrent = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.draft.canoe':
-        track.draftCanoe = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'registrations.imo':
         track.imo = this.toStringOrNull(update.value);
@@ -308,17 +362,17 @@ export class AisProcessingService {
         break;
       case 'navigation.position.latitude':
         {
-          const lat = this.toNumberOrNull(update.value);
-          if (lat === null) break;
-          track.position = { ...(track.position ?? { lat: null, lon: null }), lat };
+          const latitude = this.toNumberOrNull(update.value);
+          if (latitude === null) break;
+          track.position = { ...(track.position ?? { latitude: null, longitude: null }), latitude };
           this.registerPositionReport(track, update.timestampMs);
         }
         break;
       case 'navigation.position.longitude':
         {
-          const lon = this.toNumberOrNull(update.value);
-          if (lon === null) break;
-          track.position = { ...(track.position ?? { lat: null, lon: null }), lon };
+          const longitude = this.toNumberOrNull(update.value);
+          if (longitude === null) break;
+          track.position = { ...(track.position ?? { latitude: null, longitude: null }), longitude };
           this.registerPositionReport(track, update.timestampMs);
         }
         break;
@@ -352,13 +406,31 @@ export class AisProcessingService {
         track.atonOffPosition = Boolean(update.value);
         break;
       case 'design.aisShipType.id':
-        track.aisShipTypeId = this.toNumberOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrNull(update.value) }
+        };
         break;
       case 'design.aisShipType.name':
-        track.aisShipTypeName = this.toStringOrNull(update.value);
+        track.design = {
+          ...(track.design ?? {}),
+          aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrNull(update.value) }
+        };
+        break;
+      case 'navigation.closestApproach.distance':
+        track.closestApproach!.distance = this.toNumberOrNull(update.value);
+        break;
+      case 'navigation.closestApproach.timeTo':
+        track.closestApproach!.timeTo = this.toNumberOrNull(update.value);
+        break;
+      case 'navigation.closestApproach.range':
+        track.closestApproach!.range = this.toNumberOrNull(update.value);
+        break;
+      case 'navigation.closestApproach.bearing':
+        track.closestApproach!.bearing = this.toNumberOrNull(update.value);
         break;
       default:
-        console.warn('[AIS] unhandled update path', { path: update.path, value: update.value });
+        //console.warn('[AIS] unhandled update path', { path: update.path, value: update.value });
         break;
     }
 
@@ -389,14 +461,14 @@ export class AisProcessingService {
       msgCount: 0,
       mmsi,
       position: null,
-      trail: [],
+      closestApproach: {},
       lastUpdateAt: timestampMs,
-      lastPositionAt: null,
-      lastPositionReportAt: null
+      lastPositionAt: null
     };
 
     this.tracks.set(track.id, track);
     if (mmsi) this.addMmsiIndex(mmsi, track.id);
+    this.lastPositionReportAt.set(track.id, 0);
     this.updateTargetsSignal();
     return track;
   }
@@ -434,7 +506,7 @@ export class AisProcessingService {
   }
 
   private registerPositionReport(track: AisTrack, timestampMs: number): void {
-    if (!track.position || track.position.lat === null || track.position.lon === null) return;
+    if (!track.position || track.position.latitude === null || track.position.longitude === null) return;
 
     if (track.type === 'aton') {
       track.lastPositionAt = timestampMs;
@@ -442,22 +514,13 @@ export class AisProcessingService {
       return;
     }
 
-    const lastReport = track.lastPositionReportAt ?? 0;
+    const lastReport = this.lastPositionReportAt.get(track.id) ?? 0;
     if (Math.abs(timestampMs - lastReport) > 500) {
       track.msgCount += 1;
-      track.lastPositionReportAt = timestampMs;
+      this.lastPositionReportAt.set(track.id, timestampMs);
     }
 
     track.lastPositionAt = timestampMs;
-    track.trail.push({
-      lat: track.position.lat,
-      lon: track.position.lon,
-      ts: timestampMs
-    });
-
-    if (track.trail.length > 120) {
-      track.trail.splice(0, track.trail.length - 120);
-    }
 
     this.tryConfirm(track, timestampMs);
   }
@@ -488,6 +551,7 @@ export class AisProcessingService {
         for (const [context, id] of this.contextIndex.entries()) {
           if (id === track.id) this.contextIndex.delete(context);
         }
+        this.lastPositionReportAt.delete(track.id);
         if (AIS_DEBUG) {
           console.debug('[AIS] removed', { id: track.id, mmsi: track.mmsi, ageSec });
         }
@@ -535,7 +599,7 @@ export class AisProcessingService {
   }
 
   private flushTargetsSignal(): void {
-    this._targets.set(Array.from(this.tracks.values()).filter(track => Boolean(track.mmsi)));
+    this._targets.set(Array.from(this.tracks.values()).filter(track => Boolean(track.mmsi) || Boolean(track.position)));
     if (AIS_DEBUG) {
       console.debug('[AIS] flush', { count: this.tracks.size });
     }
@@ -602,12 +666,12 @@ export class AisProcessingService {
   }
 
   private distanceNm(a: AisTrackPosition, b: AisTrackPosition): number {
-    if (a.lat === null || a.lon === null || b.lat === null || b.lon === null) return 0;
+    if (a.latitude === null || a.longitude === null || b.latitude === null || b.longitude === null) return 0;
     const R = 6371e3; // meters
-    const phi1 = a.lat * Math.PI / 180;
-    const phi2 = b.lat * Math.PI / 180;
-    const dPhi = (b.lat - a.lat) * Math.PI / 180;
-    const dLambda = (b.lon - a.lon) * Math.PI / 180;
+    const phi1 = a.latitude * Math.PI / 180;
+    const phi2 = b.latitude * Math.PI / 180;
+    const dPhi = (b.latitude - a.latitude) * Math.PI / 180;
+    const dLambda = (b.longitude - a.longitude) * Math.PI / 180;
 
     const sinDP = Math.sin(dPhi / 2);
     const sinDL = Math.sin(dLambda / 2);
@@ -617,12 +681,17 @@ export class AisProcessingService {
     return meters / 1852;
   }
 
+  private wrapDegrees(angle: number): number {
+    const normalized = angle % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
+
   private readPositionValue(value: unknown): AisTrackPosition | null {
     if (!value || typeof value !== 'object') return null;
-    const lat = this.toNumberOrNull((value as { latitude?: unknown }).latitude);
-    const lon = this.toNumberOrNull((value as { longitude?: unknown }).longitude);
-    if (lat === null || lon === null) return null;
+    const latitude = this.toNumberOrNull((value as { latitude?: unknown }).latitude);
+    const longitude = this.toNumberOrNull((value as { longitude?: unknown }).longitude);
+    if (latitude === null || longitude === null) return null;
     const altitude = this.toNumberOrNull((value as { altitude?: unknown }).altitude);
-    return { lat, lon, altitude };
+    return { latitude, longitude, altitude };
   }
 }

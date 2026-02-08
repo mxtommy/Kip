@@ -1,3 +1,42 @@
 <div class="ais-radar-container" kipResizeObserver (kipResize)="onResized($event)">
+  <button
+    type="button"
+    class="ais-radar-mode-toggle-button"
+    matMiniFab
+    [attr.aria-label]="effectiveViewMode() === 'north-up' ? 'North up mode' : 'Course up mode'"
+    (click)="toggleViewMode()"
+  >
+    @if (effectiveViewMode() === 'north-up') {
+      <svg class="ais-mode-icon" viewBox="0 0 40 40" aria-hidden="true">
+        <path class="ais-mode-icon-chev" stroke="currentColor" d="M10 8 L20 2 L30 8"></path>
+        <text class="ais-mode-icon-letter" fill="currentColor" x="20" y="31">N</text>
+      </svg>
+    } @else {
+      <svg class="ais-mode-icon" viewBox="0 0 40 40" aria-hidden="true">
+        <path class="ais-mode-icon-vessel" fill="currentColor" d="M20 4 L34 36 L20 28 L6 36 Z"></path>
+      </svg>
+    }
+  </button>
+  <button
+    type="button"
+    class="ais-radar-range-button ais-radar-range-plus"
+    matMiniFab
+    aria-label="Increase range"
+    (click)="incrementRange()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+  <button
+    type="button"
+    class="ais-radar-range-button ais-radar-range-minus"
+    matMiniFab
+    aria-label="Decrease range"
+    (click)="decrementRange()"
+  >
+    <mat-icon>remove</mat-icon>
+  </button>
   <svg #radarSvg class="ais-radar" role="img" aria-label="AIS radar display"></svg>
 </div>
+@if (!dashboard.isDashboardStatic()) {
+  <div class="widgetOverlay"></div>
+}

@@ -433,6 +433,7 @@ widget-ais-radar {
     width: 100%;
     height: 100%;
     padding: 10px;
+    position: relative;
   }
 
   .ais-radar {
@@ -444,7 +445,7 @@ widget-ais-radar {
 
   .radar-rings .ring {
     fill: none;
-    stroke-width: 1.5;
+    stroke-width: 1.75;
   }
 
   .radar-rings .ring-label {
@@ -454,25 +455,68 @@ widget-ais-radar {
     opacity: 0.75;
   }
 
-  .radar-rings .ring-north {
-    font-size: 24px;
-    font-weight: 600;
-    fill: var(--kip-contrast-color);
-    paint-order: stroke;
-    stroke: var(--kip-widget-card-background-color);
+  .ais-radar-mode-toggle-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dimmer-color),
+    ));
+  }
+
+   .ais-mode-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ais-mode-icon-bg {
+    fill: var(--kip-widget-card-background-color);
+    stroke: var(--kip-contrast-dim-color);
     stroke-width: 2;
+  }
+
+  .ais-mode-icon-letter {
+    font-size: 38px;
+    font-weight: 900;
+    text-anchor: middle;
+    dominant-baseline: middle;
+
+  }
+
+  .ais-mode-icon-chev {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ais-mode-icon-vessel {
+    transform-origin: 20px 20px;
+    transform: rotate(45deg);
+  }
+
+  .ais-radar-range-button {
+    position: absolute;
+    right: 12px;
+    z-index: 2;
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dimmer-color),
+    ));
+  }
+
+  .ais-radar-range-plus {
+    top: 64px;
+  }
+
+  .ais-radar-range-minus {
+    top: 116px;
   }
 
   .radar-rings .radar-ownship .ownship-shape {
     fill: var(--kip-contrast-color);
     stroke: var(--kip-contrast-color);
     stroke-width: 1;
-  }
-
-  .radar-trails .trail {
-    fill: none;
-    stroke-width: 1;
-    opacity: 0.35;
   }
 
   .radar-vectors line {
@@ -484,9 +528,8 @@ widget-ais-radar {
     stroke: var(--kip-contrast-dim-color);
   }
 
-  .heading-line {
-    stroke: var(--kip-contrast-dim-color);
-    stroke-dasharray: 3 2;
+  .ownship-vector {
+    stroke: var(--kip-contrast-color);
   }
 
   .target {
@@ -519,16 +562,12 @@ widget-ais-radar {
   }
 
   .class-a .target-shape,
-  .class-a.trail,
-  .class-a.motion-vector,
-  .class-a.heading-line {
+  .class-a.motion-vector {
     stroke: var(--kip-green-color);
   }
 
   .class-b .target-shape,
-  .class-b.trail,
-  .class-b.motion-vector,
-  .class-b.heading-line {
+  .class-b.motion-vector {
     stroke: var(--kip-green-dim-color);
   }
 
@@ -539,10 +578,21 @@ widget-ais-radar {
 
   .selected-ring {
     fill: none;
-    stroke: var(--kip-contrast-color);
-    stroke-width: 2;
+    stroke: var(--kip-blue-color);
+    stroke-width: 2.5;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
     opacity: 0.8;
     filter: drop-shadow(0 0 6px var(--kip-green-color));
   }
 
+  .widgetOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    right: 0;
+    bottom: 0;
+    color: transparent;
+    z-index: 21;
+  }
 }
