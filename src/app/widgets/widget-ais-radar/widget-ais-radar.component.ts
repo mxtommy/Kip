@@ -558,6 +558,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const motionEnabled = cfg.showCogVectors ?? true;
     const baseSize = Math.max(6, radius * 0.04);
     const durationSeconds = (cfg.cogVectorsMinutes ?? 5) * 60;
+    const tipOffset = baseSize * 0.8;
 
     const motionData: VectorLine[] = [];
 
@@ -565,9 +566,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       if (target.raw.type !== 'vessel') continue;
       if (motionEnabled && typeof target.sog === 'number' && typeof target.cog === 'number') {
         const motionAngle = this.wrapDegrees(target.cog - viewRotation);
-        const tip = this.offsetPoint(target.x, target.y, motionAngle, baseSize * 0.8);
+        const tip = this.offsetPoint(target.x, target.y, motionAngle, tipOffset);
         const distanceNm = (target.sog * durationSeconds) / 1852;
-        const vectorLength = (distanceNm / maxRangeNm) * radius;
+        const vectorLength = Math.max(0, (distanceNm / rangeNm) * radius - tipOffset);
         const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
         motionData.push({
           id: target.id,
@@ -586,9 +587,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const ownSog = ownShip.speedOverGround;
       if (ownCog !== null && typeof ownSog === 'number') {
         const motionAngle = this.wrapDegrees(ownCog - viewRotation);
-        const tip = this.offsetPoint(0, 0, motionAngle, baseSize * 0.8);
+        const tip = this.offsetPoint(0, 0, motionAngle, tipOffset);
         const distanceNm = (ownSog * durationSeconds) / 1852;
-        const vectorLength = (distanceNm / maxRangeNm) * radius;
+        const vectorLength = Math.max(0, (distanceNm / rangeNm) * radius - tipOffset);
         const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
         motionData.push({
           id: 'ownship',

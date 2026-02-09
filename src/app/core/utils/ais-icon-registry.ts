@@ -124,6 +124,36 @@ const ICON_SVGS: Record<IconKey, string> = {
   'beacon/epirb': vesselSpecial
 };
 
+const AIS_SHIP_TYPE_ICON_RANGES: { min: number; max: number; key: IconKey }[] = [
+  { min: 0, max: 9, key: 'vessel/active' }, // Reserved for future use
+  { min: 10, max: 19, key: 'vessel/active' }, // Unspecified
+  { min: 20, max: 29, key: 'vessel/active' }, // Wing-in-ground aircraft
+  { min: 30, max: 30, key: 'vessel/active' }, // Fishing
+  { min: 31, max: 31, key: 'vessel/active' }, // Towing
+  { min: 32, max: 32, key: 'vessel/active' }, // Towing: length exceeds 200m or breadth exceeds 25m
+  { min: 33, max: 33, key: 'vessel/active' }, // Dredging or underwater ops
+  { min: 34, max: 34, key: 'vessel/active' }, // Diving ops
+  { min: 35, max: 35, key: 'vessel/active' }, // Military ops
+  { min: 36, max: 36, key: 'vessel/active' }, // Sailing
+  { min: 37, max: 37, key: 'vessel/active' }, // Pleasure Craft
+  { min: 38, max: 39, key: 'vessel/active' }, // Reserved for future use
+  { min: 40, max: 49, key: 'vessel/highspeed' }, // High Speed Vessel
+  { min: 50, max: 50, key: 'vessel/special' }, // Pilot Vessel
+  { min: 51, max: 51, key: 'vessel/special' }, // Search and Rescue vessel
+  { min: 52, max: 52, key: 'vessel/special' }, // Tug
+  { min: 53, max: 53, key: 'vessel/special' }, // Port Tender
+  { min: 54, max: 54, key: 'vessel/special' }, // Anti-pollution equipment
+  { min: 55, max: 55, key: 'vessel/special' }, // Law Enforcement
+  { min: 56, max: 56, key: 'vessel/special' }, // Spare - Local Vessel
+  { min: 57, max: 57, key: 'vessel/special' }, // Spare - Local Vessel
+  { min: 58, max: 58, key: 'vessel/special' }, // Medical Transport
+  { min: 59, max: 59, key: 'vessel/special' }, // Noncombatant ship according to RR Resolution No. 18
+  { min: 60, max: 69, key: 'vessel/passenger' }, // Passenger Vessel
+  { min: 70, max: 79, key: 'vessel/cargo' }, // Cargo Vessel
+  { min: 80, max: 89, key: 'vessel/tanker' }, // Tanker Vessel
+  { min: 90, max: 99, key: 'vessel/other' } // Other
+];
+
 /**
  * Resolve the icon key and return its raw SVG string. This function
  * integrates both resolveIconKey() and getIconSvg() in one step for convenience.
@@ -187,7 +217,7 @@ export function resolveIconKey(input: AisIconInput): IconKey {
     case 'sar':
       return 'vessel/sar';
     case 'vessel':
-      return resolveVesselKey(input.navState, input.aisShipTypeId ?? null);
+      return resolveVesselKey(input.aisShipTypeId ?? null);
     default:
       return 'vessel/unknown';
   }
@@ -224,16 +254,11 @@ function resolveAtonKey(isVirtual: boolean, typeName: string): IconKey {
   return `aton/${prefix}-aton` as IconKey;
 }
 
-function resolveVesselKey(navState: string | number | null | undefined, shipTypeId: number | null): IconKey {
-  if (isStationaryNavState(navState)) return 'vessel/inactive';
-
+function resolveVesselKey(shipTypeId: number | null): IconKey {
   if (shipTypeId !== null) {
-    if (shipTypeId >= 40 && shipTypeId <= 49) return 'vessel/highspeed';
-    if (shipTypeId >= 50 && shipTypeId <= 59) return 'vessel/special';
-    if (shipTypeId >= 60 && shipTypeId <= 69) return 'vessel/passenger';
-    if (shipTypeId >= 70 && shipTypeId <= 79) return 'vessel/cargo';
-    if (shipTypeId >= 80 && shipTypeId <= 89) return 'vessel/tanker';
-    if (shipTypeId >= 90 && shipTypeId <= 99) return 'vessel/other';
+    for (const entry of AIS_SHIP_TYPE_ICON_RANGES) {
+      if (shipTypeId >= entry.min && shipTypeId <= entry.max) return entry.key;
+    }
   }
 
   return 'vessel/active';
