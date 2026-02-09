@@ -87,6 +87,7 @@ export interface AisTrack {
     timeTo?: number;   // s
     range?: number;    // NM
     bearing?: number;  // deg
+    collisionRiskRating?: number; // lower is more risky
   };
 }
 
@@ -433,6 +434,9 @@ export class AisProcessingService {
         break;
       case 'navigation.closestApproach.bearing':
         track.closestApproach!.bearing = this.toNumberOrUndefined(update.value);
+        break;
+      case 'navigation.closestApproach.collisionRiskRating':
+        track.closestApproach!.collisionRiskRating = this.toNumberOrUndefined(update.value);
         break;
       default:
         //console.warn('[AIS] unhandled update path', { path: update.path, value: update.value });
