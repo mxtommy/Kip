@@ -12,55 +12,10 @@ import { DialogAisTargetComponent } from '../../core/components/dialog-ais-targe
 import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from "@angular/material/icon";
+import { resolveThemedIconDataUrl } from '../../core/utils/ais-icon-registry';
 
 type ViewMode = 'north-up' | 'course-up';
 
-interface AisShipTypeIconRange {
-  min: number;
-  max: number;
-  icon: string;
-}
-
-interface AisBeaconIconPrefix {
-  mmsiPrefix: string;
-  icon: string;
-}
-
-const AIS_VESSEL_ICON_RANGES: AisShipTypeIconRange[] = [
-  { min: 0, max: 9, icon: '' }, // Reserved for future use
-  { min: 10, max: 19, icon: 'assets/svg/vessels/ais_active.svg' }, // Unspecified
-  { min: 20, max: 29, icon: 'assets/svg/vessels/ais_active.svg' }, // Wing-in-ground aircraft
-  { min: 30, max: 30, icon: 'assets/svg/vessels/ais_active.svg' }, // Fishing
-  { min: 31, max: 31, icon: 'assets/svg/vessels/ais_active.svg' }, // Towing
-  { min: 32, max: 32, icon: 'assets/svg/vessels/ais_active.svg' }, // Towing: length exceeds 200m or breadth exceeds 25m
-  { min: 33, max: 33, icon: 'assets/svg/vessels/ais_active.svg' }, // Dredging or underwater ops
-  { min: 34, max: 34, icon: 'assets/svg/vessels/ais_active.svg' }, // Diving ops
-  { min: 35, max: 35, icon: 'assets/svg/vessels/ais_active.svg' }, // Military ops
-  { min: 36, max: 36, icon: 'assets/svg/vessels/ais_active.svg' }, // Sailing
-  { min: 37, max: 37, icon: 'assets/svg/vessels/ais_active.svg' }, // Pleasure Craft
-  { min: 38, max: 39, icon: 'assets/svg/vessels/ais_active.svg' }, // Reserved for future use
-  { min: 40, max: 49, icon: 'assets/svg/vessels/ais_highspeed.svg' }, // High Speed Vessel
-  { min: 50, max: 50, icon: 'assets/svg/vessels/ais_special.svg' }, // Pilot Vessel
-  { min: 51, max: 51, icon: 'assets/svg/vessels/ais_special.svg' }, // Search and Rescue vessel
-  { min: 52, max: 52, icon: 'assets/svg/vessels/ais_special.svg' }, // Tug
-  { min: 53, max: 53, icon: 'assets/svg/vessels/ais_special.svg' }, // Port Tender
-  { min: 54, max: 54, icon: 'assets/svg/vessels/ais_special.svg' }, // Anti-pollution equipment
-  { min: 55, max: 55, icon: 'assets/svg/vessels/ais_special.svg' }, // Law Enforcement
-  { min: 56, max: 56, icon: 'assets/svg/vessels/ais_special.svg' }, // Spare - Local Vessel
-  { min: 57, max: 57, icon: 'assets/svg/vessels/ais_special.svg' }, // Spare - Local Vessel
-  { min: 58, max: 58, icon: 'assets/svg/vessels/ais_special.svg' }, // Medical Transport
-  { min: 59, max: 59, icon: 'assets/svg/vessels/ais_special.svg' }, // Noncombatant ship according to RR Resolution No. 18
-  { min: 60, max: 69, icon: 'assets/svg/vessels/ais_passenger.svg' }, // Passenger Vessel
-  { min: 70, max: 79, icon: 'assets/svg/vessels/ais_cargo.svg' }, // Cargo Vessel
-  { min: 80, max: 89, icon: 'assets/svg/vessels/ais_tanker.svg' }, // Tanker Vessel
-  { min: 90, max: 99, icon: 'assets/svg/vessels/ais_other.svg' } // Other
-];
-
-const AIS_BEACON_ICON_PREFIXES: AisBeaconIconPrefix[] = [
-  { mmsiPrefix: '970', icon: 'assets/svg/vessels/ais_special.svg' }, // SART
-  { mmsiPrefix: '972', icon: 'assets/svg/vessels/ais_special.svg' }, // MOB
-  { mmsiPrefix: '974', icon: 'assets/svg/vessels/ais_special.svg' }  // EPIRB
-];
 
 interface RadarSize {
   width: number;
@@ -104,6 +59,7 @@ interface VectorLine {
   x2: number;
   y2: number;
   className: string;
+  stroke?: string;
 }
 
 interface CachedTargetSeed {
@@ -112,14 +68,7 @@ interface CachedTargetSeed {
   bearing: number;
   trackHeading: number | null;
   trackCog: number | null;
-  iconHref: string | null;
-  iconScale: number;
-  navState: string | undefined;
-  status: string;
-  aisClass: string | undefined;
-  type: string;
-  sog: number | undefined;
- }
+}
 
 interface RingCache {
   key: string;
@@ -136,6 +85,7 @@ interface RingCache {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
+  private static readonly OWN_SHIP_ICON_URL = 'assets/svg/vessels/ais_self.svg';
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -153,10 +103,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     dataTimeout: 5,
     ais: {
       viewMode: 'course-up',
-      rangeRings: [3, 6, 12, 24, 48],
+      rangeRings: [1, 3, 6, 12, 24, 48],
       rangeIndex: 3,
       showCogVectors: true,
-      cogVectorsMinutes: 120,
+      cogVectorsMinutes: 10,
       showLostTargets: true,
       showUnconfirmedTargets: true,
       showSelf: true
@@ -187,13 +137,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private vectorsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private targetsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private selectedLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private ownShipLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private viewRotationSmoothed: number | null = null;
   private lastRotationAt: number | null = null;
 
   private renderFrame: number | null = null;
   private readonly iconCache = new Map<string, { signature: string; icon: { href: string | null; scale: number } }>();
   private readonly targetCache = new Map<string, CachedTargetSeed>();
-  private readonly missingIconLogged = new Set<string>();
   private lastOriginKey: string | null = null;
   private ringCache: RingCache | null = null;
 
@@ -239,6 +189,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.vectorsLayer = this.root.append('g').attr('class', 'radar-vectors');
     this.targetsLayer = this.root.append('g').attr('class', 'radar-targets');
     this.selectedLayer = this.root.append('g').attr('class', 'radar-selected');
+    this.ownShipLayer = this.root.append('g').attr('class', 'radar-ownship-layer');
 
     this.svg.on('click', () => this.selectedId.set(null));
   }
@@ -293,9 +244,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const maxRangeNm = (maxRingRadius / radius) * rangeNm;
     const renderTargets = this.buildTargets(targets, ownShip.position, rangeNm, maxRangeNm, radius, viewRotation, radarCfg);
-    this.renderVectors(renderTargets, rangeNm, maxRangeNm, radius, viewRotation, radarCfg, ownShip);
+    this.renderVectors(renderTargets, rangeNm, radius, viewRotation, radarCfg, ownShip);
     this.renderTargets(renderTargets, radius);
     this.renderSelected(renderTargets, radius);
+    this.raiseOwnshipAndVector();
 
     if (remainingRotation > 0.5) {
       this.scheduleRender();
@@ -386,23 +338,29 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     centerSelection.exit().remove();
 
-    const ownShipSelection = this.ringsLayer
+    const ownShipSelection = this.ownShipLayer
       .selectAll<SVGGElement, { size: number }>('g.radar-ownship')
-      .data(showSelf ? [{ size: Math.max(8, radius * 0.04) }] : []);
+      .data(showSelf ? [{ size: Math.max(24, radius * 0.18) }] : []);
 
     const ownShipEnter = ownShipSelection.enter()
       .append('g')
       .attr('class', 'radar-ownship');
 
-    ownShipEnter.append('path')
-      .attr('class', 'ownship-shape');
+    ownShipEnter.append('image')
+      .attr('class', 'ownship-icon')
+      .attr('href', WidgetAisRadarComponent.OWN_SHIP_ICON_URL)
+      .attr('xlink:href', WidgetAisRadarComponent.OWN_SHIP_ICON_URL);
 
     const ownShipMerged = ownShipEnter.merge(ownShipSelection as d3.Selection<SVGGElement, { size: number }, SVGGElement, unknown>);
-    const shipSymbol = d3.symbol().type(d3.symbolTriangle);
 
-    ownShipMerged.select<SVGPathElement>('path.ownship-shape')
-      .attr('d', d => shipSymbol.size(d.size * d.size)() ?? '')
-      .attr('transform', `rotate(${ownShipRotation}) scale(1, 1.5)`);
+    ownShipMerged
+      .attr('transform', `rotate(${ownShipRotation})`);
+
+    ownShipMerged.select<SVGImageElement>('image.ownship-icon')
+      .attr('width', d => d.size)
+      .attr('height', d => d.size)
+      .attr('x', d => -d.size / 2)
+      .attr('y', d => -d.size / 2);
 
     ownShipSelection.exit().remove();
   }
@@ -451,12 +409,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
 
     const trackIds = new Set<string>();
-    const activeMmsi = new Set<string>();
     for (const track of tracks) {
       trackIds.add(track.id);
-      if (track.mmsi !== undefined) {
-        activeMmsi.add(String(track.mmsi));
-      }
     }
 
     for (const cachedId of this.targetCache.keys()) {
@@ -464,17 +418,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
     for (const cachedId of this.iconCache.keys()) {
       if (!trackIds.has(cachedId)) this.iconCache.delete(cachedId);
-    }
-    if (this.missingIconLogged.size) {
-      for (const key of this.missingIconLogged) {
-        const parts = key.split('|');
-        const mmsi = parts[parts.length - 1] ?? '';
-        if (mmsi && !activeMmsi.has(mmsi)) {
-          this.missingIconLogged.delete(key);
-        } else if (!mmsi && trackIds.size === 0) {
-          this.missingIconLogged.delete(key);
-        }
-      }
     }
 
     const results: RenderTarget[] = [];
@@ -490,26 +433,19 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const bearing = this.ais.getBearingTrue(origin, track.position) ?? 0;
         const trackHeading = this.toDegreesIfRadians(track.headingTrue);
         const trackCog = this.toDegreesIfRadians(track.courseOverGroundTrue);
-        const { href: iconHref, scale: iconScale } = this.resolveIconCached(track);
         cached = {
           signature,
           distanceNm: distance,
           bearing,
           trackHeading,
-          trackCog,
-          iconHref,
-          iconScale,
-          navState: track.navState,
-          status: track.status,
-          aisClass: track.aisClass,
-          type: track.type,
-          sog: track.speedOverGround
+          trackCog
         };
         this.targetCache.set(track.id, cached);
       }
 
       if (cached.distanceNm > maxRangeNm) continue;
 
+      const { href: iconHref, scale: iconScale } = this.resolveIconCached(track);
       const angle = this.wrapDegrees(cached.bearing - viewRotation);
       const { x, y } = this.polarToCartesian(angle, cached.distanceNm, rangeNm, radius);
       const heading = track.type === 'aton' || track.type === 'basestation'
@@ -517,10 +453,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         : this.wrapDegrees((cached.trackHeading ?? cached.trackCog ?? 0) - viewRotation);
       const className = this.buildClassName({
         id: track.id,
-        status: cached.status,
-        aisClass: cached.aisClass,
-        type: cached.type,
-        navState: cached.navState
+        status: track.status,
+        aisClass: track.aisClass,
+        type: track.type,
+        navState: track.navState
       });
 
       results.push({
@@ -529,13 +465,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         x,
         y,
         heading,
-        status: cached.status,
-        aisClass: cached.aisClass,
-        type: cached.type,
-        iconHref: cached.iconHref,
-        iconScale: cached.iconScale,
-        navState: cached.navState,
-        sog: cached.sog,
+        status: track.status,
+        aisClass: track.aisClass,
+        type: track.type,
+        iconHref,
+        iconScale,
+        navState: track.navState,
+        sog: track.speedOverGround,
         cog: cached.trackCog ?? null,
         className
       });
@@ -547,20 +483,19 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private renderVectors(
     targets: RenderTarget[],
     rangeNm: number,
-    maxRangeNm: number,
     radius: number,
     viewRotation: number,
     cfg: NonNullable<IWidgetSvcConfig['ais']>,
     ownShip: RenderState['ownShip']
   ): void {
-    if (!this.vectorsLayer) return;
-
+    if (!this.vectorsLayer || !this.ownShipLayer) return;
     const motionEnabled = cfg.showCogVectors ?? true;
     const baseSize = Math.max(6, radius * 0.04);
     const durationSeconds = (cfg.cogVectorsMinutes ?? 5) * 60;
     const tipOffset = baseSize * 0.8;
 
     const motionData: VectorLine[] = [];
+    const ownShipMotionData: VectorLine[] = [];
 
     for (const target of targets) {
       if (target.raw.type !== 'vessel') continue;
@@ -569,14 +504,17 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const tip = this.offsetPoint(target.x, target.y, motionAngle, tipOffset);
         const distanceNm = (target.sog * durationSeconds) / 1852;
         const vectorLength = Math.max(0, (distanceNm / rangeNm) * radius - tipOffset);
+        if (vectorLength <= 0) continue;
         const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
+        const stroke = this.resolveTargetVectorStroke(target.raw);
         motionData.push({
           id: target.id,
           x1: tip.x,
           y1: tip.y,
           x2: end.x,
           y2: end.y,
-          className: target.className
+          className: target.className,
+          stroke
         });
       }
 
@@ -590,24 +528,30 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const tip = this.offsetPoint(0, 0, motionAngle, tipOffset);
         const distanceNm = (ownSog * durationSeconds) / 1852;
         const vectorLength = Math.max(0, (distanceNm / rangeNm) * radius - tipOffset);
+        if (vectorLength <= 0) return;
         const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
-        motionData.push({
+        ownShipMotionData.push({
           id: 'ownship',
           x1: tip.x,
           y1: tip.y,
           x2: end.x,
           y2: end.y,
-          className: 'ownship-vector'
+          className: 'ownship-vector',
+          stroke: 'var(--kip-orange-color)'
         });
       }
     }
 
-    this.renderVectorLines('motion-vector', motionData);
+    this.renderVectorLines(this.vectorsLayer, 'motion-vector', motionData);
+    this.renderVectorLines(this.ownShipLayer, 'ownship-vector', ownShipMotionData);
   }
 
-  private renderVectorLines(className: string, data: VectorLine[]): void {
-    if (!this.vectorsLayer) return;
-    const selection = this.vectorsLayer
+  private renderVectorLines(
+    layer: d3.Selection<SVGGElement, unknown, null, undefined>,
+    className: string,
+    data: VectorLine[]
+  ): void {
+    const selection = layer
       .selectAll<SVGLineElement, VectorLine>(`line.${className}`)
       .data(data, d => d.id);
 
@@ -618,9 +562,32 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('x1', d => d.x1)
       .attr('y1', d => d.y1)
       .attr('x2', d => d.x2)
-      .attr('y2', d => d.y2);
+      .attr('y2', d => d.y2)
+      .style('stroke', d => d.stroke ?? '#50505f')
+      .style('stroke-width', 2)
+      .style('opacity', 1)
+      .style('stroke-dasharray', '15, 7');
 
     selection.exit().remove();
+
+    const tipSelection = layer
+      .selectAll<SVGCircleElement, VectorLine>(`circle.${className}-tip`)
+      .data(data, d => d.id);
+
+    tipSelection.enter()
+      .append('circle')
+      .attr('class', d => `${className}-tip ${d.className}`)
+      .merge(tipSelection as d3.Selection<SVGCircleElement, VectorLine, SVGGElement, unknown>)
+      .attr('cx', d => d.x2)
+      .attr('cy', d => d.y2)
+      .attr('r', 2.5)
+      .style('fill', d => d.stroke ?? '#50505f')
+      .style('stroke', d => d.stroke ?? '#50505f')
+      .style('stroke-width', 2)
+      .style('opacity', 1)
+      .style('stroke-dasharray', '15, 7');
+
+    tipSelection.exit().remove();
   }
 
   private renderTargets(targets: RenderTarget[], radius: number): void {
@@ -686,6 +653,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.exit().remove();
   }
 
+  private raiseOwnshipAndVector(): void {
+    this.ownShipLayer?.raise();
+  }
+
   private clickTarget(target: RenderTarget): void {
     this.selectedId.set(target.id);
     this.dialog.openAisDetailDialog({
@@ -704,94 +675,47 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       : base;
   }
 
-  private resolveIcon(track: AisTrack): { href: string | null; scale: number } {
-    const beaconIcon = this.resolveBeaconIcon(track);
-    if (beaconIcon) return { href: beaconIcon, scale: 2.4 };
-
-    if (track.type === 'aton') {
-      return { href: this.resolveAtonIcon(track), scale: 2 };
-    }
-
-    if (track.type === 'basestation') {
-      return { href: 'assets/svg/atons/basestation.svg', scale: 3 };
-    }
-
-    if (track.type === 'sar') {
-      return { href: 'assets/svg/vessels/ais_special.svg', scale: 2.4 };
-    }
-
-    if (track.type === 'vessel') {
-      return { href: this.resolveVesselIcon(track), scale: 3 };
-    }
-
-    const missingKey = this.buildMissingIconKey(track);
-    if (!this.missingIconLogged.has(missingKey)) {
-      this.missingIconLogged.add(missingKey);
-      console.warn('[AIS Radar Widget] Missing icon mapping', {
-        id: track.id,
-        type: track.type,
-        aisShipTypeId: track.design?.aisShipType?.id,
-        aisShipTypeName: track.design?.aisShipType?.name,
-        mmsi: track.mmsi
-      });
-    }
-    return { href: 'assets/svg/vessels/ais_unknown.svg', scale: 2.4 };
-  }
-
-  private resolveBeaconIcon(track: AisTrack): string | null {
-    const mmsi = track.mmsi ?? '';
-    for (const entry of AIS_BEACON_ICON_PREFIXES) {
-      if (mmsi.startsWith(entry.mmsiPrefix)) return entry.icon;
-    }
-    return null;
-  }
-
   private resolveIconCached(track: AisTrack): { href: string | null; scale: number } {
     const signature = this.buildIconSignature(track);
     const cached = this.iconCache.get(track.id);
     if (cached && cached.signature === signature) return cached.icon;
 
-    const resolved = this.resolveIcon(track);
-    this.iconCache.set(track.id, { signature, icon: resolved });
-    return resolved;
+    const scale = this.resolveIconScale(track.type);
+    const pendingIcon = { href: cached?.icon.href ?? null, scale };
+    this.iconCache.set(track.id, { signature, icon: pendingIcon });
+
+    void resolveThemedIconDataUrl({
+      mmsi: track.mmsi ?? '',
+      type: track.type,
+      navState: track.navState,
+      aisShipTypeId: track.design?.aisShipType?.id,
+      atonVirtual: track.atonVirtual,
+      atonTypeName: track.atonType?.name,
+      status: track.status,
+      collisionRiskRating: track.closestApproach?.collisionRiskRating
+    }).then(href => {
+      const current = this.iconCache.get(track.id);
+      if (!current || current.signature !== signature) return;
+      current.icon = { href, scale };
+      this.scheduleRender();
+    });
+
+    return pendingIcon;
   }
 
-  private resolveVesselIcon(track: AisTrack): string | null {
-    const navState = (track.navState ?? '').toLowerCase();
-    if (navState.includes('moored') || navState.includes('anchored')) {
-      return 'assets/svg/vessels/ais_inactive.svg';
+  private resolveIconScale(type: AisTrack['type']): number {
+    switch (type) {
+      case 'aton':
+        return 2;
+      case 'basestation':
+        return 3;
+      case 'sar':
+        return 2.4;
+      case 'vessel':
+        return 3;
+      default:
+        return 2.4;
     }
-
-    const shipTypeId = track.design?.aisShipType?.id;
-    const iconFromRange = typeof shipTypeId === 'number' ? this.resolveIconFromShipTypeId(shipTypeId) : null;
-    if (iconFromRange) return iconFromRange;
-
-    return 'assets/svg/vessels/ais_active.svg';
-  }
-
-  private resolveIconFromShipTypeId(shipTypeId: number): string | null {
-    for (const entry of AIS_VESSEL_ICON_RANGES) {
-      if (shipTypeId >= entry.min && shipTypeId <= entry.max) return entry.icon;
-    }
-    return null;
-  }
-
-  private resolveAtonIcon(track: AisTrack): string | null {
-    const isVirtual = track.atonVirtual ?? false;
-    const prefix = isVirtual ? 'virtual' : 'real';
-    const name = (track.atonType?.name ?? '').toLowerCase();
-
-    if (name.includes('north')) return `assets/svg/atons/${prefix}-north.svg`;
-    if (name.includes('south')) return `assets/svg/atons/${prefix}-south.svg`;
-    if (name.includes('east')) return `assets/svg/atons/${prefix}-east.svg`;
-    if (name.includes('west')) return `assets/svg/atons/${prefix}-west.svg`;
-    if (name.includes('port')) return `assets/svg/atons/${prefix}-port.svg`;
-    if (name.includes('starboard')) return `assets/svg/atons/${prefix}-starboard.svg`;
-    if (name.includes('safe')) return `assets/svg/atons/${prefix}-safe.svg`;
-    if (name.includes('special')) return `assets/svg/atons/${prefix}-special.svg`;
-    if (name.includes('danger')) return `assets/svg/atons/${prefix}-danger.svg`;
-
-    return `assets/svg/atons/${prefix}-aton.svg`;
   }
 
   private buildIconSignature(track: AisTrack): string {
@@ -800,18 +724,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       track.type,
       track.navState,
       track.design?.aisShipType?.id,
-      track.design?.aisShipType?.name,
       track.atonVirtual,
-      track.atonType?.name
-    ].join('|');
-  }
-
-  private buildMissingIconKey(track: AisTrack): string {
-    return [
-      track.type,
-      track.design?.aisShipType?.id,
-      track.design?.aisShipType?.name,
-      track.mmsi
+      track.atonType?.name,
+      track.status,
+      track.closestApproach?.collisionRiskRating
     ].join('|');
   }
 
@@ -833,6 +749,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
 
     return classes.join(' ');
+  }
+
+  private resolveTargetVectorStroke(track: AisTrack): string {
+    if (track.status !== 'confirmed') return '#50505f';
+    const rating = track.closestApproach?.collisionRiskRating;
+    const numericRating = typeof rating === 'number' ? rating : Number(rating);
+    if (!Number.isFinite(numericRating)) return '#50505f';
+    if (numericRating < 15000) return 'red';
+    if (numericRating < 25000) return 'yellow';
+    return '#50505f';
   }
 
   private polarToCartesian(angleDeg: number, distanceNm: number, rangeNm: number, radius: number) {
@@ -870,24 +796,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private buildTrackSignature(track: AisTrack): string {
     const position = track.position ?? {};
-    const atonName = track.atonType?.name ?? '';
     return [
-      track.id,
       position.latitude,
       position.longitude,
       track.headingTrue,
-      track.courseOverGroundTrue,
-      track.status,
-      track.aisClass,
-      track.type,
-      track.navState,
-      track.design?.aisShipType?.name,
-      track.aisType,
-      track.design?.aisShipType?.id,
-      track.atonVirtual,
-      atonName,
-      track.mmsi,
-      track.speedOverGround
+      track.courseOverGroundTrue
     ].join('|');
   }
 

@@ -5,16 +5,28 @@
       --icon-fill-opacity: 1;
       --icon-stroke-opacity: 1;
       --icon-stroke: #82829e;
-      --icon-stroke-width: 0.75;
+      --icon-stroke-width: 0.50;
       --icon-stroke-dasharray: none;
     }
   </style>
-  <path
-    fill="var(--icon-fill)"
+  <ellipse
+    fill-opacity="var(--icon-fill-opacity)"
     stroke="var(--icon-stroke)"
     stroke-width="var(--icon-stroke-width)"
     stroke-dasharray="var(--icon-stroke-dasharray)"
+    stroke-opacity="var(--icon-stroke-opacity)"
+
+    style="fill:#ffffff"
+    cx="12"
+    cy="12"
+    rx="3.3023782"
+    ry="3.2951753" />
+  <circle
+    fill="var(--icon-fill)"
     fill-opacity="var(--icon-fill-opacity)"
     stroke-opacity="var(--icon-stroke-opacity)"
-    d="m 17.163663,18.966244 -5.006064,-2.210421 a 0.45888923,0.55590095 0 0 0 -0.311973,0 L 6.834121,18.957454 A 0.45888923,0.55590095 0 0 1 6.2682179,18.186224 L 11.595324,5.3082185 a 0.45888923,0.55590095 0 0 1 0.821647,0 L 17.73138,18.195013 a 0.45888923,0.55590095 0 0 1 -0.567717,0.771231 z" />
+     style="stroke:none;"
+     cx="12"
+     cy="12"
+     r="2.2242277" />
 </svg>

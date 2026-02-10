@@ -1,33 +1,12 @@
-import atonBasestation from 'src/assets/svg/atons/basestation.svg?raw';
-import atonReal from 'src/assets/svg/atons/real-aton.svg?raw';
-import atonRealDanger from 'src/assets/svg/atons/real-danger.svg?raw';
-import atonRealEast from 'src/assets/svg/atons/real-east.svg?raw';
-import atonRealNorth from 'src/assets/svg/atons/real-north.svg?raw';
-import atonRealPort from 'src/assets/svg/atons/real-port.svg?raw';
-import atonRealSafe from 'src/assets/svg/atons/real-safe.svg?raw';
-import atonRealSouth from 'src/assets/svg/atons/real-south.svg?raw';
-import atonRealSpecial from 'src/assets/svg/atons/real-special.svg?raw';
-import atonRealStarboard from 'src/assets/svg/atons/real-starboard.svg?raw';
-import atonRealWest from 'src/assets/svg/atons/real-west.svg?raw';
-import atonVirtual from 'src/assets/svg/atons/virtual-aton.svg?raw';
-import atonVirtualDanger from 'src/assets/svg/atons/virtual-danger.svg?raw';
-import atonVirtualEast from 'src/assets/svg/atons/virtual-east.svg?raw';
-import atonVirtualNorth from 'src/assets/svg/atons/virtual-north.svg?raw';
-import atonVirtualPort from 'src/assets/svg/atons/virtual-port.svg?raw';
-import atonVirtualSafe from 'src/assets/svg/atons/virtual-safe.svg?raw';
-import atonVirtualSouth from 'src/assets/svg/atons/virtual-south.svg?raw';
-import atonVirtualSpecial from 'src/assets/svg/atons/virtual-special.svg?raw';
-import atonVirtualStarboard from 'src/assets/svg/atons/virtual-starboard.svg?raw';
-import atonVirtualWest from 'src/assets/svg/atons/virtual-west.svg?raw';
-import vesselActive from 'src/assets/svg/vessels/ais_active.svg?raw';
-import vesselCargo from 'src/assets/svg/vessels/ais_cargo.svg?raw';
-import vesselHighspeed from 'src/assets/svg/vessels/ais_highspeed.svg?raw';
-import vesselInactive from 'src/assets/svg/vessels/ais_inactive.svg?raw';
-import vesselOther from 'src/assets/svg/vessels/ais_other.svg?raw';
-import vesselPassenger from 'src/assets/svg/vessels/ais_passenger.svg?raw';
-import vesselSpecial from 'src/assets/svg/vessels/ais_special.svg?raw';
-import vesselTanker from 'src/assets/svg/vessels/ais_tanker.svg?raw';
-import vesselUnknown from 'src/assets/svg/vessels/ais_unknown.svg?raw';
+import {
+  AisIconTargetKind,
+  AisIconTargetState,
+  AisIconThemeInput,
+  AisIconTheme,
+  applyAisIconTheme,
+  buildAisIconTheme,
+  svgToDataUrl
+} from './ais-svg-icon.util';
 
 export type IconKey =
   | 'aton/basestation'
@@ -51,15 +30,22 @@ export type IconKey =
   | 'aton/virtual-special'
   | 'aton/virtual-starboard'
   | 'aton/virtual-west'
-  | 'vessel/active'
+  | 'vessel/fishing'
+  | 'vessel/diving'
+  | 'vessel/military'
+  | 'vessel/sailing'
+  | 'vessel/pleasurecraft'
   | 'vessel/cargo'
   | 'vessel/highspeed'
-  | 'vessel/inactive'
+  | 'vessel/stationary'
   | 'vessel/other'
+  | 'vessel/pilot'
   | 'vessel/passenger'
   | 'vessel/sar'
-  | 'vessel/special'
   | 'vessel/tanker'
+  | 'vessel/tug'
+  | 'vessel/spare'
+  | 'vessel/law'
   | 'vessel/unknown'
   | 'beacon/sart'
   | 'beacon/mob'
@@ -87,67 +73,89 @@ export interface AisIconInput {
   atonTypeName?: string;
 }
 
-const ICON_SVGS: Record<IconKey, string> = {
-  'aton/basestation': atonBasestation,
-  'aton/real-aton': atonReal,
-  'aton/real-danger': atonRealDanger,
-  'aton/real-east': atonRealEast,
-  'aton/real-north': atonRealNorth,
-  'aton/real-port': atonRealPort,
-  'aton/real-safe': atonRealSafe,
-  'aton/real-south': atonRealSouth,
-  'aton/real-special': atonRealSpecial,
-  'aton/real-starboard': atonRealStarboard,
-  'aton/real-west': atonRealWest,
-  'aton/virtual-aton': atonVirtual,
-  'aton/virtual-danger': atonVirtualDanger,
-  'aton/virtual-east': atonVirtualEast,
-  'aton/virtual-north': atonVirtualNorth,
-  'aton/virtual-port': atonVirtualPort,
-  'aton/virtual-safe': atonVirtualSafe,
-  'aton/virtual-south': atonVirtualSouth,
-  'aton/virtual-special': atonVirtualSpecial,
-  'aton/virtual-starboard': atonVirtualStarboard,
-  'aton/virtual-west': atonVirtualWest,
-  'vessel/active': vesselActive,
-  'vessel/cargo': vesselCargo,
-  'vessel/highspeed': vesselHighspeed,
-  'vessel/inactive': vesselInactive,
-  'vessel/other': vesselOther,
-  'vessel/passenger': vesselPassenger,
-  'vessel/sar': vesselSpecial,
-  'vessel/special': vesselSpecial,
-  'vessel/tanker': vesselTanker,
-  'vessel/unknown': vesselUnknown,
-  'beacon/sart': vesselSpecial,
-  'beacon/mob': vesselSpecial,
-  'beacon/epirb': vesselSpecial
+export interface AisIconRenderInput extends AisIconInput {
+  status?: 'confirmed' | 'unconfirmed' | 'lost';
+  collisionRiskRating?: number;
+  targetKind?: AisIconTargetKind;
+  themeOverrides?: Partial<AisIconThemeInput>;
+}
+
+const rawSvgCache = new Map<IconKey, string>();
+const pendingFetch = new Map<IconKey, Promise<string>>();
+const themedSvgCache = new Map<string, string>();
+const themedDataUrlCache = new Map<string, string>();
+const FALLBACK_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#12f802" stroke="#fb05eb" stroke-width="1.4"/></svg>';
+
+const ICON_URLS: Record<IconKey, string> = {
+  'aton/basestation': 'assets/svg/atons/basestation.svg',
+  'aton/real-aton': 'assets/svg/atons/real-aton.svg',
+  'aton/real-danger': 'assets/svg/atons/real-danger.svg',
+  'aton/real-east': 'assets/svg/atons/real-east.svg',
+  'aton/real-north': 'assets/svg/atons/real-north.svg',
+  'aton/real-port': 'assets/svg/atons/real-port.svg',
+  'aton/real-safe': 'assets/svg/atons/real-safe.svg',
+  'aton/real-south': 'assets/svg/atons/real-south.svg',
+  'aton/real-special': 'assets/svg/atons/real-special.svg',
+  'aton/real-starboard': 'assets/svg/atons/real-starboard.svg',
+  'aton/real-west': 'assets/svg/atons/real-west.svg',
+  'aton/virtual-aton': 'assets/svg/atons/virtual-aton.svg',
+  'aton/virtual-danger': 'assets/svg/atons/virtual-danger.svg',
+  'aton/virtual-east': 'assets/svg/atons/virtual-east.svg',
+  'aton/virtual-north': 'assets/svg/atons/virtual-north.svg',
+  'aton/virtual-port': 'assets/svg/atons/virtual-port.svg',
+  'aton/virtual-safe': 'assets/svg/atons/virtual-safe.svg',
+  'aton/virtual-south': 'assets/svg/atons/virtual-south.svg',
+  'aton/virtual-special': 'assets/svg/atons/virtual-special.svg',
+  'aton/virtual-starboard': 'assets/svg/atons/virtual-starboard.svg',
+  'aton/virtual-west': 'assets/svg/atons/virtual-west.svg',
+
+  'beacon/sart': 'assets/svg/vessels/ais_special.svg',
+  'beacon/mob': 'assets/svg/vessels/ais_special.svg',
+  'beacon/epirb': 'assets/svg/vessels/ais_special.svg',
+
+  'vessel/stationary': 'assets/svg/vessels/ais_stationary.svg',
+  'vessel/fishing': 'assets/svg/vessels/ais_fishing.svg',
+  'vessel/diving': 'assets/svg/vessels/ais_diving-ops.svg',
+  'vessel/military': 'assets/svg/vessels/ais_military-ops.svg',
+  'vessel/sailing': 'assets/svg/vessels/ais_sailing.svg',
+  'vessel/pleasurecraft': 'assets/svg/vessels/ais_pleasurecraft.svg',
+  'vessel/highspeed': 'assets/svg/vessels/ais_highspeed.svg',
+  'vessel/pilot': 'assets/svg/vessels/ais_pilot.svg',
+  'vessel/sar': 'assets/svg/vessels/ais_sar.svg',
+  'vessel/tug': 'assets/svg/vessels/ais_tug.svg',
+  'vessel/law': 'assets/svg/vessels/ais_law-enforcement.svg',
+  'vessel/spare': 'assets/svg/vessels/ais_other.svg',
+  'vessel/passenger': 'assets/svg/vessels/ais_passenger.svg',
+  'vessel/cargo': 'assets/svg/vessels/ais_cargo-tanker.svg',
+  'vessel/tanker': 'assets/svg/vessels/ais_cargo-tanker.svg',
+  'vessel/other': 'assets/svg/vessels/ais_other.svg',
+  'vessel/unknown': 'assets/svg/vessels/ais_unknown.svg'
 };
 
 const AIS_SHIP_TYPE_ICON_RANGES: { min: number; max: number; key: IconKey }[] = [
-  { min: 0, max: 9, key: 'vessel/active' }, // Reserved for future use
-  { min: 10, max: 19, key: 'vessel/active' }, // Unspecified
-  { min: 20, max: 29, key: 'vessel/active' }, // Wing-in-ground aircraft
-  { min: 30, max: 30, key: 'vessel/active' }, // Fishing
-  { min: 31, max: 31, key: 'vessel/active' }, // Towing
-  { min: 32, max: 32, key: 'vessel/active' }, // Towing: length exceeds 200m or breadth exceeds 25m
-  { min: 33, max: 33, key: 'vessel/active' }, // Dredging or underwater ops
-  { min: 34, max: 34, key: 'vessel/active' }, // Diving ops
-  { min: 35, max: 35, key: 'vessel/active' }, // Military ops
-  { min: 36, max: 36, key: 'vessel/active' }, // Sailing
-  { min: 37, max: 37, key: 'vessel/active' }, // Pleasure Craft
-  { min: 38, max: 39, key: 'vessel/active' }, // Reserved for future use
+  { min: 0, max: 9, key: 'vessel/other' }, // Reserved for future use
+  { min: 10, max: 19, key: 'vessel/other' }, // Unspecified
+  { min: 20, max: 29, key: 'vessel/highspeed' }, // Wing-in-ground aircraft
+  { min: 30, max: 30, key: 'vessel/fishing' }, // Fishing
+  { min: 31, max: 31, key: 'vessel/tug' }, // Towing
+  { min: 32, max: 32, key: 'vessel/tug' }, // Towing: length exceeds 200m or breadth exceeds 25m
+  { min: 33, max: 33, key: 'vessel/tug' }, // Dredging or underwater ops
+  { min: 34, max: 34, key: 'vessel/diving' }, // Diving ops
+  { min: 35, max: 35, key: 'vessel/military' }, // Military ops
+  { min: 36, max: 36, key: 'vessel/sailing' }, // Sailing
+  { min: 37, max: 37, key: 'vessel/pleasurecraft' }, // Pleasure Craft
+  { min: 38, max: 39, key: 'vessel/other' }, // Reserved for future use
   { min: 40, max: 49, key: 'vessel/highspeed' }, // High Speed Vessel
-  { min: 50, max: 50, key: 'vessel/special' }, // Pilot Vessel
-  { min: 51, max: 51, key: 'vessel/special' }, // Search and Rescue vessel
-  { min: 52, max: 52, key: 'vessel/special' }, // Tug
-  { min: 53, max: 53, key: 'vessel/special' }, // Port Tender
-  { min: 54, max: 54, key: 'vessel/special' }, // Anti-pollution equipment
-  { min: 55, max: 55, key: 'vessel/special' }, // Law Enforcement
-  { min: 56, max: 56, key: 'vessel/special' }, // Spare - Local Vessel
-  { min: 57, max: 57, key: 'vessel/special' }, // Spare - Local Vessel
-  { min: 58, max: 58, key: 'vessel/special' }, // Medical Transport
-  { min: 59, max: 59, key: 'vessel/special' }, // Noncombatant ship according to RR Resolution No. 18
+  { min: 50, max: 50, key: 'vessel/pilot' }, // Pilot Vessel
+  { min: 51, max: 51, key: 'vessel/sar' }, // Search and Rescue vessel
+  { min: 52, max: 52, key: 'vessel/tug' }, // Tug
+  { min: 53, max: 53, key: 'vessel/tug' }, // Port Tender
+  { min: 54, max: 54, key: 'vessel/tug' }, // Anti-pollution equipment
+  { min: 55, max: 55, key: 'vessel/law' }, // Law Enforcement
+  { min: 56, max: 56, key: 'vessel/other' }, // Spare - Local Vessel
+  { min: 57, max: 57, key: 'vessel/other' }, // Spare - Local Vessel
+  { min: 58, max: 58, key: 'vessel/tug' }, // Medical Transport
+  { min: 59, max: 59, key: 'vessel/tug' }, // Noncombatant ship according to RR Resolution No. 18
   { min: 60, max: 69, key: 'vessel/passenger' }, // Passenger Vessel
   { min: 70, max: 79, key: 'vessel/cargo' }, // Cargo Vessel
   { min: 80, max: 89, key: 'vessel/tanker' }, // Tanker Vessel
@@ -166,12 +174,67 @@ const AIS_SHIP_TYPE_ICON_RANGES: { min: number; max: number; key: IconKey }[] = 
  * const svg = resolveIconSvg({ type: 'vessel', aisShipTypeId: 70 });
  * ```
  */
-export function resolveIconSvg(input: AisIconInput): string {
+export async function resolveIconSvg(input: AisIconInput): Promise<string> {
   return getIconSvg(resolveIconKey(input));
 }
 
 /**
+ * Resolve the icon SVG and apply AIS target theming (state + collision risk), and return raw SVG markup.
+ *
+ * Use when you need raw SVG markup for inline rendering or further processing.
+ * See also resolveThemedIconDataUrl and resolveThemedIconOptions for other output formats.
+ */
+export async function resolveThemedIconSvg(input: AisIconRenderInput): Promise<string> {
+  const theme = buildAisIconTheme(buildAisIconThemeInput(input));
+  return getThemedSvg(resolveIconKey(input), theme);
+}
+
+/**
+ * Resolve the icon SVG, apply AIS target theming (state + collision risk), and return a data URL.
+ *
+ * Use for `<img>`/`<image href>` sources (e.g., AIS radar) where a data URL is required.
+ * See also resolveThemedIconSvg and resolveThemedIconOptions for other output formats.
+ */
+export async function resolveThemedIconDataUrl(input: AisIconRenderInput): Promise<string> {
+  const theme = buildAisIconTheme(buildAisIconThemeInput(input));
+  return getThemedDataUrl(resolveIconKey(input), theme);
+}
+
+/**
+ * Resolve the icon SVG, apply AIS target theming (state + collision risk), and return icon options for map libraries.
+ *
+ * Use when creating map icons (OpenLayers) that expect an options object.
+ * See also resolveThemedIconSvg and resolveThemedIconDataUrl for other output formats.
+ *
+ * Example (OpenLayers):
+ * ```ts
+ * import { Icon } from 'ol/style';
+ *
+ * const options = await resolveThemedIconOptions({
+ *   type: 'vessel',
+ *   mmsi: '366123456',
+ *   status: 'confirmed',
+ *   collisionRiskRating: 12000
+ * });
+ * const icon = new Icon(options);
+ * ```
+ */
+export async function resolveThemedIconOptions(input: AisIconRenderInput) {
+  const theme = buildAisIconTheme(buildAisIconThemeInput(input));
+  const key = resolveIconKey(input);
+  const dataUrl = await getThemedDataUrl(key, theme);
+  return {
+    src: dataUrl,
+    anchor: [0.5, 0.5],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'fraction',
+    scale: 1
+  } as const;
+}
+
+/**
  * Return the raw SVG string for a given icon key.
+ * Low-level helper: prefer resolveThemedIconSvg/resolveThemedIconDataUrl/resolveThemedIconOptions in most cases.
  *
  * @param key - Registry icon key (e.g., 'vessel/cargo').
  * @returns Raw SVG markup string.
@@ -181,12 +244,76 @@ export function resolveIconSvg(input: AisIconInput): string {
  * const svg = getIconSvg('vessel/cargo');
  * ```
  */
-export function getIconSvg(key: IconKey): string {
-  return ICON_SVGS[key];
+export async function getIconSvg(key: IconKey): Promise<string> {
+  const cached = rawSvgCache.get(key);
+  if (cached) return cached;
+
+  const pending = pendingFetch.get(key);
+  if (pending) return pending;
+
+  const url = ICON_URLS[key];
+  const request = fetch(url)
+    .then(response => (response.ok ? response.text() : FALLBACK_SVG))
+    .catch(() => FALLBACK_SVG)
+    .then(svg => {
+      rawSvgCache.set(key, svg);
+      pendingFetch.delete(key);
+      return svg;
+    });
+
+  pendingFetch.set(key, request);
+  return request;
+}
+
+async function getThemedSvg(key: IconKey, theme: AisIconTheme): Promise<string> {
+  const cacheKey = buildThemedCacheKey(key, theme);
+  const cached = themedSvgCache.get(cacheKey);
+  if (cached) return cached;
+
+  const svg = await getIconSvg(key);
+  const themedSvg = applyAisIconTheme(svg, theme);
+  themedSvgCache.set(cacheKey, themedSvg);
+  return themedSvg;
+}
+
+async function getThemedDataUrl(key: IconKey, theme: AisIconTheme): Promise<string> {
+  const cacheKey = buildThemedCacheKey(key, theme);
+  const cached = themedDataUrlCache.get(cacheKey);
+  if (cached) return cached;
+
+  const themedSvg = await getThemedSvg(key, theme);
+  const dataUrl = svgToDataUrl(themedSvg);
+  themedDataUrlCache.set(cacheKey, dataUrl);
+  return dataUrl;
+}
+
+function buildThemedCacheKey(key: IconKey, theme: AisIconTheme): string {
+  return `${key}|${buildThemeHash(theme)}`;
+}
+
+function buildThemeHash(theme: AisIconTheme): string {
+  return [
+    stringToKey(theme.fill),
+    stringToKey(theme.stroke),
+    numberToKey(theme.fillOpacity),
+    numberToKey(theme.strokeOpacity),
+    numberToKey(theme.strokeWidth),
+    numberToKey(theme.sizePx)
+  ].join('|');
+}
+
+function stringToKey(value: string | undefined): string {
+  return value ?? '';
+}
+
+function numberToKey(value: number | undefined): string {
+  if (value === undefined || !Number.isFinite(value)) return '';
+  return value.toFixed(4);
 }
 
 /**
  * Resolve the icon key from standard Signal K AIS field values.
+ * Low-level helper: prefer resolveThemedIconSvg/resolveThemedIconDataUrl/resolveThemedIconOptions in most cases.
  *
  * @param input - Standard Signal K AIS fields used for icon selection.
  * @returns Icon key resolved from the input fields.
@@ -206,7 +333,7 @@ export function resolveIconKey(input: AisIconInput): IconKey {
   if (beaconKey) return beaconKey;
 
   if ((input.type === 'vessel' || !input.type) && isStationaryNavState(input.navState)) {
-    return 'vessel/inactive';
+    return 'vessel/stationary';
   }
 
   switch (input.type) {
@@ -261,7 +388,34 @@ function resolveVesselKey(shipTypeId: number | null): IconKey {
     }
   }
 
-  return 'vessel/active';
+  return 'vessel/other';
+}
+
+function buildAisIconThemeInput(input: AisIconRenderInput): AisIconThemeInput {
+  // Treat stationary nav states as fixed so collision styling does not apply.
+  const targetKind = input.targetKind
+    ?? (isStationaryNavState(input.navState) ? 'fixed' : resolveTargetKind(input.type));
+  const targetState: AisIconTargetState = input.status === 'unconfirmed' ? 'unconfirmed' : 'confirmed';
+  return {
+    targetKind,
+    targetState,
+    collisionRiskRating: input.collisionRiskRating,
+    ...input.themeOverrides
+  };
+}
+
+function resolveTargetKind(type?: string): AisIconTargetKind {
+  switch (type) {
+    case 'aton':
+    case 'basestation':
+      return 'fixed';
+    case 'vessel':
+    case 'sar':
+    case 'aircraft':
+    case 'beacon':
+    default:
+      return 'moving';
+  }
 }
 
 function isStationaryNavState(value: string | number | null | undefined): boolean {
