@@ -8,28 +8,34 @@ import {
   svgToDataUrl
 } from './ais-svg-icon.util';
 
-export type IconKey =
+export type AtonIconKey =
+  | 'aton/other'
   | 'aton/basestation'
-  | 'aton/real-aton'
-  | 'aton/real-danger'
-  | 'aton/real-east'
-  | 'aton/real-north'
-  | 'aton/real-port'
-  | 'aton/real-safe'
-  | 'aton/real-south'
-  | 'aton/real-special'
-  | 'aton/real-starboard'
-  | 'aton/real-west'
-  | 'aton/virtual-aton'
-  | 'aton/virtual-danger'
-  | 'aton/virtual-east'
-  | 'aton/virtual-north'
-  | 'aton/virtual-port'
-  | 'aton/virtual-safe'
-  | 'aton/virtual-south'
-  | 'aton/virtual-special'
-  | 'aton/virtual-starboard'
-  | 'aton/virtual-west'
+  | 'aton/east-beacon'
+  | 'aton/east-mark'
+  | 'aton/west-beacon'
+  | 'aton/west-mark'
+  | 'aton/north-beacon'
+  | 'aton/north-mark'
+  | 'aton/south-beacon'
+  | 'aton/south-mark'
+  | 'aton/port-beacon'
+  | 'aton/starboard-beacon'
+  | 'aton/port-preferred-beacon'
+  | 'aton/starboard-preferred-beacon'
+  | 'aton/port-mark'
+  | 'aton/starboard-mark'
+  | 'aton/port-preferred-mark'
+  | 'aton/starboard-preferred-mark'
+  | 'aton/safewater-beacon'
+  | 'aton/safewater-mark'
+  | 'aton/special-beacon'
+  | 'aton/special-mark'
+  | 'aton/isolateddanger-beacon'
+  | 'aton/isolateddanger-mark'
+  | 'aton/unknown';
+
+export type VesselIconKey =
   | 'vessel/fishing'
   | 'vessel/diving'
   | 'vessel/military'
@@ -37,7 +43,6 @@ export type IconKey =
   | 'vessel/pleasurecraft'
   | 'vessel/cargo'
   | 'vessel/highspeed'
-  | 'vessel/stationary'
   | 'vessel/other'
   | 'vessel/pilot'
   | 'vessel/passenger'
@@ -47,9 +52,14 @@ export type IconKey =
   | 'vessel/spare'
   | 'vessel/law'
   | 'vessel/unknown'
+  | 'vessel/self';
+
+export type BeaconIconKey =
   | 'beacon/sart'
   | 'beacon/mob'
   | 'beacon/epirb';
+
+export type IconKey = AtonIconKey | VesselIconKey | BeaconIconKey;
 
 /**
  * Standard Signal K AIS fields needed to resolve an icon.
@@ -69,6 +79,7 @@ export interface AisIconInput {
   type?: string;
   navState?: string | number;
   aisShipTypeId?: number;
+  atonTypeId?: number;
   atonVirtual?: boolean;
   atonTypeName?: string;
 }
@@ -82,55 +93,107 @@ export interface AisIconRenderInput extends AisIconInput {
 
 const rawSvgCache = new Map<IconKey, string>();
 const pendingFetch = new Map<IconKey, Promise<string>>();
+const rawDataUrlCache = new Map<IconKey, string>();
 const themedSvgCache = new Map<string, string>();
 const themedDataUrlCache = new Map<string, string>();
 const FALLBACK_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#12f802" stroke="#fb05eb" stroke-width="1.4"/></svg>';
 
-const ICON_URLS: Record<IconKey, string> = {
-  'aton/basestation': 'assets/svg/atons/basestation.svg',
-  'aton/real-aton': 'assets/svg/atons/real-aton.svg',
-  'aton/real-danger': 'assets/svg/atons/real-danger.svg',
-  'aton/real-east': 'assets/svg/atons/real-east.svg',
-  'aton/real-north': 'assets/svg/atons/real-north.svg',
-  'aton/real-port': 'assets/svg/atons/real-port.svg',
-  'aton/real-safe': 'assets/svg/atons/real-safe.svg',
-  'aton/real-south': 'assets/svg/atons/real-south.svg',
-  'aton/real-special': 'assets/svg/atons/real-special.svg',
-  'aton/real-starboard': 'assets/svg/atons/real-starboard.svg',
-  'aton/real-west': 'assets/svg/atons/real-west.svg',
-  'aton/virtual-aton': 'assets/svg/atons/virtual-aton.svg',
-  'aton/virtual-danger': 'assets/svg/atons/virtual-danger.svg',
-  'aton/virtual-east': 'assets/svg/atons/virtual-east.svg',
-  'aton/virtual-north': 'assets/svg/atons/virtual-north.svg',
-  'aton/virtual-port': 'assets/svg/atons/virtual-port.svg',
-  'aton/virtual-safe': 'assets/svg/atons/virtual-safe.svg',
-  'aton/virtual-south': 'assets/svg/atons/virtual-south.svg',
-  'aton/virtual-special': 'assets/svg/atons/virtual-special.svg',
-  'aton/virtual-starboard': 'assets/svg/atons/virtual-starboard.svg',
-  'aton/virtual-west': 'assets/svg/atons/virtual-west.svg',
-
-  'beacon/sart': 'assets/svg/vessels/ais_special.svg',
-  'beacon/mob': 'assets/svg/vessels/ais_special.svg',
-  'beacon/epirb': 'assets/svg/vessels/ais_special.svg',
-
-  'vessel/stationary': 'assets/svg/vessels/ais_stationary.svg',
-  'vessel/fishing': 'assets/svg/vessels/ais_fishing.svg',
-  'vessel/diving': 'assets/svg/vessels/ais_diving-ops.svg',
-  'vessel/military': 'assets/svg/vessels/ais_military-ops.svg',
-  'vessel/sailing': 'assets/svg/vessels/ais_sailing.svg',
-  'vessel/pleasurecraft': 'assets/svg/vessels/ais_pleasurecraft.svg',
-  'vessel/highspeed': 'assets/svg/vessels/ais_highspeed.svg',
-  'vessel/pilot': 'assets/svg/vessels/ais_pilot.svg',
-  'vessel/sar': 'assets/svg/vessels/ais_sar.svg',
-  'vessel/tug': 'assets/svg/vessels/ais_tug.svg',
-  'vessel/law': 'assets/svg/vessels/ais_law-enforcement.svg',
-  'vessel/spare': 'assets/svg/vessels/ais_other.svg',
-  'vessel/passenger': 'assets/svg/vessels/ais_passenger.svg',
-  'vessel/cargo': 'assets/svg/vessels/ais_cargo-tanker.svg',
-  'vessel/tanker': 'assets/svg/vessels/ais_cargo-tanker.svg',
-  'vessel/other': 'assets/svg/vessels/ais_other.svg',
-  'vessel/unknown': 'assets/svg/vessels/ais_unknown.svg'
+const AtoN_URLS: Record<AtonIconKey, string> = {
+  'aton/other': 'assets/svg/AtoN/other/aton.svg',
+  'aton/basestation': 'assets/svg/AtoN/other/basestation.svg',
+  'aton/east-beacon': 'assets/svg/AtoN/cardinal/east_beacon.svg',
+  'aton/east-mark': 'assets/svg/AtoN/cardinal/east_mark.svg',
+  'aton/west-beacon': 'assets/svg/AtoN/cardinal/west_beacon.svg',
+  'aton/west-mark': 'assets/svg/AtoN/cardinal/west_mark.svg',
+  'aton/north-beacon': 'assets/svg/AtoN/cardinal/north_beacon.svg',
+  'aton/north-mark': 'assets/svg/AtoN/cardinal/north_mark.svg',
+  'aton/south-beacon': 'assets/svg/AtoN/cardinal/south_beacon.svg',
+  'aton/south-mark': 'assets/svg/AtoN/cardinal/south_mark.svg',
+  'aton/port-beacon': 'assets/svg/AtoN/lateral/port_beacon.svg',
+  'aton/starboard-beacon': 'assets/svg/AtoN/lateral/starboard_beacon.svg',
+  'aton/port-preferred-beacon': 'assets/svg/AtoN/lateral/port_preferred_beacon.svg',
+  'aton/starboard-preferred-beacon': 'assets/svg/AtoN/lateral/starboard_preferred_beacon.svg',
+  'aton/port-mark': 'assets/svg/AtoN/lateral/port_mark.svg',
+  'aton/starboard-mark': 'assets/svg/AtoN/lateral/starboard_mark.svg',
+  'aton/port-preferred-mark': 'assets/svg/AtoN/lateral/port_preferred_mark.svg',
+  'aton/starboard-preferred-mark': 'assets/svg/AtoN/lateral/starboard_preferred_mark.svg',
+  'aton/special-beacon': 'assets/svg/AtoN/special/special_beacon.svg',
+  'aton/special-mark': 'assets/svg/AtoN/special/special_mark.svg',
+  'aton/safewater-beacon': 'assets/svg/AtoN/dangerSafe/safewater_beacon.svg',
+  'aton/safewater-mark': 'assets/svg/AtoN/dangerSafe/safewater_mark.svg',
+  'aton/isolateddanger-beacon': 'assets/svg/AtoN/dangerSafe/isolateddanger_beacon.svg',
+  'aton/isolateddanger-mark': 'assets/svg/AtoN/dangerSafe/isolateddanger_mark.svg',
+  'aton/unknown': 'assets/svg/AtoN/other/unknown.svg'
 };
+
+const VESSEL_URLS: Record<VesselIconKey, string> = {
+  'vessel/fishing': 'assets/svg/vessel/fishing.svg',
+  'vessel/diving': 'assets/svg/vessel/diving-ops.svg',
+  'vessel/military': 'assets/svg/vessel/military-ops.svg',
+  'vessel/sailing': 'assets/svg/vessel/sailing.svg',
+  'vessel/pleasurecraft': 'assets/svg/vessel/pleasurecraft.svg',
+  'vessel/highspeed': 'assets/svg/vessel/highspeed.svg',
+  'vessel/pilot': 'assets/svg/vessel/pilot.svg',
+  'vessel/sar': 'assets/svg/vessel/sar.svg',
+  'vessel/tug': 'assets/svg/vessel/tug.svg',
+  'vessel/law': 'assets/svg/vessel/law-enforcement.svg',
+  'vessel/spare': 'assets/svg/vessel/other.svg',
+  'vessel/passenger': 'assets/svg/vessel/passenger.svg',
+  'vessel/cargo': 'assets/svg/vessel/cargo.svg',
+  'vessel/tanker': 'assets/svg/vessel/tanker.svg',
+  'vessel/other': 'assets/svg/vessel/other.svg',
+  'vessel/unknown': 'assets/svg/vessel/unknown.svg',
+  'vessel/self': 'assets/svg/vessel/self.svg'
+};
+
+const BEACON_URLS: Record<BeaconIconKey, string> = {
+  'beacon/sart': 'assets/svg/vessel/special.svg',
+  'beacon/mob': 'assets/svg/vessel/special.svg',
+  'beacon/epirb': 'assets/svg/vessel/special.svg'
+};
+
+const ICON_URLS: Record<IconKey, string> = {
+  ...AtoN_URLS,
+  ...VESSEL_URLS,
+  ...BEACON_URLS
+};
+
+const AIS_ATON_TYPE_ICON_MAP: { code: number; key: AtonIconKey }[] = [
+  { code: 0, key: 'aton/other' }, // Default / Not specified
+  { code: 1, key: 'aton/other' }, // Reference point
+  { code: 2, key: 'aton/other' }, // RACON
+  { code: 3, key: 'aton/other' }, // Fixed structure (off-shore platform, wind farm, etc.)
+  { code: 4, key: 'aton/other' }, // Spare
+  { code: 5, key: 'aton/other' }, // Light, without sectors
+  { code: 6, key: 'aton/other' }, // Light, with sectors
+  { code: 7, key: 'aton/other' }, // Leading light (front)
+  { code: 8, key: 'aton/other' }, // Leading light (rear)
+
+  { code: 9, key: 'aton/north-beacon' }, // Beacon, cardinal N
+  { code: 10, key: 'aton/east-beacon' }, // Beacon, cardinal E
+  { code: 11, key: 'aton/south-beacon' }, // Beacon, cardinal S
+  { code: 12, key: 'aton/west-beacon' }, // Beacon, cardinal W
+  { code: 13, key: 'aton/port-beacon' }, // Beacon, port-hand
+  { code: 14, key: 'aton/starboard-beacon' }, // Beacon, starboard-hand
+  { code: 15, key: 'aton/port-preferred-beacon' }, // Beacon, preferred channel port
+  { code: 16, key: 'aton/starboard-preferred-beacon' }, // Beacon, preferred channel starboard
+  { code: 17, key: 'aton/isolateddanger-beacon' }, // Beacon, isolated danger
+  { code: 18, key: 'aton/safewater-beacon' }, // Beacon, safe water
+  { code: 19, key: 'aton/special-beacon' }, // Beacon, special mark
+  { code: 20, key: 'aton/north-mark' }, // Cardinal mark N
+  { code: 21, key: 'aton/east-mark' }, // Cardinal mark E
+  { code: 22, key: 'aton/south-mark' }, // Cardinal mark S
+  { code: 23, key: 'aton/west-mark' }, // Cardinal mark W
+  { code: 24, key: 'aton/port-mark' }, // Port-hand mark
+  { code: 25, key: 'aton/starboard-mark' }, // Starboard-hand mark
+  { code: 26, key: 'aton/port-preferred-mark' }, // Preferred channel port mark
+  { code: 27, key: 'aton/starboard-preferred-mark' }, // Preferred channel starboard mark
+  { code: 28, key: 'aton/isolateddanger-mark' }, // Isolated danger
+  { code: 29, key: 'aton/safewater-mark' }, // Safe water
+  { code: 30, key: 'aton/special-mark' }, // Special mark
+
+  { code: 31, key: 'aton/other' } // Light vessel / LANBY / large buoy
+];
 
 const AIS_SHIP_TYPE_ICON_RANGES: { min: number; max: number; key: IconKey }[] = [
   { min: 0, max: 9, key: 'vessel/other' }, // Reserved for future use
@@ -201,6 +264,14 @@ export async function resolveThemedIconDataUrl(input: AisIconRenderInput): Promi
 }
 
 /**
+ * Resolve the ownship icon as a raw (unthemed) SVG data URL.
+ * The ais_self icon is intentionally not themed so it always renders with its baked-in styling.
+ */
+export async function resolveOwnShipIconDataUrl(): Promise<string> {
+  return getIconDataUrl('vessel/self');
+}
+
+/**
  * Resolve the icon SVG, apply AIS target theming (state + collision risk), and return icon options for map libraries.
  *
  * Use when creating map icons (OpenLayers) that expect an options object.
@@ -253,8 +324,14 @@ export async function getIconSvg(key: IconKey): Promise<string> {
 
   const url = ICON_URLS[key];
   const request = fetch(url)
-    .then(response => (response.ok ? response.text() : FALLBACK_SVG))
-    .catch(() => FALLBACK_SVG)
+    .then(response => {
+      if (response.ok) return response.text();
+      return FALLBACK_SVG;
+    })
+    .catch(error => {
+      console.warn('[ais-icon-registry] Icon fetch error, using fallback.', { key, url, error });
+      return FALLBACK_SVG;
+    })
     .then(svg => {
       rawSvgCache.set(key, svg);
       pendingFetch.delete(key);
@@ -263,6 +340,16 @@ export async function getIconSvg(key: IconKey): Promise<string> {
 
   pendingFetch.set(key, request);
   return request;
+}
+
+async function getIconDataUrl(key: IconKey): Promise<string> {
+  const cached = rawDataUrlCache.get(key);
+  if (cached) return cached;
+
+  const svg = await getIconSvg(key);
+  const dataUrl = svgToDataUrl(svg);
+  rawDataUrlCache.set(key, dataUrl);
+  return dataUrl;
 }
 
 async function getThemedSvg(key: IconKey, theme: AisIconTheme): Promise<string> {
@@ -295,8 +382,10 @@ function buildThemeHash(theme: AisIconTheme): string {
   return [
     stringToKey(theme.fill),
     stringToKey(theme.stroke),
+    stringToKey(theme.auraColor),
     numberToKey(theme.fillOpacity),
     numberToKey(theme.strokeOpacity),
+    numberToKey(theme.auraOpacity),
     numberToKey(theme.strokeWidth),
     numberToKey(theme.sizePx)
   ].join('|');
@@ -332,13 +421,9 @@ export function resolveIconKey(input: AisIconInput): IconKey {
   const beaconKey = resolveBeaconKey(normalizeMmsi(input.mmsi));
   if (beaconKey) return beaconKey;
 
-  if ((input.type === 'vessel' || !input.type) && isStationaryNavState(input.navState)) {
-    return 'vessel/stationary';
-  }
-
   switch (input.type) {
     case 'aton':
-      return resolveAtonKey(input.atonVirtual ?? false, input.atonTypeName ?? '');
+      return resolveAtonKey(input.atonTypeId ?? null, input.atonVirtual ?? false);
     case 'basestation':
       return 'aton/basestation';
     case 'sar':
@@ -364,21 +449,17 @@ function resolveBeaconKey(mmsi: string | null): IconKey | null {
   return null;
 }
 
-function resolveAtonKey(isVirtual: boolean, typeName: string): IconKey {
-  const prefix = isVirtual ? 'virtual' : 'real';
-  const name = typeName.toLowerCase();
+function resolveAtonKey(typeId: number | null, isVirtual: boolean): IconKey {
+  const code = typeof typeId === 'number' && Number.isFinite(typeId) ? typeId : null;
+  const match = code === null
+    ? undefined
+    : AIS_ATON_TYPE_ICON_MAP.find(entry => entry.code === code);
+  const baseKey = match?.key ?? 'aton/unknown';
+  return applyAtonTheme(baseKey, isVirtual);
+}
 
-  if (name.includes('north')) return `aton/${prefix}-north` as IconKey;
-  if (name.includes('south')) return `aton/${prefix}-south` as IconKey;
-  if (name.includes('east')) return `aton/${prefix}-east` as IconKey;
-  if (name.includes('west')) return `aton/${prefix}-west` as IconKey;
-  if (name.includes('port')) return `aton/${prefix}-port` as IconKey;
-  if (name.includes('starboard')) return `aton/${prefix}-starboard` as IconKey;
-  if (name.includes('safe')) return `aton/${prefix}-safe` as IconKey;
-  if (name.includes('special')) return `aton/${prefix}-special` as IconKey;
-  if (name.includes('danger')) return `aton/${prefix}-danger` as IconKey;
-
-  return `aton/${prefix}-aton` as IconKey;
+function applyAtonTheme(key: AtonIconKey, isVirtual: boolean): AtonIconKey {
+  return key;
 }
 
 function resolveVesselKey(shipTypeId: number | null): IconKey {
@@ -393,12 +474,16 @@ function resolveVesselKey(shipTypeId: number | null): IconKey {
 
 function buildAisIconThemeInput(input: AisIconRenderInput): AisIconThemeInput {
   // Treat stationary nav states as fixed so collision styling does not apply.
+  const isStationary = isStationaryNavState(input.navState);
   const targetKind = input.targetKind
-    ?? (isStationaryNavState(input.navState) ? 'fixed' : resolveTargetKind(input.type));
-  const targetState: AisIconTargetState = input.status === 'unconfirmed' ? 'unconfirmed' : 'confirmed';
+    ?? (isStationary ? 'fixed' : resolveTargetKind(input.type));
+  const targetState: AisIconTargetState = input.status === 'unconfirmed' || input.status === 'lost'
+    ? 'unconfirmed'
+    : 'confirmed';
   return {
     targetKind,
     targetState,
+    isStationary,
     collisionRiskRating: input.collisionRiskRating,
     ...input.themeOverrides
   };

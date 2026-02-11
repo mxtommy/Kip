@@ -1,48 +1,37 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { Subject, interval, merge, throttleTime } from 'rxjs';
+import { Subject, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
 const AIS_DEBUG = false;
 
-// AIS processing defaults
-const AIS_DEFAULTS = {
-  classA: {
-    confirmAfterMsgs: 2,
-    confirmMaxAge: 30,      // s
-    lostAfter: 60,          // s
-    removeAfter: 180,       // s
-    interpHz: 1
-  },
-  classB: {
-    confirmAfterMsgs: 3,
-    confirmMaxAge: 90,      // s
-    lostAfter: 180,         // s
-    removeAfter: 600,       // s
-    interpHz: 0.5
-  }
-} as const;
-
 type AisClass = 'A' | 'B' | undefined;
 type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
-export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost';
+export type AisStatus = 'unconfirmed' | 'confirmed' | 'lost' | 'remove';
 
-export interface AisTrackPosition {
+export interface Position {
   latitude?: number;
   longitude?: number;
   altitude?: number;
 }
 
-export interface AisTrack {
-  id: string;
+export interface AisTarget {
   context: string;
-  type: AisTargetType;
-  status: AisStatus;
-  aisClass: AisClass;
-  conflicted: boolean;
-  msgCount: number;
   mmsi?: string;
   name?: string;
+  type: AisTargetType;
+  ais: {
+    class?: AisClass;
+    status?: AisStatus;
+  };
+  position?: Position;
+  lastPositionAt?: number; // timestamp of last position report
+  lastUpdateAt: number; // timestamp of last update of any kind
+  id: string;
+  conflicted?: boolean;
+}
+
+interface AisVesselLike extends AisTarget {
   callsign?: string;
   destination?: string;
   eta?: string;
@@ -65,8 +54,6 @@ export interface AisTrack {
       name?: string;
     };
   };
-  position?: AisTrackPosition;
-  positionAlt?: number;
   navState?: string;
   headingTrue?: number;
   courseOverGroundTrue?: number;
@@ -75,12 +62,6 @@ export interface AisTrack {
   specialManeuver?: string;
   fromBow?: number;
   fromCenter?: number;
-  aisType?: string;
-  atonType?: { id?: number; name?: string };
-  atonVirtual?: boolean;
-  atonOffPosition?: boolean;
-  lastUpdateAt?: number;
-  lastPositionAt?: number; // timestamp of last position report
   // Collision avoidance fields from SignalK AIS Target Prioritizer plugin
   closestApproach?: {
     distance?: number; // NM
@@ -91,8 +72,30 @@ export interface AisTrack {
   };
 }
 
+export interface AisVessel extends AisVesselLike {
+  type: 'vessel';
+}
+
+export interface AisSar extends AisVesselLike {
+  type: 'sar';
+}
+
+export interface AisAton extends AisTarget {
+  type: 'aton';
+  typeId?: number;
+  typeName?: string;
+  virtual?: boolean;
+  offPosition?: boolean;
+}
+
+export interface AisBasestation extends AisTarget {
+  type: 'basestation';
+}
+
+export type AisTrack = AisVessel | AisSar | AisAton | AisBasestation;
+
 export interface OwnShipState {
-  position?: AisTrackPosition;
+  position?: Position;
   headingTrue?: number;
   courseOverGroundTrue?: number;
   speedOverGround?: number;
@@ -132,7 +135,6 @@ export class AisProcessingService {
   private readonly tracks = new Map<string, AisTrack>();
   private readonly contextIndex = new Map<string, string>();
   private readonly mmsiIndex = new Map<string, Set<string>>();
-  private readonly lastPositionReportAt = new Map<string, number>();
   private readonly targetsDirty$ = new Subject<void>();
 
   private readonly _targets = signal<AisTrack[]>([]);
@@ -141,7 +143,7 @@ export class AisProcessingService {
   public readonly targets = this._targets.asReadonly();
   public readonly ownShip = this._ownShip.asReadonly();
 
-  public getBearingTrue(from: AisTrackPosition, to: AisTrackPosition): number | null {
+  public getBearingTrue(from: Position, to: Position): number | null {
     if (
       typeof from.latitude !== 'number'
       || typeof from.longitude !== 'number'
@@ -172,9 +174,6 @@ export class AisProcessingService {
       .pipe(throttleTime(250, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.flushTargetsSignal());
 
-    interval(1000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateTrackStatuses());
   }
 
   private handleAisTreeUpdate(event: IPathUpdateWithPath): void {
@@ -268,180 +267,243 @@ export class AisProcessingService {
     if (!track) return;
 
     track.lastUpdateAt = update.timestampMs;
-    if (update.path.startsWith('navigation.closestApproach.') && !track.closestApproach) {
+    if (update.path.startsWith('navigation.closestApproach.') && this.isVesselLike(track) && !track.closestApproach) {
       track.closestApproach = {};
     }
 
-    switch (update.path) {
-      case 'mmsi':
-        this.applyMmsi(track, update.value);
-        break;
-      case 'name':
-        track.name = this.toStringOrUndefined(update.value);
-        break;
-      case 'communication.callsignVhf':
-        track.callsign = this.toStringOrUndefined(update.value);
-        break;
-      case 'navigation.destination':
-        track.destination = this.toStringOrUndefined(update.value);
-        break;
-      case 'navigation.destination.commonName':
-        track.destination = this.toStringOrUndefined(update.value);
-        break;
-      case 'navigation.destination.eta':
-        track.eta = this.toStringOrUndefined(update.value);
-        break;
-      case 'design.beam':
-        track.design = { ...(track.design ?? {}), beam: this.toNumberOrUndefined(update.value) };
-        break;
-      case 'design.length.overall':
-        track.design = {
-          ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), overall: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.length.hull':
-        track.design = {
-          ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), hull: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.length.waterline':
-        track.design = {
-          ...(track.design ?? {}),
-          length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.draft.maximum':
-        track.design = {
-          ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.draft.minimum':
-        track.design = {
-          ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.draft.current':
-        track.design = {
-          ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.draft.canoe':
-        track.design = {
-          ...(track.design ?? {}),
-          draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'registrations.imo':
-        track.imo = this.toStringOrUndefined(update.value);
-        break;
-      case 'navigation.courseOverGroundTrue':
-        track.courseOverGroundTrue = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.headingTrue':
-        track.headingTrue = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.rateOfTurn':
-        track.rateOfTurn = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.specialManeuver':
-        track.specialManeuver = this.toStringOrUndefined(update.value);
-        break;
-      case 'navigation.speedOverGround':
-        track.speedOverGround = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.state':
-        track.navState = this.toStringOrUndefined(update.value);
-        break;
-      case 'sensors.ais.class':
-        track.aisClass = this.normalizeAisClass(update.value);
-        break;
-      case 'sensors.ais.fromBow':
-        track.fromBow = this.toNumberOrUndefined(update.value);
-        break;
-      case 'sensors.ais.fromCenter':
-        track.fromCenter = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.position.latitude':
-        {
-          const latitude = this.toNumberOrUndefined(update.value);
-          if (latitude === undefined) break;
-          track.position = { ...(track.position ?? {}), latitude };
-          this.registerPositionReport(track, update.timestampMs);
+    let removed = false;
+    const handlers: Record<string, () => void> = {
+      mmsi: () => this.applyMmsi(track, update.value),
+      name: () => { track.name = this.toStringOrUndefined(update.value); },
+      'communication.callsignVhf': () => {
+        if (this.isVesselLike(track)) {
+          track.callsign = this.toStringOrUndefined(update.value);
         }
-        break;
-      case 'navigation.position.longitude':
-        {
-          const longitude = this.toNumberOrUndefined(update.value);
-          if (longitude === undefined) break;
-          track.position = { ...(track.position ?? {}), longitude };
-          this.registerPositionReport(track, update.timestampMs);
+      },
+      'navigation.destination': () => {
+        if (this.isVesselLike(track)) {
+          track.destination = this.toStringOrUndefined(update.value);
         }
-        break;
-      case 'navigation.position.altitude':
-        {
-          const altitude = this.toNumberOrUndefined(update.value);
-          track.positionAlt = altitude;
-          if (track.position) {
-            track.position = { ...track.position, altitude };
-          }
+      },
+      'navigation.destination.commonName': () => {
+        if (this.isVesselLike(track)) {
+          track.destination = this.toStringOrUndefined(update.value);
         }
-        break;
-      case 'navigation.position': {
+      },
+      'navigation.destination.eta': () => {
+        if (this.isVesselLike(track)) {
+          track.eta = this.toStringOrUndefined(update.value);
+        }
+      },
+      'design.beam': () => {
+        if (this.isVesselLike(track)) {
+          track.design = { ...(track.design ?? {}), beam: this.toNumberOrUndefined(update.value) };
+        }
+      },
+      'design.length.overall': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            length: { ...(track.design?.length ?? {}), overall: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.length.hull': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            length: { ...(track.design?.length ?? {}), hull: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.length.waterline': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.draft.maximum': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.draft.minimum': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.draft.current': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.draft.canoe': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'registrations.imo': () => {
+        if (this.isVesselLike(track)) {
+          track.imo = this.toStringOrUndefined(update.value);
+        }
+      },
+      'navigation.courseOverGroundTrue': () => {
+        if (this.isVesselLike(track)) {
+          track.courseOverGroundTrue = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.headingTrue': () => {
+        if (this.isVesselLike(track)) {
+          track.headingTrue = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.rateOfTurn': () => {
+        if (this.isVesselLike(track)) {
+          track.rateOfTurn = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.specialManeuver': () => {
+        if (this.isVesselLike(track)) {
+          track.specialManeuver = this.toStringOrUndefined(update.value);
+        }
+      },
+      'navigation.speedOverGround': () => {
+        if (this.isVesselLike(track)) {
+          track.speedOverGround = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.state': () => {
+        if (this.isVesselLike(track)) {
+          track.navState = this.toStringOrUndefined(update.value);
+        }
+      },
+      'sensors.ais.class': () => {
+        track.ais.class = this.normalizeAisClass(update.value);
+      },
+      'sensors.ais.status': () => {
+        const status = this.normalizeAisStatus(update.value);
+        if (!status) return;
+        if (status === 'remove') {
+          this.removeTrack(track);
+          removed = true;
+          return;
+        }
+        track.ais.status = status;
+      },
+      'sensors.ais.fromBow': () => {
+        if (this.isVesselLike(track)) {
+          track.fromBow = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'sensors.ais.fromCenter': () => {
+        if (this.isVesselLike(track)) {
+          track.fromCenter = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.position.latitude': () => {
+        const latitude = this.toNumberOrUndefined(update.value);
+        if (latitude === undefined) return;
+        track.position = { ...(track.position ?? {}), latitude };
+        track.lastPositionAt = update.timestampMs;
+      },
+      'navigation.position.longitude': () => {
+        const longitude = this.toNumberOrUndefined(update.value);
+        if (longitude === undefined) return;
+        track.position = { ...(track.position ?? {}), longitude };
+        track.lastPositionAt = update.timestampMs;
+      },
+      'navigation.position.altitude': () => {
+        const altitude = this.toNumberOrUndefined(update.value);
+        if (track.position) {
+          track.position = { ...track.position, altitude };
+        }
+      },
+      'navigation.position': () => {
         const position = this.readPositionValue(update.value);
         if (position) {
           track.position = position;
-          this.registerPositionReport(track, update.timestampMs);
+          track.lastPositionAt = update.timestampMs;
         }
-        break;
+      },
+      'atonType.id': () => {
+        if (this.isAton(track)) {
+          track.typeId = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'atonType.name': () => {
+        if (this.isAton(track)) {
+          track.typeName = this.toStringOrUndefined(update.value);
+        }
+      },
+      virtual: () => {
+        if (this.isAton(track)) {
+          track.virtual = Boolean(update.value);
+        }
+      },
+      offPosition: () => {
+        if (this.isAton(track)) {
+          track.offPosition = Boolean(update.value);
+        }
+      },
+      'design.aisShipType.id': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrUndefined(update.value) }
+          };
+        }
+      },
+      'design.aisShipType.name': () => {
+        if (this.isVesselLike(track)) {
+          track.design = {
+            ...(track.design ?? {}),
+            aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrUndefined(update.value) }
+          };
+        }
+      },
+      'navigation.closestApproach.distance': () => {
+        if (this.isVesselLike(track) && track.closestApproach) {
+          track.closestApproach.distance = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.closestApproach.timeTo': () => {
+        if (this.isVesselLike(track) && track.closestApproach) {
+          track.closestApproach.timeTo = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.closestApproach.range': () => {
+        if (this.isVesselLike(track) && track.closestApproach) {
+          track.closestApproach.range = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.closestApproach.bearing': () => {
+        if (this.isVesselLike(track) && track.closestApproach) {
+          track.closestApproach.bearing = this.toNumberOrUndefined(update.value);
+        }
+      },
+      'navigation.closestApproach.collisionRiskRating': () => {
+        if (this.isVesselLike(track) && track.closestApproach) {
+          track.closestApproach.collisionRiskRating = this.toNumberOrUndefined(update.value);
+        }
       }
-      case 'atonType.id':
-        track.atonType = { ...(track.atonType ?? {}), id: this.toNumberOrUndefined(update.value) };
-        break;
-      case 'atonType.name':
-        track.atonType = { ...(track.atonType ?? {}), name: this.toStringOrUndefined(update.value) };
-        break;
-      case 'virtual':
-        track.atonVirtual = Boolean(update.value);
-        break;
-      case 'offPosition':
-        track.atonOffPosition = Boolean(update.value);
-        break;
-      case 'design.aisShipType.id':
-        track.design = {
-          ...(track.design ?? {}),
-          aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrUndefined(update.value) }
-        };
-        break;
-      case 'design.aisShipType.name':
-        track.design = {
-          ...(track.design ?? {}),
-          aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrUndefined(update.value) }
-        };
-        break;
-      case 'navigation.closestApproach.distance':
-        track.closestApproach!.distance = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.closestApproach.timeTo':
-        track.closestApproach!.timeTo = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.closestApproach.range':
-        track.closestApproach!.range = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.closestApproach.bearing':
-        track.closestApproach!.bearing = this.toNumberOrUndefined(update.value);
-        break;
-      case 'navigation.closestApproach.collisionRiskRating':
-        track.closestApproach!.collisionRiskRating = this.toNumberOrUndefined(update.value);
-        break;
-      default:
-        //console.warn('[AIS] unhandled update path', { path: update.path, value: update.value });
-        break;
-    }
+    };
+
+    handlers[update.path]?.();
+    if (removed) return;
 
     this.updateTargetsSignal();
   }
@@ -460,24 +522,26 @@ export class AisProcessingService {
 
   private createTrack(context: string, type: AisTargetType, timestampMs: number, mmsi?: string): AisTrack {
     const id = this.buildTrackId(mmsi ?? context);
-    const track: AisTrack = {
-      id,
-      context,
-      type,
-      status: 'unconfirmed',
-      aisClass: undefined,
-      conflicted: false,
-      msgCount: 0,
-      mmsi,
-      position: undefined,
-      closestApproach: {},
-      lastUpdateAt: timestampMs,
-      lastPositionAt: undefined
-    };
+    const base = this.buildBaseTarget(context, type, timestampMs, mmsi, id);
+    let track: AisTrack;
+    switch (type) {
+      case 'vessel':
+        track = { ...base, type: 'vessel', closestApproach: {} };
+        break;
+      case 'sar':
+        track = { ...base, type: 'sar', closestApproach: {} };
+        break;
+      case 'aton':
+        track = { ...base, type: 'aton' };
+        break;
+      case 'basestation':
+      default:
+        track = { ...base, type: 'basestation' };
+        break;
+    }
 
     this.tracks.set(track.id, track);
     if (mmsi) this.addMmsiIndex(mmsi, track.id);
-    this.lastPositionReportAt.set(track.id, 0);
     this.updateTargetsSignal();
     return track;
   }
@@ -514,97 +578,16 @@ export class AisProcessingService {
     this.addMmsiIndex(next, track.id);
   }
 
-  private registerPositionReport(track: AisTrack, timestampMs: number): void {
-    if (
-      !track.position
-      || typeof track.position.latitude !== 'number'
-      || typeof track.position.longitude !== 'number'
-    ) return;
-
-    if (track.type === 'aton') {
-      track.lastPositionAt = timestampMs;
-      this.tryConfirm(track, timestampMs);
-      return;
+  private removeTrack(track: AisTrack): void {
+    this.tracks.delete(track.id);
+    if (track.mmsi) this.removeMmsiIndex(track.mmsi, track.id);
+    for (const [context, id] of this.contextIndex.entries()) {
+      if (id === track.id) this.contextIndex.delete(context);
     }
-
-    const lastReport = this.lastPositionReportAt.get(track.id) ?? 0;
-    if (Math.abs(timestampMs - lastReport) > 500) {
-      track.msgCount += 1;
-      this.lastPositionReportAt.set(track.id, timestampMs);
+    if (AIS_DEBUG) {
+      console.debug('[AIS] removed', { id: track.id, mmsi: track.mmsi, status: track.ais.status });
     }
-
-    track.lastPositionAt = timestampMs;
-
-    this.tryConfirm(track, timestampMs);
-  }
-
-  private tryConfirm(track: AisTrack, nowMs: number): void {
-    if (track.conflicted) return;
-    const defaults = this.getDefaults(track.aisClass);
-    const ageSec = track.lastPositionAt ? (nowMs - track.lastPositionAt) / 1000 : Number.POSITIVE_INFINITY;
-
-    if (track.msgCount >= defaults.confirmAfterMsgs && ageSec <= defaults.confirmMaxAge) {
-      track.status = 'confirmed';
-    } else if (ageSec <= defaults.lostAfter) {
-      track.status = 'unconfirmed';
-    }
-  }
-
-  private updateTrackStatuses(): void {
-    const nowMs = Date.now();
-    let changed = false;
-
-    for (const track of this.tracks.values()) {
-      const defaults = this.getDefaults(track.aisClass);
-      const ageSec = track.lastPositionAt ? (nowMs - track.lastPositionAt) / 1000 : Number.POSITIVE_INFINITY;
-
-      if (ageSec > defaults.removeAfter) {
-        this.tracks.delete(track.id);
-        if (track.mmsi) this.removeMmsiIndex(track.mmsi, track.id);
-        for (const [context, id] of this.contextIndex.entries()) {
-          if (id === track.id) this.contextIndex.delete(context);
-        }
-        this.lastPositionReportAt.delete(track.id);
-        if (AIS_DEBUG) {
-          console.debug('[AIS] removed', { id: track.id, mmsi: track.mmsi, ageSec });
-        }
-        changed = true;
-        continue;
-      }
-
-      if (ageSec > defaults.lostAfter) {
-        if (track.status !== 'lost') {
-          track.status = 'lost';
-          if (AIS_DEBUG) {
-            console.debug('[AIS] lost', { id: track.id, mmsi: track.mmsi, ageSec });
-          }
-          changed = true;
-        }
-        continue;
-      }
-
-      if (track.msgCount >= defaults.confirmAfterMsgs && ageSec <= defaults.confirmMaxAge) {
-        if (track.status !== 'confirmed') {
-          if (!track.conflicted) {
-            track.status = 'confirmed';
-            if (AIS_DEBUG) {
-              console.debug('[AIS] confirmed', { id: track.id, mmsi: track.mmsi, ageSec });
-            }
-          } else if (track.status !== 'unconfirmed') {
-            track.status = 'unconfirmed';
-          }
-          changed = true;
-        }
-      } else if (track.status !== 'unconfirmed') {
-        track.status = 'unconfirmed';
-        if (AIS_DEBUG) {
-          console.debug('[AIS] unconfirmed', { id: track.id, mmsi: track.mmsi, ageSec });
-        }
-        changed = true;
-      }
-    }
-
-    if (changed) this.updateTargetsSignal();
+    this.updateTargetsSignal();
   }
 
   private updateTargetsSignal(): void {
@@ -640,17 +623,10 @@ export class AisProcessingService {
     if (!set.size) this.mmsiIndex.delete(mmsi);
   }
 
-  private getDefaults(aisClass: AisClass) {
-    return aisClass === 'A' ? AIS_DEFAULTS.classA : AIS_DEFAULTS.classB;
-  }
-
   private markConflict(mmsi: string): void {
     const tracks = this.getTracksByMmsi(mmsi);
     for (const track of tracks) {
       track.conflicted = true;
-      if (track.status !== 'unconfirmed') {
-        track.status = 'unconfirmed';
-      }
     }
   }
 
@@ -661,6 +637,14 @@ export class AisProcessingService {
     return undefined;
   }
 
+  private normalizeAisStatus(value: unknown): AisStatus | undefined {
+    if (value === null || value === undefined) return undefined;
+    const normalized = String(value).toLowerCase();
+    if (normalized === 'unconfirmed' || normalized === 'confirmed' || normalized === 'lost' || normalized === 'remove') {
+      return normalized;
+    }
+    return undefined;
+  }
   private toTimestampMs(value: Date | string | null | undefined): number {
     if (!value) return Date.now();
     const ts = value instanceof Date ? value.getTime() : Date.parse(value);
@@ -678,33 +662,43 @@ export class AisProcessingService {
     return str.length ? str : undefined;
   }
 
-  private distanceNm(a: AisTrackPosition, b: AisTrackPosition): number {
-    if (
-      typeof a.latitude !== 'number'
-      || typeof a.longitude !== 'number'
-      || typeof b.latitude !== 'number'
-      || typeof b.longitude !== 'number'
-    ) return 0;
-    const R = 6371e3; // meters
-    const phi1 = a.latitude * Math.PI / 180;
-    const phi2 = b.latitude * Math.PI / 180;
-    const dPhi = (b.latitude - a.latitude) * Math.PI / 180;
-    const dLambda = (b.longitude - a.longitude) * Math.PI / 180;
-
-    const sinDP = Math.sin(dPhi / 2);
-    const sinDL = Math.sin(dLambda / 2);
-    const h = sinDP * sinDP + Math.cos(phi1) * Math.cos(phi2) * sinDL * sinDL;
-    const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-    const meters = R * c;
-    return meters / 1852;
-  }
-
   private wrapDegrees(angle: number): number {
     const normalized = angle % 360;
     return normalized < 0 ? normalized + 360 : normalized;
   }
 
-  private readPositionValue(value: unknown): AisTrackPosition | undefined {
+  private buildBaseTarget(
+    context: string,
+    type: AisTargetType,
+    timestampMs: number,
+    mmsi: string | undefined,
+    id: string
+  ): AisTarget {
+    return {
+      id,
+      context,
+      type,
+      ais: {
+        class: undefined,
+        status: 'unconfirmed'
+      },
+      conflicted: false,
+      mmsi,
+      position: undefined,
+      lastUpdateAt: timestampMs,
+      lastPositionAt: undefined
+    };
+  }
+
+  private isVesselLike(track: AisTrack): track is AisVessel | AisSar {
+    return track.type === 'vessel' || track.type === 'sar';
+  }
+
+  private isAton(track: AisTrack): track is AisAton {
+    return track.type === 'aton';
+  }
+
+  private readPositionValue(value: unknown): Position | undefined {
     if (!value || typeof value !== 'object') return undefined;
     const latitude = this.toNumberOrUndefined((value as { latitude?: unknown }).latitude);
     const longitude = this.toNumberOrUndefined((value as { longitude?: unknown }).longitude);

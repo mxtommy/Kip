@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import type { DialogComponentData } from '../../interfaces/dialog-data';
-import type { AisTrack } from '../../services/ais-processing.service';
+import type { AisAton, AisBasestation, AisSar, AisTrack, AisVessel } from '../../services/ais-processing.service';
 import { UnitsService } from '../../services/units.service';
 
 interface AisDialogPayload {
@@ -98,12 +98,24 @@ export class DialogAisTargetComponent implements OnDestroy {
     return value ? value.toUpperCase() : '--';
   }
 
-  protected hasClosestApproach(value: AisTrack['closestApproach'] | null | undefined): boolean {
+  protected hasClosestApproach(value: AisVessel['closestApproach'] | null | undefined): boolean {
     if (!value) return false;
     return typeof value.bearing === 'number'
       || typeof value.range === 'number'
       || typeof value.distance === 'number'
       || typeof value.timeTo === 'number';
+  }
+
+  protected isVesselLike(target: AisTrack): target is AisVessel | AisSar {
+    return target.type === 'vessel' || target.type === 'sar';
+  }
+
+  protected isAton(target: AisTrack): target is AisAton {
+    return target.type === 'aton';
+  }
+
+  protected isBasestation(target: AisTrack): target is AisBasestation {
+    return target.type === 'basestation';
   }
 
   private startClock(): void {

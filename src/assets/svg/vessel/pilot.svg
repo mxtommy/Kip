@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <style>
+    :root {
+      --icon-fill: #b1b1b1;
+      --icon-fill-opacity: 1;
+      --icon-stroke-opacity: 1;
+      --icon-stroke: #00ffff;
+      --icon-stroke-width: 1;
+      --icon-stroke-dasharray: none;
+    }
+  </style>
+  <path
+    fill="var(--icon-fill)"
+    stroke="var(--icon-stroke)"
+    stroke-width="var(--icon-stroke-width)"
+    stroke-dasharray="var(--icon-stroke-dasharray)"
+    fill-opacity="var(--icon-fill-opacity)"
+    stroke-opacity="var(--icon-stroke-opacity)"
+    d="m 12.005451,4.9999995 c -0.133231,0 -0.268411,0.06697 -0.40518,0.2013795 -1.275717,1.2533167 -2.1358002,2.7201977 -2.5802972,4.4003248 -0.1662441,0.6237102 -0.243019,1.6359042 -0.2300501,3.0366002 0.011797,1.357069 0.011249,3.235171 -0.00175,5.634512 -0.00355,0.469253 0.2033431,0.710344 0.6207231,0.723309 a 0.39085117,0.38200839 35.7 0 0 0.150603,-0.02282 c 0.8241482,-0.281786 1.5990912,-0.537064 2.3253772,-0.765798 0.0059,-0.0024 0.04319,-0.0036 0.111571,-0.0036 0.06838,0 0.105676,0.0012 0.111571,0.0036 0.725107,0.229915 1.499503,0.486283 2.323649,0.769255 a 0.38200839,0.39085117 54.4 0 0 0.150259,0.02282 c 0.417379,-0.0118 0.625153,-0.252327 0.622793,-0.721586 -0.0094,-2.399342 -0.0078,-4.277438 0.0052,-5.634513 C 15.22523,11.242787 15.15045,10.230045 14.98538,9.6051547 14.543241,7.9250272 13.685351,6.4576011 12.411991,5.2031067 12.274044,5.0675178 12.13866,4.9999995 12.005429,4.9999995 Z" />
+  <g
+     id="g8">
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5"
+       width="0.303"
+       height="5.9790001"
+       x="11.8485"
+       y="-14.9895"
+       transform="rotate(90)"
+       ry="0.1465963" />
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5-3"
+       width="0.303"
+       height="5.9790001"
+       x="-4.5438046"
+       y="-19.381805"
+       transform="rotate(150)"
+       ry="0.1465963" />
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5-9"
+       width="0.303"
+       height="5.9790001"
+       x="4.2408051"
+       y="-19.381805"
+       transform="rotate(120)"
+       ry="0.1465963" />
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5-6"
+       width="0.303"
+       height="5.9790001"
+       x="11.8485"
+       y="9.0105"
+       ry="0.1465963" />
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5-85"
+       width="0.303"
+       height="5.9790001"
+       x="16.240805"
+       y="1.4028047"
+       transform="rotate(30)"
+       ry="0.1465963" />
+    <rect
+       style="vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.46153;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.2;stroke-opacity:0.550633"
+       id="rect1152-3-5-8"
+       width="0.303"
+       height="5.9790001"
+       x="16.240805"
+       y="-7.3818049"
+       transform="rotate(60)"
+       ry="0.1465963" />
+    <circle
+       style="fill:none;stroke:#ffffff;stroke-width:0.578727;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
+       id="path8"
+       cx="12"
+       cy="12"
+       r="2.0725486" />
+  </g>
+</svg>

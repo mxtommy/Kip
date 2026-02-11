@@ -1,0 +1,15 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path
+     id="rect20-3"
+     style="fill:#008000;fill-opacity:1;stroke:#010702;stroke-width:0.2;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     d="m 11.014649,4.8709293 c -0.127126,0 -0.228516,0.047959 -0.228516,0.1074219 V 22.406086 h -0.9375 c -0.094757,0 -0.171875,0.0344 -0.171875,0.07617 v 0.328125 c 0,0.04177 0.077118,0.07422 0.171875,0.07422 h 4.302734 c 0.09476,0 0.171875,-0.03245 0.171875,-0.07422 v -0.328125 c 0,-0.04177 -0.07712,-0.07617 -0.171875,-0.07617 h -0.9375 V 4.9783512 c 0,-0.059462 -0.101389,-0.1074219 -0.228515,-0.1074219 z" />
+  <rect
+     style="fill:#d40000;fill-opacity:1;stroke:#010702;stroke-width:0.232669;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1"
+     id="rect1"
+     width="2.3905044"
+     height="4.7460036"
+     x="10.799487"
+     y="10.056068"
+     rx="0.19641735"
+     ry="0.17363414" />
+</svg>

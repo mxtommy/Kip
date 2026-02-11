@@ -11,6 +11,8 @@ export interface AisIconTheme {
   fill?: string;
   stroke?: string;
   strokeStyle?: string;
+  auraColor?: string;
+  auraOpacity?: number;
   fillOpacity?: number;
   strokeOpacity?: number;
   strokeWidth?: number;
@@ -20,25 +22,24 @@ export interface AisIconTheme {
 export interface AisIconThemeInput {
   targetKind: AisIconTargetKind;
   targetState: AisIconTargetState;
+  isStationary?: boolean;
   collisionRiskRating?: number;
   baseSizePx?: number;
   baseStrokeWidth?: number;
-  confirmedFill?: string;
-  confirmedStroke?: string;
   unconfirmedFill?: string;
   unconfirmedOpacity?: number;
 }
 
 export const DEFAULT_SVG_ICON_COLORS: SvgIconColors = {
-  fill: '#ffd200',
-  stroke: '#111111'
+  fill: '#b1b1b1',
+  stroke: '#50505f'
 };
 
 const DEFAULT_MOVING_SIZE_PX = 24;
-const DEFAULT_FIXED_SIZE_PX = 28;
-const DEFAULT_STROKE_WIDTH = 1;
-const DEFAULT_UNCONFIRMED_FILL = '#d9d9d9';
-const DEFAULT_UNCONFIRMED_OPACITY = 0.5;
+const DEFAULT_FIXED_SIZE_PX = 24;
+const DEFAULT_STROKE_WIDTH = 1.6;
+const DEFAULT_UNCONFIRMED_FILL = '#e6e6e6';
+const DEFAULT_UNCONFIRMED_OPACITY = 0.15;
 const DEFAULT_FILL_OPACITY = 1;
 const DEFAULT_STROKE_OPACITY = 1;
 
@@ -51,7 +52,6 @@ export function applySvgIconColors(svg: string, colors: SvgIconColors): string {
 export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
   const baseSize = input.baseSizePx
     ?? (input.targetKind === 'fixed' ? DEFAULT_FIXED_SIZE_PX : DEFAULT_MOVING_SIZE_PX);
-  const baseStrokeWidth = input.baseStrokeWidth ?? DEFAULT_STROKE_WIDTH;
   const unconfirmedFill = input.unconfirmedFill ?? DEFAULT_UNCONFIRMED_FILL;
   const unconfirmedOpacity = input.unconfirmedOpacity ?? DEFAULT_UNCONFIRMED_OPACITY;
 
@@ -64,18 +64,27 @@ export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
   let fillOpacity: number | undefined;
   let strokeOpacity: number | undefined;
   let strokeWidth: number | undefined;
+  let auraColor: string | undefined;
+  let auraOpacity: number | undefined;
 
   if (!isConfirmed) {
     fill = unconfirmedFill;
     fillOpacity = unconfirmedOpacity;
+    strokeOpacity = unconfirmedOpacity;
+  }
+
+  if (isConfirmed && input.isStationary) {
+    fillOpacity = 0;
   }
 
   if (input.targetKind === 'moving' && collisionRisk !== 'none') {
-    stroke = collisionRisk === 'high' ? 'red' : 'yellow';
-    strokeWidth = baseStrokeWidth * 2;
+    auraColor = collisionRisk === 'high' ? 'red' : 'yellow';
+    auraOpacity = 0.9;
     return {
       fill,
       stroke,
+      auraColor,
+      auraOpacity,
       fillOpacity,
       strokeOpacity,
       strokeWidth,
@@ -83,13 +92,14 @@ export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
     };
   }
 
-  return { fill, stroke, fillOpacity, strokeOpacity, strokeWidth, sizePx };
+  return { fill, stroke, auraColor, auraOpacity, fillOpacity, strokeOpacity, strokeWidth, sizePx };
 }
 
 export function applyAisIconTheme(svg: string, theme: AisIconTheme): string {
   const tokens = resolveIconTokens(svg, theme);
   const sized = applySvgRootSize(svg, theme.sizePx);
-  return injectSvgStyle(sized, buildSvgTokenStyle(tokens));
+  const withAura = theme.auraColor ? injectAura(sized) : sized;
+  return injectSvgStyle(withAura, buildSvgTokenStyle(tokens));
 }
 
 export function svgToDataUrl(svg: string): string {
@@ -170,6 +180,8 @@ function resolveIconTokens(svg: string, theme: AisIconTheme) {
     fill: resolveToken(theme.fill, existing.fill, DEFAULT_SVG_ICON_COLORS.fill),
     stroke: resolveToken(theme.stroke, existing.stroke, DEFAULT_SVG_ICON_COLORS.stroke),
     strokeDasharray: resolveToken(theme.strokeStyle, existing.strokeStyle, 'solid'),
+    auraColor: resolveToken(theme.auraColor, existing.auraColor, 'transparent'),
+    auraOpacity: resolveToken(theme.auraOpacity, existing.auraOpacity, 0),
     strokeWidth: resolveToken(theme.strokeWidth, existing.strokeWidth, DEFAULT_STROKE_WIDTH),
     fillOpacity: resolveToken(theme.fillOpacity, existing.fillOpacity, DEFAULT_FILL_OPACITY),
     strokeOpacity: resolveToken(theme.strokeOpacity, existing.strokeOpacity, DEFAULT_STROKE_OPACITY)
@@ -181,6 +193,8 @@ function extractIconTokens(svg: string) {
     fill: extractCssVar(svg, '--icon-fill'),
     stroke: extractCssVar(svg, '--icon-stroke'),
     strokeStyle: extractCssVar(svg, '--icon-stroke-dasharray'),
+    auraColor: extractCssVar(svg, '--icon-aura-color'),
+    auraOpacity: extractCssVarNumber(svg, '--icon-aura-opacity'),
     strokeWidth: extractCssVarNumber(svg, '--icon-stroke-width'),
     fillOpacity: extractCssVarNumber(svg, '--icon-fill-opacity'),
     strokeOpacity: extractCssVarNumber(svg, '--icon-stroke-opacity')
@@ -213,6 +227,8 @@ function buildSvgTokenStyle(tokens: {
   fill: string;
   stroke: string;
   strokeDasharray: string;
+  auraColor: string;
+  auraOpacity: number;
   strokeWidth: number;
   fillOpacity: number;
   strokeOpacity: number;
@@ -223,10 +239,40 @@ function buildSvgTokenStyle(tokens: {
     `--icon-fill-opacity: ${clampOpacity(tokens.fillOpacity)};`,
     `--icon-stroke: ${tokens.stroke};`,
     `--icon-stroke-dasharray: ${tokens.strokeDasharray};`,
+    `--icon-aura-color: ${tokens.auraColor};`,
+    `--icon-aura-opacity: ${clampOpacity(tokens.auraOpacity)};`,
     `--icon-stroke-width: ${tokens.strokeWidth};`,
     `--icon-stroke-opacity: ${clampOpacity(tokens.strokeOpacity)};`,
     '}'
   ].join('');
+}
+
+function injectAura(svg: string): string {
+  if (svg.includes('id="icon-aura"') || svg.includes("id='icon-aura'")) return svg;
+  const box = extractViewBox(svg) ?? { minX: 0, minY: 0, width: 24, height: 24 };
+  const cx = box.minX + box.width / 2;
+  const cy = box.minY + box.height / 2;
+  const r = Math.min(box.width, box.height) / 2;
+
+  const defs = [
+    '<defs>',
+    '<radialGradient id="icon-aura" cx="50%" cy="50%" r="50%">',
+    '<stop offset="0%" stop-color="var(--icon-aura-color)" stop-opacity="var(--icon-aura-opacity)" />',
+    '<stop offset="100%" stop-color="var(--icon-aura-color)" stop-opacity="0" />',
+    '</radialGradient>',
+    '</defs>'
+  ].join('');
+
+  const circle = `<circle class="icon-aura" cx="${cx}" cy="${cy}" r="${r}" fill="url(#icon-aura)" />`;
+  return svg.replace(/<svg[^>]*>/i, match => `${match}${defs}${circle}`);
+}
+
+function extractViewBox(svg: string): { minX: number; minY: number; width: number; height: number } | null {
+  const match = svg.match(/viewBox="([^"]+)"/i);
+  if (!match) return null;
+  const parts = match[1].trim().split(/\s+/).map(value => Number(value));
+  if (parts.length !== 4 || parts.some(value => !Number.isFinite(value))) return null;
+  return { minX: parts[0], minY: parts[1], width: parts[2], height: parts[3] };
 }
 
 function injectSvgStyle(svg: string, css: string): string {

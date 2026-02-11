@@ -6,16 +6,15 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IKipResizeEvent, KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 import { MatButtonModule } from '@angular/material/button';
-import { AisProcessingService, AisTrack, AisTrackPosition } from '../../core/services/ais-processing.service';
+import { AisAton, AisProcessingService, AisSar, AisTrack, AisVessel, Position } from '../../core/services/ais-processing.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { DialogAisTargetComponent } from '../../core/components/dialog-ais-target/dialog-ais-target.component';
 import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from "@angular/material/icon";
-import { resolveThemedIconDataUrl } from '../../core/utils/ais-icon-registry';
+import { resolveOwnShipIconDataUrl, resolveThemedIconDataUrl } from '../../core/utils/ais-icon-registry';
 
 type ViewMode = 'north-up' | 'course-up';
-
 
 interface RadarSize {
   width: number;
@@ -28,7 +27,7 @@ interface RenderState {
   theme: ITheme;
   targets: AisTrack[];
   ownShip: {
-    position?: AisTrackPosition;
+    position?: Position;
     headingTrue?: number;
     courseOverGroundTrue?: number;
     speedOverGround?: number;
@@ -85,7 +84,6 @@ interface RingCache {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
-  private static readonly OWN_SHIP_ICON_URL = 'assets/svg/vessels/ais_self.svg';
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -146,8 +144,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private readonly targetCache = new Map<string, CachedTargetSeed>();
   private lastOriginKey: string | null = null;
   private ringCache: RingCache | null = null;
+  private ownShipIconHref: string | null = null;
 
   constructor() {
+    this.loadOwnShipIcon();
     effect(() => {
       const size = this.hostSize();
       const cfg = this.runtime.options();
@@ -168,6 +168,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       untracked(() => {
         this.scheduleRender();
       });
+    });
+  }
+
+  private loadOwnShipIcon(): void {
+    void resolveOwnShipIconDataUrl().then(href => {
+      this.ownShipIconHref = href;
+      this.scheduleRender();
     });
   }
 
@@ -348,8 +355,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     ownShipEnter.append('image')
       .attr('class', 'ownship-icon')
-      .attr('href', WidgetAisRadarComponent.OWN_SHIP_ICON_URL)
-      .attr('xlink:href', WidgetAisRadarComponent.OWN_SHIP_ICON_URL);
+      .attr('href', this.ownShipIconHref ?? null)
+      .attr('xlink:href', this.ownShipIconHref ?? null);
 
     const ownShipMerged = ownShipEnter.merge(ownShipSelection as d3.Selection<SVGGElement, { size: number }, SVGGElement, unknown>);
 
@@ -357,6 +364,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('transform', `rotate(${ownShipRotation})`);
 
     ownShipMerged.select<SVGImageElement>('image.ownship-icon')
+      .attr('href', this.ownShipIconHref ?? null)
+      .attr('xlink:href', this.ownShipIconHref ?? null)
+      .attr('display', this.ownShipIconHref ? null : 'none')
       .attr('width', d => d.size)
       .attr('height', d => d.size)
       .attr('x', d => -d.size / 2)
@@ -392,7 +402,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private buildTargets(
     tracks: AisTrack[],
-    origin: AisTrackPosition,
+    origin: Position,
     rangeNm: number,
     maxRangeNm: number,
     radius: number,
@@ -423,16 +433,24 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const results: RenderTarget[] = [];
     for (const track of tracks) {
       if (!track.position || !this.hasValidPosition(track.position)) continue;
-      if (track.status === 'lost' && !showLost) continue;
-      if (track.status === 'unconfirmed' && !showUnconfirmed) continue;
+      if (track.ais.status === 'remove') {
+        this.targetCache.delete(track.id);
+        this.iconCache.delete(track.id);
+        if (this.selectedId() === track.id) {
+          this.selectedId.set(null);
+        }
+        continue;
+      }
+      if (track.ais.status === 'lost' && !showLost) continue;
+      if (track.ais.status === 'unconfirmed' && !showUnconfirmed) continue;
 
       const signature = this.buildTrackSignature(track);
       let cached = this.targetCache.get(track.id);
       if (!cached || cached.signature !== signature) {
         const distance = this.distanceNm(origin, track.position);
         const bearing = this.ais.getBearingTrue(origin, track.position) ?? 0;
-        const trackHeading = this.toDegreesIfRadians(track.headingTrue);
-        const trackCog = this.toDegreesIfRadians(track.courseOverGroundTrue);
+        const trackHeading = this.toDegreesIfRadians(this.isVesselLike(track) ? track.headingTrue : null);
+        const trackCog = this.toDegreesIfRadians(this.isVesselLike(track) ? track.courseOverGroundTrue : null);
         cached = {
           signature,
           distanceNm: distance,
@@ -453,10 +471,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         : this.wrapDegrees((cached.trackHeading ?? cached.trackCog ?? 0) - viewRotation);
       const className = this.buildClassName({
         id: track.id,
-        status: track.status,
-        aisClass: track.aisClass,
+        status: track.ais.status,
+        aisClass: track.ais.class,
         type: track.type,
-        navState: track.navState
+        navState: this.isVesselLike(track) ? track.navState : undefined
       });
 
       results.push({
@@ -465,13 +483,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         x,
         y,
         heading,
-        status: track.status,
-        aisClass: track.aisClass,
+        status: track.ais.status,
+        aisClass: track.ais.class,
         type: track.type,
         iconHref,
         iconScale,
-        navState: track.navState,
-        sog: track.speedOverGround,
+        navState: this.isVesselLike(track) ? track.navState : undefined,
+        sog: this.isVesselLike(track) ? track.speedOverGround : undefined,
         cog: cached.trackCog ?? null,
         className
       });
@@ -498,7 +516,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const ownShipMotionData: VectorLine[] = [];
 
     for (const target of targets) {
-      if (target.raw.type !== 'vessel') continue;
+      if (!this.isVesselLike(target.raw)) continue;
+      if (this.isStationaryNavState(target.raw.navState)) continue;
       if (motionEnabled && typeof target.sog === 'number' && typeof target.cog === 'number') {
         const motionAngle = this.wrapDegrees(target.cog - viewRotation);
         const tip = this.offsetPoint(target.x, target.y, motionAngle, tipOffset);
@@ -668,9 +687,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildTargetTitle(target: AisTrack): string {
-    const base = target.name ?? target.type ?? 'AIS Target';
-    const status = target.status;
-    return status === 'unconfirmed' || status === 'lost'
+    const base = this.isAton(target) && target.typeName
+      ? target.typeName
+      : (target.name ?? target.type ?? 'AIS Target');
+    const status = target.ais.status;
+    return status === 'unconfirmed' || status === 'lost' || status === 'remove'
       ? `${base} - ${status}`
       : base;
   }
@@ -684,15 +705,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const pendingIcon = { href: cached?.icon.href ?? null, scale };
     this.iconCache.set(track.id, { signature, icon: pendingIcon });
 
+    const iconStatus = track.ais.status === 'remove' ? undefined : track.ais.status;
     void resolveThemedIconDataUrl({
       mmsi: track.mmsi ?? '',
       type: track.type,
-      navState: track.navState,
-      aisShipTypeId: track.design?.aisShipType?.id,
-      atonVirtual: track.atonVirtual,
-      atonTypeName: track.atonType?.name,
-      status: track.status,
-      collisionRiskRating: track.closestApproach?.collisionRiskRating
+      navState: this.isVesselLike(track) ? track.navState : undefined,
+      aisShipTypeId: this.isVesselLike(track) ? track.design?.aisShipType?.id : undefined,
+      atonVirtual: this.isAton(track) ? track.virtual : undefined,
+      atonTypeId: this.isAton(track) ? track.typeId : undefined,
+      status: iconStatus,
+      collisionRiskRating: this.isVesselLike(track) ? track.closestApproach?.collisionRiskRating : undefined
     }).then(href => {
       const current = this.iconCache.get(track.id);
       if (!current || current.signature !== signature) return;
@@ -706,7 +728,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private resolveIconScale(type: AisTrack['type']): number {
     switch (type) {
       case 'aton':
-        return 2;
+        return 3.5;
       case 'basestation':
         return 3;
       case 'sar':
@@ -719,15 +741,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildIconSignature(track: AisTrack): string {
+    const signatureStatus = track.ais.status === 'lost' ? 'unconfirmed' : track.ais.status;
     return [
       track.mmsi,
       track.type,
-      track.navState,
-      track.design?.aisShipType?.id,
-      track.atonVirtual,
-      track.atonType?.name,
-      track.status,
-      track.closestApproach?.collisionRiskRating
+      this.isVesselLike(track) ? track.navState : undefined,
+      this.isVesselLike(track) ? track.design?.aisShipType?.id : undefined,
+      this.isAton(track) ? track.virtual : undefined,
+      this.isAton(track) ? track.typeId : undefined,
+      signatureStatus,
+      this.isVesselLike(track) ? track.closestApproach?.collisionRiskRating : undefined
     ].join('|');
   }
 
@@ -751,8 +774,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return classes.join(' ');
   }
 
-  private resolveTargetVectorStroke(track: AisTrack): string {
-    if (track.status !== 'confirmed') return '#50505f';
+  private resolveTargetVectorStroke(track: AisVessel | AisSar): string {
+    if (track.ais.status !== 'confirmed') return '#50505f';
     const rating = track.closestApproach?.collisionRiskRating;
     const numericRating = typeof rating === 'number' ? rating : Number(rating);
     if (!Number.isFinite(numericRating)) return '#50505f';
@@ -770,7 +793,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private hasValidPosition(position: AisTrackPosition | null | undefined): position is AisTrackPosition {
+  private hasValidPosition(position: Position | null | undefined): position is Position {
     return typeof position?.latitude === 'number'
       && Number.isFinite(position.latitude)
       && typeof position?.longitude === 'number'
@@ -790,6 +813,18 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return normalized < 0 ? normalized + 360 : normalized;
   }
 
+  private isStationaryNavState(value: string | number | null | undefined): boolean {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value === 1 || value === 5;
+    }
+    if (typeof value !== 'string') return false;
+    const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!normalized.length) return false;
+    const numeric = Number(normalized);
+    if (Number.isFinite(numeric)) return numeric === 1 || numeric === 5;
+    return normalized.includes('moored') || normalized.includes('anchored') || normalized.includes('at anchor');
+  }
+
   private shortestAngleDelta(from: number, to: number): number {
     return ((to - from + 540) % 360) - 180;
   }
@@ -799,9 +834,17 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return [
       position.latitude,
       position.longitude,
-      track.headingTrue,
-      track.courseOverGroundTrue
+      this.isVesselLike(track) ? track.headingTrue : undefined,
+      this.isVesselLike(track) ? track.courseOverGroundTrue : undefined
     ].join('|');
+  }
+
+  private isVesselLike(track: AisTrack): track is AisVessel | AisSar {
+    return track.type === 'vessel' || track.type === 'sar';
+  }
+
+  private isAton(track: AisTrack): track is AisAton {
+    return track.type === 'aton';
   }
 
   private buildCornerBoxPath(halfSize: number, cornerSize: number): string {
@@ -840,7 +883,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return this.units.convertToUnit('deg', value);
   }
 
-  private distanceNm(a: AisTrackPosition, b: AisTrackPosition): number {
+  private distanceNm(a: Position, b: Position): number {
     const R = 6371e3; // meters
     const phi1 = a.latitude * Math.PI / 180;
     const phi2 = b.latitude * Math.PI / 180;
