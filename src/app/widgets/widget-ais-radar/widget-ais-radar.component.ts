@@ -92,6 +92,9 @@ interface TargetMenuItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
+  private static readonly TARGET_ICON_SIZE_PX = 16;
+  private static readonly OWN_SHIP_ICON_SIZE_PX = 20;
+
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -264,7 +267,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
     const ringColor = getColors(cfg.color, theme).dim;
-    this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
+    this.renderRings(ringCount, rangeNm, radius, maxRingRadius, scale, viewRotation, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
@@ -274,8 +277,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.lastRenderScale = scale;
     this.lastRenderSize = size;
     this.renderVectors(renderTargets, rangeNm, radius, viewRotation, radarCfg, ownShip);
-    this.renderTargets(renderTargets, radius);
-    this.renderSelected(renderTargets, radius);
+    this.renderTargets(renderTargets, scale);
+    this.renderSelected(renderTargets, scale);
     this.raiseOwnshipAndVector();
 
     if (remainingRotation > 0.5) {
@@ -289,6 +292,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     radius: number,
     maxRadius: number,
     viewRotation: number,
+    scale: number,
     showSelf: boolean,
     ownShipRotation: number,
     ringColor: string
@@ -369,7 +373,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const ownShipSelection = this.ownShipLayer
       .selectAll<SVGGElement, { size: number }>('g.radar-ownship')
-      .data(showSelf ? [{ size: Math.max(24, radius * 0.18) }] : []);
+      .data(showSelf ? [{ size: this.resolveOwnShipBaseSize(scale) }] : []);
 
     const ownShipEnter = ownShipSelection.enter()
       .append('g')
@@ -631,10 +635,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     tipSelection.exit().remove();
   }
 
-  private renderTargets(targets: RenderTarget[], radius: number): void {
+  private renderTargets(targets: RenderTarget[], scale: number): void {
     if (!this.targetsLayer) return;
 
-    const baseSize = Math.max(6, radius * 0.04);
+    const baseSize = this.resolveTargetBaseSize(scale);
     const selection = this.targetsLayer
       .selectAll<SVGGElement, RenderTarget>('g.target')
       .data(targets, d => d.id);
@@ -672,10 +676,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.exit().remove();
   }
 
-  private renderSelected(targets: RenderTarget[], radius: number): void {
+  private renderSelected(targets: RenderTarget[], scale: number): void {
     if (!this.selectedLayer) return;
     const selected = targets.filter(t => t.id === this.selectedId());
-    const baseSize = Math.max(6, radius * 0.04);
+    const baseSize = this.resolveTargetBaseSize(scale);
     const halfSize = baseSize * 1.4;
     const cornerSize = Math.min(halfSize, Math.max(4, baseSize * 0.6));
     const cornerPath = this.buildCornerBoxPath(halfSize, cornerSize);
@@ -692,6 +696,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('d', cornerPath);
 
     selection.exit().remove();
+  }
+
+  private resolveTargetBaseSize(scale: number): number {
+    const safeScale = Math.max(0.2, scale);
+    return WidgetAisRadarComponent.TARGET_ICON_SIZE_PX / safeScale;
+  }
+
+  private resolveOwnShipBaseSize(scale: number): number {
+    const safeScale = Math.max(0.2, scale);
+    return WidgetAisRadarComponent.OWN_SHIP_ICON_SIZE_PX / safeScale;
   }
 
   private raiseOwnshipAndVector(): void {
