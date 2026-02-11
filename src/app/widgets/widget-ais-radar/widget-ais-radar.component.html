@@ -36,7 +36,32 @@
     <mat-icon>remove</mat-icon>
   </button>
   <svg #radarSvg class="ais-radar" role="img" aria-label="AIS radar display"></svg>
+  <button
+    #menuAnchor
+    #menuTrigger="matMenuTrigger"
+    type="button"
+    class="ais-radar-menu-anchor"
+    [matMenuTriggerFor]="targetMenu"
+    aria-hidden="true"
+    tabindex="-1"
+  ></button>
 </div>
+<mat-menu #targetMenu="matMenu" (closed)="closeTargetMenu()">
+  <ng-template matMenuContent>
+    @for (item of menuItems(); track item.id) {
+      <button mat-menu-item type="button" class="ais-radar-menu-item" (click)="onMenuItemSelect(item)">
+        <img
+          class="target-menu-icon"
+          [attr.src]="item.iconHref ?? null"
+          [style.visibility]="item.iconHref ? 'visible' : 'hidden'"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="target-menu-label">{{ item.label }}</span>
+      </button>
+    }
+  </ng-template>
+</mat-menu>
 @if (!dashboard.isDashboardStatic()) {
   <div class="widgetOverlay"></div>
 }

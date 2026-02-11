@@ -11,7 +11,8 @@ import { DialogService } from '../../core/services/dialog.service';
 import { DialogAisTargetComponent } from '../../core/components/dialog-ais-target/dialog-ais-target.component';
 import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { MatIconModule } from "@angular/material/icon";
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { resolveOwnShipIconDataUrl, resolveThemedIconDataUrl } from '../../core/utils/ais-icon-registry';
 
 type ViewMode = 'north-up' | 'course-up';
@@ -75,9 +76,16 @@ interface RingCache {
   labels: { key: string; value: number; x: number; y: number }[];
 }
 
+interface TargetMenuItem {
+  id: string;
+  label: string;
+  iconHref: string | null;
+  target: AisTrack;
+}
+
 @Component({
   selector: 'widget-ais-radar',
-  imports: [KipResizeObserverDirective, MatButtonModule, MatIconModule],
+  imports: [KipResizeObserverDirective, MatButtonModule, MatIconModule, MatMenuModule],
   templateUrl: './widget-ais-radar.component.html',
   styleUrls: ['./widget-ais-radar.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -113,6 +121,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   };
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('radarSvg');
+  private readonly menuAnchorRef = viewChild.required<ElementRef<HTMLButtonElement>>('menuAnchor');
+  private readonly menuTrigger = viewChild.required<MatMenuTrigger>('menuTrigger');
   private readonly hostSize = signal<RadarSize | null>(null);
   private renderState: RenderState | null = null;
   private selectedId = signal<string | null>(null);
@@ -145,6 +155,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastOriginKey: string | null = null;
   private ringCache: RingCache | null = null;
   private ownShipIconHref: string | null = null;
+  protected readonly menuItems = signal<TargetMenuItem[]>([]);
+  private menuPoint: { x: number; y: number } | null = null;
+  private lastRenderTargets: RenderTarget[] = [];
+  private lastRenderScale = 1;
+  private lastRenderSize: RadarSize | null = null;
+  private readonly hitRadiusPx = 28;
 
   constructor() {
     this.loadOwnShipIcon();
@@ -198,7 +214,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.selectedLayer = this.root.append('g').attr('class', 'radar-selected');
     this.ownShipLayer = this.root.append('g').attr('class', 'radar-ownship-layer');
 
-    this.svg.on('click', () => this.selectedId.set(null));
+    this.svg.on('click', () => {
+      this.selectedId.set(null);
+      this.closeTargetMenu();
+    });
   }
 
   private scheduleRender(): void {
@@ -251,6 +270,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const maxRangeNm = (maxRingRadius / radius) * rangeNm;
     const renderTargets = this.buildTargets(targets, ownShip.position, rangeNm, maxRangeNm, radius, viewRotation, radarCfg);
+    this.lastRenderTargets = renderTargets;
+    this.lastRenderScale = scale;
+    this.lastRenderSize = size;
     this.renderVectors(renderTargets, rangeNm, radius, viewRotation, radarCfg, ownShip);
     this.renderTargets(renderTargets, radius);
     this.renderSelected(renderTargets, radius);
@@ -621,7 +643,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .append('g')
       .on('click', (event, d) => {
         event.stopPropagation();
-        this.clickTarget(d);
+        this.handleTargetClick(event as MouseEvent, d);
       });
 
     enter.append('image')
@@ -676,14 +698,107 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.ownShipLayer?.raise();
   }
 
-  private clickTarget(target: RenderTarget): void {
+  protected onMenuItemSelect(item: TargetMenuItem): void {
+    this.openTargetDialog(item.target, item.iconHref);
+    this.selectedId.set(null);
+    this.closeTargetMenu();
+  }
+
+  private handleTargetClick(event: MouseEvent, target: RenderTarget): void {
+    const menuItems = this.resolveMenuItems(event, target);
+    if (menuItems.length <= 1) {
+      this.openTargetDialog(target.raw, target.iconHref);
+      return;
+    }
+
+    this.menuItems.set(menuItems);
+    this.menuPoint = this.resolveMenuPoint(event);
+    this.positionMenuAnchor();
+    this.menuTrigger().openMenu();
+  }
+
+  private openTargetDialog(target: AisTrack, iconHref: string | null): void {
     this.selectedId.set(target.id);
     this.dialog.openAisDetailDialog({
-      title: this.buildTargetTitle(target.raw),
+      title: this.buildTargetTitle(target),
+      iconHref: iconHref ?? undefined,
       component: 'ais-target',
       componentType: DialogAisTargetComponent,
-      payload: { target: target.raw }
+      payload: { target }
     }).subscribe();
+  }
+
+  private resolveMenuItems(event: MouseEvent, target: RenderTarget): TargetMenuItem[] {
+    const hits = this.findTargetsNearEvent(event, target);
+    return hits.map(hit => ({
+      id: hit.id,
+      label: this.buildTargetMenuLabel(hit.raw),
+      iconHref: hit.iconHref,
+      target: hit.raw
+    }));
+  }
+
+  private findTargetsNearEvent(event: MouseEvent, fallback: RenderTarget): RenderTarget[] {
+    const targets = this.lastRenderTargets.length ? this.lastRenderTargets : [fallback];
+    const point = this.eventToRadarPoint(event);
+    if (!point) return [fallback];
+
+    const hitRadius = this.hitRadiusPx / this.lastRenderScale;
+    const hits = targets
+      .map((candidate, index) => {
+        const dx = candidate.x - point.x;
+        const dy = candidate.y - point.y;
+        const distance = Math.hypot(dx, dy);
+        return { candidate, distance, index };
+      })
+      .filter(entry => entry.distance <= hitRadius)
+      .sort((a, b) => a.distance - b.distance || a.index - b.index)
+      .map(entry => entry.candidate);
+
+    return hits.length ? hits : [fallback];
+  }
+
+  private eventToRadarPoint(event: MouseEvent): { x: number; y: number } | null {
+    const size = this.lastRenderSize;
+    if (!size) return null;
+
+    const svgEl = this.svgRef().nativeElement;
+    const rect = svgEl.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    const x = (offsetX - rect.width / 2) / this.lastRenderScale;
+    const y = (offsetY - rect.height / 2) / this.lastRenderScale;
+    return { x, y };
+  }
+
+  private resolveMenuPoint(event: MouseEvent): { x: number; y: number } | null {
+    const container = this.svgRef().nativeElement.closest('.ais-radar-container') as HTMLElement | null;
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  private positionMenuAnchor(): void {
+    const anchor = this.menuAnchorRef().nativeElement;
+    if (!this.menuPoint) return;
+    anchor.style.left = `${this.menuPoint.x}px`;
+    anchor.style.top = `${this.menuPoint.y}px`;
+  }
+
+  protected closeTargetMenu(): void {
+    this.menuItems.set([]);
+    this.menuPoint = null;
+    if (this.menuTrigger().menuOpen) {
+      this.menuTrigger().closeMenu();
+    }
+  }
+
+  private buildTargetMenuLabel(target: AisTrack): string {
+    if (this.isAton(target) && target.typeName) return target.typeName;
+    return target.name ?? target.mmsi ?? 'AIS Target';
   }
 
   private buildTargetTitle(target: AisTrack): string {

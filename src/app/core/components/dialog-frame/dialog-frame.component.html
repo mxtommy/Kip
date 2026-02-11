@@ -1,5 +1,11 @@
 <div class="dialogue-header">
-  <h6 mat-dialog-title>{{data.title}}</h6>
+  <div class="dialog-title">
+    <h6 mat-dialog-title>
+      @if (data.iconHref) {
+        <img class="dialog-title-icon" [attr.src]="data.iconHref" alt="" aria-hidden="true" />
+      }
+    {{data.title}}</h6>
+  </div>
   <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
     <mat-icon>close</mat-icon>
   </button>

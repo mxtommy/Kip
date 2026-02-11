@@ -1,0 +1,35 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="19.450266"
+       height="19.450266"
+       patternTransform="translate(2.2748669,2.2748669)"
+       preserveAspectRatio="xMidYMid"
+       id="pattern4">
+      <path
+         d="M 9.7251331,0.56693 C 4.6671689,0.5668494 0.5668494,4.6671689 0.56693,9.7251331 0.5668494,14.783097 4.6671689,18.883417 9.7251331,18.883336 14.783097,18.883417 18.883417,14.783097 18.883336,9.7251331 18.883417,4.6671689 14.783097,0.5668494 9.7251331,0.56693 Z m -6.3515625,2.7089843 6.3515625,6.3515628 6.3515619,-6.3515628 0.09766,0.097656 -6.3515629,6.3515625 6.3515629,6.3515619 -0.09766,0.09766 L 9.7251331,9.8227891 3.3735706,16.174352 3.2759143,16.076695 9.6274771,9.7251331 3.2759143,3.3735706 Z"
+         style="fill:none;fill-opacity:0.983957;stroke:#ff001b;stroke-width:1.13386;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+         id="path4" />
+      <path
+         d="m 3.3735706,3.2759143 -0.097656,0.097656 6.3515628,6.3515625 0.097656,-0.097656 z m 6.4492185,6.4492188 -0.097656,0.097656 6.3515619,6.3515629 0.09766,-0.09766 z"
+         style="fill:#ff0000;fill-opacity:0.983957;stroke:#ff001b;stroke-width:0.981037;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+         id="path3" />
+      <path
+         d="M 16.076695,3.2759143 3.2759143,16.076695 3.3735706,16.174352 16.174352,3.3735706 Z"
+         style="fill:#ff0000;fill-opacity:0.983957;stroke:#ff001b;stroke-width:0.981037;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+         id="path2" />
+    </pattern>
+  </defs>
+  <g
+     id="layer1">
+    <rect
+       style="stroke:none;fill:url(#pattern4)"
+       width="19.450266"
+       height="19.450266"
+       x="2.2748669"
+       y="2.2748669"
+       id="rect4" />
+  </g>
+</svg>

@@ -1,7 +1,20 @@
 .dialogue-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+}
+
+.dialog-title-icon {
+  position:relative;
+  top: 12px;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
 }
 
 .dialog-close-icon {

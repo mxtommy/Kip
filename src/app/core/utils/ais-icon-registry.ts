@@ -147,9 +147,9 @@ const VESSEL_URLS: Record<VesselIconKey, string> = {
 };
 
 const BEACON_URLS: Record<BeaconIconKey, string> = {
-  'beacon/sart': 'assets/svg/vessel/special.svg',
-  'beacon/mob': 'assets/svg/vessel/special.svg',
-  'beacon/epirb': 'assets/svg/vessel/special.svg'
+  'beacon/sart': 'assets/svg/sar-distress-device/sart-eprib-mob.svg',
+  'beacon/mob': 'assets/svg/sar-distress-device/sart-eprib-mob.svg',
+  'beacon/epirb': 'assets/svg/sar-distress-device/sart-eprib-mob.svg'
 };
 
 const ICON_URLS: Record<IconKey, string> = {
