@@ -116,6 +116,7 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **Freeboard-SK Chart Plotter**: A high-quality Signal K implementation of the Freeboard integration widget.
 - **Autopilot Head**: Operate your autopilot from any device remotely.
 - **Data Chart**: Visualize data trends over time.
+- **AIS Radar**: Display AIS targets with range rings, interactive target details, and quick zoom and filtering controls.
 - **Race Timer**: Track regatta start sequences.
 - **Start Line Insight**: Analyze and visualize the start line for tactical racing advantage, including favored end and distance-to-line.
 - **Racer Start Timer**: Advanced race countdown timer with OCS (On Course Side) detection and automatic dashboard switching.

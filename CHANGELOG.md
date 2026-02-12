@@ -1,3 +1,6 @@
+# v4.4.0
+## New Features
+* New AIS Radar widget: Turn AIS traffic into an instant tactical view with live targets, dynamic range rings, fast zoom controls, and smart filters—so you can spot nearby vessels quicker and make confident navigation decisions at a glance.
 # v4.3.0
 ## New Features
 * New signalk-anchoralarm-plugin (by Scott Bender) embedded widget to surface its features and make anchor setting and monitoring fast and easy.
