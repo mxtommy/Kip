@@ -126,6 +126,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private static readonly TARGET_ICON_SIZE_PX = 16;
   private static readonly OWN_SHIP_ICON_SIZE_PX = 84;
   private static readonly HIT_RADIUS_PX = 28;
+  private static readonly ICON_RENDER_DEBOUNCE_MS = 50;
 
   public id = input.required<string>();
   public type = input.required<string>();
@@ -195,6 +196,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRotationAt: number | null = null;
 
   private renderFrame: number | null = null;
+  private iconRenderTimer: number | null = null;
   private readonly iconCache = new Map<string, { signature: string; icon: { href: string | null; scale: number } }>();
   private readonly targetCache = new Map<string, CachedTargetSeed>();
   private lastOriginKey: string | null = null;
@@ -265,9 +267,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadOwnShipIcon(): void {
-    void resolveOwnShipIconDataUrl().then(href => {
-      this.ownShipIconHref = href;
-      this.scheduleRender();
+    this.ngZone.runOutsideAngular(() => {
+      void resolveOwnShipIconDataUrl().then(href => {
+        this.ownShipIconHref = href;
+        this.scheduleRenderDebounced();
+      });
     });
   }
 
@@ -307,6 +311,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private scheduleRenderDebounced(): void {
+    if (this.iconRenderTimer !== null) return;
+    this.ngZone.runOutsideAngular(() => {
+      this.iconRenderTimer = window.setTimeout(() => {
+        this.iconRenderTimer = null;
+        this.scheduleRender();
+      }, WidgetAisRadarComponent.ICON_RENDER_DEBOUNCE_MS);
+    });
+  }
+
   private render(): void {
     if (!this.renderState || !this.svg || !this.root) return;
     const { size, cfg, theme, targets, ownShip } = this.renderState;
@@ -324,6 +338,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const viewMode: ViewMode = this.localViewMode() ?? radarCfg.viewMode ?? 'course-up';
     const ownCog = this.toDegreesIfRadians(ownShip.courseOverGroundTrue);
     const ownHeading = this.toDegreesIfRadians(ownShip.headingTrue);
+    const hasOrientation = ownCog !== null || ownHeading !== null;
     const targetRotation = viewMode === 'course-up'
       ? (ownCog ?? ownHeading ?? 0)
       : 0;
@@ -366,7 +381,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
     this.lastRenderSignature = signature;
     const viewRotation = viewMode === 'course-up'
-      ? this.smoothRotation(targetRotation)
+      ? (hasOrientation ? this.smoothRotation(targetRotation) : 0)
       : 0;
     const remainingRotation = viewMode === 'course-up'
       ? Math.abs(this.shortestAngleDelta(viewRotation, targetRotation))
@@ -1044,20 +1059,22 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.iconCache.set(track.id, { signature, icon: pendingIcon });
 
     const iconStatus = track.ais.status === 'remove' ? undefined : track.ais.status;
-    void resolveThemedIconDataUrl({
-      mmsi: track.mmsi ?? '',
-      type: track.type,
-      navState: this.isVesselLike(track) ? track.navState : undefined,
-      aisShipTypeId: this.isVesselLike(track) ? track.design?.aisShipType?.id : undefined,
-      atonVirtual: this.isAton(track) ? track.virtual : undefined,
-      atonTypeId: this.isAton(track) ? track.typeId : undefined,
-      status: iconStatus,
-      collisionRiskRating: this.isVesselLike(track) ? track.closestApproach?.collisionRiskRating : undefined
-    }).then(href => {
-      const current = this.iconCache.get(track.id);
-      if (!current || current.signature !== signature) return;
-      current.icon = { href, scale };
-      this.scheduleRender();
+    this.ngZone.runOutsideAngular(() => {
+      void resolveThemedIconDataUrl({
+        mmsi: track.mmsi ?? '',
+        type: track.type,
+        navState: this.isVesselLike(track) ? track.navState : undefined,
+        aisShipTypeId: this.isVesselLike(track) ? track.design?.aisShipType?.id : undefined,
+        atonVirtual: this.isAton(track) ? track.virtual : undefined,
+        atonTypeId: this.isAton(track) ? track.typeId : undefined,
+        status: iconStatus,
+        collisionRiskRating: this.isVesselLike(track) ? track.closestApproach?.collisionRiskRating : undefined
+      }).then(href => {
+        const current = this.iconCache.get(track.id);
+        if (!current || current.signature !== signature) return;
+        current.icon = { href, scale };
+        this.scheduleRenderDebounced();
+      });
     });
 
     return pendingIcon;
@@ -1304,6 +1321,11 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     if (this.renderFrame) {
       cancelAnimationFrame(this.renderFrame);
       this.renderFrame = null;
+    }
+
+    if (this.iconRenderTimer !== null) {
+      window.clearTimeout(this.iconRenderTimer);
+      this.iconRenderTimer = null;
     }
   }
 }
