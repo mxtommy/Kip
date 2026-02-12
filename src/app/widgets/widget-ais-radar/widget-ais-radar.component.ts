@@ -13,9 +13,10 @@ import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { resolveOwnShipIconDataUrl, resolveThemedIconDataUrl } from '../../core/utils/ais-icon-registry';
+import { resolveIconKey, resolveOwnShipIconDataUrl, resolveThemedIconDataUrl, VESSEL_ICON_KEYS, VesselIconKey } from '../../core/utils/ais-icon-registry';
 
 type ViewMode = 'north-up' | 'course-up';
+type RadarFilterKey = 'anchoredMoored' | 'noCollisionRisk' | 'allAton' | 'allButSar' | 'allVessels';
 
 interface RadarSize {
   width: number;
@@ -81,6 +82,15 @@ interface TargetMenuItem {
   label: string;
   iconHref: string | null;
   target: AisTrack;
+}
+
+interface RadarFilterState {
+  anchoredMoored: boolean;
+  noCollisionRisk: boolean;
+  allAton: boolean;
+  allButSar: boolean;
+  allVessels: boolean;
+  vesselTypes: Set<VesselIconKey>;
 }
 
 @Component({
@@ -164,6 +174,16 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRenderScale = 1;
   private lastRenderSize: RadarSize | null = null;
   private readonly hitRadiusPx = 28;
+  private readonly filterState = signal<RadarFilterState>({
+    anchoredMoored: false,
+    noCollisionRisk: false,
+    allAton: false,
+    allButSar: false,
+    allVessels: false,
+    vesselTypes: new Set<VesselIconKey>()
+  });
+  protected readonly vesselTypeFilters = VESSEL_ICON_KEYS
+    .filter(key => key !== 'vessel/self' && key !== 'vessel/unknown');
 
   constructor() {
     this.loadOwnShipIcon();
@@ -184,6 +204,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       this.localViewMode();
       this.localRangeIndex();
       this.selectedId();
+      this.filterState();
       untracked(() => {
         this.scheduleRender();
       });
@@ -416,6 +437,49 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.localRangeIndex.set(Math.min(this.effectiveRangeIndex() + 1, maxIndex));
   }
 
+  protected toggleFilter(key: RadarFilterKey): void {
+    this.filterState.update(state => ({
+      ...state,
+      [key]: !state[key]
+    }));
+  }
+
+  protected toggleVesselTypeFilter(key: VesselIconKey): void {
+    this.filterState.update(state => {
+      const next = new Set(state.vesselTypes);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return { ...state, vesselTypes: next };
+    });
+  }
+
+  protected isFilterEnabled(key: RadarFilterKey): boolean {
+    return this.filterState()[key];
+  }
+
+  protected isVesselTypeFilterEnabled(key: VesselIconKey): boolean {
+    return this.filterState().vesselTypes.has(key);
+  }
+
+  protected formatVesselTypeLabel(key: VesselIconKey): string {
+    const shortKey = key.replace('vessel/', '');
+    switch (shortKey) {
+      case 'pleasurecraft':
+        return 'Pleasure Craft';
+      case 'highspeed':
+        return 'High Speed';
+      case 'sar':
+        return 'SAR';
+      case 'law':
+        return 'Law Enforcement';
+      default:
+        return `${shortKey.charAt(0).toUpperCase()}${shortKey.slice(1)}`;
+    }
+  }
+
   private resolveRingCountForRange(rangeNm: number): number {
     const candidates = [3];
     return candidates.find(count => this.isNiceStep(rangeNm / count)) ?? 4;
@@ -469,6 +533,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       }
       if (track.ais.status === 'lost' && !showLost) continue;
       if (track.ais.status === 'unconfirmed' && !showUnconfirmed) continue;
+      if (this.shouldFilterTarget(track)) continue;
 
       const signature = this.buildTrackSignature(track);
       let cached = this.targetCache.get(track.id);
@@ -911,6 +976,65 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     if (numericRating < 15000) return 'red';
     if (numericRating < 25000) return 'yellow';
     return '#50505f';
+  }
+
+  private shouldFilterTarget(track: AisTrack): boolean {
+    const filters = this.filterState();
+    if (!filters.anchoredMoored
+      && !filters.noCollisionRisk
+      && !filters.allAton
+      && !filters.allButSar
+      && !filters.allVessels
+      && filters.vesselTypes.size === 0) {
+      return false;
+    }
+
+    if (filters.anchoredMoored && this.isVesselLike(track) && this.isStationaryNavState(track.navState)) {
+      return true;
+    }
+
+    if (filters.noCollisionRisk && this.isVesselLike(track) && this.isNoCollisionRisk(track)) {
+      return true;
+    }
+
+    if (filters.allAton && track.type === 'aton') {
+      return true;
+    }
+
+    if (filters.allButSar && track.type !== 'sar') {
+      return true;
+    }
+
+    if (filters.allVessels && this.isVesselLike(track)) {
+      return true;
+    }
+
+    if (filters.vesselTypes.size > 0 && this.isVesselLike(track)) {
+      const key = this.resolveVesselIconKey(track);
+      if (key && filters.vesselTypes.has(key)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isNoCollisionRisk(track: AisVessel | AisSar): boolean {
+    const rating = track.closestApproach?.collisionRiskRating;
+    if (rating === null || rating === undefined) return true;
+    const numericRating = typeof rating === 'number' ? rating : Number(rating);
+    if (!Number.isFinite(numericRating)) return true;
+    return numericRating >= 25000;
+  }
+
+  private resolveVesselIconKey(track: AisTrack): VesselIconKey | null {
+    if (!this.isVesselLike(track)) return null;
+    const key = resolveIconKey({
+      mmsi: track.mmsi ?? track.id ?? '',
+      type: track.type,
+      aisShipTypeId: track.design?.aisShipType?.id
+    });
+    return key.startsWith('vessel/') ? (key as VesselIconKey) : null;
   }
 
   private polarToCartesian(angleDeg: number, distanceNm: number, rangeNm: number, radius: number) {

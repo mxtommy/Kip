@@ -35,6 +35,15 @@
   >
     <mat-icon>remove</mat-icon>
   </button>
+  <button
+    type="button"
+    class="ais-radar-range-button ais-radar-filter-button"
+    matMiniFab
+    aria-label="Filter targets"
+    [matMenuTriggerFor]="filterMenu"
+  >
+    <mat-icon>filter_list</mat-icon>
+  </button>
   <svg #radarSvg class="ais-radar" role="img" aria-label="AIS radar display"></svg>
   <button
     #menuAnchor
@@ -58,6 +67,45 @@
           aria-hidden="true"
         />
         <span class="target-menu-label">{{ item.label }}</span>
+      </button>
+    }
+  </ng-template>
+</mat-menu>
+<mat-menu #filterMenu="matMenu" xPosition="before">
+  <ng-template matMenuContent>
+    <button mat-menu-item class="ais-filter-menu-header" disabled>Hide</button>
+    <button mat-menu-item type="button" (click)="toggleFilter('anchoredMoored')">
+      <mat-icon class="ais-filter-check" [style.visibility]="isFilterEnabled('anchoredMoored') ? 'visible' : 'hidden'">check</mat-icon>
+      <span>Anchored/Moored</span>
+    </button>
+    <button mat-menu-item type="button" (click)="toggleFilter('noCollisionRisk')">
+      <mat-icon class="ais-filter-check" [style.visibility]="isFilterEnabled('noCollisionRisk') ? 'visible' : 'hidden'">check</mat-icon>
+      <span>No Collision Risk</span>
+    </button>
+    <button mat-menu-item type="button" (click)="toggleFilter('allAton')">
+      <mat-icon class="ais-filter-check" [style.visibility]="isFilterEnabled('allAton') ? 'visible' : 'hidden'">check</mat-icon>
+      <span>All AtoN</span>
+    </button>
+    <button mat-menu-item type="button" (click)="toggleFilter('allButSar')">
+      <mat-icon class="ais-filter-check" [style.visibility]="isFilterEnabled('allButSar') ? 'visible' : 'hidden'">check</mat-icon>
+      <span>All but SAR</span>
+    </button>
+    <button mat-menu-item type="button" (click)="toggleFilter('allVessels')">
+      <mat-icon class="ais-filter-check" [style.visibility]="isFilterEnabled('allVessels') ? 'visible' : 'hidden'">check</mat-icon>
+      <span>All Vessels</span>
+    </button>
+    <button mat-menu-item [matMenuTriggerFor]="vesselTypeMenu">
+      <span>Vessel Type</span>
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </ng-template>
+</mat-menu>
+<mat-menu #vesselTypeMenu="matMenu">
+  <ng-template matMenuContent>
+    @for (key of vesselTypeFilters; track key) {
+      <button mat-menu-item type="button" (click)="toggleVesselTypeFilter(key)">
+        <mat-icon class="ais-filter-check" [style.visibility]="isVesselTypeFilterEnabled(key) ? 'visible' : 'hidden'">check</mat-icon>
+        <span>{{ formatVesselTypeLabel(key) }}</span>
       </button>
     }
   </ng-template>

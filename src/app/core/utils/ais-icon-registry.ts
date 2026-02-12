@@ -146,6 +146,8 @@ const VESSEL_URLS: Record<VesselIconKey, string> = {
   'vessel/self': 'assets/svg/vessel/self.svg'
 };
 
+export const VESSEL_ICON_KEYS = Object.keys(VESSEL_URLS) as VesselIconKey[];
+
 const BEACON_URLS: Record<BeaconIconKey, string> = {
   'beacon/sart': 'assets/svg/sar-distress-device/sart-eprib-mob.svg',
   'beacon/mob': 'assets/svg/sar-distress-device/sart-eprib-mob.svg',

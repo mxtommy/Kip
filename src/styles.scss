@@ -513,6 +513,20 @@ widget-ais-radar {
     top: 116px;
   }
 
+  .ais-radar-menu-anchor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ais-radar-filter-button {
+    top: 168px;
+  }
+
   .radar-rings .radar-ownship .ownship-shape {
     fill: var(--kip-contrast-color);
     stroke: var(--kip-contrast-color);
@@ -571,6 +585,15 @@ widget-ais-radar {
     stroke-linejoin: miter;
     opacity: 0.8;
     filter: drop-shadow(0 0 6px var(--kip-green-color));
+  }
+
+  .ais-filter-menu-header {
+    font-weight: 600;
+    opacity: 0.9;
+  }
+
+  .ais-filter-check {
+    margin-right: 8px;
   }
 
   .widgetOverlay {
