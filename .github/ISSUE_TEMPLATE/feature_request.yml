@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or enhancement for KIP
+description: Suggest a new feature or enhancement
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
@@ -29,7 +29,7 @@ body:
     id: concepts-ideas-research
     attributes:
       label: Concepts, Ideas & Research
-      description: Add any other information, screenshots, or mockups, similar apps, documentation about the feature request here.
-      placeholder: Links to similar implementations, mockups, screenshots, or related documentation to help us come up with a good design...
+      description: Add any other information, screenshots, mockups, links similar apps or existing documentation about the feature request here.
+      placeholder: Paste links, mockups, screenshots or related documentation to help us come up with a good and informed design...
     validations:
       required: false
