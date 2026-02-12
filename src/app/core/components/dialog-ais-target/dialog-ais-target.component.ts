@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
-import { CommonModule, TitleCasePipe } from '@angular/common';
+import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import type { DialogComponentData } from '../../interfaces/dialog-data';
 import type { AisAton, AisBasestation, AisSar, AisTrack, AisVessel } from '../../services/ais-processing.service';
 import { UnitsService } from '../../services/units.service';
@@ -12,12 +12,13 @@ interface AisDialogPayload {
 
 @Component({
   selector: 'dialog-ais-target',
-  imports: [CommonModule, MatDialogModule, MatDividerModule, TitleCasePipe],
+  imports: [MatDialogModule, MatDividerModule, TitleCasePipe, DecimalPipe],
   templateUrl: './dialog-ais-target.component.html',
   styleUrls: ['./dialog-ais-target.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DialogAisTargetComponent implements OnDestroy {
+  private static readonly CLOCK_INTERVAL_MS = 1000;
   private readonly data = inject<DialogComponentData>(MAT_DIALOG_DATA);
   private readonly units = inject(UnitsService);
   private readonly ngZone = inject(NgZone);
@@ -39,11 +40,6 @@ export class DialogAisTargetComponent implements OnDestroy {
   protected formatDirection(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return '--';
     return this.units.convertToUnit('deg', value).toFixed(0);
-  }
-
-  protected formatNauticalMiles(value: number | null | undefined): string {
-    if (value === null || value === undefined || !Number.isFinite(value)) return '--';
-    return this.units.convertToUnit('nm', value).toString();
   }
 
   protected formatNauticalMilesWithUnit(value: number | null | undefined): string {
@@ -94,10 +90,6 @@ export class DialogAisTargetComponent implements OnDestroy {
     return value && value.length ? value : '--';
   }
 
-  protected formatStatus(value: string | null | undefined): string {
-    return value ? value.toUpperCase() : '--';
-  }
-
   protected hasClosestApproach(value: AisVessel['closestApproach'] | null | undefined): boolean {
     if (!value) return false;
     return typeof value.bearing === 'number'
@@ -124,7 +116,7 @@ export class DialogAisTargetComponent implements OnDestroy {
         this.ngZone.run(() => {
           this.now.set(Date.now());
         });
-      }, 1000);
+      }, DialogAisTargetComponent.CLOCK_INTERVAL_MS);
     });
   }
 

@@ -293,7 +293,7 @@ export interface IAISRadarConfig {
   /** List of selectable radar ranges in nautical miles. */
   rangeRings: number[];
   /** Zero-based index into rangeRings that selects the active range. */
-  rangeIndex: number;
+  rangeIndex: string;
   /** Enable/disable drawing AIS motion vectors. */
   showCogVectors: boolean;
   /** COG projection vector duration in minutes. */

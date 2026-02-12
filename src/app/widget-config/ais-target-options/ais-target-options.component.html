@@ -1,0 +1,21 @@
+
+  @if (filtersGroup) {
+    <div class="vessel-type-grid" [formGroup]="filtersGroup">
+      <p class="span-all">Categories</p>
+      <mat-checkbox formControlName="anchoredMoored">Anchored/Moored</mat-checkbox>
+      <mat-checkbox formControlName="noCollisionRisk">No Collision Risk</mat-checkbox>
+      <mat-checkbox formControlName="allAton">All AtoN</mat-checkbox>
+      <mat-checkbox formControlName="allButSar">All but SAR</mat-checkbox>
+      <mat-checkbox formControlName="allVessels">All Vessels</mat-checkbox>
+      <mat-divider class="span-all ais-target-divider"></mat-divider>
+      <p class="span-all">Types of vessels</p>
+      @for (key of vesselTypeFilters; track key) {
+        <mat-checkbox
+          [checked]="isVesselTypeSelected(key)"
+          (change)="toggleVesselType(key)">
+          {{ formatVesselTypeLabel(key) }}
+        </mat-checkbox>
+      }
+    </div>
+  }
+

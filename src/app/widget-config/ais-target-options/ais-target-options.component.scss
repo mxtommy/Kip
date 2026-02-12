@@ -1,0 +1,33 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ais-target-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* .filter-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+} */
+
+.vessel-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0px 12px;
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.ais-target-divider {
+  margin: 4px 0;
+}

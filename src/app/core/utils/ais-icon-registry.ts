@@ -425,7 +425,7 @@ export function resolveIconKey(input: AisIconInput): IconKey {
 
   switch (input.type) {
     case 'aton':
-      return resolveAtonKey(input.atonTypeId ?? null, input.atonVirtual ?? false);
+      return resolveAtonKey(input.atonTypeId ?? null);
     case 'basestation':
       return 'aton/basestation';
     case 'sar':
@@ -451,16 +451,16 @@ function resolveBeaconKey(mmsi: string | null): IconKey | null {
   return null;
 }
 
-function resolveAtonKey(typeId: number | null, isVirtual: boolean): IconKey {
+function resolveAtonKey(typeId: number | null): IconKey {
   const code = typeof typeId === 'number' && Number.isFinite(typeId) ? typeId : null;
   const match = code === null
     ? undefined
     : AIS_ATON_TYPE_ICON_MAP.find(entry => entry.code === code);
   const baseKey = match?.key ?? 'aton/unknown';
-  return applyAtonTheme(baseKey, isVirtual);
+  return applyAtonTheme(baseKey);
 }
 
-function applyAtonTheme(key: AtonIconKey, isVirtual: boolean): AtonIconKey {
+function applyAtonTheme(key: AtonIconKey): AtonIconKey {
   return key;
 }
 

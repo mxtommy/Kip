@@ -601,11 +601,12 @@
                       formControlName="rangeIndex"
                       name="rangeIndex"
                       required>
-                      <mat-option value="0">3 miles</mat-option>
-                      <mat-option value="1">6 miles</mat-option>
-                      <mat-option value="2">12 miles</mat-option>
-                      <mat-option value="3">24 miles</mat-option>
-                      <mat-option value="4">48 miles</mat-option>
+                      <mat-option value=0>1 miles</mat-option>
+                      <mat-option value=1>3 miles</mat-option>
+                      <mat-option value=2>6 miles</mat-option>
+                      <mat-option value=3>12 miles</mat-option>
+                      <mat-option value=4>24 miles</mat-option>
+                      <mat-option value=5>48 miles</mat-option>
                     </mat-select>
                   </mat-form-field>
                   <mat-checkbox
@@ -715,6 +716,11 @@
           </div>
         }
       </mat-tab>
+      @if (widgetConfig?.ais !== undefined) {
+        <mat-tab label="Filter">
+          <ais-target-options formGroupName="ais" />
+        </mat-tab>
+      }
       <!-- Boolean Multi Child Control Config Panel -->
       @if ((widgetConfig?.multiChildCtrls !== undefined)) {
         <mat-tab label="Controls">

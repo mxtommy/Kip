@@ -3,6 +3,7 @@
     type="button"
     class="ais-radar-mode-toggle-button"
     matMiniFab
+    [matTooltip]="effectiveViewMode() === 'north-up' ? 'Change to North-Up mode' : 'Change to Course-Up mode'"
     [attr.aria-label]="effectiveViewMode() === 'north-up' ? 'North up mode' : 'Course up mode'"
     (click)="toggleViewMode()"
   >
@@ -21,6 +22,7 @@
     type="button"
     class="ais-radar-range-button ais-radar-range-plus"
     matMiniFab
+    matTooltip="Increase range"
     aria-label="Increase range"
     (click)="incrementRange()"
   >
@@ -30,6 +32,7 @@
     type="button"
     class="ais-radar-range-button ais-radar-range-minus"
     matMiniFab
+    matTooltip="Decrease range"
     aria-label="Decrease range"
     (click)="decrementRange()"
   >
@@ -39,6 +42,7 @@
     type="button"
     class="ais-radar-range-button ais-radar-filter-button"
     matMiniFab
+    matTooltip="Filter targets"
     aria-label="Filter targets"
     [class.is-active]="hasActiveFilters()"
     [matMenuTriggerFor]="filterMenu"
@@ -50,6 +54,7 @@
       type="button"
       class="ais-radar-range-button ais-radar-collision-button"
       matMiniFab
+      matTooltip="Show only collision risk targets"
       aria-label="No collision risk filter"
       [class.is-active]="isFilterEnabled('noCollisionRisk')"
       (click)="toggleFilter('noCollisionRisk')"
@@ -86,7 +91,7 @@
 </mat-menu>
 <mat-menu #filterMenu="matMenu">
   <ng-template matMenuContent>
-    <button mat-menu-item class="ais-filter-menu-header" disabled>Hide Targets</button>
+    <button mat-menu-item class="ais-filter-menu-header" disabled>Filter Targets</button>
     <button mat-menu-item type="button" (click)="toggleFilter('anchoredMoored')">
       <mat-icon class="ais-filter-check" aria-hidden="true">
         {{ isFilterEnabled('anchoredMoored') ? 'check_box' : 'check_box_outline_blank' }}

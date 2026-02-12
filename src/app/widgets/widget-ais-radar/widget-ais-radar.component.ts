@@ -13,6 +13,7 @@ import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { resolveIconKey, resolveOwnShipIconDataUrl, resolveThemedIconDataUrl, VESSEL_ICON_KEYS, VesselIconKey } from '../../core/utils/ais-icon-registry';
 
 type ViewMode = 'north-up' | 'course-up';
@@ -95,7 +96,7 @@ interface RadarFilterState {
 
 @Component({
   selector: 'widget-ais-radar',
-  imports: [KipResizeObserverDirective, MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [KipResizeObserverDirective, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule],
   templateUrl: './widget-ais-radar.component.html',
   styleUrls: ['./widget-ais-radar.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -131,7 +132,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       },
       viewMode: 'course-up',
       rangeRings: [1, 3, 6, 12, 24, 48],
-      rangeIndex: 3,
+      rangeIndex: '3',
       showCogVectors: true,
       cogVectorsMinutes: 10,
       showLostTargets: true,
@@ -153,7 +154,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return this.localViewMode() ?? (this.runtime.options()?.ais?.viewMode ?? 'course-up');
   });
   protected readonly effectiveRangeIndex = computed<number>(() => {
-    const cfgIndex = this.runtime.options()?.ais?.rangeIndex ?? 0;
+    const cfgIndex = Number(this.runtime.options()?.ais?.rangeIndex ?? 0);
     const ranges = this.runtime.options()?.ais?.rangeRings ?? [3, 6, 12, 24, 48];
     const maxIndex = Math.max(0, ranges.length - 1);
     const index = this.localRangeIndex() ?? cfgIndex;
@@ -183,7 +184,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRenderSize: RadarSize | null = null;
   private readonly hitRadiusPx = 28;
   private lastCollisionDebugSignature: string | null = null;
-  private filtersInitialized = false;
+  private lastFiltersSignature: string | null = null;
   private readonly filterState = signal<RadarFilterState>({
     anchoredMoored: false,
     noCollisionRisk: false,
@@ -222,7 +223,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       if (!size || !cfg || !theme) return;
       untracked(() => {
         this.renderState = { size, cfg, theme, targets, ownShip };
-        this.applyInitialFilters(cfg);
+        this.syncFiltersFromConfig(cfg);
       });
       this.scheduleRender();
     });
@@ -507,11 +508,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private applyInitialFilters(cfg: IWidgetSvcConfig): void {
-    if (this.filtersInitialized) return;
+  private syncFiltersFromConfig(cfg: IWidgetSvcConfig): void {
     const filters = cfg.ais?.filters;
     if (!filters) return;
-    this.filtersInitialized = true;
+    const signature = this.buildFilterSignature(filters);
+    if (signature === this.lastFiltersSignature) return;
+    this.lastFiltersSignature = signature;
     this.filterState.set({
       anchoredMoored: filters.anchoredMoored ?? false,
       noCollisionRisk: filters.noCollisionRisk ?? false,
@@ -519,6 +521,18 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       allButSar: filters.allButSar ?? false,
       allVessels: filters.allVessels ?? false,
       vesselTypes: new Set((filters.vesselTypes ?? []) as VesselIconKey[])
+    });
+  }
+
+  private buildFilterSignature(filters: NonNullable<IWidgetSvcConfig['ais']>['filters']): string {
+    const vesselTypes = [...(filters?.vesselTypes ?? [])].sort();
+    return JSON.stringify({
+      anchoredMoored: filters?.anchoredMoored ?? false,
+      noCollisionRisk: filters?.noCollisionRisk ?? false,
+      allAton: filters?.allAton ?? false,
+      allButSar: filters?.allButSar ?? false,
+      allVessels: filters?.allVessels ?? false,
+      vesselTypes
     });
   }
 
@@ -628,7 +642,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       });
     }
 
-    this.debugCollisionFilterResults(results);
     return results;
   }
 
@@ -1023,26 +1036,6 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     if (numericRating < 15000) return 'red';
     if (numericRating < 25000) return 'yellow';
     return '#50505f';
-  }
-
-  private debugCollisionFilterResults(targets: RenderTarget[]): void {
-    if (!this.filterState().noCollisionRisk) {
-      this.lastCollisionDebugSignature = null;
-      return;
-    }
-
-    const signature = targets.map(target => target.id).join('|');
-    if (signature === this.lastCollisionDebugSignature) return;
-    this.lastCollisionDebugSignature = signature;
-
-    const visible = targets.map(target => ({
-      id: target.id,
-      name: target.raw.name ?? target.raw.mmsi ?? 'AIS Target',
-      type: target.raw.type,
-      rating: this.isVesselLike(target.raw) ? target.raw.closestApproach?.collisionRiskRating : null
-    }));
-
-    console.debug('[AIS Radar] Collision filter visible targets:', visible);
   }
 
   private shouldFilterTarget(track: AisTrack): boolean {
