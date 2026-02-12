@@ -10,6 +10,8 @@ import { AisAton, AisProcessingService, AisSar, AisTrack, AisVessel, Position } 
 import { DialogService } from '../../core/services/dialog.service';
 import { DialogAisTargetComponent } from './dialog-ais-target/dialog-ais-target.component';
 import { UnitsService } from '../../core/services/units.service';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { ToastService } from '../../core/services/toast.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -134,6 +136,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(DialogService);
   private readonly ngZone = inject(NgZone);
   private readonly units = inject(UnitsService);
+  private readonly settings = inject(AppSettingsService);
+  private readonly toast = inject(ToastService);
   protected readonly dashboard = inject(DashboardService);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -226,6 +230,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   protected readonly hasCollisionRiskData = this.ais.hasCollisionRiskData;
 
   constructor() {
+    this.warnIfRemoteDataDisabled();
     this.loadOwnShipIcon();
     effect(() => {
       const size = this.hostSize();
@@ -250,6 +255,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         this.scheduleRender();
       });
     });
+  }
+
+  private warnIfRemoteDataDisabled(): void {
+    if (this.settings.signalKSubscribeAll) return;
+    this.toast.show(
+      'AIS data is disabled in your connection. To see radar targets, go to Settings -> Options -> Connectivity, enable "Subscribe to remote sources messages", then reconnect.', 0, false, 'Dismiss', 'warn'
+    );
   }
 
   private loadOwnShipIcon(): void {
