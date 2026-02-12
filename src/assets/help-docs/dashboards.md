@@ -80,6 +80,7 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Freeboard-SK** – Adds the Freeboard-SK chart plotter as a widget with automatic sign-in.
 - **Autopilot Head** – Typical autopilot controls for compatible Signal K Autopilot devices.
 - **Realtime Data Chart** – Visualizes data on a real-time chart with actuals, averages, and min/max.
+- **AIS Radar**: Display AIS targets with range rings, interactive target details, and quick zoom and filtering controls.
 - **Embed Webpage Viewer** – Embeds external web apps (Grafana, Node-RED, etc.) into your dashboard.
 - **Racesteer** – Race steering display fusing polar performance data with live conditions for optimal tactics.
 - **Racer - Start Line Insight** – Set and adjust start line ends, see distance, favored end, and line bias; integrates with Freeboard SK.
