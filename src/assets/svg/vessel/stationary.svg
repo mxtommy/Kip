@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <style>
+    :root {
+      --icon-fill: #50505f;
+      --icon-fill-opacity: 1;
+      --icon-stroke-opacity: 1;
+      --icon-stroke: #82829e;
+      --icon-stroke-width: 0.50;
+      --icon-stroke-dasharray: none;
+    }
+  </style>
+  <ellipse
+    fill-opacity="var(--icon-fill-opacity)"
+    stroke="var(--icon-stroke)"
+    stroke-width="var(--icon-stroke-width)"
+    stroke-dasharray="var(--icon-stroke-dasharray)"
+    stroke-opacity="var(--icon-stroke-opacity)"
+
+    style="fill:#ffffff"
+    cx="12"
+    cy="12"
+    rx="3.3023782"
+    ry="3.2951753" />
+  <circle
+    fill="var(--icon-fill)"
+    fill-opacity="var(--icon-fill-opacity)"
+    stroke-opacity="var(--icon-stroke-opacity)"
+     style="stroke:none;"
+     cx="12"
+     cy="12"
+     r="2.2242277" />
+</svg>

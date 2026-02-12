@@ -20,13 +20,14 @@ import { PathsOptionsComponent } from '../paths-options/paths-options.component'
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
 import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.component';
+import { AisTargetOptionsComponent } from '../ais-target-options/ais-target-options.component';
 import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'modal-widget-config',
   templateUrl: './modal-widget-config.component.html',
   styleUrls: ['./modal-widget-config.component.scss'],
-  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent]
+  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   // Property name constants to avoid magic strings
@@ -35,6 +36,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private static readonly KEY_GAUGE = 'gauge';
   private static readonly KEY_AUTOPILOT = 'autopilot';
   private static readonly KEY_PATHS = 'paths';
+  private static readonly KEY_AIS = 'ais';
   private static readonly KEY_CONVERT_UNIT_TO = 'convertUnitTo';
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
@@ -94,6 +96,8 @@ export class ModalWidgetConfigComponent implements OnInit {
           groups.addControl(key, this.generateFormGroups(value, key));
         } else if (key === ModalWidgetConfigComponent.KEY_AUTOPILOT) {
           groups.addControl(key, this.generateFormGroups(value, key));
+        } else if (key === ModalWidgetConfigComponent.KEY_AIS) {
+          groups.addControl(key, this.generateFormGroups(value, key));
         } else if (key === ModalWidgetConfigComponent.KEY_PATHS) {
           const pathsValue = value as Record<string, unknown>;
           if (this.widgetConfig.multiChildCtrls !== undefined) {
@@ -124,6 +128,10 @@ export class ModalWidgetConfigComponent implements OnInit {
             });
             groups.addControl(key, pathsGroup);
           }
+        } else if (Array.isArray(value)) {
+          groups.addControl(key, new UntypedFormControl(value));
+        } else {
+          groups.addControl(key, this.generateFormGroups(value, key));
         }
 
         if (parent === ModalWidgetConfigComponent.KEY_PATHS) {

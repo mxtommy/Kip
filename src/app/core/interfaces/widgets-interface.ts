@@ -90,6 +90,9 @@ export interface IWidgetSvcConfig {
     power?: number;
   }
 
+  /** Radar widget configuration */
+  ais?: IAISRadarConfig;
+
   /** Color from KIP selection tool to use as main display color */
   color?: string;
   /** Color from KIP selection tool to use as background color */
@@ -280,6 +283,42 @@ export interface IWidgetSvcConfig {
   nextDashboard?: number;
   /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */
   playBeeps?: boolean;
+}
+
+export interface IAISRadarConfig {
+  /** Optional filter settings for AIS targets. */
+  filters?: IAISRadarFilterConfig;
+  /** Radar orientation: follow vessel course or keep north at the top. */
+  viewMode: 'course-up' | 'north-up';
+  /** List of selectable radar ranges in nautical miles. */
+  rangeRings: number[];
+  /** Zero-based index into rangeRings that selects the active range. */
+  rangeIndex: string;
+  /** Enable/disable drawing AIS motion vectors. */
+  showCogVectors: boolean;
+  /** COG projection vector duration in minutes. */
+  cogVectorsMinutes: number;
+  /** Show targets that are marked as lost. */
+  showLostTargets: boolean;
+  /** Show targets that are not yet confirmed. */
+  showUnconfirmedTargets: boolean;
+  /** Show own ship icon */
+  showSelf: boolean;
+}
+
+export interface IAISRadarFilterConfig {
+  /** Hide targets that are anchored or moored. */
+  anchoredMoored?: boolean;
+  /** Hide targets that have no collision risk. */
+  noCollisionRisk?: boolean;
+  /** Hide all AtoN targets. */
+  allAton?: boolean;
+  /** Hide all targets except SAR. */
+  allButSar?: boolean;
+  /** Hide all vessel targets. */
+  allVessels?: boolean;
+  /** Hide vessel targets matching the given vessel type keys. */
+  vesselTypes?: string[];
 }
 
 export interface IAutopilotConfig {

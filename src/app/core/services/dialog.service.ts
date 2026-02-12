@@ -9,6 +9,7 @@ import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-con
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
+import { DialogAisTargetComponent } from '../../widgets/widget-ais-radar/dialog-ais-target/dialog-ais-target.component';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +26,9 @@ export class DialogService {
       case 'upgrade-config':
         data.componentType = UpgradeConfigComponent;
         break;
+      case 'ais-target':
+        data.componentType = DialogAisTargetComponent;
+        break;
     }
 
     return this.dialog.open(DialogFrameComponent,
@@ -34,6 +38,19 @@ export class DialogService {
         width: fullscreen ? "calc(100% - 30px)" : "",
         maxWidth: fullscreen ? "100%" : "",
         maxHeight: fullscreen ? "100%" : "",
+      }
+    ).afterClosed();
+  }
+
+  public openAisDetailDialog(data: DialogComponentData): Observable<boolean> {
+    return this.dialog.open(DialogFrameComponent,
+      {
+        panelClass: 'ais-dialog-panel',
+        data: data,
+        height: "",
+        width: "",
+        maxWidth: "",
+        maxHeight: "",
       }
     ).afterClosed();
   }

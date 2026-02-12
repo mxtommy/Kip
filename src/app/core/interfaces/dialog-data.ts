@@ -10,8 +10,11 @@ export interface DialogConfirmationData {
 export interface DialogComponentData {
   title: string;
   component: string;
+  iconHref?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentType?: ComponentType<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any;
 }
 
 export interface DialogNameData {

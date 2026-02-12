@@ -13,6 +13,7 @@ import { WidgetRacerTimerComponent } from '../../widgets/widget-racer-timer/widg
 import { WidgetRacerLineComponent } from '../../widgets/widget-racer-line/widget-racer-line.component';
 import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
 import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
+import { WidgetAisRadarComponent } from '../../widgets/widget-ais-radar/widget-ais-radar.component';
 import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
 import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
@@ -136,6 +137,7 @@ export class WidgetService {
     WidgetRacerLineComponent: WidgetRacerLineComponent,
     WidgetRaceTimerComponent: WidgetRaceTimerComponent,
     WidgetPositionComponent: WidgetPositionComponent,
+    WidgetAisRadarComponent: WidgetAisRadarComponent,
     WidgetLabelComponent: WidgetLabelComponent,
     WidgetIframeComponent: WidgetIframeComponent,
     WidgetHorizonComponent: WidgetHorizonComponent,
@@ -427,6 +429,20 @@ export class WidgetService {
       requiredPlugins: ['anchoralarm'],
       selector: 'widget-anchor-alarm',
       componentClassName: 'WidgetAnchorAlarmComponent'
+    },
+    {
+      name: 'AIS Radar',
+      description: 'Marine-style AIS radar display with range rings, sweep, and interactive targets.',
+      icon: 'aisradar',
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 5,
+      defaultHeight: 8,
+      category: 'Component',
+      requiredPlugins: [],
+      optionalPlugins: ['signalk-ais-target-prioritizer'],
+      selector: 'widget-ais-radar',
+      componentClassName: 'WidgetAisRadarComponent'
     },
     {
       name: 'Embed Webpage Viewer',

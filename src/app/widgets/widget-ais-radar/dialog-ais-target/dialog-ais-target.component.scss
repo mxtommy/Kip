@@ -1,0 +1,66 @@
+@use '@angular/material' as mat;
+
+::ng-deep .ais-dialog-panel .mat-mdc-dialog-container {
+	--mat-dialog-content-padding: 0px 24px 20px 24px;
+}
+
+.ais-dialog {
+	display: grid;
+	gap: 8px;
+	color: var(--kip-contrast-color);
+}
+
+.ais-dialog-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px 14px;
+}
+
+.ais-vessel-description {
+  grid-column: span 2;
+  font-size: var(--mat-sys-body-large-size);
+}
+
+.ais-dialog-long-item {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	align-items: baseline;
+	gap: 6px;
+}
+
+.ais-dialog-long-value {
+  grid-column: span 3;
+	color: var(--kip-contrast-color);
+}
+
+.ais-dialog-item {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: baseline;
+	gap: 6px;
+}
+
+.ais-divider {
+  margin-top: 6px;
+}
+
+.ais-dialog-item mat-divider {
+  grid-column: 1 / -1;
+}
+
+.ais-dialog-item-span {
+	grid-column: span 2;
+}
+
+.ais-dialog-key {
+	color: var(--kip-contrast-dim-color);
+	letter-spacing: 0.04em;
+}
+
+.ais-dialog-value {
+	color: var(--kip-contrast-color);
+}
+
+.ais-dialog-empty {
+	color: var(--kip-contrast-color);
+}

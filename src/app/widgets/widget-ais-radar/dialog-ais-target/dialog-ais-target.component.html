@@ -1,0 +1,296 @@
+@if (target) {
+  <div class="ais-dialog mat-typography">
+    <div class="ais-dialog-grid">
+      @switch (target.type) {
+        @case ('vessel') {
+          @if (isVesselLike(target)) {
+            @let shipType = target.design?.aisShipType?.name ? `${target.design.aisShipType.name}` : ``;
+            @let length = target.design?.length?.overall ? `${target.design.length.overall}m` : `?m`;
+            @let beam = target.design?.beam ? `${target.design.beam}m` : `?m`;
+            @let dimensions = length && beam ? `${length} x ${beam}` : ``;
+            @if (target.design?.length?.overall || target.design?.beam || shipType) {
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <span class="ais-vessel-description">{{ dimensions }} {{ shipType }}</span>
+              </div>
+            }
+            @if (target.navState || target.specialManeuver) {
+              <div class="ais-dialog-long-item ais-dialog-item-span">
+                <span class="ais-dialog-key mat-subtitle-2">State</span>
+                <span class="ais-dialog-long-value mat-body-2">{{ (target.navState ? `${target.navState}` : ``) | titlecase }}{{ target.specialManeuver === 'not available' ? `` : `, ${target.specialManeuver}` }}</span>
+              </div>
+            }
+            @if (target.design?.length?.overall || target.design?.beam || shipType || target.navState || target.specialManeuver) {
+              <div class="ais-dialog-item ais-dialog-item-span ais-divider">
+                <mat-divider></mat-divider>
+              </div>
+            }
+            @if (hasClosestApproach(target.closestApproach)) {
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">Bearing</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit(target.closestApproach?.bearing) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">Range</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.range) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">CPA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.distance) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">TCPA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime(target.closestApproach?.timeTo) }}</span>
+              </div>
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <mat-divider></mat-divider>
+              </div>
+            }
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">COG</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatDirection(target.courseOverGroundTrue) }}° <span style="font-size: 10px">T</span></span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">SOG</span>
+              <span class="ais-dialog-value mat-body-2">{{ target.speedOverGround | number:'1.1-1'}} kn</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">HDG</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatDirection(target.headingTrue) }}° <span style="font-size: 10px">T</span></span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">ROT</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatRateOfTurn(target.rateOfTurn) }}</span>
+            </div>
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">IMO</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.imo) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">MMSI</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.mmsi) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">VHF Callsign</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.callsign) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">AIS Class</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.ais.class) }}</span>
+            </div>
+            <div class="ais-dialog-long-item ais-dialog-item-span">
+              <span class="ais-dialog-key mat-subtitle-2">Destination</span>
+              <span class="ais-dialog-long-value mat-body-2">{{ formatText(target.destination) }}</span>
+            </div>
+            @if (target.eta) {
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <span class="ais-dialog-key mat-subtitle-2">ETA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatText(target.eta) }}</span>
+              </div>
+            }
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item" style="grid-column: span 2;">
+              <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
+            </div>
+          }
+        }
+        @case ('sar') {
+          @if (isVesselLike(target)) {
+            @let shipType = target.design?.aisShipType?.name ? `${target.design.aisShipType.name}` : ``;
+            @let length = target.design?.length?.overall ? `${target.design.length.overall}m` : `?m`;
+            @let beam = target.design?.beam ? `${target.design.beam}m` : `?m`;
+            @let dimensions = length && beam ? `${length} x ${beam}` : ``;
+            @if (target.design?.length?.overall || target.design?.beam || shipType) {
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <span class="ais-vessel-description">{{ dimensions }} {{ shipType }}</span>
+              </div>
+            }
+            @if (target.navState || target.specialManeuver) {
+              <div class="ais-dialog-long-item ais-dialog-item-span">
+                <span class="ais-dialog-key mat-subtitle-2">State</span>
+                <span class="ais-dialog-long-value mat-body-2">{{ (target.navState ? `${target.navState}` : ``) | titlecase }}{{ target.specialManeuver === 'not available' ? `` : `, ${target.specialManeuver}` }}</span>
+              </div>
+            }
+            @if (target.design?.length?.overall || target.design?.beam || shipType || target.navState || target.specialManeuver) {
+              <div class="ais-dialog-item ais-dialog-item-span ais-divider">
+                <mat-divider></mat-divider>
+              </div>
+            }
+            @if (hasClosestApproach(target.closestApproach)) {
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">Bearing</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit(target.closestApproach?.bearing) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">Range</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.range) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">CPA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.distance) }}</span>
+              </div>
+              <div class="ais-dialog-item">
+                <span class="ais-dialog-key mat-subtitle-2">TCPA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime(target.closestApproach?.timeTo) }}</span>
+              </div>
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <mat-divider></mat-divider>
+              </div>
+            }
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">COG</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatDirection(target.courseOverGroundTrue) }}° <span style="font-size: 10px">T</span></span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">SOG</span>
+              <span class="ais-dialog-value mat-body-2">{{ target.speedOverGround | number:'1.1-1'}} kn</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">HDG</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatDirection(target.headingTrue) }}° <span style="font-size: 10px">T</span></span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">ROT</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatRateOfTurn(target.rateOfTurn) }}</span>
+            </div>
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">IMO</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.imo) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">MMSI</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.mmsi) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">VHF Callsign</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.callsign) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">AIS Class</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.ais.class) }}</span>
+            </div>
+            <div class="ais-dialog-long-item ais-dialog-item-span">
+              <span class="ais-dialog-key mat-subtitle-2">Destination</span>
+              <span class="ais-dialog-long-value mat-body-2">{{ formatText(target.destination) }}</span>
+            </div>
+            @if (target.eta) {
+              <div class="ais-dialog-item ais-dialog-item-span">
+                <span class="ais-dialog-key mat-subtitle-2">ETA</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatText(target.eta) }}</span>
+              </div>
+            }
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item" style="grid-column: span 2;">
+              <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
+            </div>
+          }
+        }
+        @case ('aton') {
+          @if (isAton(target)) {
+            <div class="ais-dialog-item ais-dialog-item-span">
+                <span class="ais-vessel-description">{{ formatText(target.name) }}</span>
+            </div>
+          <div class="ais-dialog-long-item ais-dialog-item-span">
+              <span class="ais-dialog-key mat-subtitle-2">Off Position</span>
+              <span class="ais-dialog-value mat-body-2">{{ target.offPosition ? 'Yes' : 'No' }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Type</span>
+              <span class="ais-dialog-value mat-body-2">Aid to Navigation</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Type ID</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.typeId?.toString()) }}</span>
+            </div>
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">MMSI</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.mmsi) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Status</span>
+              <span class="ais-dialog-value mat-body-2">{{ target.ais.status | titlecase}}</span>
+            </div>
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item" style="grid-column: span 2;">
+              <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
+            </div>
+          }
+        }
+        @case ('basestation') {
+          @if (isBasestation(target)) {
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Name</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.name) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">MMSI</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.mmsi) }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Status</span>
+              <span class="ais-dialog-value mat-body-2">{{ target.ais.status | titlecase}}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">AIS Class</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText(target.ais.class) }}</span>
+            </div>
+            <div class="ais-dialog-item ais-dialog-item-span">
+              <mat-divider></mat-divider>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item">
+              <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+            </div>
+            <div class="ais-dialog-item" style="grid-column: span 2;">
+              <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+} @else {
+  <div class="ais-dialog-empty">No AIS target selected.</div>
+}

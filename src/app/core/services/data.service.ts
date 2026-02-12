@@ -1,6 +1,6 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
-import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription } from 'rxjs';
-import { ISkPathData, IPathValueData, IPathMetaData, IMeta } from "../interfaces/app-interfaces";
+import { Observable, BehaviorSubject, ReplaySubject, Subject, map, combineLatest, of, interval, Subscription, filter } from 'rxjs';
+import { ISkPathData, IPathValueData, IPathMetaData, IMeta, IPathUpdateEvent } from "../interfaces/app-interfaces";
 import { ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, TState } from '../interfaces/signalk-interfaces'
 import { SignalKDeltaService } from './signalk-delta.service';
 import { cloneDeep, merge } from 'lodash-es';
@@ -82,6 +82,11 @@ export interface IDeltaUpdate {
   timestamp: number;
 }
 
+export interface IPathUpdateWithPath {
+  path: string;
+  update: IPathUpdate;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -99,6 +104,8 @@ export class DataService implements OnDestroy {
 
   // Full skMeta updates for Zones component
   private _dataServiceMeta: IPathMetaData[] = [];
+  /** Map of meta entries by path to dedupe full-tree meta updates. */
+  private _dataServiceMetaByPath = new Map<string, IPathMetaData>();
   private _isSkMetaFullTreeActive = false;
   private _dataServiceMetaSubject$ = new BehaviorSubject<IPathMetaData[]>([]);
 
@@ -106,11 +113,18 @@ export class DataService implements OnDestroy {
   private _skNotificationMsg$ = new Subject<ISignalKDataValueUpdate>();
   private _skNotificationMeta$ = new Subject<IMeta>();
   private _isReset = new Subject<boolean>();
+  private _pathUpdates$ = new Subject<IPathUpdateEvent>();
 
   // Service data variables
   private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
-  private _skData: ISkPathData[] = []; // Local array of paths containing received Signal K Data and used to source Observers
+  private _skData = new Map<string, ISkPathData>(); // Local map of paths containing received Signal K Data and used to source Observers
+  /** Full-tree cache (mutated in place); subscribers must not rely on array identity changes. */
+  private _skDataArrayCache: ISkPathData[] = [];
+  /** Path -> index lookup for `_skDataArrayCache` to enable O(1) upserts. */
+  private _skDataIndexByPath = new Map<string, number>();
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
+  /** Path -> registrations index for fast lookups during updates. */
+  private _pathRegisterByPath = new Map<string, IPathRegistration[]>();
 
   constructor() {
     // Emit Delta message update counter every second (RxJS based)
@@ -134,13 +148,15 @@ export class DataService implements OnDestroy {
     this.delta.subscribeNotificationsUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((msg: ISignalKDataValueUpdate) => {
       const cleanedPath = msg.path.replace('notifications.', 'self.');
 
-      const pathItem = this._skData.find(item => item.path == cleanedPath);
+      const pathItem = this._skData.get(cleanedPath);
       if (pathItem && pathItem.state !== (msg.value as ISignalKNotification).state) {
         pathItem.state = (msg.value as ISignalKNotification).state;
 
-        const pathRegisterItem = this._pathRegister.find(item => item.path == cleanedPath);
-        if (pathRegisterItem) {
-          pathRegisterItem._pathState$.next(pathItem.state);
+        const pathRegisterItems = this._pathRegisterByPath.get(cleanedPath);
+        if (pathRegisterItems?.length) {
+          for (const registration of pathRegisterItems) {
+            registration._pathState$.next(pathItem.state);
+          }
         }
       }
 
@@ -167,7 +183,9 @@ export class DataService implements OnDestroy {
   }
 
   private resetSignalKData() {
-    this._skData = [];
+    this._skData = new Map<string, ISkPathData>();
+    this._skDataArrayCache = [];
+    this._skDataIndexByPath.clear();
     this._selfUrn = 'self';
     this._isReset.next(true);
   }
@@ -188,11 +206,22 @@ export class DataService implements OnDestroy {
       // Use splice to remove the item without changing the entire
       // array reference.
       this._pathRegister.splice(index, 1);
+
+      const registrations = this._pathRegisterByPath.get(path);
+      if (registrations) {
+        const updated = registrations.filter(item => item !== registration);
+        if (updated.length) {
+          this._pathRegisterByPath.set(path, updated);
+        } else {
+          this._pathRegisterByPath.delete(path);
+        }
+      }
     }
   }
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
-    const matchingPaths = this._pathRegister.find(item => item.path === path && item.source === source);
+    const registrations = this._pathRegisterByPath.get(path);
+    const matchingPaths = registrations?.find(item => item.path === path && item.source === source);
     if (matchingPaths) {
       return matchingPaths.pathDataUpdate$;
     }
@@ -210,9 +239,9 @@ export class DataService implements OnDestroy {
     };
     let metaUpdate: ISkMetadata = null;
 
-    const dataPath = this._skData.find(item => item.path == path);
+    const dataPath = this._skData.get(path);
 
-    if (this._skData.length && dataPath) {
+    if (dataPath) {
       currentValue = source === 'default' ? dataPath.pathValue : dataPath.sources?.[source]?.sourceValue ?? null;
       currentTimestamp = source === 'default' ? dataPath.pathTimestamp : dataPath.sources?.[source]?.sourceTimestamp ?? null;
       currentDateTimestamp = currentTimestamp ? new Date(currentTimestamp) : null;
@@ -245,7 +274,55 @@ export class DataService implements OnDestroy {
     newPathSubject.combinedSub = combined$.subscribe(value => newPathSubject.pathDataUpdate$.next(value));
 
     this._pathRegister.push(newPathSubject);
+    if (registrations) {
+      registrations.push(newPathSubject);
+    } else {
+      this._pathRegisterByPath.set(path, [newPathSubject]);
+    }
     return newPathSubject.pathDataUpdate$;
+  }
+
+  /**
+   * Subscribe to all child paths under a prefix (supports wildcard-style prefixes like 'self.electric.battery.*').
+   *
+   * @param {string} pathPrefix Path prefix to match. Use either a literal prefix (e.g. 'self.electric.battery.')
+   * or a wildcard suffix (e.g. 'self.electric.battery.*'). The prefix is normalized to end with a '.'.
+   * @param {string} source Signal K source to read from. Use 'default' to read the pathValue (server priority).
+   * When a specific source is provided, the matching path will emit source-specific values when available.
+   *
+   * @returns Observable emitting the matched path and its current update payload.
+   *
+   * @example
+   * // Receive all battery child updates under self.electric.battery
+  * dataService.subscribePathTree('self.electric.battery.*')
+   *   .subscribe(({ path, update }) => console.log(path, update.data.value));
+   */
+  public subscribePathTree(pathPrefix: string, source = 'default'): Observable<IPathUpdateWithPath> {
+    const normalizedPrefix = this.normalizePathPrefix(pathPrefix);
+
+    return new Observable<IPathUpdateWithPath>(subscriber => {
+      for (const item of this._skData.values()) {
+        if (item.path.startsWith(normalizedPrefix)) {
+          subscriber.next({
+            path: item.path,
+            update: this.buildPathUpdate(item, source)
+          });
+        }
+      }
+
+      const sub = this._pathUpdates$
+        .pipe(filter(update => update.fullPath.startsWith(normalizedPrefix)))
+        .subscribe(update => {
+          const item = this._skData.get(update.fullPath);
+          if (!item) return;
+          subscriber.next({
+            path: item.path,
+            update: this.buildPathUpdate(item, source)
+          });
+        });
+
+      return () => sub.unsubscribe();
+    }).pipe(takeUntilDestroyed(this._destroyRef));
   }
 
   /**
@@ -275,9 +352,9 @@ export class DataService implements OnDestroy {
     const updatePath = this.setPathContext(dataPath.context, dataPath.path);
 
     // Find the path item in _skData or create a new one if it doesn't exist
-    let pathItem = this._skData.find(pathObject => pathObject.path == updatePath);
+    let pathItem = this._skData.get(updatePath);
     if (!pathItem) {
-      let pathType: string = typeof(dataPath.value);
+      let pathType: string = dataPath.value === null ? undefined : typeof (dataPath.value);
       if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
         pathType = "Date";
       }
@@ -297,7 +374,7 @@ export class DataService implements OnDestroy {
         }
       };
 
-      this._skData.push(pathItem);
+      this._skData.set(updatePath, pathItem);
     } else {
       // Update the existing path item
       if (pathItem.defaultSource === undefined) {
@@ -318,11 +395,11 @@ export class DataService implements OnDestroy {
     }
 
     // Update path register Subjects with new data
-    const pathRegisterItems = this._pathRegister.filter(item => item.path === updatePath);
+    const pathRegisterItems = this._pathRegisterByPath.get(updatePath) ?? [];
     if (pathRegisterItems.length) {
       const pathData: IPathData = {
         value: pathItem.pathValue,
-        timestamp: new Date(pathItem.pathTimestamp)
+        timestamp: pathItem.pathTimestamp ? new Date(pathItem.pathTimestamp) : null
       };
 
       const defaultSource = pathRegisterItems.find(item => item.source === "default");
@@ -338,8 +415,15 @@ export class DataService implements OnDestroy {
 
     // Push full tree if data-browser or Zones component are observing
     if (this._isSkDataFullTreeActive) {
-      this._skDataSubject$.next(this._skData);
+      this.upsertSkDataCache(pathItem);
+      this._skDataSubject$.next(this._skDataArrayCache);
     }
+
+    // Emit post-processed path update
+    this._pathUpdates$.next({
+      fullPath: updatePath,
+      update: dataPath
+    });
   }
 
   private setMeta(meta: IMeta): void {
@@ -347,7 +431,7 @@ export class DataService implements OnDestroy {
       this._skNotificationMeta$.next(meta);
     } else {
       const metaPath = this.setPathContext(meta.context, meta.path);
-      let pathObject = this._skData.find(pathObject => pathObject.path === metaPath);
+      let pathObject = this._skData.get(metaPath);
 
       if (!pathObject) { // not in our list yet. The Meta update came before the Source update.
         pathObject = {
@@ -360,7 +444,11 @@ export class DataService implements OnDestroy {
           sources: {},
           meta: meta.meta ? cloneDeep(meta.meta) : null,
         };
-        this._skData.push(pathObject);
+        this._skData.set(metaPath, pathObject);
+        if (this._isSkDataFullTreeActive) {
+          this.upsertSkDataCache(pathObject);
+          this._skDataSubject$.next(this._skDataArrayCache);
+        }
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
           pathObject.type = typeFromUnits(meta.meta.units);
@@ -370,15 +458,18 @@ export class DataService implements OnDestroy {
         pathObject.meta = merge({}, pathObject.meta, meta.meta);
       }
 
-      const entry = this._pathRegister.find(entry => entry.path === metaPath);
-      if (entry) {
-        // Emit a snapshot to guarantee a new reference for downstream consumers.
-        entry.pathMeta$.next(pathObject.meta ? cloneDeep(pathObject.meta) : null);
+      const entries = this._pathRegisterByPath.get(metaPath);
+      if (entries?.length) {
+        for (const entry of entries) {
+          // Emit a snapshot to guarantee a new reference for downstream consumers.
+          entry.pathMeta$.next(pathObject.meta ? cloneDeep(pathObject.meta) : null);
+        }
       }
 
       // If full meta tree is active, push the full tree
       if (this._isSkMetaFullTreeActive) {
-        this._dataServiceMeta.push({ path: metaPath, meta: pathObject.meta });
+        this._dataServiceMetaByPath.set(metaPath, { path: metaPath, meta: pathObject.meta });
+        this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
         this._dataServiceMetaSubject$.next(this._dataServiceMeta);
       }
     }
@@ -387,9 +478,13 @@ export class DataService implements OnDestroy {
   public startSkMetaFullTree(): Observable<IPathMetaData[]> {
     this._isSkMetaFullTreeActive = true;
 
-    this._dataServiceMeta = this._skData
-      .filter(item => item.meta !== undefined && item.path.startsWith('self.'))
-      .map(item => ({ path: item.path, meta: item.meta }));
+    this._dataServiceMetaByPath.clear();
+    for (const item of this.getSkDataArray()) {
+      if (item.meta !== undefined && item.path.startsWith('self.')) {
+        this._dataServiceMetaByPath.set(item.path, { path: item.path, meta: item.meta });
+      }
+    }
+    this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
 
     this._dataServiceMetaSubject$.next(this._dataServiceMeta);
     return this._dataServiceMetaSubject$;
@@ -397,18 +492,50 @@ export class DataService implements OnDestroy {
 
   public stopSkMetaFullTree(): void {
     this._isSkMetaFullTreeActive = false;
-    this._dataServiceMetaSubject$.next(null);
-    this._dataServiceMeta = null;
+    this._dataServiceMetaSubject$.next([]);
+    this._dataServiceMeta = [];
+    this._dataServiceMetaByPath.clear();
   }
 
   public startSkDataFullTree(): Observable<ISkPathData[]> {
     this._isSkDataFullTreeActive = true;
-    this._skDataSubject$.next(this._skData);
+    this.refreshSkDataCache();
+    this._skDataSubject$.next(this._skDataArrayCache);
     return this._skDataSubject$;
+  }
+
+  private getSkDataArray(): ISkPathData[] {
+    return this._isSkDataFullTreeActive ? this._skDataArrayCache : Array.from(this._skData.values());
+  }
+
+  /**
+   * Returns a stream of post-processed Signal K path updates.
+   * Each event includes a normalized fullPath and the raw delta update payload.
+   */
+  public observePathUpdates(): Observable<IPathUpdateEvent> {
+    return this._pathUpdates$.asObservable();
   }
 
   public stopSkDataFullTree(): void {
     this._isSkDataFullTreeActive = false;
+    this._skDataArrayCache = [];
+    this._skDataIndexByPath.clear();
+  }
+
+  private refreshSkDataCache(): void {
+    this._skDataArrayCache = Array.from(this._skData.values());
+    this._skDataIndexByPath.clear();
+    this._skDataArrayCache.forEach((item, index) => this._skDataIndexByPath.set(item.path, index));
+  }
+
+  private upsertSkDataCache(pathItem: ISkPathData): void {
+    const index = this._skDataIndexByPath.get(pathItem.path);
+    if (index === undefined) {
+      this._skDataIndexByPath.set(pathItem.path, this._skDataArrayCache.length);
+      this._skDataArrayCache.push(pathItem);
+    } else {
+      this._skDataArrayCache[index] = pathItem;
+    }
   }
 
   private setSelfUrn(value: string) {
@@ -426,19 +553,59 @@ export class DataService implements OnDestroy {
   }
 
   /**
+   * Normalizes a prefix to a canonical dot-terminated form for fast startsWith checks.
+   * Accepts wildcard forms like 'self.electric.battery.*' or 'self.electric.battery*'.
+   */
+  private normalizePathPrefix(pathPrefix: string): string {
+    let normalized = pathPrefix?.trim() ?? '';
+    if (normalized.endsWith('.*')) {
+      normalized = normalized.slice(0, -1);
+    } else if (normalized.endsWith(':*')) {
+      normalized = normalized.slice(0, -1);
+    } else if (normalized.endsWith('*')) {
+      normalized = normalized.slice(0, -1);
+    }
+
+    if (normalized && !normalized.endsWith('.') && !normalized.endsWith(':')) {
+      normalized = `${normalized}.`;
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Builds a path update payload from cached Signal K path data.
+   * @param {ISkPathData} pathItem Cached path object from _skData.
+   * @param {string} source Source to read from ('default' uses pathValue).
+   */
+  private buildPathUpdate(pathItem: ISkPathData, source: string): IPathUpdate {
+    const useDefault = source === 'default';
+    const value = useDefault ? pathItem.pathValue : pathItem.sources?.[source]?.sourceValue ?? null;
+    const timestamp = useDefault ? pathItem.pathTimestamp : pathItem.sources?.[source]?.sourceTimestamp ?? null;
+
+    return {
+      data: {
+        value,
+        timestamp: timestamp ? new Date(timestamp) : null
+      },
+      state: pathItem.state || States.Normal
+    };
+  }
+
+  /**
    * Returns a list of all known Signal K paths of the specified type (sting or numeric)
    * @param valueType data type: string or numeric
    * @param selfOnly if true, returns only paths the begins with "self". If false or not specified, everything known
    * @return array of Signal K path string
    */
   public getPathsByType(valueType: string, selfOnly?: boolean): string[] {
-    return this._skData
+    return this.getSkDataArray()
       .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
       .map(item => item.path);
   }
 
   public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
-    return this._skData
+    return this.getSkDataArray()
       .filter(item => {
         const isRuntimeType = ['string', 'number', 'boolean', 'object', 'undefined', 'function', 'symbol', 'bigint', 'Date']
           .includes(valueType);
@@ -456,11 +623,11 @@ export class DataService implements OnDestroy {
   }
 
   public getPathObject(path: string): ISkPathData | null {
-    return cloneDeep(this._skData.find(pathObject => pathObject.path === path)) || null;
+    return cloneDeep(this._skData.get(path)) || null;
   }
 
   public getPathUnitType(path: string): string | null {
-    return this._skData.find(pathObject => pathObject.path === path)?.meta?.units || null;
+    return this._skData.get(path)?.meta?.units || null;
   }
 
   /**
@@ -508,7 +675,7 @@ export class DataService implements OnDestroy {
    * - The returned Observable completes when the path is unsubscribed via {@link unsubscribePath} (subjects are completed).
    */
   public getPathMetaObservable(path: string): Observable<ISkMetadata | null> {
-    const registration = this._pathRegister.find(registration => registration.path == path);
+    const registration = this._pathRegisterByPath.get(path)?.[0];
     return registration?.pathMeta$.asObservable() || of(null);
   }
 
@@ -520,7 +687,7 @@ export class DataService implements OnDestroy {
    * @returns {ISkMetadata | null} The metadata object for the given path if found, otherwise null.
    */
   public getPathMeta(path: string): ISkMetadata | null {
-    return this._skData.find(item => item.path === path)?.meta || null;
+    return this._skData.get(path)?.meta || null;
   }
 
   public isResetService(): Observable<boolean> {
@@ -534,5 +701,6 @@ export class DataService implements OnDestroy {
     this._isReset?.complete();
     this._skDataSubject$?.complete();
     this._dataServiceMetaSubject$?.complete();
+    this._pathUpdates$?.complete();
   }
 }

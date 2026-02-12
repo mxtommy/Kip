@@ -420,10 +420,220 @@ body {
     transform: scale(1);
   }
 }
+/* =====================================================================
+   D3 AIS Radar widget styles
+   ===================================================================== */
+widget-ais-radar {
+  display: block;
+  width: 100%;
+  height: 100%;
 
-@keyframes load {
-  100% {
+  .ais-radar-container {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    position: relative;
+  }
+
+  .ais-radar {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background: var(--kip-card-background-color);
+  }
+
+  .radar-rings .ring {
+    fill: none;
+    stroke-width: 1.75;
+  }
+
+  .radar-rings .ring-label {
+    font-size: 14px;
+    font-weight: 300;
+    fill: var(--kip-contrast-dim-color);
+    opacity: 0.75;
+  }
+
+  .ais-radar-mode-toggle-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dimmer-color),
+    ));
+  }
+
+   .ais-mode-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ais-mode-icon-bg {
+    fill: var(--kip-widget-card-background-color);
+    stroke: var(--kip-contrast-dim-color);
+    stroke-width: 2;
+  }
+
+  .ais-mode-icon-letter {
+    font-size: 38px;
+    font-weight: 900;
+    text-anchor: middle;
+    dominant-baseline: middle;
+
+  }
+
+  .ais-mode-icon-chev {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ais-mode-icon-vessel {
+    transform-origin: 20px 20px;
+    transform: rotate(45deg);
+  }
+
+  .ais-radar-range-button {
+    position: absolute;
+    right: 12px;
+    z-index: 2;
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dimmer-color),
+    ));
+  }
+
+  .ais-radar-range-plus {
+    top: 64px;
+  }
+
+  .ais-radar-range-minus {
+    top: 116px;
+  }
+
+  .ais-radar-menu-anchor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
     opacity: 0;
-    transform: scale(1);
+    pointer-events: none;
+  }
+
+  .ais-radar-filter-button {
+    top: 12px;
+    left: 12px;
+    right: auto;
+  }
+
+  .ais-radar-filter-button.is-active {
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dim-color),
+      small-foreground-color: var(--kip-card-background-color),
+    ));
+  }
+
+  .ais-radar-collision-button {
+    top: 64px;
+    left: 12px;
+    right: auto;
+  }
+
+  .ais-radar-collision-button.is-active {
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dim-color),
+      small-foreground-color: var(--kip-card-background-color),
+    ));
+  }
+
+  .radar-rings .radar-ownship .ownship-shape {
+    fill: var(--kip-contrast-color);
+    stroke: var(--kip-contrast-color);
+    stroke-width: 1;
+  }
+
+  .radar-vectors line {
+    stroke-width: 2;
+    opacity: 1;
+    stroke-dasharray: 15, 7;
+  }
+
+  .motion-vector {
+    stroke: var(--kip-contrast-dim-color);
+  }
+
+  .target {
+    cursor: pointer;
+  }
+
+  .target-shape {
+    stroke-width: 1.4;
+    stroke: var(--kip-contrast-color);
+  }
+
+  .target-label {
+    font-size: 7px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    fill: var(--kip-contrast-color);
+  }
+
+  .status-confirmed .target-shape {
+    fill: var(--kip-green-color);
+  }
+
+  .status-unconfirmed .target-shape {
+    fill: none;
+  }
+
+  .status-lost .target-shape {
+    fill: none;
+    stroke-dasharray: 4 3;
+  }
+
+  .type-aton .target-shape {
+    fill: var(--kip-green-color);
+    stroke: var(--kip-green-color);
+  }
+
+  .selected-ring {
+    fill: none;
+    stroke: var(--kip-contrast-color);
+    stroke-width: 4;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 6px var(--kip-green-color));
+  }
+
+  .ais-filter-menu-header {
+    font-weight: 600;
+    opacity: 0.9;
+  }
+
+  .ais-filter-check {
+    margin-right: 8px;
+  }
+
+  .ais-filter-check,
+  .ais-filter-check-placeholder {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .widgetOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    right: 0;
+    bottom: 0;
+    color: transparent;
+    z-index: 21;
   }
 }
