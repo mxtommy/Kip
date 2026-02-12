@@ -286,6 +286,8 @@ export interface IWidgetSvcConfig {
 }
 
 export interface IAISRadarConfig {
+  /** Optional filter settings for AIS targets. */
+  filters?: IAISRadarFilterConfig;
   /** Radar orientation: follow vessel course or keep north at the top. */
   viewMode: 'course-up' | 'north-up';
   /** List of selectable radar ranges in nautical miles. */
@@ -302,6 +304,21 @@ export interface IAISRadarConfig {
   showUnconfirmedTargets: boolean;
   /** Show own ship icon */
   showSelf: boolean;
+}
+
+export interface IAISRadarFilterConfig {
+  /** Hide targets that are anchored or moored. */
+  anchoredMoored?: boolean;
+  /** Hide targets that have no collision risk. */
+  noCollisionRisk?: boolean;
+  /** Hide all AtoN targets. */
+  allAton?: boolean;
+  /** Hide all targets except SAR. */
+  allButSar?: boolean;
+  /** Hide all vessel targets. */
+  allVessels?: boolean;
+  /** Hide vessel targets matching the given vessel type keys. */
+  vesselTypes?: string[];
 }
 
 export interface IAutopilotConfig {

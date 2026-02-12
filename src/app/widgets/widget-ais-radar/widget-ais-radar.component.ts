@@ -121,6 +121,14 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     enableTimeout: false,
     dataTimeout: 5,
     ais: {
+      filters: {
+        anchoredMoored: false,
+        noCollisionRisk: false,
+        allAton: false,
+        allButSar: false,
+        allVessels: false,
+        vesselTypes: []
+      },
       viewMode: 'course-up',
       rangeRings: [1, 3, 6, 12, 24, 48],
       rangeIndex: 3,
@@ -175,6 +183,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRenderSize: RadarSize | null = null;
   private readonly hitRadiusPx = 28;
   private lastCollisionDebugSignature: string | null = null;
+  private filtersInitialized = false;
   private readonly filterState = signal<RadarFilterState>({
     anchoredMoored: false,
     noCollisionRisk: false,
@@ -213,6 +222,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       if (!size || !cfg || !theme) return;
       untracked(() => {
         this.renderState = { size, cfg, theme, targets, ownShip };
+        this.applyInitialFilters(cfg);
       });
       this.scheduleRender();
     });
@@ -495,6 +505,21 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       default:
         return `${shortKey.charAt(0).toUpperCase()}${shortKey.slice(1)}`;
     }
+  }
+
+  private applyInitialFilters(cfg: IWidgetSvcConfig): void {
+    if (this.filtersInitialized) return;
+    const filters = cfg.ais?.filters;
+    if (!filters) return;
+    this.filtersInitialized = true;
+    this.filterState.set({
+      anchoredMoored: filters.anchoredMoored ?? false,
+      noCollisionRisk: filters.noCollisionRisk ?? false,
+      allAton: filters.allAton ?? false,
+      allButSar: filters.allButSar ?? false,
+      allVessels: filters.allVessels ?? false,
+      vesselTypes: new Set((filters.vesselTypes ?? []) as VesselIconKey[])
+    });
   }
 
   private resolveRingCountForRange(rangeNm: number): number {
