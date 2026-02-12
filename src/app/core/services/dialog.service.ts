@@ -9,7 +9,7 @@ import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-con
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
-import { DialogAisTargetComponent } from '../components/dialog-ais-target/dialog-ais-target.component';
+import { DialogAisTargetComponent } from '../../widgets/widget-ais-radar/dialog-ais-target/dialog-ais-target.component';
 
 @Injectable({
   providedIn: 'root'

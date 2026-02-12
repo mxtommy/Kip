@@ -8,7 +8,7 @@ import { IKipResizeEvent, KipResizeObserverDirective } from '../../core/directiv
 import { MatButtonModule } from '@angular/material/button';
 import { AisAton, AisProcessingService, AisSar, AisTrack, AisVessel, Position } from '../../core/services/ais-processing.service';
 import { DialogService } from '../../core/services/dialog.service';
-import { DialogAisTargetComponent } from '../../core/components/dialog-ais-target/dialog-ais-target.component';
+import { DialogAisTargetComponent } from './dialog-ais-target/dialog-ais-target.component';
 import { UnitsService } from '../../core/services/units.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from '@angular/material/icon';

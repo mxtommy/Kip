@@ -440,6 +440,7 @@ export class WidgetService {
       defaultHeight: 8,
       category: 'Component',
       requiredPlugins: [],
+      optionalPlugins: ['signalk-ais-target-prioritizer'],
       selector: 'widget-ais-radar',
       componentClassName: 'WidgetAisRadarComponent'
     },
