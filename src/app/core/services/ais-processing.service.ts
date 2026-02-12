@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
 const AIS_DEBUG = false;
+const THROTTLE_MS = 250;
 
 type AisClass = 'A' | 'B' | undefined;
 type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
@@ -139,9 +140,11 @@ export class AisProcessingService {
 
   private readonly _targets = signal<AisTrack[]>([]);
   private readonly _ownShip = signal<OwnShipState>({});
+  private readonly _hasCollisionRiskData = signal(false);
 
   public readonly targets = this._targets.asReadonly();
   public readonly ownShip = this._ownShip.asReadonly();
+  public readonly hasCollisionRiskData = this._hasCollisionRiskData.asReadonly();
 
   public getBearingTrue(from: Position, to: Position): number | null {
     if (
@@ -171,7 +174,7 @@ export class AisProcessingService {
       .subscribe(event => this.handleOwnShipTreeUpdate(event));
 
     this.targetsDirty$
-      .pipe(throttleTime(250, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
+      .pipe(throttleTime(THROTTLE_MS, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.flushTargetsSignal());
 
   }
@@ -595,7 +598,14 @@ export class AisProcessingService {
   }
 
   private flushTargetsSignal(): void {
-    this._targets.set(Array.from(this.tracks.values()).filter(track => Boolean(track.mmsi) || Boolean(track.position)));
+    const nextTargets = Array.from(this.tracks.values()).filter(track => Boolean(track.mmsi) || Boolean(track.position));
+    const hasCollisionRiskData = nextTargets.some(track => {
+      if (!this.isVesselLike(track)) return false;
+      const closest = track.closestApproach ?? {};
+      return Object.prototype.hasOwnProperty.call(closest, 'collisionRiskRating');
+    });
+    this._targets.set(nextTargets);
+    this._hasCollisionRiskData.set(hasCollisionRiskData);
     if (AIS_DEBUG) {
       console.debug('[AIS] flush', { count: this.tracks.size });
     }

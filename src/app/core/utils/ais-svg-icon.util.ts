@@ -35,13 +35,16 @@ export const DEFAULT_SVG_ICON_COLORS: SvgIconColors = {
   stroke: '#50505f'
 };
 
-const DEFAULT_MOVING_SIZE_PX = 24;
-const DEFAULT_FIXED_SIZE_PX = 24;
+const DEFAULT_ICON_SIZE_PX = 24;
 const DEFAULT_STROKE_WIDTH = 1.6;
 const DEFAULT_UNCONFIRMED_FILL = '#e6e6e6';
 const DEFAULT_UNCONFIRMED_OPACITY = 0.15;
 const DEFAULT_FILL_OPACITY = 1;
 const DEFAULT_STROKE_OPACITY = 1;
+export const COLLISION_RISK_HIGH_THRESHOLD = 15000;
+export const COLLISION_RISK_LOW_THRESHOLD = 25000;
+const AURA_OPACITY = 0.9;
+const AURA_SIZE_MULTIPLIER = 1.25;
 
 export function applySvgIconColors(svg: string, colors: SvgIconColors): string {
   return svg
@@ -51,7 +54,7 @@ export function applySvgIconColors(svg: string, colors: SvgIconColors): string {
 
 export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
   const baseSize = input.baseSizePx
-    ?? (input.targetKind === 'fixed' ? DEFAULT_FIXED_SIZE_PX : DEFAULT_MOVING_SIZE_PX);
+    ?? DEFAULT_ICON_SIZE_PX;
   const unconfirmedFill = input.unconfirmedFill ?? DEFAULT_UNCONFIRMED_FILL;
   const unconfirmedOpacity = input.unconfirmedOpacity ?? DEFAULT_UNCONFIRMED_OPACITY;
 
@@ -79,7 +82,7 @@ export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
 
   if (input.targetKind === 'moving' && collisionRisk !== 'none') {
     auraColor = collisionRisk === 'high' ? 'red' : 'yellow';
-    auraOpacity = 0.9;
+    auraOpacity = AURA_OPACITY;
     return {
       fill,
       stroke,
@@ -88,7 +91,7 @@ export function buildAisIconTheme(input: AisIconThemeInput): AisIconTheme {
       fillOpacity,
       strokeOpacity,
       strokeWidth,
-      sizePx: Math.round(baseSize * 1.25)
+      sizePx: Math.round(baseSize * AURA_SIZE_MULTIPLIER)
     };
   }
 
@@ -153,8 +156,8 @@ export function buildThemedSvgIconOptions(svg: string, theme: AisIconTheme) {
 
 function resolveCollisionRiskFactor(rating?: number): AisIconCollisionRisk {
   if (typeof rating !== 'number' || !Number.isFinite(rating)) return 'none';
-  if (rating < 15000) return 'high';
-  if (rating < 25000) return 'low';
+  if (rating < COLLISION_RISK_HIGH_THRESHOLD) return 'high';
+  if (rating < COLLISION_RISK_LOW_THRESHOLD) return 'low';
   return 'none';
 }
 

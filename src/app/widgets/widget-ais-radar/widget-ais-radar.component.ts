@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { resolveIconKey, resolveOwnShipIconDataUrl, resolveThemedIconDataUrl, VESSEL_ICON_KEYS, VesselIconKey } from '../../core/utils/ais-icon-registry';
+import { COLLISION_RISK_HIGH_THRESHOLD, COLLISION_RISK_LOW_THRESHOLD } from '../../core/utils/ais-svg-icon.util';
 
 type ViewMode = 'north-up' | 'course-up';
 type RadarFilterKey = 'anchoredMoored' | 'noCollisionRisk' | 'allAton' | 'allButSar' | 'allVessels';
@@ -78,6 +79,23 @@ interface RingCache {
   labels: { key: string; value: number; x: number; y: number }[];
 }
 
+interface RenderSignature {
+  sizeKey: string;
+  viewMode: ViewMode;
+  rangeIndex: number;
+  rangesKey: string;
+  showSelf: boolean;
+  showCogVectors: boolean;
+  showLostTargets: boolean;
+  showUnconfirmedTargets: boolean;
+  filtersKey: string;
+  selectedId: string | null;
+  targetsRef: AisTrack[];
+  ownShipRef: RenderState['ownShip'];
+  themeRef: ITheme;
+  color: string | undefined;
+}
+
 interface TargetMenuItem {
   id: string;
   label: string;
@@ -105,6 +123,7 @@ interface RadarFilterState {
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private static readonly TARGET_ICON_SIZE_PX = 16;
   private static readonly OWN_SHIP_ICON_SIZE_PX = 84;
+  private static readonly HIT_RADIUS_PX = 28;
 
   public id = input.required<string>();
   public type = input.required<string>();
@@ -154,7 +173,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return this.localViewMode() ?? (this.runtime.options()?.ais?.viewMode ?? 'course-up');
   });
   protected readonly effectiveRangeIndex = computed<number>(() => {
-    const cfgIndex = Number(this.runtime.options()?.ais?.rangeIndex ?? 0);
+    const cfgIndex = this.resolveRangeIndex(this.runtime.options()?.ais);
     const ranges = this.runtime.options()?.ais?.rangeRings ?? [3, 6, 12, 24, 48];
     const maxIndex = Math.max(0, ranges.length - 1);
     const index = this.localRangeIndex() ?? cfgIndex;
@@ -182,9 +201,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRenderTargets: RenderTarget[] = [];
   private lastRenderScale = 1;
   private lastRenderSize: RadarSize | null = null;
-  private readonly hitRadiusPx = 28;
-  private lastCollisionDebugSignature: string | null = null;
+  private readonly hitRadiusPx = WidgetAisRadarComponent.HIT_RADIUS_PX;
   private lastFiltersSignature: string | null = null;
+  private lastRenderSignature: RenderSignature | null = null;
   private readonly filterState = signal<RadarFilterState>({
     anchoredMoored: false,
     noCollisionRisk: false,
@@ -204,13 +223,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       || filters.vesselTypes.size > 0;
   });
 
-  protected readonly hasCollisionRiskData = computed(() => {
-    return this.ais.targets().some(track => {
-      if (!this.isVesselLike(track)) return false;
-      const closest = track.closestApproach ?? {};
-      return Object.prototype.hasOwnProperty.call(closest, 'collisionRiskRating');
-    });
-  });
+  protected readonly hasCollisionRiskData = this.ais.hasCollisionRiskData;
 
   constructor() {
     this.loadOwnShipIcon();
@@ -302,6 +315,44 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const targetRotation = viewMode === 'course-up'
       ? (ownCog ?? ownHeading ?? 0)
       : 0;
+    const rotationPending = this.viewRotationSmoothed !== null
+      && Math.abs(this.shortestAngleDelta(this.viewRotationSmoothed, targetRotation)) > 0.5;
+    const filtersKey = this.buildFilterStateSignature(this.filterState());
+    const signature: RenderSignature = {
+      sizeKey: `${width}x${height}`,
+      viewMode,
+      rangeIndex,
+      rangesKey: availableRanges.join(','),
+      showSelf: radarCfg.showSelf ?? true,
+      showCogVectors: radarCfg.showCogVectors ?? true,
+      showLostTargets: radarCfg.showLostTargets ?? true,
+      showUnconfirmedTargets: radarCfg.showUnconfirmedTargets ?? true,
+      filtersKey,
+      selectedId: this.selectedId(),
+      targetsRef: targets,
+      ownShipRef: ownShip,
+      themeRef: theme,
+      color: cfg.color
+    };
+    const last = this.lastRenderSignature;
+    if (!rotationPending && last
+      && last.sizeKey === signature.sizeKey
+      && last.viewMode === signature.viewMode
+      && last.rangeIndex === signature.rangeIndex
+      && last.rangesKey === signature.rangesKey
+      && last.showSelf === signature.showSelf
+      && last.showCogVectors === signature.showCogVectors
+      && last.showLostTargets === signature.showLostTargets
+      && last.showUnconfirmedTargets === signature.showUnconfirmedTargets
+      && last.filtersKey === signature.filtersKey
+      && last.selectedId === signature.selectedId
+      && last.targetsRef === signature.targetsRef
+      && last.ownShipRef === signature.ownShipRef
+      && last.themeRef === signature.themeRef
+      && last.color === signature.color) {
+      return;
+    }
+    this.lastRenderSignature = signature;
     const viewRotation = viewMode === 'course-up'
       ? this.smoothRotation(targetRotation)
       : 0;
@@ -536,6 +587,18 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private buildFilterStateSignature(filters: RadarFilterState): string {
+    const vesselTypes = [...filters.vesselTypes].sort();
+    return JSON.stringify({
+      anchoredMoored: filters.anchoredMoored,
+      noCollisionRisk: filters.noCollisionRisk,
+      allAton: filters.allAton,
+      allButSar: filters.allButSar,
+      allVessels: filters.allVessels,
+      vesselTypes
+    });
+  }
+
   private resolveRingCountForRange(rangeNm: number): number {
     const candidates = [3];
     return candidates.find(count => this.isNiceStep(rangeNm / count)) ?? 4;
@@ -544,6 +607,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private isNiceStep(step: number): boolean {
     const niceSteps = [0.5, 1, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25];
     return niceSteps.some(value => Math.abs(step - value) < 1e-6);
+  }
+
+  private resolveRangeIndex(cfg: IWidgetSvcConfig['ais'] | undefined): number {
+    return cfg ? Number(cfg.rangeIndex) : 0;
   }
 
   private buildTargets(
@@ -578,19 +645,24 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const results: RenderTarget[] = [];
     for (const track of tracks) {
-      if (!track.position || !this.hasValidPosition(track.position)) continue;
       if (track.ais.status === 'remove') {
         this.targetCache.delete(track.id);
         this.iconCache.delete(track.id);
         if (this.selectedId() === track.id) {
           this.selectedId.set(null);
         }
-        continue;
       }
-      if (track.ais.status === 'lost' && !showLost) continue;
-      if (track.ais.status === 'unconfirmed' && !showUnconfirmed) continue;
-      if (this.shouldFilterTarget(track)) continue;
+    }
 
+    const candidates = tracks.filter(track => {
+      if (track.ais.status === 'remove') return false;
+      if (track.ais.status === 'lost' && !showLost) return false;
+      if (track.ais.status === 'unconfirmed' && !showUnconfirmed) return false;
+      if (!track.position || !this.hasValidPosition(track.position)) return false;
+      return !this.shouldFilterTarget(track);
+    });
+
+    for (const track of candidates) {
       const signature = this.buildTrackSignature(track);
       let cached = this.targetCache.get(track.id);
       if (!cached || cached.signature !== signature) {
@@ -1033,8 +1105,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const rating = track.closestApproach?.collisionRiskRating;
     const numericRating = typeof rating === 'number' ? rating : Number(rating);
     if (!Number.isFinite(numericRating)) return '#50505f';
-    if (numericRating < 15000) return 'red';
-    if (numericRating < 25000) return 'yellow';
+    if (numericRating < COLLISION_RISK_HIGH_THRESHOLD) return 'red';
+    if (numericRating < COLLISION_RISK_LOW_THRESHOLD) return 'yellow';
     return '#50505f';
   }
 
@@ -1089,7 +1161,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     if (rating === null || rating === undefined) return true;
     const numericRating = typeof rating === 'number' ? rating : Number(rating);
     if (!Number.isFinite(numericRating)) return true;
-    return numericRating >= 25000;
+    return numericRating >= COLLISION_RISK_LOW_THRESHOLD;
   }
 
   private resolveVesselIconKey(track: AisTrack): VesselIconKey | null {
