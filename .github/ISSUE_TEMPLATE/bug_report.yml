@@ -65,7 +65,7 @@ body:
     id: bug-description
     attributes:
       label: Bug Description
-      description: A clear and concise description of what the bug is: What did you expect , what actually happened and any other context about the problem here, including screenshots, logs, or error messages.
+      description: A clear and concise description of what the bug is - What did you expect, what actually happened and any other context about the problem here, including screenshots, logs, or error messages.
       placeholder: What happened?
     validations:
       required: true
