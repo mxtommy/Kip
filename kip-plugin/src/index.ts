@@ -27,13 +27,13 @@ const start = (server: ServerAPI): Plugin => {
     const want = `displays.${displayId}${tail}`
     const full = server.getSelfPath(want)
     server.debug(`getDisplaySelfPath: displayId: ${displayId}, suffix: ${suffix}, want=${want}, fullPath=${JSON.stringify(full)}`)
-    return full ? full : undefined;
+    return typeof full === 'object' && full !== null ? full : undefined;
   }
 
   function getAvailableDisplays(): object | undefined {
     const fullPath = server.getSelfPath('displays') ;
     server.debug(`getAvailableDisplays: fullPath=${JSON.stringify(fullPath)}`);
-    return fullPath ? fullPath : undefined;
+    return typeof fullPath === 'object' && fullPath !== null ? fullPath : undefined;
   }
 
   function pathToDotNotation(path: string): string {

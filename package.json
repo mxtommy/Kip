@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -100,7 +100,6 @@
     "@angular/router": "21.1.4",
     "@aziham/chartjs-plugin-streaming": "^3.5.1",
     "@godind/ng-canvas-gauges": "^6.2.1",
-    "@signalk/server-api": "^2.7.2",
     "@zakj/no-sleep": "^0.13.5",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -119,6 +118,8 @@
     "screenfull": "^6.0.2",
     "steelseries": "^2.0.9",
     "tslib": "^2.6.2",
-    "zone.js": "^0.15.1"
+    "zone.js": "^0.15.1",
+    "@signalk/server-api": "^2.7.2",
+    "sk-ais-status-plugin": "^1.0.0"
   }
 }
