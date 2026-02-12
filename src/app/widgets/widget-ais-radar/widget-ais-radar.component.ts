@@ -103,7 +103,7 @@ interface RadarFilterState {
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private static readonly TARGET_ICON_SIZE_PX = 16;
-  private static readonly OWN_SHIP_ICON_SIZE_PX = 20;
+  private static readonly OWN_SHIP_ICON_SIZE_PX = 84;
 
   public id = input.required<string>();
   public type = input.required<string>();
@@ -183,7 +183,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     vesselTypes: new Set<VesselIconKey>()
   });
   protected readonly vesselTypeFilters = VESSEL_ICON_KEYS
-    .filter(key => key !== 'vessel/self' && key !== 'vessel/unknown');
+    .filter(key => key !== 'vessel/self' && key !== 'vessel/unknown' && key !== 'vessel/spare');
 
   constructor() {
     this.loadOwnShipIcon();
@@ -288,7 +288,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
     const ringColor = getColors(cfg.color, theme).dim;
-    this.renderRings(ringCount, rangeNm, radius, maxRingRadius, scale, viewRotation, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
+    this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
 
@@ -868,11 +868,15 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   protected closeTargetMenu(): void {
-    this.menuItems.set([]);
-    this.menuPoint = null;
+    this.resetTargetMenuState();
     if (this.menuTrigger().menuOpen) {
       this.menuTrigger().closeMenu();
     }
+  }
+
+  protected resetTargetMenuState(): void {
+    this.menuItems.set([]);
+    this.menuPoint = null;
   }
 
   private buildTargetMenuLabel(target: AisTrack): string {

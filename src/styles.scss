@@ -524,7 +524,9 @@ widget-ais-radar {
   }
 
   .ais-radar-filter-button {
-    top: 168px;
+    top: 12px;
+    left: 12px;
+    right: auto;
   }
 
   .radar-rings .radar-ownship .ownship-shape {
@@ -594,6 +596,15 @@ widget-ais-radar {
 
   .ais-filter-check {
     margin-right: 8px;
+  }
+
+  .ais-filter-check,
+  .ais-filter-check-placeholder {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .widgetOverlay {
