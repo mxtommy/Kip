@@ -529,6 +529,26 @@ widget-ais-radar {
     right: auto;
   }
 
+  .ais-radar-filter-button.is-active {
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dim-color),
+      small-foreground-color: var(--kip-card-background-color),
+    ));
+  }
+
+  .ais-radar-collision-button {
+    top: 64px;
+    left: 12px;
+    right: auto;
+  }
+
+  .ais-radar-collision-button.is-active {
+    @include mat.fab-overrides((
+      small-container-color: var(--kip-contrast-dim-color),
+      small-foreground-color: var(--kip-card-background-color),
+    ));
+  }
+
   .radar-rings .radar-ownship .ownship-shape {
     fill: var(--kip-contrast-color);
     stroke: var(--kip-contrast-color);

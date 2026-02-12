@@ -174,6 +174,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private lastRenderScale = 1;
   private lastRenderSize: RadarSize | null = null;
   private readonly hitRadiusPx = 28;
+  private lastCollisionDebugSignature: string | null = null;
   private readonly filterState = signal<RadarFilterState>({
     anchoredMoored: false,
     noCollisionRisk: false,
@@ -184,6 +185,22 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   });
   protected readonly vesselTypeFilters = VESSEL_ICON_KEYS
     .filter(key => key !== 'vessel/self' && key !== 'vessel/unknown' && key !== 'vessel/spare');
+  protected readonly hasActiveFilters = computed(() => {
+    const filters = this.filterState();
+    return filters.anchoredMoored
+      || filters.allAton
+      || filters.allButSar
+      || filters.allVessels
+      || filters.vesselTypes.size > 0;
+  });
+
+  protected readonly hasCollisionRiskData = computed(() => {
+    return this.ais.targets().some(track => {
+      if (!this.isVesselLike(track)) return false;
+      const closest = track.closestApproach ?? {};
+      return Object.prototype.hasOwnProperty.call(closest, 'collisionRiskRating');
+    });
+  });
 
   constructor() {
     this.loadOwnShipIcon();
@@ -586,6 +603,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       });
     }
 
+    this.debugCollisionFilterResults(results);
     return results;
   }
 
@@ -982,6 +1000,26 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return '#50505f';
   }
 
+  private debugCollisionFilterResults(targets: RenderTarget[]): void {
+    if (!this.filterState().noCollisionRisk) {
+      this.lastCollisionDebugSignature = null;
+      return;
+    }
+
+    const signature = targets.map(target => target.id).join('|');
+    if (signature === this.lastCollisionDebugSignature) return;
+    this.lastCollisionDebugSignature = signature;
+
+    const visible = targets.map(target => ({
+      id: target.id,
+      name: target.raw.name ?? target.raw.mmsi ?? 'AIS Target',
+      type: target.raw.type,
+      rating: this.isVesselLike(target.raw) ? target.raw.closestApproach?.collisionRiskRating : null
+    }));
+
+    console.debug('[AIS Radar] Collision filter visible targets:', visible);
+  }
+
   private shouldFilterTarget(track: AisTrack): boolean {
     const filters = this.filterState();
     if (!filters.anchoredMoored
@@ -997,8 +1035,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       return true;
     }
 
-    if (filters.noCollisionRisk && this.isVesselLike(track) && this.isNoCollisionRisk(track)) {
-      return true;
+    if (filters.noCollisionRisk && this.isVesselLike(track)) {
+      if (track.ais.status !== 'confirmed') return true;
+      if (this.isStationaryNavState(track.navState)) return true;
+      if (this.isNoCollisionRisk(track)) return true;
     }
 
     if (filters.allAton && track.type === 'aton') {
@@ -1025,6 +1065,9 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private isNoCollisionRisk(track: AisVessel | AisSar): boolean {
     const rating = track.closestApproach?.collisionRiskRating;
+    if (!Object.prototype.hasOwnProperty.call(track.closestApproach ?? {}, 'collisionRiskRating')) {
+      return false;
+    }
     if (rating === null || rating === undefined) return true;
     const numericRating = typeof rating === 'number' ? rating : Number(rating);
     if (!Number.isFinite(numericRating)) return true;

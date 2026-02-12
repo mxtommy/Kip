@@ -40,10 +40,23 @@
     class="ais-radar-range-button ais-radar-filter-button"
     matMiniFab
     aria-label="Filter targets"
+    [class.is-active]="hasActiveFilters()"
     [matMenuTriggerFor]="filterMenu"
   >
     <mat-icon>filter_list</mat-icon>
   </button>
+  @if (hasCollisionRiskData()) {
+    <button
+      type="button"
+      class="ais-radar-range-button ais-radar-collision-button"
+      matMiniFab
+      aria-label="No collision risk filter"
+      [class.is-active]="isFilterEnabled('noCollisionRisk')"
+      (click)="toggleFilter('noCollisionRisk')"
+    >
+      <mat-icon>security</mat-icon>
+    </button>
+  }
   <svg #radarSvg class="ais-radar" role="img" aria-label="AIS radar display"></svg>
   <button
     #menuAnchor
@@ -79,12 +92,6 @@
         {{ isFilterEnabled('anchoredMoored') ? 'check_box' : 'check_box_outline_blank' }}
       </mat-icon>
       <span>Anchored/Moored</span>
-    </button>
-    <button mat-menu-item type="button" (click)="toggleFilter('noCollisionRisk')">
-      <mat-icon class="ais-filter-check" aria-hidden="true">
-        {{ isFilterEnabled('noCollisionRisk') ? 'check_box' : 'check_box_outline_blank' }}
-      </mat-icon>
-      <span>No Collision Risk</span>
     </button>
     <button mat-menu-item type="button" (click)="toggleFilter('allAton')">
       <mat-icon class="ais-filter-check" aria-hidden="true">
