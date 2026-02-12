@@ -122,7 +122,6 @@ export class WidgetService {
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
-  //TODO: clenup. not needed since Host2 migration was completed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly _componentTypeMap: Record<string, Type<any>> = {
     WidgetNumericComponent: WidgetNumericComponent,
@@ -432,7 +431,7 @@ export class WidgetService {
     },
     {
       name: 'AIS Radar',
-      description: 'Marine-style AIS radar display with range rings, sweep, and interactive targets.',
+      description: 'Displays AIS targets with range rings, interactive target details, and quick zoom and filtering controls.',
       icon: 'aisradar',
       minWidth: 4,
       minHeight: 4,
@@ -440,7 +439,7 @@ export class WidgetService {
       defaultHeight: 8,
       category: 'Component',
       requiredPlugins: [],
-      optionalPlugins: ['signalk-ais-target-prioritizer'],
+      //optionalPlugins: ['signalk-ais-target-prioritizer'],
       selector: 'widget-ais-radar',
       componentClassName: 'WidgetAisRadarComponent'
     },
