@@ -63,17 +63,11 @@
         ]
       },
       "ScreenListOrNull": {
-        "oneOf": [
-          {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScreenItem"
-            }
-          },
-          {
-            "type": "null"
-          }
-        ]
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "$ref": "#/components/schemas/ScreenItem"
+        }
       },
       "SuccessResponse": {
         "type": "object",
@@ -129,15 +123,9 @@
         }
       },
       "AnyObjectOrNull": {
-        "oneOf": [
-          {
-            "type": "object",
-            "additionalProperties": true
-          },
-          {
-            "type": "null"
-          }
-        ]
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": true
       }
     },
     "parameters": {

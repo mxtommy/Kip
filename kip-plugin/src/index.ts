@@ -4,6 +4,8 @@ import * as openapi from './openApi.json';
 
 const start = (server: ServerAPI): Plugin => {
 
+  const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
+
   const API_PATHS = {
     DISPLAYS: `/displays`,
     INSTANCE: `/displays/:displayId`,
@@ -270,22 +272,22 @@ const start = (server: ServerAPI): Plugin => {
       router.get(`${API_PATHS.CHANGE_SCREEN}`, (req: Request, res: Response) => {
         server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
         try {
-          const changeId = (req as Request & { changeId?: string }).changeId
-          if (!changeId) {
-            return sendFail(res, 400, 'Missing changeId parameter')
+          const displayId = (req as Request & { displayId?: string }).displayId
+          if (!displayId) {
+            return sendFail(res, 400, 'Missing displayId parameter')
           }
 
-          const node = getDisplaySelfPath(changeId, 'activeScreen');
+          const node = getDisplaySelfPath(displayId, 'activeScreen');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const idx = (node as any)?.value ?? null;
 
           if (idx === undefined) {
-            return sendFail(res, 404, `Change display screen Id ${changeId} not found in path`)
+            return sendFail(res, 404, `Change display screen Id ${displayId} not found in path`)
           }
 
           return sendOk(res, idx);
         } catch (error) {
-          server.error(`Error reading activeScreen for ${req.params?.changeId}: ${String((error as Error).message || error)}`);
+          server.error(`Error reading activeScreen for ${req.params?.displayId}: ${String((error as Error).message || error)}`);
           return sendFail(res, 400, (error as Error).message)
         }
       });
@@ -301,7 +303,7 @@ const start = (server: ServerAPI): Plugin => {
 
       server.setPluginStatus(`Providing remote display screen control`);
     },
-    getOpenApi: () => openapi
+    getOpenApi: () => mutableOpenApi
   };
 
   return plugin;
