@@ -17,6 +17,7 @@ import { DataService } from './data.service';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { StorageService } from './storage.service';
 import { ConnectionStateMachine } from './connection-state-machine.service';
+import { InternetReachabilityService } from './internet-reachability.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -34,6 +35,7 @@ export class AppNetworkInitService implements OnDestroy {
   private delta = inject(SignalKDeltaService); // Init to get data before app starts
   private data = inject(DataService); // Init to get data before app starts
   private storage = inject(StorageService); // Init to get data before app starts
+  private internetReachability = inject(InternetReachabilityService);
 
   constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -44,6 +46,7 @@ export class AppNetworkInitService implements OnDestroy {
   public async initNetworkServices() {
     this.loadLocalStorageConfig();
     this.preloadFonts();
+    this.internetReachability.start();
 
     try {
       if (this.config?.signalKUrl !== undefined && this.config.signalKUrl !== null) {

@@ -51,6 +51,7 @@
       <pre>KIP: {{ app.appVersion() }}
 {{ app.browserVersion() }}, {{ app.osVersion() }}<br />
 {{ endpointServiceStatus.serverDescription }}
-{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}</pre>
+{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}
+Internet: {{ internetAvailabilityLabel() }}</pre>
     </div>
   </div>
