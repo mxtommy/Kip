@@ -573,10 +573,10 @@ export class WidgetService {
    * Returns the list of widget definitions, each enriched with plugin dependency status.
    *
    * For each widget, this method:
-   * - Checks all unique plugin dependencies using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
+    * - Checks all unique plugin dependencies for installation using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
-   * - `isDependencyValid`: `true` if all required plugins are enabled and, if optionalPlugins is present, at least one optional plugin is enabled. Otherwise `false`.
-   * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
+    * - `isDependencyValid`: `true` if all required plugins are installed and, if optionalPlugins is present, at least one optional plugin is installed. Otherwise `false`.
+    * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
    *
    * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
    *
@@ -599,10 +599,10 @@ export class WidgetService {
       ]))
     );
 
-    // Check each unique dependency once
+    // Check each unique dependency once (installed status for selection-stage validation)
     await Promise.all(
       allDeps.map(async dep => {
-        pluginCache[dep] = await this._plugins.isEnabled(dep);
+        pluginCache[dep] = await this._plugins.isInstalled(dep);
       })
     );
 
@@ -622,7 +622,7 @@ export class WidgetService {
         required: false
       }));
       const pluginsStatus = [...requiredStatus, ...optionalStatus];
-      // Widget is valid if all required plugins are enabled AND (if any optional plugins, at least one is enabled)
+      // Widget is valid if all required plugins are installed AND (if any optional plugins, at least one is installed)
       let isDependencyValid = requiredStatus.every(p => p.enabled);
       if (isDependencyValid && optional.length > 0) {
         isDependencyValid = optionalStatus.some(p => p.enabled);

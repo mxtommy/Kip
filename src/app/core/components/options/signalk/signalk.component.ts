@@ -208,7 +208,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       this.isConnecting = false;
       const errorMessage = (error as Error)?.message || 'Unknown validation error';
       console.error('[Settings-SignalK] Server validation failed:', errorMessage);
-      this.toast.show(`${errorMessage}`, 0, false, null, 'error');
+      this.toast.show(`${errorMessage}`, 0, false, 'error');
     }
   }
 
@@ -287,7 +287,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     if (e.checked) {
       const version: string = this.signalKConnectionService.serverVersion$.getValue();
       if (!compare(version, '1.46.2', ">=")) {
-        this.toast.show("Configuration sharing requires Signal K version 1.46.2 or better", 0, false, null, 'warn');
+        this.toast.show("Configuration sharing requires Signal K version 1.46.2 or better", 0, false, 'warn');
         this.connectionConfig.useSharedConfig = false;
         return;
       }

@@ -27,9 +27,14 @@ export class ToastSnackbarComponent {
   protected readonly data = inject<ToastSnackbarData>(MAT_SNACK_BAR_DATA);
 
   protected readonly severity = computed<ToastSeverity>(() => this.data.severity ?? 'message');
+  protected readonly hasAction = computed(() => !!this.data.action);
   protected readonly title = computed(() => this.data.title ?? this.titleForSeverity(this.severity()));
   protected readonly icon = computed(() => this.iconForSeverity(this.severity()));
   protected readonly hostClass = computed(() => `toast-${this.severity()}`);
+
+  protected onActionClick(): void {
+    this.ref.dismissWithAction();
+  }
 
   protected dismiss(): void {
     this.ref.dismiss();

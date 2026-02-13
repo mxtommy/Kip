@@ -46,7 +46,7 @@ export class SettingsNotificationsComponent {
   public saveAllSettings():void {
     this.settings.setNotificationConfig(cloneDeep(this.notificationConfig));
     this.notificationsForm().form.markAsPristine();
-    this.toast.show("Configuration saved", 1000, true, null, 'message');
+    this.toast.show("Configuration saved", 1000, true, 'message');
   }
 
   public togglePanel(e: MatSlideToggleChange): void {

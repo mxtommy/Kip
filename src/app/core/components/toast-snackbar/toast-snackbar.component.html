@@ -7,8 +7,18 @@
       <div class="toast-title">{{ title() }}</div>
      }
     <div matSnackBarLabel>{{ data.message }}</div>
+    @if (hasAction()) {
+      <div class="button-group">
+        <button matButton="tonal" matSnackBarAction (click)="onActionClick()">{{ data.action }}</button>
+        <button matButton="tonal" matSnackBarAction (click)="dismiss()">Cancel</button>
+      </div>
+    }
   </div>
-  <button matIconButton matSnackBarAction class="toast-close" aria-label="Dismiss notification" (click)="dismiss()">
-    <mat-icon>close</mat-icon>
-  </button>
+  @if (!hasAction()) {
+    <div class="toast-body" matSnackBarActions>
+      <button matIconButton matSnackBarAction class="toast-close" aria-label="Dismiss notification" (click)="dismiss()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
 </section>

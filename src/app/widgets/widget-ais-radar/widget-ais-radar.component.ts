@@ -262,7 +262,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private warnIfRemoteDataDisabled(): void {
     if (this.settings.signalKSubscribeAll) return;
     this.toast.show(
-      'AIS data is disabled in your connection. To see radar targets, go to Settings -> Options -> Connectivity, enable "Subscribe to remote sources messages", then reconnect.', 0, false, 'Dismiss', 'warn'
+      'AIS data is disabled in your connection. To see radar targets, go to Settings -> Options -> Connectivity, enable "Subscribe to remote sources messages", then reconnect.', 0, false, 'warn'
     );
   }
 
