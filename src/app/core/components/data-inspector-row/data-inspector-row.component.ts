@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, input, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { UnitsService } from '../../services/units.service';
@@ -15,11 +15,13 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
     templateUrl: './data-inspector-row.component.html',
     styleUrls: ['./data-inspector-row.component.css'],
     encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MatCell, MatButtonModule]
 })
 export class DataInspectorRowComponent implements OnInit {
   private _units = inject(UnitsService);
   private _dialog = inject(MatDialog);
+  private readonly cdr = inject(ChangeDetectorRef);
   readonly path = input.required<string>();
   readonly source = input<string>(undefined);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +53,7 @@ export class DataInspectorRowComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.selectedUnit = result;
+        this.cdr.markForCheck();
       }
     });
   }

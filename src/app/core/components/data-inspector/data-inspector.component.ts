@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +11,7 @@ import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { Subject } from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { map, throttleTime,debounceTime } from 'rxjs/operators';
+import { map, debounceTime } from 'rxjs/operators';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { Clipboard } from '@angular/cdk/clipboard';
 
@@ -21,14 +21,16 @@ import { ToastService } from '../../services/toast.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
-    selector: 'data-inspector',
-    templateUrl: './data-inspector.component.html',
-    styleUrls: ['./data-inspector.component.scss'],
-    imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
+  selector: 'data-inspector',
+  templateUrl: './data-inspector.component.html',
+  styleUrls: ['./data-inspector.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private readonly dataService = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly _responsive = inject(BreakpointObserver);
   private readonly clipboard = inject(Clipboard);
   private readonly toast = inject(ToastService);
@@ -48,7 +50,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     this.filterSubject.pipe(
-      debounceTime(500)
+      debounceTime(350)
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(filterValue => {
       this.tableData.filter = filterValue.trim().toLowerCase();
       if (this.tableData.paginator) {
@@ -75,30 +77,13 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     this.dataService.startSkDataFullTree()
       .pipe(
         map((paths: ISkPathData[]) =>
-          paths
-            .filter(path => Object.keys(path.sources || {}).length > 0) // Filter out items with empty sources
-            .map(path => ({
-              ...path,
-              sources: path.type && path.type.includes('object') && typeof path.sources === 'object'
-                ? Object.fromEntries(
-                    Object.entries(path.sources).map(([key, value]) => [
-                      key,
-                      {
-                        ...value,
-                        sourceValue: typeof value.sourceValue === 'object'
-                          ? JSON.stringify(value.sourceValue) // Stringify only sourceValue if it's an object
-                          : value.sourceValue
-                      }
-                    ])
-                  ) // Transform only sourceValue in sources if path.type contains 'object'
-                : path.sources
-            }))
+          paths.filter(path => Object.keys(path.sources || {}).length > 0)
         ),
-        throttleTime(500), // Emit at most once every 500ms
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((filteredPaths: ISkPathData[]) => {
         this.tableData.data = filteredPaths;
+        this.cdr.markForCheck();
       });
 
     // Assign paginator and sort to the tableData
@@ -125,7 +110,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     return `${item.path}`;
   }
 
-  protected trackBySource(index: number, item): string {
+  protected trackBySource(index: number, item: { key: string }): string {
     return `${item.key}`;
   }
 
@@ -135,8 +120,9 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected getSourceValue(item: { key: any, value: any } ): any {
-    return item.value.sourceValue;
+  protected getSourceValue(item: { key: unknown, value: { sourceValue: unknown } } ): unknown {
+    const value = item.value?.sourceValue;
+    return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
   }
 
   protected copyPath(path: string | null | undefined, ev?: MouseEvent): void {
