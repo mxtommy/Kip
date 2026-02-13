@@ -14,7 +14,7 @@ PUT writes a value to a Signal K path. By itself, that write does not trigger ha
 
 Examples of server-side handlers:
 - A built-in server handler
-- A Signal K plugin
+- A Signal K plugin (see [Popular Digital Switching Plugins](#popular-digital-switching-plugins))
 - A Node-RED flow (see [Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md))
 
 ## Basic Requirements
@@ -59,6 +59,23 @@ Follow these steps in order:
 6. Configure the widget in KIP.
 7. Trigger the control and verify the value changes in Data Inspector.
 8. Validate the server-side handler executes the expected real-world action.
+
+## Popular Digital Switching Plugins
+
+If you prefer plugin-based integrations instead of building your own flow logic, these are commonly used options in the Signal K ecosystem:
+
+- **Shelly Gen 1 integrations**
+	- Commonly used to control Shelly Gen 1 relays, switches, and I/O modules.
+	- npm: [signalk-shelly](https://www.npmjs.com/package/signalk-shelly)
+
+- **Shelly Gen 2+ integrations**
+	- Commonly used to control Shelly Gen 2+ smart devices relays, switches, and I/O modules.
+	- npm: [signalk-shelly2](https://www.npmjs.com/package/signalk-shelly2)
+
+- **Sonoff integrations**
+	- Commonly used for eWeLink switches running the factory firmware.
+	- npm: [signalk-sonoff-ewelink](https://www.npmjs.com/package/signalk-sonoff-ewelink)
+
 
 ## Troubleshooting
 
