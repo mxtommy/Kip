@@ -132,6 +132,7 @@ Template:
 - CommonJS deps are explicitly allowed (js-quantities). Avoid introducing new CJS without adding to allowedCommonJsDependencies.
 - Use standalone components, signals, @if/@for; follow .github/instructions/angular.instructions.md for style.
 - Widget config UIs live under src/app/widget-config; path controls use custom validators (no Validators.required). Respect isPathConfigurable and pathRequired.
+- Documentation standard: Every public property and public method in TypeScript code MUST include full JSDoc with: purpose, parameters, return value, and at least one usage example. Apply this by default for all generated/edited code unless a file explicitly cannot use comments.
 
 ## Widgets: do this, not that (Host2)
 - Do: Provide a complete `DEFAULT_CONFIG` with all paths & options. Don’t: Scatter defaults across lifecycle hooks.
@@ -143,10 +144,12 @@ Template:
 
 ## Key files/dirs
 - Core services: `src/app/core/services/` (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DataSetService, NotificationsService)
+- Plugin config foundation: `src/app/core/services/signalk-plugin-config.service.ts` (plugin-only detection, dependency validation, schema normalization metadata, and config persistence via `/plugins` endpoints)
 - Directives: `src/app/core/directives/` (widget-runtime, widget-streams, widget-metadata)
 - Widgets: `src/app/widgets/` (e.g., widget-numeric, widget-gauge-ng-*, widget-data-chart, widget-windtrends-chart, widget-autopilot)
 - Embedded host: `src/app/core/components/widget-embedded/`
 - Config UI: `src/app/widget-config/`
+- Plugin management (server plugins) is handled separately through `SignalkPluginConfigService` and `/plugins` REST endpoints. Keep install/uninstall out of scope unless explicitly added.
 - Build: `angular.json`, `package.json` scripts
 
 ## Debugging

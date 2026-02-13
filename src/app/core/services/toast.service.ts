@@ -37,16 +37,22 @@ export class ToastService {
    * Defaults to 10000 if no value is provided.
    * @param silent A boolean that defines if the notification should make no sound.
    * Defaults false.
-   * @param action Label for the snackbar action button.
    * @param severity Severity styling for the snackbar. Defaults to 'message'
    * - 'message': no icon or title
    * - 'info': blue info icon and Info title
    * - 'warn': yellow warning icon and Warning title
    * - 'error': red error icon and Error title
    * - 'success': green check icon and Completed title
-   * @returns MatSnackBarRef you can use to dismiss or observe lifecycle events.
+   * @param action Optional label for the snackbar action button. When omitted, no action button is displayed.
+   * @returns MatSnackBarRef you can use to dismiss, subscribe to `onAction()` and handle lifecycle events.
+   *
+   * @example
+   * this.toastService.show('Configuration saved', 1000, true, 'success');
+   *
+   * @example
+   * this.toastService.show('Plugin disabled', 0, true, 'warn', 'Enable Plugin');
    */
-  public show(message: string, duration = 1500, silent = true, action = 'Dismiss', severity: ToastSeverity = 'message'): MatSnackBarRef<ToastSnackbarComponent> {
+  public show(message: string, duration = 1500, silent = true, severity: ToastSeverity = 'message', action?: string): MatSnackBarRef<ToastSnackbarComponent> {
     const snack: SnackItem = { message, duration, silent, action, severity };
     const data: ToastSnackbarData = { message, action, severity };
     const ref = this.snackBar.openFromComponent(ToastSnackbarComponent, {

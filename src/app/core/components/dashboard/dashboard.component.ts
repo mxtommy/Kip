@@ -20,6 +20,7 @@ import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 import { DashboardClipboardBottomSheetComponent } from '../dashboard-clipboard-bottom-sheet/dashboard-clipboard-bottom-sheet.component';
+import { SignalkPluginConfigService } from '../../services/signalk-plugin-config.service';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -46,6 +47,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
+  private readonly _pluginConfig = inject(SignalkPluginConfigService);
   protected readonly _router = inject(Router);
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected isDashboardStatic = computed(() => this.dashboard.isDashboardStatic());
@@ -281,7 +283,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
         this.openAddWidgetDialog(gridCell.x, gridCell.y);
       } else {
-        this.toast.show('Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0, false, null, 'error');
+        this.toast.show('Not enough free space at the selected location to add a widget. Please reorganize the dashboard to free up space or try a larger empty area.', 0, false, 'error');
       }
     }
   }
@@ -316,81 +318,209 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       component: 'select-widget',
     }, true)
     .pipe(finalize(() => { this._addDialogOpen = false; }))
-    .subscribe(data => {
+    .subscribe(async data => {
       if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
       const widget = data as WidgetDescription;
-      const ID = UUID.create();
-      let newWidget: NgGridStackWidget = {};
+      await this.tryAddWidgetWithDependencyChecks(widget, x, y);
+    });
+  }
 
-      if (widget.selector === 'group-widget') {
-        newWidget = {
-          x,
-          y,
-          w: 3,
-          h: 4,
-          id: ID,
-          selector: "group-widget",
-          input: {
-            widgetProperties: {
-              type: widget.selector,
-              uuid: ID,
-              config: {
-                displayName: "Group Widget",
-                color: "contrast"
-              }
-            }
-          },
-          subGridOpts: {
-            children: []
-          },
+  private async tryAddWidgetWithDependencyChecks(widget: WidgetDescription, x: number, y: number): Promise<void> {
+    const disabledRequiredPlugins = await this.getDisabledRequiredPlugins(widget.requiredPlugins ?? []);
+    if (disabledRequiredPlugins.length > 0) {
+      this.promptEnableRequiredPlugins(widget, x, y, disabledRequiredPlugins);
+      return;
+    }
+
+    const anyOfState = await this.getAnyOfPluginActivationState(widget.anyOfPlugins ?? []);
+    const hasAnyOfPluginsInstalled = anyOfState.installed.length > 0;
+    const hasAnyOfPluginsEnabled = anyOfState.enabled.length > 0;
+
+    if (hasAnyOfPluginsInstalled && !hasAnyOfPluginsEnabled) {
+      this.notifyAnyOfPluginsRequireManualActivation(widget, anyOfState.installed);
+      return;
+    }
+
+    this.addWidgetToGrid(widget, x, y);
+  }
+
+  private async getDisabledRequiredPlugins(requiredPlugins: string[]): Promise<string[]> {
+    if (!requiredPlugins?.length) {
+      return [];
+    }
+
+    const uniqueRequiredPlugins = [...new Set(requiredPlugins)];
+    const statusList = await Promise.all(
+      uniqueRequiredPlugins.map(async pluginId => {
+        const result = await this._pluginConfig.getPlugin(pluginId);
+        return {
+          pluginId,
+          enabled: result.ok && result.data.state.enabled
         };
-      } else {
-        newWidget = {
-          x,
-          y,
-          w: widget.defaultWidth,
-          h: widget.defaultHeight,
-          minW: widget.minWidth,
-          minH: widget.minHeight,
-          id: ID,
-          selector: "widget-host2",
-          input: {
-            widgetProperties: {
-              type: widget.selector,
-              uuid: ID,
+      })
+    );
+
+    return statusList
+      .filter(pluginStatus => !pluginStatus.enabled)
+      .map(pluginStatus => pluginStatus.pluginId);
+  }
+
+  private async getAnyOfPluginActivationState(anyOfPlugins: string[]): Promise<{ installed: string[]; enabled: string[] }> {
+    if (!anyOfPlugins?.length) {
+      return { installed: [], enabled: [] };
+    }
+
+    const uniqueAnyOfPlugins = [...new Set(anyOfPlugins)];
+    const statusList = await Promise.all(
+      uniqueAnyOfPlugins.map(async pluginId => {
+        const result = await this._pluginConfig.getPlugin(pluginId);
+        return {
+          pluginId,
+          installed: result.ok,
+          enabled: result.ok && result.data.state.enabled
+        };
+      })
+    );
+
+    return {
+      installed: statusList.filter(pluginStatus => pluginStatus.installed).map(pluginStatus => pluginStatus.pluginId),
+      enabled: statusList.filter(pluginStatus => pluginStatus.enabled).map(pluginStatus => pluginStatus.pluginId)
+    };
+  }
+
+  private notifyAnyOfPluginsRequireManualActivation(widget: WidgetDescription, installedAnyOfPlugins: string[]): void {
+    const pluginLabel = installedAnyOfPlugins.join(', ');
+    this.toast.show(
+      `Cannot add "${widget.name}" yet. Any-of plugin${installedAnyOfPlugins.length > 1 ? 's are' : ' is'} installed (${pluginLabel}) but none ${installedAnyOfPlugins.length > 1 ? 'are' : 'is'} active. Please manually activate and configure one or all in Signal K Plugin Config, then come back and add the widget.`,
+      0,
+      false,
+      'warn'
+    );
+  }
+
+  private promptEnableRequiredPlugins(widget: WidgetDescription, x: number, y: number, disabledRequiredPlugins: string[]): void {
+    const pluginLabel = disabledRequiredPlugins.join(', ');
+    const actionLabel = 'Enable';
+    const toastRef = this.toast.show(
+      `Cannot add "${widget.name}" widget until required plugin${disabledRequiredPlugins.length > 1 ? 's are' : ' is'} enabled: ${pluginLabel}.`,
+      0,
+      false,
+      'warn',
+      actionLabel
+    );
+
+    toastRef.onAction()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(() => {
+        void this.enableRequiredPluginsAndAddWidget(widget, x, y, disabledRequiredPlugins);
+      });
+  }
+
+  private async enableRequiredPluginsAndAddWidget(widget: WidgetDescription, x: number, y: number, pluginIds: string[]): Promise<void> {
+    const uniquePluginIds = [...new Set(pluginIds)];
+    const enableResults = await Promise.all(
+      uniquePluginIds.map(async pluginId => ({
+        pluginId,
+        result: await this._pluginConfig.setPluginEnabled(pluginId, true)
+      }))
+    );
+
+    const failedPlugins = enableResults
+      .filter(entry => !entry.result.ok)
+      .map(entry => entry.pluginId);
+
+    if (failedPlugins.length > 0) {
+      this.toast.show(
+        `Failed to enable required plugin${failedPlugins.length > 1 ? 's' : ''}: ${failedPlugins.join(', ')}.`,
+        0,
+        false,
+        'error'
+      );
+      return;
+    }
+
+    this.toast.show(
+      `Enabled required plugin${uniquePluginIds.length > 1 ? 's' : ''}: ${uniquePluginIds.join(', ')}.`,
+      3000,
+      true,
+      'success'
+    );
+
+    await this.tryAddWidgetWithDependencyChecks(widget, x, y);
+  }
+
+  private addWidgetToGrid(widget: WidgetDescription, x: number, y: number): void {
+    const ID = UUID.create();
+    let newWidget: NgGridStackWidget = {};
+
+    if (widget.selector === 'group-widget') {
+      newWidget = {
+        x,
+        y,
+        w: 3,
+        h: 4,
+        id: ID,
+        selector: "group-widget",
+        input: {
+          widgetProperties: {
+            type: widget.selector,
+            uuid: ID,
+            config: {
+              displayName: "Group Widget",
+              color: "contrast"
             }
           }
-        };
-      }
-
-      // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
-      const grid = this._gridstack().grid;
-      const minW = Number(widget.minWidth ?? 1);
-      const minH = Number(widget.minHeight ?? 2);
-      const maxW = Number(widget.defaultWidth ?? minW);
-      const maxH = Number(widget.defaultHeight ?? minH);
-
-      const defaultFits =
-        grid.isAreaEmpty(x, y, maxW, maxH) &&
-        grid.willItFit({ x, y, w: maxW, h: maxH } as NgGridStackWidget);
-
-      if (!defaultFits) {
-        const best = this.findBestWidgetSizeAtCell(grid, x, y, minW, minH, maxW, maxH);
-
-        if (!best) {
-          this.toast.show(`Not enough free space to add ${widget.name} widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0, false, null, 'error');
-          return;
+        },
+        subGridOpts: {
+          children: []
+        },
+      };
+    } else {
+      newWidget = {
+        x,
+        y,
+        w: widget.defaultWidth,
+        h: widget.defaultHeight,
+        minW: widget.minWidth,
+        minH: widget.minHeight,
+        id: ID,
+        selector: "widget-host2",
+        input: {
+          widgetProperties: {
+            type: widget.selector,
+            uuid: ID,
+          }
         }
+      };
+    }
 
-        newWidget.w = best.w;
-        newWidget.h = best.h;
+    // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
+    const grid = this._gridstack().grid;
+    const minW = Number(widget.minWidth ?? 1);
+    const minH = Number(widget.minHeight ?? 2);
+    const maxW = Number(widget.defaultWidth ?? minW);
+    const maxH = Number(widget.defaultHeight ?? minH);
+
+    const defaultFits =
+      grid.isAreaEmpty(x, y, maxW, maxH) &&
+      grid.willItFit({ x, y, w: maxW, h: maxH } as NgGridStackWidget);
+
+    if (!defaultFits) {
+      const best = this.findBestWidgetSizeAtCell(grid, x, y, minW, minH, maxW, maxH);
+
+      if (!best) {
+        this.toast.show(`Not enough free space to add "${widget.name}" widget at the selected location. Please reorganize the dashboard to free up space or try a larger empty area.`, 0, false, 'error');
+        return;
       }
 
-      const item = this._gridstack().grid.addWidget(newWidget);
-      if (item.gridstackNode.subGrid) {
-        item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
-      }
-    });
+      newWidget.w = best.w;
+      newWidget.h = best.h;
+    }
+
+    const item = this._gridstack().grid.addWidget(newWidget);
+    if (item.gridstackNode.subGrid) {
+      item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+    }
   }
 
   /** Find the biggest size that fits at (x,y), within [min..max]. Prefers larger area, then height, then width. */
@@ -469,7 +599,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (_gridstack.grid.willItFit(newItem)) {
         _gridstack.grid.addWidget(newItem);
       } else {
-        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, 'error');
       }
     }
   }
@@ -512,7 +642,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         _gridstack.grid.addWidget(newItem);
         this.dashboard.clearWidgetClipboard();
       } else {
-        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, null, 'error');
+        this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, 'error');
       }
     }
   }

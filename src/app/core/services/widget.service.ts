@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Type } from '@angular/core';
-import { SignalkPluginsService } from './signalk-plugins.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
@@ -43,14 +43,14 @@ export enum WidgetCategories {
  * WidgetDescription defines the metadata and plugin dependencies for a widget.
  *
  * - requiredPlugins: All listed plugins must be enabled for the widget to function.
- * - optionalPlugins: If present, at least one must be enabled for the widget to function. If requirements are met, missing optional plugins are shown as unavailable but do not block use.
+ * - anyOfPlugins: If present, at least one listed plugin must be installed and active for the widget to function.
  *
  * Example:
  * {
  *   name: 'Autopilot',
  *   ...
  *   requiredPlugins: [],
- *   optionalPlugins: ['autopilot', 'pypilot-autopilot-provider']
+ *   anyOfPlugins: ['autopilot', 'pypilot-autopilot-provider']
  * }
  */
 export interface WidgetDescription {
@@ -74,9 +74,10 @@ export interface WidgetDescription {
    */
   requiredPlugins: string[];
   /**
-   * Plugins that are optional for the widget. If present, at least one must be enabled for the widget to function. If omitted or empty, no optional plugin logic is applied.
+    * Plugins where any one must be installed and active for the widget to function.
+    * If omitted or empty, no any-of plugin logic is applied.
    */
-  optionalPlugins?: string[];
+    anyOfPlugins?: string[];
   /**
    * The category of the widget, used for filtering in the widget list.
    */
@@ -109,7 +110,18 @@ export interface WidgetDescription {
   componentClassName: string;
 }
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
+  /**
+   * Selection-stage dependency validity.
+   *
+   * Uses installed/available dependency checks (not runtime enabled state).
+   */
   isDependencyValid: boolean;
+  /**
+   * Selection-stage plugin status list.
+   *
+   * `enabled` currently represents dependency availability (installed/reachable)
+   * for widget selection cards, not plugin active runtime state.
+   */
   pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
 }
 
@@ -117,7 +129,7 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   providedIn: 'root'
 })
 export class WidgetService {
-  private readonly _plugins = inject(SignalkPluginsService);
+  private readonly _pluginConfig = inject(SignalkPluginConfigService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -399,7 +411,7 @@ export class WidgetService {
       defaultHeight: 10,
       category: 'Component',
       requiredPlugins: [],
-      optionalPlugins: ['autopilot', 'pypilot-autopilot-provider'],
+      anyOfPlugins: ['autopilot', 'pypilot-autopilot-provider'],
       selector: 'widget-autopilot',
       componentClassName: 'WidgetAutopilotComponent'
     },
@@ -439,7 +451,7 @@ export class WidgetService {
       defaultHeight: 8,
       category: 'Component',
       requiredPlugins: [],
-      //optionalPlugins: ['signalk-ais-target-prioritizer'],
+      //anyOfPlugins: ['signalk-ais-target-prioritizer'],
       selector: 'widget-ais-radar',
       componentClassName: 'WidgetAisRadarComponent'
     },
@@ -573,10 +585,11 @@ export class WidgetService {
    * Returns the list of widget definitions, each enriched with plugin dependency status.
    *
    * For each widget, this method:
-   * - Checks all unique plugin dependencies using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
+    * - Checks all unique plugin dependencies for installation/availability using the SignalkPluginConfigService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
-   * - `isDependencyValid`: `true` if all required plugins are enabled and, if optionalPlugins is present, at least one optional plugin is enabled. Otherwise `false`.
-   * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
+    * - `isDependencyValid`: `true` if all required plugins are installed and, if anyOfPlugins is present, at least one any-of plugin is installed. Otherwise `false`.
+    * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
+    *   Note: in this selection-stage payload, `enabled` indicates dependency availability (installed/reachable), not active runtime plugin state.
    *
    * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
    *
@@ -595,37 +608,38 @@ export class WidgetService {
     const allDeps = Array.from(
       new Set(this._widgetDefinition.flatMap(w => [
         ...(w.requiredPlugins || []),
-        ...(w.optionalPlugins || [])
+        ...(w.anyOfPlugins || [])
       ]))
     );
 
-    // Check each unique dependency once
+    // Check each unique dependency once (installed status for selection-stage validation)
     await Promise.all(
       allDeps.map(async dep => {
-        pluginCache[dep] = await this._plugins.isEnabled(dep);
+        const result = await this._pluginConfig.getPlugin(dep);
+        pluginCache[dep] = result.ok;
       })
     );
 
     // Map widgets using the cached results
     return this._widgetDefinition.map(widget => {
       const required = widget.requiredPlugins || [];
-      const optional = widget.optionalPlugins || [];
+      const anyOf = widget.anyOfPlugins || [];
 
       const requiredStatus = required.map(dep => ({
         name: dep,
         enabled: pluginCache[dep],
         required: true
       }));
-      const optionalStatus = optional.map(dep => ({
+      const anyOfStatus = anyOf.map(dep => ({
         name: dep,
         enabled: pluginCache[dep],
         required: false
       }));
-      const pluginsStatus = [...requiredStatus, ...optionalStatus];
-      // Widget is valid if all required plugins are enabled AND (if any optional plugins, at least one is enabled)
+      const pluginsStatus = [...requiredStatus, ...anyOfStatus];
+      // Widget is valid if all required plugins are installed AND (if any any-of plugins, at least one is installed)
       let isDependencyValid = requiredStatus.every(p => p.enabled);
-      if (isDependencyValid && optional.length > 0) {
-        isDependencyValid = optionalStatus.some(p => p.enabled);
+      if (isDependencyValid && anyOf.length > 0) {
+        isDependencyValid = anyOfStatus.some(p => p.enabled);
       }
       return {
         ...widget,

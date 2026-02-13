@@ -53,6 +53,7 @@ KIP Instrument MFD is an advanced and versatile marine instrumentation package d
 ## 6. Documentation & Comments
 - **Document all custom validators and business rules.**
 - **Update this file and the README with any major changes or new patterns.**
+- **JSDoc requirement:** Every public TypeScript property and public method must include full JSDoc containing: purpose, parameters, return value, and at least one usage example.
 
 ---
 
@@ -136,11 +137,11 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
   - Key methods: Data set CRUD, data source updates.
   - Dependencies: DataService, StorageService.
 
-- **SignalKPluginsService (`signalk-plugins.service.ts`)**
-  - Purpose: Manages Signal K plugin discovery, configuration, and state.
-  - Key methods: Plugin list management, config updates.
-  - Dependencies: SignalKConnectionService, DataService.
-  - Usage: Used to manage plugins and their configuration.
+- **SignalkPluginConfigService (`signalk-plugin-config.service.ts`)**
+  - Purpose: Plugin configuration foundation service for dependency checks and plugin state/config persistence via Signal K `/plugins` endpoints.
+  - Key methods: `listPlugins()`, `getPlugin()`, `getPluginConfig()`, `savePluginConfig()`, `setPluginEnabled()`, `validateDependency()`, `normalizePluginSchema()`.
+  - Dependencies: HttpClient, SignalKConnectionService.
+  - Usage: Source of truth for plugin detection and config save flows; no plugin install/uninstall support.
 
 - **SignalKRequestsService (`signalk-requests.service.ts`)**
   - Purpose: Handles requests to the Signal K server, such as PUT/POST operations and custom actions.

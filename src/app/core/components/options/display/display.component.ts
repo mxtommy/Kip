@@ -9,8 +9,8 @@ import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { SignalkPluginsService } from '../../../services/signalk-plugins.service';
-import { DataService } from '../../../services/data.service';
+import { SignalkPluginConfigService } from '../../../services/signalk-plugin-config.service';
+import { IPluginApiFailure, ISignalkPlugin } from '../../../interfaces/signalk-plugin-config.interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
@@ -32,14 +32,13 @@ import { MatSelectModule } from '@angular/material/select';
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
-  private readonly MODE_PATH: string = 'self.environment.mode';
+  private readonly DERIVED_DATA_PLUGIN_ID = 'derived-data';
   readonly displayForm = viewChild<NgForm>('displayForm');
   private _app = inject(AppService);
   private toast = inject(ToastService);
   private _settings = inject(AppSettingsService);
   private _responsive = inject(BreakpointObserver);
-  private _plugins = inject(SignalkPluginsService);
-  private _data = inject(DataService);
+  private _pluginConfig = inject(SignalkPluginConfigService);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
   protected autoNightMode = model<boolean>(false);
@@ -80,6 +79,18 @@ export class SettingsDisplayComponent implements OnInit {
       this.toast.show('Please fill out required fields before saving.', 3000, true);
       return;
     }
+
+    // If auto night mode is enabled, validate plugin requirements before saving
+    if (this.autoNightMode()) {
+      const seq = ++this._pluginCheckSeq;
+      void this.validateAndSaveSettings(seq);
+      return;
+    }
+
+    this.applyAndSaveSettings();
+  }
+
+  private applyAndSaveSettings(): void {
     this._settings.setAutoNightMode(this.autoNightMode());
     this._settings.setRedNightMode(this.isRedNightMode());
     this._settings.setNightModeBrightness(this.nightBrightness());
@@ -104,49 +115,172 @@ export class SettingsDisplayComponent implements OnInit {
     this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
 
     this.displayForm().form.markAsPristine();
-    this.toast.show("Configuration saved", 1000, true, null, 'message');
+    this.toast.show("Configuration saved", 1000, true, 'message');
+  }
+
+  private async validateAndSaveSettings(seq: number): Promise<void> {
+    const isValid = await this.validateAndHandleAutoNightRequirement(seq);
+    if (seq !== this._pluginCheckSeq) return;
+
+    if (isValid) {
+      this.applyAndSaveSettings();
+    } else {
+      // Reset toggle and abort save
+      this.autoNightMode.set(false);
+    }
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
     this.displayForm().form.markAsDirty();
-    // If user unchecked, immediately disable and abort
-    if (!e.checked) {
-      this.autoNightMode.set(false);
-      return;
-    }
-    const seq = ++this._pluginCheckSeq; // capture sequence for this async request
-    this._plugins.isEnabled('derived-data')
-      .then((enabled) => {
-        if (seq !== this._pluginCheckSeq) return; // stale response; ignore
-        if (!enabled) {
-          this.autoNightMode.set(false);
-          this.toast.show(
-            "To enable Automatic Night Mode, verify that: 1) The Signal K Derived Data plugin is installed and enabled on the server. 2) The plugin's Sun: Sets environment.sun parameter is enabled. Restart the Signal K server and try again.",
-            0, false, null, 'error'
-          );
-          return;
-        }
-        const supported = this.validateAutoNightModeSupported();
-        this.autoNightMode.set(supported);
-      })
-      .catch((error) => {
-        if (seq !== this._pluginCheckSeq) return;
-        console.error('[Display Component] Error checking plugin status:', error);
-        this.autoNightMode.set(false);
-      });
+    this.autoNightMode.set(e.checked);
   }
 
-  /**
-   * Check if the browser supports the automatic night mode feature.
-   * This is a helper method to check if the browser supports the
-   * matchMedia API and the prefers-color-scheme media query.
-   */
-  public  validateAutoNightModeSupported(): boolean {
-    if (!this._data.getPathObject(this.MODE_PATH)) {
-      this.toast.show("Locate the Derived Data plugin in the Signal K admin and enable the 'Sets environment.sun' parameter under the 'Sun' group. Restart the Signal K server and try again.", 0, false, null, 'error');
+  private async validateAndHandleAutoNightRequirement(seq: number): Promise<boolean> {
+    const pluginResult = await this._pluginConfig.getPlugin(this.DERIVED_DATA_PLUGIN_ID);
+    if (seq !== this._pluginCheckSeq) return false;
+
+    if (!pluginResult.ok) {
+      const pluginFailure = pluginResult as IPluginApiFailure;
+      if (pluginFailure.error.reason === 'not-found') {
+        this.toast.show(
+          'Automatic Night Mode requires the Signal K Derived Data plugin. This requirement is missing and must be installed manually by the user.',
+          0,
+          false,
+          'error'
+        );
+        return false;
+      }
+
+      this.toast.show(
+        `Failed to validate Automatic Night Mode requirements: ${pluginFailure.error.message}`,
+        0,
+        false,
+        'error'
+      );
       return false;
     }
-    return true;
+
+    const plugin = pluginResult.data;
+    const sunFlagPath = this.resolveEnvironmentSunFlagPath(plugin.state.configuration);
+    const isSunFlagEnabled = this.readBooleanByPath(plugin.state.configuration, sunFlagPath) === true;
+
+    if (plugin.state.enabled && isSunFlagEnabled) {
+      return true;
+    }
+
+    // Build precise message based on what needs to be changed
+    const needsEnable = !plugin.state.enabled;
+    const needsSunFlag = !isSunFlagEnabled;
+    let message: string;
+
+    if (needsEnable && needsSunFlag) {
+      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled and the environment.sun path must be set to true. Do you wish to enable & configure?";
+    } else if (needsEnable) {
+      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled. Do you wish to enable it?";
+    } else {
+      message = "To enable Automatic Night Mode, the environment.sun path in the Derived Data plugin must be set to true. Do you wish to configure it?";
+    }
+
+    return new Promise<boolean>((resolve) => {
+      const promptRef = this.toast.show(message, 0, false, 'warn', 'Ok');
+
+      promptRef.onAction().subscribe(() => {
+        void this.enableAndConfigureAutoNight(plugin, sunFlagPath, seq, resolve);
+      });
+
+      promptRef.afterDismissed().subscribe((dismissal) => {
+        if (!dismissal.dismissedByAction) {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  private async enableAndConfigureAutoNight(plugin: ISignalkPlugin, sunFlagPath: string[], seq: number, resolve: (value: boolean) => void): Promise<void> {
+    const nextConfiguration = this.cloneConfig(plugin.state.configuration);
+    this.writeBooleanByPath(nextConfiguration, sunFlagPath, true);
+
+    const saveResult = await this._pluginConfig.savePluginConfig(plugin.id, {
+      configuration: nextConfiguration,
+      enabled: true
+    });
+
+    if (seq !== this._pluginCheckSeq) {
+      resolve(false);
+      return;
+    }
+
+    if (!saveResult.ok) {
+      const saveFailure = saveResult as IPluginApiFailure;
+      this.toast.show(
+        `Failed to enable and configure Derived Data plugin: ${saveFailure.error.message}`,
+        0,
+        false,
+        'error'
+      );
+      resolve(false);
+      return;
+    }
+
+    this.toast.show('Automatic Night Mode dependency enabled and configured.', 3000, true, 'success');
+    resolve(true);
+  }
+
+  private resolveEnvironmentSunFlagPath(configuration: Record<string, unknown>): string[] {
+    const detectedPath = this.findBooleanSunPath(configuration);
+    return detectedPath ?? ['sun'];
+  }
+
+  private findBooleanSunPath(obj: Record<string, unknown>, pathPrefix: string[] = []): string[] | null {
+    const exactSunBoolean = Object.entries(obj).find(([key, value]) => key.toLowerCase() === 'sun' && typeof value === 'boolean');
+    if (exactSunBoolean) {
+      return [...pathPrefix, exactSunBoolean[0]];
+    }
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'boolean' && key.toLowerCase().includes('sun')) {
+        return [...pathPrefix, key];
+      }
+
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const nested = this.findBooleanSunPath(value as Record<string, unknown>, [...pathPrefix, key]);
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private readBooleanByPath(obj: Record<string, unknown>, path: string[]): boolean | null {
+    let current: unknown = obj;
+    for (const segment of path) {
+      if (!current || typeof current !== 'object' || Array.isArray(current)) {
+        return null;
+      }
+      current = (current as Record<string, unknown>)[segment];
+    }
+    return typeof current === 'boolean' ? current : null;
+  }
+
+  private writeBooleanByPath(obj: Record<string, unknown>, path: string[], value: boolean): void {
+    if (path.length === 0) return;
+
+    let current: Record<string, unknown> = obj;
+    for (let index = 0; index < path.length - 1; index++) {
+      const key = path[index];
+      const next = current[key];
+      if (!next || typeof next !== 'object' || Array.isArray(next)) {
+        current[key] = {};
+      }
+      current = current[key] as Record<string, unknown>;
+    }
+    current[path[path.length - 1]] = value;
+  }
+
+  private cloneConfig(configuration: Record<string, unknown>): Record<string, unknown> {
+    return JSON.parse(JSON.stringify(configuration || {})) as Record<string, unknown>;
   }
 
   protected setBrightness(value: number): void {

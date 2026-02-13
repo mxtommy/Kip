@@ -28,7 +28,7 @@
  * - Integrates with Angular Reactive Forms and Material
  */
 import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
-import { SignalkPluginsService } from '../../core/services/signalk-plugins.service';
+import { SignalkPluginConfigService } from '../../core/services/signalk-plugin-config.service';
 import { IV2AutopilotOptionsResponse, IV2AutopilotProvider } from '../../core/interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -67,7 +67,7 @@ const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
 })
 export class SelectAutopilotComponent implements OnInit {
 readonly formGroupName = input.required<string>();
-private readonly _plugins = inject(SignalkPluginsService);
+private readonly _pluginConfig = inject(SignalkPluginConfigService);
 private readonly _destroyRef = inject(DestroyRef);
 private readonly http = inject(HttpClient);
 
@@ -147,7 +147,8 @@ ngOnInit(): void {
 
     try {
       // Fall back to V1 plugin detection
-      const v1Enabled = await this._plugins.isEnabled(API_PATHS.V1_PLUGIN);
+      const v1Result = await this._pluginConfig.getPlugin(API_PATHS.V1_PLUGIN);
+      const v1Enabled = v1Result.ok && v1Result.data.state.enabled;
       if (v1Enabled) {
         this.apiVersion.set('v1');
         this.autopilotFormGroup.get('apiVersion')?.setValue("v1", { emitEvent: false });

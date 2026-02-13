@@ -93,10 +93,10 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
       .catch((error: HttpErrorResponse) => {
         switch (error.status) {
           case 401:
-            this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, null, 'error');
+            this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, 'error');
             break;
 
-          default: this.toast.show("Cannot list configurations: " + error, 0, false, null, 'error' );
+          default: this.toast.show("Cannot list configurations: " + error, 0, false, 'error' );
             break;
         }
       });
@@ -107,17 +107,17 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     if (this.supportApplicationData) {
       // Prevent saving with scope 'user' and name 'default'
       if ((scope === 'user' && name === 'default') && !forceSave) {
-        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, null, 'error');
+        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, 'error');
         return;
       }
 
       if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, null, 'success');
+        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, 'success');
         if (!dontRefreshConfigList || undefined) {
           this.getServerConfigList();
         }
       } else {
-        this.toast.show("Configuration not saved to server", 0, false, null, 'error');
+        this.toast.show("Configuration not saved to server", 0, false, 'error');
       }
     }
   }
@@ -139,7 +139,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         conf = config
       });
     } catch (error) {
-      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, null, 'error');
+      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, 'error');
       return;
     }
 
@@ -149,7 +149,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, null, 'success');
+    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
@@ -228,13 +228,13 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
           }
           this.appSettingsService.reloadApp();
         } catch (error) {
-          this.toast.show("File does not contain valid JSON.", 0, false, null, 'error');
+          this.toast.show("File does not contain valid JSON.", 0, false, 'error');
           console.error("Invalid JSON file format:", error);
         }
       };
       reader.readAsText(file); // Read the file as text
     } else {
-      this.toast.show("Please select a valid JSON file", 0, false, null, 'error');
+      this.toast.show("Please select a valid JSON file", 0, false, 'error');
     }
   }
 

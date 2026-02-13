@@ -8,8 +8,12 @@
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+}
+
+.toast[data-severity='message'] {
+  align-items: center;
 }
 
 .toast[data-severity='info'] {
@@ -43,6 +47,7 @@
 .toast-body {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   gap: 2px;
   flex: 1 1 auto;
   min-width: 0;
@@ -53,7 +58,23 @@
   font-size: 15px;
 }
 
+.button-group {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.toast-action {
+  @include mat.button-overrides((
+    text-label-text-color: var(--mat-sys-primary)
+  ));
+}
+
 .toast-close {
+  align-self: flex-end;
   @include mat.icon-button-overrides((
     icon-color: var(--mat-sys-inverse-on-surface),
     icon-size: 32px,

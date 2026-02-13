@@ -53,3 +53,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Documentation
+
+- Every public TypeScript property and public method MUST include full JSDoc with: purpose, parameters, return value, and at least one usage example.
