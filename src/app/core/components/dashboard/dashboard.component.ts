@@ -332,12 +332,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const optionalState = await this.getOptionalPluginState(widget.optionalPlugins ?? []);
-    const hasOptionalPluginsInstalled = optionalState.installed.length > 0;
-    const hasOptionalPluginsEnabled = optionalState.enabled.length > 0;
+    const anyOfState = await this.getAnyOfPluginActivationState(widget.anyOfPlugins ?? []);
+    const hasAnyOfPluginsInstalled = anyOfState.installed.length > 0;
+    const hasAnyOfPluginsEnabled = anyOfState.enabled.length > 0;
 
-    if (hasOptionalPluginsInstalled && !hasOptionalPluginsEnabled) {
-      this.notifyOptionalPluginsRequireManualActivation(widget, optionalState.installed);
+    if (hasAnyOfPluginsInstalled && !hasAnyOfPluginsEnabled) {
+      this.notifyAnyOfPluginsRequireManualActivation(widget, anyOfState.installed);
       return;
     }
 
@@ -365,14 +365,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       .map(pluginStatus => pluginStatus.pluginId);
   }
 
-  private async getOptionalPluginState(optionalPlugins: string[]): Promise<{ installed: string[]; enabled: string[] }> {
-    if (!optionalPlugins?.length) {
+  private async getAnyOfPluginActivationState(anyOfPlugins: string[]): Promise<{ installed: string[]; enabled: string[] }> {
+    if (!anyOfPlugins?.length) {
       return { installed: [], enabled: [] };
     }
 
-    const uniqueOptionalPlugins = [...new Set(optionalPlugins)];
+    const uniqueAnyOfPlugins = [...new Set(anyOfPlugins)];
     const statusList = await Promise.all(
-      uniqueOptionalPlugins.map(async pluginId => {
+      uniqueAnyOfPlugins.map(async pluginId => {
         const result = await this._pluginConfig.getPlugin(pluginId);
         return {
           pluginId,
@@ -388,10 +388,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private notifyOptionalPluginsRequireManualActivation(widget: WidgetDescription, installedOptionalPlugins: string[]): void {
-    const pluginLabel = installedOptionalPlugins.join(', ');
+  private notifyAnyOfPluginsRequireManualActivation(widget: WidgetDescription, installedAnyOfPlugins: string[]): void {
+    const pluginLabel = installedAnyOfPlugins.join(', ');
     this.toast.show(
-      `Cannot add "${widget.name}" yet. Optional plugin${installedOptionalPlugins.length > 1 ? 's are' : ' is'} installed (${pluginLabel}) but none ${installedOptionalPlugins.length > 1 ? 'are' : 'is'} active. Please manually activate and configure one or all in Signal K Plugin Config, then come back and add the widget.`,
+      `Cannot add "${widget.name}" yet. Any-of plugin${installedAnyOfPlugins.length > 1 ? 's are' : ' is'} installed (${pluginLabel}) but none ${installedAnyOfPlugins.length > 1 ? 'are' : 'is'} active. Please manually activate and configure one or all in Signal K Plugin Config, then come back and add the widget.`,
       0,
       false,
       'warn'

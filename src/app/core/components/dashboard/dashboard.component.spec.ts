@@ -32,7 +32,7 @@ describe('DashboardComponent', () => {
     const widget = {
       name: 'Anchor Watch',
       requiredPlugins: ['anchoralarm', 'tracks'],
-      optionalPlugins: [],
+      anyOfPlugins: [],
       description: 'test',
       icon: 'icon',
       category: 'Component',
