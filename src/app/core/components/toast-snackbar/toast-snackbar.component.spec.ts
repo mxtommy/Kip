@@ -30,7 +30,7 @@ describe('ToastSnackbarComponent', () => {
   it('renders action button when action label exists', () => {
     createComponent({ message: 'Plugin disabled', action: 'Enable Plugin', severity: 'warn' });
 
-    const actionButton = fixture.debugElement.query(By.css('.toast-action'));
+    const actionButton = fixture.debugElement.query(By.css('button[matSnackBarAction]'));
     expect(actionButton).toBeTruthy();
     expect((actionButton.nativeElement as HTMLButtonElement).textContent?.trim()).toBe('Enable Plugin');
   });
@@ -38,14 +38,14 @@ describe('ToastSnackbarComponent', () => {
   it('does not render action button when action is missing', () => {
     createComponent({ message: 'Saved', severity: 'success' });
 
-    const actionButton = fixture.debugElement.query(By.css('.toast-action'));
-    expect(actionButton).toBeFalsy();
+    const actionGroup = fixture.debugElement.query(By.css('.button-group'));
+    expect(actionGroup).toBeFalsy();
   });
 
   it('clicking action button triggers dismissWithAction', () => {
     createComponent({ message: 'Plugin disabled', action: 'Enable Plugin', severity: 'warn' });
 
-    const actionButton = fixture.debugElement.query(By.css('.toast-action'));
+    const actionButton = fixture.debugElement.query(By.css('button[matSnackBarAction]'));
     actionButton.nativeElement.click();
 
     expect(snackBarRef.dismissWithAction).toHaveBeenCalled();
@@ -53,7 +53,7 @@ describe('ToastSnackbarComponent', () => {
   });
 
   it('clicking close button triggers dismiss only', () => {
-    createComponent({ message: 'Plugin disabled', action: 'Enable Plugin', severity: 'warn' });
+    createComponent({ message: 'Plugin disabled', severity: 'warn' });
 
     const closeButton = fixture.debugElement.query(By.css('.toast-close'));
     closeButton.nativeElement.click();

@@ -138,9 +138,16 @@ class ConnectionStateMachineStub {
 }
 
 // Minimal stub for SignalkPluginConfigService to avoid network fetches in tests
+interface SignalkPluginStubResponse {
+  ok: boolean;
+  capabilities: Record<string, unknown>;
+  data?: unknown[];
+}
+
 class SignalkPluginConfigServiceStub implements Partial<SignalkPluginConfigService> {
-  async getPlugin(): Promise<any> { return { ok: false, capabilities: {} }; }
-  async listPlugins(): Promise<any> { return { ok: false, data: [], capabilities: {} }; }
+  async getPlugin(): Promise<SignalkPluginStubResponse> { return { ok: false, capabilities: {} }; }
+  async listPlugins(): Promise<SignalkPluginStubResponse> { return { ok: false, data: [], capabilities: {} }; }
+  async setPluginEnabled(): Promise<SignalkPluginStubResponse> { return { ok: true, capabilities: {} }; }
 }
 
 // A robust global AppSettingsService stub exposing both sync getters and observable getters

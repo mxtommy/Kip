@@ -14,6 +14,11 @@ describe('GroupWidgetComponent', () => {
 
     fixture = TestBed.createComponent(GroupWidgetComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('widgetProperties', {
+      uuid: 'group-widget-test',
+      type: 'group-widget',
+      config: {}
+    });
     fixture.detectChanges();
   });
 
