@@ -48,6 +48,12 @@ import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.d
 import { ENVIRONMENT_INITIALIZER, signal, inject as diInject } from '@angular/core';
 import type { IWidgetSvcConfig } from './app/core/interfaces/widgets-interface';
 import type { IAppConfig } from './app/core/interfaces/app-settings.interfaces';
+import type {
+  IPluginApiCapabilities,
+  IPluginApiResult,
+  IPluginConfigSaveResult,
+  ISignalkPlugin,
+} from './app/core/interfaces/signalk-plugin-config.interfaces';
 import type { IUnitDefaults } from './app/core/services/units.service';
 import type { IDatasetServiceDatasetConfig } from './app/core/services/data-set.service';
 // Global provider setup (HttpClient, RouterTestingModule, animation & material stubs, etc.)
@@ -137,17 +143,49 @@ class ConnectionStateMachineStub {
   onWebSocketError(): void { /* noop */ }
 }
 
-// Minimal stub for SignalkPluginConfigService to avoid network fetches in tests
-interface SignalkPluginStubResponse {
-  ok: boolean;
-  capabilities: Record<string, unknown>;
-  data?: unknown[];
-}
-
 class SignalkPluginConfigServiceStub implements Partial<SignalkPluginConfigService> {
-  async getPlugin(): Promise<SignalkPluginStubResponse> { return { ok: false, capabilities: {} }; }
-  async listPlugins(): Promise<SignalkPluginStubResponse> { return { ok: false, data: [], capabilities: {} }; }
-  async setPluginEnabled(): Promise<SignalkPluginStubResponse> { return { ok: true, capabilities: {} }; }
+  private readonly stubCapabilities: IPluginApiCapabilities = {
+    listSupported: true,
+    detailSupported: true,
+    saveConfigSupported: true,
+    detailFallbackToList: false,
+  };
+
+  async getPlugin(pluginId: string): Promise<IPluginApiResult<ISignalkPlugin>> {
+    return {
+      ok: false,
+      error: {
+        reason: 'not-found',
+        statusCode: 404,
+        message: `Plugin not found: ${pluginId}`,
+      },
+      capabilities: this.stubCapabilities,
+    };
+  }
+
+  async listPlugins(): Promise<IPluginApiResult<ISignalkPlugin[]>> {
+    return {
+      ok: true,
+      data: [],
+      capabilities: this.stubCapabilities,
+    };
+  }
+
+  async setPluginEnabled(pluginId: string, enabled: boolean): Promise<IPluginApiResult<IPluginConfigSaveResult>> {
+    return {
+      ok: true,
+      data: {
+        pluginId,
+        state: {
+          configuration: {},
+          enabled,
+          enableDebug: false,
+          enableLogging: false,
+        },
+      },
+      capabilities: this.stubCapabilities,
+    };
+  }
 }
 
 // A robust global AppSettingsService stub exposing both sync getters and observable getters
