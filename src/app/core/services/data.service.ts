@@ -101,6 +101,8 @@ export class DataService implements OnDestroy {
   // Full skData updates for data-browser component
   private _isSkDataFullTreeActive = false;
   private _skDataSubject$ = new BehaviorSubject<ISkPathData[]>([]);
+  private _skDataEmitTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly _skDataEmitIntervalMs = 200;
 
   // Full skMeta updates for Zones component
   private _dataServiceMeta: IPathMetaData[] = [];
@@ -416,7 +418,7 @@ export class DataService implements OnDestroy {
     // Push full tree if data-browser or Zones component are observing
     if (this._isSkDataFullTreeActive) {
       this.upsertSkDataCache(pathItem);
-      this._skDataSubject$.next(this._skDataArrayCache);
+      this.scheduleSkDataFullTreeEmit();
     }
 
     // Emit post-processed path update
@@ -447,7 +449,7 @@ export class DataService implements OnDestroy {
         this._skData.set(metaPath, pathObject);
         if (this._isSkDataFullTreeActive) {
           this.upsertSkDataCache(pathObject);
-          this._skDataSubject$.next(this._skDataArrayCache);
+          this.scheduleSkDataFullTreeEmit();
         }
       } else {
         if (pathObject.type === 'object' && meta.meta.units) {
@@ -500,7 +502,7 @@ export class DataService implements OnDestroy {
   public startSkDataFullTree(): Observable<ISkPathData[]> {
     this._isSkDataFullTreeActive = true;
     this.refreshSkDataCache();
-    this._skDataSubject$.next(this._skDataArrayCache);
+    this.emitSkDataFullTree();
     return this._skDataSubject$;
   }
 
@@ -518,8 +520,31 @@ export class DataService implements OnDestroy {
 
   public stopSkDataFullTree(): void {
     this._isSkDataFullTreeActive = false;
+    if (this._skDataEmitTimer) {
+      clearTimeout(this._skDataEmitTimer);
+      this._skDataEmitTimer = null;
+    }
     this._skDataArrayCache = [];
     this._skDataIndexByPath.clear();
+  }
+
+  private scheduleSkDataFullTreeEmit(): void {
+    if (!this._isSkDataFullTreeActive || this._skDataEmitTimer) {
+      return;
+    }
+
+    this._skDataEmitTimer = setTimeout(() => {
+      this._skDataEmitTimer = null;
+      this.emitSkDataFullTree();
+    }, this._skDataEmitIntervalMs);
+  }
+
+  private emitSkDataFullTree(): void {
+    if (!this._isSkDataFullTreeActive) {
+      return;
+    }
+
+    this._skDataSubject$.next(this._skDataArrayCache);
   }
 
   private refreshSkDataCache(): void {
@@ -695,6 +720,10 @@ export class DataService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this._skDataEmitTimer) {
+      clearTimeout(this._skDataEmitTimer);
+      this._skDataEmitTimer = null;
+    }
     this._deltaUpdatesSubject?.complete();
     this._skNotificationMsg$?.complete();
     this._skNotificationMeta$?.complete();
