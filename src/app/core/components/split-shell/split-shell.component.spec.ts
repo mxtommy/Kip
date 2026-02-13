@@ -5,10 +5,18 @@ import { DashboardService, widgetOperation } from '../../services/dashboard.serv
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { BehaviorSubject, of } from 'rxjs';
 import { RemoteDashboardsService } from '../../services/remote-dashboards.service';
+import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 
 class MockAppSettingsService {
   private ratio = 0.3; // stored as ratio (0-1)
   private side: 'left' | 'right' = 'right';
+  private notificationConfig: INotificationConfig = {
+    disableNotifications: true,
+    menuGrouping: false,
+    security: { disableSecurity: true },
+    devices: { disableDevices: true, showNormalState: false, showNominalState: false },
+    sound: { disableSound: true, muteNormal: true, muteNominal: true, muteWarn: true, muteAlert: true, muteAlarm: true, muteEmergency: true }
+  };
   // Minimal properties consumed by other services
   public signalkUrl = { url: 'http://localhost:3000' };
   public KipUUID = 'test-kip-uuid';
@@ -23,6 +31,8 @@ class MockAppSettingsService {
   getAutoNightModeAsO() { return of(false); }
   getThemeNameAsO() { return of('light-theme'); }
   getRedNightModeAsO() { return of(false); }
+  getNotificationServiceConfigAsO() { return of(this.notificationConfig); }
+  getNotificationConfig() { return this.notificationConfig; }
   // Methods consumed by DatasetService (indirectly via nested components)
   // Return true to bypass cleanup requiring additional settings API
   configUpgrade() { return true; }
@@ -53,6 +63,13 @@ class MockRemoteDashboardsService {
 
 describe('SplitShellComponent', () => {
   beforeEach(async () => {
+    TestBed.overrideComponent(SplitShellComponent, {
+      set: {
+        template: '<div class="split-root"><div #panel></div></div>',
+        imports: []
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [SplitShellComponent],
       providers: [
