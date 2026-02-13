@@ -10,7 +10,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
      - Type `self.` to view paths related to your vessel.
      - Type `environment` to view environmental data like wind or temperature.
      - Type `speed` to view any speed related data like wind speed, max speed, polar speed, etc.
-     - Type `derived` to view all path from source derived-data .
+   - Type `derived` to view all paths from source `derived-data`.
 
 2. **Sort and Navigate**:
    - Click on column headers to sort the data by Path, PUT Support, or Source.
@@ -24,7 +24,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 2. **PUT Support**:
    - You can see if a path supports PUT operations, indicated by a green checkmark in the **PUT Support** column.
-   - For more details on PUT support and how to use it, refer to the **Updating Signal K Data** help documentation.
+   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](putcontrols.md) help documentation.
 
 3. **Multiple Data Sources**:
    - The Data Inspector displays how many sources are providing data for each path.
@@ -41,11 +41,13 @@ The Data Inspector is a good way to validate raw data and available paths withou
   - Use the Data Inspector to validate raw data and available paths without the constraints that widgets can impose. This is especially useful when setting up new devices or debugging data issues.
 
 - **Verify PUT Support**:
-  - Check if a path supports PUT operations before configuring widgets like the Switch Panel or Slider.
+   - Check if a path supports PUT operations. It is required to configure widgets like Switch Panel, Slider, or Multi State Switch.
+   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](putcontrols.md) help documentation.
+   - If you are learning Node-RED flows and want your flow to work with KIP digital switching widgets, continue with [Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md).
 
 - **Troubleshoot Data Issues**:
-  - The Data Inspector is a good troubleshooting tool, but it should be matched with the Signal K Data Browser when trying to understand raw data and what is going on. The combination of these tools provides a more complete picture of the data, it's processing and its behavior.
+   - The Data Inspector is a good troubleshooting tool, but it should be used with the Signal K Data Browser when trying to understand raw data and behavior. The combination of these tools provides a more complete picture of the data, its processing, and its behavior.
 
 ## Summary
 
-The Data Inspector is an essential tool for managing and understanding the data KIP receives from your Signal K server. With its real-time updates, filtering, and unit conversion capabilities, it provides a comprehensive view of your vessel's data. Whether you're monitoring performance, configuring widgets, or troubleshooting issues. For deeper analysis and understanding of raw data, pair it with the Signal K Data Browser to gain even more insights.
+The Data Inspector is an essential tool for managing and understanding the data KIP receives from your Signal K server. With its real-time updates, filtering, and unit conversion capabilities, it provides a comprehensive view of your vessel's data whether you're monitoring performance, configuring widgets, or troubleshooting issues. For deeper analysis and understanding of raw data, pair it with the Signal K Data Browser.

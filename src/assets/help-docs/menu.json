@@ -6,6 +6,7 @@
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Data Inspector", "file": "datainspector.md" },
   { "title": "Digital Switching and PUT", "file": "putcontrols.md" },
+  { "title": "Node-RED Control Flows (Beginner)", "file": "nodered-control-flows.md" },
   { "title": "The Embed Page Viewer", "file": "embedwidget.md" },
   { "title": "Datasets and Data Chart Widget", "file": "datasets.md" },
   { "title": "Kiosk Mode", "file": "kiosk.md" },
