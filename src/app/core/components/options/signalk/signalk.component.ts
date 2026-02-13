@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
@@ -22,6 +22,7 @@ import { MatDialog } from '@angular/material/dialog';
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
 import { CanvasService } from '../../../services/canvas.service';
+import { InternetReachabilityService } from '../../../services/internet-reachability.service';
 
 
 
@@ -56,6 +57,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly signalKConnectionService = inject(SignalKConnectionService);
   private readonly deltaService = inject(SignalKDeltaService);
   private readonly connectionStateMachine = inject(ConnectionStateMachine);
+  private readonly internetReachability = inject(InternetReachabilityService);
   protected readonly auth = inject(AuthenticationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly canvasService = inject(CanvasService);
@@ -70,6 +72,22 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   public endpointServiceStatus: IEndpointStatus;
   public streamStatus: IStreamStatus;
+
+  protected readonly internetAvailabilityLabel = computed(() => {
+    if (this.internetReachability.isChecking()) {
+      return 'Checking...';
+    }
+
+    if (this.internetReachability.internetAvailable()) {
+      return 'Available';
+    }
+
+    if (this.internetReachability.isReachable() === false) {
+      return 'Unavailable';
+    }
+
+    return 'Unknown';
+  });
 
 
   private _chart: Chart = null;
