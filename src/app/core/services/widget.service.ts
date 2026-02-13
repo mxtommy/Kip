@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Type } from '@angular/core';
-import { SignalkPluginsService } from './signalk-plugins.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
@@ -109,7 +109,18 @@ export interface WidgetDescription {
   componentClassName: string;
 }
 export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
+  /**
+   * Selection-stage dependency validity.
+   *
+   * Uses installed/available dependency checks (not runtime enabled state).
+   */
   isDependencyValid: boolean;
+  /**
+   * Selection-stage plugin status list.
+   *
+   * `enabled` currently represents dependency availability (installed/reachable)
+   * for widget selection cards, not plugin active runtime state.
+   */
   pluginsStatus: { name: string; enabled: boolean, required: boolean }[];
 }
 
@@ -117,7 +128,7 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   providedIn: 'root'
 })
 export class WidgetService {
-  private readonly _plugins = inject(SignalkPluginsService);
+  private readonly _pluginConfig = inject(SignalkPluginConfigService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -573,10 +584,11 @@ export class WidgetService {
    * Returns the list of widget definitions, each enriched with plugin dependency status.
    *
    * For each widget, this method:
-    * - Checks all unique plugin dependencies for installation using the SignalkPluginsService (each dependency is checked only once, even if used by multiple widgets).
+    * - Checks all unique plugin dependencies for installation/availability using the SignalkPluginConfigService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
     * - `isDependencyValid`: `true` if all required plugins are installed and, if optionalPlugins is present, at least one optional plugin is installed. Otherwise `false`.
     * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).
+    *   Note: in this selection-stage payload, `enabled` indicates dependency availability (installed/reachable), not active runtime plugin state.
    *
    * @returns Promise resolving to an array of WidgetDescriptionWithPluginStatus objects.
    *
@@ -602,7 +614,8 @@ export class WidgetService {
     // Check each unique dependency once (installed status for selection-stage validation)
     await Promise.all(
       allDeps.map(async dep => {
-        pluginCache[dep] = await this._plugins.isInstalled(dep);
+        const result = await this._pluginConfig.getPlugin(dep);
+        pluginCache[dep] = result.ok;
       })
     );
 

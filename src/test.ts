@@ -41,7 +41,7 @@ import { ReactiveFormsModule, FormGroupDirective, FormGroup } from '@angular/for
 // If a specific spec needs them, it should declare/provide local stubs in that spec.
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
-import { SignalkPluginsService } from './app/core/services/signalk-plugins.service';
+import { SignalkPluginConfigService } from './app/core/services/signalk-plugin-config.service';
 import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
@@ -137,10 +137,10 @@ class ConnectionStateMachineStub {
   onWebSocketError(): void { /* noop */ }
 }
 
-// Minimal stub for SignalkPluginsService to avoid network fetches in tests
-class SignalkPluginsServiceStub implements Partial<SignalkPluginsService> {
-  async isInstalled(): Promise<boolean> { return false; }
-  async isEnabled(): Promise<boolean> { return false; }
+// Minimal stub for SignalkPluginConfigService to avoid network fetches in tests
+class SignalkPluginConfigServiceStub implements Partial<SignalkPluginConfigService> {
+  async getPlugin(): Promise<any> { return { ok: false, capabilities: {} }; }
+  async listPlugins(): Promise<any> { return { ok: false, data: [], capabilities: {} }; }
 }
 
 // A robust global AppSettingsService stub exposing both sync getters and observable getters
@@ -364,7 +364,7 @@ testBed.configureTestingModule({
     // SignalK connection-related stubs to prevent heavy runtime and missing .pipe
     { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
     { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
-    { provide: SignalkPluginsService, useClass: SignalkPluginsServiceStub },
+    { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceStub },
     // Provide a root-level WidgetRuntimeDirective stub to satisfy injections in widget specs
     { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
     // Provide a root-level WidgetStreamsDirective stub for widget/component specs
@@ -435,7 +435,7 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
   { provide: AppSettingsService, useClass: AppSettingsServiceStub },
   { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
   { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
-  { provide: SignalkPluginsService, useClass: SignalkPluginsServiceStub },
+  { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceStub },
   { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
   { provide: WidgetStreamsDirective, useClass: WidgetStreamsDirectiveStub },
   { provide: WidgetMetadataDirective, useClass: WidgetMetadataDirectiveStub },

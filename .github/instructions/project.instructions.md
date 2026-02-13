@@ -137,14 +137,8 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
   - Key methods: Data set CRUD, data source updates.
   - Dependencies: DataService, StorageService.
 
-- **SignalKPluginsService (`signalk-plugins.service.ts`)**
-  - Purpose: Manages Signal K plugin discovery, configuration, and state.
-  - Key methods: Plugin list management, config updates.
-  - Dependencies: SignalKConnectionService, DataService.
-  - Usage: Used to manage plugins and their configuration.
-
 - **SignalkPluginConfigService (`signalk-plugin-config.service.ts`)**
-  - Purpose: Plugin-only foundation service for dependency checks and plugin state/config persistence via Signal K `/plugins` endpoints.
+  - Purpose: Plugin configuration foundation service for dependency checks and plugin state/config persistence via Signal K `/plugins` endpoints.
   - Key methods: `listPlugins()`, `getPlugin()`, `getPluginConfig()`, `savePluginConfig()`, `setPluginEnabled()`, `validateDependency()`, `normalizePluginSchema()`.
   - Dependencies: HttpClient, SignalKConnectionService.
   - Usage: Source of truth for plugin detection and config save flows; no plugin install/uninstall support.

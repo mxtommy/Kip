@@ -20,7 +20,6 @@ import { DatasetService } from '../../services/data-set.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 import { DashboardClipboardBottomSheetComponent } from '../dashboard-clipboard-bottom-sheet/dashboard-clipboard-bottom-sheet.component';
-import { SignalkPluginsService } from '../../services/signalk-plugins.service';
 import { SignalkPluginConfigService } from '../../services/signalk-plugin-config.service';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
@@ -48,7 +47,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dataset = inject(DatasetService);
-  private readonly _plugins = inject(SignalkPluginsService);
   private readonly _pluginConfig = inject(SignalkPluginConfigService);
   protected readonly _router = inject(Router);
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
@@ -323,15 +321,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     .subscribe(async data => {
       if (!data || typeof data !== 'object') return; // clicked cancel or invalid data
       const widget = data as WidgetDescription;
-
-      const disabledRequiredPlugins = await this.getDisabledRequiredPlugins(widget.requiredPlugins ?? []);
-      if (disabledRequiredPlugins.length > 0) {
-        this.promptEnableRequiredPlugins(widget, x, y, disabledRequiredPlugins);
-        return;
-      }
-
-      this.addWidgetToGrid(widget, x, y);
+      await this.tryAddWidgetWithDependencyChecks(widget, x, y);
     });
+  }
+
+  private async tryAddWidgetWithDependencyChecks(widget: WidgetDescription, x: number, y: number): Promise<void> {
+    const disabledRequiredPlugins = await this.getDisabledRequiredPlugins(widget.requiredPlugins ?? []);
+    if (disabledRequiredPlugins.length > 0) {
+      this.promptEnableRequiredPlugins(widget, x, y, disabledRequiredPlugins);
+      return;
+    }
+
+    const optionalState = await this.getOptionalPluginState(widget.optionalPlugins ?? []);
+    const hasOptionalPluginsInstalled = optionalState.installed.length > 0;
+    const hasOptionalPluginsEnabled = optionalState.enabled.length > 0;
+
+    if (hasOptionalPluginsInstalled && !hasOptionalPluginsEnabled) {
+      this.notifyOptionalPluginsRequireManualActivation(widget, optionalState.installed);
+      return;
+    }
+
+    this.addWidgetToGrid(widget, x, y);
   }
 
   private async getDisabledRequiredPlugins(requiredPlugins: string[]): Promise<string[]> {
@@ -341,15 +351,51 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     const uniqueRequiredPlugins = [...new Set(requiredPlugins)];
     const statusList = await Promise.all(
-      uniqueRequiredPlugins.map(async pluginId => ({
-        pluginId,
-        enabled: await this._plugins.isEnabled(pluginId)
-      }))
+      uniqueRequiredPlugins.map(async pluginId => {
+        const result = await this._pluginConfig.getPlugin(pluginId);
+        return {
+          pluginId,
+          enabled: result.ok && result.data.state.enabled
+        };
+      })
     );
 
     return statusList
       .filter(pluginStatus => !pluginStatus.enabled)
       .map(pluginStatus => pluginStatus.pluginId);
+  }
+
+  private async getOptionalPluginState(optionalPlugins: string[]): Promise<{ installed: string[]; enabled: string[] }> {
+    if (!optionalPlugins?.length) {
+      return { installed: [], enabled: [] };
+    }
+
+    const uniqueOptionalPlugins = [...new Set(optionalPlugins)];
+    const statusList = await Promise.all(
+      uniqueOptionalPlugins.map(async pluginId => {
+        const result = await this._pluginConfig.getPlugin(pluginId);
+        return {
+          pluginId,
+          installed: result.ok,
+          enabled: result.ok && result.data.state.enabled
+        };
+      })
+    );
+
+    return {
+      installed: statusList.filter(pluginStatus => pluginStatus.installed).map(pluginStatus => pluginStatus.pluginId),
+      enabled: statusList.filter(pluginStatus => pluginStatus.enabled).map(pluginStatus => pluginStatus.pluginId)
+    };
+  }
+
+  private notifyOptionalPluginsRequireManualActivation(widget: WidgetDescription, installedOptionalPlugins: string[]): void {
+    const pluginLabel = installedOptionalPlugins.join(', ');
+    this.toast.show(
+      `Cannot add "${widget.name}" yet. Optional plugin${installedOptionalPlugins.length > 1 ? 's are' : ' is'} installed (${pluginLabel}) but none ${installedOptionalPlugins.length > 1 ? 'are' : 'is'} active. Please manually activate and configure one or all in Signal K Plugin Config, then come back and add the widget.`,
+      0,
+      false,
+      'warn'
+    );
   }
 
   private promptEnableRequiredPlugins(widget: WidgetDescription, x: number, y: number, disabledRequiredPlugins: string[]): void {
@@ -400,7 +446,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       'success'
     );
 
-    this.addWidgetToGrid(widget, x, y);
+    await this.tryAddWidgetWithDependencyChecks(widget, x, y);
   }
 
   private addWidgetToGrid(widget: WidgetDescription, x: number, y: number): void {
