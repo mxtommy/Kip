@@ -65,9 +65,9 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Position** – Displays latitude and longitude for location tracking and navigation.
 - **Static Label** – Add customizable labels to organize and clarify your dashboard layout.
 - **Zones State Panel**: Monitor the health/state of path data. Each panel control displays path data severity and status messages (driven by Signal K metadata zones).
-- **Switch Panel** – Group of toggle switches, indicator lights, and press buttons for digital switching and operations.
-- **Slider** – Range slider for adjusting values (e.g. lighting intensity).
-- **Multi State Switch** - Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.
+- **Switch Panel** – Group of toggle switches, indicator lights, and press buttons for digital switching and operations. See [Digital Switching and PUT Path Setup](putcontrols.md).
+- **Slider** – Range slider for adjusting values (e.g. lighting intensity). See [Digital Switching and PUT Path Setup](putcontrols.md).
+- **Multi State Switch** - Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result. See [Digital Switching and PUT Path Setup](putcontrols.md).
 - **Compact Linear** – Simple horizontal linear gauge with a large value label and modern look.
 - **Linear** – Horizontal or vertical linear gauge with zone highlighting.
 - **Radial** – Radial gauge with configurable dials and zone highlighting.
