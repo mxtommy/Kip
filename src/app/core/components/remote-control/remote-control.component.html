@@ -18,12 +18,12 @@
     </mat-action-list>
   </mat-sidenav>
   <mat-sidenav-content class="sidenav-remote-control-content">
-    @if (screens.isLoading()) {
+    @if (screensLoading()) {
       <div class="loading-container" aria-label="Loading screens">
         <mat-progress-spinner mode="indeterminate" diameter="64" strokeWidth="5"></mat-progress-spinner>
       </div>
-    } @else if(screens.hasValue()) {
-      @for(screen of screens.value(); track screen.id) {
+    } @else if (screens().length) {
+      @for(screen of screens(); track screen.id) {
         <tile-large-icon
           #tile
           [active]="activeScreenIdx() === $index ? true : false"

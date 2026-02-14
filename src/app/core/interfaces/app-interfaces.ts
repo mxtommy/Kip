@@ -95,7 +95,15 @@ export interface IMeta {
 }
 
 /**
- * KIP Remote Displays API types (plugin endpoints under /plugins/kip)
+ * KIP remote display models sourced from the Signal K data tree.
+ *
+ * @example
+ * ```ts
+ * const display: IKipDisplayInfo = {
+ *   displayId: '881d9185-426e-4dc3-bb95-ed58b81392c1',
+ *   displayName: 'Helm Port'
+ * };
+ * ```
  */
 export interface IKipDisplayInfo {
   /** KIP instance UUID */
@@ -104,32 +112,32 @@ export interface IKipDisplayInfo {
   displayName: string | null;
 }
 
-/** Response for GET /plugins/kip/displays */
-export type IKipDisplayList = IKipDisplayInfo[];
-
-/** A single screen entry */
+/**
+ * A single remote-selectable dashboard entry.
+ *
+ * @example
+ * ```ts
+ * const screen: IKipScreenItem = { id: 'dash-nav', name: 'Navigation', icon: 'sailing' };
+ * ```
+ */
 export interface IKipScreenItem {
+  /** Unique dashboard identifier. */
   id: string;
+  /** Human-readable dashboard title. */
   name: string;
+  /** SVG icon identifier used by the UI. */
   icon: string;
 }
 
-/** Response for GET /plugins/kip/displays/{displayId} */
+/**
+ * Ordered list of remote-selectable dashboards for a display.
+ *
+ * @example
+ * ```ts
+ * const screens: IKipDisplayScreen = [
+ *   { id: 'dash-nav', name: 'Navigation', icon: 'sailing' }
+ * ];
+ * ```
+ */
 export type IKipDisplayScreen = IKipScreenItem[];
-
-/** Response for GET /plugins/kip/displays/{displayId}/activeScreen */
-export type IKipActiveScreen = number | null;
-
-/** Standard response envelope from plugin PUTs */
-export interface IKipResponse {
-  state: string;
-  statusCode: number;
-  message?: string;
-}
-
-/** Request body for PUT /plugins/kip/displays/{displayId}/activeScreen */
-export interface IKipActiveScreenSetRequest {
-  /** Index of active screen or null to clear */
-  screenIdx: number | null;
-}
 
