@@ -877,6 +877,11 @@
         </mat-tab>
       }
       <!-- end Chart -->
+      @if (widgetConfig?.bms) {
+        <mat-tab label="BMS">
+          <bms-bank-setup formGroupName="bms" class="tab-content" />
+        </mat-tab>
+      }
     </mat-tab-group>
   </mat-dialog-content>
   <mat-divider></mat-divider>

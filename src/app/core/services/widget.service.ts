@@ -30,6 +30,7 @@ import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switc
 import { WidgetMultiStateSwitchComponent } from '../../widgets/widget-multi-state-switch/widget-multi-state-switch.component';
 import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
+import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -164,9 +165,23 @@ export class WidgetService {
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
     WidgetMultiStateSwitchComponent: WidgetMultiStateSwitchComponent,
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
-    WidgetAutopilotComponent: WidgetAutopilotComponent
+    WidgetAutopilotComponent: WidgetAutopilotComponent,
+    WidgetBmsComponent: WidgetBmsComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
+    {
+      name: 'BMS',
+      description: 'Displays battery management system data with bank aggregation and per-battery details.',
+      icon: 'data',
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-bms',
+      componentClassName: 'WidgetBmsComponent'
+    },
     {
       name: 'Numeric',
       description: 'Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.',
