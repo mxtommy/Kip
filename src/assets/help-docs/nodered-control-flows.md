@@ -119,6 +119,7 @@ Use these terms consistently while setting up your flow.
 
 Use these guides next as needed.
 
+- SignalK signalk-node-red: [Show and tell](https://github.com/SignalK/signalk-node-red/discussions/categories/show-and-tell)
 - Path requirements and widget compatibility: [Digital Switching and PUT Path Setup](putcontrols.md)
 - Finding paths and checking PUT support: [Data Inspector](datainspector.md)
 - Adding and configuring widgets: [Dashboards and Layout](dashboards.md)
