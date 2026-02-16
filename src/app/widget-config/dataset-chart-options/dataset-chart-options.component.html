@@ -96,6 +96,7 @@
           [formControl]="timeScale()"
           name="timeScaleFormat"
           required>
+          <mat-option value="day">Days</mat-option>
           <mat-option value="hour">Hours</mat-option>
           <mat-option value="minute">Minutes</mat-option>
           <mat-option value="second">Seconds</mat-option>
@@ -106,11 +107,15 @@
       <mat-form-field class="full-width">
         <mat-label>Duration</mat-label>
         <input matInput type="number"
-          min="1" max="60" step="1"
+          min="1" [max]="maxDuration()" step="1"
           placeholder="Enter or select number..."
           [formControl]="period()"
           required>
       </mat-form-field>
+    </div>
+    <div style="grid-column: 1 / -1; font-size: 0.9em; color: var(--mat-sys-outline);">
+      <strong>History API:</strong> When the time scale is minutes or longer, the Data Chart can be pre-filled with historical data.
+      <a routerLink="/help" style="color: var(--kip-blue-color); cursor: pointer; text-decoration: underline;">Learn more</a>
     </div>
   </div>
 </div>

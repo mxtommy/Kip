@@ -92,6 +92,10 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private lastVerticalChart: boolean | null = null;
+  protected hasPath = computed<boolean>(() => {
+    const cfg = this.runtime.options();
+    return !!cfg?.datachartPath;
+  });
   private pathSignature = computed<string | undefined>(() => {
     const cfg = this.runtime.options();
     if (!cfg.datachartPath) {
@@ -136,6 +140,15 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
         }
       });
+    });
+
+    // Guard: ensure chart builds once canvas exists after initial render
+    effect(() => {
+      const cfg = this.runtime.options();
+      const canvas = this.widgetDataChart();
+      const hasPath = this.hasPath();
+      if (!cfg || !hasPath || !canvas || this.chart) return;
+      untracked(() => this.rebuildForDataset(cfg));
     });
   }
 
@@ -396,7 +409,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
        streaming: {
         duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
         delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
        }
     }
   }
@@ -739,6 +752,11 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           const avgRows = this.transformDatasetRows(dsPointOrBatch, cfg.datasetAverageArray);
           this.chart.data.datasets[1].data.push(...avgRows);
         }
+
+        const lastBatchPoint = dsPointOrBatch[dsPointOrBatch.length - 1];
+        if (lastBatchPoint) {
+          this.applyTitleAndAnnotationValues(lastBatchPoint, cfg);
+        }
       } else {
         const valueRow = this.transformDatasetRows([dsPointOrBatch], 0)[0];
         this.chart.data.datasets[0].data.push(valueRow);
@@ -752,34 +770,41 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
             this.chart.data.datasets[1].data.shift();
           } */
         }
-        const trackValue: number = cfg.trackAgainstAverage ? (dsPointOrBatch.data.sma ?? dsPointOrBatch.data.value) : dsPointOrBatch.data.value;
-        const convertedTrack = this.unitsService.convertToUnit(cfg.convertUnitTo, trackValue);
-
-        this.chart.options.plugins.title.text = `${convertedTrack.toFixed(cfg.numDecimal)} ${this.getUnitsLabel()} `;
-
-        const lastAverage = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastAverage);
-        const lastMinimum = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastMinimum);
-        const lastMaximum = this.unitsService.convertToUnit(cfg.convertUnitTo, dsPointOrBatch.data.lastMaximum);
-        const plugins = this.chart.options.plugins as unknown as AnnPlugin;
-        const ann = plugins.annotation?.annotations;
-
-        if (ann) {
-          if (ann.averageLine?.value !== lastAverage) {
-            ann.averageLine.value = lastAverage;
-            ann.averageLine.label.content = `${lastAverage.toFixed(cfg.numDecimal)}`;
-          }
-          if (ann.minimumLine?.value !== lastMinimum) {
-            ann.minimumLine.value = lastMinimum;
-            ann.minimumLine.label.content = `${lastMinimum.toFixed(cfg.numDecimal)}`;
-          }
-            if (ann.maximumLine?.value !== lastMaximum) {
-            ann.maximumLine.value = lastMaximum;
-            ann.maximumLine.label.content = `${lastMaximum.toFixed(cfg.numDecimal)}`;
-          }
-        }
+        this.applyTitleAndAnnotationValues(dsPointOrBatch, cfg);
       }
       this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
     });
+  }
+
+  private applyTitleAndAnnotationValues(point: IDatasetServiceDatapoint, cfg: IWidgetSvcConfig): void {
+    const trackValue: number = cfg.trackAgainstAverage ? (point.data.sma ?? point.data.value) : point.data.value;
+    const convertedTrack = this.unitsService.convertToUnit(cfg.convertUnitTo, trackValue);
+    if (Number.isFinite(convertedTrack)) {
+      this.chart.options.plugins.title.text = `${convertedTrack.toFixed(cfg.numDecimal)} ${this.getUnitsLabel()} `;
+    }
+
+    const lastAverage = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastAverage);
+    const lastMinimum = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastMinimum);
+    const lastMaximum = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastMaximum);
+
+    const plugins = this.chart.options.plugins as unknown as AnnPlugin;
+    const ann = plugins.annotation?.annotations;
+    if (!ann) return;
+
+    if (Number.isFinite(lastAverage) && ann.averageLine?.value !== lastAverage) {
+      ann.averageLine.value = lastAverage;
+      ann.averageLine.label.content = `${lastAverage.toFixed(cfg.numDecimal)}`;
+    }
+
+    if (Number.isFinite(lastMinimum) && ann.minimumLine?.value !== lastMinimum) {
+      ann.minimumLine.value = lastMinimum;
+      ann.minimumLine.label.content = `${lastMinimum.toFixed(cfg.numDecimal)}`;
+    }
+
+    if (Number.isFinite(lastMaximum) && ann.maximumLine?.value !== lastMaximum) {
+      ann.maximumLine.value = lastMaximum;
+      ann.maximumLine.label.content = `${lastMaximum.toFixed(cfg.numDecimal)}`;
+    }
   }
 
   private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {

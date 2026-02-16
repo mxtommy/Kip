@@ -11,6 +11,7 @@ import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, D
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { DemoAppConfig, DemoThemeConfig, DemoDashboardsConfig } from '../../../default-config/config.demo.const';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
@@ -23,6 +24,7 @@ const latestConfigVersion = 12; // used to set the configVersion property in the
 })
 export class AppSettingsService {
   private storage = inject(StorageService);
+  private snackBar = inject(MatSnackBar);
 
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
@@ -73,16 +75,35 @@ export class AppSettingsService {
       const hasCreds = !!this.loginName && !!this.loginPassword && !!this.signalkUrl?.url;
       if (this.storage.initConfig === null && hasCreds) {
         try {
-          const fileUpgradeRequired = await this.checkConfigFileVersionUpgradeRequired();
-          if (fileUpgradeRequired) {
-            this.configUpgrade.set(true);
-          } else {
-            this.resetSettings(); // triggers reload when done
+          const storageReady = await this.storage.waitUntilReady();
+          if (!storageReady) {
+            console.warn("[AppSettings Service] Startup check skipped: StorageService did not become ready in time.");
+            return;
+          }
+
+          // Try loading current-version remote config before any migration checks
+          if (this.storage.initConfig === null) {
+            try {
+              await this.storage.getConfig('user', this.sharedConfigName, configFileVersion, true);
+            } catch {
+              // keep flow below for migration/fallback checks
+            }
+          }
+
+          if (this.storage.initConfig === null) {
+            const fileUpgradeRequired = await this.checkConfigFileVersionUpgradeRequired();
+            if (fileUpgradeRequired) {
+              this.configUpgrade.set(true);
+              return;
+            }
+
+            console.warn(`[AppSettings Service] No remote config found for '${this.sharedConfigName}' in version ${configFileVersion}. Creating default remote config and reloading app.`);
+            this.resetSettings();
+            return;
           }
         } catch (err) {
           console.error("[AppSettings Service] Startup check failed:", err);
         }
-        return;
       }
 
       console.log("[AppSettings Service] Remote configuration storage enabled");
@@ -595,6 +616,14 @@ export class AppSettingsService {
             })
             .catch(error => {
               console.error("[AppSettings Service] Error replacing server config name: " + this.sharedConfigName + ", with default configuration values", error);
+              this.snackBar.open(
+                'Problem saving configuration to the server. Resolve this issue before KIP can be used reliably.',
+                'Close',
+                {
+                  duration: 0,
+                  verticalPosition: 'top'
+                }
+              );
             });
         }
       } else {
