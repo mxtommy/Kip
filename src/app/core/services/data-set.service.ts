@@ -379,6 +379,14 @@ export class DatasetService implements OnDestroy {
       // Seed the ReplaySubject with history datapoints
       const subject = this._svcSubjectObserverRegistry.find(r => r.datasetUuid === dataSource.uuid)?.rxjsSubject;
       if (subject && historyDatapoints.length > 0) {
+        const seededValues = historyDatapoints
+          .map(dp => dp.data.value)
+          .filter((value): value is number => Number.isFinite(value));
+
+        if (seededValues.length > 0) {
+          dataSource.historicalData = seededValues.slice(-dataSource.maxDataPoints);
+        }
+
         historyDatapoints.forEach(dp => subject.next(dp));
         console.log(`[Dataset Service] Seeded ${historyDatapoints.length} history datapoints for ${configuration.path}`);
       }
@@ -780,63 +788,127 @@ export class DatasetService implements OnDestroy {
     unit: string,
     domain: AngleDomain
   ): IDatasetServiceDatapoint[] {
-    const datapoints: IDatasetServiceDatapoint[] = [];
-
-    if (!response.data || response.data.length === 0) {
-      return datapoints;
+    const rows = response.data;
+    if (!rows || rows.length === 0) {
+      return [];
     }
 
-    // Build a map of method -> index from the values array
-    const methodIndexMap: Record<string, number> = {};
+    const datapoints: IDatasetServiceDatapoint[] = [];
+
+    let smaIndex = -1;
+    let avgIndex = -1;
+    let minIndex = -1;
+    let maxIndex = -1;
     if (response.values && Array.isArray(response.values)) {
       for (let i = 0; i < response.values.length; i++) {
-        const valueSpec = response.values[i];
-        if (valueSpec && valueSpec.method) {
-          methodIndexMap[valueSpec.method] = i + 1; // +1 because index 0 is timestamp
-        }
+        const method = response.values[i]?.method;
+        if (!method) continue;
+        const index = i + 1; // +1 because index 0 is timestamp
+        if (method === 'sma') smaIndex = index;
+        else if (method === 'avg') avgIndex = index;
+        else if (method === 'min') minIndex = index;
+        else if (method === 'max') maxIndex = index;
       }
     }
 
-    // Pre-compute angle normalization once (avoids per-row checks)
     const shouldNormalizeAngle = unit === 'rad';
     const normalizeAngle = shouldNormalizeAngle
       ? (domain === 'signed' ? this.normalizeToSigned.bind(this) : this.normalizeToDirection.bind(this))
       : null;
 
-    for (const row of response.data) {
+    let scalarSum = 0;
+    let scalarMin = Number.POSITIVE_INFINITY;
+    let scalarMax = Number.NEGATIVE_INFINITY;
+    let scalarCount = 0;
+
+    let angleSumSin = 0;
+    let angleSumCos = 0;
+    const angleValues: number[] = shouldNormalizeAngle ? [] : null;
+
+    for (const row of rows) {
       if (!Array.isArray(row) || row.length === 0) continue;
 
-      const timestampStr = row[0] as string;
-      const timestamp = new Date(timestampStr).getTime();
+      const timestamp = Date.parse(row[0] as string);
 
-      // Extract values
-      let smaValue = methodIndexMap['sma'] !== undefined ? (row[methodIndexMap['sma']] as number | null) : null;
-      let avgValue = methodIndexMap['avg'] !== undefined ? (row[methodIndexMap['avg']] as number | null) : null;
-      let minValue = methodIndexMap['min'] !== undefined ? (row[methodIndexMap['min']] as number | null) : null;
-      let maxValue = methodIndexMap['max'] !== undefined ? (row[methodIndexMap['max']] as number | null) : null;
+      let smaValue = smaIndex >= 0 ? (row[smaIndex] as number | null) : null;
+      let avgValue = avgIndex >= 0 ? (row[avgIndex] as number | null) : null;
+      let minValue = minIndex >= 0 ? (row[minIndex] as number | null) : null;
+      let maxValue = maxIndex >= 0 ? (row[maxIndex] as number | null) : null;
 
-      // Normalize angle values if applicable (single check per row)
       if (shouldNormalizeAngle) {
-        if (smaValue !== null) smaValue = normalizeAngle!(smaValue);
-        if (avgValue !== null) avgValue = normalizeAngle!(avgValue);
-        if (minValue !== null) minValue = normalizeAngle!(minValue);
-        if (maxValue !== null) maxValue = normalizeAngle!(maxValue);
+        smaValue = Number.isFinite(smaValue) ? normalizeAngle!(smaValue) : null;
+        avgValue = Number.isFinite(avgValue) ? normalizeAngle!(avgValue) : null;
+        minValue = Number.isFinite(minValue) ? normalizeAngle!(minValue) : null;
+        maxValue = Number.isFinite(maxValue) ? normalizeAngle!(maxValue) : null;
+      } else {
+        smaValue = Number.isFinite(smaValue) ? smaValue : null;
+        avgValue = Number.isFinite(avgValue) ? avgValue : null;
+        minValue = Number.isFinite(minValue) ? minValue : null;
+        maxValue = Number.isFinite(maxValue) ? maxValue : null;
       }
 
-      const datapoint: IDatasetServiceDatapoint = {
+      if (Number.isFinite(avgValue)) {
+        const value = avgValue as number;
+        if (shouldNormalizeAngle) {
+          angleValues!.push(value);
+          angleSumSin += Math.sin(value);
+          angleSumCos += Math.cos(value);
+        } else {
+          scalarCount++;
+          scalarSum += value;
+          if (value < scalarMin) scalarMin = value;
+          if (value > scalarMax) scalarMax = value;
+        }
+      }
+
+      datapoints.push({
         timestamp,
         data: {
-          value: avgValue ?? 0,
+          value: avgValue,
           sma: smaValue,
           ema: null,
           doubleEma: null,
-          lastAverage: avgValue,
-          lastMinimum: minValue,
-          lastMaximum: maxValue
+          lastAverage: null,
+          lastMinimum: null,
+          lastMaximum: null
         }
-      };
+      });
+    }
 
-      datapoints.push(datapoint);
+    if (datapoints.length > 0) {
+      let datasetAverage: number | null = null;
+      let datasetMinimum: number | null = null;
+      let datasetMaximum: number | null = null;
+
+      if (shouldNormalizeAngle && angleValues!.length > 0) {
+        datasetAverage = Math.atan2(angleSumSin / angleValues!.length, angleSumCos / angleValues!.length);
+        const { min, max } = this.circularMinMaxRad(angleValues!);
+
+        if (domain === 'signed') {
+          datasetAverage = this.normalizeToSigned(datasetAverage);
+          datasetMinimum = this.normalizeToSigned(min);
+          datasetMaximum = this.normalizeToSigned(max);
+        } else {
+          datasetAverage = this.normalizeToDirection(datasetAverage);
+          datasetMinimum = this.normalizeToDirection(min);
+          datasetMaximum = this.normalizeToDirection(max);
+        }
+      } else if (!shouldNormalizeAngle && scalarCount > 0) {
+        datasetAverage = scalarSum / scalarCount;
+        datasetMinimum = scalarMin;
+        datasetMaximum = scalarMax;
+      }
+
+      if (
+        datasetAverage !== null
+        && datasetMinimum !== null
+        && datasetMaximum !== null
+      ) {
+        const finalDatapoint = datapoints[datapoints.length - 1];
+        finalDatapoint.data.lastAverage = datasetAverage;
+        finalDatapoint.data.lastMinimum = datasetMinimum;
+        finalDatapoint.data.lastMaximum = datasetMaximum;
+      }
     }
 
     return datapoints;

@@ -150,6 +150,49 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
+  it('hydrates dataSource history from seeded history datapoints', inject([DatasetService], async (service: DatasetService) => {
+    historyServiceMock.getValues.calls.reset();
+    historyServiceMock.getValues.and.resolveTo({
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:05:00.000Z'
+      },
+      values: [
+        { path: 'navigation.speedThroughWater', method: 'avg' }
+      ],
+      data: [
+        ['2026-02-16T00:00:00.000Z', 2],
+        ['2026-02-16T00:01:00.000Z', 4],
+        ['2026-02-16T00:02:00.000Z', 6]
+      ]
+    });
+
+    const config = {
+      uuid: 'ds-hydrate-history',
+      path: 'navigation.speedThroughWater',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'Last 5 Minutes' as const,
+      period: 1,
+      label: 'test-hydrate-history'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any).start(config.uuid);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dataSource = (service as any)._svcDataSource.find((entry: { uuid: string }) => entry.uuid === config.uuid);
+    expect(dataSource).toBeTruthy();
+    expect(dataSource.historicalData[0]).toBe(2);
+    expect(dataSource.historicalData[1]).toBe(4);
+    expect(dataSource.historicalData[2]).toBe(6);
+
+    service.ngOnDestroy();
+  }));
+
   it('continues startup in live mode when history seeding throws', inject([DatasetService], async (service: DatasetService) => {
     historyServiceMock.getValues.calls.reset();
     historyServiceMock.getValues.and.rejectWith(new Error('History backend failure'));
@@ -179,5 +222,71 @@ describe('DatasetService', () => {
     expect(dataSource.pathObserverSubscription.closed).toBeFalse();
 
     service.ngOnDestroy();
+  }));
+
+  it('sets dataset stats only on final history datapoint using datapoint values', inject([DatasetService], (service: DatasetService) => {
+    const response = {
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:03:00.000Z'
+      },
+      values: [
+        { path: 'navigation.speedThroughWater', method: 'avg' },
+        { path: 'navigation.speedThroughWater', method: 'min' },
+        { path: 'navigation.speedThroughWater', method: 'max' }
+      ],
+      data: [
+        ['2026-02-16T00:00:00.000Z', 2, 50, 80],
+        ['2026-02-16T00:01:00.000Z', 4, 55, 85],
+        ['2026-02-16T00:02:00.000Z', 6, 60, 90]
+      ]
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datapoints = (service as any).convertHistoryToDatapoints(response, 'number', 'scalar');
+
+    expect(datapoints.length).toBe(3);
+    expect(datapoints[0].data.lastAverage).toBeNull();
+    expect(datapoints[0].data.lastMinimum).toBeNull();
+    expect(datapoints[0].data.lastMaximum).toBeNull();
+    expect(datapoints[1].data.lastAverage).toBeNull();
+    expect(datapoints[1].data.lastMinimum).toBeNull();
+    expect(datapoints[1].data.lastMaximum).toBeNull();
+
+    // Must be computed from datapoint.value series [2,4,6], not min/max columns.
+    expect(datapoints[2].data.lastAverage).toBe(4);
+    expect(datapoints[2].data.lastMinimum).toBe(2);
+    expect(datapoints[2].data.lastMaximum).toBe(6);
+  }));
+
+  it('uses circular stats for final history datapoint in rad direction domain', inject([DatasetService], (service: DatasetService) => {
+    const response = {
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:03:00.000Z'
+      },
+      values: [
+        { path: 'environment.wind.angleTrueWater', method: 'avg' }
+      ],
+      data: [
+        ['2026-02-16T00:00:00.000Z', 6.19591884457987],  // 355°
+        ['2026-02-16T00:01:00.000Z', 0.08726646259971647], // 5°
+        ['2026-02-16T00:02:00.000Z', 0.05235987755982989]  // 3°
+      ]
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datapoints = (service as any).convertHistoryToDatapoints(response, 'rad', 'direction');
+
+    expect(datapoints.length).toBe(3);
+    expect(datapoints[0].data.lastAverage).toBeNull();
+    expect(datapoints[1].data.lastAverage).toBeNull();
+
+    const final = datapoints[2].data;
+    expect(final.lastAverage).toBeCloseTo(0.0174959160, 6); // circular mean (~1.0024°)
+    expect(final.lastMinimum).toBeCloseTo(6.1959188446, 6); // 355°
+    expect(final.lastMaximum).toBeCloseTo(0.0872664626, 6); // 5°
   }));
 });
