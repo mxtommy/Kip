@@ -31,17 +31,17 @@ A Signal K server endpoint that provides access to recorded historical data. KIP
 
 ---
 
-## What Plugins Are Required?
+## What Plugins and Signal K Version Are Required?
 
-The History API requires a Signal K plugin that records data to a persistent store. Currently, two plugins support the History API:
+The History API requires Signal K version 2.22.1 or above and one plugin that records data to a persistent store. Currently, two plugins support the History API:
 
-### 1. signalk-to-influxdb2
+### 1. signalk-to-influxdb2, v2.0.0 or above
 - **Purpose**: Records Signal K data to an InfluxDB v2 time-series database. Requires pre-installed InfluxDB v2.
 - **Link**: [signalk-to-influxdb2](https://www.npmjs.com/package/signalk-to-influxdb2)
 - **Setup**: Consult the plugin documentation for installation and configuration.
 - **Path Configuration**: By default, records all paths. Configure filters, resolution, and other settings to match the paths you want available in KIP charts.
 
-### 2. signalk-parquet
+### 2. signalk-parquet, (supporting version not release yet)
 - **Purpose**: Records Signal K data to Parquet files for efficient storage and querying. No external database installation required.
 - **Link**: [signalk-parquet](https://www.npmjs.com/package/signalk-parquet)
 - **Setup**: Consult the plugin documentation for installation and configuration.
