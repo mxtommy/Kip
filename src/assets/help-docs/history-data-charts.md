@@ -22,7 +22,7 @@ A Signal K server endpoint that provides access to recorded historical data. KIP
 
 ### Wind Trends Widget
 - **Supported**: Yes, uses fixed paths (True Wind Direction and Speed).
-- **Requirements**: None - all `Scale Span` are supported.
+- **Requirements**: Time Span of `5 minutes` or `30 minutes`.
 - See [Wind Trends Fixed Paths](#wind-trends-fixed-paths) below for configuration details.
 
 ### Numeric Widget (with Mini Chart)
