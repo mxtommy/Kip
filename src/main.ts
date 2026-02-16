@@ -1,4 +1,4 @@
-import { enableProdMode, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
 import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -75,6 +75,7 @@ bootstrapApplication(AppComponent, {
     DatasetService,
     DashboardService,
     UnitsService,
+    AppNetworkInitService,
     AppSettingsService,
     NotificationsService,
     TimersService,
@@ -101,10 +102,8 @@ bootstrapApplication(AppComponent, {
      * @return {*} Promise once AppNetworkInitService is done
      */
     provideAppInitializer(() => {
-      const appNetInitSvc = new AppNetworkInitService();
-      return appNetInitSvc.initNetworkServices()
-        .then(() => { })
-        .catch(() => { });
+      const appNetInitSvc = inject(AppNetworkInitService);
+      return appNetInitSvc.initNetworkServices();
     }),
   ],
 });

@@ -94,6 +94,51 @@ export class StorageService {
     }
   }
 
+  /**
+   * Wait until storage service is ready for use.
+   * Should be called during app initialization to ensure storage is ready
+   * before services that depend on it are constructed.
+   *
+   * @param {number} timeoutMs Maximum time to wait in milliseconds.
+   * @returns {Promise<boolean>} Resolves true when ready; false on timeout.
+   *
+   * @example
+   * const ready = await this.storage.waitUntilReady();
+   * if (!ready) {
+   *   console.warn('Storage did not become ready in time.');
+   * }
+   */
+  public async waitUntilReady(timeoutMs = 10000): Promise<boolean> {
+    if (this.storageServiceReady$.getValue()) {
+      return true;
+    }
+
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+
+      const subscription = this.storageServiceReady$.subscribe((ready) => {
+        if (settled || !ready) {
+          return;
+        }
+
+        settled = true;
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+        resolve(true);
+      });
+
+      const timeoutId = window.setTimeout(() => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        subscription.unsubscribe();
+        resolve(false);
+      }, timeoutMs);
+    });
+  }
+
   private ensureReady(): void {
     if (!this.storageServiceReady$.getValue()) {
       throw new Error('[StorageService] Not ready: storageServiceReady is false');

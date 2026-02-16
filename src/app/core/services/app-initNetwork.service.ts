@@ -67,7 +67,13 @@ export class AppNetworkInitService implements OnDestroy {
       if (this.isLoggedIn && this.config?.useSharedConfig) {
         this.storage.activeConfigFileVersion = configFileVersion;
         this.storage.sharedConfigName = this.config.sharedConfigName;
-        await this.storage.getConfig("user", this.config.sharedConfigName, configFileVersion, true);
+        // Wait for storage to be fully ready before accessing it
+        const storageReady = await this.storage.waitUntilReady();
+        if (!storageReady) {
+          console.warn("[AppInit Network Service] StorageService did not become ready in time. Skipping remote config preload.");
+        } else {
+          await this.storage.getConfig("user", this.config.sharedConfigName, configFileVersion, true);
+        }
       }
 
       // Seed datasets after authentication (if required) so History API calls are authenticated.
