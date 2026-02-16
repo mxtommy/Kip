@@ -29,6 +29,11 @@ export const routes: Routes = [
     title: 'KIP - Remote Control'
   },
   {
+    path: 'help/:page',
+    loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent),
+    title: 'KIP - Help'
+  },
+  {
     path: 'help',
     loadComponent: () => import('./core/components/app-help/app-help.component').then(m => m.AppHelpComponent),
     title: 'KIP - Help'

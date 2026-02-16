@@ -17,7 +17,6 @@ Curated videos created by community members. Ordered to highlight broad onboardi
 
 Improve or add entries: PR or Discord #showcase.
 
----
 
 ## Authors & Channels
 Creator channels producing helpful KIP or Signal K related content.
@@ -53,7 +52,6 @@ Open a PR or post in Discord #showcase with:
 - Focus summary (1 line)
 - One featured video (link + short purpose sentence)
 
----
 
 ## More Community Resources
 
@@ -63,6 +61,5 @@ Open a PR or post in Discord #showcase with:
 - [SensESP](https://signalk.org/SensESP/) — A Signal K sensor development toolkit for the ESP32 platform
 - [OpenMarine Community](https://openmarine.net/) — OpenPlotter, MacArthur HAT and open source marine tech
 
----
 
 > Want to contribute a video or resource? Share your link in the Discord #showcase channel or open a GitHub issue!

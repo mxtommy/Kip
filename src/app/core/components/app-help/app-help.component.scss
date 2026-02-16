@@ -37,6 +37,16 @@
   padding-right: 15px;
 }
 
+.help-menu-group-title {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+::ng-deep .mat-mdc-menu-panel.help-menu-panel {
+  border: 1px solid var(--mat-sys-outline);
+  background: var(--mat-sys-surface-container-high);
+}
+
 ::ng-deep .markdown-content {
   display: block;
   height: calc(100% - 75px);

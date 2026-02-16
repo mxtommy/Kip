@@ -5,13 +5,11 @@ KIP can automatically request historical data points when opening chart widgets,
 
 This enables the display of minutes, hours, days, or weeks of pre-populated historical data immediately—no waiting, no empty charts. The History API is used to achieve this.
 
----
 
 ## What Is the History API?
 
 A Signal K server endpoint that provides access to recorded historical data. KIP automatically requests historical data points when opening chart widgets, pre-filling the chart instead of starting empty.
 
----
 
 ## Which Widgets Support History?
 
@@ -29,7 +27,6 @@ A Signal K server endpoint that provides access to recorded historical data. KIP
 - **Supported**: No. Mini charts use very short time windows (12 seconds) and skip history seeding.
 - Mini charts start live-only for performance reasons.
 
----
 
 ## What Plugins and Signal K Version Are Required?
 
@@ -47,7 +44,6 @@ The History API requires Signal K version 2.22.1 or above and one plugin that re
 - **Setup**: Consult the plugin documentation for installation and configuration.
 - **Path Configuration**: Specify which paths to record in the plugin settings. None are recorded by default.
 
----
 
 ## How History Data Works in KIP
 
@@ -68,7 +64,6 @@ After history data loads:
 - The chart will display only live data starting from when it was opened.
 - This is normal and does not indicate an error.
 
----
 
 ## Wind Trends Fixed Paths
 
@@ -78,7 +73,6 @@ The Wind Trends widget uses two fixed Signal K paths:
 
 For Wind Trends to display historical data, both of these paths **must be configured in your chosen History API plugin**. Check your plugin documentation to ensure these paths are included in the capture list.
 
----
 
 ## Troubleshooting
 
@@ -105,7 +99,6 @@ For Wind Trends to display historical data, both of these paths **must be config
 - Confirm that KIP can reach the Signal K server's History API endpoint. Use the OpenApi link in the Server Admin pages to the test.
 - Check browser console logs (F12) for any HTTP errors from history requests.
 
----
 
 ## Next Steps
 
@@ -116,7 +109,6 @@ For Wind Trends to display historical data, both of these paths **must be config
 5. Allow the chart to load—history data will appear if available.
 6. For more details, consult your plugin's documentation and the Signal K community resources.
 
----
 
 ## Questions or Issues?
 

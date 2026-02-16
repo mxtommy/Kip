@@ -6,7 +6,6 @@ We’d love to hear from you. The KIP community is active and friendly—whether
 
 Use Discord for quick questions, sharing dashboards, comparing hardware setups, and learning how others integrate KIP with Signal K.
 
----
 
 ## When to Use GitHub Issues
 
@@ -42,7 +41,6 @@ Tell us:
 
 If you’re willing to help test or prototype—say so. That speeds things up.
 
----
 
 ## Response Expectations
 - Discord: often same-day community responses; core maintainer availability may vary.
@@ -51,14 +49,12 @@ If you’re willing to help test or prototype—say so. That speeds things up.
 
 If something critical slips through, feel free to politely bump the issue after about a week.
 
----
 
 ## Contributing Beyond Issues
 - Share dashboards, layouts, or usage patterns. Use the Discord #showcase chanel with a few pictures (great inspiration for others!).
 - Help answer other users’ questions on Discord.
 - Test new widgets or configuration flows and give feedback.
 
----
 
 ## Thank You
 Your feedback, curiosity, and ideas directly shape KIP. Whether it’s a tiny typo fix or a major feature concept—every contribution moves the project forward.

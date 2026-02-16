@@ -25,6 +25,7 @@ import { AuthenticationInterceptor } from './app/core/interceptors/authenticatio
 import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { AppOverlayContainer } from './app/core/utils/app-overlay-container';
+import { RouterOverlayNavigationService } from './app/core/services/router-overlay-navigation.service';
 
 if (environment.production) {
   enableProdMode();
@@ -104,6 +105,11 @@ bootstrapApplication(AppComponent, {
     provideAppInitializer(() => {
       const appNetInitSvc = inject(AppNetworkInitService);
       return appNetInitSvc.initNetworkServices();
+    }),
+    // Ensure overlays (dialogs/bottom sheets) close on route navigation,
+    // including standard routerLink clicks from overlay content.
+    provideAppInitializer(() => {
+      inject(RouterOverlayNavigationService);
     }),
   ],
 });

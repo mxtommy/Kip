@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
 import { IPathMetaData, ISkPathData } from '../../core/interfaces/app-interfaces';
 import { debounceTime } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -40,7 +41,7 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
 }
 @Component({
   selector: 'config-dataset-chart-options',
-  imports: [MatIconModule, MatAutocompleteModule, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, ReactiveFormsModule],
+  imports: [MatIconModule, MatAutocompleteModule, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './dataset-chart-options.component.html',
   styleUrl: './dataset-chart-options.component.scss'
 })

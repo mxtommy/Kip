@@ -19,7 +19,7 @@ To log in to Signal K, you must first create a user. Follow these steps to creat
 
 ## Login to Server Mode
 
-*In this mode, your configuration is shared across all devices **as long as you authenticate to Signal K using the same User ID**. It's that simple!*
+>In this mode, your configuration is shared across all devices **as long as you authenticate to Signal K using the same User ID**. It's that simple!
 
 On the **Configurations** page, you can perform the following actions:
 
