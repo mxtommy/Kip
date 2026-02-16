@@ -10,8 +10,7 @@ KIP supports multiple input modes for seamless navigation across devices.
 | Toggle Night mode          | N/A           | N/A                          | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>N</kbd>  |
 | Toggle dashboard edit mode | N/A           | N/A                          | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd>  |
 
-_Note that the words Touch and Tap are synonymous with mouse click._
-<br/>
+> Note that the words Touch and Tap are synonymous with mouse click.
 
 ## General Layout
 <img src="../../assets/help-docs/img/general-layout.png" alt="Sidebar Menus" title="Sidebar Menus" width="100%">
@@ -101,11 +100,11 @@ If multiple devices log in with the same Signal K user to share configuration, t
 | Wrong device switched | Two devices share same Instance Name—rename one. |
 | Works, then stops | Network drop or Signal K reconnect in progress—wait a few seconds or reload. |
 
-### Tips
-- Keep Instance Names short but meaningful (e.g. Mast, Helm, NavTV).
-- For unattended displays, enable the browser’s keep‑awake / no‑sleep features if supported.
-- Combine with Night Mode + per‑profile layouts for role‑specific remote switching.
-- Use different Signal K users if you want fully isolated configurations.
+> **Tips**
+>- Keep Instance Names short but meaningful (e.g. Mast, Helm, NavTV).
+>- For unattended displays, enable the browser’s keep‑awake / no‑sleep features if supported.
+>- Combine with Night Mode + per‑profile layouts for role‑specific remote switching.
+>- Use different Signal K users if you want fully isolated configurations.
 
 ### Privacy / Safety Note
 Anyone with access to a logged‑in controlling KIP instance can switch dashboards on enabled targets. Only enable remote management on displays where that is acceptable.

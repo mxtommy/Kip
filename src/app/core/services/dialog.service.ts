@@ -93,7 +93,8 @@ export class DialogService {
       {
         data: data.config,
         minWidth: "50vw",
-        maxWidth: "90vw"
+        maxWidth: "90vw",
+        closeOnNavigation: true
       }
     );
   }

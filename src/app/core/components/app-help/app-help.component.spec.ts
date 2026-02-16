@@ -3,14 +3,23 @@ import { AppHelpComponent } from './app-help.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ApplicationRef, Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { BehaviorSubject } from 'rxjs';
 
 type NavArgs = [unknown]; // minimal tuple placeholder for single-arg navigate signature used
 class MockRouter { navigateCalls: NavArgs[] = []; navigate(commands: unknown[]): void { this.navigateCalls.push([commands]); } }
+class MockActivatedRoute {
+  private readonly _paramMap = new BehaviorSubject(convertToParamMap({}));
+  readonly paramMap = this._paramMap.asObservable();
+
+  setPage(page: string | null): void {
+    this._paramMap.next(page ? convertToParamMap({ page }) : convertToParamMap({}));
+  }
+}
 
 // Minimal stub replacing <markdown [src]="..."> usage so we avoid real MarkdownService dependency
 @Component({
@@ -24,21 +33,29 @@ describe('AppHelpComponent', () => {
   let component: AppHelpComponent;
   let fixture: import('@angular/core/testing').ComponentFixture<AppHelpComponent>;
   let router: MockRouter;
+  let activatedRoute: MockActivatedRoute;
   let httpMock: HttpTestingController;
   let appRef: ApplicationRef;
 
   const mockMenu = [
-    { title: 'Intro', file: 'intro.md' },
-    { title: 'Usage', file: 'usage.md' },
-    { title: 'Ignored', file: 'image.png' } // non-md filtered out
+    {
+      title: 'Group A',
+      items: [
+        { title: 'Intro', file: 'intro.md' },
+        { title: 'Ignored', file: 'image.png' } // non-md filtered out
+      ]
+    },
+    { title: 'Usage', file: 'usage.md' }
   ];
 
   beforeEach(async () => {
     router = new MockRouter();
+    activatedRoute = new MockActivatedRoute();
     await TestBed.configureTestingModule({
       imports: [AppHelpComponent],
       providers: [
         { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: activatedRoute },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]
@@ -130,6 +147,14 @@ describe('AppHelpComponent', () => {
     fixture.detectChanges();
     await flushMenu();
     component['selectFile']('usage.md');
+    expect(component['selectedFile']()).toBe('usage.md');
+    expect(router.navigateCalls[0][0]).toEqual(['/help', 'usage']);
+  });
+
+  it('should use route page parameter to select help file', async () => {
+    activatedRoute.setPage('usage');
+    fixture.detectChanges();
+    await flushMenu();
     expect(component['selectedFile']()).toBe('usage.md');
   });
 

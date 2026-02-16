@@ -11,17 +11,43 @@
   <button mat-flat-button [matMenuTriggerFor]="helpMenu" [disabled]="isLoading() || hasError() || helpFiles().length === 0">
     @if (isLoading()) { Loading... } @else { Table of Content }
   </button>
-  <mat-menu #helpMenu="matMenu">
+  <mat-menu #helpMenu="matMenu" class="help-menu-panel">
     <ng-template matMenuContent>
       @if (hasError()) {
         <button mat-menu-item disabled>Error loading menu</button>
       } @else if (!isLoading() && helpFiles().length === 0) {
         <button mat-menu-item disabled>No help entries</button>
+      } @else if (isMobileMenuMode()) {
+        @for (item of helpMenuItems(); track item.title) {
+          @if (isGroup(item)) {
+            <button mat-menu-item disabled class="help-menu-group-title">{{ item.title }}</button>
+            @for (file of item.items; track file.file) {
+              <button mat-menu-item (click)="selectFile(file.file)" [disabled]="selectedFile() === file.file">
+                {{ file.title }}
+              </button>
+            }
+          } @else {
+            <button mat-menu-item (click)="selectFile(item.file)" [disabled]="selectedFile() === item.file">
+              {{ item.title }}
+            </button>
+          }
+        }
       } @else {
-        @for (file of helpFiles(); track file.file) {
-          <button mat-menu-item (click)="selectFile(file.file)" [disabled]="selectedFile() === file.file">
-            {{ file.title }}
-          </button>
+        @for (item of helpMenuItems(); track item.title) {
+          @if (isGroup(item)) {
+            <button mat-menu-item [matMenuTriggerFor]="childMenu">{{ item.title }}</button>
+            <mat-menu #childMenu="matMenu" class="help-menu-panel" [overlapTrigger]="false">
+              @for (file of item.items; track file.file) {
+                <button mat-menu-item (click)="selectFile(file.file)" [disabled]="selectedFile() === file.file">
+                  {{ file.title }}
+                </button>
+              }
+            </mat-menu>
+          } @else {
+            <button mat-menu-item (click)="selectFile(item.file)" [disabled]="selectedFile() === item.file">
+              {{ item.title }}
+            </button>
+          }
         }
       }
     </ng-template>

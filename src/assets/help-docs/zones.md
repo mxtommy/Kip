@@ -2,7 +2,6 @@
 
 Stay informed about your vessel’s data with Signal K’s state notifications. For example, Signal K can flag certain sensor readings—such as depth or temperature—when they reach critical levels. KIP can then visually or audibly alert you. For instance, if the depth drops to 3 meters or less, KIP can highlight this with a warning sound or visual cue. This powerful feature combines **Zones Configuration** and **Notification Methods** in Signal K.
 
----
 
 ## Zones & Notification Configuration
 
@@ -15,7 +14,6 @@ For more details on path units, see the [Keys Reference (Vessel)](https://signal
 
 As path values move between zone ranges, Signal K generates a notification sent to KIP. Each notification includes a state (severity), optional presentation methods (visual and/or sound), and an optional message.
 
----
 
 ### Zone State and Method Guidance
 
@@ -26,13 +24,12 @@ As path values move between zone ranges, Signal K generates a notification sent 
 - KIP uses predefined, state specific sound files.
 - You can configure KIP to globally ignore audio prompts in **Settings > Notifications**; this applies globally to all notifications and paths.
 
-**Tips:**
-1. You don’t need zones for every path.
-2. You don’t need to configure every zone for a given path. Only configure what is really needed. For example, if all you want is to be alerted at 20% State Of Charge, just add one zone with the Alarm state and method. No need for Warn and Alert zones in this case.
-3. Don't enable the **visual** method if you don't want a zone state in the Notifications menu.
-4. Keep your zone setup simple—too many Notifications can become overwhelming.
+>**Tips:**
+>1. You don’t need zones for every path.
+>2. You don’t need to configure every zone for a given path. Only configure what is really needed. For example, if all you want is to be alerted at 20% State Of Charge, just add one zone with the Alarm state and method. No need for Warn and Alert zones in this case.
+>3. Don't enable the **visual** method if you don't want a zone state in the Notifications menu.
+>4. Keep your zone setup simple—too many Notifications can become overwhelming.
 
----
 
 ### Taking Action on Notifications
 
@@ -46,7 +43,6 @@ You can **Silence** or **Resolve** notifications.
 - If you turn off a device, then resolve its last notification, it will remain resolved until the device is powered back on and sends new data.
 - Different devices send data at different intervals—some multiple times per second, others as infrequently as once per day. Check your device or plugin documentation for details. Once a notification is silenced or resolved, it will stay in this state until a new value is received and evaluated.
 
----
 
 ## Displaying Zones and Notifications
 
@@ -81,7 +77,6 @@ You can **Silence** or **Resolve** notifications.
 - **Individual Widgets:**  
   Widgets such as **Numeric**, **Simple Linear**, **Linear**, **Radial**, and **Steel Style** visually highlight relevant data ranges according to their configured zones and integrate notification states into their display. You can configure each widget to ignore zones if desired.
 
----
 
 ## KIP Notification Configuration Override
 

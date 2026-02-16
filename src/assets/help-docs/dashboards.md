@@ -1,9 +1,8 @@
 ## Managing Dashboards
 Dashboards let you group widgets by task—navigation, engines, energy, weather, racing, night watch, and more. This guide covers creating, organizing, and editing dashboards, plus an overview of available widget types.
 
----
 
-## 1. Dashboard Pages Panel
+## Dashboard Pages Panel
 Open the Actions menu and select Settings.
 
 Here you can:
@@ -24,9 +23,8 @@ Choose icons that reflect each dashboard’s purpose (e.g. compass for navigatio
 | Duplicate     | Long press → Duplicate | Long click → Duplicate |
 | Delete        | Long press → Delete    | Long click → Delete    |
 
----
 
-## 2. Editing Dashboard Layouts
+## Editing Dashboard Layouts
 1. Navigate to the dashboard you want to change (swipe or use dashboard selector).
 2. Open the Actions menu.
 3. Tap the Unlock/Lock button at the bottom to toggle edit mode.
@@ -42,11 +40,10 @@ In edit mode, widgets show dashed outlines.
 - Delete a widget (long press → Delete, then confirm)
 - Save changes (Check button) or discard (X button) in the lower right
 
-Tip: If you can’t add a widget, free up space by resizing or moving existing ones first.
+>**Tip:** If you can’t add a widget, free up space by resizing or moving existing ones first.
 
----
 
-## 3. Workflow: From Idea to Dashboard
+## Workflow: From Idea to Dashboard
 1. Define the purpose (e.g. “Night Nav” = heading, COG, SOG, depth, wind, batteries, minimal brightness)
 2. Create or duplicate a dashboard similar to what you want
 3. Enter edit mode and add required widgets
@@ -54,9 +51,8 @@ Tip: If you can’t add a widget, free up space by resizing or moving existing o
 5. Arrange and size for readability at your viewing distance
 6. Exit edit mode and test switching at real brightness/environment
 
----
 
-## 4. Widget Gallery (Overview)
+## Widget Gallery (Overview)
 KIP widgets turn Signal K data into readable visuals and controls. Available widget types:
 
 - **Numeric** – Displays numeric data in a clear and concise format, with options to show min/max values and a background minichart for trends.
@@ -87,9 +83,8 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Racer - Start Timer** – Advanced racing countdown timer with OCS status and auto dashboard switching.
 - **Countdown Timer** – Simple race start countdown timer with start, pause, sync, and reset options.
 
----
 
-## 5. Performance & Layout Tips
+## Performance & Layout Tips
 - Favor clarity over cramming: leave space around high‑priority values
 - Group related widgets (navigation, energy, engines, environment)
 - Use consistent units per dashboard (e.g. all speeds in knots, all temps in °C or °F—don’t mix)
@@ -99,9 +94,8 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - Know your device’s hardware limits and adjust widget count per dashboard accordingly
 - Avoid embedding too many external webpages—each adds load
 
----
 
-## 6. Troubleshooting
+## Troubleshooting
 | Issue                  | Possible Cause                        | Fix                                                                 |
 |------------------------|---------------------------------------|---------------------------------------------------------------------|
 | Data shows “—” or blank| Path missing/not configured/null value | Open widget config, verify Signal K path exists and updates. Use Data Inspector and Signal K Data Browser to view raw data from the server. |
@@ -109,9 +103,8 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 | Slow dashboard switching| Excessive data sampling/too many widgets| Increase sample times; remove unused widgets. Split widgets into separate dashboards. Optimize system resource usage. |
 | Embedded page blank    | Cross‑origin blocked                   | See "Embed Page Viewer" help section.                               |
 
----
 
-## 7. Next Steps
+## Next Steps
 See also:
 - Remote Control (switch dashboards on unattended displays)
 - Night Mode (automatic theme + brightness)

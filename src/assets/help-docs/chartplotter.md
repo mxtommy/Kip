@@ -1,12 +1,10 @@
 ## Chartplotter Mode
 Chartplotter Mode provides a persistent dual‑panel navigation layout: a continuously live Freeboard‑SK chart on one side and an actively switchable KIP dashboard on the other. Switching dashboards never unloads or blinks the chart, giving you an MFD‑style experience powered entirely by Signal K.
 
----
 
 ## When to Use It
 Use Chartplotter Mode when you want uninterrupted situational awareness (chart + vessel motion + routing context) while cycling between specialized dashboards (navigation, engines, energy, racing, night watch, etc.). If you only need a chart on a few dashboards or have very constrained hardware, the standalone Freeboard‑SK widget may be sufficient.
 
----
 
 ## Key Capabilities
 - Persistent Freeboard‑SK chart (no reload on dashboard change)
@@ -16,7 +14,6 @@ Use Chartplotter Mode when you want uninterrupted situational awareness (chart +
 - Remote dashboard switching compatible (chart forced collapse preserved remotely)
 - Optional panel side selection (left or right)
 
----
 
 ## Enabling & Basic Setup
 1. Open Actions → Settings → Display.
@@ -25,9 +22,8 @@ Use Chartplotter Mode when you want uninterrupted situational awareness (chart +
 4. Optionally, enable the per‑dashboard “Auto-collapse Freeboard-SK panel when displaying this dashboard” flag if you want that dashboard to hide the chart and use the full width.
 5. Enter dashboard edit mode if you wish to resize the split (see Resizing section), then Save to persist or Cancel to discard.
 
-Tip: Remove any existing Freeboard‑SK widget instances to avoid redundant chart rendering once mode is enabled.
+>**Tip:** Remove any existing Freeboard‑SK widget instances to avoid redundant chart rendering once mode is enabled.
 
----
 
 ## Orientation & Layout Behavior
 | Environment | Layout |
@@ -37,7 +33,6 @@ Tip: Remove any existing Freeboard‑SK widget instances to avoid redundant char
 
 The transition is automatic; no manual toggle is required. The per‑dashboard collapse still applies regardless of orientation.
 
----
 
 ## Resizing the Split
 1. Enter dashboard edit mode on any dashboard (Actions → Unlock / Edit button).
@@ -46,12 +41,11 @@ The transition is automatic; no manual toggle is required. The per‑dashboard c
 
 <img src="../../assets/help-docs/img/splitdeviderhandle.png" alt="Resize the split" title="Split handle" width="100%">
 
-Notes:
-- Width changes are only committed on Save (prevents accidental layout shifts).
-- Cancel always restores the original ratio before the edit session began.
-- The persisted ratio applies across dashboards (unless a dashboard is collapsed).
+>**Notes:**
+>- Width changes are only committed on Save (prevents accidental layout shifts).
+>- Cancel always restores the original ratio before the edit session began.
+>- The persisted ratio applies across dashboards (unless a dashboard is collapsed).
 
----
 
 ## Per‑Dashboard Collapse
 Each dashboard can force the chart panel closed to maximize data area. This is ideal for engine diagnostics, racing performance pages, or night watch minimalism. When you switch to a collapsed dashboard, the chart panel is hidden; switching back to a normal dashboard restores it instantly with its prior state and zoom.
@@ -61,12 +55,10 @@ Characteristics:
 - No chart reload occurs when re‑expanding—state (position, zoom, layers) persists.
 - Remote control switches respect the same collapse logic.
 
----
 
 ## Selecting Chart Panel Side
 Change side via Settings → Display → “Freeboard‑SK panel side”. This updates the split instantly. If a dashboard is collapsed, the side preference is applied the next time a non‑collapsed dashboard is shown.
 
----
 
 ## Chartplotter Mode vs Freeboard‑SK Widget
 | Aspect | Chartplotter Mode | Freeboard‑SK Widget |
@@ -78,12 +70,10 @@ Change side via Settings → Display → “Freeboard‑SK panel side”. This u
 | Memory footprint | Higher baseline (Freeboard-SK always resident) | Lower when dashboard lack the widget |
 | Best for | Continuous nav + multi‑dashboard workflow (MFD) | Occasional chart reference |
 
----
 
 ## Remote Control Integration
 When another KIP instance changes your active dashboard (Remote Control feature), the chartplotter mode and collapsed dashboard settings are respected. No special configuration is required.
 
----
 
 ## Performance & Resource Notes
 - The persistent chart consumes GPU/CPU continuously; on very low‑power hardware consider disabling Chartplotter Mode for purely data dashboards.
@@ -91,7 +81,6 @@ When another KIP instance changes your active dashboard (Remote Control feature)
 - Avoid unnecessary high‑frequency (sub‑500 ms) widget sampling if chart responsiveness matters.
 - Keep embedded iframes (Embed widget) minimal when running persistent chart + heavy datasets.
 
----
 
 ## Troubleshooting
 | Issue | Possible Cause | Fix |
@@ -102,7 +91,6 @@ When another KIP instance changes your active dashboard (Remote Control feature)
 | Freeboard‑SK widget shows duplicate chart | Legacy widget still on a dashboard | Remove the Freeboard‑SK widget when using Chartplotter Mode |
 | Performance feels sluggish | High widget sampling or heavy embeds | Increase sample times, remove unused widgets, collapse non‑nav dashboards, investigate hardware resource consumption |
 
----
 
 ## FAQs
 **Does the chart keep its zoom and layers when collapsed dashboards are shown?**  Yes. The panel is hidden, not destroyed.
@@ -115,7 +103,6 @@ When another KIP instance changes your active dashboard (Remote Control feature)
 
 **Will remote control commands interrupt a resize session?**  If remote switching occurs mid‑edit, the Drag resize session ends when you Save or Cancel; uncommitted changes do not apply until you explicitly save.
 
----
 
 ## Related Help
 - Dashboards and Layout
