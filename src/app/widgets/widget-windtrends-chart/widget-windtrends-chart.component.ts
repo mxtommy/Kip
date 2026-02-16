@@ -568,7 +568,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       streaming: {
         duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
         delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
       }
     }
 

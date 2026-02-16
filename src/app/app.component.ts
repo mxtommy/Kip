@@ -34,8 +34,22 @@ import { ToastService } from './core/services/toast.service';
   imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly _deltaService = inject(SignalKDeltaService); // force init
+  // ============================================================================
+  // APP_INITIALIZER - Services pre-initialized in AppNetworkInitService
+  // ============================================================================
+  // These services are fully initialized and ready when AppComponent is created.
+  // No sequencing needed; dependencies are already resolved.
+
+  private readonly _deltaService = inject(SignalKDeltaService);
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
+  public readonly authenticationService = inject(AuthenticationService);
+  private readonly _dataSet = inject(DatasetService);
+
+  // ============================================================================
+  // AppComponent - Services initialized by this component
+  // ============================================================================
+  // These services are initialized on-demand when AppComponent is created.
+
   private readonly _dashboard = inject(DashboardService);
   private readonly _remoteControl = inject(RemoteDashboardsService);
   private readonly toast = inject(ToastService);
@@ -43,8 +57,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
   public readonly appSettingsService = inject(AppSettingsService);
-  public readonly authenticationService = inject(AuthenticationService);
-  private readonly _dataSet = inject(DatasetService); // force init
   private readonly _responsive = inject(BreakpointObserver);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);

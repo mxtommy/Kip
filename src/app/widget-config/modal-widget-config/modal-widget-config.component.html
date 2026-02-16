@@ -512,6 +512,10 @@
                     <mat-option value="Last 30 Minutes">30 Minutes</mat-option>
                   </mat-select>
                 </mat-form-field>
+                <div style="grid-column: 1 / -1; font-size: 0.9em; color: var(--mat-sys-outline);">
+                  <strong>History API:</strong> Wind Trends can be pre-filled with historical data from the Signal K History API.
+                  <a routerLink="/help" style="color: var(--kip-blue-color); cursor: pointer; text-decoration: underline;">Learn more</a>
+                </div>
               }
               @if ((widgetConfig?.showMiniChart !== undefined)) {
                 <mat-checkbox

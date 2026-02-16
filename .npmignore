@@ -13,6 +13,7 @@ tslint.json
 protractor.conf.js
 COPILOT.md
 eslint.config.js
+rm-npmjs-beta.sh
 
 # dependencies
 /node_modules

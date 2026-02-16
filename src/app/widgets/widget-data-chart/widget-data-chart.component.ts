@@ -92,6 +92,10 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private lastVerticalChart: boolean | null = null;
+  protected hasPath = computed<boolean>(() => {
+    const cfg = this.runtime.options();
+    return !!cfg?.datachartPath;
+  });
   private pathSignature = computed<string | undefined>(() => {
     const cfg = this.runtime.options();
     if (!cfg.datachartPath) {
@@ -136,6 +140,15 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
           this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
         }
       });
+    });
+
+    // Guard: ensure chart builds once canvas exists after initial render
+    effect(() => {
+      const cfg = this.runtime.options();
+      const canvas = this.widgetDataChart();
+      const hasPath = this.hasPath();
+      if (!cfg || !hasPath || !canvas || this.chart) return;
+      untracked(() => this.rebuildForDataset(cfg));
     });
   }
 
@@ -396,7 +409,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
        streaming: {
         duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
         delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat  === "hour" ? 8 : this.datasetConfig.timeScaleFormat  === "minute" ? 15 : 30,
+        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
        }
     }
   }

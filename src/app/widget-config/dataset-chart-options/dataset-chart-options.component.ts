@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnInit, input, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, input, inject, signal, computed, DestroyRef } from '@angular/core';
 import { AbstractControl, ReactiveFormsModule, UntypedFormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -60,6 +60,7 @@ export class DatasetChartOptionsComponent implements OnInit {
   protected filteredNumericPaths = signal<IPathMetaData[]>([]);
   protected unitList = signal<{default?: string, conversions?: IUnitGroup[] }>({});
   protected pathSources = signal<string[]>([]);
+  protected maxDuration = computed<number>(() => this.timeScale().value === 'day' ? 365 : 60);
 
   ngOnInit(): void {
     this.numericPaths.set(this.data.getPathsAndMetaByType('number', false, false, this.filterSelfPaths().value).sort());

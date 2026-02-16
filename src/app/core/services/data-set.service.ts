@@ -2,6 +2,7 @@ import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
 import { AppSettingsService } from './app-settings.service';
 import { DataService, IPathUpdate } from './data.service';
+import { SignalkHistoryService, IHistoryValuesResponse } from './signalk-history.service';
 import { UUID } from '../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
@@ -21,7 +22,7 @@ export interface IDatasetServiceDatapoint {
   }
 }
 
-export type TimeScaleFormat = "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
+export type TimeScaleFormat = "day" | "hour" | "minute" | "second" | "Last Minute" | "Last 5 Minutes" | "Last 30 Minutes";
 
 export interface IDatasetServiceDatasetConfig {
   uuid: string;
@@ -57,12 +58,15 @@ type AngleDomain = 'scalar' | 'direction' | 'signed';
   providedIn: 'root'
 })
 export class DatasetService implements OnDestroy {
-  private appSettings = inject(AppSettingsService);
-  private data = inject(DataService);
+  private readonly appSettings = inject(AppSettingsService);
+  private readonly data = inject(DataService);
+  private readonly history = inject(SignalkHistoryService);
+  private readonly historyMinSampleTimeMs = 1000;
 
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
   private _svcDataSource: IDatasetServiceDataSource[] = [];
   private _svcSubjectObserverRegistry: IDatasetServiceObserverRegistration[] = [];
+  private _startAllPromise: Promise<void>;
 
   // List of Signal K paths that should be interpreted as signed angles (-π, π].
   // Add your specific paths here. All other radian paths will default to direction domain [0, 2π).
@@ -79,7 +83,7 @@ export class DatasetService implements OnDestroy {
   constructor() {
     this._svcDatasetConfigs = this.appSettings.getDataSets();
     this.cleanupDatasets();
-    this.startAll();
+    this._startAllPromise = this.startAll();
   }
 
   private cleanupDatasets(): void {
@@ -205,6 +209,8 @@ export class DatasetService implements OnDestroy {
           return 5 * 60_000;
         case 'Last 30 Minutes':
           return 30 * 60_000;
+        case 'day':
+          return Math.max(0, period) * 24 * 60 * 60_000;
         case 'hour':
           return Math.max(0, period) * 60 * 60_000;
         case 'minute':
@@ -218,14 +224,29 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
+   * Waits for all datasets to be fully initialized and seeded.
+   * Returns immediately if initialization is already complete.
+   *
+   * @returns {Promise<void>} Resolves when all datasets are ready
+   * @memberof DatasetService
+   *
+   * @example
+   * await datasetService.waitUntilReady();
+   * // All datasets are now seeded and ready for subscribers
+   */
+  public async waitUntilReady(): Promise<void> {
+    return this._startAllPromise;
+  }
+
+  /**
    * Start all Dataset Service's _svcDatasetConfigs
    *
    * @memberof DataSetService
    */
-  private startAll(): void {
+  private async startAll(): Promise<void> {
     console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (const config of this._svcDatasetConfigs) {
-      this.start(config.uuid);
+      await this.start(config.uuid);
     }
   }
 
@@ -238,15 +259,15 @@ export class DatasetService implements OnDestroy {
    *
    * Concept: SK_path_values -> datasource -> (ReplaySubject) <- Widget observers
    *
-   * Once a datasource is started, subscribers will receive historical data (equal to the
-   * length of the dataset)pushed to the Subject, as as future data.
+   * Once a datasource is started, subscribers will receive historical data (from History API if available,
+   * equal to the length of the dataset) pushed to the Subject, followed by live future data.
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to start
    * @return {*}  {void}
    * @memberof DataSetService
    */
-  private start(uuid: string): void {
+  private async start(uuid: string): Promise<void> {
     const configuration = this._svcDatasetConfigs.find(configuration => configuration.uuid == uuid);
     if (!configuration) {
       console.warn(`[Dataset Service] Dataset UUID:${uuid} not found`);
@@ -263,6 +284,12 @@ export class DatasetService implements OnDestroy {
 
     // Decide how to interpret the dataset values (scalar vs radian domains)
     const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
+
+    // Attempt to seed dataset with history if eligible
+    const historyResolution = Math.max(newDataSourceConfig.sampleTime, this.historyMinSampleTimeMs);
+    if (this.shouldSeedHistory(newDataSourceConfig.sampleTime)) {
+      await this.seedHistoryData(dataSource, configuration, historyResolution, angleDomain);
+    }
 
     // Share the latest non-null value so we can:
     // 1) emit immediately on first value (chart isn't blank)
@@ -292,6 +319,73 @@ export class DatasetService implements OnDestroy {
         .find(registration => registration.datasetUuid === dataSource.uuid)
         .rxjsSubject.next(datapoint);
     });
+  }
+
+  /**
+   * Seeds a dataset with historical data from the History API.
+   *
+   * @private
+   * @param {IDatasetServiceDataSource} dataSource The data source to seed.
+   * @param {IDatasetServiceDatasetConfig} configuration The dataset config.
+  * @param {number} historyResolution The resolution in milliseconds (>= historyMinSampleTimeMs).
+   * @param {AngleDomain} angleDomain The angle domain interpretation.
+   * @return {Promise<void>}
+   */
+  private async seedHistoryData(
+    dataSource: IDatasetServiceDataSource,
+    configuration: IDatasetServiceDatasetConfig,
+    historyResolution: number,
+    angleDomain: AngleDomain
+  ): Promise<void> {
+    try {
+      // Build history request path with aggregations
+      const historyPath = this.buildHistoryPathString(
+        configuration.path,
+        dataSource.smoothingPeriod
+      );
+
+      // Compute time range based on dataset config
+      const windowMs = (() => {
+        switch (configuration.timeScaleFormat) {
+          case 'Last Minute': return 60_000;
+          case 'Last 5 Minutes': return 5 * 60_000;
+          case 'Last 30 Minutes': return 30 * 60_000;
+          case 'day': return Math.max(0, configuration.period) * 24 * 60 * 60_000;
+          case 'hour': return Math.max(0, configuration.period) * 60 * 60_000;
+          case 'minute': return Math.max(0, configuration.period) * 60_000;
+          case 'second': return Math.max(0, configuration.period) * 1_000;
+          default: return 0;
+        }
+      })();
+
+      const now = new Date();
+      const fromTime = new Date(now.getTime() - windowMs);
+
+      // Fetch history data
+      const response = await this.history.getValues({
+        paths: historyPath,
+        from: fromTime.toISOString(),
+        resolution: historyResolution
+      });
+
+      if (!response || !response.data || response.data.length === 0) {
+        console.log(`[Dataset Service] No history data available for ${configuration.path}`);
+        return;
+      }
+
+      // Convert history response to datapoints
+      const historyDatapoints = this.convertHistoryToDatapoints(response, configuration.baseUnit, angleDomain);
+
+      // Seed the ReplaySubject with history datapoints
+      const subject = this._svcSubjectObserverRegistry.find(r => r.datasetUuid === dataSource.uuid)?.rxjsSubject;
+      if (subject && historyDatapoints.length > 0) {
+        historyDatapoints.forEach(dp => subject.next(dp));
+        console.log(`[Dataset Service] Seeded ${historyDatapoints.length} history datapoints for ${configuration.path}`);
+      }
+    } catch (error) {
+      console.warn(`[Dataset Service] Failed to seed history data for ${configuration.path}:`, error);
+      // Continue with live-only mode; don't block dataset startup
+    }
   }
 
   /**
@@ -347,8 +441,8 @@ export class DatasetService implements OnDestroy {
    *
    * @param {string} path Signal K path of the data to record
    * @param {string} source The path's chosen source
-   * @param {TimeScaleFormat} timeScaleFormat The duration of the historicalData: "hour", "minute", "second". See {@link TimeScaleFormat}
-  * @param {number} period Window size expressed in units of timeScaleFormat (ignored for "Last *" presets).
+   * @param {TimeScaleFormat} timeScaleFormat The duration of the historicalData: "day", "hour", "minute", "second". See {@link TimeScaleFormat}
+   * @param {number} period Window size expressed in units of timeScaleFormat (ignored for "Last *" presets).
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
    * @param {boolean} [editable]  DEPRECATED -If true, the dataset configuration can be edited by the user. Defaults to true. // TODO: remove this param once Dataset management component is not required anymore
@@ -465,9 +559,7 @@ export class DatasetService implements OnDestroy {
    * @param {number} batchSize The number of datapoints to batch for new subscribers
    * @returns {Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint>}
    */
-  public getDatasetBatchThenLiveObservable(
-    dataSetUuid: string
-  ): Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint> {
+  public getDatasetBatchThenLiveObservable(dataSetUuid: string): Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint> {
     const registration = this._svcSubjectObserverRegistry.find(
       registration => registration.datasetUuid == dataSetUuid
     );
@@ -637,6 +729,119 @@ export class DatasetService implements OnDestroy {
     if (!uuid) return false;
     if (this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
     return this.remove(uuid, serialize);
+  }
+
+  /**
+   * Determines if history seeding is eligible for a dataset based on derived sampleTime.
+  * History seeding is skipped if the computed resolution would be below historyMinSampleTimeMs (History API minimum).
+   *
+   * @private
+   * @param {number} sampleTime The derived sample time in milliseconds.
+   * @returns {boolean} True if history seeding should be attempted, false otherwise.
+   */
+  private shouldSeedHistory(sampleTime: number): boolean {
+    const historyResolution = Math.max(sampleTime, this.historyMinSampleTimeMs);
+    // Skip if the resolution would be below historyMinSampleTimeMs (original sampleTime)
+    return historyResolution >= this.historyMinSampleTimeMs && sampleTime < this.historyMinSampleTimeMs === false;
+  }
+
+  /**
+   * Builds a History API request path string with aggregation suffixes.
+   *
+   * @private
+   * @param {string} path The Signal K path (e.g., 'navigation.speedThroughWater')
+   * @param {number} smoothingPeriod The smoothing period for SMA calculation
+   * @returns {string} The formatted path string with aggregations (e.g., 'navigation.speedThroughWater:sma:5,navigation.speedThroughWater:avg,navigation.speedThroughWater:min,navigation.speedThroughWater:max')
+   */
+  private buildHistoryPathString(path: string, smoothingPeriod: number): string {
+    // Normalize path: remove 'self.' or 'vessels.self.' prefix for History API
+    const normalizedPath = path.replace(/^(vessels\.)?self\./, '');
+
+    // Request aggregations: sma, avg, min, max
+    const aggregations = [
+      `${normalizedPath}:sma:${smoothingPeriod}`,
+      `${normalizedPath}:avg`,
+      `${normalizedPath}:min`,
+      `${normalizedPath}:max`
+    ];
+
+    return aggregations.join(',');
+  }
+
+  /**
+   * Converts History API response data into IDatasetServiceDatapoint items.
+   *
+   * @private
+   * @param {IHistoryValuesResponse} response The History API response.
+   * @param {string} unit The base unit type (for angle interpretation).
+   * @param {AngleDomain} domain The angle domain (scalar, direction, or signed).
+   * @returns {IDatasetServiceDatapoint[]} Array of datapoints with preserved timestamps.
+   */
+  private convertHistoryToDatapoints(
+    response: IHistoryValuesResponse,
+    unit: string,
+    domain: AngleDomain
+  ): IDatasetServiceDatapoint[] {
+    const datapoints: IDatasetServiceDatapoint[] = [];
+
+    if (!response.data || response.data.length === 0) {
+      return datapoints;
+    }
+
+    // Build a map of method -> index from the values array
+    const methodIndexMap: Record<string, number> = {};
+    if (response.values && Array.isArray(response.values)) {
+      for (let i = 0; i < response.values.length; i++) {
+        const valueSpec = response.values[i];
+        if (valueSpec && valueSpec.method) {
+          methodIndexMap[valueSpec.method] = i + 1; // +1 because index 0 is timestamp
+        }
+      }
+    }
+
+    // Pre-compute angle normalization once (avoids per-row checks)
+    const shouldNormalizeAngle = unit === 'rad';
+    const normalizeAngle = shouldNormalizeAngle
+      ? (domain === 'signed' ? this.normalizeToSigned.bind(this) : this.normalizeToDirection.bind(this))
+      : null;
+
+    for (const row of response.data) {
+      if (!Array.isArray(row) || row.length === 0) continue;
+
+      const timestampStr = row[0] as string;
+      const timestamp = new Date(timestampStr).getTime();
+
+      // Extract values
+      let smaValue = methodIndexMap['sma'] !== undefined ? (row[methodIndexMap['sma']] as number | null) : null;
+      let avgValue = methodIndexMap['avg'] !== undefined ? (row[methodIndexMap['avg']] as number | null) : null;
+      let minValue = methodIndexMap['min'] !== undefined ? (row[methodIndexMap['min']] as number | null) : null;
+      let maxValue = methodIndexMap['max'] !== undefined ? (row[methodIndexMap['max']] as number | null) : null;
+
+      // Normalize angle values if applicable (single check per row)
+      if (shouldNormalizeAngle) {
+        if (smaValue !== null) smaValue = normalizeAngle!(smaValue);
+        if (avgValue !== null) avgValue = normalizeAngle!(avgValue);
+        if (minValue !== null) minValue = normalizeAngle!(minValue);
+        if (maxValue !== null) maxValue = normalizeAngle!(maxValue);
+      }
+
+      const datapoint: IDatasetServiceDatapoint = {
+        timestamp,
+        data: {
+          value: avgValue ?? 0,
+          sma: smaValue,
+          ema: null,
+          doubleEma: null,
+          lastAverage: avgValue,
+          lastMinimum: minValue,
+          lastMaximum: maxValue
+        }
+      };
+
+      datapoints.push(datapoint);
+    }
+
+    return datapoints;
   }
 
   /**

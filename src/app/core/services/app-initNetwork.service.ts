@@ -18,6 +18,7 @@ import { SignalKDeltaService } from './signalk-delta.service';
 import { StorageService } from './storage.service';
 import { ConnectionStateMachine } from './connection-state-machine.service';
 import { InternetReachabilityService } from './internet-reachability.service';
+import { DatasetService } from './data-set.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -28,14 +29,15 @@ export class AppNetworkInitService implements OnDestroy {
   private isLoggedIn: boolean = null;
   private loggedInSubscription: Subscription = null;
 
-  private connection = inject(SignalKConnectionService);
-  private auth = inject(AuthenticationService);
-  private connectionStateMachine = inject(ConnectionStateMachine);
-  private router = inject(Router);
-  private delta = inject(SignalKDeltaService); // Init to get data before app starts
-  private data = inject(DataService); // Init to get data before app starts
-  private storage = inject(StorageService); // Init to get data before app starts
-  private internetReachability = inject(InternetReachabilityService);
+  private readonly connection = inject(SignalKConnectionService);
+  private readonly auth = inject(AuthenticationService);
+  private readonly connectionStateMachine = inject(ConnectionStateMachine);
+  private readonly router = inject(Router);
+  private readonly delta = inject(SignalKDeltaService); // Init to get data before app starts
+  private readonly data = inject(DataService); // Init to get data before app starts
+  private readonly storage = inject(StorageService); // Init to get data before app starts
+  private readonly internetReachability = inject(InternetReachabilityService);
+  private readonly dataset = inject(DatasetService); // Init and wait for seeding before app starts
 
   constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -67,6 +69,10 @@ export class AppNetworkInitService implements OnDestroy {
         this.storage.sharedConfigName = this.config.sharedConfigName;
         await this.storage.getConfig("user", this.config.sharedConfigName, configFileVersion, true);
       }
+
+      // Seed datasets after authentication (if required) so History API calls are authenticated.
+      // This ensures all chart data is ready before any widget components are created.
+      await this.dataset.waitUntilReady();
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {
         this.router.navigate(['/login']); // need to set credentials

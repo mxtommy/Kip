@@ -1,1 +1,8 @@
-<canvas #widgetDataChart style="z-index: inherit;"></canvas>
+@if (hasPath()) {
+  <canvas #widgetDataChart style="z-index: inherit;"></canvas>
+} @else {
+  <div class="empty-state">
+    <p>Ready to configure</p>
+    <p class="hint">Double-tap to begin</p>
+  </div>
+}

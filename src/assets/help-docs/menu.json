@@ -8,7 +8,7 @@
   { "title": "Digital Switching and PUT", "file": "putcontrols.md" },
   { "title": "Node-RED (Getting Started)", "file": "nodered-control-flows.md" },
   { "title": "The Embed Page Viewer", "file": "embedwidget.md" },
-  { "title": "Datasets and Data Chart Widget", "file": "datasets.md" },
+  { "title": "History Data for Charts", "file": "history-data-charts.md" },
   { "title": "Kiosk Mode", "file": "kiosk.md" },
   { "title": "Grafana Integration", "file": "grafana.md" },
   { "title": "InfluxDB and Signal K", "file": "influxdb.md" },

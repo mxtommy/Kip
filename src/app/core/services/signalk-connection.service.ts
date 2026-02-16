@@ -11,7 +11,13 @@ interface ISignalKEndpointResponse {
             "signalk-http"?: string;
             "signalk-ws"?: string;
             "signalk-tcp"?: string;
-        }
+        };
+        v2?: {
+            version: string;
+            "signalk-http"?: string;
+            "signalk-ws"?: string;
+            "signalk-tcp"?: string;
+        };
     }
     server: {
         id: string;
@@ -33,8 +39,10 @@ export interface IEndpointStatus {
   operation: number;
   message: string;
   serverDescription: string;
-  httpServiceUrl: string;
+  httpServiceUrl: string;     // v1 API endpoint
+  httpServiceUrlV2?: string;  // v2 API endpoint (if available)
   WsServiceUrl: string;
+  WsServiceUrlV2?: string;    // v2 WebSocket endpoint (if available)
   subscribeAll?: boolean;
 }
 
@@ -299,6 +307,8 @@ export class SignalKConnectionService {
 
     const httpUrl = endpointResponse.body.endpoints.v1["signalk-http"];
     const wsUrl = endpointResponse.body.endpoints.v1["signalk-ws"];
+    const httpUrlV2 = endpointResponse.body.endpoints.v2?.["signalk-http"];
+    const wsUrlV2 = endpointResponse.body.endpoints.v2?.["signalk-ws"];
 
     const serverServiceEndpoints: IEndpointStatus = {
       operation: 2,
@@ -312,15 +322,33 @@ export class SignalKConnectionService {
       console.debug("[Connection Service] Proxy Mode Enabled");
       serverServiceEndpoints.httpServiceUrl = window.location.origin + new URL(httpUrl).pathname;
       serverServiceEndpoints.WsServiceUrl = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + new URL(wsUrl).pathname;
+      if (httpUrlV2) {
+        serverServiceEndpoints.httpServiceUrlV2 = window.location.origin + new URL(httpUrlV2).pathname;
+      }
+      if (wsUrlV2) {
+        serverServiceEndpoints.WsServiceUrlV2 = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + new URL(wsUrlV2).pathname;
+      }
     } else {
       serverServiceEndpoints.httpServiceUrl = httpUrl;
       // Only override ws:// to wss:// when page is HTTPS, otherwise keep original
       const isHttpsPage = window.location.protocol === 'https:';
       serverServiceEndpoints.WsServiceUrl = isHttpsPage ? wsUrl.replace('ws://', 'wss://') : wsUrl;
+      if (httpUrlV2) {
+        serverServiceEndpoints.httpServiceUrlV2 = httpUrlV2;
+      }
+      if (wsUrlV2) {
+        serverServiceEndpoints.WsServiceUrlV2 = isHttpsPage ? wsUrlV2.replace('ws://', 'wss://') : wsUrlV2;
+      }
     }
 
     console.debug("[Connection Service] HTTP URI: " + serverServiceEndpoints.httpServiceUrl);
+    if (serverServiceEndpoints.httpServiceUrlV2) {
+      console.debug("[Connection Service] HTTP V2 URI: " + serverServiceEndpoints.httpServiceUrlV2);
+    }
     console.debug("[Connection Service] WebSocket URI: " + serverServiceEndpoints.WsServiceUrl);
+    if (serverServiceEndpoints.WsServiceUrlV2) {
+      console.debug("[Connection Service] WebSocket V2 URI: " + serverServiceEndpoints.WsServiceUrlV2);
+    }
 
     serverServiceEndpoints.subscribeAll = !!subscribeAll;
     return serverServiceEndpoints;
