@@ -286,9 +286,9 @@ export class DatasetService implements OnDestroy {
     const angleDomain = this.resolveAngleDomain(configuration.path, configuration.baseUnit);
 
     // Attempt to seed dataset with history if eligible
-    const historyResolution = Math.max(newDataSourceConfig.sampleTime, this.historyMinSampleTimeMs);
+    const historyResolutionSeconds = Math.max(1, Math.round(newDataSourceConfig.sampleTime / 1000));
     if (this.shouldSeedHistory(newDataSourceConfig.sampleTime)) {
-      await this.seedHistoryData(dataSource, configuration, historyResolution, angleDomain);
+      await this.seedHistoryData(dataSource, configuration, historyResolutionSeconds, angleDomain);
     }
 
     // Share the latest non-null value so we can:
@@ -327,14 +327,14 @@ export class DatasetService implements OnDestroy {
    * @private
    * @param {IDatasetServiceDataSource} dataSource The data source to seed.
    * @param {IDatasetServiceDatasetConfig} configuration The dataset config.
-  * @param {number} historyResolution The resolution in milliseconds (>= historyMinSampleTimeMs).
+   * @param {number} historyResolutionSeconds The resolution in seconds (minimum 1).
    * @param {AngleDomain} angleDomain The angle domain interpretation.
    * @return {Promise<void>}
    */
   private async seedHistoryData(
     dataSource: IDatasetServiceDataSource,
     configuration: IDatasetServiceDatasetConfig,
-    historyResolution: number,
+    historyResolutionSeconds: number,
     angleDomain: AngleDomain
   ): Promise<void> {
     try {
@@ -365,7 +365,7 @@ export class DatasetService implements OnDestroy {
       const response = await this.history.getValues({
         paths: historyPath,
         from: fromTime.toISOString(),
-        resolution: historyResolution
+        resolution: historyResolutionSeconds
       });
 
       if (!response || !response.data || response.data.length === 0) {
@@ -733,16 +733,14 @@ export class DatasetService implements OnDestroy {
 
   /**
    * Determines if history seeding is eligible for a dataset based on derived sampleTime.
-  * History seeding is skipped if the computed resolution would be below historyMinSampleTimeMs (History API minimum).
+  * History seeding is skipped when sampleTime is below the minimum supported threshold.
    *
    * @private
    * @param {number} sampleTime The derived sample time in milliseconds.
    * @returns {boolean} True if history seeding should be attempted, false otherwise.
    */
   private shouldSeedHistory(sampleTime: number): boolean {
-    const historyResolution = Math.max(sampleTime, this.historyMinSampleTimeMs);
-    // Skip if the resolution would be below historyMinSampleTimeMs (original sampleTime)
-    return historyResolution >= this.historyMinSampleTimeMs && sampleTime < this.historyMinSampleTimeMs === false;
+    return sampleTime >= this.historyMinSampleTimeMs;
   }
 
   /**

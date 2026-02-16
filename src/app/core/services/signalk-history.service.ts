@@ -44,15 +44,13 @@ export interface IHistoryQueryParams {
   duration?: string;  // ISO 8601 duration or milliseconds
   paths: string;      // Required: comma-separated Signal K paths with optional aggregation
   context?: string;   // Optional Signal K context, default 'vessels.self'
-  resolution?: string | number; // Optional: window length in ms or time expression
+  resolution?: string | number; // Optional: window length in seconds or time expression
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalkHistoryService {
-  private readonly historyMinResolutionMs = 1000; // History API minimum resolution in milliseconds
-
   private http = inject(HttpClient);
   private connection = inject(SignalKConnectionService);
   private destroyRef = inject(DestroyRef);
@@ -143,7 +141,7 @@ export class SignalkHistoryService {
    *   - paths (required): comma-separated Signal K paths with optional aggregation suffixes
    *     (e.g., 'navigation.speedOverGround:sma:5,navigation.speedThroughWater:avg')
    *   - from, to, duration: define the time range
-   *   - resolution: optional downsampling window (must be >= 1000ms per History API limit)
+   *   - resolution: optional downsampling window
    *   - context: optional Signal K context (defaults to 'vessels.self')
    *
    * @returns {Promise<IHistoryValuesResponse | null>} The history response, or null if the request fails.
@@ -153,7 +151,7 @@ export class SignalkHistoryService {
    *     paths: 'navigation.speedThroughWater:avg,navigation.speedThroughWater:min',
    *     from: new Date(Date.now() - 3600000).toISOString(),
    *     to: new Date().toISOString(),
-   *     resolution: 1000
+   *     resolution: 1
    *   });
    *   if (response) {
    *     for (const [timestamp, ...values] of response.data) {
@@ -169,16 +167,6 @@ export class SignalkHistoryService {
         console.warn('[SignalkHistoryService] No HTTP service URL available');
         return null;
       }
-
-      // Ensure resolution is at least historyMinResolutionMs (History API minimum)
-      if (params.resolution && typeof params.resolution === 'number' && params.resolution <= this.historyMinResolutionMs) {
-        console.warn(`[SignalkHistoryService] Resolution ${params.resolution}ms is below ${this.historyMinResolutionMs}ms minimum; clamping to ${this.historyMinResolutionMs}ms`);
-        params.resolution = this.historyMinResolutionMs;
-      }
-
-      //TODO: Patch until fixed in pluging
-      params.resolution = typeof params.resolution === 'number' ? params.resolution / 1000 : params.resolution; // Convert ms to seconds for current plugin versions that expect seconds (remove when plugins are updated to accept ms)
-
 
       const historyUrl = `${this.historyServiceUrl}history/values`;
       let httpParams = new HttpParams();
@@ -197,7 +185,7 @@ export class SignalkHistoryService {
       if (params.duration) {
         httpParams = httpParams.set('duration', params.duration.toString());
       }
-      if (params.resolution) {
+      if (params.resolution !== undefined && params.resolution !== null) {
         httpParams = httpParams.set('resolution', params.resolution.toString());
       }
 

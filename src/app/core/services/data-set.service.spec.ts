@@ -4,10 +4,17 @@ import { DatasetService, TimeScaleFormat } from './data-set.service';
 import { AppSettingsService } from './app-settings.service';
 import { IAppConfig } from '../interfaces/app-settings.interfaces';
 import { DataService } from './data.service';
+import { SignalkHistoryService } from './signalk-history.service';
+import { of } from 'rxjs';
 
 
 describe('DatasetService', () => {
+  let historyServiceMock: jasmine.SpyObj<SignalkHistoryService>;
+
   beforeEach(() => {
+    historyServiceMock = jasmine.createSpyObj<SignalkHistoryService>('SignalkHistoryService', ['getValues']);
+    historyServiceMock.getValues.and.resolveTo(null);
+
     const appSettingsMock: Partial<AppSettingsService> = {
       getDataSets: () => [],
       // Skip cleanup logic and avoid any persistence writes.
@@ -18,14 +25,16 @@ describe('DatasetService', () => {
     };
 
     const dataServiceMock: Partial<DataService> = {
-      getPathUnitType: () => 'number'
+      getPathUnitType: () => 'number',
+      subscribePath: () => of({ data: { value: 1, timestamp: null }, state: 'normal' })
     };
 
     TestBed.configureTestingModule({
       providers: [
         DatasetService,
         { provide: AppSettingsService, useValue: appSettingsMock },
-        { provide: DataService, useValue: dataServiceMock }
+        { provide: DataService, useValue: dataServiceMock },
+        { provide: SignalkHistoryService, useValue: historyServiceMock }
       ]
     });
   });
@@ -80,5 +89,95 @@ describe('DatasetService', () => {
     expect(cfg.sampleTime).toBe(100);
     expect(cfg.maxDataPoints).toBe(10);
     expect(cfg.smoothingPeriod).toBe(2);
+  }));
+
+  it('skips history seeding when sampleTime is below one second', inject([DatasetService], async (service: DatasetService) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((service as any).shouldSeedHistory(999)).toBeFalse();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((service as any).shouldSeedHistory(1000)).toBeTrue();
+
+    const config = {
+      uuid: 'ds-sec-1',
+      path: 'navigation.headingTrue',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'second' as const,
+      period: 1,
+      label: 'test-sec'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any).start(config.uuid);
+
+    expect(historyServiceMock.getValues).not.toHaveBeenCalled();
+    service.ngOnDestroy();
+  }));
+
+  it('passes history resolution in seconds when seeding history', inject([DatasetService], async (service: DatasetService) => {
+    historyServiceMock.getValues.calls.reset();
+    historyServiceMock.getValues.and.resolveTo({
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:05:00.000Z'
+      },
+      values: [],
+      data: []
+    });
+
+    const config = {
+      uuid: 'ds-last-5',
+      path: 'navigation.speedThroughWater',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'Last 5 Minutes' as const,
+      period: 1,
+      label: 'test-last-5'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any).start(config.uuid);
+
+    expect(historyServiceMock.getValues).toHaveBeenCalled();
+    const request = historyServiceMock.getValues.calls.mostRecent().args[0] as { resolution: number };
+    // Last 5 Minutes resolves to sampleTime=2500ms, therefore history resolution=3s
+    expect(request.resolution).toBe(3);
+    service.ngOnDestroy();
+  }));
+
+  it('continues startup in live mode when history seeding throws', inject([DatasetService], async (service: DatasetService) => {
+    historyServiceMock.getValues.calls.reset();
+    historyServiceMock.getValues.and.rejectWith(new Error('History backend failure'));
+
+    const config = {
+      uuid: 'ds-live-fallback',
+      path: 'navigation.speedOverGround',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'Last 5 Minutes' as const,
+      period: 1,
+      label: 'test-live-fallback'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+
+    await expectAsync(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (service as any).start(config.uuid)
+    ).toBeResolved();
+
+    // Data source should still be active for live updates
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dataSource = (service as any)._svcDataSource.find((entry: { uuid: string }) => entry.uuid === config.uuid);
+    expect(dataSource).toBeTruthy();
+    expect(dataSource.pathObserverSubscription.closed).toBeFalse();
+
+    service.ngOnDestroy();
   }));
 });
