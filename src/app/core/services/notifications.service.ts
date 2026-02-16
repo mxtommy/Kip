@@ -4,6 +4,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 import { AppSettingsService } from "./app-settings.service";
+import { ToastService } from './toast.service';
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
 import { SignalkRequestsService } from './signalk-requests.service';
@@ -48,6 +49,8 @@ type IAlarmSeverities = Record<string, ISeverityLevel>;
 @Injectable({ providedIn: 'root' })
 export class NotificationsService implements OnDestroy {
   private settings = inject(AppSettingsService);
+  private toastService = inject(ToastService);
+  private audioBlockedNotificationShown = false;
   private data = inject(DataService);
   private requests = inject(SignalkRequestsService);
 
@@ -367,7 +370,24 @@ export class NotificationsService implements OnDestroy {
     this._activeAlarmSoundtrack = trackId;
     player.muted = this._isMuted;
     player.currentTime = 0;
-    void player.play();
+    player.play().catch(err => {
+      // Autoplay blocked by browser policy - requires user interaction first
+      console.debug('Alarm audio playback blocked:', err.message);
+      if (!this.audioBlockedNotificationShown) {
+        this.audioBlockedNotificationShown = true;
+        // Show persistent toast requiring user interaction to dismiss
+        const blockRef = this.toastService.show(
+          'Alarm sounds blocked by browser. Closing this message will enable audio.',
+          0, // No timeout - requires user to close
+          true, // Silent to avoid recursion
+          'warn'
+        );
+        // Reset flag when user dismisses, allowing audio to work after interaction
+        blockRef.afterDismissed().subscribe(() => {
+          this.audioBlockedNotificationShown = false;
+        });
+      }
+    });
   }
 
   /**

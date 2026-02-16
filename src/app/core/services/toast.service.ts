@@ -24,6 +24,7 @@ export class ToastService {
     { initialValue: this.app.getNotificationConfig().sound.disableSound }
   );
   private toastAudio: HTMLAudioElement | null = null;
+  private audioBlockedNotificationShown = false;
 
   // last snack for diagnostics/other UI (not a queue)
   public readonly lastSnack = signal<SnackItem | null>(null);
@@ -70,7 +71,26 @@ export class ToastService {
     }
     // restart sound for rapid successive notifications
     this.toastAudio.currentTime = 0;
-    void this.toastAudio.play();
+    this.toastAudio.play().catch(err => {
+      // Autoplay blocked by browser policy - requires user interaction first
+      console.debug('Toast audio playback blocked:', err.message);
+      if (!this.audioBlockedNotificationShown) {
+        this.audioBlockedNotificationShown = true;
+        // Show persistent toast requiring user interaction to dismiss
+        const blockRef = this.snackBar.openFromComponent(ToastSnackbarComponent, {
+          duration: 0, // No timeout - requires user to close
+          verticalPosition: 'top',
+          data: {
+            message: 'Sound notifications blocked by browser. Close this message will enable audio.',
+            severity: 'warn'
+          } as ToastSnackbarData
+        });
+        // Reset flag when user dismisses, allowing audio to work after interaction
+        blockRef.afterDismissed().subscribe(() => {
+          this.audioBlockedNotificationShown = false;
+        });
+      }
+    });
     return ref;
   }
 }
