@@ -2,7 +2,7 @@ import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import packageInfo from '../../../../package.json';
@@ -66,7 +66,7 @@ export class AppService {
   ];
   public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
   private _cssThemeColorRoles: ITheme = null;
-  private readonly _settings = inject(AppSettingsService);
+  private readonly _settings = inject(SettingsService);
   private readonly _data = inject(DataService);
   private readonly _iconRegistry = inject(MatIconRegistry);
   private readonly _sanitizer = inject(DomSanitizer);

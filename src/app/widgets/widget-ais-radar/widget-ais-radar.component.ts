@@ -10,7 +10,7 @@ import { AisAton, AisProcessingService, AisSar, AisTrack, AisVessel, Position } 
 import { DialogService } from '../../core/services/dialog.service';
 import { DialogAisTargetComponent } from './dialog-ais-target/dialog-ais-target.component';
 import { UnitsService } from '../../core/services/units.service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -137,7 +137,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(DialogService);
   private readonly ngZone = inject(NgZone);
   private readonly units = inject(UnitsService);
-  private readonly settings = inject(AppSettingsService);
+  private readonly settings = inject(SettingsService);
   private readonly toast = inject(ToastService);
   protected readonly dashboard = inject(DashboardService);
 

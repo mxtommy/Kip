@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, mo
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
-import { AppSettingsService } from './core/services/app-settings.service';
+import { SettingsService } from './core/services/settings.service';
 import { SignalKDeltaService } from './core/services/signalk-delta.service';
 import { ConnectionStateMachine, IConnectionStatus } from './core/services/connection-state-machine.service';
 import { MatMenuModule } from '@angular/material/menu';
@@ -58,7 +58,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _notifications = inject(NotificationsService);
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
-  public readonly appSettingsService = inject(AppSettingsService);
+  public readonly settings = inject(SettingsService);
   private readonly _responsive = inject(BreakpointObserver);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);
@@ -87,8 +87,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.appSettingsService.configUpgrade()) {
-        const liveVersion = this.appSettingsService.getConfigVersion();
+      if (this.settings.configUpgrade()) {
+        const liveVersion = this.settings.getConfigVersion();
 
         if (liveVersion === 11) {
           this.upgrade.runUpgrade(liveVersion);
@@ -220,7 +220,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           if (canUpgradeLegacy) {
             this.upgrade.runUpgrade();
           } else {
-            this.appSettingsService.resetSettings();
+            this.settings.resetSettings();
           }
         });
     });

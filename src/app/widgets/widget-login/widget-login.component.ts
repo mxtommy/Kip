@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthenticationService } from "../../core/services/authentication.service";
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,12 +18,12 @@ export class WidgetLoginComponent implements OnInit {
   dialog = inject(MatDialog);
   private auth = inject(AuthenticationService);
   private toast = inject(ToastService);
-  private appSettingsService = inject(AppSettingsService);
+  private settings = inject(SettingsService);
 
   public connectionConfig: IConnectionConfig = null;
 
   ngOnInit(): void {
-    this.connectionConfig = this.appSettingsService.getConnectionConfig();
+    this.connectionConfig = this.settings.getConnectionConfig();
     this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valide credentials or access the Confifuration/Settings menu, validate the server URL or/and disable the user Sign in option");
   }
 
@@ -43,7 +43,7 @@ export class WidgetLoginComponent implements OnInit {
       } else {
         this.connectionConfig.loginName = data.user;
         this.connectionConfig.loginPassword = data.password;
-        this.appSettingsService.setConnectionConfig(this.connectionConfig);
+        this.settings.setConnectionConfig(this.connectionConfig);
         this.serverLogin();
       }
     });
@@ -52,7 +52,7 @@ export class WidgetLoginComponent implements OnInit {
   private serverLogin(newUrl?: string) {
     this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
     .then(() => {
-      this.appSettingsService.reloadApp();
+      this.settings.reloadApp();
     })
     .catch((error: HttpErrorResponse) => {
       if (error.status == 401) {

@@ -6,7 +6,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { AppService } from '../../services/app-service';
 import { LargeIconTile, TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 import { uiEventService } from '../../services/uiEvent.service';
-import { AppSettingsService } from '../../services/app-settings.service';
+import { SettingsService } from '../../services/settings.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -34,7 +34,7 @@ export class MenuActionsComponent implements AfterViewInit, OnDestroy {
   protected uiEvent = inject(uiEventService);
   protected dashboard = inject(DashboardService);
   protected app = inject(AppService);
-  private _settings = inject(AppSettingsService);
+  private _settings = inject(SettingsService);
   protected isAutoNightMode = toSignal(this._settings.getAutoNightModeAsO(), { requireSync: true });
 
   // Reactive signal: true when URL is '/', '/dashboard', or any '/dashboard/*'

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { ConfigurationUpgradeService } from './configuration-upgrade.service';
 import { StorageService } from './storage.service';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 
 describe('ConfigurationUpgradeService', () => {
   let service: ConfigurationUpgradeService;
@@ -34,7 +34,7 @@ describe('ConfigurationUpgradeService', () => {
       providers: [
         ConfigurationUpgradeService,
         { provide: StorageService, useValue: mockStorage },
-        { provide: AppSettingsService, useValue: mockAppSettings }
+        { provide: SettingsService, useValue: mockAppSettings }
       ]
     });
     service = TestBed.inject(ConfigurationUpgradeService);

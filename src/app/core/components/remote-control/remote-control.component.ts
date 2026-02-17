@@ -5,7 +5,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { IKipDisplayInfo, IKipDisplayScreen } from '../../interfaces/app-interfaces';
-import { AppSettingsService } from '../../services/app-settings.service';
+import { SettingsService } from '../../services/settings.service';
 import { TileLargeIconComponent } from '../tile-large-icon/tile-large-icon.component';
 import { MatIconModule } from '@angular/material/icon';
 import { DataService } from '../../services/data.service';
@@ -22,7 +22,7 @@ import { SignalkRequestsService } from '../../services/signalk-requests.service'
 export class RemoteControlComponent {
   private readonly COMMAND_REQUEST_ACTIVE_SCREEN_PATH = 'self.kip.remote.requestActiveScreen';
 
-  private readonly _settings = inject(AppSettingsService);
+  private readonly _settings = inject(SettingsService);
   private readonly _data = inject(DataService);
   private readonly _requests = inject(SignalkRequestsService);
   private readonly _destroyRef = inject(DestroyRef);

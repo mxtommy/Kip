@@ -2,7 +2,7 @@ import { Component, inject, OnInit, viewChild, signal, Signal, model } from '@an
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
-import { AppSettingsService } from '../../../services/app-settings.service';
+import { SettingsService } from '../../../services/settings.service';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatSliderModule } from '@angular/material/slider';
@@ -36,7 +36,7 @@ export class SettingsDisplayComponent implements OnInit {
   readonly displayForm = viewChild<NgForm>('displayForm');
   private _app = inject(AppService);
   private toast = inject(ToastService);
-  private _settings = inject(AppSettingsService);
+  private _settings = inject(SettingsService);
   private _responsive = inject(BreakpointObserver);
   private _pluginConfig = inject(SignalkPluginConfigService);
   protected isPhonePortrait: Signal<BreakpointState>;

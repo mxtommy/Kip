@@ -22,7 +22,7 @@ const latestConfigVersion = 12; // used to set the configVersion property in the
 @Injectable({
   providedIn: 'root'
 })
-export class AppSettingsService {
+export class SettingsService {
   private storage = inject(StorageService);
   private snackBar = inject(MatSnackBar);
 
@@ -135,7 +135,7 @@ export class AppSettingsService {
    *
    * @param {string} type Possible choices are: appConfig, dashboardsConfig, themeConfig, connectionConfig or older v2 if they are present widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
    * @return {*}
-   * @memberof AppSettingsService
+   * @memberof SettingsService
    */
   public loadConfigFromLocalStorage(type: string) {
     let config = JSON.parse(localStorage.getItem(type));

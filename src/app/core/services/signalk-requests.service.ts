@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable , Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { ISignalKDeltaMessage } from '../interfaces/signalk-interfaces';
 import { SignalKDeltaService } from './signalk-delta.service';
 import { AuthenticationService } from './authentication.service';
@@ -34,7 +34,7 @@ export interface skRequest {
 })
 export class SignalkRequestsService {
   private signalKDeltaService = inject(SignalKDeltaService);
-  private appSettingsService = inject(AppSettingsService);
+  private settings = inject(SettingsService);
   private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
 
@@ -63,7 +63,7 @@ export class SignalkRequestsService {
     const deviceTokenRequest = {
       requestId: requestId,
       accessRequest: {
-        clientId: this.appSettingsService.KipUUID,
+        clientId: this.settings.KipUUID,
         description: "KIP Instrument MDF",
         permissions: "admin"
       }

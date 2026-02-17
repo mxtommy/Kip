@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { SelectIconComponent } from '../select-icon/select-icon.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { AppSettingsService } from '../../services/app-settings.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'dialog-dashboard-page-editor',
@@ -20,7 +20,7 @@ import { AppSettingsService } from '../../services/app-settings.service';
 export class DialogDashboardPageEditorComponent {
   protected dialogRef = inject<MatDialogRef<DialogDashboardPageEditorComponent>>(MatDialogRef);
   protected data = inject<DialogDashboardPageEditorData>(MAT_DIALOG_DATA);
-  private _settings = inject(AppSettingsService);
+  private _settings = inject(SettingsService);
   protected isSplitShellEnabled = signal<boolean>(true);
 
   constructor() {

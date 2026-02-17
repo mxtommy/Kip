@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 
-describe('AppSettingsService', () => {
+describe('SettingsService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AppSettingsService]
+      providers: [SettingsService]
     });
   });
 
   it('should be created', () => {
-    const service = TestBed.inject(AppSettingsService);
+    const service = TestBed.inject(SettingsService);
     expect(service).toBeTruthy();
   });
 });

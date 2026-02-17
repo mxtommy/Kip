@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 
 import { ToastService } from './toast.service';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { ToastSnackbarComponent } from '../components/toast-snackbar/toast-snackbar.component';
 
 class MatSnackBarMock {
@@ -12,7 +12,7 @@ class MatSnackBarMock {
   } as unknown as MatSnackBarRef<ToastSnackbarComponent>));
 }
 
-class AppSettingsServiceMock {
+class SettingsServiceMock {
   private readonly cfg = { sound: { disableSound: true } };
 
   public getNotificationServiceConfigAsO() {
@@ -33,7 +33,7 @@ describe('ToastService', () => {
       providers: [
         ToastService,
         { provide: MatSnackBar, useClass: MatSnackBarMock },
-        { provide: AppSettingsService, useClass: AppSettingsServiceMock }
+        { provide: SettingsService, useClass: SettingsServiceMock }
       ]
     });
     service = TestBed.inject(ToastService);

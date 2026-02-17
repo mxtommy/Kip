@@ -34,7 +34,7 @@ import { UnitsService } from './app/core/services/units.service';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { AuthenticationService } from './app/core/services/authentication.service';
 import { ActivatedRoute } from '@angular/router';
-import { AppSettingsService } from './app/core/services/app-settings.service';
+import { SettingsService } from './app/core/services/settings.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ReactiveFormsModule, FormGroupDirective, FormGroup } from '@angular/forms';
 // Note: Avoid globally providing directive stubs for Host2 directives because it breaks their own specs.
@@ -194,8 +194,8 @@ class SignalkPluginConfigServiceStub implements Partial<SignalkPluginConfigServi
   }
 }
 
-// A robust global AppSettingsService stub exposing both sync getters and observable getters
-class AppSettingsServiceStub {
+// A robust global SettingsService stub exposing both sync getters and observable getters
+class SettingsServiceStub {
   private themeNameSubject = new BehaviorSubject<string>('light');
   private redNightModeSubject = new BehaviorSubject<boolean>(false);
   private autoNightModeSubject = new BehaviorSubject<boolean>(false);
@@ -411,7 +411,7 @@ testBed.configureTestingModule({
     { provide: AppNetworkInitService, useClass: AppNetworkInitServiceStub },
     { provide: AuthenticationService, useClass: AuthenticationServiceStub },
     { provide: ActivatedRoute, useValue: ActivatedRouteStub },
-    { provide: AppSettingsService, useClass: AppSettingsServiceStub },
+    { provide: SettingsService, useClass: SettingsServiceStub },
     // SignalK connection-related stubs to prevent heavy runtime and missing .pipe
     { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
     { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
@@ -483,7 +483,7 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
   { provide: AppNetworkInitService, useClass: AppNetworkInitServiceStub },
   { provide: AuthenticationService, useClass: AuthenticationServiceStub },
   { provide: ActivatedRoute, useValue: ActivatedRouteStub },
-  { provide: AppSettingsService, useClass: AppSettingsServiceStub },
+  { provide: SettingsService, useClass: SettingsServiceStub },
   { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
   { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
   { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceStub },

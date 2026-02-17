@@ -1,5 +1,5 @@
 import { effect, inject, Injectable, untracked } from '@angular/core';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { DashboardService, Dashboard } from './dashboard.service';
 import { DataService } from './data.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -54,7 +54,7 @@ export class RemoteDashboardsService {
   private readonly COMMAND_SET_SCREEN_INDEX_PATH = 'self.kip.remote.setScreenIndex';
   private readonly COMMAND_REQUEST_ACTIVE_SCREEN_PATH = 'self.kip.remote.requestActiveScreen';
 
-  private readonly settings = inject(AppSettingsService);
+  private readonly settings = inject(SettingsService);
   private readonly dashboard = inject(DashboardService);
   private readonly data = inject(DataService);
   private readonly requests = inject(SignalkRequestsService);

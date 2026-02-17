@@ -1,7 +1,7 @@
 import { TestBed, inject } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { DatasetService, TimeScaleFormat } from './data-set.service';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { IAppConfig } from '../interfaces/app-settings.interfaces';
 import { DataService } from './data.service';
 import { SignalkHistoryService } from './signalk-history.service';
@@ -15,7 +15,7 @@ describe('DatasetService', () => {
     historyServiceMock = jasmine.createSpyObj<SignalkHistoryService>('SignalkHistoryService', ['getValues']);
     historyServiceMock.getValues.and.resolveTo(null);
 
-    const appSettingsMock: Partial<AppSettingsService> = {
+    const appSettingsMock: Partial<SettingsService> = {
       getDataSets: () => [],
       // Skip cleanup logic and avoid any persistence writes.
       configUpgrade: signal(true),
@@ -32,7 +32,7 @@ describe('DatasetService', () => {
     TestBed.configureTestingModule({
       providers: [
         DatasetService,
-        { provide: AppSettingsService, useValue: appSettingsMock },
+        { provide: SettingsService, useValue: appSettingsMock },
         { provide: DataService, useValue: dataServiceMock },
         { provide: SignalkHistoryService, useValue: historyServiceMock }
       ]
