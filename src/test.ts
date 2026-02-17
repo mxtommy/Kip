@@ -97,7 +97,13 @@ testBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicT
 })();
 class MatBottomSheetRefStub { dismiss(): void { /* noop */ } }
 class MatDialogRefStub { close(): void { /* noop */ } }
-class AppNetworkInitServiceStub { /* noop for tests */ }
+class AppNetworkInitServiceStub {
+  private _bootstrapStatusSubject = new BehaviorSubject<'starting' | 'ready' | 'degraded'>('ready');
+  private _bootstrapIssueSubject = new BehaviorSubject<{ reason: 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown'; statusCode?: number; sharedConfigName?: string; legacyUpgradeAvailable?: boolean }>({ reason: 'none' });
+
+  public bootstrapStatus$ = this._bootstrapStatusSubject.asObservable();
+  public bootstrapIssue$ = this._bootstrapIssueSubject.asObservable();
+}
 class AuthenticationServiceStub {
   // Minimal stub surface for tests that inject AuthenticationService
   private _isLoggedIn$ = new BehaviorSubject<boolean>(false);

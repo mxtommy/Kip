@@ -26,6 +26,7 @@ import { DatasetService } from './core/services/data-set.service';
 import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
 import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
 import { ToastService } from './core/services/toast.service';
+import { AppNetworkInitService, IBootstrapIssue } from './core/services/app-initNetwork.service';
 
 @Component({
   selector: 'app-root',
@@ -42,6 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private readonly _deltaService = inject(SignalKDeltaService);
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
+  private readonly _appNetworkInit = inject(AppNetworkInitService);
   public readonly authenticationService = inject(AuthenticationService);
   private readonly _dataSet = inject(DatasetService);
 
@@ -70,10 +72,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   protected actionsSidenavOpened = model<boolean>(false);
   protected notificationsSidenavOpened = model<boolean>(false);
   protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly bootstrapStatus = toSignal(this._appNetworkInit.bootstrapStatus$, { initialValue: 'starting' });
+  protected readonly bootstrapIssue: Signal<IBootstrapIssue> = toSignal(this._appNetworkInit.bootstrapIssue$, { initialValue: { reason: 'none' } as IBootstrapIssue });
   protected dashboardVisible = signal<boolean>(false);
   protected isPhonePortrait: Signal<BreakpointState>;
   private scheduledOpen: number | null = null;
   private readonly OPEN_DELAY_MS = 300; // should match/ exceed sidenav close animation time
+  private missingConfigPromptShown = false;
 
   // Stable handler refs (prevent leak from rebinding)
   private readonly _swipeLeftHandler = () => this.onSwipeLeft();
@@ -187,6 +192,38 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this._connectionStateMachine.status$
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe((status: IConnectionStatus) => this.displayConnectionsStatusNotification(status));
+
+    effect(() => {
+      const issue = this.bootstrapIssue();
+      if (issue.reason !== 'missing-shared-config' || this.missingConfigPromptShown) {
+        return;
+      }
+
+      this.missingConfigPromptShown = true;
+      const cfgName = issue.sharedConfigName || 'default';
+      const canUpgradeLegacy = issue.legacyUpgradeAvailable === true;
+      const actionLabel = canUpgradeLegacy ? 'Upgrade' : 'Create';
+      const message = canUpgradeLegacy
+        ? `Server is reachable, but no current version shared configuration '${cfgName}' exists for this user. A legacy configuration was found and can be upgraded. Upgrade now?`
+        : `Server is reachable, but no shared configuration '${cfgName}' exists for this user. Create a default configuration now?`;
+      const ref = this.toast.show(
+        message,
+        0,
+        true,
+        'warn',
+        actionLabel
+      );
+
+      ref.onAction()
+        .pipe(takeUntilDestroyed(this._destroyRef))
+        .subscribe(() => {
+          if (canUpgradeLegacy) {
+            this.upgrade.runUpgrade();
+          } else {
+            this.appSettingsService.resetSettings();
+          }
+        });
+    });
   }
 
   private isUrlDashboard(url: string | null | undefined): boolean {
@@ -241,6 +278,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private displayConnectionsStatusNotification(connectionStatus: IConnectionStatus) {
     const message = connectionStatus.message;
+    const silentDuringBootstrap = this.bootstrapStatus() !== 'ready';
     switch (connectionStatus.operation) {
       case 0:
         this.toast.show(message, 5000, true);
@@ -249,17 +287,17 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       case 2:
         break;
       case 3:
-        this.toast.show(message, 3000, false, 'warn');
+        this.toast.show(message, 3000, silentDuringBootstrap, 'warn');
         break;
       case 4:
         this.toast.show(message, 3000, true, 'info');
         break;
       case 5:
-        this.toast.show(message, 0, false);
+        this.toast.show(message, 0, silentDuringBootstrap);
         break;
       default:
         console.error('[AppComponent] Unknown operation code:', connectionStatus.operation);
-        this.toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, false, 'error');
+        this.toast.show(`Unknown connection status: ${connectionStatus.state}`, 0, silentDuringBootstrap, 'error');
     }
   }
 

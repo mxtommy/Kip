@@ -64,9 +64,7 @@ export class SignalkHistoryService {
       .subscribe(endpoint => {
         const httpServiceUrl = endpoint?.httpServiceUrl || null;
         this.historyServiceUrl = httpServiceUrl ? httpServiceUrl.replace('/v1/', '/v2/') : null;
-        if (this.historyServiceUrl) {
-          console.debug(`[SignalkHistoryService] History service URL resolved (v2 via v1): ${this.historyServiceUrl}`);
-        } else {
+        if (!this.historyServiceUrl) {
           console.warn(`[SignalkHistoryService] History API endpoint not available; history service is disabled`);
         }
       });

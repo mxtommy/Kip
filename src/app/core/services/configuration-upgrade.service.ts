@@ -56,10 +56,18 @@ export class ConfigurationUpgradeService {
   };
 
   /**
-   * Entry point used by component to trigger upgrade.
-   * Decides local vs remote based on StorageService.initConfig (remote present -> remote upgrade).
+   * Triggers the configuration upgrade flow for local or remote storage.
+   *
+   * @param {number | undefined} version Optional current config version. Omit to run legacy remote migration discovery.
+   * @returns {Promise<void>} Resolves when the selected upgrade flow has completed.
+   *
+   * @example
+   * await this.upgradeService.runUpgrade(11);
+   *
+   * @example
+   * await this.upgradeService.runUpgrade();
    */
-  public async runUpgrade(version: number): Promise<void> {
+  public async runUpgrade(version?: number): Promise<void> {
     this.error.set(null);
     this.upgrading.set(true);
     this.messages.set([]);
