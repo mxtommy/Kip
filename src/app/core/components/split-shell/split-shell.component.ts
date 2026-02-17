@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, NgZone, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AppSettingsService } from '../../services/app-settings.service';
+import { SettingsService } from '../../services/settings.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { WidgetFreeboardskComponent } from '../../../widgets/widget-freeboardsk/widget-freeboardsk.component';
 import { DashboardComponent } from '../dashboard/dashboard.component';
@@ -17,7 +17,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 })
 export class SplitShellComponent implements OnDestroy {
   private readonly panelEl = viewChild.required<ElementRef<HTMLElement>>('panel');
-  private readonly _settings = inject(AppSettingsService);
+  private readonly _settings = inject(SettingsService);
   private readonly _dashboard = inject(DashboardService);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly ngZone = inject(NgZone);

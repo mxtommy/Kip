@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule }    from '@angular/forms';
-import { AppSettingsService } from '../../../services/app-settings.service';
+import { SettingsService } from '../../../services/settings.service';
 import { ToastService } from '../../../services/toast.service';
 import { IUnitDefaults, UnitsService, IUnit } from '../../../services/units.service';
 import { MatButton } from '@angular/material/button';
@@ -18,14 +18,14 @@ import { KeyValuePipe } from '@angular/common';
 })
 export class SettingsUnitsComponent implements OnInit {
   private units = inject(UnitsService);
-  private appSettingsService = inject(AppSettingsService);
+  private settings = inject(SettingsService);
   private toast = inject(ToastService);
 
   public unitsFormGroup = new UntypedFormGroup({});
   protected groupUnits: Record<string, IUnit>[] = [];
 
   ngOnInit() {
-    const unitsSettings: IUnitDefaults = this.appSettingsService.getDefaultUnits();
+    const unitsSettings: IUnitDefaults = this.settings.getDefaultUnits();
     // Format unit group data a bit better for consumption in template
     const unitGroupsRaw = this.units.getConversions();
 
@@ -44,7 +44,7 @@ export class SettingsUnitsComponent implements OnInit {
   }
 
   submitConfig() {
-    this.appSettingsService.setDefaultUnits(this.unitsFormGroup.value);
+    this.settings.setDefaultUnits(this.unitsFormGroup.value);
     this.toast.show("Configuration saved", 1000, true, 'message');
   }
 }

@@ -102,7 +102,7 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
   - Key methods: Event emitters, hotkey handlers.
   - Dependencies: Angular core, browser APIs.
 
-- **AppSettingsService (`app-settings.service.ts`)**
+- **SettingsService (`settings.service.ts`)**
   - Purpose: Manages persistent app settings, user preferences, and configuration storage.
   - Key methods: `getSetting()`, `setSetting()`, config file management.
   - Dependencies: StorageService.
@@ -114,12 +114,12 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 
 - **NotificationsService (`notifications.service.ts`)**
   - Key methods: Notification state management, audio/visual alerts, muting.
-  - Dependencies: AppSettingsService, DataService, SignalkRequestsService.
+  - Dependencies: SettingsService, DataService, SignalkRequestsService.
 
 - **ToastService (`toast.service.ts`)**
   - Purpose: In-app snackbars using Angular Material.
   - Key methods: `show(message, duration = 1500, silent = true, action = 'Dismiss', severity = 'message')`.
-  - Dependencies: MatSnackBar, AppSettingsService.
+  - Dependencies: MatSnackBar, SettingsService.
   - Usage: Use for short, user-visible feedback (login errors, PUT failures, success confirmations). Sound is suppressed when `silent=true` or user sound settings disable audio.
 
 - **CanvasService (`canvas.service.ts`)**
@@ -156,7 +156,7 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
 - **UnitsService (`units.service.ts`)**
   - Purpose: Handles unit conversion and formatting for all displayed data.
   - Key methods: `convert()`, `format()`, unit preference management.
-  - Dependencies: AppSettingsService.
+  - Dependencies: SettingsService.
 
 - **WidgetService (`widget.service.ts`)**
   - Purpose: Manages widget registration, configuration, and lifecycle.

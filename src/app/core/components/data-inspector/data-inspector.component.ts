@@ -119,7 +119,6 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     return String(source.key);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected getSourceValue(item: { key: unknown, value: { sourceValue: unknown } } ): unknown {
     const value = item.value?.sourceValue;
     return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;

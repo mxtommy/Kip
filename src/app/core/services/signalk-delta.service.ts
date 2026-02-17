@@ -301,7 +301,6 @@ export class SignalKDeltaService implements OnDestroy {
   */
   public publishDelta(msg: object): void {
     if (this.socketWS$) {
-      console.log("[Delta Service] WebSocket sending message");
       this.socketWS$.next(msg);
     } else {
       console.log("[Delta Service] No WebSocket present to send message - dropping message");

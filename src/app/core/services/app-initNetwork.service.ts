@@ -6,22 +6,31 @@
 * @usage must return a Promise in all cases or will block app from loading.
 * All execution in this service delays app start. Keep code small and simple.
 **/
-import { inject, Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, Injector, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { IConnectionConfig } from "../interfaces/app-settings.interfaces";
+import { IConfig, IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService } from './authentication.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { DataService } from './data.service';
 import { SignalKDeltaService } from './signalk-delta.service';
-import { StorageService } from './storage.service';
-import { ConnectionStateMachine } from './connection-state-machine.service';
+import { IStorageRemoteBootstrapContext, StorageService } from './storage.service';
+import { ConnectionState, ConnectionStateMachine } from './connection-state-machine.service';
 import { InternetReachabilityService } from './internet-reachability.service';
 import { DatasetService } from './data-set.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
+export type TBootstrapStatus = 'starting' | 'ready' | 'degraded';
+export type TBootstrapIssueReason = 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown';
+
+export interface IBootstrapIssue {
+  reason: TBootstrapIssueReason;
+  statusCode?: number;
+  sharedConfigName?: string;
+  legacyUpgradeAvailable?: boolean;
+}
 
 @Injectable()
 export class AppNetworkInitService implements OnDestroy {
@@ -37,7 +46,10 @@ export class AppNetworkInitService implements OnDestroy {
   private readonly data = inject(DataService); // Init to get data before app starts
   private readonly storage = inject(StorageService); // Init to get data before app starts
   private readonly internetReachability = inject(InternetReachabilityService);
-  private readonly dataset = inject(DatasetService); // Init and wait for seeding before app starts
+  private readonly injector = inject(Injector);
+  private datasetService: DatasetService | null = null;
+  private readonly _bootstrapStatus$ = new BehaviorSubject<TBootstrapStatus>('starting');
+  private readonly _bootstrapIssue$ = new BehaviorSubject<IBootstrapIssue>({ reason: 'none' });
 
   constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -46,6 +58,7 @@ export class AppNetworkInitService implements OnDestroy {
   }
 
   public async initNetworkServices() {
+    let startupDegraded = false;
     this.loadLocalStorageConfig();
     this.preloadFonts();
     this.internetReachability.start();
@@ -65,35 +78,71 @@ export class AppNetworkInitService implements OnDestroy {
       }
 
       if (this.isLoggedIn && this.config?.useSharedConfig) {
-        this.storage.activeConfigFileVersion = configFileVersion;
-        this.storage.sharedConfigName = this.config.sharedConfigName;
         // Wait for storage to be fully ready before accessing it
         const storageReady = await this.storage.waitUntilReady();
         if (!storageReady) {
-          console.warn("[AppInit Network Service] StorageService did not become ready in time. Skipping remote config preload.");
+          throw new Error('[AppInit Network Service] StorageService did not become ready in time. Cannot bootstrap remote configuration.');
         } else {
-          await this.storage.getConfig("user", this.config.sharedConfigName, configFileVersion, true);
+          const remoteConfig = await this.storage.getConfig('user', this.config.sharedConfigName, configFileVersion);
+          const bootstrapContext: IStorageRemoteBootstrapContext = {
+            sharedConfigName: this.config.sharedConfigName,
+            configFileVersion,
+            initConfig: remoteConfig
+          };
+          this.storage.bootstrapRemoteContext(bootstrapContext);
         }
       }
 
+      this._bootstrapIssue$.next({ reason: 'none' });
+
       // Seed datasets after authentication (if required) so History API calls are authenticated.
       // This ensures all chart data is ready before any widget components are created.
-      await this.dataset.waitUntilReady();
+      await this.getDatasetService().waitUntilReady();
 
       if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {
         this.router.navigate(['/login']); // need to set credentials
       }
 
     } catch (error) {
+      startupDegraded = true;
+      if (error?.status === 404 && this.config?.useSharedConfig) {
+        const legacyUpgradeAvailable = await this.probeLegacyUpgradeAvailability(this.config.sharedConfigName);
+        this._bootstrapIssue$.next({
+          reason: 'missing-shared-config',
+          statusCode: 404,
+          sharedConfigName: this.config.sharedConfigName,
+          legacyUpgradeAvailable
+        });
+      } else if (error?.status === 0) {
+        this._bootstrapIssue$.next({ reason: 'network-unreachable', statusCode: 0 });
+      } else if (error?.status === 401) {
+        this._bootstrapIssue$.next({ reason: 'unauthorized', statusCode: 401 });
+      } else {
+        this._bootstrapIssue$.next({ reason: 'unknown', statusCode: error?.status });
+      }
+
       if (error.status === 0) {
-        console.warn("[AppInit Network Service] Initialization failed. Network error. Redirecting to settings page.");
+        const finalState = await this.waitForHttpRetryCompletion();
+        if (finalState === ConnectionState.HTTPConnected || this.connectionStateMachine.isHTTPConnected()) {
+          console.warn('[AppInit Network Service] Initial connection recovered during retry cycle. Skipping fallback route.');
+        } else {
+          console.warn("[AppInit Network Service] Initialization failed after HTTP retries. Redirecting to settings page.");
+          await this.router.navigate(['/options']);
+        }
       } else if (error.status === 401) {
         console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Redirecting to login page.");
+        await this.router.navigate(['/login']);
       } else {
         console.warn("[AppInit Network Service] Initialization failed. Error: ", JSON.stringify(error));
+        await this.router.navigate(['/options']);
       }
-      return Promise.reject("[AppInit Network Service] Startup completed with connection issue.");
+      console.warn('[AppInit Network Service] Startup continuing in degraded mode to allow UI feedback.');
+      this._bootstrapStatus$.next('degraded');
+      return;
     } finally {
+      if (!startupDegraded) {
+        this._bootstrapStatus$.next('ready');
+      }
       console.log("[AppInit Network Service] Initialization completed");
       // Enable WebSocket functionality now that initialization is complete
       this.connectionStateMachine.enableWebSocketMode();
@@ -103,6 +152,83 @@ export class AppNetworkInitService implements OnDestroy {
         console.log("[AppInit Network Service] Starting WebSocket connection after initialization");
         this.connectionStateMachine.startWebSocketConnection();
       }
+    }
+  }
+
+  /**
+   * Emits the APP_INITIALIZER bootstrap lifecycle status.
+   *
+   * @returns {Observable<TBootstrapStatus>} Stream of bootstrap status values.
+   *
+   * @example
+   * this.appNetworkInit.bootstrapStatus$
+   *   .subscribe(status => console.log('Bootstrap status', status));
+   */
+  public get bootstrapStatus$(): Observable<TBootstrapStatus> {
+    return this._bootstrapStatus$.asObservable();
+  }
+
+  /**
+   * Emits detailed bootstrap issue metadata for degraded startup scenarios.
+   *
+   * @returns {Observable<IBootstrapIssue>} Stream of bootstrap issue descriptors.
+   *
+   * @example
+   * this.appNetworkInit.bootstrapIssue$
+   *   .subscribe(issue => console.log(issue.reason, issue.sharedConfigName));
+   */
+  public get bootstrapIssue$(): Observable<IBootstrapIssue> {
+    return this._bootstrapIssue$.asObservable();
+  }
+
+  private getDatasetService(): DatasetService {
+    if (!this.datasetService) {
+      this.datasetService = this.injector.get(DatasetService);
+    }
+    return this.datasetService;
+  }
+
+  private async waitForHttpRetryCompletion(timeoutMs?: number): Promise<ConnectionState | null> {
+    const effectiveTimeoutMs = timeoutMs ?? this.connectionStateMachine.getHttpRetryWindowMs(2000);
+    const terminalStates = new Set<ConnectionState>([
+      ConnectionState.HTTPConnected,
+      ConnectionState.PermanentFailure,
+    ]);
+
+    const current = this.connectionStateMachine.currentState;
+    if (terminalStates.has(current)) {
+      return current;
+    }
+
+    return new Promise<ConnectionState | null>((resolve) => {
+      const timeoutId = window.setTimeout(() => {
+        subscription.unsubscribe();
+        resolve(null);
+      }, effectiveTimeoutMs);
+
+      const subscription = this.connectionStateMachine.state$.subscribe((state: ConnectionState) => {
+        if (!terminalStates.has(state)) {
+          return;
+        }
+
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+        resolve(state);
+      });
+    });
+  }
+
+  private async probeLegacyUpgradeAvailability(sharedConfigName: string): Promise<boolean> {
+    if (!sharedConfigName) {
+      return false;
+    }
+
+    try {
+      const legacyConfig = await this.storage.getConfig('user', sharedConfigName, 9) as IConfig;
+      const legacyConfigVersion = legacyConfig?.app?.configVersion;
+      return legacyConfigVersion === 10;
+    } catch {
+      return false;
     }
   }
 

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { StorageService, Config } from './storage.service';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { IAppConfig, IConfig, IThemeConfig } from '../interfaces/app-settings.interfaces';
 import { v10IConfig, v10IThemeConfig } from '../interfaces/v10-config-interface';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
@@ -20,7 +20,7 @@ interface DataChartConfigUpdate {
 @Injectable({ providedIn: 'root' })
 export class ConfigurationUpgradeService {
   private _storage = inject(StorageService);
-  private _settings = inject(AppSettingsService);
+  private _settings = inject(SettingsService);
 
   // Signals/state for UI binding if desired
   public upgrading = signal<boolean>(false);
@@ -31,7 +31,7 @@ export class ConfigurationUpgradeService {
   private readonly legacyFileVersion = 9;
   private readonly legacyConfigVersion = 10;
   // Target version for this migration step
-  private readonly targetConfigVersion = 12; // After upgrade we set to 12 (AppSettingsService may later handle 12 -> 13)
+  private readonly targetConfigVersion = 12; // After upgrade we set to 12 (SettingsService may later handle 12 -> 13)
 
   // Static mapping of old widget.type to new selector values
   private static readonly widgetTypeToSelectorMap: Record<string, string> = {
@@ -56,10 +56,18 @@ export class ConfigurationUpgradeService {
   };
 
   /**
-   * Entry point used by component to trigger upgrade.
-   * Decides local vs remote based on StorageService.initConfig (remote present -> remote upgrade).
+   * Triggers the configuration upgrade flow for local or remote storage.
+   *
+   * @param {number | undefined} version Optional current config version. Omit to run legacy remote migration discovery.
+   * @returns {Promise<void>} Resolves when the selected upgrade flow has completed.
+   *
+   * @example
+   * await this.upgradeService.runUpgrade(11);
+   *
+   * @example
+   * await this.upgradeService.runUpgrade();
    */
-  public async runUpgrade(version: number): Promise<void> {
+  public async runUpgrade(version?: number): Promise<void> {
     this.error.set(null);
     this.upgrading.set(true);
     this.messages.set([]);

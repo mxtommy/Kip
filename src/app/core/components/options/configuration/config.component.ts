@@ -4,7 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 
 import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
 import { ToastService } from '../../../services/toast.service';
-import { AppSettingsService } from '../../../services/app-settings.service';
+import { SettingsService } from '../../../services/settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../../services/storage.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -28,7 +28,7 @@ interface IRemoteConfig {
     imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, MatInputModule]
 })
 export class SettingsConfigComponent implements OnInit, OnDestroy {
-  private appSettingsService = inject(AppSettingsService);
+  private settings = inject(SettingsService);
   private storageSvc = inject(StorageService);
   private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
@@ -126,9 +126,9 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
    * Save config to local storage
    */
   public saveToLocalstorage(config: IConfig) {
-    this.appSettingsService.replaceConfig("appConfig", config.app, false);
-    this.appSettingsService.replaceConfig("dashboardsConfig", config.dashboards, false);
-    this.appSettingsService.replaceConfig("themeConfig", config.theme, false);
+    this.settings.replaceConfig("appConfig", config.app, false);
+    this.settings.replaceConfig("dashboardsConfig", config.dashboards, false);
+    this.settings.replaceConfig("themeConfig", config.theme, false);
   }
 
   public async copyConfig() {
@@ -144,7 +144,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     }
 
     this.saveConfig(conf, 'user', 'default', false, true);
-    this.appSettingsService.reloadApp();
+    this.settings.reloadApp();
   }
 
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
@@ -156,20 +156,20 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public resetConfigToDefault() {
-    this.appSettingsService.resetSettings();
+    this.settings.resetSettings();
   }
 
   public resetConnectionToDefault() {
-    this.appSettingsService.resetConnection();
+    this.settings.resetConnection();
   }
 
   public loadDemoConfig() {
-    this.appSettingsService.loadDemoConfig();
+    this.settings.loadDemoConfig();
   }
 
   public getActiveConfig(): IConfig {
     let conf: IConfig;
-    if (this.appSettingsService.useSharedConfig) {
+    if (this.settings.useSharedConfig) {
       conf = this.getLocalConfigFromMemory();
     } else {
       conf = this.getLocalConfigFromLocalStorage();
@@ -179,18 +179,18 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
 
   public getLocalConfigFromMemory(): IConfig {
     const localConfig: IConfig = {
-      "app": this.appSettingsService.getAppConfig(),
-      "dashboards": this.appSettingsService.getDashboardConfig(),
-      "theme": this.appSettingsService.getThemeConfig(),
+      "app": this.settings.getAppConfig(),
+      "dashboards": this.settings.getDashboardConfig(),
+      "theme": this.settings.getThemeConfig(),
     };
     return localConfig;
   }
 
   public getLocalConfigFromLocalStorage(): IConfig {
     const localConfig: IConfig = {
-      "app": this.appSettingsService.loadConfigFromLocalStorage('appConfig'),
-      "dashboards": this.appSettingsService.loadConfigFromLocalStorage('dashboardsConfig'),
-      "theme": this.appSettingsService.loadConfigFromLocalStorage('themeConfig'),
+      "app": this.settings.loadConfigFromLocalStorage('appConfig'),
+      "dashboards": this.settings.loadConfigFromLocalStorage('dashboardsConfig'),
+      "theme": this.settings.loadConfigFromLocalStorage('themeConfig'),
     };
     return localConfig;
   }
@@ -226,7 +226,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
           } else {
             this.saveToLocalstorage(this.jsonData);
           }
-          this.appSettingsService.reloadApp();
+          this.settings.reloadApp();
         } catch (error) {
           this.toast.show("File does not contain valid JSON.", 0, false, 'error');
           console.error("Invalid JSON file format:", error);

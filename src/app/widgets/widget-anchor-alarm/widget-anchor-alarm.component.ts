@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -22,7 +22,7 @@ export class WidgetAnchorAlarmComponent implements AfterViewInit, OnDestroy {
   protected readonly runtime = inject(WidgetRuntimeDirective);
   protected readonly _dashboard = inject(DashboardService);
   private readonly _sanitizer = inject(DomSanitizer);
-  private readonly settings = inject(AppSettingsService);
+  private readonly settings = inject(SettingsService);
 
   // Static default config (legacy parity)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {

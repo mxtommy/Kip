@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ToastService } from '../../../services/toast.service';
 import { AppService } from '../../../services/app-service';
-import { AppSettingsService } from '../../../services/app-settings.service';
+import { SettingsService } from '../../../services/settings.service';
 import { SignalkPluginConfigService } from '../../../services/signalk-plugin-config.service';
 
 import { SettingsDisplayComponent } from './display.component';
@@ -29,7 +29,7 @@ class ToastServiceMock {
   });
 }
 
-class AppSettingsServiceMock {
+class SettingsServiceMock {
   public getNightModeBrightness() { return 0.27; }
   public getAutoNightMode() { return false; }
   public getThemeName() { return ''; }
@@ -78,7 +78,7 @@ describe('SettingsNotificationsComponent', () => {
         { provide: BreakpointObserver, useClass: BreakpointObserverMock },
         { provide: AppService, useClass: AppServiceMock },
         { provide: ToastService, useClass: ToastServiceMock },
-        { provide: AppSettingsService, useClass: AppSettingsServiceMock },
+        { provide: SettingsService, useClass: SettingsServiceMock },
         { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceMock }
       ]
     })

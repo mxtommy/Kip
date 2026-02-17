@@ -1,6 +1,6 @@
 import { DashboardService } from './../../core/services/dashboard.service';
 import { AuthenticationService, IAuthorizationToken } from './../../core/services/authentication.service';
-import { AppSettingsService } from './../../core/services/app-settings.service';
+import { SettingsService } from './../../core/services/settings.service';
 import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, untracked } from '@angular/core';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
@@ -34,7 +34,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   public swipeDisabled = input<boolean>(false);
 
   private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
-  private readonly appSettings = inject(AppSettingsService);
+  private readonly appSettings = inject(SettingsService);
   private readonly app = inject(AppService);
   private readonly auth = inject(AuthenticationService);
   protected readonly dashboard = inject(DashboardService);

@@ -3,7 +3,7 @@
  */
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
-import { AppSettingsService } from "./app-settings.service";
+import { SettingsService } from "./settings.service";
 import { ToastService } from './toast.service';
 import { INotificationConfig } from '../interfaces/app-settings.interfaces';
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
@@ -48,7 +48,7 @@ type IAlarmSeverities = Record<string, ISeverityLevel>;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService implements OnDestroy {
-  private settings = inject(AppSettingsService);
+  private settings = inject(SettingsService);
   private toastService = inject(ToastService);
   private audioBlockedNotificationShown = false;
   private data = inject(DataService);

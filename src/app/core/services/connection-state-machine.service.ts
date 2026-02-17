@@ -103,7 +103,6 @@ export class ConnectionStateMachine implements OnDestroy {
 
     // Ensure current status is emitted for components that start after initialization
     const currentStatus = this._status$.getValue();
-    console.log(`[ConnectionStateMachine] Current status when enabling WebSocket mode: ${currentStatus.state} - ${currentStatus.message}`);
     this._status$.next(currentStatus);
   }
 
@@ -257,6 +256,24 @@ export class ConnectionStateMachine implements OnDestroy {
    */
   public isFullyConnected(): boolean {
     return this.currentState === ConnectionState.Connected;
+  }
+
+  /**
+   * Computes the total HTTP retry scheduling window based on configured retry count and intervals.
+   *
+   * @param {number} graceMs Additional buffer added to the computed retry delay window.
+   * @returns {number} Total retry window in milliseconds.
+   *
+   * @example
+   * const waitMs = this.connectionStateMachine.getHttpRetryWindowMs(2000);
+   */
+  public getHttpRetryWindowMs(graceMs = 0): number {
+    const totalRetryDelayMs = Array.from({ length: this.config.httpRetryCount }, (_, index) => {
+      const intervalIndex = Math.min(index, this.config.retryIntervals.length - 1);
+      return this.config.retryIntervals[intervalIndex];
+    }).reduce((sum, interval) => sum + interval, 0);
+
+    return totalRetryDelayMs + graceMs;
   }
 
   /**

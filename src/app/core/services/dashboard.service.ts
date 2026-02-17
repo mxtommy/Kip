@@ -1,4 +1,4 @@
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { DestroyRef, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
@@ -26,7 +26,7 @@ export interface widgetOperation {
   providedIn: 'root'
 })
 export class DashboardService {
-  private readonly _settings = inject(AppSettingsService);
+  private readonly _settings = inject(SettingsService);
   private readonly _router = inject(Router);
   private readonly _destroyRef = inject(DestroyRef);
   public dashboards = signal<Dashboard[]>([], { equal: isEqual });

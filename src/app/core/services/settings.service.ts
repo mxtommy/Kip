@@ -22,7 +22,7 @@ const latestConfigVersion = 12; // used to set the configVersion property in the
 @Injectable({
   providedIn: 'root'
 })
-export class AppSettingsService {
+export class SettingsService {
   private storage = inject(StorageService);
   private snackBar = inject(MatSnackBar);
 
@@ -71,42 +71,11 @@ export class AppSettingsService {
 
   private async startup(): Promise<void> {
     if (this.useSharedConfig) {
-      // Remote storage flow
-      const hasCreds = !!this.loginName && !!this.loginPassword && !!this.signalkUrl?.url;
-      if (this.storage.initConfig === null && hasCreds) {
-        try {
-          const storageReady = await this.storage.waitUntilReady();
-          if (!storageReady) {
-            console.warn("[AppSettings Service] Startup check skipped: StorageService did not become ready in time.");
-            return;
-          }
-
-          // Try loading current-version remote config before any migration checks
-          if (this.storage.initConfig === null) {
-            try {
-              await this.storage.getConfig('user', this.sharedConfigName, configFileVersion, true);
-            } catch {
-              // keep flow below for migration/fallback checks
-            }
-          }
-
-          if (this.storage.initConfig === null) {
-            const fileUpgradeRequired = await this.checkConfigFileVersionUpgradeRequired();
-            if (fileUpgradeRequired) {
-              this.configUpgrade.set(true);
-              return;
-            }
-
-            console.warn(`[AppSettings Service] No remote config found for '${this.sharedConfigName}' in version ${configFileVersion}. Creating default remote config and reloading app.`);
-            this.resetSettings();
-            return;
-          }
-        } catch (err) {
-          console.error("[AppSettings Service] Startup check failed:", err);
-        }
+      if (!this.storage.isRemoteContextBootstrapped() || this.storage.initConfig === null) {
+        console.warn('[AppSettings Service] Shared configuration enabled but remote bootstrap handoff is missing. Waiting for explicit recovery action.');
+        return;
       }
 
-      console.log("[AppSettings Service] Remote configuration storage enabled");
       this.configVersion = this.storage.initConfig?.app?.configVersion;
       this.checkConfigUpgradeRequired(false, this.storage.initConfig?.app?.configVersion);
       this.activeConfig = this.storage.initConfig;
@@ -154,34 +123,6 @@ export class AppSettingsService {
     this.reloadApp();
   }
 
-  private async checkConfigFileVersionUpgradeRequired(): Promise<boolean> {
-    const rootConfigs = await this.storage.listConfigs(9);
-    try {
-      let configFileUpgradeRequired = false;
-      for (const rootConfig of rootConfigs) {
-        // Fetch the full configuration for each rootConfig
-        const fullConfig = await this.storage.getConfig(rootConfig.scope, rootConfig.name, 9);
-        try {
-          // Check if the version is 10
-          if (fullConfig.app?.configVersion === 10) {
-            configFileUpgradeRequired = true; // Set the upgrade flag to true
-            console.log(`[AppSettings Service] Configuration upgrade required for version 10.`);
-            break; // Exit the loop once a version 10 config is found
-          }
-        }
-        catch (error) {
-          console.error(`[AppSettings Service] Error fetching configuration for ${rootConfig.name}:`, error);
-          break;
-        }
-      }
-      return configFileUpgradeRequired;
-    }
-    catch (error) {
-      console.error("[AppSettings Service] Error fetching configuration data:", error);
-      return false;
-    }
-  }
-
   private checkConfigUpgradeRequired(isLocalStorageConfig: boolean, storageVersion?: number): void {
     if (storageVersion !== latestConfigVersion) {
       this.configUpgrade.set(true);
@@ -194,7 +135,7 @@ export class AppSettingsService {
    *
    * @param {string} type Possible choices are: appConfig, dashboardsConfig, themeConfig, connectionConfig or older v2 if they are present widgetConfig, layoutConfig, themeConfig, zonesConfig, connectionConfig.
    * @return {*}
-   * @memberof AppSettingsService
+   * @memberof SettingsService
    */
   public loadConfigFromLocalStorage(type: string) {
     let config = JSON.parse(localStorage.getItem(type));

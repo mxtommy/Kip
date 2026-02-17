@@ -2,7 +2,7 @@ import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inj
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
-import { AppSettingsService } from '../../../services/app-settings.service';
+import { SettingsService } from '../../../services/settings.service';
 import { IConnectionConfig } from "../../../interfaces/app-settings.interfaces";
 import { SignalKConnectionService, IEndpointStatus } from '../../../services/signalk-connection.service';
 import { IDeltaUpdate, DataService } from '../../../services/data.service';
@@ -50,7 +50,7 @@ import { InternetReachabilityService } from '../../../services/internet-reachabi
 
 export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
-  private readonly appSettingsService = inject(AppSettingsService);
+  private readonly settings = inject(SettingsService);
   protected readonly app = inject(AppService);
   protected readonly toast = inject(ToastService);
   private readonly DataService = inject(DataService);
@@ -95,7 +95,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   ngOnInit() {
     // get Signal K connection configuration
-    this.connectionConfig = this.appSettingsService.getConnectionConfig();
+    this.connectionConfig = this.settings.getConnectionConfig();
 
     // get authentication token status
     this.auth.authToken$.pipe(
@@ -186,7 +186,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       console.log('[Settings-SignalK] Validation successful - proceeding with connection');
 
       // Step 2: Save the new configuration to localStorage
-      this.appSettingsService.setConnectionConfig(this.connectionConfig);
+      this.settings.setConnectionConfig(this.connectionConfig);
 
       // Step 3: Properly close WebSocket and HTTP connections
       this.connectionStateMachine.shutdown('Configuration changed - restarting app');

@@ -1,6 +1,6 @@
 import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { AppSettingsService } from '../../core/services/app-settings.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
@@ -23,7 +23,7 @@ export class WidgetTutorialComponent  {
   };
 
   protected dashboard = inject(DashboardService);
-  protected settings = inject(AppSettingsService);
+  protected settings = inject(SettingsService);
 
   public loadDemoConfig() {
     this.settings.loadDemoConfig();

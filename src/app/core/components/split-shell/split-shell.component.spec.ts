@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { SplitShellComponent } from './split-shell.component';
-import { AppSettingsService } from '../../services/app-settings.service';
+import { SettingsService } from '../../services/settings.service';
 import { DashboardService, widgetOperation } from '../../services/dashboard.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { BehaviorSubject, of } from 'rxjs';
 import { RemoteDashboardsService } from '../../services/remote-dashboards.service';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 
-class MockAppSettingsService {
+class MockSettingsService {
   private ratio = 0.3; // stored as ratio (0-1)
   private side: 'left' | 'right' = 'right';
   private notificationConfig: INotificationConfig = {
@@ -73,7 +73,7 @@ describe('SplitShellComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SplitShellComponent],
       providers: [
-        { provide: AppSettingsService, useClass: MockAppSettingsService },
+        { provide: SettingsService, useClass: MockSettingsService },
         { provide: DashboardService, useClass: MockDashboardService },
         { provide: BreakpointObserver, useClass: MockBreakpointObserver },
         { provide: RemoteDashboardsService, useClass: MockRemoteDashboardsService }

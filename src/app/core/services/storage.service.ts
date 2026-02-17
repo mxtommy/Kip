@@ -14,6 +14,12 @@ export interface Config {
   scope: string
 }
 
+export interface IStorageRemoteBootstrapContext {
+  sharedConfigName: string;
+  configFileVersion: number;
+  initConfig: IConfig;
+}
+
 interface IPatchAction {
   url: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +39,7 @@ export class StorageService {
   private configFileVersion: number = null;
   public sharedConfigName: string;
   private InitConfig: IConfig = null;
+  private _isRemoteContextBootstrapped = false;
   public storageServiceReady$ = new BehaviorSubject<boolean>(false);
   private _isLoggedIn = false;
   private _networkStatus: IEndpointStatus = undefined;
@@ -88,7 +95,7 @@ export class StorageService {
 
     if (this._networkStatus?.operation === 2 && this._isLoggedIn && this.serverEndpoint) {
       this.storageServiceReady$.next(true);
-      console.log(`[Remote Storage Service] Authenticated ${this._isLoggedIn} ,AppData API: ${this.serverEndpoint}`);
+      console.log(`[Remote Storage Service] Authenticated ${this._isLoggedIn}, AppData API: ${this.serverEndpoint}`);
     } else {
       this.storageServiceReady$.next(false);
     }
@@ -482,6 +489,48 @@ export class StorageService {
 
   public set activeConfigFileVersion(v: number) {
     this.configFileVersion = v;
+  }
+
+  /**
+   * Applies initializer-provided remote context into storage runtime state.
+   * This method is the explicit handoff point used during bootstrap to avoid
+   * startup races between services.
+   *
+   * @param {IStorageRemoteBootstrapContext} context Remote bootstrap context containing
+   * shared config name, active file version, and the preloaded init configuration.
+   * @returns {void} No return value.
+   *
+   * @example
+   * this.storage.bootstrapRemoteContext({
+   *   sharedConfigName: 'myBoat',
+   *   configFileVersion: 11,
+   *   initConfig: remoteConfig
+   * });
+   */
+  public bootstrapRemoteContext(context: IStorageRemoteBootstrapContext): void {
+    if (!context?.sharedConfigName || context.configFileVersion == null || !context.initConfig) {
+      throw new Error('[StorageService] Invalid remote bootstrap context');
+    }
+
+    this.sharedConfigName = context.sharedConfigName;
+    this.configFileVersion = context.configFileVersion;
+    this.InitConfig = cloneDeep(context.initConfig);
+    this._isRemoteContextBootstrapped = true;
+    console.log(`[Storage Service] Bootstrap handoff applied (sharedConfig=${this.sharedConfigName}, fileVersion=${this.configFileVersion})`);
+  }
+
+  /**
+   * Indicates whether remote startup context was explicitly bootstrapped.
+   *
+   * @returns {boolean} True when remote context was bootstrapped by initializer.
+   *
+   * @example
+   * if (!this.storage.isRemoteContextBootstrapped()) {
+   *   console.warn('Remote context missing.');
+   * }
+   */
+  public isRemoteContextBootstrapped(): boolean {
+    return this._isRemoteContextBootstrapped;
   }
 
   private handleError(error: HttpErrorResponse) {

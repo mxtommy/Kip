@@ -1,6 +1,6 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
-import { AppSettingsService } from './app-settings.service';
+import { SettingsService } from './settings.service';
 import { DataService, IPathUpdate } from './data.service';
 import { SignalkHistoryService, IHistoryValuesResponse } from './signalk-history.service';
 import { UUID } from '../utils/uuid.util'
@@ -58,7 +58,7 @@ type AngleDomain = 'scalar' | 'direction' | 'signed';
   providedIn: 'root'
 })
 export class DatasetService implements OnDestroy {
-  private readonly appSettings = inject(AppSettingsService);
+  private readonly appSettings = inject(SettingsService);
   private readonly data = inject(DataService);
   private readonly history = inject(SignalkHistoryService);
   private readonly historyMinSampleTimeMs = 1000;
