@@ -2,24 +2,15 @@ import { Injectable, inject, DestroyRef } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { AggregateMethod, TimeRangeQueryParams } from '@signalk/server-api/history';
 import { SignalKConnectionService } from './signalk-connection.service';
-
-/**
- * Represents a single data point from the History API response.
- * The array format: [timestamp_string, value1, value2, ...]
- * where each value corresponds to the paths in the request.
- */
-export interface IHistoryDataPoint {
-  timestamp: string;
-  values: (number | string | null | number[])[];
-}
 
 /**
  * Represents a single series metadata from the History API response.
  */
-export interface IHistoryValueMetadata {
+interface IHistoryValueMetadata {
   path: string;
-  method?: string; // e.g., 'sma', 'avg', 'min', 'max'
+  method?: AggregateMethod | 'avg'; // keep 'avg' for compatibility with existing backends/tests
 }
 
 /**
@@ -36,16 +27,22 @@ export interface IHistoryValuesResponse {
 }
 
 /**
- * Query parameters for the History API.
+ * Query parameters supported by the /history/values endpoint in this app.
+ *
+ * Extends server-api query params while preserving current app compatibility:
+ * - allows string `resolution` passthrough (e.g. `PT1S`)
+ * - requires `paths` for the HTTP endpoint variant used by KIP
  */
-export interface IHistoryQueryParams {
-  from?: string;      // ISO 8601 date-time (inclusive)
-  to?: string;        // ISO 8601 date-time (inclusive, defaults to now)
-  duration?: string;  // ISO 8601 duration or milliseconds
-  paths: string;      // Required: comma-separated Signal K paths with optional aggregation
-  context?: string;   // Optional Signal K context, default 'vessels.self'
-  resolution?: string | number; // Optional: window length in seconds or time expression
-}
+type IHistoryValuesQueryParams = Partial<TimeRangeQueryParams> & {
+  paths: string;
+  context?: string;
+  resolution?: number | string;
+};
+
+/**
+ * Query parameters supported by history endpoints that only require a time range.
+ */
+type IHistoryTimeRangeQueryParams = Partial<TimeRangeQueryParams>;
 
 @Injectable({
   providedIn: 'root'
@@ -73,7 +70,7 @@ export class SignalkHistoryService {
   /**
    * Gets paths that have historical data available for the specified time range.
    *
-   * @param {Partial<IHistoryQueryParams>} params - Optional time range parameters.
+   * @param {IHistoryTimeRangeQueryParams} params - Optional time range parameters.
    *   - from: Start of the time range (ISO 8601), optional
    *   - to: End of the time range (ISO 8601), optional
    *   - duration: Duration of the time range (ISO 8601 or milliseconds), optional
@@ -91,7 +88,7 @@ export class SignalkHistoryService {
    *
    * @memberof SignalkHistoryService
    */
-  public async getPaths(params?: Partial<IHistoryQueryParams>): Promise<string[] | null> {
+  public async getPaths(params?: IHistoryTimeRangeQueryParams): Promise<string[] | null> {
     try {
       if (!this.historyServiceUrl) {
         console.warn('[SignalkHistoryService] No HTTP service URL available');
@@ -128,6 +125,60 @@ export class SignalkHistoryService {
   }
 
   /**
+   * Gets contexts that have historical data available for the specified time range.
+   *
+   * @param {IHistoryTimeRangeQueryParams} params - Optional time range parameters.
+   *   - from: Start of the time range (ISO 8601), optional
+   *   - to: End of the time range (ISO 8601), optional
+   *   - duration: Duration of the time range (ISO 8601 or milliseconds), optional
+   *
+   * @returns {Promise<string[] | null>} Array of Signal K contexts with historical data, or null if the request fails.
+   *
+   * @example
+   *   const contexts = await historyService.getContexts({ duration: 'PT1H' });
+   *   if (contexts) {
+   *     console.log('Available contexts:', contexts);
+   *   }
+   *
+   * @memberof SignalkHistoryService
+   */
+  public async getContexts(params?: IHistoryTimeRangeQueryParams): Promise<string[] | null> {
+    try {
+      if (!this.historyServiceUrl) {
+        console.warn('[SignalkHistoryService] No HTTP service URL available');
+        return null;
+      }
+
+      const historyUrl = `${this.historyServiceUrl}history/contexts`;
+      let httpParams = new HttpParams();
+
+      // Build query parameters (time range only)
+      if (params?.from) {
+        httpParams = httpParams.set('from', params.from);
+      }
+      if (params?.to) {
+        httpParams = httpParams.set('to', params.to);
+      }
+      if (params?.duration) {
+        httpParams = httpParams.set('duration', params.duration.toString());
+      }
+
+      const fullUrl = `${historyUrl}?${httpParams.toString()}`;
+      console.log(`[SignalkHistoryService] GET ${fullUrl}`);
+
+      const response = await firstValueFrom(
+        this.http.get<string[]>(historyUrl, { params: httpParams })
+      );
+
+      console.log(`[SignalkHistoryService] Retrieved ${response?.length ?? 0} available contexts`);
+      return response;
+    } catch (error) {
+      console.error('[SignalkHistoryService] History API /contexts request failed:', error);
+      return null;
+    }
+  }
+
+  /**
    * Fetches historical data from the Signal K History API.
    *
    * The History API must be available on the Signal K server. History data
@@ -135,7 +186,7 @@ export class SignalkHistoryService {
    * signalk-parquet. If no history is available or the API is not installed,
    * the request will fail.
    *
-   * @param {IHistoryQueryParams} params - Query parameters for the history request.
+   * @param {IHistoryValuesQueryParams} params - Query parameters for the history request.
    *   - paths (required): comma-separated Signal K paths with optional aggregation suffixes
    *     (e.g., 'navigation.speedOverGround:sma:5,navigation.speedThroughWater:avg')
    *   - from, to, duration: define the time range
@@ -159,7 +210,7 @@ export class SignalkHistoryService {
    *
    * @memberof SignalkHistoryService
    */
-  public async getValues(params: IHistoryQueryParams): Promise<IHistoryValuesResponse | null> {
+  public async getValues(params: IHistoryValuesQueryParams): Promise<IHistoryValuesResponse | null> {
     try {
       if (!this.historyServiceUrl) {
         console.warn('[SignalkHistoryService] No HTTP service URL available');

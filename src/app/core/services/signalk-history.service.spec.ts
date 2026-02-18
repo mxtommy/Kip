@@ -48,6 +48,41 @@ describe('SignalkHistoryService', () => {
     httpMock.expectNone(() => true);
   });
 
+  it('should pass duration to history values endpoint', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getValues({
+      paths: 'navigation.speedThroughWater:average',
+      duration: 'PT10M',
+      resolution: 1
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/signalk/v2/api/history/values'
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('paths')).toBe('navigation.speedThroughWater:average');
+    expect(req.request.params.get('duration')).toBe('PT10M');
+    expect(req.request.params.get('resolution')).toBe('1');
+
+    req.flush({
+      context: 'vessels.self',
+      range: { from: '2026-02-16T12:00:00.000Z', to: '2026-02-16T12:10:00.000Z' },
+      values: [{ path: 'navigation.speedThroughWater', method: 'average' }],
+      data: [['2026-02-16T12:00:00.000Z', 3.2]]
+    });
+
+    const response = await promise;
+    expect(response).toBeTruthy();
+    expect(response?.values[0].method).toBe('average');
+  });
+
   it('should fetch values from v2 history endpoint with resolution in seconds', async () => {
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
@@ -111,6 +146,56 @@ describe('SignalkHistoryService', () => {
 
     const response = await promise;
     expect(response).toBeTruthy();
+  });
+
+  it('should pass duration query to history paths endpoint', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getPaths({ duration: 'PT1H' });
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/signalk/v2/api/history/paths'
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('duration')).toBe('PT1H');
+
+    req.flush(['navigation.speedThroughWater', 'environment.wind.speedTrue']);
+
+    const response = await promise;
+    expect(response).toEqual(['navigation.speedThroughWater', 'environment.wind.speedTrue']);
+  });
+
+  it('should pass from/to query to history contexts endpoint', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getContexts({
+      from: '2026-02-16T12:00:00.000Z',
+      to: '2026-02-16T12:01:00.000Z'
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/signalk/v2/api/history/contexts'
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('from')).toBe('2026-02-16T12:00:00.000Z');
+    expect(req.request.params.get('to')).toBe('2026-02-16T12:01:00.000Z');
+
+    req.flush(['vessels.self', 'vessels.urn:mrn:signalk:uuid:example']);
+
+    const response = await promise;
+    expect(response).toEqual(['vessels.self', 'vessels.urn:mrn:signalk:uuid:example']);
   });
 
   it('should pass numeric zero resolution when provided', async () => {
@@ -183,6 +268,27 @@ describe('SignalkHistoryService', () => {
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/paths'
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({ message: 'Server Error' }, { status: 500, statusText: 'Server Error' });
+
+    const response = await promise;
+    expect(response).toBeNull();
+  });
+
+  it('should return null when history contexts endpoint returns 500', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getContexts({ duration: 'PT10M' });
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/signalk/v2/api/history/contexts'
     );
     expect(req.request.method).toBe('GET');
     req.flush({ message: 'Server Error' }, { status: 500, statusText: 'Server Error' });
