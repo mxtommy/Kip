@@ -1,4 +1,4 @@
-import { Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
+import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 
@@ -9,8 +9,15 @@ const start = (server: ServerAPI): Plugin => {
   const API_PATHS = {
     DISPLAYS: `/displays`,
     INSTANCE: `/displays/:displayId`,
-    ACTIVE_SCREEN: `/displays/:displayId/screenIndex`,
-    CHANGE_SCREEN: `/displays/:displayId/activeScreen`
+    SCREEN_INDEX: `/displays/:displayId/screenIndex`,
+    ACTIVATE_SCREEN: `/displays/:displayId/activeScreen`
+  } as const;
+
+  const PUT_CONTEXT = 'vessels.self';
+  const COMMAND_PATHS = {
+    SET_DISPLAY: 'kip.remote.setDisplay',
+    SET_SCREEN_INDEX: 'kip.remote.setScreenIndex',
+    REQUEST_ACTIVE_SCREEN: 'kip.remote.requestActiveScreen'
   } as const;
 
   const CONFIG_SCHEMA = {
@@ -38,12 +45,6 @@ const start = (server: ServerAPI): Plugin => {
     return typeof fullPath === 'object' && fullPath !== null ? fullPath : undefined;
   }
 
-  function pathToDotNotation(path: string): string {
-    const dottedPath = path.replace(/\//g, '.').replace(/^\./, '');
-    server.debug(`pathToDotNotation: input path=${path}, dottedPath=${dottedPath}`);
-    return dottedPath;
-  }
-
   function sendOk(res: Response, body?: unknown) {
     if (body === undefined) return res.status(204).end()
     return res.status(200).json(body)
@@ -53,12 +54,132 @@ const start = (server: ServerAPI): Plugin => {
     return res.status(statusCode).json({ state: 'FAILED', statusCode, message })
   }
 
+  function logAuthTrace(req: Request, stage: string) {
+    const hasAuthorizationHeader = typeof req.headers.authorization === 'string' && req.headers.authorization.length > 0;
+    const hasCookieHeader = typeof req.headers.cookie === 'string' && req.headers.cookie.length > 0;
+    const origin = req.headers.origin ?? null;
+    const userAgent = req.headers['user-agent'] ?? null;
+    const contentType = req.headers['content-type'] ?? null;
+
+    server.debug(
+      `[AUTH TRACE] stage=${stage} method=${req.method} path=${req.path} ip=${req.ip} origin=${String(origin)} authHeader=${hasAuthorizationHeader} cookieHeader=${hasCookieHeader} contentType=${String(contentType)} userAgent=${String(userAgent)}`
+    );
+  }
+
+  function completed(statusCode: number, message?: string): ActionResult {
+    return { state: 'COMPLETED', statusCode, message };
+  }
+
+  function isValidDisplayId(displayId: unknown): displayId is string {
+    return typeof displayId === 'string' && /^[A-Za-z0-9-]+$/.test(displayId);
+  }
+
+  function applyDisplayWrite(displayId: string, suffix: 'screenIndex' | 'activeScreen' | null, value: string | number | boolean | object | null): ActionResult {
+    const path = suffix ? `displays.${displayId}.${suffix}` : `displays.${displayId}`;
+    server.debug(`[WRITE TRACE] applyDisplayWrite path=${path} value=${JSON.stringify(value)}`);
+    try {
+      server.handleMessage(
+        plugin.id,
+        {
+          updates: [
+            {
+              values: [
+                {
+                  path: path as Path,
+                  value: value ?? null
+                }
+              ]
+            }
+          ]
+        },
+        SKVersion.v1
+      );
+      server.debug(`[WRITE TRACE] handleMessage success path=${path}`);
+      return completed(200);
+    } catch (error) {
+      const message = (error as Error)?.message ?? 'Unable to write display path';
+      server.error(`[WRITE TRACE] handleMessage failure path=${path} message=${message}`);
+      return completed(400, message);
+    }
+  }
+
+  function handleSetDisplay(value: unknown): ActionResult {
+    server.debug(`[COMMAND TRACE] handleSetDisplay payload=${JSON.stringify(value)}`);
+    const command = value as { displayId?: unknown; display?: unknown } | null;
+    if (!command || typeof command !== 'object') {
+      return completed(400, 'Command payload is required');
+    }
+
+    if (!isValidDisplayId(command.displayId)) {
+      return completed(400, 'Invalid displayId format');
+    }
+
+    const displayValue = command.display ?? null;
+    if (displayValue !== null && typeof displayValue !== 'object') {
+      return completed(400, 'display must be an object or null');
+    }
+
+    return applyDisplayWrite(command.displayId, null, displayValue as object | null);
+  }
+
+  function handleScreenWrite(value: unknown, suffix: 'screenIndex' | 'activeScreen'): ActionResult {
+    server.debug(`[COMMAND TRACE] handleScreenWrite suffix=${suffix} payload=${JSON.stringify(value)}`);
+    const command = value as { displayId?: unknown; screenIdx?: unknown } | null;
+    if (!command || typeof command !== 'object') {
+      return completed(400, 'Command payload is required');
+    }
+
+    if (!isValidDisplayId(command.displayId)) {
+      return completed(400, 'Invalid displayId format');
+    }
+
+    const screenIdxValue = command.screenIdx ?? null;
+    if (screenIdxValue !== null && typeof screenIdxValue !== 'number') {
+      return completed(400, 'screenIdx must be a number or null');
+    }
+
+    return applyDisplayWrite(command.displayId, suffix, screenIdxValue as number | null);
+  }
+
+  function sendActionAsRest(res: Response, result: ActionResult) {
+    server.debug(`[REST TRACE] sendActionAsRest statusCode=${result.statusCode} message=${result.message ?? ''}`);
+    if (result.statusCode === 200) {
+      return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
+    }
+    return sendFail(res, result.statusCode || 400, result.message || 'Command failed');
+  }
+
   const plugin: Plugin = {
     id: 'kip',
     name: 'KIP',
     description: 'KIP server plugin',
     start: (settings) => {
       server.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+
+      if (server.registerPutHandler) {
+        server.debug(`[COMMAND TRACE] Registering PUT handlers under context=${PUT_CONTEXT}`);
+        server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.SET_DISPLAY, (context, path, value) => {
+          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.SET_DISPLAY}`);
+          void context;
+          void path;
+          return handleSetDisplay(value);
+        }, plugin.id);
+
+        server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.SET_SCREEN_INDEX, (context, path, value) => {
+          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.SET_SCREEN_INDEX}`);
+          void context;
+          void path;
+          return handleScreenWrite(value, 'screenIndex');
+        }, plugin.id);
+
+        server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.REQUEST_ACTIVE_SCREEN, (context, path, value) => {
+          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.REQUEST_ACTIVE_SCREEN}`);
+          void context;
+          void path;
+          return handleScreenWrite(value, 'activeScreen');
+        }, plugin.id);
+      }
+
       server.setPluginStatus(`Starting...`);
     },
     stop: () => {
@@ -68,10 +189,11 @@ const start = (server: ServerAPI): Plugin => {
     },
     schema: () => CONFIG_SCHEMA,
     registerWithRouter(router) {
-      server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.ACTIVE_SCREEN}, ${API_PATHS.CHANGE_SCREEN}`);
+      server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.SCREEN_INDEX}, ${API_PATHS.ACTIVATE_SCREEN}`);
 
       // Validate/normalize :displayId where present
       router.param('displayId', (req: Request & { displayId?: string }, res: Response, next: NextFunction, displayId: string) => {
+        logAuthTrace(req, 'router.param:displayId:entry');
         if (displayId == null) return sendFail(res, 400, 'Missing displayId parameter')
         try {
           let id = String(displayId)
@@ -99,34 +221,24 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Invalid displayId format')
           }
           req.displayId = id
+          server.debug(`[AUTH TRACE] router.param:displayId:normalized displayId=${id}`);
           next()
         } catch {
+          server.error(`[AUTH TRACE] router.param:displayId:failed rawDisplayId=${String(displayId)}`);
           return sendFail(res, 400, 'Missing or invalid displayId parameter')
         }
       })
 
-      router.put(`${API_PATHS.INSTANCE}`, async (req: Request, res: Response) => {
+      router.put(`${API_PATHS.INSTANCE}`, async (req: Request & { displayId?: string }, res: Response) => {
+        logAuthTrace(req, 'route:PUT:INSTANCE:entry');
         server.debug(`** PUT ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
         try {
-          const dottedPath = pathToDotNotation(req.path);
-          server.debug(`Updating SK path ${dottedPath}`)
-          server.handleMessage(
-            plugin.id,
-            {
-              updates: [
-                {
-                  values: [
-                    {
-                      path: dottedPath as Path,
-                      value: req.body ?? null
-                    }
-                  ]
-                }
-              ]
-            },
-            SKVersion.v1
-          );
-          return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
+          const displayId = req.displayId;
+          if (!displayId) {
+            return sendFail(res, 400, 'Missing displayId parameter');
+          }
+          const result = handleSetDisplay({ displayId, display: req.body ?? null });
+          return sendActionAsRest(res, result);
 
         } catch (error) {
           const msg = `HandleMessage failed with errors!`
@@ -137,28 +249,19 @@ const start = (server: ServerAPI): Plugin => {
         }
       });
 
-      router.put(`${API_PATHS.ACTIVE_SCREEN}`, async (req: Request, res: Response) => {
-        server.debug(`** PUT ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+      router.put(`${API_PATHS.SCREEN_INDEX}`, async (req: Request & { displayId?: string }, res: Response) => {
+        logAuthTrace(req, 'route:PUT:SCREEN_INDEX:entry');
+        server.debug(`** PUT ${API_PATHS.SCREEN_INDEX}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
         try {
-          const dottedPath = pathToDotNotation(req.path);
-          server.debug(`Updating SK path ${dottedPath} with body.screenIdx`)
-          server.handleMessage(
-            plugin.id,
-            {
-              updates: [
-                {
-                  values: [
-                    {
-                      path: dottedPath as Path,
-                      value: req.body.screenIdx !== undefined ? req.body.screenIdx : null
-                    }
-                  ]
-                }
-              ]
-            },
-            SKVersion.v1
-          );
-          return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
+          const displayId = req.displayId;
+          if (!displayId) {
+            return sendFail(res, 400, 'Missing displayId parameter');
+          }
+          const result = handleScreenWrite({
+            displayId,
+            screenIdx: req.body?.screenIdx !== undefined ? req.body.screenIdx : null
+          }, 'screenIndex');
+          return sendActionAsRest(res, result);
 
         } catch (error) {
           const msg = `HandleMessage failed with errors!`
@@ -169,28 +272,19 @@ const start = (server: ServerAPI): Plugin => {
         }
       });
 
-      router.put(`${API_PATHS.CHANGE_SCREEN}`, async (req: Request, res: Response) => {
-        server.debug(`** PUT ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+      router.put(`${API_PATHS.ACTIVATE_SCREEN}`, async (req: Request & { displayId?: string }, res: Response) => {
+        logAuthTrace(req, 'route:PUT:ACTIVATE_SCREEN:entry');
+        server.debug(`** PUT ${API_PATHS.ACTIVATE_SCREEN}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
         try {
-          const dottedPath = pathToDotNotation(req.path);
-          server.debug(`Updating SK path ${dottedPath} with body.screenIdx`)
-          server.handleMessage(
-            plugin.id,
-            {
-              updates: [
-                {
-                  values: [
-                    {
-                      path: dottedPath as Path,
-                      value: req.body.screenIdx !== undefined ? req.body.screenIdx : null
-                    }
-                  ]
-                }
-              ]
-            },
-            SKVersion.v1
-          );
-          return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
+          const displayId = req.displayId;
+          if (!displayId) {
+            return sendFail(res, 400, 'Missing displayId parameter');
+          }
+          const result = handleScreenWrite({
+            displayId,
+            screenIdx: req.body?.screenIdx !== undefined ? req.body.screenIdx : null
+          }, 'activeScreen');
+          return sendActionAsRest(res, result);
 
         } catch (error) {
           const msg = `HandleMessage failed with errors!`
@@ -232,12 +326,11 @@ const start = (server: ServerAPI): Plugin => {
           }
 
           const node = getDisplaySelfPath(displayId);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const screens = (node as any)?.value?.screens ?? null;
-
-          if (screens === undefined) {
+          if (node === undefined) {
             return sendFail(res, 404, `Display ${displayId} not found`)
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const screens = (node as any)?.value?.screens ?? null;
 
           return sendOk(res, screens);
         } catch (error) {
@@ -246,8 +339,8 @@ const start = (server: ServerAPI): Plugin => {
         }
       });
 
-      router.get(`${API_PATHS.ACTIVE_SCREEN}`, (req: Request, res: Response) => {
-        server.debug(`*** GET ACTIVE_SCREEN ${API_PATHS.ACTIVE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+      router.get(`${API_PATHS.SCREEN_INDEX}`, (req: Request, res: Response) => {
+        server.debug(`*** GET SCREEN_INDEX ${API_PATHS.SCREEN_INDEX}. Params: ${JSON.stringify(req.params)}`);
         try {
           const displayId = (req as Request & { displayId?: string }).displayId
           if (!displayId) {
@@ -255,12 +348,11 @@ const start = (server: ServerAPI): Plugin => {
           }
 
           const node = getDisplaySelfPath(displayId, 'screenIndex');
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const idx = (node as any)?.value ?? null;
-
-          if (idx === undefined) {
+          if (node === undefined) {
             return sendFail(res, 404, `Active screen for display Id ${displayId} not found in path`)
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const idx = (node as any)?.value ?? null;
 
           return sendOk(res, idx);
         } catch (error) {
@@ -269,8 +361,8 @@ const start = (server: ServerAPI): Plugin => {
         }
       });
 
-      router.get(`${API_PATHS.CHANGE_SCREEN}`, (req: Request, res: Response) => {
-        server.debug(`*** GET CHANGE_SCREEN ${API_PATHS.CHANGE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+      router.get(`${API_PATHS.ACTIVATE_SCREEN}`, (req: Request, res: Response) => {
+        server.debug(`*** GET ACTIVATE_SCREEN ${API_PATHS.ACTIVATE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
         try {
           const displayId = (req as Request & { displayId?: string }).displayId
           if (!displayId) {
@@ -278,12 +370,11 @@ const start = (server: ServerAPI): Plugin => {
           }
 
           const node = getDisplaySelfPath(displayId, 'activeScreen');
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const idx = (node as any)?.value ?? null;
-
-          if (idx === undefined) {
+          if (node === undefined) {
             return sendFail(res, 404, `Change display screen Id ${displayId} not found in path`)
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const idx = (node as any)?.value ?? null;
 
           return sendOk(res, idx);
         } catch (error) {

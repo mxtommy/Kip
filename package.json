@@ -42,6 +42,7 @@
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
     "test": "CI=1 ng test --watch=false",
+    "test:plugin": "npm run build:plugin && node --test kip-plugin/tests/index.test.cjs",
     "test:interactive": "ng test",
     "test:headless": "CI=1 ng test --browsers=ChromeHeadless --watch=false",
     "lint": "ng lint",
