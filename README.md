@@ -258,16 +258,17 @@ Once done with your work, from your fork's working branch, make a GitHub pull re
 
 For comprehensive development guidance, please refer to these instruction files:
 
-### **Primary Instructions:**
+### Primary Instructions
 - **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration.
-- **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v20+ coding standards, component patterns, and framework best practices.
+- **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v21+ coding standards, component patterns, and framework best practices.
+- **[Copilot Agent Instructions](./.github/copilot-instructions.md)**: Architecture details and coding-agent guardrails for this repository.
 
-### **Development Workflow:**
+### Development Workflow
 1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns.
 2. **Angular Standards**: Follow `.github/instructions/angular.instructions.md` for modern Angular development.
 3. **Setup & Build**: Use this README for project setup and build commands.
 
-### **Key Priorities:**
+### Key Priorities
 - **Widget Development**: Use the Host2 widget pattern (signals + directives) and scaffold new widgets with the `create-host2-widget` schematic (see `COPILOT.md`).
 - **Angular Patterns**: Use signals, standalone components, and modern control flow.
 - **Theming**: Follow KIP's theme system for consistent UI.

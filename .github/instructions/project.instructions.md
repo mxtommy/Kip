@@ -22,6 +22,18 @@ KIP Instrument MFD is an advanced and versatile marine instrumentation package d
   - The main configuration form logic is in `src/app/widget-config/modal-widget-config/`. For unique widget config needs, you may add a new config component (e.g., `modal-widget-<name>-config`).
   - Widget logic/UI and widget configuration are separate concepts that work together.
 
+### Finalized architecture (2026 Q1)
+- **History series reconciliation pipeline:** Dashboard widget topology is normalized by `HistorySeriesReconcileService` and reconciled through `KipSeriesService` into plugin-backed series definitions.
+- **Dataset lifecycle centralization:** `WidgetDatasetLifecycleService` is the write-owner for widget datasets (create/edit/remove and owner-based cleanup).
+- **Shared history adaptation:** `HistoryChartAdapterService` centralizes History API values-to-chart datapoint mapping, including average aliases and circular-angle summary stats.
+- **Delete-path cleanup simplification:** Dashboard delete flow now performs owner UUID dataset cleanup via lifecycle service instead of selector-specific branches.
+
+### Architecture guardrails for contributors
+- Replace direct widget/dashboard `DatasetService` write calls with `WidgetDatasetLifecycleService` sync/remove helpers.
+- Preserve stable widget UUID ownership contracts; these IDs are used for dataset and series reconciliation behavior.
+- Keep history response transformation logic in `HistoryChartAdapterService` to avoid divergence across chart consumers.
+- Avoid reintroducing legacy widget-selector cleanup branches.
+
 ---
 
 ## 4. Conventions & Patterns
@@ -136,6 +148,30 @@ All major services in `src/app/core/services/` are summarized below for Copilot 
   - Purpose: Manages data sets, including loading, saving, and updating widget data sources.
   - Key methods: Data set CRUD, data source updates.
   - Dependencies: DataService, StorageService.
+
+- **WidgetDatasetLifecycleService (`widget-dataset-lifecycle.service.ts`)**
+  - Purpose: Centralized dataset orchestration for widget lifecycle operations.
+  - Key methods: `syncDataChartDataset()`, `syncNumericMiniChartDataset()`, `syncWindTrendsDatasets()`, `removeOwnedDatasets()`.
+  - Dependencies: DataSetService.
+  - Usage: Preferred write path for widget/dash dataset lifecycle actions.
+
+- **HistoryChartAdapterService (`history-chart-adapter.service.ts`)**
+  - Purpose: Shared adapter for converting History API value responses into chart datapoints.
+  - Key methods: `mapValuesToChartDatapoints()`.
+  - Dependencies: None (core mapping service).
+  - Usage: Keeps chart history behavior consistent across all consumers.
+
+- **HistorySeriesReconcileService (`history-series-reconcile.service.ts`)**
+  - Purpose: Derives desired historical-series definitions from current dashboard/widget state and reconciles with plugin backend.
+  - Key methods: Internal extraction + debounced reconcile scheduling.
+  - Dependencies: DashboardService, KipSeriesService, SignalKConnectionService.
+  - Usage: Single orchestration path for add/edit/delete/copy/paste/duplicate widget series convergence.
+
+- **KipSeriesService (`kip-series.service.ts`)**
+  - Purpose: Frontend bridge to KIP plugin series reconcile endpoint.
+  - Key methods: `reconcileSeries()`.
+  - Dependencies: HttpClient, SignalKConnectionService.
+  - Usage: Posts full desired series definitions to plugin for canonical reconciliation.
 
 - **SignalkPluginConfigService (`signalk-plugin-config.service.ts`)**
   - Purpose: Plugin configuration foundation service for dependency checks and plugin state/config persistence via Signal K `/plugins` endpoints.

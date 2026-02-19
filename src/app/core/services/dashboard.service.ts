@@ -277,13 +277,14 @@ export class DashboardService {
    * @param configuration The new widget configuration array.
    */
   public updateConfiguration(itemIndex: number, configuration: NgGridStackWidget[]): void {
+    const nextConfiguration = cloneDeep(configuration ?? []);
     this.dashboards.update(dashboards => dashboards.map((dashboard, i) => {
       if (i === itemIndex) {
         // Only update if the configuration has changed
-        if (isEqual(dashboard.configuration, configuration)) {
+        if (isEqual(dashboard.configuration, nextConfiguration)) {
           return dashboard; // No changes, return the same reference
         }
-        return { ...dashboard, configuration: configuration }; // Update with new configuration
+        return { ...dashboard, configuration: nextConfiguration }; // Update with new configuration
       }
       return dashboard; // No changes for other dashboards
     }));

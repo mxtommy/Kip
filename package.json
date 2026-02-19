@@ -111,6 +111,7 @@
     "core-js": "^3.13.1",
     "d3": "^7.9.0",
     "date-fns": "^2.30.0",
+    "duckdb": "^1.4.4",
     "gridstack": "^12.3.3",
     "js-quantities": "^1.8.0",
     "lodash-es": "^4.17.23",

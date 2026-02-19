@@ -1,12 +1,24 @@
 # KIP – Copilot Instructions (for AI coding agents)
 
-Use this quick-start map to be productive in this repo. Prefer these concrete patterns over generic Angular tips. For depth, see COPILOT.md (root) and .github/instructions/angular.instructions.md.
+Use this quick-start map to be productive in this repo. Prefer these concrete patterns over generic Angular tips. For depth, see `COPILOT.md` (root entrypoint), this file, and `.github/instructions/angular.instructions.md`.
 
 ## Big picture
 - Angular v20+ PWA served under base path /@mxtommy/kip/ (angular.json baseHref, package.json scripts).
 - Data flow: SignalKConnectionService → SignalKDeltaService → DataService → Widgets.
 - UI: Dashboard(s) with draggable/resizable widgets (gridstack). Themes: light/dark/night via SCSS roles + CSS variables.
 - Storage: Config lives in Signal K when logged in, else local (StorageService). App init via APP_INITIALIZER (AppNetworkInitService).
+
+## Final architecture (2026 Q1)
+- Historical-series orchestration path: `DashboardService` → `HistorySeriesReconcileService` → `KipSeriesService` → plugin `/plugins/kip/series/reconcile`.
+- Dataset write ownership is centralized in `WidgetDatasetLifecycleService`; avoid direct dataset create/edit/remove calls from widget/dashboard flows.
+- Shared history mapping path: `HistoryChartAdapterService` performs history-values → chart datapoint adaptation; `DatasetService` delegates to it.
+- Widget delete cleanup uses owner UUID matching (`ownerUuid` and `ownerUuid-*`) through lifecycle service, replacing selector-specific cleanup.
+
+### Migration guardrails
+1. For chart/trend widgets, use lifecycle sync helpers (`syncDataChartDataset`, `syncNumericMiniChartDataset`, `syncWindTrendsDatasets`).
+2. Keep widget UUIDs stable and unique; ownership drives both dataset cleanup and history-series reconciliation.
+3. Route history response mapping changes through `HistoryChartAdapterService` only.
+4. Do not reintroduce legacy selector-branch dataset cleanup in dashboard/widget code.
 
 ## Daily workflows
 - Dev: npm run dev, then open http://localhost:4200/@mxtommy/kip/ (needs a running Signal K server).
@@ -123,6 +135,7 @@ Template:
 ## Datasets & charts
 - Historical/trend data: DataSetService (src/app/core/services/data-set.service.ts). Create/update/remove in widget lifecycle.
 - Example: src/app/widgets/widget-windtrends-chart uses Chart.js + date-fns and DataSetService for batch-then-live streams.
+- Preferred write path: `WidgetDatasetLifecycleService` (centralized dataset orchestration for Data Chart / Numeric minichart / Windtrends and owner-based cleanup).
 
 ## Signal K PUT/requests
 - Read via DataService; write via SignalKRequestsService. UI filters PUT-enabled paths (see src/assets/help-docs/putcontrols.md).

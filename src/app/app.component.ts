@@ -27,6 +27,7 @@ import { ConfigurationUpgradeService } from './core/services/configuration-upgra
 import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
 import { ToastService } from './core/services/toast.service';
 import { AppNetworkInitService, IBootstrapIssue } from './core/services/app-initNetwork.service';
+import { HistorySeriesReconcileService } from './core/services/history-series-reconcile.service';
 
 @Component({
   selector: 'app-root',
@@ -44,6 +45,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _deltaService = inject(SignalKDeltaService);
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _appNetworkInit = inject(AppNetworkInitService);
+  private readonly _historySeriesReconcile = inject(HistorySeriesReconcileService);
   public readonly authenticationService = inject(AuthenticationService);
   private readonly _dataSet = inject(DatasetService);
 

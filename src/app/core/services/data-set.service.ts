@@ -3,6 +3,7 @@ import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, 
 import { SettingsService } from './settings.service';
 import { DataService, IPathUpdate } from './data.service';
 import { SignalkHistoryService, IHistoryValuesResponse } from './signalk-history.service';
+import { HistoryChartAdapterService } from './history-chart-adapter.service';
 import { UUID } from '../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
@@ -61,6 +62,7 @@ export class DatasetService implements OnDestroy {
   private readonly appSettings = inject(SettingsService);
   private readonly data = inject(DataService);
   private readonly history = inject(SignalkHistoryService);
+  private readonly historyChartAdapter = inject(HistoryChartAdapterService);
   private readonly historyMinSampleTimeMs = 1000;
 
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
@@ -379,16 +381,27 @@ export class DatasetService implements OnDestroy {
       // Seed the ReplaySubject with history datapoints
       const subject = this._svcSubjectObserverRegistry.find(r => r.datasetUuid === dataSource.uuid)?.rxjsSubject;
       if (subject && historyDatapoints.length > 0) {
-        const seededValues = historyDatapoints
-          .map(dp => dp.data.value)
-          .filter((value): value is number => Number.isFinite(value));
+        const seededPoints: IDatasetServiceDatapoint[] = [];
+        dataSource.historicalData = [];
 
-        if (seededValues.length > 0) {
-          dataSource.historicalData = seededValues.slice(-dataSource.maxDataPoints);
-        }
+        historyDatapoints.forEach(historyPoint => {
+          const value = historyPoint.data.value;
+          if (!Number.isFinite(value)) {
+            return;
+          }
 
-        historyDatapoints.forEach(dp => subject.next(dp));
-        console.log(`[Dataset Service] Seeded ${historyDatapoints.length} history datapoints for ${configuration.path}`);
+          if (dataSource.maxDataPoints > 0 && dataSource.historicalData.length >= dataSource.maxDataPoints) {
+            dataSource.historicalData.shift();
+          }
+          dataSource.historicalData.push(value);
+
+          const computedPoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
+          computedPoint.timestamp = historyPoint.timestamp;
+          seededPoints.push(computedPoint);
+        });
+
+        seededPoints.forEach(dp => subject.next(dp));
+        console.log(`[Dataset Service] Seeded ${seededPoints.length} history datapoints for ${configuration.path}`);
       }
     } catch (error) {
       console.warn(`[Dataset Service] Failed to seed history data for ${configuration.path}:`, error);
@@ -453,7 +466,7 @@ export class DatasetService implements OnDestroy {
    * @param {number} period Window size expressed in units of timeScaleFormat (ignored for "Last *" presets).
    * @param {string} label Name of the historicalData
    * @param {boolean} [serialize] If true, the dataset configuration will be persisted to application settings. If set to false, dataset will not be present in the configuration on app restart. Defaults to true.
-   * @param {boolean} [editable]  DEPRECATED -If true, the dataset configuration can be edited by the user. Defaults to true. // TODO: remove this param once Dataset management component is not required anymore
+  * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
    * @memberof DataSetService
@@ -788,130 +801,10 @@ export class DatasetService implements OnDestroy {
     unit: string,
     domain: AngleDomain
   ): IDatasetServiceDatapoint[] {
-    const rows = response.data;
-    if (!rows || rows.length === 0) {
-      return [];
-    }
-
-    const datapoints: IDatasetServiceDatapoint[] = [];
-
-    let smaIndex = -1;
-    let avgIndex = -1;
-    let minIndex = -1;
-    let maxIndex = -1;
-    if (response.values && Array.isArray(response.values)) {
-      for (let i = 0; i < response.values.length; i++) {
-        const method = response.values[i]?.method;
-        if (!method) continue;
-        const index = i + 1; // +1 because index 0 is timestamp
-        if (method === 'sma') smaIndex = index;
-        else if (method === 'avg') avgIndex = index;
-        else if (method === 'min') minIndex = index;
-        else if (method === 'max') maxIndex = index;
-      }
-    }
-
-    const shouldNormalizeAngle = unit === 'rad';
-    const normalizeAngle = shouldNormalizeAngle
-      ? (domain === 'signed' ? this.normalizeToSigned.bind(this) : this.normalizeToDirection.bind(this))
-      : null;
-
-    let scalarSum = 0;
-    let scalarMin = Number.POSITIVE_INFINITY;
-    let scalarMax = Number.NEGATIVE_INFINITY;
-    let scalarCount = 0;
-
-    let angleSumSin = 0;
-    let angleSumCos = 0;
-    const angleValues: number[] = shouldNormalizeAngle ? [] : null;
-
-    for (const row of rows) {
-      if (!Array.isArray(row) || row.length === 0) continue;
-
-      const timestamp = Date.parse(row[0] as string);
-
-      let smaValue = smaIndex >= 0 ? (row[smaIndex] as number | null) : null;
-      let avgValue = avgIndex >= 0 ? (row[avgIndex] as number | null) : null;
-      let minValue = minIndex >= 0 ? (row[minIndex] as number | null) : null;
-      let maxValue = maxIndex >= 0 ? (row[maxIndex] as number | null) : null;
-
-      if (shouldNormalizeAngle) {
-        smaValue = Number.isFinite(smaValue) ? normalizeAngle!(smaValue) : null;
-        avgValue = Number.isFinite(avgValue) ? normalizeAngle!(avgValue) : null;
-        minValue = Number.isFinite(minValue) ? normalizeAngle!(minValue) : null;
-        maxValue = Number.isFinite(maxValue) ? normalizeAngle!(maxValue) : null;
-      } else {
-        smaValue = Number.isFinite(smaValue) ? smaValue : null;
-        avgValue = Number.isFinite(avgValue) ? avgValue : null;
-        minValue = Number.isFinite(minValue) ? minValue : null;
-        maxValue = Number.isFinite(maxValue) ? maxValue : null;
-      }
-
-      if (Number.isFinite(avgValue)) {
-        const value = avgValue as number;
-        if (shouldNormalizeAngle) {
-          angleValues!.push(value);
-          angleSumSin += Math.sin(value);
-          angleSumCos += Math.cos(value);
-        } else {
-          scalarCount++;
-          scalarSum += value;
-          if (value < scalarMin) scalarMin = value;
-          if (value > scalarMax) scalarMax = value;
-        }
-      }
-
-      datapoints.push({
-        timestamp,
-        data: {
-          value: avgValue,
-          sma: smaValue,
-          ema: null,
-          doubleEma: null,
-          lastAverage: null,
-          lastMinimum: null,
-          lastMaximum: null
-        }
-      });
-    }
-
-    if (datapoints.length > 0) {
-      let datasetAverage: number | null = null;
-      let datasetMinimum: number | null = null;
-      let datasetMaximum: number | null = null;
-
-      if (shouldNormalizeAngle && angleValues!.length > 0) {
-        datasetAverage = Math.atan2(angleSumSin / angleValues!.length, angleSumCos / angleValues!.length);
-        const { min, max } = this.circularMinMaxRad(angleValues!);
-
-        if (domain === 'signed') {
-          datasetAverage = this.normalizeToSigned(datasetAverage);
-          datasetMinimum = this.normalizeToSigned(min);
-          datasetMaximum = this.normalizeToSigned(max);
-        } else {
-          datasetAverage = this.normalizeToDirection(datasetAverage);
-          datasetMinimum = this.normalizeToDirection(min);
-          datasetMaximum = this.normalizeToDirection(max);
-        }
-      } else if (!shouldNormalizeAngle && scalarCount > 0) {
-        datasetAverage = scalarSum / scalarCount;
-        datasetMinimum = scalarMin;
-        datasetMaximum = scalarMax;
-      }
-
-      if (
-        datasetAverage !== null
-        && datasetMinimum !== null
-        && datasetMaximum !== null
-      ) {
-        const finalDatapoint = datapoints[datapoints.length - 1];
-        finalDatapoint.data.lastAverage = datasetAverage;
-        finalDatapoint.data.lastMinimum = datasetMinimum;
-        finalDatapoint.data.lastMaximum = datasetMaximum;
-      }
-    }
-
-    return datapoints;
+    return this.historyChartAdapter.mapValuesToChartDatapoints(response, {
+      unit,
+      domain
+    }) as IDatasetServiceDatapoint[];
   }
 
   /**

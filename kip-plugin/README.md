@@ -7,6 +7,13 @@ Base path for plugin routes: `/plugins/kip`
 - `kip-plugin/` contains the TypeScript source for the Signal K server plugin.
 - The root-level `plugin/` folder (if present) is build output/packaging and is intentionally ignored by git.
 
+## History architecture (DuckDB-only reads)
+
+- History reads (`/history/values`, `/history/paths`, `/history/contexts`) are served from DuckDB only.
+- In-memory state is metadata-only for runtime matching/routing (series definitions and stream subscription logic), not a query engine.
+- Live samples are buffered in memory only as a short write queue before periodic flush to DuckDB/Parquet.
+- If DuckDB is unavailable, history and series APIs return an error response instead of falling back to in-memory history.
+
 ## Endpoints
 
 - GET `/plugins/kip/displays`
@@ -91,6 +98,7 @@ curl -s -X PUT \
 Notes:
 - Replace `<displayId>` with the KIP instance UUID under `self.displays`.
 - If your Signal K server requires auth, include cookies or bearer token accordingly.
+- When DuckDB is unavailable, history and series endpoints can return `503` until storage is available.
 
 Terminology:
 - `screenIndex` is the current active dashboard index for the display.

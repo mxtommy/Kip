@@ -5,7 +5,7 @@ import { SettingsService } from './settings.service';
 import { IAppConfig } from '../interfaces/app-settings.interfaces';
 import { DataService } from './data.service';
 import { SignalkHistoryService } from './signalk-history.service';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 
 describe('DatasetService', () => {
@@ -193,6 +193,61 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
+  it('recomputes SMA locally for seeded history before live updates', inject([DatasetService], async (service: DatasetService) => {
+    historyServiceMock.getValues.calls.reset();
+    historyServiceMock.getValues.and.resolveTo({
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:05:00.000Z'
+      },
+      values: [
+        { path: 'navigation.speedThroughWater', method: 'sma' },
+        { path: 'navigation.speedThroughWater', method: 'avg' },
+        { path: 'navigation.speedThroughWater', method: 'min' },
+        { path: 'navigation.speedThroughWater', method: 'max' }
+      ],
+      // Intentionally make returned SMA equal to value to emulate backend/provider behavior
+      // that collapses the historical SMA column.
+      data: [
+        ['2026-02-16T00:00:00.000Z', 2, 2, 2, 2],
+        ['2026-02-16T00:01:00.000Z', 4, 4, 4, 4],
+        ['2026-02-16T00:02:00.000Z', 6, 6, 6, 6]
+      ]
+    });
+
+    const config = {
+      uuid: 'ds-seeded-sma',
+      path: 'navigation.speedThroughWater',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'Last 5 Minutes' as const,
+      period: 1,
+      label: 'test-seeded-sma'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any).start(config.uuid);
+
+    const batchOrLive = await firstValueFrom(service.getDatasetBatchThenLiveObservable(config.uuid)!);
+    expect(Array.isArray(batchOrLive)).toBeTrue();
+    const batch = batchOrLive as unknown as { data: { value: number; sma: number } }[];
+
+    // First 3 points are seeded history values (a first live point is emitted afterwards).
+    expect(batch[0].data.value).toBe(2);
+    expect(batch[1].data.value).toBe(4);
+    expect(batch[2].data.value).toBe(6);
+
+    // Local SMA recomputation should be [2, 3, 4], not [2, 4, 6].
+    expect(batch[0].data.sma).toBe(2);
+    expect(batch[1].data.sma).toBe(3);
+    expect(batch[2].data.sma).toBe(4);
+
+    service.ngOnDestroy();
+  }));
+
   it('continues startup in live mode when history seeding throws', inject([DatasetService], async (service: DatasetService) => {
     historyServiceMock.getValues.calls.reset();
     historyServiceMock.getValues.and.rejectWith(new Error('History backend failure'));
@@ -258,6 +313,30 @@ describe('DatasetService', () => {
     expect(datapoints[2].data.lastAverage).toBe(4);
     expect(datapoints[2].data.lastMinimum).toBe(2);
     expect(datapoints[2].data.lastMaximum).toBe(6);
+  }));
+
+  it('maps history method average as avg for datapoint value extraction', inject([DatasetService], (service: DatasetService) => {
+    const response = {
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:03:00.000Z'
+      },
+      values: [
+        { path: 'environment.wind.angleApparent', method: 'average' }
+      ],
+      data: [
+        ['2026-02-16T00:00:00.000Z', 0.5],
+        ['2026-02-16T00:01:00.000Z', 0.6]
+      ]
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datapoints = (service as any).convertHistoryToDatapoints(response, 'number', 'scalar');
+
+    expect(datapoints.length).toBe(2);
+    expect(datapoints[0].data.value).toBe(0.5);
+    expect(datapoints[1].data.value).toBe(0.6);
   }));
 
   it('uses circular stats for final history datapoint in rad direction domain', inject([DatasetService], (service: DatasetService) => {
