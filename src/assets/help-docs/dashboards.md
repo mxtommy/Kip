@@ -42,6 +42,14 @@ In edit mode, widgets show dashed outlines.
 
 >**Tip:** If you can’t add a widget, free up space by resizing or moving existing ones first.
 
+## Viewing Widget History on Locked Dashboards
+When a dashboard is locked (normal viewing mode), you can open a history chart for a widget without entering edit mode:
+
+- **Desktop / mouse:** right-click on the widget
+- **Touch device:** two-finger tap on the widget
+
+KIP opens a history chart dialog and loads historical series data for that widget using the History API.
+
 
 ## Workflow: From Idea to Dashboard
 1. Define the purpose (e.g. “Night Nav” = heading, COG, SOG, depth, wind, batteries, minimal brightness)
@@ -102,6 +110,7 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 | Wrong units            | Default convert unit used              | Edit widget config paths and set the desired target unit.            |
 | Slow dashboard switching| Excessive data sampling/too many widgets| Increase sample times; remove unused widgets. Split widgets into separate dashboards. Optimize system resource usage. |
 | Embedded page blank    | Cross‑origin blocked                   | See "Embed Page Viewer" help section.                               |
+| History dialog not opening on locked dashboard | Dashboard is still in edit mode, or interaction did not register as right-click / two-finger tap | Lock the dashboard first, then retry with a right-click (desktop) or two-finger tap (touch). |
 
 
 ## Next Steps

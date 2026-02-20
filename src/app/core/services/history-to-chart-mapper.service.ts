@@ -71,6 +71,12 @@ export class HistoryToChartMapperService {
         if (method === 'sma') smaIndex = index;
         else if (method === 'avg' || method === 'average') avgIndex = index;
       }
+
+      if (avgIndex < 0 && response.values.length === 1) {
+        avgIndex = 1;
+      }
+    } else if (rows[0]?.length > 1) {
+      avgIndex = 1;
     }
 
     const shouldNormalizeAngle = options.unit === 'rad';

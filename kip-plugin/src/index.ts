@@ -54,7 +54,7 @@ const start = (server: ServerAPI): Plugin => {
   let storageFlushTimer: NodeJS.Timeout | null = null;
   let duckDbInitializationPromise: Promise<boolean> | null = null;
   const DUCKDB_INIT_WAIT_TIMEOUT_MS = 5000;
-  let streamUnsubscribes: Array<() => void> = [];
+  let streamUnsubscribes: (() => void)[] = [];
   let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
   let historySeriesServiceEnabled = true;
   let registerAsHistoryApiProvider = true;
@@ -565,21 +565,47 @@ const start = (server: ServerAPI): Plugin => {
       return;
     }
 
-    const seriesByPath = new Map<string, ISeriesDefinition[]>();
+    const subscriptionCandidates = new Map<string, { allSelfContext: boolean }>();
+
+    const addCandidate = (path: string, allSelfContext: boolean): void => {
+      const normalized = typeof path === 'string' ? path.trim() : '';
+      if (!normalized) {
+        return;
+      }
+
+      const existing = subscriptionCandidates.get(normalized);
+      if (!existing) {
+        subscriptionCandidates.set(normalized, { allSelfContext });
+        return;
+      }
+
+      // If any series for this path requires non-self context, force generic bus subscription.
+      existing.allSelfContext = existing.allSelfContext && allSelfContext;
+    };
+
     historySeries.listSeries().filter(series => series.enabled !== false).forEach(series => {
-      const list = seriesByPath.get(series.path) ?? [];
-      list.push(series);
-      seriesByPath.set(series.path, list);
+      const allSelfContext = (series.context ?? 'vessels.self') === 'vessels.self';
+      addCandidate(series.path, allSelfContext);
+
+      // Workaround: subscribe to immediate parent path so object deltas (e.g. navigation.attitude)
+      // are captured and flattened into leaf numeric paths (e.g. navigation.attitude.pitch).
+      // Remove this fallback when KIP adds first-class object-path capture support.
+      const parentIdx = series.path.lastIndexOf('.');
+      if (parentIdx > 0) {
+        addCandidate(series.path.slice(0, parentIdx), allSelfContext);
+      }
     });
 
-    const uniquePaths = Array.from(seriesByPath.keys());
-    uniquePaths.forEach(path => {
+    const candidates = Array.from(subscriptionCandidates.entries()).map(([path, meta]) => ({
+      path,
+      allSelfContext: meta.allSelfContext
+    }));
+
+    candidates.forEach(candidate => {
       try {
-        const pathSeries = seriesByPath.get(path) ?? [];
-        const allSelfContext = pathSeries.every(series => (series.context ?? 'vessels.self') === 'vessels.self');
-        const bus = allSelfContext && typeof (streamBundle as { getSelfBus?: unknown }).getSelfBus === 'function'
-          ? (streamBundle as { getSelfBus: (p: Path) => unknown }).getSelfBus(path as Path)
-          : streamBundle.getBus(path as Path);
+        const bus = candidate.allSelfContext && typeof (streamBundle as { getSelfBus?: unknown }).getSelfBus === 'function'
+          ? (streamBundle as { getSelfBus: (p: Path) => unknown }).getSelfBus(candidate.path as Path)
+          : streamBundle.getBus(candidate.path as Path);
         if (!bus || typeof (bus as { onValue?: unknown }).onValue !== 'function') {
           return;
         }
@@ -588,10 +614,10 @@ const start = (server: ServerAPI): Plugin => {
           try {
             const count = historySeries.recordFromSignalKSample(sample as { path?: unknown; value?: unknown; timestamp?: unknown; context?: unknown; source?: unknown; $source?: unknown });
             if (count > 0) {
-              // server.debug(`[SERIES CAPTURE] path=${path} recorded=${count}`);
+              // server.debug(`[SERIES CAPTURE] path=${candidate.path} recorded=${count}`);
             }
           } catch (error) {
-            server.error(`[SERIES CAPTURE] failed to record sample path=${path}: ${String((error as Error).message || error)}`);
+            server.error(`[SERIES CAPTURE] failed to record sample path=${candidate.path}: ${String((error as Error).message || error)}`);
           }
         });
 
@@ -599,11 +625,11 @@ const start = (server: ServerAPI): Plugin => {
           streamUnsubscribes.push(unsubscribe);
         }
       } catch (error) {
-        server.error(`[SERIES CAPTURE] failed to subscribe path=${path}: ${String((error as Error).message || error)}`);
+        server.error(`[SERIES CAPTURE] failed to subscribe path=${candidate.path}: ${String((error as Error).message || error)}`);
       }
     });
 
-    // server.debug(`[SERIES CAPTURE] activePathSubscriptions=${uniquePaths.length}`);
+    // server.debug(`[SERIES CAPTURE] activePathSubscriptions=${candidates.length}`);
   }
 
   function startStorageFlushTimer(intervalMs: number): void {

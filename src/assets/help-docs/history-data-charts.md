@@ -47,6 +47,14 @@ The History API requires Signal K version 2.22.1 or above and one plugin that re
 
 ## How History Data Works in KIP
 
+### Locked Dashboard Quick View
+You can open a widget history dialog directly from a locked dashboard:
+
+- **Desktop / mouse:** right-click a widget
+- **Touch device:** two-finger tap a widget
+
+This dialog is history-only and loads data using the History API (no live stream overlay).
+
 ### History Seeding
 When you open a chart widget with a larger time scale (minutes/hours):
 1. KIP checks if history data is available via the History API.

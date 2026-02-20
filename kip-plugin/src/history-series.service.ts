@@ -263,37 +263,78 @@ export class HistorySeriesService {
       return 0;
     }
 
-    const value = Number(sample.value);
-    if (!Number.isFinite(value)) {
-      return 0;
-    }
-
     const ts = this.resolveTimestamp(sample.timestamp);
     const context = typeof sample.context === 'string' && sample.context ? sample.context : 'vessels.self';
     const source = this.resolveSource(sample);
+    const leafSamples = this.extractNumericLeafSamples(path, sample.value);
+
+    if (leafSamples.length === 0) {
+      return 0;
+    }
 
     let recorded = 0;
-    this.seriesById.forEach(series => {
-      if (series.path !== path || series.enabled === false) {
-        return;
-      }
+    leafSamples.forEach(leaf => {
+      this.seriesById.forEach(series => {
+        if (series.path !== leaf.path || series.enabled === false) {
+          return;
+        }
 
-      const seriesContext = series.context ?? 'vessels.self';
-      if (!this.isContextMatch(seriesContext, context)) {
-        return;
-      }
+        const seriesContext = series.context ?? 'vessels.self';
+        if (!this.isContextMatch(seriesContext, context)) {
+          return;
+        }
 
-      const seriesSource = series.source ?? 'default';
-      if (!this.isSourceMatch(seriesSource, source)) {
-        return;
-      }
+        const seriesSource = series.source ?? 'default';
+        if (!this.isSourceMatch(seriesSource, source)) {
+          return;
+        }
 
-      if (this.recordSample(series.seriesId, value, ts)) {
-        recorded += 1;
-      }
+        if (this.recordSample(series.seriesId, leaf.value, ts)) {
+          recorded += 1;
+        }
+      });
     });
 
     return recorded;
+  }
+
+  private extractNumericLeafSamples(basePath: string, value: unknown): Array<{ path: string; value: number }> {
+    const samples: Array<{ path: string; value: number }> = [];
+
+    const addNumeric = (samplePath: string, sampleValue: unknown): void => {
+      const normalizedPath = this.normalizePathIdentifier(samplePath);
+      if (!normalizedPath) {
+        return;
+      }
+
+      const numericValue = Number(sampleValue);
+      if (!Number.isFinite(numericValue)) {
+        return;
+      }
+
+      samples.push({ path: normalizedPath, value: numericValue });
+    };
+
+    const walk = (currentPath: string, currentValue: unknown): void => {
+      if (currentValue && typeof currentValue === 'object') {
+        if (Array.isArray(currentValue)) {
+          currentValue.forEach((entry, index) => {
+            walk(`${currentPath}.${index}`, entry);
+          });
+          return;
+        }
+
+        Object.entries(currentValue as Record<string, unknown>).forEach(([key, child]) => {
+          walk(`${currentPath}.${key}`, child);
+        });
+        return;
+      }
+
+      addNumeric(currentPath, currentValue);
+    };
+
+    walk(basePath, value);
+    return samples;
   }
 
   /**

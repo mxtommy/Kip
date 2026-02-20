@@ -6,6 +6,8 @@ import { DashboardHistorySeriesSyncService } from './dashboard-history-series-sy
 import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
+import { IWidget } from '../interfaces/widgets-interface';
+import { WidgetService } from './widget.service';
 
 class DashboardServiceStub {
   public dashboards = signal<Dashboard[]>([]);
@@ -166,6 +168,9 @@ describe('DashboardHistorySeriesSyncService', () => {
   let pluginConfigMock: {
     getKipRuntimeModeConfigCached: jasmine.Spy;
   };
+  let widgetServiceMock: {
+    getComponentType: jasmine.Spy;
+  };
   let reconcileSpy: jasmine.Spy<(series: IKipSeriesDefinition[]) => Promise<{ created: number; updated: number; deleted: number; total: number }>>;
 
   beforeEach(() => {
@@ -184,12 +189,17 @@ describe('DashboardHistorySeriesSyncService', () => {
       total: 0,
     });
 
+    widgetServiceMock = {
+      getComponentType: jasmine.createSpy('getComponentType').and.returnValue(undefined)
+    };
+
     TestBed.configureTestingModule({
       providers: [
         DashboardHistorySeriesSyncService,
         { provide: DashboardService, useClass: DashboardServiceStub },
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
         { provide: PluginConfigClientService, useValue: pluginConfigMock },
+        { provide: WidgetService, useValue: widgetServiceMock },
         {
           provide: KipSeriesApiClientService,
           useValue: {
@@ -204,6 +214,7 @@ describe('DashboardHistorySeriesSyncService', () => {
   });
 
   it('should not reconcile when HTTP endpoint is unavailable', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     dashboardStub.dashboards.set([
       {
         id: 'dash-1',
@@ -215,13 +226,13 @@ describe('DashboardHistorySeriesSyncService', () => {
       }
     ]);
 
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).not.toHaveBeenCalled();
   }));
 
   it('should extract numeric path series and reconcile once after debounce', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -247,7 +258,6 @@ describe('DashboardHistorySeriesSyncService', () => {
       }
     ]);
 
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
@@ -271,6 +281,7 @@ describe('DashboardHistorySeriesSyncService', () => {
   }));
 
   it('should preserve dedicated data chart and wind trends sync mappings', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -297,7 +308,6 @@ describe('DashboardHistorySeriesSyncService', () => {
       }
     ]);
 
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
@@ -320,6 +330,7 @@ describe('DashboardHistorySeriesSyncService', () => {
   }));
 
   it('should skip reconcile when history series service mode is disabled', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     historySeriesServiceEnabled = false;
 
     connectionStub.serverServiceEndpoint$.next({
@@ -341,13 +352,13 @@ describe('DashboardHistorySeriesSyncService', () => {
       }
     ]);
 
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).not.toHaveBeenCalled();
   }));
 
   it('should reconcile when dashboards signal emits updated widget configuration', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -369,7 +380,6 @@ describe('DashboardHistorySeriesSyncService', () => {
         ]
       }
     ]);
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
@@ -427,6 +437,7 @@ describe('DashboardHistorySeriesSyncService', () => {
   }));
 
   it('should skip widgets explicitly opted out and include array/object numeric paths', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -434,8 +445,6 @@ describe('DashboardHistorySeriesSyncService', () => {
       httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
       WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
     });
-
-    TestBed.inject(DashboardHistorySeriesSyncService);
 
     dashboardStub.dashboards.set([
       {
@@ -469,6 +478,7 @@ describe('DashboardHistorySeriesSyncService', () => {
   }));
 
   it('should deduplicate duplicate numeric paths with same source per widget', fakeAsync(() => {
+    TestBed.inject(DashboardHistorySeriesSyncService);
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -518,10 +528,112 @@ describe('DashboardHistorySeriesSyncService', () => {
       }
     ]);
 
-    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
     expect(reconcileSpy.calls.mostRecent().args[0].length).toBe(1);
   }));
+
+  it('resolves dedicated data chart and wind trends mappings via public widget resolver', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const dataChartWidget: IWidget = {
+      uuid: 'widget-data-1',
+      type: 'widget-data-chart',
+      config: {
+        datachartPath: 'navigation.speedThroughWater',
+        datachartSource: 'default',
+        timeScale: 'minute',
+        period: 10,
+      }
+    };
+
+    const windTrendsWidget: IWidget = {
+      uuid: 'widget-wind-1',
+      type: 'widget-windtrends-chart',
+      config: {
+        timeScale: 'Last 30 Minutes'
+      }
+    };
+
+    const dataChartSeries = service.resolveSeriesForWidget(dataChartWidget);
+    const windSeries = service.resolveSeriesForWidget(windTrendsWidget);
+
+    expect(dataChartSeries.map(item => item.seriesId)).toEqual(['widget-data-1:datachart']);
+    expect(windSeries.map(item => item.seriesId).sort()).toEqual([
+      'widget-wind-1:wind-direction',
+      'widget-wind-1:wind-speed'
+    ]);
+  });
+
+  it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-numeric-1',
+      type: 'widget-numeric',
+      config: {
+        supportAutomaticHistoricalSeries: false,
+        paths: {
+          numericPath: {
+            description: 'Numeric Data',
+            path: 'navigation.speedThroughWater',
+            source: null,
+            pathType: 'number',
+            isPathConfigurable: true,
+            sampleTime: 1000
+          }
+        }
+      }
+    };
+
+    expect(service.resolveSeriesForWidget(widget)).toEqual([]);
+  });
+
+  it('resolves numeric paths from widget DEFAULT_CONFIG when saved config is partial', () => {
+    widgetServiceMock.getComponentType.and.callFake((selector: string) => {
+      if (selector !== 'widget-horizon') {
+        return undefined;
+      }
+
+      return {
+        DEFAULT_CONFIG: {
+          supportAutomaticHistoricalSeries: true,
+          timeScale: 'minute',
+          period: 30,
+          paths: {
+            gaugePitchPath: {
+              description: 'Pitch',
+              path: 'self.navigation.attitude.pitch',
+              source: 'default',
+              pathType: 'number',
+              isPathConfigurable: true,
+              sampleTime: 1000
+            },
+            gaugeRollPath: {
+              description: 'Roll',
+              path: 'self.navigation.attitude.roll',
+              source: 'default',
+              pathType: 'number',
+              isPathConfigurable: true,
+              sampleTime: 1000
+            }
+          }
+        }
+      };
+    });
+
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-horizon-1',
+      type: 'widget-horizon',
+      config: {
+        displayName: 'Horizon'
+      }
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(seriesIds(series)).toEqual([
+      'widget-horizon-1:auto:self-navigation-attitude-pitch:default',
+      'widget-horizon-1:auto:self-navigation-attitude-roll:default'
+    ]);
+  });
 });

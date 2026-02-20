@@ -1,5 +1,10 @@
 <mat-card kipGestures mode="press" appearance="raised" class="widget-container kip-widget-card-colors" [style.border]="_dashboard.isDashboardStatic() ? '1px dashed transparent' : '1px dashed var(--mat-sys-outline)'"
   (doubletap)="openWidgetOptions($event)"
-  (press)="openBottomSheet($event)">
+  (press)="openBottomSheet($event)"
+  (pointerdown)="onHistoryPointerDown($event)"
+  (pointermove)="onHistoryPointerMove($event)"
+  (pointerup)="onHistoryPointerUp($event)"
+  (pointercancel)="onHistoryPointerCancel($event)"
+  (contextmenu)="openWidgetHistoryDialog($event)">
   <ng-container #childOutlet></ng-container>
 </mat-card>

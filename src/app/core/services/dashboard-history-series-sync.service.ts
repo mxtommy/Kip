@@ -109,33 +109,41 @@ export class DashboardHistorySeriesSyncService {
       .sort((left, right) => left.seriesId.localeCompare(right.seriesId));
   }
 
+  /**
+   * Resolves the historical series definitions for a single widget based on current
+   * sync rules (dedicated widget mappings + automatic numeric path mapping).
+   *
+   * @param {IWidget | null | undefined} widget Widget definition to evaluate.
+   * @returns {IKipSeriesDefinition[]} Historical series definitions for the widget.
+   *
+   * @example
+   * const series = service.resolveSeriesForWidget(widget);
+   */
+  public resolveSeriesForWidget(widget: IWidget | null | undefined): IKipSeriesDefinition[] {
+    const widgetType = widget?.type;
+    const widgetUuid = widget?.uuid;
+    const cfg = widget?.config;
+
+    if (!widgetType || !widgetUuid || cfg?.supportAutomaticHistoricalSeries === false) {
+      return [];
+    }
+
+    if (widgetType === 'widget-data-chart') {
+      const series = this.mapDataChartWidget(widgetUuid, widgetType, cfg);
+      return series ? [series] : [];
+    }
+
+    if (widgetType === 'widget-windtrends-chart') {
+      return this.mapWindTrendsWidget(widgetUuid, widgetType, cfg);
+    }
+
+    return this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg);
+  }
+
   private collectSeriesFromNodes(nodes: IGridWidgetNode[], sink: IKipSeriesDefinition[]): void {
     nodes.forEach(node => {
       const widget = node?.input?.widgetProperties;
-      const widgetType = widget?.type;
-      const widgetUuid = widget?.uuid;
-
-      if (widgetType && widgetUuid) {
-        const cfg = widget?.config;
-        if (cfg?.supportAutomaticHistoricalSeries === false) {
-          return;
-        }
-
-        if (widgetType === 'widget-data-chart') {
-          const series = this.mapDataChartWidget(widgetUuid, widgetType, cfg);
-          if (series) {
-            sink.push(series);
-          }
-          return;
-        }
-
-        if (widgetType === 'widget-windtrends-chart') {
-          sink.push(...this.mapWindTrendsWidget(widgetUuid, widgetType, cfg));
-          return;
-        }
-
-        sink.push(...this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg));
-      }
+      sink.push(...this.resolveSeriesForWidget(widget));
 
       const children = this.coerceNodeList(node?.subGridOpts?.children);
       if (children.length > 0) {
