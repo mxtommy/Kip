@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { WidgetDatasetLifecycleService } from './widget-dataset-lifecycle.service';
-import { DatasetService, IDatasetServiceDatasetConfig } from './data-set.service';
+import { WidgetDatasetOrchestratorService } from './widget-dataset-orchestrator.service';
+import { DatasetStreamService, IDatasetServiceDatasetConfig } from './dataset-stream.service';
 import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
-describe('WidgetDatasetLifecycleService', () => {
-  let service: WidgetDatasetLifecycleService;
-  let datasetSpy: jasmine.SpyObj<DatasetService>;
+describe('WidgetDatasetOrchestratorService', () => {
+  let service: WidgetDatasetOrchestratorService;
+  let datasetSpy: jasmine.SpyObj<DatasetStreamService>;
 
   beforeEach(() => {
-    datasetSpy = jasmine.createSpyObj<DatasetService>('DatasetService', [
+    datasetSpy = jasmine.createSpyObj<DatasetStreamService>('DatasetStreamService', [
       'getDatasetConfig',
       'create',
       'edit',
@@ -18,12 +18,12 @@ describe('WidgetDatasetLifecycleService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        WidgetDatasetLifecycleService,
-        { provide: DatasetService, useValue: datasetSpy }
+        WidgetDatasetOrchestratorService,
+        { provide: DatasetStreamService, useValue: datasetSpy }
       ]
     });
 
-    service = TestBed.inject(WidgetDatasetLifecycleService);
+    service = TestBed.inject(WidgetDatasetOrchestratorService);
   });
 
   it('creates Data Chart dataset when missing', () => {
@@ -136,7 +136,7 @@ describe('WidgetDatasetLifecycleService', () => {
     expect(datasetSpy.removeIfExists).not.toHaveBeenCalledWith('widget-other', true);
   });
 
-  it('forwards removeDatasetIfExists to DatasetService', () => {
+  it('forwards removeDatasetIfExists to DatasetStreamService', () => {
     service.removeDatasetIfExists('widget-9', false);
 
     expect(datasetSpy.removeIfExists).toHaveBeenCalledWith('widget-9', false);

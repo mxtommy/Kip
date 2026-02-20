@@ -3,9 +3,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard, DashboardService } from './dashboard.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { IKipSeriesDefinition, KipSeriesService } from './kip-series.service';
+import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
 import { SignalKConnectionService } from './signalk-connection.service';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 
 interface IGridWidgetNode extends NgGridStackWidget {
   input?: {
@@ -19,12 +19,12 @@ interface IGridWidgetNode extends NgGridStackWidget {
 @Injectable({
   providedIn: 'root'
 })
-export class HistorySeriesReconcileService {
+export class DashboardHistorySeriesSyncService {
   private readonly dashboard = inject(DashboardService);
-  private readonly kipSeries = inject(KipSeriesService);
+  private readonly kipSeries = inject(KipSeriesApiClientService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly connection = inject(SignalKConnectionService);
-  private readonly pluginConfig = inject(SignalkPluginConfigService);
+  private readonly pluginConfig = inject(PluginConfigClientService);
 
   private readonly serverEndpoint = toSignal(this.connection.serverServiceEndpoint$, {
     initialValue: null
@@ -87,7 +87,7 @@ export class HistorySeriesReconcileService {
 
     const modeConfig = await this.pluginConfig.getKipRuntimeModeConfigCached('kip');
     if (!modeConfig.historySeriesServiceEnabled) {
-      console.warn('[HistorySeriesReconcileService] Reconcile skipped because history series service mode is disabled');
+      console.warn('[DashboardHistorySeriesSyncService] Reconcile skipped because history series service mode is disabled');
       this.lastSubmittedSignature = nextSignature;
       return;
     }

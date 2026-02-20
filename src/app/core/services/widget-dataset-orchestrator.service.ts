@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { DatasetService, IDatasetServiceDatasetConfig, TimeScaleFormat } from './data-set.service';
+import { DatasetStreamService, IDatasetServiceDatasetConfig, TimeScaleFormat } from './dataset-stream.service';
 import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
 @Injectable({
   providedIn: 'root'
 })
-export class WidgetDatasetLifecycleService {
-  private readonly dataset = inject(DatasetService);
+export class WidgetDatasetOrchestratorService {
+  private readonly dataset = inject(DatasetStreamService);
 
   /**
    * Ensures Data Chart dataset configuration exists and stays in sync with widget settings.

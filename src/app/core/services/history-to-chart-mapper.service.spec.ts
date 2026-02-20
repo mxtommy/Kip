@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { HistoryChartAdapterService } from './history-chart-adapter.service';
-import { IHistoryValuesResponse } from './signalk-history.service';
+import { HistoryToChartMapperService } from './history-to-chart-mapper.service';
+import { IHistoryValuesResponse } from './history-api-client.service';
 
-describe('HistoryChartAdapterService', () => {
-  let service: HistoryChartAdapterService;
+describe('HistoryToChartMapperService', () => {
+  let service: HistoryToChartMapperService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [HistoryChartAdapterService]
+      providers: [HistoryToChartMapperService]
     });
 
-    service = TestBed.inject(HistoryChartAdapterService);
+    service = TestBed.inject(HistoryToChartMapperService);
   });
 
   it('maps average method alias to datapoint value extraction', () => {

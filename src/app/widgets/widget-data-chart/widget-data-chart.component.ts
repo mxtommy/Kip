@@ -1,13 +1,13 @@
-import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
 import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
+import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
 import { UnitsService } from '../../core/services/units.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { ITheme } from '../../core/services/app-service';
-import { WidgetDatasetLifecycleService } from '../../core/services/widget-dataset-lifecycle.service';
+import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -46,11 +46,11 @@ export class WidgetDataChartComponent implements OnDestroy {
   // Host2 runtime directive (merged config)
   private readonly runtime = inject(WidgetRuntimeDirective);
 
-  private readonly dsService = inject(DatasetService);
+  private readonly dsService = inject(DatasetStreamService);
   private readonly ngZone = inject(NgZone);
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
-  private readonly datasetLifecycle = inject(WidgetDatasetLifecycleService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Chart Label',

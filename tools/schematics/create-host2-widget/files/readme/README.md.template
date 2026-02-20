@@ -52,7 +52,7 @@ unit to the service instead of hardcoding conversion math in a widget.
 | Service | Purpose | Typical Use |
 |---------|---------|-------------|
 | `UnitsService` | Central unit conversion & formatting | Convert or format values when you must post-process derived numbers. |
-| `DataSetService` | Historical / trend datasets (chart widgets) | Create/update/remove datasets for charts or statistics. |
+| `DatasetStreamService` | Historical / trend datasets (chart widgets) | Create/update/remove datasets for charts or statistics. |
 | `NotificationsService` | User-visible toast/Snackbar/info/warn/error | Present message to user |
 | `SignalKRequestsService` | PUT/Request operations to server | Implement interactive controls and set Signal K path value (e.g., set heading). |
 | `DataService` | Low-level Signal K value + metadata access | Rarely needed directly; `WidgetStreamsDirective` wraps it. |

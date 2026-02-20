@@ -8,15 +8,15 @@ Canonical instructions live in:
 - `.github/instructions/project.instructions.md` (long-form project notes)
 
 ## Final Architecture (2026 Q1)
-- **Historical-series orchestration:** `DashboardService` → `HistorySeriesReconcileService` → `KipSeriesService` → plugin `/plugins/kip/series/reconcile`.
-- **Dataset lifecycle ownership:** `WidgetDatasetLifecycleService` is the single write-owner for dataset create/edit/remove and owner-based cleanup.
-- **Shared history mapping:** `HistoryChartAdapterService` performs history-values → chart datapoint adaptation; `DatasetService` delegates to it.
+- **Historical-series orchestration:** `DashboardService` → `DashboardHistorySeriesSyncService` → `KipSeriesApiClientService` → plugin `/plugins/kip/series/reconcile`.
+- **Dataset lifecycle ownership:** `WidgetDatasetOrchestratorService` is the single write-owner for dataset create/edit/remove and owner-based cleanup.
+- **Shared history mapping:** `HistoryToChartMapperService` performs history-values → chart datapoint adaptation; `DatasetStreamService` delegates to it.
 - **Delete cleanup behavior:** Owner UUID matching (`ownerUuid` and `ownerUuid-*`) is the standard cleanup contract.
 
 ## Architecture Guardrails for Contributors
 1. Use lifecycle sync helpers for chart/trend widgets (`syncDataChartDataset`, `syncNumericMiniChartDataset`, `syncWindTrendsDatasets`).
 2. Keep widget UUID ownership stable and unique.
-3. Route history-response mapping changes through `HistoryChartAdapterService` only.
+3. Route history-response mapping changes through `HistoryToChartMapperService` only.
 4. Do not reintroduce selector-specific dataset cleanup branches.
 
 ## Contributor Notes

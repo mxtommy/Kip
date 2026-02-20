@@ -2,8 +2,8 @@ import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
 import { SettingsService } from './settings.service';
 import { DataService, IPathUpdate } from './data.service';
-import { SignalkHistoryService, IHistoryValuesResponse } from './signalk-history.service';
-import { HistoryChartAdapterService } from './history-chart-adapter.service';
+import { HistoryApiClientService, IHistoryValuesResponse } from './history-api-client.service';
+import { HistoryToChartMapperService } from './history-to-chart-mapper.service';
 import { UUID } from '../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
@@ -58,11 +58,11 @@ type AngleDomain = 'scalar' | 'direction' | 'signed';
 @Injectable({
   providedIn: 'root'
 })
-export class DatasetService implements OnDestroy {
+export class DatasetStreamService implements OnDestroy {
   private readonly appSettings = inject(SettingsService);
   private readonly data = inject(DataService);
-  private readonly history = inject(SignalkHistoryService);
-  private readonly historyChartAdapter = inject(HistoryChartAdapterService);
+  private readonly history = inject(HistoryApiClientService);
+  private readonly historyChartAdapter = inject(HistoryToChartMapperService);
   private readonly historyMinSampleTimeMs = 1000;
 
   private _svcDatasetConfigs: IDatasetServiceDatasetConfig[] = [];
@@ -139,7 +139,7 @@ export class DatasetService implements OnDestroy {
 
     if (removed.length) {
       removed.forEach(ds => {
-        console.warn(`[DatasetService] Cleaned dataset: uuid=${ds.uuid}, label="${ds.label}"`);
+        console.warn(`[DatasetStreamService] Cleaned dataset: uuid=${ds.uuid}, label="${ds.label}"`);
       });
       this._svcDatasetConfigs = filtered;
       this.appSettings.saveDataSets(this._svcDatasetConfigs);
@@ -153,7 +153,7 @@ export class DatasetService implements OnDestroy {
    *
    * @private
    * @param {string} uuid
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   private setupServiceSubjectRegistry(uuid: string, replayDatapoints: number): void {
     const entryIndex = this._svcSubjectObserverRegistry.findIndex(entry => entry.datasetUuid == uuid);
@@ -230,10 +230,10 @@ export class DatasetService implements OnDestroy {
    * Returns immediately if initialization is already complete.
    *
    * @returns {Promise<void>} Resolves when all datasets are ready
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    *
    * @example
-   * await datasetService.waitUntilReady();
+   * await datasetStreamService.waitUntilReady();
    * // All datasets are now seeded and ready for subscribers
    */
   public async waitUntilReady(): Promise<void> {
@@ -241,12 +241,12 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
-   * Start all Dataset Service's _svcDatasetConfigs
+   * Start all dataset stream service configs.
    *
-   * @memberof DataSetService
+   * @memberof DatasetStreamService
    */
   private async startAll(): Promise<void> {
-    console.log("[Dataset Service] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
+    console.log("[DatasetStreamService] Auto Starting " + this._svcDatasetConfigs.length.toString() + " Datasets");
     for (const config of this._svcDatasetConfigs) {
       await this.start(config.uuid);
     }
@@ -267,12 +267,12 @@ export class DatasetService implements OnDestroy {
    * @private
    * @param {string} uuid The UUID of the DataSource to start
    * @return {*}  {void}
-   * @memberof DataSetService
+   * @memberof DatasetStreamService
    */
   private async start(uuid: string): Promise<void> {
     const configuration = this._svcDatasetConfigs.find(configuration => configuration.uuid == uuid);
     if (!configuration) {
-      console.warn(`[Dataset Service] Dataset UUID:${uuid} not found`);
+      console.warn(`[DatasetStreamService] Dataset UUID:${uuid} not found`);
       return;
     }
 
@@ -281,7 +281,7 @@ export class DatasetService implements OnDestroy {
     const dataSource = this._svcDataSource[this._svcDataSource.push(newDataSourceConfig) - 1];
 
     console.log(
-      `[Dataset Service] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`
+      `[DatasetStreamService] Starting recording process: ${configuration.path}, Scale: ${configuration.timeScaleFormat}, Period: ${configuration.period}, Datapoints: ${newDataSourceConfig.maxDataPoints}`
     );
 
     // Decide how to interpret the dataset values (scalar vs radian domains)
@@ -371,7 +371,7 @@ export class DatasetService implements OnDestroy {
       });
 
       if (!response || !response.data || response.data.length === 0) {
-        console.log(`[Dataset Service] No history data available for ${configuration.path}`);
+        console.log(`[DatasetStreamService] No history data available for ${configuration.path}`);
         return;
       }
 
@@ -401,10 +401,10 @@ export class DatasetService implements OnDestroy {
         });
 
         seededPoints.forEach(dp => subject.next(dp));
-        console.log(`[Dataset Service] Seeded ${seededPoints.length} history datapoints for ${configuration.path}`);
+        console.log(`[DatasetStreamService] Seeded ${seededPoints.length} history datapoints for ${configuration.path}`);
       }
     } catch (error) {
-      console.warn(`[Dataset Service] Failed to seed history data for ${configuration.path}:`, error);
+      console.warn(`[DatasetStreamService] Failed to seed history data for ${configuration.path}:`, error);
       // Continue with live-only mode; don't block dataset startup
     }
   }
@@ -416,11 +416,11 @@ export class DatasetService implements OnDestroy {
    *
    * @private
    * @param {string} uuid The UUID of the DataSource to stop
-   * @memberof DataSetService
+   * @memberof DatasetStreamService
    */
   private stop(uuid: string) {
     const dsIndex = this._svcDataSource.findIndex(d => d.uuid == uuid);
-    console.log(`[Dataset Service] Stopping Dataset ${uuid} data capture`);
+    console.log(`[DatasetStreamService] Stopping Dataset ${uuid} data capture`);
     this._svcDataSource[dsIndex].pathObserverSubscription.unsubscribe();
     this._svcDataSource.splice(dsIndex, 1);
   }
@@ -429,7 +429,7 @@ export class DatasetService implements OnDestroy {
    * Returns a copy of all existing dataset configurations
    *
    * @return {*}  {IDatasetServiceDatasetConfig[]} Arrays of all historicalData configurations
-   * @memberof DataSetService
+   * @memberof DatasetStreamService
    */
   public list(): IDatasetServiceDatasetConfig[] {
     return cloneDeep(this._svcDatasetConfigs);
@@ -440,7 +440,7 @@ export class DatasetService implements OnDestroy {
    *
    * @param {string} uuid The UUID of the desired historicalData
    * @return {*}  {IDatasetServiceDatasetConfig} A Dataset configuration object
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig {
     return this._svcDatasetConfigs.find(config => config.uuid === uuid);
@@ -451,7 +451,7 @@ export class DatasetService implements OnDestroy {
    *
    * @param {string} uuid The UUID of the desired Data Source
    * @return {*}  {IDatasetServiceDatasetConfig} A data Source configuration object
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   public getDataSourceInfo(uuid: string): IDatasetServiceDataSourceInfo {
     return this._svcDataSource.find(config => config.uuid === uuid);
@@ -469,7 +469,7 @@ export class DatasetService implements OnDestroy {
   * @param {boolean} [editable] If true, the dataset configuration can be edited by the user. Defaults to true.
    * @param {string} [forced_id] If provided, this ID will be used instead of generating a new UUID. Useful for testing or when you want to ensure a specific ID is used.
    * @returns {string} The ID of the newly created dataset configuration
-   * @memberof DataSetService
+  * @memberof DatasetStreamService
    */
   public create(path: string, source: string, timeScaleFormat: TimeScaleFormat, period: number, label: string, serialize = true, editable = true, forced_id?: string): string | null {
     if (!path || !source || !timeScaleFormat || !period || !label) return null;
@@ -486,7 +486,7 @@ export class DatasetService implements OnDestroy {
       editable: editable
     };
 
-    console.log(`[Dataset Service] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
+    console.log(`[DatasetStreamService] Creating ${serialize ? '' : 'non-'}persistent ${editable ? '' : 'hidden '}dataset: ${newSvcDataset.uuid}, Path: ${newSvcDataset.path}, Source: ${newSvcDataset.pathSource} Scale: ${newSvcDataset.timeScaleFormat}, Period: ${newSvcDataset.period}`);
 
     this._svcDatasetConfigs.push(newSvcDataset);
 
@@ -504,7 +504,7 @@ export class DatasetService implements OnDestroy {
    *
    * @param {IDatasetServiceDatasetConfig} datasetConfig The updated dataset configuration object.
    * @returns {boolean} True if the dataset was updated and restarted, false if not found or unchanged.
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   public edit(datasetConfig: IDatasetServiceDatasetConfig, serialize = true): boolean {
     const existingConfig = this._svcDatasetConfigs.find(conf => conf.uuid === datasetConfig.uuid);
@@ -512,12 +512,12 @@ export class DatasetService implements OnDestroy {
       return false; // Dataset not found
     }
     if (JSON.stringify(existingConfig) === JSON.stringify(datasetConfig)) {
-      console.log(`[Dataset Service] No changes detected for Dataset ${datasetConfig.uuid}.`);
+      console.log(`[DatasetStreamService] No changes detected for Dataset ${datasetConfig.uuid}.`);
       return false; // Avoid unnecessary stop/start
     }
 
     this.stop(datasetConfig.uuid);
-    console.log(`[Dataset Service] Updating Dataset: ${datasetConfig.uuid}`);
+    console.log(`[DatasetStreamService] Updating Dataset: ${datasetConfig.uuid}`);
     datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
@@ -527,7 +527,7 @@ export class DatasetService implements OnDestroy {
   }
 
   /**
-   * Removes a dataset and all associated resources from the DatasetService.
+   * Removes a dataset and all associated resources from the DatasetStreamService.
    *
    * - Stops the data source recording process for the given UUID.
    * - Deletes the dataset configuration and removes it from the service registry.
@@ -537,13 +537,13 @@ export class DatasetService implements OnDestroy {
    * @param {string} uuid The UUID of the dataset to remove.
    * @param {boolean} [serialize=true] If true, the removal is persisted to application settings. If false, the dataset will reappear on app restart.
    * @returns {boolean} True if the dataset was found and removed, false otherwise.
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   public remove(uuid: string, serialize = true): boolean {
     if (!uuid || uuid === "" || this._svcDatasetConfigs.findIndex(c => c.uuid === uuid) === -1) return false;
 
     this.stop(uuid);
-    console.log(`[Dataset Service] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
+    console.log(`[DatasetStreamService] Removing ${serialize ? '' : 'non-'}persistent Dataset: ${uuid}`);
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid), 1);
     // stop Subject Observers
@@ -560,7 +560,7 @@ export class DatasetService implements OnDestroy {
    *
    * @param {string} dataSetUuid The UUID is the historicalData
    * @return {*}  {Observable<IDatasetServiceDatapoint> | null} Observable of data point array or null if not found
-   * @memberof DataSetService
+  * @memberof DatasetStreamService
    */
   public getDatasetObservable(dataSetUuid: string): Observable<IDatasetServiceDatapoint> | null {
     const registration = this._svcSubjectObserverRegistry.find(registration => registration.datasetUuid == dataSetUuid);
@@ -615,7 +615,7 @@ export class DatasetService implements OnDestroy {
    * @param {IDatasetServiceDatapoint[]} ds The historicalData object to update
    * @param {number} value The value to add to the historicalData
    * @return {*}  {IDatasetServiceDatapoint} A new historicalData object. Note: push() the object to the historicalData to
-   * @memberof DatasetService
+   * @memberof DatasetStreamService
    */
   private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar'): IDatasetServiceDatapoint {
     let avgCalc: number = null;

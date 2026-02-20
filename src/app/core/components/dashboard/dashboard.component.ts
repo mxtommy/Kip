@@ -16,11 +16,11 @@ import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Router } from '@angular/router';
-import { WidgetDatasetLifecycleService } from '../../services/widget-dataset-lifecycle.service';
+import { WidgetDatasetOrchestratorService } from '../../services/widget-dataset-orchestrator.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 import { DashboardClipboardBottomSheetComponent } from '../dashboard-clipboard-bottom-sheet/dashboard-clipboard-bottom-sheet.component';
-import { SignalkPluginConfigService } from '../../services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../services/plugin-config-client.service';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -46,8 +46,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
-  private readonly datasetLifecycle = inject(WidgetDatasetLifecycleService);
-  private readonly _pluginConfig = inject(SignalkPluginConfigService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
+  private readonly _pluginConfig = inject(PluginConfigClientService);
   protected readonly _router = inject(Router);
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected isDashboardStatic = computed(() => this.dashboard.isDashboardStatic());

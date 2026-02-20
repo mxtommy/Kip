@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IHistoryValuesResponse } from './signalk-history.service';
+import { IHistoryValuesResponse } from './history-api-client.service';
 
 /**
  * Defines how angular/radian values are interpreted while mapping historical data.
@@ -29,7 +29,7 @@ export interface IHistoryChartDatapoint {
 @Injectable({
   providedIn: 'root'
 })
-export class HistoryChartAdapterService {
+export class HistoryToChartMapperService {
   /**
    * Maps a History API response payload into normalized chart datapoints.
    *

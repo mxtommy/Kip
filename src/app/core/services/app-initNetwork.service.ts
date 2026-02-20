@@ -18,7 +18,7 @@ import { SignalKDeltaService } from './signalk-delta.service';
 import { IStorageRemoteBootstrapContext, StorageService } from './storage.service';
 import { ConnectionState, ConnectionStateMachine } from './connection-state-machine.service';
 import { InternetReachabilityService } from './internet-reachability.service';
-import { DatasetService } from './data-set.service';
+import { DatasetStreamService } from './dataset-stream.service';
 
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
@@ -47,7 +47,7 @@ export class AppNetworkInitService implements OnDestroy {
   private readonly storage = inject(StorageService); // Init to get data before app starts
   private readonly internetReachability = inject(InternetReachabilityService);
   private readonly injector = inject(Injector);
-  private datasetService: DatasetService | null = null;
+  private datasetService: DatasetStreamService | null = null;
   private readonly _bootstrapStatus$ = new BehaviorSubject<TBootstrapStatus>('starting');
   private readonly _bootstrapIssue$ = new BehaviorSubject<IBootstrapIssue>({ reason: 'none' });
 
@@ -181,9 +181,9 @@ export class AppNetworkInitService implements OnDestroy {
     return this._bootstrapIssue$.asObservable();
   }
 
-  private getDatasetService(): DatasetService {
+  private getDatasetService(): DatasetStreamService {
     if (!this.datasetService) {
-      this.datasetService = this.injector.get(DatasetService);
+      this.datasetService = this.injector.get(DatasetStreamService);
     }
     return this.datasetService;
   }

@@ -5,7 +5,7 @@ import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.dir
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { IPathUpdate } from '../../core/services/data.service';
 import { CanvasService } from '../../core/services/canvas.service';
-import { WidgetDatasetLifecycleService } from '../../core/services/widget-dataset-lifecycle.service';
+import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 import { ITheme } from '../../core/services/app-service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -53,7 +53,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private readonly stream = inject(WidgetStreamsDirective);
 
   private readonly canvas = inject(CanvasService);
-  private readonly datasetLifecycle = inject(WidgetDatasetLifecycleService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
 

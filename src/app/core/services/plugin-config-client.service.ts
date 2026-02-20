@@ -61,7 +61,7 @@ const UNSUPPORTED_JSON_SCHEMA_KEYWORDS = new Set([
  * - Leaves UI concerns (toasts, dialogs) to callers.
  */
 @Injectable({ providedIn: 'root' })
-export class SignalkPluginConfigService {
+export class PluginConfigClientService {
   private readonly http = inject(HttpClient);
   private readonly connection = inject(SignalKConnectionService);
   private kipRuntimeModeCache: IKipRuntimeModeConfig | null = null;

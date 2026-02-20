@@ -9,15 +9,15 @@ Use this quick-start map to be productive in this repo. Prefer these concrete pa
 - Storage: Config lives in Signal K when logged in, else local (StorageService). App init via APP_INITIALIZER (AppNetworkInitService).
 
 ## Final architecture (2026 Q1)
-- Historical-series orchestration path: `DashboardService` → `HistorySeriesReconcileService` → `KipSeriesService` → plugin `/plugins/kip/series/reconcile`.
-- Dataset write ownership is centralized in `WidgetDatasetLifecycleService`; avoid direct dataset create/edit/remove calls from widget/dashboard flows.
-- Shared history mapping path: `HistoryChartAdapterService` performs history-values → chart datapoint adaptation; `DatasetService` delegates to it.
+- Historical-series orchestration path: `DashboardService` → `DashboardHistorySeriesSyncService` → `KipSeriesApiClientService` → plugin `/plugins/kip/series/reconcile`.
+- Dataset write ownership is centralized in `WidgetDatasetOrchestratorService`; avoid direct dataset create/edit/remove calls from widget/dashboard flows.
+- Shared history mapping path: `HistoryToChartMapperService` performs history-values → chart datapoint adaptation; `DatasetStreamService` delegates to it.
 - Widget delete cleanup uses owner UUID matching (`ownerUuid` and `ownerUuid-*`) through lifecycle service, replacing selector-specific cleanup.
 
 ### Migration guardrails
 1. For chart/trend widgets, use lifecycle sync helpers (`syncDataChartDataset`, `syncNumericMiniChartDataset`, `syncWindTrendsDatasets`).
 2. Keep widget UUIDs stable and unique; ownership drives both dataset cleanup and history-series reconciliation.
-3. Route history response mapping changes through `HistoryChartAdapterService` only.
+3. Route history response mapping changes through `HistoryToChartMapperService` only.
 4. Do not reintroduce legacy selector-branch dataset cleanup in dashboard/widget code.
 
 ## Daily workflows
@@ -133,9 +133,9 @@ Template:
 - SCSS: use variables from src/themes/_m3*.scss; avoid hardcoded hex.
 
 ## Datasets & charts
-- Historical/trend data: DataSetService (src/app/core/services/data-set.service.ts). Create/update/remove in widget lifecycle.
-- Example: src/app/widgets/widget-windtrends-chart uses Chart.js + date-fns and DataSetService for batch-then-live streams.
-- Preferred write path: `WidgetDatasetLifecycleService` (centralized dataset orchestration for Data Chart / Numeric minichart / Windtrends and owner-based cleanup).
+- Historical/trend data: DatasetStreamService (src/app/core/services/dataset-stream.service.ts). Create/update/remove in widget lifecycle.
+- Example: src/app/widgets/widget-windtrends-chart uses Chart.js + date-fns and DatasetStreamService for batch-then-live streams.
+- Preferred write path: `WidgetDatasetOrchestratorService` (centralized dataset orchestration for Data Chart / Numeric minichart / Windtrends and owner-based cleanup).
 
 ## Signal K PUT/requests
 - Read via DataService; write via SignalKRequestsService. UI filters PUT-enabled paths (see src/assets/help-docs/putcontrols.md).
@@ -156,18 +156,18 @@ Template:
 - Do: Use widget-embedded or inline directives for composites. Don’t: Reintroduce legacy host wrappers.
 
 ## Key files/dirs
-- Core services: `src/app/core/services/` (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DataSetService, NotificationsService)
+- Core services: `src/app/core/services/` (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DatasetStreamService, NotificationsService)
 - Plugin config foundation: `src/app/core/services/signalk-plugin-config.service.ts` (plugin-only detection, dependency validation, schema normalization metadata, and config persistence via `/plugins` endpoints)
 - Directives: `src/app/core/directives/` (widget-runtime, widget-streams, widget-metadata)
 - Widgets: `src/app/widgets/` (e.g., widget-numeric, widget-gauge-ng-*, widget-data-chart, widget-windtrends-chart, widget-autopilot)
 - Embedded host: `src/app/core/components/widget-embedded/`
 - Config UI: `src/app/widget-config/`
-- Plugin management (server plugins) is handled separately through `SignalkPluginConfigService` and `/plugins` REST endpoints. Keep install/uninstall out of scope unless explicitly added.
+- Plugin management (server plugins) is handled separately through `PluginConfigClientService` and `/plugins` REST endpoints. Keep install/uninstall out of scope unless explicitly added.
 - Build: `angular.json`, `package.json` scripts
 
 ## Debugging
 - Use Data Inspector (src/app/core/components/data-inspector) to verify live paths/metadata.
-- Dev with source maps: npm run dev. Watch console from DataService/DataSetService for timeouts/lifecycle logs.
+- Dev with source maps: npm run dev. Watch console from DataService/DatasetStreamService for timeouts/lifecycle logs.
 - Embeds (widget-iframe): prefer same-origin or relative URLs to avoid CORS and input-injection limits (see embedwidget.md).
 
 ## SVG Animation Helpers (rAF)

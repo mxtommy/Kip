@@ -47,7 +47,7 @@ type IHistoryTimeRangeQueryParams = Partial<TimeRangeQueryParams>;
 @Injectable({
   providedIn: 'root'
 })
-export class SignalkHistoryService {
+export class HistoryApiClientService {
   private http = inject(HttpClient);
   private connection = inject(SignalKConnectionService);
   private destroyRef = inject(DestroyRef);
@@ -62,7 +62,7 @@ export class SignalkHistoryService {
         const httpServiceUrl = endpoint?.httpServiceUrl || null;
         this.historyServiceUrl = httpServiceUrl ? httpServiceUrl.replace('/v1/', '/v2/') : null;
         if (!this.historyServiceUrl) {
-          console.warn(`[SignalkHistoryService] History API endpoint not available; history service is disabled`);
+          console.warn(`[HistoryApiClientService] History API endpoint not available; history service is disabled`);
         }
       });
   }
@@ -86,12 +86,12 @@ export class SignalkHistoryService {
    *     console.log('Available paths:', paths);
    *   }
    *
-   * @memberof SignalkHistoryService
+   * @memberof HistoryApiClientService
    */
   public async getPaths(params?: IHistoryTimeRangeQueryParams): Promise<string[] | null> {
     try {
       if (!this.historyServiceUrl) {
-        console.warn('[SignalkHistoryService] No HTTP service URL available');
+        console.warn('[HistoryApiClientService] No HTTP service URL available');
         return null;
       }
 
@@ -110,16 +110,16 @@ export class SignalkHistoryService {
       }
 
       const fullUrl = `${historyUrl}?${httpParams.toString()}`;
-      console.log(`[SignalkHistoryService] GET ${fullUrl}`);
+      console.log(`[HistoryApiClientService] GET ${fullUrl}`);
 
       const response = await firstValueFrom(
         this.http.get<string[]>(historyUrl, { params: httpParams })
       );
 
-      console.log(`[SignalkHistoryService] Retrieved ${response?.length ?? 0} available paths`);
+      console.log(`[HistoryApiClientService] Retrieved ${response?.length ?? 0} available paths`);
       return response;
     } catch (error) {
-      console.error('[SignalkHistoryService] History API /paths request failed:', error);
+      console.error('[HistoryApiClientService] History API /paths request failed:', error);
       return null;
     }
   }
@@ -140,12 +140,12 @@ export class SignalkHistoryService {
    *     console.log('Available contexts:', contexts);
    *   }
    *
-   * @memberof SignalkHistoryService
+   * @memberof HistoryApiClientService
    */
   public async getContexts(params?: IHistoryTimeRangeQueryParams): Promise<string[] | null> {
     try {
       if (!this.historyServiceUrl) {
-        console.warn('[SignalkHistoryService] No HTTP service URL available');
+        console.warn('[HistoryApiClientService] No HTTP service URL available');
         return null;
       }
 
@@ -164,16 +164,16 @@ export class SignalkHistoryService {
       }
 
       const fullUrl = `${historyUrl}?${httpParams.toString()}`;
-      console.log(`[SignalkHistoryService] GET ${fullUrl}`);
+      console.log(`[HistoryApiClientService] GET ${fullUrl}`);
 
       const response = await firstValueFrom(
         this.http.get<string[]>(historyUrl, { params: httpParams })
       );
 
-      console.log(`[SignalkHistoryService] Retrieved ${response?.length ?? 0} available contexts`);
+      console.log(`[HistoryApiClientService] Retrieved ${response?.length ?? 0} available contexts`);
       return response;
     } catch (error) {
-      console.error('[SignalkHistoryService] History API /contexts request failed:', error);
+      console.error('[HistoryApiClientService] History API /contexts request failed:', error);
       return null;
     }
   }
@@ -208,12 +208,12 @@ export class SignalkHistoryService {
    *     }
    *   }
    *
-   * @memberof SignalkHistoryService
+   * @memberof HistoryApiClientService
    */
   public async getValues(params: IHistoryValuesQueryParams): Promise<IHistoryValuesResponse | null> {
     try {
       if (!this.historyServiceUrl) {
-        console.warn('[SignalkHistoryService] No HTTP service URL available');
+        console.warn('[HistoryApiClientService] No HTTP service URL available');
         return null;
       }
 
@@ -239,16 +239,16 @@ export class SignalkHistoryService {
       }
 
       const fullUrl = `${historyUrl}?${httpParams.toString()}`;
-      console.log(`[SignalkHistoryService] GET ${fullUrl}`);
+      console.log(`[HistoryApiClientService] GET ${fullUrl}`);
 
       const response = await firstValueFrom(
         this.http.get<IHistoryValuesResponse>(historyUrl, { params: httpParams })
       );
 
-      console.log(`[SignalkHistoryService] History fetch successful, received ${response.data?.length ?? 0} data points`);
+      console.log(`[HistoryApiClientService] History fetch successful, received ${response.data?.length ?? 0} data points`);
       return response;
     } catch (error) {
-      console.error('[SignalkHistoryService] History API request failed:', error);
+      console.error('[HistoryApiClientService] History API request failed:', error);
       return null;
     }
   }

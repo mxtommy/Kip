@@ -9,7 +9,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { SignalkPluginConfigService } from '../../../services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../../services/plugin-config-client.service';
 import { IPluginApiFailure, ISignalkPlugin } from '../../../interfaces/signalk-plugin-config.interfaces';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
@@ -38,7 +38,7 @@ export class SettingsDisplayComponent implements OnInit {
   private toast = inject(ToastService);
   private _settings = inject(SettingsService);
   private _responsive = inject(BreakpointObserver);
-  private _pluginConfig = inject(SignalkPluginConfigService);
+  private _pluginConfig = inject(PluginConfigClientService);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
   protected autoNightMode = model<boolean>(false);

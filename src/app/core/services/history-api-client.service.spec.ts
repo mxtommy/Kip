@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BehaviorSubject } from 'rxjs';
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
-import { SignalkHistoryService } from './signalk-history.service';
+import { HistoryApiClientService } from './history-api-client.service';
 
 class SignalKConnectionServiceStub {
   public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
@@ -14,8 +14,8 @@ class SignalKConnectionServiceStub {
   });
 }
 
-describe('SignalkHistoryService', () => {
-  let service: SignalkHistoryService;
+describe('HistoryApiClientService', () => {
+  let service: HistoryApiClientService;
   let httpMock: HttpTestingController;
   let connectionStub: SignalKConnectionServiceStub;
 
@@ -23,12 +23,12 @@ describe('SignalkHistoryService', () => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
-        SignalkHistoryService,
+        HistoryApiClientService,
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub }
       ]
     });
 
-    service = TestBed.inject(SignalkHistoryService);
+    service = TestBed.inject(HistoryApiClientService);
     httpMock = TestBed.inject(HttpTestingController);
     connectionStub = TestBed.inject(SignalKConnectionService) as unknown as SignalKConnectionServiceStub;
   });

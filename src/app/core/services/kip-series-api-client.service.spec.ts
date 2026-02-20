@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BehaviorSubject } from 'rxjs';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
-import { KipSeriesService } from './kip-series.service';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { KipSeriesApiClientService } from './kip-series-api-client.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 
 class SignalKConnectionServiceStub {
   public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
@@ -15,8 +15,8 @@ class SignalKConnectionServiceStub {
   });
 }
 
-describe('KipSeriesService', () => {
-  let service: KipSeriesService;
+describe('KipSeriesApiClientService', () => {
+  let service: KipSeriesApiClientService;
   let httpMock: HttpTestingController;
   let connectionStub: SignalKConnectionServiceStub;
   let historySeriesServiceEnabled = true;
@@ -36,13 +36,13 @@ describe('KipSeriesService', () => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
-        KipSeriesService,
+        KipSeriesApiClientService,
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
-        { provide: SignalkPluginConfigService, useValue: pluginConfigMock }
+        { provide: PluginConfigClientService, useValue: pluginConfigMock }
       ]
     });
 
-    service = TestBed.inject(KipSeriesService);
+    service = TestBed.inject(KipSeriesApiClientService);
     httpMock = TestBed.inject(HttpTestingController);
     connectionStub = TestBed.inject(SignalKConnectionService) as unknown as SignalKConnectionServiceStub;
   });

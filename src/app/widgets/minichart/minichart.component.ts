@@ -1,6 +1,6 @@
 import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
-import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
-import { IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
+import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
 import { ITheme } from '../../core/services/app-service';
@@ -46,7 +46,7 @@ export class MinichartComponent implements OnDestroy {
   public verticalChart = null;
   public datasetUUID: string = null;
   protected unitsService = inject(UnitsService);
-  private readonly dsService = inject(DatasetService);
+  private readonly dsService = inject(DatasetStreamService);
   private readonly ngZone = inject(NgZone);
   private readonly canvasService = inject(CanvasService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });

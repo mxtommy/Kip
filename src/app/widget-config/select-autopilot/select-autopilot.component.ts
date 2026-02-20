@@ -28,7 +28,7 @@
  * - Integrates with Angular Reactive Forms and Material
  */
 import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
-import { SignalkPluginConfigService } from '../../core/services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 import { IV2AutopilotOptionsResponse, IV2AutopilotProvider } from '../../core/interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -67,7 +67,7 @@ const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
 })
 export class SelectAutopilotComponent implements OnInit {
 readonly formGroupName = input.required<string>();
-private readonly _pluginConfig = inject(SignalkPluginConfigService);
+private readonly _pluginConfig = inject(PluginConfigClientService);
 private readonly _destroyRef = inject(DestroyRef);
 private readonly http = inject(HttpClient);
 

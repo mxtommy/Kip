@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { SelectAutopilotComponent } from './select-autopilot.component';
 import { Component } from '@angular/core';
-import { SignalkPluginConfigService } from '../../core/services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 
 @Component({
   selector: 'host-wrapper',
@@ -32,7 +32,7 @@ describe('SelectAutopilotComponent', () => {
       imports: [HostWrapperComponent],
       providers: [
         provideHttpClient(),
-        { provide: SignalkPluginConfigService, useValue: { getPlugin: () => Promise.resolve({ ok: false }) } }
+        { provide: PluginConfigClientService, useValue: { getPlugin: () => Promise.resolve({ ok: false }) } }
       ]
     })
     .compileComponents();

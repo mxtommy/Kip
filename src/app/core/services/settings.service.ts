@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { IDatasetServiceDatasetConfig } from './data-set.service';
+import { IDatasetServiceDatasetConfig } from './dataset-stream.service';
 import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid.util';

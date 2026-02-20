@@ -2,10 +2,10 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Dashboard, DashboardService } from './dashboard.service';
-import { HistorySeriesReconcileService } from './history-series-reconcile.service';
-import { IKipSeriesDefinition, KipSeriesService } from './kip-series.service';
+import { DashboardHistorySeriesSyncService } from './dashboard-history-series-sync.service';
+import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 
 class DashboardServiceStub {
   public dashboards = signal<Dashboard[]>([]);
@@ -76,7 +76,7 @@ function seriesIds(series: IKipSeriesDefinition[]): string[] {
   return series.map(item => item.seriesId).sort();
 }
 
-describe('HistorySeriesReconcileService', () => {
+describe('DashboardHistorySeriesSyncService', () => {
   let dashboardStub: DashboardServiceStub;
   let connectionStub: SignalKConnectionServiceStub;
   let historySeriesServiceEnabled = true;
@@ -103,12 +103,12 @@ describe('HistorySeriesReconcileService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        HistorySeriesReconcileService,
+        DashboardHistorySeriesSyncService,
         { provide: DashboardService, useClass: DashboardServiceStub },
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
-        { provide: SignalkPluginConfigService, useValue: pluginConfigMock },
+        { provide: PluginConfigClientService, useValue: pluginConfigMock },
         {
-          provide: KipSeriesService,
+          provide: KipSeriesApiClientService,
           useValue: {
             reconcileSeries: reconcileSpy
           }
@@ -146,7 +146,7 @@ describe('HistorySeriesReconcileService', () => {
       }
     ]);
 
-    TestBed.inject(HistorySeriesReconcileService);
+    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).not.toHaveBeenCalled();
@@ -200,7 +200,7 @@ describe('HistorySeriesReconcileService', () => {
       }
     ]);
 
-    TestBed.inject(HistorySeriesReconcileService);
+    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
@@ -274,7 +274,7 @@ describe('HistorySeriesReconcileService', () => {
       }
     ]);
 
-    TestBed.inject(HistorySeriesReconcileService);
+    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).not.toHaveBeenCalled();
@@ -314,7 +314,7 @@ describe('HistorySeriesReconcileService', () => {
         ]
       }
     ]);
-    TestBed.inject(HistorySeriesReconcileService);
+    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
@@ -370,7 +370,7 @@ describe('HistorySeriesReconcileService', () => {
       WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
     });
 
-    TestBed.inject(HistorySeriesReconcileService);
+    TestBed.inject(DashboardHistorySeriesSyncService);
 
     const baselineDashboards: Dashboard[] = [
       {

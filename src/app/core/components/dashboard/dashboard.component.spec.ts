@@ -6,8 +6,8 @@ import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ToastService } from '../../services/toast.service';
-import { SignalkPluginConfigService } from '../../services/signalk-plugin-config.service';
-import { WidgetDatasetLifecycleService } from '../../services/widget-dataset-lifecycle.service';
+import { PluginConfigClientService } from '../../services/plugin-config-client.service';
+import { WidgetDatasetOrchestratorService } from '../../services/widget-dataset-orchestrator.service';
 import { DialogService } from '../../services/dialog.service';
 import { uiEventService } from '../../services/uiEvent.service';
 
@@ -49,8 +49,8 @@ describe('DashboardComponent', () => {
     });
 
     const mockToastService = jasmine.createSpyObj('ToastService', ['show']);
-    const mockPluginConfigService = jasmine.createSpyObj('SignalkPluginConfigService', ['getPlugin', 'setPluginEnabled']);
-    const mockDatasetLifecycleService = jasmine.createSpyObj('WidgetDatasetLifecycleService', ['removeOwnedDatasets']);
+    const mockPluginConfigService = jasmine.createSpyObj('PluginConfigClientService', ['getPlugin', 'setPluginEnabled']);
+    const mockDatasetLifecycleService = jasmine.createSpyObj('WidgetDatasetOrchestratorService', ['removeOwnedDatasets']);
     const mockDialogService = jasmine.createSpyObj('DialogService', ['openFrameDialog']);
     const mockUiEventService = jasmine.createSpyObj('uiEventService', ['addHotkeyListener', 'removeHotkeyListener'], {
       isDragging: signal(false)
@@ -62,8 +62,8 @@ describe('DashboardComponent', () => {
         provideRouter([]),
         { provide: DashboardService, useValue: mockDashboardService },
         { provide: ToastService, useValue: mockToastService },
-        { provide: SignalkPluginConfigService, useValue: mockPluginConfigService },
-        { provide: WidgetDatasetLifecycleService, useValue: mockDatasetLifecycleService },
+        { provide: PluginConfigClientService, useValue: mockPluginConfigService },
+        { provide: WidgetDatasetOrchestratorService, useValue: mockDatasetLifecycleService },
         { provide: DialogService, useValue: mockDialogService },
         { provide: uiEventService, useValue: mockUiEventService }
       ]

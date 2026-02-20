@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SignalKConnectionService } from './signalk-connection.service';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 
 /**
  * Series definition expected by the KIP plugin `/plugins/kip/series/reconcile` endpoint.
@@ -36,10 +36,10 @@ export interface IKipSeriesReconcileResult {
 @Injectable({
   providedIn: 'root'
 })
-export class KipSeriesService {
+export class KipSeriesApiClientService {
   private readonly http = inject(HttpClient);
   private readonly connection = inject(SignalKConnectionService);
-  private readonly pluginConfig = inject(SignalkPluginConfigService);
+  private readonly pluginConfig = inject(PluginConfigClientService);
   private readonly destroyRef = inject(DestroyRef);
 
   private kipPluginServiceUrl: string | null = null;
@@ -82,7 +82,7 @@ export class KipSeriesService {
    * @returns {Promise<IKipSeriesReconcileResult | null>} Reconcile summary when successful, otherwise null.
    *
    * @example
-   * const result = await kipSeriesService.reconcileSeries([
+  * const result = await kipSeriesApiClientService.reconcileSeries([
    *   {
    *     seriesId: 'widget-123:datachart',
    *     datasetUuid: 'widget-123',
@@ -96,34 +96,34 @@ export class KipSeriesService {
    *   }
    * ]);
    *
-   * @memberof KipSeriesService
+   * @memberof KipSeriesApiClientService
    */
   public async reconcileSeries(seriesDefinitions: IKipSeriesDefinition[]): Promise<IKipSeriesReconcileResult | null> {
     try {
       const modeConfig = await this.pluginConfig.getKipRuntimeModeConfigCached('kip');
       if (!modeConfig.historySeriesServiceEnabled) {
-        console.warn('[KipSeriesService] Reconcile skipped because history-series service is disabled in KIP plugin settings');
+        console.warn('[KipSeriesApiClientService] Reconcile skipped because history-series service is disabled in KIP plugin settings');
         return null;
       }
 
       if (!this.kipPluginServiceUrl) {
-        console.warn('[KipSeriesService] No KIP plugin endpoint available for series reconcile');
+        console.warn('[KipSeriesApiClientService] No KIP plugin endpoint available for series reconcile');
         return null;
       }
 
       const reconcileUrl = `${this.kipPluginServiceUrl}series/reconcile`;
-      console.log(`[KipSeriesService] POST ${reconcileUrl} (${seriesDefinitions.length} series)`);
+      console.log(`[KipSeriesApiClientService] POST ${reconcileUrl} (${seriesDefinitions.length} series)`);
 
       const response = await firstValueFrom(
         this.http.post<IKipSeriesReconcileResult>(reconcileUrl, seriesDefinitions)
       );
 
       console.log(
-        `[KipSeriesService] Series reconcile successful (created=${response.created}, updated=${response.updated}, deleted=${response.deleted}, total=${response.total})`
+        `[KipSeriesApiClientService] Series reconcile successful (created=${response.created}, updated=${response.updated}, deleted=${response.deleted}, total=${response.total})`
       );
       return response;
     } catch (error) {
-      console.error('[KipSeriesService] Series reconcile request failed:', error);
+      console.error('[KipSeriesApiClientService] Series reconcile request failed:', error);
       return null;
     }
   }
