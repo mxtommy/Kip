@@ -2,7 +2,7 @@ import { DestroyRef, effect, inject, Injectable } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard, DashboardService } from './dashboard.service';
-import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
@@ -31,6 +31,7 @@ export class DashboardHistorySeriesSyncService {
   });
 
   private readonly RECONCILE_DEBOUNCE_MS = 750;
+  private readonly AUTO_RETENTION_MS = 24 * 60 * 60 * 1000;
   private reconcileTimer: number | null = null;
   private lastSubmittedSignature: string | null = null;
   private pendingSignature: string | null = null;
@@ -115,16 +116,25 @@ export class DashboardHistorySeriesSyncService {
       const widgetUuid = widget?.uuid;
 
       if (widgetType && widgetUuid) {
+        const cfg = widget?.config;
+        if (cfg?.supportAutomaticHistoricalSeries === false) {
+          return;
+        }
+
         if (widgetType === 'widget-data-chart') {
-          const series = this.mapDataChartWidget(widgetUuid, widgetType, widget?.config);
+          const series = this.mapDataChartWidget(widgetUuid, widgetType, cfg);
           if (series) {
             sink.push(series);
           }
+          return;
         }
 
         if (widgetType === 'widget-windtrends-chart') {
-          sink.push(...this.mapWindTrendsWidget(widgetUuid, widgetType, widget?.config));
+          sink.push(...this.mapWindTrendsWidget(widgetUuid, widgetType, cfg));
+          return;
         }
+
+        sink.push(...this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg));
       }
 
       const children = this.coerceNodeList(node?.subGridOpts?.children);
@@ -183,6 +193,68 @@ export class DashboardHistorySeriesSyncService {
         path: 'self.environment.wind.speedTrue',
       }
     ];
+  }
+
+  private mapAutomaticHistorySeries(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipSeriesDefinition[] {
+    const paths = this.extractWidgetPaths(cfg?.paths);
+    const seriesBySignature = new Map<string, IKipSeriesDefinition>();
+
+    paths.forEach(pathCfg => {
+      if (pathCfg.pathType !== 'number') {
+        return;
+      }
+
+      const path = this.normalizeString(pathCfg.path);
+      if (!path) {
+        return;
+      }
+
+      const source = this.normalizeString(pathCfg.source);
+      const signature = `${path}|${source ?? 'default'}`;
+      if (seriesBySignature.has(signature)) {
+        return;
+      }
+
+      const pathKey = this.slugify(path);
+      const sourceKey = this.slugify(source ?? 'default');
+      const sampleTime = this.normalizeNumber(pathCfg.sampleTime);
+
+      seriesBySignature.set(signature, {
+        seriesId: `${widgetUuid}:auto:${pathKey}:${sourceKey}`,
+        datasetUuid: `${widgetUuid}:${pathKey}:${sourceKey}`,
+        ownerWidgetUuid: widgetUuid,
+        ownerWidgetSelector: widgetType,
+        path,
+        context: null,
+        source,
+        timeScale: this.normalizeString(cfg?.timeScale),
+        period: this.normalizeNumber(cfg?.period),
+        retentionDurationMs: this.AUTO_RETENTION_MS,
+        sampleTime,
+        enabled: true,
+      });
+    });
+
+    return [...seriesBySignature.values()];
+  }
+
+  private extractWidgetPaths(paths: IWidgetSvcConfig['paths'] | undefined): IWidgetPath[] {
+    if (!paths) {
+      return [];
+    }
+
+    if (Array.isArray(paths)) {
+      return paths;
+    }
+
+    return Object.values(paths);
+  }
+
+  private slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   private normalizeString(value: unknown): string | null {

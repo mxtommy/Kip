@@ -19,6 +19,7 @@ export class WidgetWindComponent implements OnDestroy {
   public theme = input.required<ITheme|null>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     filterSelfPaths: true,
     paths: {
       headingPath: {

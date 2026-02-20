@@ -21,6 +21,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
 
   // Static full default config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     filterSelfPaths: true,
     paths: {
       headingPath: { description: 'True Heading', path: 'self.navigation.headingTrue', source: 'default', pathType: 'number', isPathConfigurable: true, pathSkUnitsFilter: 'rad', convertUnitTo: 'deg', sampleTime: 500 },

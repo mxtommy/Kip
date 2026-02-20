@@ -73,7 +73,8 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
         sampleTime: 500
       }
     },
-    gauge: {
+      supportAutomaticHistoricalSeries: true,
+      gauge: {
       type: 'ngRadial',
       subType: 'baseplateCompass', // marineCompass, baseplateCompass
       enableTicks: true,

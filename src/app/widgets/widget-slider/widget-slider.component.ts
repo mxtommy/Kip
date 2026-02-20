@@ -22,6 +22,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   public type = input.required<string>();
   public theme = input.required<ITheme|null>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     displayName: 'Slider Label',
     filterSelfPaths: true,
     paths: {

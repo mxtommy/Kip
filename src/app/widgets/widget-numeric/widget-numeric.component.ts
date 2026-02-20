@@ -21,6 +21,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   public type = input.required<string>();
   public theme = input.required<ITheme|null>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {

@@ -23,6 +23,89 @@ class SignalKConnectionServiceStub {
 
 type TWidgetNode = NonNullable<Dashboard['configuration']>[number];
 
+function createAutomaticNode(uuid: string, selector: string, options?: {
+  supportAutomaticHistoricalSeries?: boolean;
+  numericPath?: string | null;
+  textPath?: string | null;
+  source?: string | null;
+  sampleTime?: number;
+  period?: number;
+  timeScale?: string;
+}): TWidgetNode {
+  const numericPath = options?.numericPath ?? 'navigation.speedThroughWater';
+  const textPath = options?.textPath ?? 'navigation.state';
+
+  return {
+    id: uuid,
+    selector: 'widget-host2',
+    input: {
+      widgetProperties: {
+        uuid,
+        type: selector,
+        config: {
+          supportAutomaticHistoricalSeries: options?.supportAutomaticHistoricalSeries,
+          timeScale: options?.timeScale ?? 'minute',
+          period: options?.period ?? 10,
+          paths: {
+            numericPath: {
+              description: 'Numeric Data',
+              path: numericPath,
+              source: options?.source ?? null,
+              pathType: 'number',
+              isPathConfigurable: true,
+              sampleTime: options?.sampleTime ?? 1000
+            },
+            textPath: {
+              description: 'Text Data',
+              path: textPath,
+              source: null,
+              pathType: 'string',
+              isPathConfigurable: true,
+              sampleTime: 1000
+            }
+          }
+        }
+      }
+    }
+  } as TWidgetNode;
+}
+
+function createArrayPathsNode(uuid: string, selector: string, supportAutomaticHistoricalSeries?: boolean): TWidgetNode {
+  return {
+    id: uuid,
+    selector: 'widget-host2',
+    input: {
+      widgetProperties: {
+        uuid,
+        type: selector,
+        config: {
+          supportAutomaticHistoricalSeries,
+          timeScale: 'hour',
+          period: 1,
+          paths: [
+            {
+              description: 'Numeric Data',
+              path: 'navigation.headingTrue',
+              source: null,
+              pathType: 'number',
+              isPathConfigurable: true,
+              sampleTime: 500
+            },
+            {
+              description: 'Disabled Numeric Data',
+              path: null,
+              source: null,
+              pathType: 'number',
+              isPathConfigurable: true,
+              sampleTime: 1000
+            }
+          ]
+        }
+      }
+    }
+  } as TWidgetNode;
+}
+
 function createDataChartNode(uuid: string, path: string, period = 10): TWidgetNode {
   return {
     id: uuid,
@@ -127,21 +210,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         name: 'Dashboard 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          {
-            id: 'widget-1',
-            selector: 'widget-host2',
-            input: {
-              widgetProperties: {
-                uuid: 'widget-1',
-                type: 'widget-data-chart',
-                config: {
-                  datachartPath: 'navigation.speedThroughWater',
-                  timeScale: 'minute',
-                  period: 10,
-                }
-              }
-            }
-          }
+          createAutomaticNode('widget-1', 'widget-numeric')
         ]
       }
     ]);
@@ -152,7 +221,7 @@ describe('DashboardHistorySeriesSyncService', () => {
     expect(reconcileSpy).not.toHaveBeenCalled();
   }));
 
-  it('should extract chart series and reconcile once after debounce', fakeAsync(() => {
+  it('should extract numeric path series and reconcile once after debounce', fakeAsync(() => {
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -167,35 +236,13 @@ describe('DashboardHistorySeriesSyncService', () => {
         name: 'Dashboard 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          {
-            id: 'widget-data-1',
-            selector: 'widget-host2',
-            input: {
-              widgetProperties: {
-                uuid: 'widget-data-1',
-                type: 'widget-data-chart',
-                config: {
-                  datachartPath: 'navigation.speedThroughWater',
-                  datachartSource: 'default',
-                  timeScale: 'minute',
-                  period: 10,
-                }
-              }
-            }
-          },
-          {
-            id: 'widget-wind-1',
-            selector: 'widget-host2',
-            input: {
-              widgetProperties: {
-                uuid: 'widget-wind-1',
-                type: 'widget-windtrends-chart',
-                config: {
-                  timeScale: 'Last 30 Minutes'
-                }
-              }
-            }
-          }
+          createAutomaticNode('widget-numeric-1', 'widget-numeric', {
+            numericPath: 'navigation.speedThroughWater',
+            source: 'default',
+            timeScale: 'minute',
+            period: 10,
+            sampleTime: 1200
+          })
         ]
       }
     ]);
@@ -206,50 +253,70 @@ describe('DashboardHistorySeriesSyncService', () => {
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
 
     const submitted = reconcileSpy.calls.mostRecent().args[0];
-    expect(submitted).toEqual([
+    expect(submitted.length).toBe(1);
+    expect(submitted[0]).toEqual({
+      seriesId: 'widget-numeric-1:auto:navigation-speedthroughwater:default',
+      datasetUuid: 'widget-numeric-1:navigation-speedthroughwater:default',
+      ownerWidgetUuid: 'widget-numeric-1',
+      ownerWidgetSelector: 'widget-numeric',
+      path: 'navigation.speedThroughWater',
+      context: null,
+      source: 'default',
+      timeScale: 'minute',
+      period: 10,
+      retentionDurationMs: 86400000,
+      sampleTime: 1200,
+      enabled: true,
+    });
+  }));
+
+  it('should preserve dedicated data chart and wind trends sync mappings', fakeAsync(() => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    dashboardStub.dashboards.set([
       {
-        seriesId: 'widget-data-1:datachart',
-        datasetUuid: 'widget-data-1',
-        ownerWidgetUuid: 'widget-data-1',
-        ownerWidgetSelector: 'widget-data-chart',
-        path: 'navigation.speedThroughWater',
-        context: null,
-        source: 'default',
-        timeScale: 'minute',
-        period: 10,
-        retentionDurationMs: null,
-        sampleTime: null,
-        enabled: true,
-      },
-      {
-        seriesId: 'widget-wind-1:wind-direction',
-        datasetUuid: 'widget-wind-1-twd',
-        ownerWidgetUuid: 'widget-wind-1',
-        ownerWidgetSelector: 'widget-windtrends-chart',
-        path: 'self.environment.wind.directionTrue',
-        context: null,
-        source: 'default',
-        timeScale: 'Last 30 Minutes',
-        period: 30,
-        retentionDurationMs: null,
-        sampleTime: null,
-        enabled: true,
-      },
-      {
-        seriesId: 'widget-wind-1:wind-speed',
-        datasetUuid: 'widget-wind-1-tws',
-        ownerWidgetUuid: 'widget-wind-1',
-        ownerWidgetSelector: 'widget-windtrends-chart',
-        path: 'self.environment.wind.speedTrue',
-        context: null,
-        source: 'default',
-        timeScale: 'Last 30 Minutes',
-        period: 30,
-        retentionDurationMs: null,
-        sampleTime: null,
-        enabled: true,
+        id: 'dash-1',
+        name: 'Dashboard 1',
+        icon: 'dashboard-dashboard',
+        configuration: [
+          createDataChartNode('widget-data-1', 'navigation.speedThroughWater', 10),
+          createWindTrendsNode('widget-wind-1'),
+          createAutomaticNode('widget-numeric-1', 'widget-numeric', {
+            numericPath: 'navigation.headingTrue',
+            source: null,
+            period: 5,
+            sampleTime: 500
+          })
+        ]
       }
     ]);
+
+    TestBed.inject(DashboardHistorySeriesSyncService);
+    tick(800);
+
+    expect(reconcileSpy).toHaveBeenCalledTimes(1);
+    const submitted = reconcileSpy.calls.mostRecent().args[0];
+    expect(seriesIds(submitted)).toEqual([
+      'widget-data-1:datachart',
+      'widget-numeric-1:auto:navigation-headingtrue:default',
+      'widget-wind-1:wind-direction',
+      'widget-wind-1:wind-speed'
+    ]);
+
+    const dataChart = submitted.find(series => series.seriesId === 'widget-data-1:datachart');
+    expect(dataChart?.path).toBe('navigation.speedThroughWater');
+
+    const windDirection = submitted.find(series => series.seriesId === 'widget-wind-1:wind-direction');
+    expect(windDirection?.path).toBe('self.environment.wind.directionTrue');
+
+    const windSpeed = submitted.find(series => series.seriesId === 'widget-wind-1:wind-speed');
+    expect(windSpeed?.path).toBe('self.environment.wind.speedTrue');
   }));
 
   it('should skip reconcile when history series service mode is disabled', fakeAsync(() => {
@@ -269,7 +336,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         name: 'Dashboard 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          createDataChartNode('widget-data-1', 'navigation.speedThroughWater')
+          createAutomaticNode('widget-data-1', 'widget-numeric')
         ]
       }
     ]);
@@ -295,22 +362,10 @@ describe('DashboardHistorySeriesSyncService', () => {
         name: 'Dashboard 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          {
-            id: 'widget-data-1',
-            selector: 'widget-host2',
-            input: {
-              widgetProperties: {
-                uuid: 'widget-data-1',
-                type: 'widget-data-chart',
-                config: {
-                  datachartPath: 'navigation.speedThroughWater',
-                  datachartSource: 'default',
-                  timeScale: 'minute',
-                  period: 10,
-                }
-              }
-            }
-          }
+          createAutomaticNode('widget-data-1', 'widget-numeric', {
+            source: 'default',
+            period: 10
+          })
         ]
       }
     ]);
@@ -342,7 +397,17 @@ describe('DashboardHistorySeriesSyncService', () => {
             ...(firstWidget.input?.widgetProperties ?? {}),
             config: {
               ...(firstWidget.input?.widgetProperties?.config ?? {}),
-              period: 20
+              paths: {
+                ...((firstWidget.input?.widgetProperties?.config?.paths as Record<string, unknown>) ?? {}),
+                numericPath: {
+                  description: 'Numeric Data',
+                  path: 'navigation.speedOverGround',
+                  source: 'default',
+                  pathType: 'number',
+                  isPathConfigurable: true,
+                  sampleTime: 1000
+                }
+              }
             }
           }
         }
@@ -358,10 +423,10 @@ describe('DashboardHistorySeriesSyncService', () => {
 
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
     const submitted = reconcileSpy.calls.mostRecent().args[0];
-    expect(submitted[0].period).toBe(20);
+    expect(submitted[0].path).toBe('navigation.speedOverGround');
   }));
 
-  it('converges series set across add/edit/delete/copy/paste/duplicate in mixed dashboards', fakeAsync(() => {
+  it('should skip widgets explicitly opted out and include array/object numeric paths', fakeAsync(() => {
     connectionStub.serverServiceEndpoint$.next({
       operation: 2,
       message: 'Connected',
@@ -372,159 +437,91 @@ describe('DashboardHistorySeriesSyncService', () => {
 
     TestBed.inject(DashboardHistorySeriesSyncService);
 
-    const baselineDashboards: Dashboard[] = [
+    dashboardStub.dashboards.set([
       {
         id: 'dash-1',
         name: 'Dash 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          createDataChartNode('dc-1', 'navigation.speedThroughWater', 10),
-          createWindTrendsNode('wt-1'),
+          createAutomaticNode('auto-1', 'widget-numeric', {
+            supportAutomaticHistoricalSeries: true,
+            numericPath: 'navigation.speedThroughWater',
+            source: null
+          }),
+          createArrayPathsNode('array-1', 'widget-gauge-ng-radial', true),
+          createAutomaticNode('auto-optout', 'widget-text', {
+            supportAutomaticHistoricalSeries: false,
+            numericPath: 'navigation.speedOverGround'
+          }),
           createNonHistoryNode('nh-1')
         ]
-      },
+      }
+    ]);
+    tick(800);
+
+    expect(reconcileSpy).toHaveBeenCalledTimes(1);
+    const submitted = reconcileSpy.calls.mostRecent().args[0];
+    expect(seriesIds(submitted)).toEqual([
+      'array-1:auto:navigation-headingtrue:default',
+      'auto-1:auto:navigation-speedthroughwater:default'
+    ]);
+    expect(submitted.every(item => item.retentionDurationMs === 86400000)).toBeTrue();
+  }));
+
+  it('should deduplicate duplicate numeric paths with same source per widget', fakeAsync(() => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    dashboardStub.dashboards.set([
       {
-        id: 'dash-2',
-        name: 'Dash 2',
+        id: 'dash-1',
+        name: 'Dashboard 1',
         icon: 'dashboard-dashboard',
         configuration: [
-          createDataChartNode('dc-2', 'navigation.speedOverGround', 5)
-        ]
-      }
-    ];
-
-    // Initial reconcile
-    dashboardStub.dashboards.set(baselineDashboards);
-    tick(800);
-    expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).toEqual([
-      'dc-1:datachart',
-      'dc-2:datachart',
-      'wt-1:wind-direction',
-      'wt-1:wind-speed'
-    ]);
-    reconcileSpy.calls.reset();
-
-    // Add (new windtrends widget)
-    dashboardStub.dashboards.set([
-      baselineDashboards[0],
-      {
-        ...baselineDashboards[1],
-        configuration: [
-          ...(baselineDashboards[1].configuration ?? []),
-          createWindTrendsNode('wt-2')
-        ]
-      }
-    ]);
-    tick(800);
-    expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).toEqual([
-      'dc-1:datachart',
-      'dc-2:datachart',
-      'wt-1:wind-direction',
-      'wt-1:wind-speed',
-      'wt-2:wind-direction',
-      'wt-2:wind-speed'
-    ]);
-    reconcileSpy.calls.reset();
-
-    // Edit (data chart period/path)
-    dashboardStub.dashboards.set([
-      {
-        ...baselineDashboards[0],
-        configuration: [
-          createDataChartNode('dc-1', 'navigation.courseOverGroundTrue', 20),
-          createWindTrendsNode('wt-1'),
-          createNonHistoryNode('nh-1')
-        ]
-      },
-      {
-        ...baselineDashboards[1],
-        configuration: [
-          createDataChartNode('dc-2', 'navigation.speedOverGround', 5),
-          createWindTrendsNode('wt-2')
+          {
+            id: 'widget-dup',
+            selector: 'widget-host2',
+            input: {
+              widgetProperties: {
+                uuid: 'widget-dup',
+                type: 'widget-numeric',
+                config: {
+                  supportAutomaticHistoricalSeries: true,
+                  paths: {
+                    numericPathA: {
+                      description: 'A',
+                      path: 'navigation.speedOverGround',
+                      source: 'default',
+                      pathType: 'number',
+                      isPathConfigurable: true,
+                      sampleTime: 500
+                    },
+                    numericPathB: {
+                      description: 'B',
+                      path: 'navigation.speedOverGround',
+                      source: 'default',
+                      pathType: 'number',
+                      isPathConfigurable: true,
+                      sampleTime: 1000
+                    }
+                  }
+                }
+              }
+            }
+          }
         ]
       }
     ]);
-    tick(800);
-    expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    const editedSeries = reconcileSpy.calls.mostRecent().args[0];
-    const dc1 = editedSeries.find(item => item.seriesId === 'dc-1:datachart');
-    expect(dc1?.path).toBe('navigation.courseOverGroundTrue');
-    expect(dc1?.period).toBe(20);
-    reconcileSpy.calls.reset();
 
-    // Copy/Paste (new data chart UUID)
-    dashboardStub.dashboards.set([
-      {
-        ...baselineDashboards[0],
-        configuration: [
-          createDataChartNode('dc-1', 'navigation.courseOverGroundTrue', 20),
-          createWindTrendsNode('wt-1'),
-          createNonHistoryNode('nh-1')
-        ]
-      },
-      {
-        ...baselineDashboards[1],
-        configuration: [
-          createDataChartNode('dc-2', 'navigation.speedOverGround', 5),
-          createWindTrendsNode('wt-2'),
-          createDataChartNode('dc-1-copy', 'navigation.courseOverGroundTrue', 20)
-        ]
-      }
-    ]);
+    TestBed.inject(DashboardHistorySeriesSyncService);
     tick(800);
-    expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).toContain('dc-1-copy:datachart');
-    reconcileSpy.calls.reset();
 
-    // Duplicate (new windtrends UUID)
-    dashboardStub.dashboards.set([
-      {
-        ...baselineDashboards[0],
-        configuration: [
-          createDataChartNode('dc-1', 'navigation.courseOverGroundTrue', 20),
-          createWindTrendsNode('wt-1'),
-          createWindTrendsNode('wt-1-dup'),
-          createNonHistoryNode('nh-1')
-        ]
-      },
-      {
-        ...baselineDashboards[1],
-        configuration: [
-          createDataChartNode('dc-2', 'navigation.speedOverGround', 5),
-          createWindTrendsNode('wt-2'),
-          createDataChartNode('dc-1-copy', 'navigation.courseOverGroundTrue', 20)
-        ]
-      }
-    ]);
-    tick(800);
     expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).toContain('wt-1-dup:wind-direction');
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).toContain('wt-1-dup:wind-speed');
-    reconcileSpy.calls.reset();
-
-    // Delete (remove one data chart)
-    dashboardStub.dashboards.set([
-      {
-        ...baselineDashboards[0],
-        configuration: [
-          createDataChartNode('dc-1', 'navigation.courseOverGroundTrue', 20),
-          createWindTrendsNode('wt-1'),
-          createWindTrendsNode('wt-1-dup'),
-          createNonHistoryNode('nh-1')
-        ]
-      },
-      {
-        ...baselineDashboards[1],
-        configuration: [
-          createWindTrendsNode('wt-2'),
-          createDataChartNode('dc-1-copy', 'navigation.courseOverGroundTrue', 20)
-        ]
-      }
-    ]);
-    tick(800);
-    expect(reconcileSpy).toHaveBeenCalledTimes(1);
-    expect(seriesIds(reconcileSpy.calls.mostRecent().args[0])).not.toContain('dc-2:datachart');
+    expect(reconcileSpy.calls.mostRecent().args[0].length).toBe(1);
   }));
 });
