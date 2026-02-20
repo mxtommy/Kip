@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { BehaviorSubject } from 'rxjs';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
 import { KipSeriesService } from './kip-series.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 
 class SignalKConnectionServiceStub {
   public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
@@ -18,13 +19,26 @@ describe('KipSeriesService', () => {
   let service: KipSeriesService;
   let httpMock: HttpTestingController;
   let connectionStub: SignalKConnectionServiceStub;
+  let historySeriesServiceEnabled = true;
+  let pluginConfigMock: {
+    getKipRuntimeModeConfigCached: jasmine.Spy;
+  };
 
   beforeEach(() => {
+    historySeriesServiceEnabled = true;
+    pluginConfigMock = {
+      getKipRuntimeModeConfigCached: jasmine.createSpy('getKipRuntimeModeConfigCached').and.callFake(async () => ({
+        historySeriesServiceEnabled,
+        registerAsHistoryApiProvider: true
+      }))
+    };
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         KipSeriesService,
-        { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub }
+        { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
+        { provide: SignalkPluginConfigService, useValue: pluginConfigMock }
       ]
     });
 
@@ -79,6 +93,7 @@ describe('KipSeriesService', () => {
     ];
 
     const promise = service.reconcileSeries(payload);
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/plugins/kip/series/reconcile'
@@ -95,5 +110,28 @@ describe('KipSeriesService', () => {
 
     const response = await promise;
     expect(response).toEqual({ created: 1, updated: 0, deleted: 0, total: 1 });
+  });
+
+  it('should skip reconcile when history-series service is disabled in plugin config', async () => {
+    historySeriesServiceEnabled = false;
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const response = await service.reconcileSeries([
+      {
+        seriesId: 'widget-1:datachart',
+        datasetUuid: 'widget-1',
+        ownerWidgetUuid: 'widget-1',
+        path: 'navigation.speedThroughWater'
+      }
+    ]);
+
+    expect(response).toBeNull();
+    httpMock.expectNone(() => true);
   });
 });

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SignalKConnectionService } from './signalk-connection.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 
 /**
  * Series definition expected by the KIP plugin `/plugins/kip/series/reconcile` endpoint.
@@ -38,6 +39,7 @@ export interface IKipSeriesReconcileResult {
 export class KipSeriesService {
   private readonly http = inject(HttpClient);
   private readonly connection = inject(SignalKConnectionService);
+  private readonly pluginConfig = inject(SignalkPluginConfigService);
   private readonly destroyRef = inject(DestroyRef);
 
   private kipPluginServiceUrl: string | null = null;
@@ -98,6 +100,12 @@ export class KipSeriesService {
    */
   public async reconcileSeries(seriesDefinitions: IKipSeriesDefinition[]): Promise<IKipSeriesReconcileResult | null> {
     try {
+      const modeConfig = await this.pluginConfig.getKipRuntimeModeConfigCached('kip');
+      if (!modeConfig.historySeriesServiceEnabled) {
+        console.warn('[KipSeriesService] Reconcile skipped because history-series service is disabled in KIP plugin settings');
+        return null;
+      }
+
       if (!this.kipPluginServiceUrl) {
         console.warn('[KipSeriesService] No KIP plugin endpoint available for series reconcile');
         return null;

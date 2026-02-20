@@ -29,11 +29,21 @@ const start = (server: ServerAPI): Plugin => {
   } as const;
 
   const CONFIG_SCHEMA = {
+    type: 'object',
+    title: 'Remote Control and Data Series',
+    description: 'KIP plugin runtime mode configuration.',
     properties: {
-      notifications: {
-        type: 'object',
-        title: 'Remote Control and Data Series',
-        description: 'This plugin requires no configuration.'
+      historySeriesServiceEnabled: {
+        type: 'boolean',
+        title: 'Enable History-Series Service',
+        description: 'Automatically capture widget history-series data from widget configuration. If disabled, configure data capture in your chosen history provider plugin.',
+        default: true
+      },
+      registerAsHistoryApiProvider: {
+        type: 'boolean',
+        title: 'Enable History API Provider',
+        description: 'Use plugin provider for widget history data. Turn this off to use another History API provider.',
+        default: true
       }
     }
   };
@@ -46,6 +56,14 @@ const start = (server: ServerAPI): Plugin => {
   const DUCKDB_INIT_WAIT_TIMEOUT_MS = 5000;
   let streamUnsubscribes: Array<() => void> = [];
   let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
+  let historySeriesServiceEnabled = true;
+  let registerAsHistoryApiProvider = true;
+  let historyApiProviderRegistered = false;
+
+  interface IHistoryModeConfig {
+    historySeriesServiceEnabled: boolean;
+    registerAsHistoryApiProvider: boolean;
+  }
 
   interface IHistoryApiPathSpecLike {
     path?: unknown;
@@ -74,6 +92,25 @@ const start = (server: ServerAPI): Plugin => {
     duration?: string | number;
   }
 
+  function resolveHistoryModeConfig(settings: unknown): IHistoryModeConfig {
+    const root = (settings && typeof settings === 'object' ? settings : {}) as Record<string, unknown>;
+
+    const historySeriesServiceEnabledSetting =
+      typeof root.historySeriesServiceEnabled === 'boolean'
+        ? root.historySeriesServiceEnabled
+        : undefined;
+
+    const registerAsHistoryApiProviderSetting =
+      typeof root.registerAsHistoryApiProvider === 'boolean'
+        ? root.registerAsHistoryApiProvider
+        : undefined;
+
+    return {
+      historySeriesServiceEnabled: historySeriesServiceEnabledSetting !== false,
+      registerAsHistoryApiProvider: registerAsHistoryApiProviderSetting !== false
+    };
+  }
+
   // Helpers
   function getDisplaySelfPath(displayId: string, suffix?: string): object | undefined {
     const tail = suffix ? `.${suffix}` : ''
@@ -96,6 +133,10 @@ const start = (server: ServerAPI): Plugin => {
 
   function sendFail(res: Response, statusCode: number, message: string) {
     return res.status(statusCode).json({ state: 'FAILED', statusCode, message })
+  }
+
+  function getHistorySeriesServiceDisabledMessage(): string {
+    return 'KIP history-series service is disabled by plugin configuration';
   }
 
   function getDuckDbUnavailableMessage(): string {
@@ -163,12 +204,35 @@ const start = (server: ServerAPI): Plugin => {
     return current ? JSON.parse(JSON.stringify(current)) as ISeriesDefinition : null;
   }
 
+  function isHistorySeriesServiceEnabled(): boolean {
+    return historySeriesServiceEnabled;
+  }
+
+  function isHistoryApiProviderEnabled(): boolean {
+    return registerAsHistoryApiProvider;
+  }
+
+  function logOperationalMode(stage: string): void {
+    server.debug(
+      `[HISTORY MODE] stage=${stage} historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`
+    );
+  }
+
   async function ensureDuckDbReadyForRequest(res: Response): Promise<boolean> {
     await waitForDuckDbInitialization();
     if (storageService.isDuckDbParquetReady()) {
       return true;
     }
     sendFail(res, 503, getDuckDbUnavailableMessage());
+    return false;
+  }
+
+  function ensureHistorySeriesServiceEnabledForRequest(res: Response): boolean {
+    if (isHistorySeriesServiceEnabled()) {
+      return true;
+    }
+
+    sendFail(res, 503, getHistorySeriesServiceDisabledMessage());
     return false;
   }
 
@@ -434,6 +498,13 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function registerHistoryProvider(): void {
+    historyApiProviderRegistered = false;
+
+    if (!isHistoryApiProviderEnabled()) {
+      server.debug('[HISTORY PROVIDER] Registration disabled by plugin configuration');
+      return;
+    }
+
     const host = server as ServerAPI & {
       history?: { registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void; unregisterHistoryApiProvider?: () => void };
       registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void;
@@ -470,45 +541,23 @@ const start = (server: ServerAPI): Plugin => {
 
     if (registry && typeof registry.registerHistoryApiProvider === 'function') {
       registry.registerHistoryApiProvider(apiProvider);
+      historyApiProviderRegistered = true;
       if (typeof registry.unregisterHistoryApiProvider === 'function') {
         historyApiRegistry = { unregisterHistoryApiProvider: registry.unregisterHistoryApiProvider.bind(registry) };
       }
       server.debug('[HISTORY PROVIDER] Registered KIP as History API provider');
+      return;
     }
 
-    if (typeof host.registerHistoryProvider === 'function') {
-      host.registerHistoryProvider({
-        hasAnydata: (_options: object, cb: (hasResults: boolean) => void) => {
-          void resolveHistoryPaths()
-            .then(paths => cb(paths.length > 0))
-            .catch(() => cb(false));
-        },
-        getHistory: (date: Date, path: string, cb: (deltas: object[]) => void) => {
-          const fromDate = new Date((date instanceof Date ? date.getTime() : Date.now()) - (60 * 60 * 1000));
-          void resolveHistoryValues({
-            paths: `${String(path)}:avg`,
-            from: fromDate.toISOString(),
-            to: date instanceof Date ? date.toISOString() : new Date().toISOString(),
-            context: 'vessels.self'
-          }).then(values => {
-            const deltas = values.data.map(row => ({
-              timestamp: row[0],
-              path,
-              value: row[1] ?? null
-            }));
-            cb(deltas);
-          }).catch(() => cb([]));
-        },
-        streamHistory: (_spark: unknown, _options: object, _onDelta: (delta: object) => void) => {
-          // No streaming hook for historical backfill in KIP provider.
-        }
-      });
-      server.debug('[HISTORY PROVIDER] Registered legacy history provider bridge');
-    }
+    server.debug('[HISTORY PROVIDER] Registration requested but no compatible registration API was found on server host');
   }
 
   function rebuildSeriesCaptureSubscriptions(): void {
     stopSeriesCapture();
+
+    if (!isHistorySeriesServiceEnabled()) {
+      return;
+    }
 
     const streamBundle = server.streambundle;
     if (!streamBundle || typeof streamBundle.getBus !== 'function') {
@@ -588,6 +637,11 @@ const start = (server: ServerAPI): Plugin => {
     description: 'KIP server plugin',
     start: (settings) => {
       server.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+      const modeConfig = resolveHistoryModeConfig(settings);
+      historySeriesServiceEnabled = modeConfig.historySeriesServiceEnabled;
+      registerAsHistoryApiProvider = modeConfig.registerAsHistoryApiProvider;
+      logOperationalMode('start-configured');
+
       storageService.setLogger({
         debug: (msg: string) => server.debug(msg),
         error: (msg: string) => server.error(msg)
@@ -602,20 +656,30 @@ const start = (server: ServerAPI): Plugin => {
       void duckDbInitializationPromise.then((ready) => {
         server.debug(`[SERIES STORAGE] duckdbReady=${ready}`);
         if (ready && storageService.isDuckDbParquetEnabled()) {
-          void storageService.getSeriesDefinitions()
-            .then((storedSeries) => {
-              if (storedSeries.length > 0) {
-                historySeries.reconcileSeries(storedSeries);
-                rebuildSeriesCaptureSubscriptions();
-              }
-              startStorageFlushTimer(storageConfig.flushIntervalMs);
-              server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series.`);
-            })
-            .catch((loadError) => {
-              server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
-              startStorageFlushTimer(storageConfig.flushIntervalMs);
-              server.setPluginStatus('KIP plugin started with DuckDB/Parquet history storage.');
-            });
+          if (isHistorySeriesServiceEnabled()) {
+            void storageService.getSeriesDefinitions()
+              .then((storedSeries) => {
+                if (storedSeries.length > 0) {
+                  historySeries.reconcileSeries(storedSeries);
+                  rebuildSeriesCaptureSubscriptions();
+                }
+                startStorageFlushTimer(storageConfig.flushIntervalMs);
+                logOperationalMode('duckdb-ready');
+                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+              })
+              .catch((loadError) => {
+                server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
+                startStorageFlushTimer(storageConfig.flushIntervalMs);
+                logOperationalMode('duckdb-ready-series-load-failed');
+                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+              });
+          } else {
+            historySeries.reconcileSeries([]);
+            stopSeriesCapture();
+            startStorageFlushTimer(storageConfig.flushIntervalMs);
+            logOperationalMode('duckdb-ready-series-disabled');
+            server.setPluginStatus(`KIP plugin started with history-series service disabled. historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+          }
           return;
         }
 
@@ -627,7 +691,8 @@ const start = (server: ServerAPI): Plugin => {
         const initError = storageService.getLastInitError();
         if (initError) {
           server.setPluginError(`DuckDB unavailable. ${initError}`);
-          server.setPluginStatus('KIP plugin started with DuckDB unavailable. History and series APIs will return errors until DuckDB is available.');
+          logOperationalMode('duckdb-unavailable');
+          server.setPluginStatus(`KIP plugin started with DuckDB unavailable. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
         }
       });
 
@@ -680,6 +745,7 @@ const start = (server: ServerAPI): Plugin => {
       }
 
       registerHistoryProvider();
+      logOperationalMode('post-provider-registration');
 
       server.setPluginStatus(`Starting...`);
     },
@@ -915,6 +981,9 @@ const start = (server: ServerAPI): Plugin => {
       router.get(API_PATHS.SERIES, async (req: Request, res: Response) => {
         server.debug(`*** GET SERIES ${API_PATHS.SERIES}. Params: ${JSON.stringify(req.params)}`);
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -929,6 +998,9 @@ const start = (server: ServerAPI): Plugin => {
       router.put(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
         server.debug(`** PUT ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -969,6 +1041,9 @@ const start = (server: ServerAPI): Plugin => {
       router.delete(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
         server.debug(`** DELETE ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)}`);
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -998,6 +1073,9 @@ const start = (server: ServerAPI): Plugin => {
       router.post(API_PATHS.SERIES_RECONCILE, async (req: Request, res: Response) => {
         server.debug(`** POST ${API_PATHS.SERIES_RECONCILE}. Body: ${JSON.stringify(req.body)}`);
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -1029,6 +1107,9 @@ const start = (server: ServerAPI): Plugin => {
 
       router.get(API_PATHS.HISTORY_PATHS, async (_req: Request, res: Response) => {
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -1047,6 +1128,9 @@ const start = (server: ServerAPI): Plugin => {
 
       router.get(API_PATHS.HISTORY_CONTEXTS, async (_req: Request, res: Response) => {
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
@@ -1066,6 +1150,9 @@ const start = (server: ServerAPI): Plugin => {
       router.get(API_PATHS.HISTORY_VALUES, async (req: Request, res: Response) => {
         server.debug(`*** GET HISTORY_VALUES ${API_PATHS.HISTORY_VALUES}. Query: ${JSON.stringify(req.query)}`);
         try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }

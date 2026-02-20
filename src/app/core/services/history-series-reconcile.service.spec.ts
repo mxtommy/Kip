@@ -5,6 +5,7 @@ import { Dashboard, DashboardService } from './dashboard.service';
 import { HistorySeriesReconcileService } from './history-series-reconcile.service';
 import { IKipSeriesDefinition, KipSeriesService } from './kip-series.service';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 
 class DashboardServiceStub {
   public dashboards = signal<Dashboard[]>([]);
@@ -78,9 +79,21 @@ function seriesIds(series: IKipSeriesDefinition[]): string[] {
 describe('HistorySeriesReconcileService', () => {
   let dashboardStub: DashboardServiceStub;
   let connectionStub: SignalKConnectionServiceStub;
+  let historySeriesServiceEnabled = true;
+  let pluginConfigMock: {
+    getKipRuntimeModeConfigCached: jasmine.Spy;
+  };
   let reconcileSpy: jasmine.Spy<(series: IKipSeriesDefinition[]) => Promise<{ created: number; updated: number; deleted: number; total: number }>>;
 
   beforeEach(() => {
+    historySeriesServiceEnabled = true;
+    pluginConfigMock = {
+      getKipRuntimeModeConfigCached: jasmine.createSpy('getKipRuntimeModeConfigCached').and.callFake(async () => ({
+        historySeriesServiceEnabled,
+        registerAsHistoryApiProvider: true
+      }))
+    };
+
     reconcileSpy = jasmine.createSpy('reconcileSeries').and.resolveTo({
       created: 0,
       updated: 0,
@@ -93,6 +106,7 @@ describe('HistorySeriesReconcileService', () => {
         HistorySeriesReconcileService,
         { provide: DashboardService, useClass: DashboardServiceStub },
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
+        { provide: SignalkPluginConfigService, useValue: pluginConfigMock },
         {
           provide: KipSeriesService,
           useValue: {
@@ -236,6 +250,34 @@ describe('HistorySeriesReconcileService', () => {
         enabled: true,
       }
     ]);
+  }));
+
+  it('should skip reconcile when history series service mode is disabled', fakeAsync(() => {
+    historySeriesServiceEnabled = false;
+
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    dashboardStub.dashboards.set([
+      {
+        id: 'dash-1',
+        name: 'Dashboard 1',
+        icon: 'dashboard-dashboard',
+        configuration: [
+          createDataChartNode('widget-data-1', 'navigation.speedThroughWater')
+        ]
+      }
+    ]);
+
+    TestBed.inject(HistorySeriesReconcileService);
+    tick(800);
+
+    expect(reconcileSpy).not.toHaveBeenCalled();
   }));
 
   it('should reconcile when dashboards signal emits updated widget configuration', fakeAsync(() => {

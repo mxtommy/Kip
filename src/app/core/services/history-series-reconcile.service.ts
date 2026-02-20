@@ -5,6 +5,7 @@ import { Dashboard, DashboardService } from './dashboard.service';
 import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { IKipSeriesDefinition, KipSeriesService } from './kip-series.service';
 import { SignalKConnectionService } from './signalk-connection.service';
+import { SignalkPluginConfigService } from './signalk-plugin-config.service';
 
 interface IGridWidgetNode extends NgGridStackWidget {
   input?: {
@@ -23,6 +24,7 @@ export class HistorySeriesReconcileService {
   private readonly kipSeries = inject(KipSeriesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly connection = inject(SignalKConnectionService);
+  private readonly pluginConfig = inject(SignalkPluginConfigService);
 
   private readonly serverEndpoint = toSignal(this.connection.serverServiceEndpoint$, {
     initialValue: null
@@ -82,6 +84,13 @@ export class HistorySeriesReconcileService {
     const nextSeries = this.pendingSeries;
     this.pendingSignature = null;
     this.reconcileTimer = null;
+
+    const modeConfig = await this.pluginConfig.getKipRuntimeModeConfigCached('kip');
+    if (!modeConfig.historySeriesServiceEnabled) {
+      console.warn('[HistorySeriesReconcileService] Reconcile skipped because history series service mode is disabled');
+      this.lastSubmittedSignature = nextSignature;
+      return;
+    }
 
     await this.kipSeries.reconcileSeries(nextSeries);
     this.lastSubmittedSignature = nextSignature;
