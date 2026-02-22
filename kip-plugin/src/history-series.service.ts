@@ -439,16 +439,16 @@ export class HistorySeriesService {
       throw new Error('path is required');
     }
 
-    // Determine if this is a widget type to skip custom sampleTime logic
-    const skipCustomSampleTime =
+    // Determine if this is a data chart based widget
+    const dsSampleTime =
       ownerWidgetUuid?.startsWith('widget-windtrends-chart') ||
       ownerWidgetUuid?.startsWith('widget-data-chart');
 
-    // Calculate sampleTime: retentionDurationMs / 240 unless skipping
     let sampleTime: number;
     const retentionMs = input.retentionDurationMs ?? this.resolveRetentionMs(input);
-    if (!skipCustomSampleTime && Number.isFinite(retentionMs) && retentionMs > 0) {
-      sampleTime = Math.max(1, Math.trunc(retentionMs / 240));
+    if (dsSampleTime && Number.isFinite(retentionMs) && retentionMs > 0) {
+      // regular widget sampleTime: 15 sec
+      sampleTime = Math.max(1, Math.trunc(15000));
     } else {
       sampleTime = this.resolveSampleTimeMs(input.sampleTime);
     }

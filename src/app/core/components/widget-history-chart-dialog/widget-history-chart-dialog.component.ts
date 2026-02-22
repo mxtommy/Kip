@@ -178,7 +178,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private async buildDatasetForSeries(series: IKipSeriesDefinition, index: number): Promise<ChartDataset<'line', { x: number; y: number }[]> | null> {
-    const rawPath = this.normalizeInputPath(series.path);
+    const rawPath = series.path;
     if (!rawPath) {
       return null;
     }
@@ -208,7 +208,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       });
 
       chartPoints = datapoints
-        .filter(point => point.data.value !== null && Number.isFinite(point.data.value))
+        //.filter(point => point.data.value !== null && Number.isFinite(point.data.value))
         .map(point => ({ x: point.timestamp, y: point.data.value as number }));
 
       if (chartPoints.length) {
@@ -249,27 +249,14 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   private buildHistoryRequestCandidates(rawPath: string, context: string | null | undefined): { paths: string; context: string | undefined; labelPath: string }[] {
     const normalizedPath = this.normalizeHistoryPath(rawPath);
     const contextCandidate = this.resolveHistoryContext(rawPath, context);
-    const pathVariants = [...new Set([rawPath, normalizedPath].filter(path => path.length > 0))];
+    const pathVariants = [...new Set([normalizedPath].filter(path => path.length > 0))];
     const requests: { paths: string; context: string | undefined; labelPath: string }[] = [];
 
     pathVariants.forEach(path => {
       requests.push({ paths: `${path}:avg`, context: contextCandidate, labelPath: this.normalizeHistoryPath(path) });
     });
 
-    pathVariants.forEach(path => {
-      requests.push({ paths: path, context: contextCandidate, labelPath: this.normalizeHistoryPath(path) });
-    });
-
     return requests;
-  }
-
-  private normalizeInputPath(path: string | null | undefined): string {
-    const trimmed = typeof path === 'string' ? path.trim() : '';
-    if (!trimmed.length) {
-      return '';
-    }
-
-    return trimmed;
   }
 
   private normalizeHistoryPath(path: string): string {
@@ -366,7 +353,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       return this.durationFromScaleAndPeriod(series.timeScale, series.period);
     }
 
-    return 'PT24H';
+    return 'PT2H';
   }
 
   private durationFromScaleAndPeriod(scaleRaw: string, periodRaw: number): string {
