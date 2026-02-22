@@ -17,14 +17,6 @@ export interface ISeriesDefinition {
   methods?: THistoryMethod[];
 }
 
-interface ISeriesSample {
-  timestamp: number;
-  value: number;
-  path: string;
-  source: string;
-  context: string;
-}
-
 export interface IRecordedSeriesSample {
   userScope: string;
   seriesId: string;
@@ -35,12 +27,6 @@ export interface IRecordedSeriesSample {
   source: string;
   timestamp: number;
   value: number;
-}
-
-interface IRequestedPath {
-  path: string;
-  method?: THistoryMethod;
-  period?: number;
 }
 
 export interface IHistoryValuesResponse {
@@ -432,8 +418,6 @@ export class HistorySeriesService {
     return Array.from(contexts).sort();
   }
 
-
-
   private normalizeSeries(input: ISeriesDefinition): ISeriesDefinition {
     const seriesId = (input.seriesId || input.datasetUuid || '').trim();
     if (!seriesId) {
@@ -521,33 +505,6 @@ export class HistorySeriesService {
     return 24 * 60 * 60_000;
   }
 
-  private parseRequestedPaths(paths: string): IRequestedPath[] {
-    return String(paths)
-      .split(',')
-      .map(entry => entry.trim())
-      .filter(Boolean)
-      .map(raw => {
-        const [pathToken, maybeMethod, maybePeriod] = raw.split(':');
-        const path = this.normalizePathIdentifier(pathToken);
-        const method = this.parseMethod(maybeMethod);
-        const period = maybePeriod !== undefined ? Number(maybePeriod) : undefined;
-        return {
-          path,
-          method,
-          period: Number.isFinite(period as number) ? period : undefined
-        };
-      });
-  }
-
-  private parseMethod(value?: string): THistoryMethod | undefined {
-    if (!value) return undefined;
-    const normalized = value.toLowerCase();
-    if (normalized === 'min' || normalized === 'max' || normalized === 'avg' || normalized === 'sma' || normalized === 'ema') {
-      return normalized;
-    }
-    return undefined;
-  }
-
   private normalizePathIdentifier(path: string): string {
     const trimmed = String(path).trim();
     if (!trimmed) {
@@ -563,89 +520,6 @@ export class HistorySeriesService {
     }
 
     return trimmed;
-  }
-
-  private resolveRange(nowMs: number, from?: string, to?: string, duration?: string | number): { fromMs: number; toMs: number } {
-    const toMs = to ? Date.parse(to) : nowMs;
-    if (!Number.isFinite(toMs)) {
-      throw new Error('Invalid to date-time. Expected an ISO 8601 date-time string.');
-    }
-
-    const fromMs = from ? Date.parse(from) : toMs - this.parseDurationMs(duration);
-    if (!Number.isFinite(fromMs)) {
-      throw new Error('Invalid from date-time. Expected an ISO 8601 date-time string.');
-    }
-
-    return { fromMs, toMs };
-  }
-
-  private parseDurationMs(duration?: string | number): number {
-    if (duration === undefined || duration === null) {
-      return 60 * 60_000;
-    }
-
-    if (typeof duration === 'number' && Number.isFinite(duration) && duration > 0) {
-      return duration;
-    }
-
-    if (typeof duration === 'number') {
-      throw new Error('Invalid duration. Expected a positive number of milliseconds or an ISO 8601 duration (e.g. PT10M).');
-    }
-
-    const value = String(duration).trim();
-    if (/^\d+(\.\d+)?$/.test(value)) {
-      const parsedMs = Number(value);
-      if (Number.isFinite(parsedMs) && parsedMs > 0) {
-        return parsedMs;
-      }
-      throw new Error('Invalid duration. Expected a positive number of milliseconds or an ISO 8601 duration (e.g. PT10M).');
-    }
-
-    const iso = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i.exec(value);
-    if (!iso) {
-      throw new Error('Invalid duration. Expected a positive number of milliseconds or an ISO 8601 duration (e.g. PT10M).');
-    }
-
-    const hours = Number(iso[1] || 0);
-    const minutes = Number(iso[2] || 0);
-    const seconds = Number(iso[3] || 0);
-    const totalMs = (((hours * 60) + minutes) * 60 + seconds) * 1000;
-    if (totalMs <= 0) {
-      throw new Error('Invalid duration. Expected a positive number of milliseconds or an ISO 8601 duration (e.g. PT10M).');
-    }
-    return totalMs;
-  }
-
-  private resolveResolutionMs(resolution?: string | number): number {
-    if (resolution === undefined || resolution === null) {
-      return 0;
-    }
-
-    if (typeof resolution === 'number') {
-      if (!Number.isFinite(resolution) || resolution <= 0) {
-        throw new Error('Invalid resolution. Expected a positive number of seconds or an ISO 8601 duration (e.g. PT10S).');
-      }
-      return Math.max(1, Math.trunc(resolution * 1000));
-    }
-
-    const value = String(resolution).trim();
-    if (!value) {
-      throw new Error('Invalid resolution. Expected a positive number of seconds or an ISO 8601 duration (e.g. PT10S).');
-    }
-
-    if (/^\d+(\.\d+)?$/.test(value)) {
-      const parsedSeconds = Number(value);
-      if (!Number.isFinite(parsedSeconds) || parsedSeconds <= 0) {
-        throw new Error('Invalid resolution. Expected a positive number of seconds or an ISO 8601 duration (e.g. PT10S).');
-      }
-      return Math.max(1, Math.trunc(parsedSeconds * 1000));
-    }
-
-    try {
-      return this.parseDurationMs(value);
-    } catch {
-      throw new Error('Invalid resolution. Expected a positive number of seconds or an ISO 8601 duration (e.g. PT10S).');
-    }
   }
 
   private resolveTimestamp(timestamp: unknown): number {
@@ -713,94 +587,5 @@ export class HistorySeriesService {
     }
 
     return seriesSource === sampleSource;
-  }
-
-
-
-  private applyMethod(request: IRequestedPath, samples: ISeriesSample[]): { timestamp: number; value: number | null }[] {
-    const method = request.method ?? 'avg';
-    if (samples.length === 0) return [];
-
-    if (method === 'min') {
-      return samples.map(entry => ({ timestamp: entry.timestamp, value: entry.value }));
-    }
-    if (method === 'max') {
-      return samples.map(entry => ({ timestamp: entry.timestamp, value: entry.value }));
-    }
-    if (method === 'avg') {
-      return samples.map(entry => ({ timestamp: entry.timestamp, value: entry.value }));
-    }
-    if (method === 'sma') {
-      const period = Math.max(1, request.period ?? 5);
-      return samples.map((entry, index) => {
-        const start = Math.max(0, index - period + 1);
-        const window = samples.slice(start, index + 1);
-        const sum = window.reduce((acc, item) => acc + item.value, 0);
-        return {
-          timestamp: entry.timestamp,
-          value: sum / window.length
-        };
-      });
-    }
-
-    // EMA
-    const period = Math.max(1, request.period ?? 5);
-    const multiplier = 2 / (period + 1);
-    let previous: number | null = null;
-    return samples.map(entry => {
-      if (previous === null) {
-        previous = entry.value;
-      } else {
-        previous = ((entry.value - previous) * multiplier) + previous;
-      }
-      return {
-        timestamp: entry.timestamp,
-        value: previous
-      };
-    });
-  }
-
-  private downsampleIfNeeded(values: { timestamp: number; value: number | null }[], resolutionMs: number, method: THistoryMethod): { timestamp: number; value: number | null }[] {
-    if (resolutionMs <= 0 || values.length === 0) {
-      return values;
-    }
-
-    const buckets = new Map<number, number[]>();
-    values.forEach(entry => {
-      if (!Number.isFinite(entry.value as number)) {
-        return;
-      }
-      const bucket = Math.floor(entry.timestamp / resolutionMs) * resolutionMs;
-      const list = buckets.get(bucket) ?? [];
-      list.push(entry.value as number);
-      buckets.set(bucket, list);
-    });
-
-    return Array.from(buckets.entries())
-      .sort((left, right) => left[0] - right[0])
-      .map(([timestamp, list]) => {
-        const value = this.aggregateBucket(list, method);
-        return {
-          timestamp,
-          value
-        };
-      });
-  }
-
-  private aggregateBucket(values: number[], method: THistoryMethod): number | null {
-    if (values.length === 0) {
-      return null;
-    }
-
-    if (method === 'min') {
-      return Math.min(...values);
-    }
-
-    if (method === 'max') {
-      return Math.max(...values);
-    }
-
-    const sum = values.reduce((acc, value) => acc + value, 0);
-    return sum / values.length;
   }
 }
