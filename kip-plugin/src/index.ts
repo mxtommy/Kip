@@ -3,6 +3,11 @@ import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { DuckDbParquetStorageService } from './duckdb-parquet-storage.service';
+import {
+  normalizeUserScope,
+  resolveReadUserScope,
+  resolveWriteUserScopeOrReject
+} from './plugin-auth.service';
 
 const start = (server: ServerAPI): Plugin => {
 
@@ -199,8 +204,8 @@ const start = (server: ServerAPI): Plugin => {
     return { statusCode: 500, message };
   }
 
-  function findSeriesById(seriesId: string): ISeriesDefinition | null {
-    const current = historySeries.listSeries().find(item => item.seriesId === seriesId);
+  function findSeriesByIdForScope(seriesId: string, userScope: string): ISeriesDefinition | null {
+    const current = historySeries.findSeriesByIdForScope(seriesId, userScope);
     return current ? JSON.parse(JSON.stringify(current)) as ISeriesDefinition : null;
   }
 
@@ -451,7 +456,7 @@ const start = (server: ServerAPI): Plugin => {
     };
   }
 
-  async function resolveHistoryPaths(query?: IHistoryRangeQuery): Promise<string[]> {
+  async function resolveHistoryPaths(userScope: string, query?: IHistoryRangeQuery): Promise<string[]> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -462,10 +467,13 @@ const start = (server: ServerAPI): Plugin => {
     } catch (flushError) {
       server.error(`[SERIES STORAGE] pre-paths flush failed: ${String((flushError as Error).message || flushError)}`);
     }
-    return storageService.getStoredPaths(query);
+    return storageService.getStoredPaths({
+      ...(query ?? {}),
+      userScope
+    });
   }
 
-  async function resolveHistoryContexts(query?: IHistoryRangeQuery): Promise<string[]> {
+  async function resolveHistoryContexts(userScope: string, query?: IHistoryRangeQuery): Promise<string[]> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -476,10 +484,13 @@ const start = (server: ServerAPI): Plugin => {
     } catch (flushError) {
       server.error(`[SERIES STORAGE] pre-contexts flush failed: ${String((flushError as Error).message || flushError)}`);
     }
-    return storageService.getStoredContexts(query);
+    return storageService.getStoredContexts({
+      ...(query ?? {}),
+      userScope
+    });
   }
 
-  async function resolveHistoryValues(query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
+  async function resolveHistoryValues(userScope: string, query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -490,7 +501,10 @@ const start = (server: ServerAPI): Plugin => {
     } catch (flushError) {
       server.error(`[SERIES STORAGE] pre-query flush failed: ${String((flushError as Error).message || flushError)}`);
     }
-    const values = await storageService.getValues(query);
+    const values = await storageService.getValues({
+      ...query,
+      userScope
+    });
     if (!values) {
       throw new Error('DuckDB storage did not return history values.');
     }
@@ -513,7 +527,7 @@ const start = (server: ServerAPI): Plugin => {
 
     const apiProvider = {
       getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
-        const resolved = await resolveHistoryValues(buildHistoryQueryFromValuesRequest(query));
+        const resolved = await resolveHistoryValues('anonymous', buildHistoryQueryFromValuesRequest(query));
         return {
           ...resolved,
           values: resolved.values.map(valueSpec => ({
@@ -523,9 +537,9 @@ const start = (server: ServerAPI): Plugin => {
         };
       },
       getPaths: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)),
+        resolveHistoryPaths('anonymous', buildHistoryQueryFromRangeRequest(query)),
       getContexts: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
+        resolveHistoryContexts('anonymous', buildHistoryQueryFromRangeRequest(query))
     };
 
     const registry = host.history && typeof host.history.registerHistoryApiProvider === 'function'
@@ -734,6 +748,12 @@ const start = (server: ServerAPI): Plugin => {
                 if (removedPersistedRows > 0) {
                   server.debug(`[SERIES RETENTION] duckdbPrune removedRows=${removedPersistedRows}`);
                 }
+                return storageService.pruneOrphanedSamples(lifecycleToken)
+                  .then(removedOrphanRows => {
+                    if (removedOrphanRows > 0) {
+                      server.debug(`[SERIES RETENTION] duckdbOrphanPrune removedRows=${removedOrphanRows}`);
+                    }
+                  });
               })
               .catch(error => {
                 server.error(`[SERIES RETENTION] duckdbPrune failed: ${String((error as Error).message || error)}`);
@@ -809,6 +829,7 @@ const start = (server: ServerAPI): Plugin => {
       server.setPluginStatus(msg);
     },
     schema: () => CONFIG_SCHEMA,
+
     registerWithRouter(router) {
       server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.SCREEN_INDEX}, ${API_PATHS.ACTIVATE_SCREEN}`);
 
@@ -1013,7 +1034,8 @@ const start = (server: ServerAPI): Plugin => {
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
-          return sendOk(res, historySeries.listSeries());
+          const userScope = resolveReadUserScope(req);
+          return sendOk(res, historySeries.listSeriesForScope(userScope));
         } catch (error) {
           server.error(`Error reading series: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to read series');
@@ -1035,12 +1057,18 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing seriesId parameter');
           }
 
+          const userScope = resolveWriteUserScopeOrReject(req, res, 'PUT /series/:seriesId', server.error.bind(server), sendFail);
+          if (!userScope) {
+            return;
+          }
+
           const payload = (req.body ?? {}) as Partial<ISeriesDefinition>;
-          const previous = findSeriesById(seriesId);
+          const previous = findSeriesByIdForScope(seriesId, userScope);
           const next = historySeries.upsertSeries({
             ...payload,
             seriesId,
-            datasetUuid: String(payload.datasetUuid ?? seriesId)
+            datasetUuid: String(payload.datasetUuid ?? seriesId),
+            userScope
           } as ISeriesDefinition);
 
           try {
@@ -1049,7 +1077,7 @@ const start = (server: ServerAPI): Plugin => {
             if (previous) {
               historySeries.upsertSeries(previous);
             } else {
-              historySeries.deleteSeries(seriesId);
+              historySeries.deleteSeriesForScope(seriesId, userScope);
             }
             throw storageError;
           }
@@ -1078,13 +1106,18 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing seriesId parameter');
           }
 
-          const previous = findSeriesById(seriesId);
+          const userScope = resolveWriteUserScopeOrReject(req, res, 'DELETE /series/:seriesId', server.error.bind(server), sendFail);
+          if (!userScope) {
+            return;
+          }
+
+          const previous = findSeriesByIdForScope(seriesId, userScope);
           if (!previous) {
             return sendFail(res, 404, `Series ${seriesId} not found`);
           }
 
-          await storageService.deleteSeriesDefinition(seriesId);
-          historySeries.deleteSeries(seriesId);
+          await storageService.deleteSeriesDefinitionForScope(seriesId, userScope);
+          historySeries.deleteSeriesForScope(seriesId, userScope);
 
           rebuildSeriesCaptureSubscriptions();
 
@@ -1110,18 +1143,32 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Body must be an array of series definitions');
           }
 
+          const userScope = resolveWriteUserScopeOrReject(req, res, 'POST /series/reconcile', server.error.bind(server), sendFail);
+          if (!userScope) {
+            return;
+          }
+
           const simulated = new HistorySeriesService(() => Date.now(), false);
-          historySeries.listSeries().forEach(series => {
+          historySeries.listSeriesForScope(userScope).forEach(series => {
             simulated.upsertSeries(series);
           });
 
-          const result = simulated.reconcileSeries(payload as ISeriesDefinition[]);
-          const nextSeries = simulated.listSeries();
+          const scopedPayload = (payload as ISeriesDefinition[]).map(series => ({
+            ...series,
+            userScope
+          }));
 
-          await storageService.replaceSeriesDefinitions(nextSeries);
-          historySeries.reconcileSeries(nextSeries);
+          const result = simulated.reconcileSeries(scopedPayload);
+          const nextSeries = simulated.listSeriesForScope(userScope);
 
-          server.debug(`[SERIES RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
+          await storageService.replaceSeriesDefinitionsForScope(userScope, nextSeries);
+
+          const seriesOutsideScope = historySeries
+            .listSeries()
+            .filter(series => normalizeUserScope(series.userScope) !== userScope);
+          historySeries.reconcileSeries([...seriesOutsideScope, ...nextSeries]);
+
+          server.debug(`[SERIES RECONCILE] scope=${userScope} created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
           rebuildSeriesCaptureSubscriptions();
           return sendOk(res, result);
         } catch (error) {
@@ -1144,7 +1191,8 @@ const start = (server: ServerAPI): Plugin => {
             to: _req.query.to ? String(_req.query.to) : undefined,
             duration: _req.query.duration ? String(_req.query.duration) : undefined
           };
-          return sendOk(res, await resolveHistoryPaths(query));
+          const userScope = resolveReadUserScope(_req);
+          return sendOk(res, await resolveHistoryPaths(userScope, query));
         } catch (error) {
           server.error(`Error reading history paths: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to read history paths');
@@ -1165,7 +1213,8 @@ const start = (server: ServerAPI): Plugin => {
             to: _req.query.to ? String(_req.query.to) : undefined,
             duration: _req.query.duration ? String(_req.query.duration) : undefined
           };
-          return sendOk(res, await resolveHistoryContexts(query));
+          const userScope = resolveReadUserScope(_req);
+          return sendOk(res, await resolveHistoryContexts(userScope, query));
         } catch (error) {
           server.error(`Error reading history contexts: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to read history contexts');
@@ -1196,7 +1245,8 @@ const start = (server: ServerAPI): Plugin => {
             resolution: req.query.resolution ? String(req.query.resolution) : undefined
           };
 
-          return sendOk(res, await resolveHistoryValues(query));
+          const userScope = resolveReadUserScope(req);
+          return sendOk(res, await resolveHistoryValues(userScope, query));
         } catch (error) {
           server.error(`Error reading history values: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to read history values');

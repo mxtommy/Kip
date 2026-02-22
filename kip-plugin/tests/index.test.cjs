@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const { HistorySeriesService } = require('../../plugin/history-series.service.js');
 const { DuckDbParquetStorageService } = require('../../plugin/duckdb-parquet-storage.service.js');
 
+const TEST_AUTH_USER = { username: 'test-user' };
+
 function createServerMock() {
   const putHandlers = [];
   const messages = [];
@@ -525,6 +527,7 @@ test('series CRUD works and history paths/contexts come from stored samples', as
     path: '/series/chart-1',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'chart-1' },
     body: {
       datasetUuid: 'chart-1',
@@ -542,21 +545,21 @@ test('series CRUD works and history paths/contexts come from stored samples', as
   assert.equal(upsertRes.payload.seriesId, 'chart-1');
 
   const listRes = createResMock();
-  await list({ params: {}, headers: {}, query: {} }, listRes);
+  await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
   assert.equal(listRes.statusCode, 200);
   assert.equal(Array.isArray(listRes.payload), true);
   assert.equal(listRes.payload.length, 1);
 
   const pathsRes = createResMock();
-  await getPaths({ params: {}, headers: {}, query: {} }, pathsRes);
+  await getPaths({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, pathsRes);
   assert.deepEqual(pathsRes.payload, []);
 
   const contextsRes = createResMock();
-  await getContexts({ params: {}, headers: {}, query: {} }, contextsRes);
+  await getContexts({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, contextsRes);
   assert.deepEqual(contextsRes.payload, []);
 
   const deleteRes = createResMock();
-  await remove({ params: { seriesId: 'chart-1' }, headers: {} }, deleteRes);
+  await remove({ params: { seriesId: 'chart-1' }, headers: {}, user: TEST_AUTH_USER, method: 'DELETE', path: '/series/chart-1', ip: '127.0.0.1' }, deleteRes);
   assert.equal(deleteRes.statusCode, 200);
 });
 
@@ -675,6 +678,7 @@ test('history values endpoint returns history-compatible payload', async () => {
     path: '/series/chart-2',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'chart-2' },
     body: {
       datasetUuid: 'chart-2',
@@ -690,6 +694,7 @@ test('history values endpoint returns history-compatible payload', async () => {
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: { paths: 'environment.wind.speedTrue:avg', duration: 'PT1H' }
   }, res);
 
@@ -717,6 +722,7 @@ test('stream ingestion records live samples for configured series', async () => 
     path: '/series/live-1',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-1' },
     body: {
       datasetUuid: 'live-1',
@@ -740,6 +746,7 @@ test('stream ingestion records live samples for configured series', async () => 
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'navigation.speedOverGround:avg',
       duration: 'PT1H',
@@ -770,6 +777,7 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
     path: '/series/live-prefixed-1',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-prefixed-1' },
     body: {
       datasetUuid: 'live-prefixed-1',
@@ -793,6 +801,7 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'vessels.self.navigation.speedOverGround:avg',
       duration: 'PT1H',
@@ -823,6 +832,7 @@ test('history values returns pending ingested sample without waiting for timer f
     path: '/series/live-2',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-2' },
     body: {
       datasetUuid: 'live-2',
@@ -847,6 +857,7 @@ test('history values returns pending ingested sample without waiting for timer f
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'environment.wind.angleTrueWater:avg',
       from: new Date(sampleTs - 1000).toISOString(),
@@ -878,6 +889,7 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
     path: '/series/live-3',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-3' },
     body: {
       datasetUuid: 'live-3',
@@ -902,6 +914,7 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'navigation.speedOverGround:avg',
       duration: 'PT1H',
@@ -931,6 +944,7 @@ test('history values resolution numeric input is interpreted as seconds', async 
     path: '/series/live-4',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-4' },
     body: {
       datasetUuid: 'live-4',
@@ -964,6 +978,7 @@ test('history values resolution numeric input is interpreted as seconds', async 
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'navigation.speedOverGround:avg',
       context: 'vessels.self',
@@ -999,6 +1014,7 @@ test('history values applies min and max methods when downsampling', async () =>
     path: '/series/live-5',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-5' },
     body: {
       datasetUuid: 'live-5',
@@ -1032,6 +1048,7 @@ test('history values applies min and max methods when downsampling', async () =>
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'navigation.speedOverGround:avg,navigation.speedOverGround:min,navigation.speedOverGround:max',
       context: 'vessels.self',
@@ -1143,6 +1160,7 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
     path: '/series/live-6',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     params: { seriesId: 'live-6' },
     body: {
       datasetUuid: 'live-6',
@@ -1170,6 +1188,7 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
     path: '/history/values',
     ip: '127.0.0.1',
     headers: {},
+    user: TEST_AUTH_USER,
     query: {
       paths: 'navigation.speedOverGround:avg,navigation.speedOverGround:min,navigation.speedOverGround:max,navigation.speedOverGround:sma:3,navigation.speedOverGround:ema:3',
       context: 'vessels.self',
@@ -1244,6 +1263,45 @@ test('history values does not create synthetic buckets for sparse data gaps', ()
   assert.equal(response.data[0][0], '2026-02-18T15:00:00.000Z');
   assert.equal(response.data[1][0], '2026-02-18T15:00:10.000Z');
   assert.equal(response.data[2][0], '2026-02-18T15:00:40.000Z');
+});
+
+test('history series enforces default 1000ms sampleTime when unset', () => {
+  const service = new HistorySeriesService(() => Date.now());
+  service.upsertSeries({
+    seriesId: 'sampling-default-1',
+    datasetUuid: 'sampling-default-1',
+    ownerWidgetUuid: 'widget-sampling-default-1',
+    path: 'navigation.speedOverGround',
+    context: 'vessels.self'
+  });
+
+  const firstAccepted = service.recordSample('sampling-default-1', 10, 1000);
+  const secondAccepted = service.recordSample('sampling-default-1', 11, 1500);
+  const thirdAccepted = service.recordSample('sampling-default-1', 12, 2000);
+
+  assert.equal(firstAccepted, true);
+  assert.equal(secondAccepted, false);
+  assert.equal(thirdAccepted, true);
+});
+
+test('history series enforces configured sampleTime at ingest', () => {
+  const service = new HistorySeriesService(() => Date.now());
+  service.upsertSeries({
+    seriesId: 'sampling-config-1',
+    datasetUuid: 'sampling-config-1',
+    ownerWidgetUuid: 'widget-sampling-config-1',
+    path: 'navigation.speedOverGround',
+    context: 'vessels.self',
+    sampleTime: 200
+  });
+
+  const firstAccepted = service.recordSample('sampling-config-1', 10, 1000);
+  const secondAccepted = service.recordSample('sampling-config-1', 11, 1100);
+  const thirdAccepted = service.recordSample('sampling-config-1', 12, 1200);
+
+  assert.equal(firstAccepted, true);
+  assert.equal(secondAccepted, false);
+  assert.equal(thirdAccepted, true);
 });
 
 test('in-memory and duckdb math paths stay aligned for method and resolution combinations', () => {
@@ -1605,7 +1663,7 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
     const list = router.getHandlers.get('/series');
 
     const baselineRes = createResMock();
-    await list({ params: {}, headers: {}, query: {} }, baselineRes);
+    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, baselineRes);
     assert.equal(baselineRes.statusCode, 200);
     const baselineSeriesIds = new Set((baselineRes.payload ?? []).map(item => item.seriesId));
 
@@ -1615,6 +1673,7 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
       path: '/series/atomic-upsert-1',
       ip: '127.0.0.1',
       headers: {},
+      user: TEST_AUTH_USER,
       params: { seriesId: 'atomic-upsert-1' },
       body: {
         datasetUuid: 'atomic-upsert-1',
@@ -1627,7 +1686,7 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
     assert.equal(upsertRes.statusCode, 503);
 
     const listRes = createResMock();
-    await list({ params: {}, headers: {}, query: {} }, listRes);
+    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
     assert.equal(listRes.statusCode, 200);
     const nextSeriesIds = new Set((listRes.payload ?? []).map(item => item.seriesId));
     assert.equal(nextSeriesIds.has('atomic-upsert-1'), false);
@@ -1638,8 +1697,8 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
 });
 
 test('series delete keeps in-memory state when duckdb delete fails', async () => {
-  const originalDelete = DuckDbParquetStorageService.prototype.deleteSeriesDefinition;
-  DuckDbParquetStorageService.prototype.deleteSeriesDefinition = async function deleteFail() {
+  const originalDelete = DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope;
+  DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope = async function deleteFail() {
     throw new Error('DuckDB forced delete failure');
   };
 
@@ -1661,6 +1720,7 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
       path: '/series/atomic-delete-1',
       ip: '127.0.0.1',
       headers: {},
+      user: TEST_AUTH_USER,
       params: { seriesId: 'atomic-delete-1' },
       body: {
         datasetUuid: 'atomic-delete-1',
@@ -1680,7 +1740,7 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
       }
 
       const listBeforeDeleteRes = createResMock();
-      await list({ params: {}, headers: {}, query: {} }, listBeforeDeleteRes);
+      await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listBeforeDeleteRes);
       created = Array.isArray(listBeforeDeleteRes.payload)
         && listBeforeDeleteRes.payload.some(item => item.seriesId === 'atomic-delete-1');
 
@@ -1692,16 +1752,16 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
     assert.equal(created, true);
 
     const deleteRes = createResMock();
-    await remove({ method: 'DELETE', path: '/series/atomic-delete-1', ip: '127.0.0.1', headers: {}, params: { seriesId: 'atomic-delete-1' } }, deleteRes);
+    await remove({ method: 'DELETE', path: '/series/atomic-delete-1', ip: '127.0.0.1', headers: {}, user: TEST_AUTH_USER, params: { seriesId: 'atomic-delete-1' } }, deleteRes);
     assert.equal(deleteRes.statusCode, 503);
 
     const listRes = createResMock();
-    await list({ params: {}, headers: {}, query: {} }, listRes);
+    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
     assert.equal(listRes.statusCode, 200);
     assert.equal(Array.isArray(listRes.payload), true);
     assert.equal(listRes.payload.some(item => item.seriesId === 'atomic-delete-1'), true);
   } finally {
-    DuckDbParquetStorageService.prototype.deleteSeriesDefinition = originalDelete;
+    DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope = originalDelete;
   }
 });
 

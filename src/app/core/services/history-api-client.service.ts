@@ -33,7 +33,7 @@ export interface IHistoryValuesResponse {
  * - allows string `resolution` passthrough (e.g. `PT1S`)
  * - requires `paths` for the HTTP endpoint variant used by KIP
  */
-type IHistoryValuesQueryParams = Partial<TimeRangeQueryParams> & {
+export type IHistoryValuesQueryParams = Partial<TimeRangeQueryParams> & {
   paths: string;
   context?: string;
   resolution?: number | string;

@@ -1,5 +1,6 @@
 import { mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
+import * as duckdb from 'duckdb';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
 export interface IDuckDbParquetStorageConfig {
@@ -10,6 +11,7 @@ export interface IDuckDbParquetStorageConfig {
 }
 
 export interface IRecordedSample {
+  userScope: string;
   seriesId: string;
   datasetUuid: string;
   ownerWidgetUuid: string;
@@ -21,6 +23,8 @@ export interface IRecordedSample {
 }
 
 interface ISeriesRange {
+  userScope: string;
+  seriesId: string;
   minTs: number;
   maxTs: number;
 }
@@ -42,6 +46,7 @@ interface IPathValueRow extends IPathRow {
 
 interface ISeriesRow {
   series_id: string;
+  user_scope: string | null;
   dataset_uuid: string;
   owner_widget_uuid: string;
   owner_widget_selector: string | null;
@@ -64,26 +69,32 @@ interface ICountRow {
   removed_rows: unknown;
 }
 
+interface ITableInfoRow {
+  name?: unknown;
+  pk?: unknown;
+}
+
 interface IHistoryRangeQuery {
+  userScope?: string;
   from?: string;
   to?: string;
   duration?: string | number;
 }
 
-type TLogger = {
+interface TLogger {
   debug: (msg: string) => void;
   error: (msg: string) => void;
-};
+}
 
-type TDuckDbConnectionLike = {
+interface TDuckDbConnectionLike {
   run?: (sql: string, callback: (err?: Error | null) => void) => void;
   all?: (sql: string, callback: (err: Error | null, rows?: unknown[]) => void) => void;
   close?: (callback: (err?: Error | null) => void) => void;
-};
+}
 
-type TDuckDbDatabaseLike = TDuckDbConnectionLike & {
+interface TDuckDbDatabaseLike extends TDuckDbConnectionLike {
   connect?: () => TDuckDbConnectionLike;
-};
+}
 
 /**
  * Provides DuckDB storage and Parquet flush support for captured history samples.
@@ -95,6 +106,10 @@ export class DuckDbParquetStorageService {
     parquetDirectory: 'plugin-config-data/kip/historicalData/parquet',
     flushIntervalMs: 30_000
   };
+
+  // Weekly VACUUM job interval (in ms)
+  private static readonly VACUUM_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+  private vacuumJob: NodeJS.Timeout | null = null;
 
   private logger: TLogger = {
     debug: () => undefined,
@@ -163,12 +178,12 @@ export class DuckDbParquetStorageService {
     this.lifecycleToken += 1;
 
     try {
-      const duckdb = this.requireDuckDb();
+      const duckdbModule = duckdb;
       const dbPath = resolve(this.config.databaseFile);
       mkdirSync(dirname(dbPath), { recursive: true });
       mkdirSync(resolve(this.config.parquetDirectory), { recursive: true });
 
-      this.db = new duckdb.Database(dbPath) as TDuckDbDatabaseLike;
+      this.db = new duckdbModule.Database(dbPath) as TDuckDbDatabaseLike;
 
       const maybeConnection = typeof this.db.connect === 'function'
         ? this.db.connect()
@@ -184,43 +199,29 @@ export class DuckDbParquetStorageService {
       }
 
       this.connection = maybeConnection as Required<TDuckDbConnectionLike>;
-      await this.runSql(`
-        CREATE TABLE IF NOT EXISTS history_samples (
-          series_id VARCHAR,
-          dataset_uuid VARCHAR,
-          owner_widget_uuid VARCHAR,
-          path VARCHAR,
-          context VARCHAR,
-          source VARCHAR,
-          ts_ms BIGINT,
-          value DOUBLE
-        )
-      `);
-      await this.runSql(`
-        CREATE TABLE IF NOT EXISTS history_series (
-          series_id VARCHAR PRIMARY KEY,
-          dataset_uuid VARCHAR NOT NULL,
-          owner_widget_uuid VARCHAR NOT NULL,
-          owner_widget_selector VARCHAR,
-          path VARCHAR NOT NULL,
-          source VARCHAR,
-          context VARCHAR,
-          time_scale VARCHAR,
-          period INTEGER,
-          retention_duration_ms BIGINT,
-          sample_time INTEGER,
-          enabled BOOLEAN,
-          methods_json VARCHAR
-        )
-      `);
-      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_ts ON history_samples(series_id, ts_ms)');
-      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_context_path_ts ON history_samples(context, path, ts_ms)');
-      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_ts_path ON history_samples(ts_ms, path)');
-      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_ts_context ON history_samples(ts_ms, context)');
+      await this.createCoreTables();
+      const schemaCompatible = await this.isCompositeKeySchemaCompatible();
+      if (!schemaCompatible) {
+        const legacySeriesRows = await this.countRows('history_series');
+        const legacySampleRows = await this.countRows('history_samples');
+        await this.runSql('DROP TABLE IF EXISTS history_samples');
+        await this.runSql('DROP TABLE IF EXISTS history_series');
+        await this.createCoreTables();
+        this.logger.debug(`[SERIES STORAGE] legacy schema reset: droppedAndRecreated=history_series,history_samples legacySeriesRows=${legacySeriesRows} legacySampleRows=${legacySampleRows}`);
+      }
+      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_ts ON history_samples(user_scope, series_id, ts_ms)');
+      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_id ON history_series(user_scope, series_id)');
+      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_scope_context_path_ts ON history_samples(user_scope, context, path, ts_ms)');
+      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_scope_ts_path ON history_samples(user_scope, ts_ms, path)');
+      await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_scope_ts_context ON history_samples(user_scope, ts_ms, context)');
 
       this.logger.debug(`[SERIES STORAGE] DuckDB initialized at ${dbPath}`);
       this.lastInitError = null;
       this.initialized = true;
+
+      // Start weekly VACUUM job
+      this.startVacuumJob();
+
       return true;
     } catch (error) {
       const message = (error as Error)?.message ?? String(error);
@@ -232,7 +233,32 @@ export class DuckDbParquetStorageService {
       this.pendingRows = [];
       this.pendingRangesBySeriesId.clear();
       this.initialized = false;
+      this.stopVacuumJob();
       return false;
+    }
+  }
+
+  /**
+   * Starts the weekly VACUUM job for DuckDB.
+   */
+  private startVacuumJob(): void {
+    this.stopVacuumJob();
+    if (!this.isDuckDbParquetReady() || !this.connection) return;
+    this.vacuumJob = setInterval(() => {
+      this.logger.debug('[SERIES STORAGE] Running scheduled DuckDB VACUUM');
+      this.runSql('VACUUM;').catch(err => {
+        this.logger.error(`[SERIES STORAGE] VACUUM failed: ${err?.message ?? err}`);
+      });
+    }, DuckDbParquetStorageService.VACUUM_INTERVAL_MS);
+  }
+
+  /**
+   * Stops the scheduled VACUUM job if running.
+   */
+  private stopVacuumJob(): void {
+    if (this.vacuumJob) {
+      clearInterval(this.vacuumJob);
+      this.vacuumJob = null;
     }
   }
 
@@ -319,13 +345,21 @@ export class DuckDbParquetStorageService {
     }
 
     this.pendingRows.push(sample);
-    const existing = this.pendingRangesBySeriesId.get(sample.seriesId);
+    const rangeKey = this.buildScopedSeriesKey(sample.userScope, sample.seriesId);
+    const existing = this.pendingRangesBySeriesId.get(rangeKey);
     if (!existing) {
-      this.pendingRangesBySeriesId.set(sample.seriesId, { minTs: sample.timestamp, maxTs: sample.timestamp });
+      this.pendingRangesBySeriesId.set(rangeKey, {
+        userScope: this.normalizeUserScope(sample.userScope),
+        seriesId: sample.seriesId,
+        minTs: sample.timestamp,
+        maxTs: sample.timestamp
+      });
       return;
     }
 
-    this.pendingRangesBySeriesId.set(sample.seriesId, {
+    this.pendingRangesBySeriesId.set(rangeKey, {
+      userScope: existing.userScope,
+      seriesId: existing.seriesId,
       minTs: Math.min(existing.minTs, sample.timestamp),
       maxTs: Math.max(existing.maxTs, sample.timestamp)
     });
@@ -356,20 +390,22 @@ export class DuckDbParquetStorageService {
     try {
       await this.insertRows(rows);
       let exported = 0;
-      for (const [seriesId, range] of ranges.entries()) {
-        await this.exportSeriesRange(seriesId, range.minTs, range.maxTs);
+      for (const range of ranges.values()) {
+        await this.exportSeriesRange(range.userScope, range.seriesId, range.minTs, range.maxTs);
         exported += 1;
       }
       return { inserted: rows.length, exported };
     } catch (error) {
       this.pendingRows = [...rows, ...this.pendingRows];
-      ranges.forEach((range, seriesId) => {
-        const current = this.pendingRangesBySeriesId.get(seriesId);
+      ranges.forEach((range, rangeKey) => {
+        const current = this.pendingRangesBySeriesId.get(rangeKey);
         if (!current) {
-          this.pendingRangesBySeriesId.set(seriesId, range);
+          this.pendingRangesBySeriesId.set(rangeKey, range);
           return;
         }
-        this.pendingRangesBySeriesId.set(seriesId, {
+        this.pendingRangesBySeriesId.set(rangeKey, {
+          userScope: current.userScope,
+          seriesId: current.seriesId,
           minTs: Math.min(current.minTs, range.minTs),
           maxTs: Math.max(current.maxTs, range.maxTs)
         });
@@ -394,6 +430,7 @@ export class DuckDbParquetStorageService {
     const rows = await this.querySql<ISeriesRow>(`
       SELECT
         series_id,
+        user_scope,
         dataset_uuid,
         owner_widget_uuid,
         owner_widget_selector,
@@ -407,11 +444,12 @@ export class DuckDbParquetStorageService {
         enabled,
         methods_json
       FROM history_series
-      ORDER BY series_id ASC
+      ORDER BY user_scope ASC, series_id ASC
     `);
 
     return rows.map(row => ({
       seriesId: row.series_id,
+      userScope: this.normalizeUserScope(row.user_scope),
       datasetUuid: row.dataset_uuid,
       ownerWidgetUuid: row.owner_widget_uuid,
       ownerWidgetSelector: row.owner_widget_selector ?? undefined,
@@ -441,10 +479,12 @@ export class DuckDbParquetStorageService {
       return;
     }
 
-    await this.runSql(`DELETE FROM history_series WHERE series_id = ${this.escape(series.seriesId)}`);
+    const userScope = this.normalizeUserScope(series.userScope);
+    await this.runSql(`DELETE FROM history_series WHERE user_scope = ${this.escape(userScope)} AND series_id = ${this.escape(series.seriesId)}`);
     await this.runSql(`
       INSERT INTO history_series (
         series_id,
+        user_scope,
         dataset_uuid,
         owner_widget_uuid,
         owner_widget_selector,
@@ -459,6 +499,7 @@ export class DuckDbParquetStorageService {
         methods_json
       ) VALUES (
         ${this.escape(series.seriesId)},
+        ${this.escape(userScope)},
         ${this.escape(series.datasetUuid)},
         ${this.escape(series.ownerWidgetUuid)},
         ${this.nullableString(series.ownerWidgetSelector)},
@@ -492,6 +533,27 @@ export class DuckDbParquetStorageService {
   }
 
   /**
+   * Deletes one persisted series definition in DuckDB for a specific user scope.
+   *
+   * @param {string} seriesId Series identifier.
+   * @param {string} userScope User scope key resolved by plugin auth.
+   * @returns {Promise<void>}
+   *
+   * @example
+   * await storage.deleteSeriesDefinitionForScope('series-1', 'demo-user');
+   */
+  public async deleteSeriesDefinitionForScope(seriesId: string, userScope: string): Promise<void> {
+    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+      return;
+    }
+    await this.runSql(`
+      DELETE FROM history_series
+      WHERE user_scope = ${this.escape(this.normalizeUserScope(userScope))}
+        AND series_id = ${this.escape(seriesId)}
+    `);
+  }
+
+  /**
    * Replaces persisted series definitions with desired set.
    *
    * @param {ISeriesDefinition[]} series Full desired series set.
@@ -508,6 +570,31 @@ export class DuckDbParquetStorageService {
     await this.runSql('DELETE FROM history_series');
     for (const item of series) {
       await this.upsertSeriesDefinition(item);
+    }
+  }
+
+  /**
+   * Replaces persisted series definitions for a specific user scope.
+   *
+   * @param {string} userScope User scope key resolved by plugin auth.
+   * @param {ISeriesDefinition[]} series Full desired series set for the scope.
+   * @returns {Promise<void>}
+   *
+   * @example
+   * await storage.replaceSeriesDefinitionsForScope('demo-user', series);
+   */
+  public async replaceSeriesDefinitionsForScope(userScope: string, series: ISeriesDefinition[]): Promise<void> {
+    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+      return;
+    }
+
+    const normalizedScope = this.normalizeUserScope(userScope);
+    await this.runSql(`DELETE FROM history_series WHERE user_scope = ${this.escape(normalizedScope)}`);
+    for (const item of series) {
+      await this.upsertSeriesDefinition({
+        ...item,
+        userScope: normalizedScope
+      });
     }
   }
 
@@ -535,10 +622,57 @@ export class DuckDbParquetStorageService {
       EXISTS (
         SELECT 1
         FROM history_series AS hs
-        WHERE hs.series_id = history_samples.series_id
+        WHERE hs.user_scope = history_samples.user_scope
+          AND hs.series_id = history_samples.series_id
           AND hs.retention_duration_ms IS NOT NULL
           AND hs.retention_duration_ms > 0
           AND history_samples.ts_ms < (${anchorMs} - hs.retention_duration_ms)
+      )
+    `;
+
+    const countRows = await this.querySql<ICountRow>(`
+      SELECT COUNT(*) AS removed_rows
+      FROM history_samples
+      WHERE ${whereClause}
+    `);
+
+    const removedRows = this.toNumberOrUndefined(countRows[0]?.removed_rows) ?? 0;
+    if (removedRows <= 0) {
+      return 0;
+    }
+
+    await this.runSql(`
+      DELETE FROM history_samples
+      WHERE ${whereClause}
+    `);
+
+    return removedRows;
+  }
+
+  /**
+   * Removes persisted samples that no longer have a matching series definition.
+   *
+   * @param {number} [expectedLifecycleToken] Optional lifecycle token guard to skip stale sweeps.
+   * @returns {Promise<number>} Number of deleted orphan sample rows.
+   *
+   * @example
+   * const removed = await storage.pruneOrphanedSamples();
+   */
+  public async pruneOrphanedSamples(expectedLifecycleToken?: number): Promise<number> {
+    if (expectedLifecycleToken !== undefined && expectedLifecycleToken !== this.lifecycleToken) {
+      return 0;
+    }
+
+    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+      return 0;
+    }
+
+    const whereClause = `
+      NOT EXISTS (
+        SELECT 1
+        FROM history_series AS hs
+        WHERE hs.user_scope = history_samples.user_scope
+          AND hs.series_id = history_samples.series_id
       )
     `;
 
@@ -574,6 +708,7 @@ export class DuckDbParquetStorageService {
       return [];
     }
 
+    const userScope = this.normalizeUserScope(query?.userScope);
     const nowMs = Date.now();
     const range = this.resolveRange(nowMs, query?.from, query?.to, query?.duration);
 
@@ -581,6 +716,7 @@ export class DuckDbParquetStorageService {
       SELECT DISTINCT path AS value
       FROM history_samples
       WHERE path IS NOT NULL
+        AND user_scope = ${this.escape(userScope)}
         AND ts_ms >= ${Math.trunc(range.fromMs)}
         AND ts_ms <= ${Math.trunc(range.toMs)}
       ORDER BY value ASC
@@ -601,6 +737,7 @@ export class DuckDbParquetStorageService {
       return [];
     }
 
+    const userScope = this.normalizeUserScope(query?.userScope);
     const nowMs = Date.now();
     const range = this.resolveRange(nowMs, query?.from, query?.to, query?.duration);
 
@@ -608,6 +745,7 @@ export class DuckDbParquetStorageService {
       SELECT DISTINCT context AS value
       FROM history_samples
       WHERE context IS NOT NULL
+        AND user_scope = ${this.escape(userScope)}
         AND ts_ms >= ${Math.trunc(range.fromMs)}
         AND ts_ms <= ${Math.trunc(range.toMs)}
       ORDER BY value ASC
@@ -629,6 +767,7 @@ export class DuckDbParquetStorageService {
       return null;
     }
 
+    const userScope = this.normalizeUserScope(query.userScope);
     const nowMs = Date.now();
     const requested = this.parseRequestedPaths(query.paths);
     if (requested.length === 0) {
@@ -639,7 +778,7 @@ export class DuckDbParquetStorageService {
     const context = query.context ?? 'vessels.self';
     const resolutionMs = this.resolveResolutionMs(query.resolution);
     const uniquePaths = Array.from(new Set(requested.map(item => item.path)));
-    const rowsByPath = await this.selectRowsForPaths(uniquePaths, context, range.fromMs, range.toMs);
+    const rowsByPath = await this.selectRowsForPaths(uniquePaths, context, range.fromMs, range.toMs, userScope);
 
     const timestampRows = new Map<number, (number | null)[]>();
     for (let index = 0; index < requested.length; index += 1) {
@@ -701,9 +840,65 @@ export class DuckDbParquetStorageService {
     this.db = null;
   }
 
-  private requireDuckDb(): { Database: new (path: string) => TDuckDbDatabaseLike } {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('duckdb');
+  private async createCoreTables(): Promise<void> {
+    await this.runSql(`
+      CREATE TABLE IF NOT EXISTS history_samples (
+        user_scope VARCHAR NOT NULL,
+        series_id VARCHAR,
+        dataset_uuid VARCHAR,
+        owner_widget_uuid VARCHAR,
+        path VARCHAR,
+        context VARCHAR,
+        source VARCHAR,
+        ts_ms BIGINT,
+        value DOUBLE
+      )
+    `);
+    await this.runSql(`
+      CREATE TABLE IF NOT EXISTS history_series (
+        user_scope VARCHAR NOT NULL,
+        series_id VARCHAR NOT NULL,
+        dataset_uuid VARCHAR NOT NULL,
+        owner_widget_uuid VARCHAR NOT NULL,
+        owner_widget_selector VARCHAR,
+        path VARCHAR NOT NULL,
+        source VARCHAR,
+        context VARCHAR,
+        time_scale VARCHAR,
+        period INTEGER,
+        retention_duration_ms BIGINT,
+        sample_time INTEGER,
+        enabled BOOLEAN,
+        methods_json VARCHAR,
+        PRIMARY KEY (user_scope, series_id)
+      )
+    `);
+  }
+
+  private async countRows(tableName: 'history_series' | 'history_samples'): Promise<number> {
+    const rows = await this.querySql<ICountRow>(`SELECT COUNT(*) AS removed_rows FROM ${tableName}`);
+    return this.toNumberOrUndefined(rows[0]?.removed_rows) ?? 0;
+  }
+
+  private async isCompositeKeySchemaCompatible(): Promise<boolean> {
+    const seriesColumns = await this.querySql<ITableInfoRow>(`
+      PRAGMA table_info('history_series')
+    `);
+    const samplesColumns = await this.querySql<ITableInfoRow>(`
+      PRAGMA table_info('history_samples')
+    `);
+
+    const normalizedSeries = seriesColumns.map(column => ({
+      name: String(column.name ?? '').trim().toLowerCase(),
+      pk: Number(column.pk ?? 0)
+    }));
+    const normalizedSamples = samplesColumns.map(column => String(column.name ?? '').trim().toLowerCase());
+
+    const seriesUserScopePk = normalizedSeries.some(column => column.name === 'user_scope' && column.pk > 0);
+    const seriesIdPk = normalizedSeries.some(column => column.name === 'series_id' && column.pk > 0);
+    const samplesHasUserScope = normalizedSamples.includes('user_scope');
+
+    return seriesUserScopePk && seriesIdPk && samplesHasUserScope;
   }
 
   private async insertRows(rows: IRecordedSample[]): Promise<void> {
@@ -712,11 +907,12 @@ export class DuckDbParquetStorageService {
     }
 
     const valuesSql = rows
-      .map(sample => `(${this.escape(sample.seriesId)}, ${this.escape(sample.datasetUuid)}, ${this.escape(sample.ownerWidgetUuid)}, ${this.escape(sample.path)}, ${this.escape(sample.context)}, ${this.escape(sample.source)}, ${Math.trunc(sample.timestamp)}, ${Number(sample.value)})`)
+      .map(sample => `(${this.escape(this.normalizeUserScope(sample.userScope))}, ${this.escape(sample.seriesId)}, ${this.escape(sample.datasetUuid)}, ${this.escape(sample.ownerWidgetUuid)}, ${this.escape(sample.path)}, ${this.escape(sample.context)}, ${this.escape(sample.source)}, ${Math.trunc(sample.timestamp)}, ${Number(sample.value)})`)
       .join(',\n');
 
     const sql = `
       INSERT INTO history_samples (
+        user_scope,
         series_id,
         dataset_uuid,
         owner_widget_uuid,
@@ -731,18 +927,20 @@ export class DuckDbParquetStorageService {
     await this.runSql(sql);
   }
 
-  private async exportSeriesRange(seriesId: string, fromMs: number, toMs: number): Promise<void> {
+  private async exportSeriesRange(userScope: string, seriesId: string, fromMs: number, toMs: number): Promise<void> {
     const baseDir = resolve(this.config.parquetDirectory);
-    const seriesDir = join(baseDir, this.safePath(seriesId));
+    const seriesDir = join(baseDir, this.safePath(this.normalizeUserScope(userScope)), this.safePath(seriesId));
     mkdirSync(seriesDir, { recursive: true });
 
     const filePath = join(seriesDir, `${fromMs}-${toMs}.parquet`);
+    const escapedScope = this.escape(this.normalizeUserScope(userScope));
     const escapedSeries = this.escape(seriesId);
     const escapedFile = this.escapePath(filePath);
 
     const sql = `
       COPY (
         SELECT
+          user_scope,
           series_id,
           dataset_uuid,
           owner_widget_uuid,
@@ -753,7 +951,8 @@ export class DuckDbParquetStorageService {
           to_timestamp(ts_ms / 1000.0) AS ts,
           value
         FROM history_samples
-        WHERE series_id = ${escapedSeries}
+        WHERE user_scope = ${escapedScope}
+          AND series_id = ${escapedSeries}
           AND ts_ms >= ${Math.trunc(fromMs)}
           AND ts_ms <= ${Math.trunc(toMs)}
         ORDER BY ts_ms
@@ -795,20 +994,7 @@ export class DuckDbParquetStorageService {
     });
   }
 
-  private async selectRowsForPath(path: string, context: string, fromMs: number, toMs: number): Promise<IPathRow[]> {
-    const sql = `
-      SELECT ts_ms, value
-      FROM history_samples
-      WHERE path = ${this.escape(path)}
-        AND context = ${this.escape(context)}
-        AND ts_ms >= ${Math.trunc(fromMs)}
-        AND ts_ms <= ${Math.trunc(toMs)}
-      ORDER BY ts_ms ASC
-    `;
-    return this.querySql<IPathRow>(sql);
-  }
-
-  private async selectRowsForPaths(paths: string[], context: string, fromMs: number, toMs: number): Promise<Map<string, IPathRow[]>> {
+  private async selectRowsForPaths(paths: string[], context: string, fromMs: number, toMs: number, userScope: string): Promise<Map<string, IPathRow[]>> {
     const rowsByPath = new Map<string, IPathRow[]>();
     if (paths.length === 0) {
       return rowsByPath;
@@ -818,7 +1004,8 @@ export class DuckDbParquetStorageService {
     const sql = `
       SELECT path, ts_ms, value
       FROM history_samples
-      WHERE context = ${this.escape(context)}
+      WHERE user_scope = ${this.escape(this.normalizeUserScope(userScope))}
+        AND context = ${this.escape(context)}
         AND path IN (${pathFilter})
         AND ts_ms >= ${Math.trunc(fromMs)}
         AND ts_ms <= ${Math.trunc(toMs)}
@@ -962,7 +1149,7 @@ export class DuckDbParquetStorageService {
     }
   }
 
-  private applyMethod(request: IRequestedPath, rows: IPathRow[]): Array<{ timestamp: number; value: number | null }> {
+  private applyMethod(request: IRequestedPath, rows: IPathRow[]): { timestamp: number; value: number | null }[] {
     if (rows.length === 0) return [];
 
     const method = request.method ?? 'avg';
@@ -1000,7 +1187,7 @@ export class DuckDbParquetStorageService {
     });
   }
 
-  private downsampleIfNeeded(values: Array<{ timestamp: number; value: number | null }>, resolutionMs: number, method: THistoryMethod): Array<{ timestamp: number; value: number | null }> {
+  private downsampleIfNeeded(values: { timestamp: number; value: number | null }[], resolutionMs: number, method: THistoryMethod): { timestamp: number; value: number | null }[] {
     if (resolutionMs <= 0 || values.length === 0) {
       return values;
     }
@@ -1046,6 +1233,10 @@ export class DuckDbParquetStorageService {
 
   private safePath(value: string): string {
     return value.replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  private buildScopedSeriesKey(userScope: string, seriesId: string): string {
+    return `${this.normalizeUserScope(userScope)}::${seriesId}`;
   }
 
   private escape(value: string): string {
@@ -1119,5 +1310,10 @@ export class DuckDbParquetStorageService {
     }
 
     return Boolean(value);
+  }
+
+  private normalizeUserScope(value: unknown): string {
+    const normalized = typeof value === 'string' ? value.trim() : '';
+    return normalized.length > 0 ? normalized : 'anonymous';
   }
 }

@@ -4,6 +4,7 @@ export interface ISeriesDefinition {
   seriesId: string;
   datasetUuid: string;
   ownerWidgetUuid: string;
+  userScope?: string | null;
   ownerWidgetSelector?: string;
   path: string;
   source?: string | null;
@@ -25,6 +26,7 @@ interface ISeriesSample {
 }
 
 export interface IRecordedSeriesSample {
+  userScope: string;
   seriesId: string;
   datasetUuid: string;
   ownerWidgetUuid: string;
@@ -55,6 +57,7 @@ export interface IHistoryValuesResponse {
 }
 
 export interface IHistoryQueryParams {
+  userScope?: string;
   paths: string;
   context?: string;
   from?: string;
@@ -68,7 +71,7 @@ export interface IHistoryQueryParams {
  */
 export class HistorySeriesService {
   private readonly seriesById = new Map<string, ISeriesDefinition>();
-  private readonly samplesBySeriesId = new Map<string, ISeriesSample[]>();
+  private readonly lastAcceptedTimestampBySeriesKey = new Map<string, number>();
   private sampleSink: ((sample: IRecordedSeriesSample) => void) | null = null;
 
   constructor(
@@ -86,7 +89,44 @@ export class HistorySeriesService {
    * console.log(list.length);
    */
   public listSeries(): ISeriesDefinition[] {
-    return Array.from(this.seriesById.values()).sort((left, right) => left.seriesId.localeCompare(right.seriesId));
+    return Array.from(this.seriesById.values()).sort((left, right) => {
+      const leftScope = this.normalizeUserScope(left.userScope);
+      const rightScope = this.normalizeUserScope(right.userScope);
+      const scopeCompare = leftScope.localeCompare(rightScope);
+      if (scopeCompare !== 0) {
+        return scopeCompare;
+      }
+      return left.seriesId.localeCompare(right.seriesId);
+    });
+  }
+
+  /**
+   * Returns all configured series for a given user scope sorted by `seriesId`.
+   *
+   * @param {string} userScope Scope key resolved by the plugin auth layer.
+   * @returns {ISeriesDefinition[]} Ordered list for the scope.
+   *
+   * @example
+   * const scoped = service.listSeriesForScope('demo-user');
+   */
+  public listSeriesForScope(userScope: string): ISeriesDefinition[] {
+    const normalizedScope = this.normalizeUserScope(userScope);
+    return this.listSeries().filter(series => this.normalizeUserScope(series.userScope) === normalizedScope);
+  }
+
+  /**
+   * Finds a series by identifier within a specific user scope.
+   *
+   * @param {string} seriesId Series identifier.
+   * @param {string} userScope Scope key resolved by the plugin auth layer.
+   * @returns {ISeriesDefinition | null} Matching series or null.
+   *
+   * @example
+   * const row = service.findSeriesByIdForScope('series-1', 'demo-user');
+   */
+  public findSeriesByIdForScope(seriesId: string, userScope: string): ISeriesDefinition | null {
+    const key = this.buildSeriesMapKey(seriesId, userScope);
+    return this.seriesById.get(key) ?? null;
   }
 
   /**
@@ -105,10 +145,8 @@ export class HistorySeriesService {
    */
   public upsertSeries(input: ISeriesDefinition): ISeriesDefinition {
     const normalized = this.normalizeSeries(input);
-    this.seriesById.set(normalized.seriesId, normalized);
-    if (this.retainSamplesInMemory && !this.samplesBySeriesId.has(normalized.seriesId)) {
-      this.samplesBySeriesId.set(normalized.seriesId, []);
-    }
+    const key = this.buildSeriesMapKey(normalized.seriesId, normalized.userScope);
+    this.seriesById.set(key, normalized);
     return normalized;
   }
 
@@ -135,10 +173,36 @@ export class HistorySeriesService {
    * const deleted = service.deleteSeries('abc');
    */
   public deleteSeries(seriesId: string): boolean {
-    const deleted = this.seriesById.delete(seriesId);
-    if (this.retainSamplesInMemory) {
-      this.samplesBySeriesId.delete(seriesId);
+    const keysToDelete = Array.from(this.seriesById.entries())
+      .filter(([, series]) => series.seriesId === seriesId)
+      .map(([key]) => key);
+
+    if (keysToDelete.length === 0) {
+      return false;
     }
+
+    keysToDelete.forEach(key => {
+      this.seriesById.delete(key);
+      this.lastAcceptedTimestampBySeriesKey.delete(key);
+    });
+
+    return true;
+  }
+
+  /**
+   * Deletes an existing series definition for a specific user scope.
+   *
+   * @param {string} seriesId Unique series identifier.
+   * @param {string} userScope Scope key resolved by the plugin auth layer.
+   * @returns {boolean} True when a scoped series existed and was deleted.
+   *
+   * @example
+   * const deleted = service.deleteSeriesForScope('abc', 'demo-user');
+   */
+  public deleteSeriesForScope(seriesId: string, userScope: string): boolean {
+    const key = this.buildSeriesMapKey(seriesId, userScope);
+    const deleted = this.seriesById.delete(key);
+    this.lastAcceptedTimestampBySeriesKey.delete(key);
     return deleted;
   }
 
@@ -156,36 +220,32 @@ export class HistorySeriesService {
     const desiredById = new Map<string, ISeriesDefinition>();
     desiredSeries.forEach(entry => {
       const normalized = this.normalizeSeries(entry);
-      desiredById.set(normalized.seriesId, normalized);
+      const key = this.buildSeriesMapKey(normalized.seriesId, normalized.userScope);
+      desiredById.set(key, normalized);
     });
 
     let created = 0;
     let updated = 0;
     let deleted = 0;
 
-    desiredById.forEach((desired, seriesId) => {
-      const existing = this.seriesById.get(seriesId);
+    desiredById.forEach((desired, seriesKey) => {
+      const existing = this.seriesById.get(seriesKey);
       if (!existing) {
-        this.seriesById.set(seriesId, desired);
-        if (this.retainSamplesInMemory) {
-          this.samplesBySeriesId.set(seriesId, []);
-        }
+        this.seriesById.set(seriesKey, desired);
         created += 1;
         return;
       }
 
       if (JSON.stringify(existing) !== JSON.stringify(desired)) {
-        this.seriesById.set(seriesId, desired);
+        this.seriesById.set(seriesKey, desired);
         updated += 1;
       }
     });
 
-    Array.from(this.seriesById.keys()).forEach(seriesId => {
-      if (!desiredById.has(seriesId)) {
-        this.seriesById.delete(seriesId);
-        if (this.retainSamplesInMemory) {
-          this.samplesBySeriesId.delete(seriesId);
-        }
+    Array.from(this.seriesById.keys()).forEach(seriesKey => {
+      if (!desiredById.has(seriesKey)) {
+        this.seriesById.delete(seriesKey);
+        this.lastAcceptedTimestampBySeriesKey.delete(seriesKey);
         deleted += 1;
       }
     });
@@ -210,33 +270,33 @@ export class HistorySeriesService {
    * service.recordSample('abc', 12.4, Date.now());
    */
   public recordSample(seriesId: string, value: number, timestamp: number): boolean {
-    const series = this.seriesById.get(seriesId);
+    const seriesEntry = Array.from(this.seriesById.entries())
+      .find(([, series]) => series.seriesId === seriesId);
+    if (!seriesEntry) {
+      return false;
+    }
+
+    return this.recordSampleByKey(seriesEntry[0], value, timestamp);
+  }
+
+  private recordSampleByKey(seriesKey: string, value: number, timestamp: number): boolean {
+    const series = this.seriesById.get(seriesKey);
     if (!series || series.enabled === false || !Number.isFinite(value) || !Number.isFinite(timestamp)) {
+      return false;
+    }
+
+    const samplingIntervalMs = this.resolveSampleTimeMs(series.sampleTime);
+    const previousTimestamp = this.lastAcceptedTimestampBySeriesKey.get(seriesKey);
+    if (previousTimestamp !== undefined && (timestamp - previousTimestamp) < samplingIntervalMs) {
       return false;
     }
 
     const context = series.context ?? 'vessels.self';
     const source = series.source ?? 'default';
-    if (this.retainSamplesInMemory) {
-      const list = this.samplesBySeriesId.get(seriesId) ?? [];
-
-      list.push({
-        timestamp,
-        value,
-        path: series.path,
-        source,
-        context
-      });
-
-      if (list.length > 50_000) {
-        list.splice(0, list.length - 50_000);
-      }
-
-      this.samplesBySeriesId.set(seriesId, list);
-    }
 
     this.sampleSink?.({
-      seriesId,
+      userScope: this.normalizeUserScope(series.userScope),
+      seriesId: series.seriesId,
       datasetUuid: series.datasetUuid,
       ownerWidgetUuid: series.ownerWidgetUuid,
       path: series.path,
@@ -245,6 +305,7 @@ export class HistorySeriesService {
       timestamp,
       value
     });
+    this.lastAcceptedTimestampBySeriesKey.set(seriesKey, timestamp);
     return true;
   }
 
@@ -274,7 +335,7 @@ export class HistorySeriesService {
 
     let recorded = 0;
     leafSamples.forEach(leaf => {
-      this.seriesById.forEach(series => {
+      this.seriesById.forEach((series, seriesKey) => {
         if (series.path !== leaf.path || series.enabled === false) {
           return;
         }
@@ -289,7 +350,7 @@ export class HistorySeriesService {
           return;
         }
 
-        if (this.recordSample(series.seriesId, leaf.value, ts)) {
+        if (this.recordSampleByKey(seriesKey, leaf.value, ts)) {
           recorded += 1;
         }
       });
@@ -298,8 +359,8 @@ export class HistorySeriesService {
     return recorded;
   }
 
-  private extractNumericLeafSamples(basePath: string, value: unknown): Array<{ path: string; value: number }> {
-    const samples: Array<{ path: string; value: number }> = [];
+  private extractNumericLeafSamples(basePath: string, value: unknown): { path: string; value: number }[] {
+    const samples: { path: string; value: number }[] = [];
 
     const addNumeric = (samplePath: string, sampleValue: unknown): void => {
       const normalizedPath = this.normalizePathIdentifier(samplePath);
@@ -337,42 +398,7 @@ export class HistorySeriesService {
     return samples;
   }
 
-  /**
-   * Runs retention cleanup across all series and drops expired samples.
-   *
-   * @param {number} [nowMs] Optional override for current time in milliseconds.
-   * @returns {number} Number of sample rows removed.
-   *
-   * @example
-   * const removed = service.runRetentionSweep(Date.now());
-   */
-  public runRetentionSweep(nowMs = this.nowProvider()): number {
-    if (!this.retainSamplesInMemory) {
-      return 0;
-    }
 
-    let removed = 0;
-
-    this.seriesById.forEach((series, seriesId) => {
-      const durationMs = this.resolveRetentionMs(series);
-      if (!Number.isFinite(durationMs) || durationMs <= 0) {
-        return;
-      }
-
-      const cutoff = nowMs - durationMs;
-      const samples = this.samplesBySeriesId.get(seriesId);
-      if (!samples || samples.length === 0) {
-        return;
-      }
-
-      const originalLength = samples.length;
-      const next = samples.filter(sample => sample.timestamp >= cutoff);
-      removed += originalLength - next.length;
-      this.samplesBySeriesId.set(seriesId, next);
-    });
-
-    return removed;
-  }
 
   /**
    * Returns all known history paths.
@@ -406,55 +432,7 @@ export class HistorySeriesService {
     return Array.from(contexts).sort();
   }
 
-  /**
-   * Returns a History API-compatible values response for the requested path expressions.
-   *
-   * @param {IHistoryQueryParams} query Incoming query parameters.
-   * @returns {IHistoryValuesResponse} Response payload compatible with KIP history consumer.
-   *
-   * @example
-   * const response = service.getValues({ paths: 'navigation.speedOverGround:avg', duration: 'PT1H' });
-   */
-  public getValues(query: IHistoryQueryParams): IHistoryValuesResponse {
-    if (!this.retainSamplesInMemory) {
-      throw new Error('In-memory history query engine is disabled.');
-    }
 
-    const nowMs = this.nowProvider();
-    const requested = this.parseRequestedPaths(query.paths);
-    const range = this.resolveRange(nowMs, query.from, query.to, query.duration);
-    const context = query.context ?? 'vessels.self';
-    const resolutionMs = this.resolveResolutionMs(query.resolution);
-
-    const timestampRows = new Map<number, (number | null)[]>();
-    requested.forEach((request, requestIndex) => {
-      const samples = this.collectSamplesForRequest(request, context, range.fromMs, range.toMs);
-      const transformed = this.applyMethod(request, samples);
-      const merged = this.downsampleIfNeeded(transformed, resolutionMs, request.method ?? 'avg');
-      merged.forEach(entry => {
-        const row = timestampRows.get(entry.timestamp) ?? Array.from({ length: requested.length }, () => null);
-        row[requestIndex] = entry.value;
-        timestampRows.set(entry.timestamp, row);
-      });
-    });
-
-    const data = Array.from(timestampRows.entries())
-      .sort((left, right) => left[0] - right[0])
-      .map(([timestamp, values]) => [new Date(timestamp).toISOString(), ...values]);
-
-    return {
-      context,
-      range: {
-        from: new Date(range.fromMs).toISOString(),
-        to: new Date(range.toMs).toISOString()
-      },
-      values: requested.map(item => ({
-        path: item.path,
-        method: item.method ?? 'avg'
-      })),
-      data
-    };
-  }
 
   private normalizeSeries(input: ISeriesDefinition): ISeriesDefinition {
     const seriesId = (input.seriesId || input.datasetUuid || '').trim();
@@ -477,17 +455,51 @@ export class HistorySeriesService {
       throw new Error('path is required');
     }
 
+    // Determine if this is a widget type to skip custom sampleTime logic
+    const skipCustomSampleTime =
+      ownerWidgetUuid?.startsWith('widget-windtrends-chart') ||
+      ownerWidgetUuid?.startsWith('widget-data-chart');
+
+    // Calculate sampleTime: retentionDurationMs / 240 unless skipping
+    let sampleTime: number;
+    const retentionMs = input.retentionDurationMs ?? this.resolveRetentionMs(input);
+    if (!skipCustomSampleTime && Number.isFinite(retentionMs) && retentionMs > 0) {
+      sampleTime = Math.max(1, Math.trunc(retentionMs / 240));
+    } else {
+      sampleTime = this.resolveSampleTimeMs(input.sampleTime);
+    }
+
     return {
       ...input,
       seriesId,
       datasetUuid,
       ownerWidgetUuid,
+      userScope: this.normalizeUserScope(input.userScope),
       path,
       source: input.source ?? 'default',
       context: input.context ?? 'vessels.self',
       enabled: input.enabled !== false,
-      retentionDurationMs: input.retentionDurationMs ?? this.resolveRetentionMs(input)
+      retentionDurationMs: retentionMs,
+      sampleTime
     };
+  }
+
+  private resolveSampleTimeMs(sampleTime: unknown): number {
+    const parsed = Number(sampleTime);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.max(1, Math.trunc(parsed));
+    }
+
+    return 1000;
+  }
+
+  private normalizeUserScope(value: unknown): string {
+    const normalized = typeof value === 'string' ? value.trim() : '';
+    return normalized.length > 0 ? normalized : 'anonymous';
+  }
+
+  private buildSeriesMapKey(seriesId: string, userScope: unknown): string {
+    return `${this.normalizeUserScope(userScope)}::${String(seriesId).trim()}`;
   }
 
   private resolveRetentionMs(series: ISeriesDefinition): number {
@@ -703,21 +715,7 @@ export class HistorySeriesService {
     return seriesSource === sampleSource;
   }
 
-  private collectSamplesForRequest(request: IRequestedPath, context: string, fromMs: number, toMs: number): ISeriesSample[] {
-    const samples: ISeriesSample[] = [];
-    this.seriesById.forEach((series, seriesId) => {
-      if (series.path !== request.path) return;
-      if ((series.context ?? 'vessels.self') !== context) return;
 
-      const list = this.samplesBySeriesId.get(seriesId) ?? [];
-      list.forEach(sample => {
-        if (sample.timestamp < fromMs || sample.timestamp > toMs) return;
-        samples.push(sample);
-      });
-    });
-
-    return samples.sort((left, right) => left.timestamp - right.timestamp);
-  }
 
   private applyMethod(request: IRequestedPath, samples: ISeriesSample[]): { timestamp: number; value: number | null }[] {
     const method = request.method ?? 'avg';

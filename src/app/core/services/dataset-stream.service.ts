@@ -1,8 +1,9 @@
+import { KipSeriesApiClientService } from './kip-series-api-client.service';
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
 import { SettingsService } from './settings.service';
 import { DataService, IPathUpdate } from './data.service';
-import { HistoryApiClientService, IHistoryValuesResponse } from './history-api-client.service';
+import { HistoryApiClientService, IHistoryValuesResponse, IHistoryValuesQueryParams } from './history-api-client.service';
 import { HistoryToChartMapperService } from './history-to-chart-mapper.service';
 import { UUID } from '../utils/uuid.util'
 import { cloneDeep } from 'lodash-es';
@@ -62,6 +63,7 @@ export class DatasetStreamService implements OnDestroy {
   private readonly appSettings = inject(SettingsService);
   private readonly data = inject(DataService);
   private readonly history = inject(HistoryApiClientService);
+  private readonly series = inject(KipSeriesApiClientService);
   private readonly historyChartAdapter = inject(HistoryToChartMapperService);
   private readonly historyMinSampleTimeMs = 1000;
 
@@ -361,14 +363,21 @@ export class DatasetStreamService implements OnDestroy {
       })();
 
       const now = new Date();
-      const fromTime = new Date(now.getTime() - windowMs);
+      const query: IHistoryValuesQueryParams = {
+        paths: historyPath,
+        from: new Date(now.getTime() - windowMs).toISOString(),
+        resolution: historyResolutionSeconds
+      };
 
       // Fetch history data
-      const response = await this.history.getValues({
-        paths: historyPath,
-        from: fromTime.toISOString(),
-        resolution: historyResolutionSeconds
-      });
+      //TODO: make dynamic on config parameter
+      let response: IHistoryValuesResponse | null;
+      // eslint-disable-next-line no-constant-condition
+      if (true) {
+        response = await this.series.getValues(query);
+      } else {
+        response = await this.history.getValues(query);
+      }
 
       if (!response || !response.data || response.data.length === 0) {
         console.log(`[DatasetStreamService] No history data available for ${configuration.path}`);
