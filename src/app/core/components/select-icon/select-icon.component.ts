@@ -14,7 +14,7 @@ interface IconData {
 })
 export class SelectIconComponent {
   iconFile = input<string>('assets/svg/icons.svg');
-  currentIcon = input<string>('');
+  currentIcon = input<string | undefined>(undefined);
   selectedIcon = output<string>();
 
   icons = signal<IconData[]>([]);

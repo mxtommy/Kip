@@ -1,12 +1,23 @@
+.dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dialog-close-icon {
+  margin-right: 15px;
+}
+
 .history-dialog-content {
   min-width: 70vw;
   min-height: 55vh;
+  padding-top: 0px;
 }
 
 .chart-wrapper {
   position: relative;
   width: 100%;
-  height: 50vh;
+  height: 55vh;
 }
 
 .history-message {

@@ -9,6 +9,7 @@ import { IKipSeriesDefinition } from '../../services/kip-series-api-client.servi
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
 import { HistoryApiClientService } from '../../services/history-api-client.service';
+import { MatIconModule } from '@angular/material/icon';
 
 Chart.register(LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend);
 
@@ -24,7 +25,7 @@ export interface IWidgetHistoryChartDialogData {
 @Component({
   selector: 'widget-history-chart-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule],
   templateUrl: './widget-history-chart-dialog.component.html',
   styleUrl: './widget-history-chart-dialog.component.scss'
 })
@@ -41,34 +42,27 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
    * const title = this.data.title;
    */
   public readonly data = inject<IWidgetHistoryChartDialogData>(MAT_DIALOG_DATA);
-
   private readonly theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
-
   /**
    * Canvas reference used by Chart.js.
    */
   protected readonly chartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('historyCanvas');
-
   /**
    * Indicates whether history requests are currently in progress.
    */
   protected readonly loading = signal<boolean>(true);
-
   /**
    * Error message shown when history loading fails.
    */
   protected readonly error = signal<string | null>(null);
-
   /**
    * Number of rendered datasets.
    */
   protected readonly datasetCount = signal<number>(0);
-
   /**
    * Empty-state flag after loading has completed.
    */
   protected readonly hasNoData = computed<boolean>(() => !this.loading() && !this.error() && this.datasetCount() === 0);
-
   private chart: Chart<'line'> | null = null;
   private viewReady = false;
   private pendingDatasets: ChartDataset<'line', { x: number; y: number }[]>[] = [];

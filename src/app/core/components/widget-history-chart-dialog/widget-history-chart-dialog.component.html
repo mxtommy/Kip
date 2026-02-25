@@ -1,19 +1,19 @@
-<h2 mat-dialog-title>{{ data.title }}</h2>
-
+<div class="dialogue-header">
+  <h5 mat-dialog-title>{{data.title}}</h5>
+  <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
 <mat-dialog-content class="history-dialog-content">
   @if (loading()) {
     <p class="history-message">Loading historical data…</p>
   } @else if (error()) {
     <p class="history-message error">{{ error() }}</p>
   } @else if (hasNoData()) {
-    <p class="history-message">No historical data available for this widget.</p>
+    <p class="history-message">No historical data is available for this widget. If you are not using the built-in KIP History API provider, validate your plugin configuration supports the widget's path and try again.</p>
   } @else {
     <div class="chart-wrapper">
       <canvas #historyCanvas></canvas>
     </div>
   }
 </mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Close</button>
-</mat-dialog-actions>
