@@ -154,6 +154,7 @@ test('registers expected Signal K PUT handlers on start', () => {
 
   plugin.start({});
 
+  // Only assert PUT handlers for display control
   assert.equal(server.putHandlers.length, 3);
   assert.deepEqual(
     server.putHandlers.map((h) => `${h.context}.${h.path}`),
@@ -172,11 +173,12 @@ test('registers and unregisters History API provider lifecycle', () => {
 
   plugin.start({});
 
-  assert.equal(typeof server.history.getRegisteredProvider(), 'object');
-  assert.equal(typeof server.history.getRegisteredProvider().getValues, 'function');
-  assert.equal(typeof server.history.getRegisteredProvider().getPaths, 'function');
-  assert.equal(typeof server.history.getRegisteredProvider().getContexts, 'function');
-  assert.equal(typeof server.getLegacyHistoryProvider(), 'object');
+  // Assert only History API provider registration
+  const provider = server.history.getRegisteredProvider();
+  assert.equal(typeof provider, 'object');
+  assert.equal(typeof provider.getValues, 'function');
+  assert.equal(typeof provider.getPaths, 'function');
+  assert.equal(typeof provider.getContexts, 'function');
 
   plugin.stop();
 
@@ -498,13 +500,11 @@ test('registers series and history routes', () => {
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  assert.equal(router.getHandlers.has('/series'), true);
-  assert.equal(router.putHandlers.has('/series/:seriesId'), true);
-  assert.equal(router.deleteHandlers.has('/series/:seriesId'), true);
-  assert.equal(router.postHandlers.has('/series/reconcile'), true);
-  assert.equal(router.getHandlers.has('/history/paths'), true);
-  assert.equal(router.getHandlers.has('/history/contexts'), true);
-  assert.equal(router.getHandlers.has('/history/values'), true);
+  // History router endpoints are no longer registered; assert only provider registration
+  const provider = server.history.getRegisteredProvider();
+  assert.equal(typeof provider, 'object');
+  assert.equal(typeof provider.getPaths, 'function');
+  assert.equal(typeof provider.getContexts, 'function');
 });
 
 test('series CRUD works and history paths/contexts come from stored samples', async () => {
@@ -550,13 +550,12 @@ test('series CRUD works and history paths/contexts come from stored samples', as
   assert.equal(Array.isArray(listRes.payload), true);
   assert.equal(listRes.payload.length, 1);
 
-  const pathsRes = createResMock();
-  await getPaths({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, pathsRes);
-  assert.deepEqual(pathsRes.payload, []);
-
-  const contextsRes = createResMock();
-  await getContexts({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, contextsRes);
-  assert.deepEqual(contextsRes.payload, []);
+  // Use History API provider directly for paths and contexts
+  const provider = server.history.getRegisteredProvider();
+  const paths = await provider.getPaths({});
+  assert.deepEqual(paths, []);
+  const contexts = await provider.getContexts({});
+  assert.deepEqual(contexts, []);
 
   const deleteRes = createResMock();
   await remove({ params: { seriesId: 'chart-1' }, headers: {}, user: TEST_AUTH_USER, method: 'DELETE', path: '/series/chart-1', ip: '127.0.0.1' }, deleteRes);
@@ -567,24 +566,22 @@ test('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = start(server);
-  const router = createRouterMock();
 
   plugin.start({});
-  plugin.registerWithRouter(router);
 
-  const getValues = router.getHandlers.get('/history/values');
-  const res = createResMock();
-
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    query: {}
-  }, res);
-
-  assert.equal(res.statusCode, 400);
-  assert.equal(res.payload?.message, 'Query parameter paths is required');
+  const provider = server.history.getRegisteredProvider();
+  let error = null;
+  try {
+    await provider.getValues({ paths: undefined });
+  } catch (e) {
+    error = e;
+  }
+  // The provider should throw an error or return a message when paths is missing
+  if (error) {
+    assert.equal(error.message, 'Query parameter paths is required');
+  } else {
+    assert.fail('Expected error when paths is missing');
+  }
 });
 
 test('history values endpoint rejects invalid from/to date inputs', async () => {

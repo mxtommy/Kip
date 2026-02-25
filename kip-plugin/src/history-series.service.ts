@@ -4,7 +4,6 @@ export interface ISeriesDefinition {
   seriesId: string;
   datasetUuid: string;
   ownerWidgetUuid: string;
-  userScope?: string | null;
   ownerWidgetSelector?: string;
   path: string;
   source?: string | null;
@@ -18,7 +17,6 @@ export interface ISeriesDefinition {
 }
 
 export interface IRecordedSeriesSample {
-  userScope: string;
   seriesId: string;
   datasetUuid: string;
   ownerWidgetUuid: string;
@@ -43,7 +41,6 @@ export interface IHistoryValuesResponse {
 }
 
 export interface IHistoryQueryParams {
-  userScope?: string;
   paths: string;
   context?: string;
   from?: string;
@@ -76,43 +73,21 @@ export class HistorySeriesService {
    */
   public listSeries(): ISeriesDefinition[] {
     return Array.from(this.seriesById.values()).sort((left, right) => {
-      const leftScope = this.normalizeUserScope(left.userScope);
-      const rightScope = this.normalizeUserScope(right.userScope);
-      const scopeCompare = leftScope.localeCompare(rightScope);
-      if (scopeCompare !== 0) {
-        return scopeCompare;
-      }
       return left.seriesId.localeCompare(right.seriesId);
     });
   }
 
   /**
-   * Returns all configured series for a given user scope sorted by `seriesId`.
-   *
-   * @param {string} userScope Scope key resolved by the plugin auth layer.
-   * @returns {ISeriesDefinition[]} Ordered list for the scope.
-   *
-   * @example
-   * const scoped = service.listSeriesForScope('demo-user');
+  * Finds a series by identifier.
+  *
+  * @param {string} seriesId Series identifier.
+  * @returns {ISeriesDefinition | null} Matching series or null.
+  *
+  * @example
+  * const row = service.findSeriesById('series-1');
    */
-  public listSeriesForScope(userScope: string): ISeriesDefinition[] {
-    const normalizedScope = this.normalizeUserScope(userScope);
-    return this.listSeries().filter(series => this.normalizeUserScope(series.userScope) === normalizedScope);
-  }
-
-  /**
-   * Finds a series by identifier within a specific user scope.
-   *
-   * @param {string} seriesId Series identifier.
-   * @param {string} userScope Scope key resolved by the plugin auth layer.
-   * @returns {ISeriesDefinition | null} Matching series or null.
-   *
-   * @example
-   * const row = service.findSeriesByIdForScope('series-1', 'demo-user');
-   */
-  public findSeriesByIdForScope(seriesId: string, userScope: string): ISeriesDefinition | null {
-    const key = this.buildSeriesMapKey(seriesId, userScope);
-    return this.seriesById.get(key) ?? null;
+  public findSeriesById(seriesId: string): ISeriesDefinition | null {
+    return this.seriesById.get(seriesId) ?? null;
   }
 
   /**
@@ -131,7 +106,7 @@ export class HistorySeriesService {
    */
   public upsertSeries(input: ISeriesDefinition): ISeriesDefinition {
     const normalized = this.normalizeSeries(input);
-    const key = this.buildSeriesMapKey(normalized.seriesId, normalized.userScope);
+    const key = normalized.seriesId;
     this.seriesById.set(key, normalized);
     return normalized;
   }
@@ -176,23 +151,6 @@ export class HistorySeriesService {
   }
 
   /**
-   * Deletes an existing series definition for a specific user scope.
-   *
-   * @param {string} seriesId Unique series identifier.
-   * @param {string} userScope Scope key resolved by the plugin auth layer.
-   * @returns {boolean} True when a scoped series existed and was deleted.
-   *
-   * @example
-   * const deleted = service.deleteSeriesForScope('abc', 'demo-user');
-   */
-  public deleteSeriesForScope(seriesId: string, userScope: string): boolean {
-    const key = this.buildSeriesMapKey(seriesId, userScope);
-    const deleted = this.seriesById.delete(key);
-    this.lastAcceptedTimestampBySeriesKey.delete(key);
-    return deleted;
-  }
-
-  /**
    * Reconciles the entire desired series set against the current state.
    *
    * @param {ISeriesDefinition[]} desiredSeries Full desired series payload list.
@@ -206,7 +164,7 @@ export class HistorySeriesService {
     const desiredById = new Map<string, ISeriesDefinition>();
     desiredSeries.forEach(entry => {
       const normalized = this.normalizeSeries(entry);
-      const key = this.buildSeriesMapKey(normalized.seriesId, normalized.userScope);
+      const key = normalized.seriesId;
       desiredById.set(key, normalized);
     });
 
@@ -281,7 +239,6 @@ export class HistorySeriesService {
     const source = series.source ?? 'default';
 
     this.sampleSink?.({
-      userScope: this.normalizeUserScope(series.userScope),
       seriesId: series.seriesId,
       datasetUuid: series.datasetUuid,
       ownerWidgetUuid: series.ownerWidgetUuid,
@@ -384,8 +341,6 @@ export class HistorySeriesService {
     return samples;
   }
 
-
-
   /**
    * Returns all known history paths.
    *
@@ -458,7 +413,6 @@ export class HistorySeriesService {
       seriesId,
       datasetUuid,
       ownerWidgetUuid,
-      userScope: this.normalizeUserScope(input.userScope),
       path,
       source: input.source ?? 'default',
       context: input.context ?? 'vessels.self',
@@ -477,13 +431,9 @@ export class HistorySeriesService {
     return 1000;
   }
 
-  private normalizeUserScope(value: unknown): string {
-    const normalized = typeof value === 'string' ? value.trim() : '';
-    return normalized.length > 0 ? normalized : 'anonymous';
-  }
-
-  private buildSeriesMapKey(seriesId: string, userScope: unknown): string {
-    return `${this.normalizeUserScope(userScope)}::${String(seriesId).trim()}`;
+  private buildSeriesMapKey(seriesId: string): string {
+    // userScope removed; now returns only seriesId
+    return String(seriesId).trim();
   }
 
   private resolveRetentionMs(series: ISeriesDefinition): number {

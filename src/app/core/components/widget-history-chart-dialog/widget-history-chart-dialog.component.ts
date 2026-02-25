@@ -5,9 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Chart, ChartConfiguration, ChartDataset, LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { IWidget } from '../../interfaces/widgets-interface';
-import { IKipSeriesDefinition, KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
+import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
+import { HistoryApiClientService } from '../../services/history-api-client.service';
 
 Chart.register(LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend);
 
@@ -28,7 +29,7 @@ export interface IWidgetHistoryChartDialogData {
   styleUrl: './widget-history-chart-dialog.component.scss'
 })
 export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly historyApiClient = inject(KipSeriesApiClientService);
+  private readonly historyApiClient = inject(HistoryApiClientService);
   private readonly historyMapper = inject(HistoryToChartMapperService);
   private readonly app = inject(AppService);
   private readonly destroyRef = inject(DestroyRef);

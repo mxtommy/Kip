@@ -495,8 +495,35 @@ export class GestureDirective {
     }
     this.ownedLanes = { h: false, v: false, p: false };
     if (allowH && owners.h === undefined) { owners.h = this._instanceId; this.ownedLanes.h = true; }
+        if (allowH && owners.h === undefined) {
+          owners.h = this._instanceId;
+          this.ownedLanes.h = true;
+          this.debug('lane acquired', { lane: 'horizontal', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+        }
     if (allowV && owners.v === undefined) { owners.v = this._instanceId; this.ownedLanes.v = true; }
+        if (allowV && owners.v === undefined) {
+          owners.v = this._instanceId;
+          this.ownedLanes.v = true;
+          this.debug('lane acquired', { lane: 'vertical', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+        }
     if (wantP && owners.p === undefined) { owners.p = this._instanceId; this.ownedLanes.p = true; }
+        if (wantP && owners.p === undefined) {
+          owners.p = this._instanceId;
+          this.ownedLanes.p = true;
+          this.debug('lane acquired', { lane: 'press', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+        }
+                  if (this.ownedLanes.h && owners.h === this._instanceId) {
+                    this.debug('lane released', { lane: 'horizontal', pointerId: this.pointerId, instanceId: this._instanceId, owners });
+                    delete owners.h;
+                  }
+                  if (this.ownedLanes.v && owners.v === this._instanceId) {
+                    this.debug('lane released', { lane: 'vertical', pointerId: this.pointerId, instanceId: this._instanceId, owners });
+                    delete owners.v;
+                  }
+                  if (this.ownedLanes.p && owners.p === this._instanceId) {
+                    this.debug('lane released', { lane: 'press', pointerId: this.pointerId, instanceId: this._instanceId, owners });
+                    delete owners.p;
+                  }
     this.debug('lane acquisition', {
       allowH, allowV, allowPress, allowDT,
       wantP,

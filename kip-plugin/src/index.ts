@@ -3,16 +3,9 @@ import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { DuckDbParquetStorageService } from './duckdb-parquet-storage.service';
-import {
-  normalizeUserScope,
-  resolveReadUserScope,
-  resolveWriteUserScopeOrReject
-} from './plugin-auth.service';
 
 const start = (server: ServerAPI): Plugin => {
-
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
-
   const API_PATHS = {
     DISPLAYS: `/displays`,
     INSTANCE: `/displays/:displayId`,
@@ -20,19 +13,14 @@ const start = (server: ServerAPI): Plugin => {
     ACTIVATE_SCREEN: `/displays/:displayId/activeScreen`,
     SERIES: '/series',
     SERIES_INSTANCE: '/series/:seriesId',
-    SERIES_RECONCILE: '/series/reconcile',
-    HISTORY_PATHS: '/history/paths',
-    HISTORY_CONTEXTS: '/history/contexts',
-    HISTORY_VALUES: '/history/values'
+    SERIES_RECONCILE: '/series/reconcile'
   } as const;
-
   const PUT_CONTEXT = 'vessels.self';
   const COMMAND_PATHS = {
     SET_DISPLAY: 'kip.remote.setDisplay',
     SET_SCREEN_INDEX: 'kip.remote.setScreenIndex',
     REQUEST_ACTIVE_SCREEN: 'kip.remote.requestActiveScreen'
   } as const;
-
   const CONFIG_SCHEMA = {
     type: 'object',
     title: 'Remote Control and Data Series',
@@ -52,7 +40,6 @@ const start = (server: ServerAPI): Plugin => {
       }
     }
   };
-
   const historySeries = new HistorySeriesService(() => Date.now(), false);
   const storageService = new DuckDbParquetStorageService();
   let retentionSweepTimer: NodeJS.Timeout | null = null;
@@ -204,8 +191,8 @@ const start = (server: ServerAPI): Plugin => {
     return { statusCode: 500, message };
   }
 
-  function findSeriesByIdForScope(seriesId: string, userScope: string): ISeriesDefinition | null {
-    const current = historySeries.findSeriesByIdForScope(seriesId, userScope);
+  function findSeriesById(seriesId: string): ISeriesDefinition | null {
+    const current = historySeries.findSeriesById(seriesId);
     return current ? JSON.parse(JSON.stringify(current)) as ISeriesDefinition : null;
   }
 
@@ -456,7 +443,7 @@ const start = (server: ServerAPI): Plugin => {
     };
   }
 
-  async function resolveHistoryPaths(userScope: string, query?: IHistoryRangeQuery): Promise<string[]> {
+  async function resolveHistoryPaths(query?: IHistoryRangeQuery): Promise<string[]> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -468,12 +455,11 @@ const start = (server: ServerAPI): Plugin => {
       server.error(`[SERIES STORAGE] pre-paths flush failed: ${String((flushError as Error).message || flushError)}`);
     }
     return storageService.getStoredPaths({
-      ...(query ?? {}),
-      userScope
+      ...(query ?? {})
     });
   }
 
-  async function resolveHistoryContexts(userScope: string, query?: IHistoryRangeQuery): Promise<string[]> {
+  async function resolveHistoryContexts(query?: IHistoryRangeQuery): Promise<string[]> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -485,12 +471,11 @@ const start = (server: ServerAPI): Plugin => {
       server.error(`[SERIES STORAGE] pre-contexts flush failed: ${String((flushError as Error).message || flushError)}`);
     }
     return storageService.getStoredContexts({
-      ...(query ?? {}),
-      userScope
+      ...(query ?? {})
     });
   }
 
-  async function resolveHistoryValues(userScope: string, query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
+  async function resolveHistoryValues(query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
     await waitForDuckDbInitialization();
     if (!storageService.isDuckDbParquetReady()) {
       throw new Error(getDuckDbUnavailableMessage());
@@ -502,8 +487,7 @@ const start = (server: ServerAPI): Plugin => {
       server.error(`[SERIES STORAGE] pre-query flush failed: ${String((flushError as Error).message || flushError)}`);
     }
     const values = await storageService.getValues({
-      ...query,
-      userScope
+      ...query
     });
     if (!values) {
       throw new Error('DuckDB storage did not return history values.');
@@ -527,7 +511,7 @@ const start = (server: ServerAPI): Plugin => {
 
     const apiProvider = {
       getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
-        const resolved = await resolveHistoryValues('anonymous', buildHistoryQueryFromValuesRequest(query));
+        const resolved = await resolveHistoryValues(buildHistoryQueryFromValuesRequest(query));
         return {
           ...resolved,
           values: resolved.values.map(valueSpec => ({
@@ -537,9 +521,9 @@ const start = (server: ServerAPI): Plugin => {
         };
       },
       getPaths: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryPaths('anonymous', buildHistoryQueryFromRangeRequest(query)),
+        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)),
       getContexts: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryContexts('anonymous', buildHistoryQueryFromRangeRequest(query))
+        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
     };
 
     const registry = host.history && typeof host.history.registerHistoryApiProvider === 'function'
@@ -1034,8 +1018,7 @@ const start = (server: ServerAPI): Plugin => {
           if (!(await ensureDuckDbReadyForRequest(res))) {
             return;
           }
-          const userScope = resolveReadUserScope(req);
-          return sendOk(res, historySeries.listSeriesForScope(userScope));
+          return sendOk(res, historySeries.listSeries());
         } catch (error) {
           server.error(`Error reading series: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to read series');
@@ -1057,18 +1040,12 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing seriesId parameter');
           }
 
-          const userScope = resolveWriteUserScopeOrReject(req, res, 'PUT /series/:seriesId', server.error.bind(server), sendFail);
-          if (!userScope) {
-            return;
-          }
-
           const payload = (req.body ?? {}) as Partial<ISeriesDefinition>;
-          const previous = findSeriesByIdForScope(seriesId, userScope);
+          const previous = findSeriesById(seriesId);
           const next = historySeries.upsertSeries({
             ...payload,
             seriesId,
-            datasetUuid: String(payload.datasetUuid ?? seriesId),
-            userScope
+            datasetUuid: String(payload.datasetUuid ?? seriesId)
           } as ISeriesDefinition);
 
           try {
@@ -1077,7 +1054,7 @@ const start = (server: ServerAPI): Plugin => {
             if (previous) {
               historySeries.upsertSeries(previous);
             } else {
-              historySeries.deleteSeriesForScope(seriesId, userScope);
+              historySeries.deleteSeries(seriesId);
             }
             throw storageError;
           }
@@ -1106,18 +1083,13 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Missing seriesId parameter');
           }
 
-          const userScope = resolveWriteUserScopeOrReject(req, res, 'DELETE /series/:seriesId', server.error.bind(server), sendFail);
-          if (!userScope) {
-            return;
-          }
-
-          const previous = findSeriesByIdForScope(seriesId, userScope);
+          const previous = findSeriesById(seriesId);
           if (!previous) {
             return sendFail(res, 404, `Series ${seriesId} not found`);
           }
 
-          await storageService.deleteSeriesDefinitionForScope(seriesId, userScope);
-          historySeries.deleteSeriesForScope(seriesId, userScope);
+          await storageService.deleteSeriesDefinition(seriesId);
+          historySeries.deleteSeries(seriesId);
 
           rebuildSeriesCaptureSubscriptions();
 
@@ -1143,113 +1115,29 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Body must be an array of series definitions');
           }
 
-          const userScope = resolveWriteUserScopeOrReject(req, res, 'POST /series/reconcile', server.error.bind(server), sendFail);
-          if (!userScope) {
-            return;
-          }
-
           const simulated = new HistorySeriesService(() => Date.now(), false);
-          historySeries.listSeriesForScope(userScope).forEach(series => {
+          historySeries.listSeries().forEach(series => {
             simulated.upsertSeries(series);
           });
 
           const scopedPayload = (payload as ISeriesDefinition[]).map(series => ({
-            ...series,
-            userScope
+            ...series
           }));
 
           const result = simulated.reconcileSeries(scopedPayload);
-          const nextSeries = simulated.listSeriesForScope(userScope);
+          const nextSeries = simulated.listSeries();
 
-          await storageService.replaceSeriesDefinitionsForScope(userScope, nextSeries);
+          await storageService.replaceSeriesDefinitions(nextSeries);
 
-          const seriesOutsideScope = historySeries
-            .listSeries()
-            .filter(series => normalizeUserScope(series.userScope) !== userScope);
+          const seriesOutsideScope = historySeries.listSeries();
           historySeries.reconcileSeries([...seriesOutsideScope, ...nextSeries]);
 
-          server.debug(`[SERIES RECONCILE] scope=${userScope} created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
+          server.debug(`[SERIES RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
           rebuildSeriesCaptureSubscriptions();
           return sendOk(res, result);
         } catch (error) {
           server.error(`Error reconciling series: ${String((error as Error).message || error)}`);
           const mapped = getRouteError(error, 'Failed to reconcile series');
-          return sendFail(res, mapped.statusCode, mapped.message)
-        }
-      });
-
-      router.get(API_PATHS.HISTORY_PATHS, async (_req: Request, res: Response) => {
-        try {
-          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
-            return;
-          }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
-            return;
-          }
-          const query = {
-            from: _req.query.from ? String(_req.query.from) : undefined,
-            to: _req.query.to ? String(_req.query.to) : undefined,
-            duration: _req.query.duration ? String(_req.query.duration) : undefined
-          };
-          const userScope = resolveReadUserScope(_req);
-          return sendOk(res, await resolveHistoryPaths(userScope, query));
-        } catch (error) {
-          server.error(`Error reading history paths: ${String((error as Error).message || error)}`);
-          const mapped = getRouteError(error, 'Failed to read history paths');
-          return sendFail(res, mapped.statusCode, mapped.message)
-        }
-      });
-
-      router.get(API_PATHS.HISTORY_CONTEXTS, async (_req: Request, res: Response) => {
-        try {
-          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
-            return;
-          }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
-            return;
-          }
-          const query = {
-            from: _req.query.from ? String(_req.query.from) : undefined,
-            to: _req.query.to ? String(_req.query.to) : undefined,
-            duration: _req.query.duration ? String(_req.query.duration) : undefined
-          };
-          const userScope = resolveReadUserScope(_req);
-          return sendOk(res, await resolveHistoryContexts(userScope, query));
-        } catch (error) {
-          server.error(`Error reading history contexts: ${String((error as Error).message || error)}`);
-          const mapped = getRouteError(error, 'Failed to read history contexts');
-          return sendFail(res, mapped.statusCode, mapped.message)
-        }
-      });
-
-      router.get(API_PATHS.HISTORY_VALUES, async (req: Request, res: Response) => {
-        server.debug(`*** GET HISTORY_VALUES ${API_PATHS.HISTORY_VALUES}. Query: ${JSON.stringify(req.query)}`);
-        try {
-          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
-            return;
-          }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
-            return;
-          }
-          const paths = String(req.query.paths ?? '').trim();
-          if (!paths) {
-            return sendFail(res, 400, 'Query parameter paths is required');
-          }
-
-          const query = {
-            paths,
-            context: req.query.context ? String(req.query.context) : undefined,
-            from: req.query.from ? String(req.query.from) : undefined,
-            to: req.query.to ? String(req.query.to) : undefined,
-            duration: req.query.duration ? String(req.query.duration) : undefined,
-            resolution: req.query.resolution ? String(req.query.resolution) : undefined
-          };
-
-          const userScope = resolveReadUserScope(req);
-          return sendOk(res, await resolveHistoryValues(userScope, query));
-        } catch (error) {
-          server.error(`Error reading history values: ${String((error as Error).message || error)}`);
-          const mapped = getRouteError(error, 'Failed to read history values');
           return sendFail(res, mapped.statusCode, mapped.message)
         }
       });

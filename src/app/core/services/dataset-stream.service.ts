@@ -370,14 +370,7 @@ export class DatasetStreamService implements OnDestroy {
       };
 
       // Fetch history data
-      //TODO: make dynamic on config parameter
-      let response: IHistoryValuesResponse | null;
-      // eslint-disable-next-line no-constant-condition
-      if (true) {
-        response = await this.series.getValues(query);
-      } else {
-        response = await this.history.getValues(query);
-      }
+      const response = await this.history.getValues(query);
 
       if (!response || !response.data || response.data.length === 0) {
         console.log(`[DatasetStreamService] No history data available for ${configuration.path}`);

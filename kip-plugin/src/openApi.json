@@ -22,15 +22,11 @@
   "tags": [
     {
       "name": "Displays",
-      "description": "KIP display discovery and control."
+      "description": "KIP remote display discovery and control."
     },
     {
       "name": "Series",
-      "description": "KIP chart history series configuration."
-    },
-    {
-      "name": "History",
-      "description": "History API-compatible query endpoints for KIP datasets."
+      "description": "KIP widget history series configuration."
     }
   ],
   "components": {
@@ -211,63 +207,6 @@
           "updated",
           "deleted",
           "total"
-        ]
-      },
-      "HistoryValuesResponse": {
-        "type": "object",
-        "properties": {
-          "context": {
-            "type": "string"
-          },
-          "range": {
-            "type": "object",
-            "properties": {
-              "from": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "to": {
-                "type": "string",
-                "format": "date-time"
-              }
-            },
-            "required": [
-              "from",
-              "to"
-            ]
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "method": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "path"
-              ]
-            }
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": {
-                "nullable": true
-              }
-            }
-          }
-        },
-        "required": [
-          "context",
-          "range",
-          "values",
-          "data"
         ]
       }
     },
@@ -745,167 +684,6 @@
           },
           "400": {
             "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/plugins/kip/history/paths": {
-      "get": {
-        "tags": [
-          "History"
-        ],
-        "summary": "List available history paths",
-        "responses": {
-          "200": {
-            "description": "Path names",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/plugins/kip/history/contexts": {
-      "get": {
-        "tags": [
-          "History"
-        ],
-        "summary": "List available history contexts",
-        "responses": {
-          "200": {
-            "description": "Context names",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/plugins/kip/history/values": {
-      "get": {
-        "tags": [
-          "History"
-        ],
-        "summary": "Query history samples in History API-compatible shape",
-        "description": "Returns sampled history data for one or more path expressions. Query validation is strict: malformed `from`, `to`, `duration`, or `resolution` values return HTTP 400 instead of fallback defaults.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "paths",
-            "required": true,
-            "description": "Comma-separated path expressions. Format: `<path>[:<method>[:<period>]]`. Methods: `avg`, `min`, `max`, `sma`, `ema`. Period is sample-count based and used by `sma`/`ema` (default: 5).",
-            "example": "navigation.speedOverGround:avg,navigation.speedOverGround:ema:10",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "context",
-            "required": false,
-            "description": "Signal K context filter. Defaults to `vessels.self` when omitted.",
-            "example": "vessels.self",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "required": false,
-            "description": "Range start as ISO 8601 date-time. Must be a valid date-time string when provided.",
-            "example": "2026-02-18T21:56:22.126Z",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "description": "Range end as ISO 8601 date-time. Must be a valid date-time string when provided.",
-            "example": "2026-02-18T22:06:22.126Z",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "duration",
-            "required": false,
-            "description": "Range length used when `from` is omitted. Accepts a positive number interpreted as milliseconds (e.g. `600000`) or ISO 8601 duration (e.g. `PT10M`). Invalid formats return 400.",
-            "example": "PT10M",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "resolution",
-            "required": false,
-            "description": "Downsampling bucket size. Accepts a positive number interpreted as seconds (e.g. `10`) or ISO 8601 duration (e.g. `PT10S`). Invalid formats return 400.",
-            "example": "10",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "History values payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HistoryValuesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (for example: missing `paths`, malformed `from`/`to`, malformed `duration`, malformed `resolution`)",
             "content": {
               "application/json": {
                 "schema": {
