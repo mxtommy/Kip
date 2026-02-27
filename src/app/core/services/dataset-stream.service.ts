@@ -1,4 +1,3 @@
-import { KipSeriesApiClientService } from './kip-series-api-client.service';
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { Subscription, Observable, ReplaySubject, withLatestFrom, concat, skip, from, filter, merge, shareReplay, take, timer } from 'rxjs';
 import { SettingsService } from './settings.service';
@@ -63,7 +62,6 @@ export class DatasetStreamService implements OnDestroy {
   private readonly appSettings = inject(SettingsService);
   private readonly data = inject(DataService);
   private readonly history = inject(HistoryApiClientService);
-  private readonly series = inject(KipSeriesApiClientService);
   private readonly historyChartAdapter = inject(HistoryToChartMapperService);
   private readonly historyMinSampleTimeMs = 1000;
 

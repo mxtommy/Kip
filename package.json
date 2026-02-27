@@ -26,6 +26,7 @@
     "signalk-webapp",
     "signalk-category-instruments",
     "signalk-category-notifications",
+    "signalk-category-ais",
     "signalk-node-server-plugin",
     "signal k",
     "signalk",

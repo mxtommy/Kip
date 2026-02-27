@@ -9,9 +9,12 @@
 }
 
 .history-dialog-content {
+  display: flex;
   min-width: 70vw;
   min-height: 55vh;
   padding-top: 0px;
+  justify-content: center;
+  align-items: center;
 }
 
 .chart-wrapper {
@@ -27,4 +30,8 @@
 
 .error {
   color: var(--mat-sys-error);
+}
+
+.time-select {
+  text-align: center;
 }

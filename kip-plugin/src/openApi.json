@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "version": "1.1.0",
-    "title": "KIP Remote Displays API",
-    "description": "API endpoints to list KIP displays and control dashboard for a given KIP instance via the Signal K self.displays tree.\n\nUsage:\n- List displays:\n  curl -s http://localhost:3000/plugins/kip/displays\n- Read a display's screens:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}\n- Set a display entry:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"displayName\":\"Mast\"}' http://localhost:3000/plugins/kip/displays/{displayId}\n- Get current screen index:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/screenIndex\n- Set current screen index:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/screenIndex\n- Get requested screen change index:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen\n- Request a screen change:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen",
+    "title": "KIP Plugin API",
+    "description": "Endpoints\n- List remote displays and control remote dashboard of a given KIP instance.\n- Configure data series for widget framework historical data series and data chart widgets.",
     "termsOfService": "http://signalk.org/terms/",
     "license": {
       "name": "Apache 2.0",

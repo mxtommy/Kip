@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, model, signal, untracked, viewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -8,8 +8,11 @@ import { IWidget } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
+import { UnitsService } from '../../services/units.service';
 import { HistoryApiClientService } from '../../services/history-api-client.service';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { FormsModule} from '@angular/forms';
 
 Chart.register(LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend);
 
@@ -24,44 +27,27 @@ export interface IWidgetHistoryChartDialogData {
 
 @Component({
   selector: 'widget-history-chart-dialog',
-  standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [ MatDialogModule, MatButtonToggleModule, MatButtonModule, MatIconModule, FormsModule],
   templateUrl: './widget-history-chart-dialog.component.html',
-  styleUrl: './widget-history-chart-dialog.component.scss'
+  styleUrl: './widget-history-chart-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly historyApiClient = inject(HistoryApiClientService);
   private readonly historyMapper = inject(HistoryToChartMapperService);
   private readonly app = inject(AppService);
   private readonly destroyRef = inject(DestroyRef);
-
-  /**
-   * Dialog data payload containing title, widget identity and resolved historical series.
-   *
-   * @example
-   * const title = this.data.title;
-   */
+  private readonly units = inject(UnitsService);
   public readonly data = inject<IWidgetHistoryChartDialogData>(MAT_DIALOG_DATA);
-  private readonly theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
-  /**
-   * Canvas reference used by Chart.js.
-   */
+
   protected readonly chartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('historyCanvas');
-  /**
-   * Indicates whether history requests are currently in progress.
-   */
-  protected readonly loading = signal<boolean>(true);
-  /**
-   * Error message shown when history loading fails.
-   */
-  protected readonly error = signal<string | null>(null);
-  /**
-   * Number of rendered datasets.
-   */
-  protected readonly datasetCount = signal<number>(0);
-  /**
-   * Empty-state flag after loading has completed.
-   */
+
+  private theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+
+  protected loading = signal<boolean>(true);
+  protected error = signal<string | null>(null);
+  protected datasetCount = signal<number>(0);
+  protected selectedPeriod = model<string>('PT1H');
   protected readonly hasNoData = computed<boolean>(() => !this.loading() && !this.error() && this.datasetCount() === 0);
   private chart: Chart<'line'> | null = null;
   private viewReady = false;
@@ -185,6 +171,28 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     let chartPoints: { x: number; y: number }[] = [];
     let labelPath = this.normalizeHistoryPath(rawPath);
 
+    // Get widget config for this path (if available)
+    const widgetConfig = this.data.widget?.config;
+    // Try to find config for this path (by path key or by matching path string)
+    // Fallback to widgetConfig.convertUnitTo if not per-path
+    let convertUnitTo: string | null = null;
+    if (widgetConfig) {
+      // If widgetConfig.paths exists and is an object, try to find matching path config
+      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
+        for (const key of Object.keys(widgetConfig.paths)) {
+          const pathCfg = widgetConfig.paths[key];
+          if (pathCfg?.path === rawPath && pathCfg.convertUnitTo) {
+            convertUnitTo = pathCfg.convertUnitTo;
+            break;
+          }
+        }
+      }
+      // Fallback to top-level convertUnitTo
+      if (!convertUnitTo && widgetConfig.convertUnitTo) {
+        convertUnitTo = widgetConfig.convertUnitTo;
+      }
+    }
+
     for (const candidate of requestCandidates) {
       const response = await this.historyApiClient.getValues({
         paths: candidate.paths,
@@ -202,9 +210,14 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
         domain: 'scalar'
       });
 
-      chartPoints = datapoints
-        //.filter(point => point.data.value !== null && Number.isFinite(point.data.value))
-        .map(point => ({ x: point.timestamp, y: point.data.value as number }));
+      // Apply unit conversion if needed
+      chartPoints = datapoints.map(point => {
+        let y = point.data.value as number;
+        if (convertUnitTo && typeof y === 'number' && Number.isFinite(y)) {
+          y = this.units.convertToUnit(convertUnitTo, y);
+        }
+        return { x: point.timestamp, y };
+      });
 
       if (chartPoints.length) {
         labelPath = candidate.labelPath;
@@ -294,6 +307,25 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
     this.chart?.destroy();
 
+    // Determine y-axis unit label from widget config (prefer per-path, fallback to top-level)
+    let unitLabel = '';
+    const widgetConfig = this.data.widget?.config;
+    let convertUnitTo: string | null = null;
+    if (widgetConfig) {
+      // Try to get from first path config if available
+      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
+        const firstPathKey = Object.keys(widgetConfig.paths)[0];
+        if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
+          convertUnitTo = widgetConfig.paths[firstPathKey].convertUnitTo;
+        }
+      }
+      if (!convertUnitTo && widgetConfig.convertUnitTo) {
+        convertUnitTo = widgetConfig.convertUnitTo;
+      }
+    }
+
+    unitLabel = this.getUnitsLabel(convertUnitTo);
+
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
@@ -312,10 +344,22 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           x: {
             type: 'time',
             time: {
-              tooltipFormat: 'PPpp'
+              tooltipFormat: 'PPpp',
+              displayFormats: {
+                second: 'HH:mm:ss',
+                minute: 'HH:mm',
+                hour: 'HH:mm',
+                day: 'MMM d',
+                week: 'MMM d',
+                month: 'MMM yyyy'
+              },
+              unit: 'minute',
+              minUnit: 'second'
+
+
             },
             ticks: {
-              color: this.theme().contrastDim
+              color: this.theme().contrastDim,
             },
             grid: {
               color: this.theme().contrastDimmer
@@ -327,6 +371,11 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
             },
             grid: {
               color: this.theme().contrastDimmer
+            },
+            title: {
+              display: !!unitLabel,
+              text: unitLabel ? `${unitLabel}` : '',
+              color: this.theme().contrastDim
             }
           }
         },
@@ -343,12 +392,17 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     this.chart = new Chart(canvas.nativeElement.getContext('2d')!, config);
   }
 
+  protected setPeriod(period: string) {
+    this.selectedPeriod.set(period);
+    this.loadHistoryDatasets();
+  }
+
   private resolveDuration(series: IKipSeriesDefinition): string {
     if (series.timeScale && series.period && Number.isFinite(series.period)) {
       return this.durationFromScaleAndPeriod(series.timeScale, series.period);
     }
 
-    return 'PT2H';
+    return this.selectedPeriod();
   }
 
   private durationFromScaleAndPeriod(scaleRaw: string, periodRaw: number): string {
@@ -405,5 +459,29 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   private normalizeContext(context: string | null | undefined): string | undefined {
     const trimmed = typeof context === 'string' ? context.trim() : '';
     return trimmed.length ? trimmed : undefined;
+  }
+
+  /**
+   * Returns a display label for the y-axis unit, based on widget config.
+   * @param unit The convertUnitTo string
+   * @returns string label for axis
+   */
+  private getUnitsLabel(unit: string | null | undefined): string {
+    if (!unit) return '';
+    switch (unit) {
+      case 'percent':
+      case 'percentraw':
+        return '%';
+      case 'latitudeMin':
+        return 'latitude in minutes';
+      case 'latitudeSec':
+        return 'latitude in secondes';
+      case 'longitudeMin':
+        return 'longitude in minutes';
+      case 'longitudeSec':
+        return 'longitude in secondes';
+      default:
+        return unit;
+    }
   }
 }
