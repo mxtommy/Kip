@@ -34,6 +34,7 @@ export interface IAppConfig {
   splitShellSide?: 'left' | 'right';
   splitShellSwipeDisabled?: boolean;
   splitShellWidth?: number;
+  widgetHistoryDisabled?: boolean;
 }
 
 export interface IThemeConfig {

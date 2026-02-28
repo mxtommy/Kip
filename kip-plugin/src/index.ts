@@ -13,7 +13,8 @@ const start = (server: ServerAPI): Plugin => {
     ACTIVATE_SCREEN: `/displays/:displayId/activeScreen`,
     SERIES: '/series',
     SERIES_INSTANCE: '/series/:seriesId',
-    SERIES_RECONCILE: '/series/reconcile'
+    SERIES_RECONCILE: '/series/reconcile',
+
   } as const;
   const PUT_CONTEXT = 'vessels.self';
   const COMMAND_PATHS = {
@@ -24,18 +25,18 @@ const start = (server: ServerAPI): Plugin => {
   const CONFIG_SCHEMA = {
     type: 'object',
     title: 'Remote Control and Data Series',
-    description: 'KIP plugin runtime mode configuration.',
+    description: 'NOTE: All plugin settings are also managed from within KIP\'s Display Options panel. Changes made here will be overridden when KIP applies settings from the Display Options.',
     properties: {
       historySeriesServiceEnabled: {
         type: 'boolean',
-        title: 'Enable History-Series Service',
-        description: 'Automatically capture widget history-series data from widget configuration. If disabled, configure data capture in your chosen history provider plugin.',
+        title: 'Enable Automatic Historical Time-Series Capture and Management',
+        description: 'Historical Time-Series are data captures that supply the widget historical data and seed the Data Chart and Wind Trends widgets. If disabled, data capture must be configured in your chosen history provider plugin.',
         default: true
       },
       registerAsHistoryApiProvider: {
         type: 'boolean',
-        title: 'Enable History API Provider',
-        description: 'Use plugin provider for widget history data. Turn this off to use another History API provider.',
+        title: 'Enable Query Provider',
+        description: 'The built-in History-API provider is the querying engine that uses the Historical Time-Series data to seed the widget historical panel, the Data Chart and Wind Trends widgets. If you want to use another History-API provider, turn this off and configure your chosen History-API compatible provider accordingly and KIP will query that provider.',
         default: true
       }
     }

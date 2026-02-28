@@ -229,17 +229,31 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       return null;
     }
 
-    const colors = [
-      this.theme().blue,
+
+    // Build palette and shift so config color is first, removing duplicate if present
+    const configColor = this.data.widget?.config?.color || 'blue';
+    let palette = [
       this.theme().green,
-      this.theme().pink,
       this.theme().orange,
+      this.theme().pink,
       this.theme().purple,
       this.theme().yellow,
+      this.theme().grey,
+      this.theme().blue,
       this.theme().contrast
     ];
 
-    const color = colors[index % colors.length];
+    // Find if configColor is in palette (case-insensitive)
+    const idx = palette.findIndex(c => c?.toLowerCase() === this.theme()[configColor].toLowerCase());
+    if (idx !== -1) {
+      // Move configColor to front
+      palette = [palette[idx], ...palette.slice(0, idx), ...palette.slice(idx + 1)];
+    } else {
+      // Insert configColor at front if not present
+      palette = [configColor, ...palette];
+    }
+    const color = palette[index % palette.length];
+
     const sourceLabel = series.source ? ` (${series.source})` : '';
 
     return {

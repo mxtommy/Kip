@@ -15,6 +15,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
+import { SignalKConnectionService } from '../services/signalk-connection.service';
+import { compare } from 'compare-versions';
+
 
 const defaultTheme = '';
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
@@ -23,8 +26,9 @@ const latestConfigVersion = 12; // used to set the configVersion property in the
   providedIn: 'root'
 })
 export class SettingsService {
-  private storage = inject(StorageService);
-  private snackBar = inject(MatSnackBar);
+  private readonly storage = inject(StorageService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly server = inject(SignalKConnectionService);
 
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
@@ -38,6 +42,7 @@ export class SettingsService {
   private splitShellSide: BehaviorSubject<'left' | 'right'> = new BehaviorSubject<'left' | 'right'>('left');
   private splitShellSwipeDisabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private splitShellWidth: BehaviorSubject<number> = new BehaviorSubject<number>(0.5);
+  private widgetHistoryDisabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
@@ -245,6 +250,13 @@ export class SettingsService {
     } else {
       this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
     }
+
+    const historyApiSupported = compare(this.server.serverVersion$.getValue(), '2.22.1', ">=");
+    if (this.activeConfig.app.widgetHistoryDisabled === undefined) {
+      this.setWidgetHistoryDisabled(historyApiSupported ? false : true);
+    } else {
+      this.widgetHistoryDisabled.next(historyApiSupported ? this.activeConfig.app.widgetHistoryDisabled : true);
+    }
   }
 
   //UnitDefaults
@@ -444,6 +456,23 @@ export class SettingsService {
     }
   }
 
+    public getWidgetHistoryDisabledAsO() {
+    return this.widgetHistoryDisabled.asObservable();
+  }
+  public getWidgetHistoryDisabled(): boolean {
+    return this.widgetHistoryDisabled.getValue();
+  }
+  public setWidgetHistoryDisabled(disabled: boolean): void {
+    this.widgetHistoryDisabled.next(disabled);
+    const appConf = this.buildAppStorageObject();
+
+    if (this.useSharedConfig) {
+      this.storage.patchConfig('IAppConfig', appConf);
+    } else {
+      this.saveAppConfigToLocalStorage();
+    }
+  }
+
   public getSplitShellSwipeDisabledAsO() {
     return this.splitShellSwipeDisabled.asObservable();
   }
@@ -634,7 +663,8 @@ export class SettingsService {
       splitShellEnabled: this.splitShellEnabled.getValue(),
       splitShellSide: this.splitShellSide.getValue() ?? 'right',
       splitShellWidth: this.splitShellWidth.getValue() ?? 0.5,
-      splitShellSwipeDisabled: this.splitShellSwipeDisabled.getValue()
+      splitShellSwipeDisabled: this.splitShellSwipeDisabled.getValue(),
+      widgetHistoryDisabled: this.widgetHistoryDisabled.getValue()
     }
     return storageObject;
   }

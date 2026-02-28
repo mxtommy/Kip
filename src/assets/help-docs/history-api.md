@@ -1,5 +1,4 @@
-## History Data for Charts
-
+## Historical Data Using the History API
 
 KIP can automatically request historical data points when opening chart widgets, seamlessly integrating past data with live updates.
 
@@ -8,7 +7,7 @@ This enables the display of minutes, hours, days, or weeks of pre-populated hist
 
 ## What Is the History API?
 
-A Signal K server endpoint that provides access to recorded historical data. KIP automatically requests historical data points when opening chart widgets, pre-filling the chart instead of starting empty.
+A Signal K server endpoint that provides access to recorded historical data. Behind the endpoint, the data is served by a history provider plugin. KIP automatically requests historical data points when opening chart widgets, pre-filling the chart instead of starting empty.
 
 
 ## Which Widgets Support History?
@@ -47,14 +46,6 @@ The History API requires Signal K version 2.22.1 or above and one plugin that re
 
 ## How History Data Works in KIP
 
-### Locked Dashboard Quick View
-You can open a widget history dialog directly from a locked dashboard:
-
-- **Desktop / mouse:** right-click a widget
-- **Touch device:** two-finger tap a widget
-
-This dialog is history-only and loads data using the History API (no live stream overlay).
-
 ### History Seeding
 When you open a chart widget with a larger time scale (minutes/hours):
 1. KIP checks if history data is available via the History API.
@@ -71,7 +62,6 @@ After history data loads:
 - If a History API plugin is not installed, or the plugin report the path is not recorded, history requests are skipped silently.
 - The chart will display only live data starting from when it was opened.
 - This is normal and does not indicate an error.
-
 
 ## Wind Trends Fixed Paths
 

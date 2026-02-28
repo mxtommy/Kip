@@ -252,4 +252,14 @@ export class HistoryApiClientService {
       return null;
     }
   }
+
+  public async getProviders(): Promise<string[]> {
+    //TODO: implement real provider fetching when backend API support is available
+    const providersUrl = `${this.historyServiceUrl}history/_providers`;
+    const response = await firstValueFrom(
+        this.http.get<IHistoryValuesResponse>(providersUrl)
+      );
+
+    return ['kip'];
+  }
 }

@@ -12,3 +12,14 @@
 .disable-color {
   color: var(--mat-sys-outline);
 }
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 5px 0px 15px 0px;
+  align-items: flex-start;
+}
+
+.radio-button {
+  margin: 5px;
+}

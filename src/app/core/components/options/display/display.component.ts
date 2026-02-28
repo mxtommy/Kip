@@ -1,19 +1,22 @@
-import { Component, inject, OnInit, viewChild, signal, Signal, model } from '@angular/core';
+import { Component, inject, OnInit, viewChild, signal, Signal, model, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
-import { MatButton } from '@angular/material/button';
-import { MatDivider } from '@angular/material/divider';
-import { MatSliderModule } from '@angular/material/slider';
-import { FormsModule, NgForm } from '@angular/forms';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { PluginConfigClientService } from '../../../services/plugin-config-client.service';
-import { IPluginApiFailure, ISignalkPlugin } from '../../../interfaces/signalk-plugin-config.interfaces';
+import { IPluginApiFailure, IPluginConfigSaveRequest, ISignalkPlugin } from '../../../interfaces/signalk-plugin-config.interfaces';
+import { FormsModule, NgForm } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
+import { SignalKConnectionService } from '../../../services/signalk-connection.service';
+import { compare } from 'compare-versions';
 
 
 @Component({
@@ -22,54 +25,62 @@ import { MatSelectModule } from '@angular/material/select';
     styleUrls: ['./display.component.scss'],
     imports: [
         FormsModule,
-        MatDivider,
-        MatButton,
+        MatDividerModule,
+        MatButtonModule,
         MatSliderModule,
         MatExpansionModule,
         MatInputModule,
         MatSlideToggleModule,
-        MatSelectModule
+        MatSelectModule,
+        MatRadioModule
     ],
 })
 export class SettingsDisplayComponent implements OnInit {
   private readonly DERIVED_DATA_PLUGIN_ID = 'derived-data';
-  readonly displayForm = viewChild<NgForm>('displayForm');
-  private _app = inject(AppService);
-  private toast = inject(ToastService);
-  private _settings = inject(SettingsService);
-  private _responsive = inject(BreakpointObserver);
-  private _pluginConfig = inject(PluginConfigClientService);
+  private readonly KIP_DATA_PLUGIN_ID = 'kip';
+  private readonly LIGHT_THEME_NAME = "light-theme";
+  private readonly displayForm = viewChild<NgForm>('displayForm');
+  private readonly app = inject(AppService);
+  private readonly toast = inject(ToastService);
+  private readonly settings = inject(SettingsService);
+  private readonly responsive = inject(BreakpointObserver);
+  private readonly pluginConfig = inject(PluginConfigClientService);
+  private readonly server = inject(SignalKConnectionService);
   protected isPhonePortrait: Signal<BreakpointState>;
   protected nightBrightness = signal<number>(0.27);
+  protected isHistoryApiSupported = computed<boolean>(() => {
+    const version = this.server.serverVersion$.getValue();
+    return version ? compare(version, '2.22.1', ">=") : false;
+  });
   protected autoNightMode = model<boolean>(false);
   protected isRedNightMode = model<boolean>(false);
   protected isLightTheme = model<boolean>(false);
-  /* If true, the display can be remotely controlled by another KIP via Signal K displays path. */
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
-  // Freeboard split shell config
   protected splitShellEnabled = model<boolean>(false);
   protected splitShellSide = model<'left' | 'right'>('left');
   protected splitShellSwipeDisabled = model<boolean>(false);
+  protected providerMode = model<'kip' | 'other'>('kip');
+  protected widgetHistoryDisabled = model<boolean>(false);
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
-  readonly LIGHT_THEME_NAME = "light-theme";
-  readonly RED_NIGHT_MODE_THEME_NAME = "night-theme";
 
   constructor() {
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait));
   }
 
   ngOnInit() {
-    this.nightBrightness.set(this._settings.getNightModeBrightness());
-    this.autoNightMode.set(this._settings.getAutoNightMode());
-    this.isLightTheme.set(this._settings.getThemeName() === this.LIGHT_THEME_NAME);
-    this.isRedNightMode.set(this._settings.getRedNightMode());
-    this.isRemoteControl.set(this._settings.getIsRemoteControl());
-    this.instanceName.set(this._settings.getInstanceName());
-    this.splitShellEnabled.set(this._settings.getSplitShellEnabled());
-    this.splitShellSide.set(this._settings.getSplitShellSide());
-    this.splitShellSwipeDisabled.set(this._settings.getSplitShellSwipeDisabled());
+    this.nightBrightness.set(this.settings.getNightModeBrightness());
+    this.autoNightMode.set(this.settings.getAutoNightMode());
+    this.isLightTheme.set(this.settings.getThemeName() === this.LIGHT_THEME_NAME);
+    this.isRedNightMode.set(this.settings.getRedNightMode());
+    this.isRemoteControl.set(this.settings.getIsRemoteControl());
+    this.instanceName.set(this.settings.getInstanceName());
+    this.splitShellEnabled.set(this.settings.getSplitShellEnabled());
+    this.splitShellSide.set(this.settings.getSplitShellSide());
+    this.splitShellSwipeDisabled.set(this.settings.getSplitShellSwipeDisabled());
+    this.widgetHistoryDisabled.set(this.settings.getWidgetHistoryDisabled());
+    void this.getKipPluginConfig();
   }
 
   protected saveAllSettings():void {
@@ -91,29 +102,32 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   private applyAndSaveSettings(): void {
-    this._settings.setAutoNightMode(this.autoNightMode());
-    this._settings.setRedNightMode(this.isRedNightMode());
-    this._settings.setNightModeBrightness(this.nightBrightness());
-    this._settings.setIsRemoteControl(this.isRemoteControl());
+    this.settings.setAutoNightMode(this.autoNightMode());
+    this.settings.setRedNightMode(this.isRedNightMode());
+    this.settings.setNightModeBrightness(this.nightBrightness());
+    this.settings.setIsRemoteControl(this.isRemoteControl());
     if (this.isRemoteControl()) {
-      this._settings.setInstanceName(this.instanceName());
+      this.settings.setInstanceName(this.instanceName());
     } else {
       // If remote control is disabled, reset instance name
-      this._settings.setInstanceName('');
+      this.settings.setInstanceName('');
     }
 
-    if (!this._app.isNightMode()) {
-      this._app.setBrightness(1);
+    if (!this.app.isNightMode()) {
+      this.app.setBrightness(1);
     }
     if (this.isLightTheme()) {
-    this._settings.setThemeName(this.LIGHT_THEME_NAME);
+    this.settings.setThemeName(this.LIGHT_THEME_NAME);
     } else {
-      this._settings.setThemeName("");
+      this.settings.setThemeName("");
     }
-    this._settings.setSplitShellEnabled(this.splitShellEnabled());
-    this._settings.setSplitShellSide(this.splitShellSide());
-    this._settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
-
+    this.settings.setSplitShellEnabled(this.splitShellEnabled());
+    this.settings.setSplitShellSide(this.splitShellSide());
+    this.settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
+    this.settings.setWidgetHistoryDisabled(this.widgetHistoryDisabled());
+    if (!this.setKipPluginConfig()) {
+      this.toast.show('Failed to save KIP plugin configuration on server.', 0, false, 'error');
+    }
     this.displayForm().form.markAsPristine();
     this.toast.show("Configuration saved", 1000, true, 'message');
   }
@@ -130,13 +144,40 @@ export class SettingsDisplayComponent implements OnInit {
     }
   }
 
+  private async getKipPluginConfig(): Promise<void> {
+    const result = await this.pluginConfig.getPlugin(this.KIP_DATA_PLUGIN_ID);
+    if (!result.ok) {
+      this.toast.show(
+        `Failed to load KIP plugin configuration: ${(result as IPluginApiFailure).error.message}`,
+        0,
+        false,
+        'error'
+      );
+      return;
+    }
+
+    const pluginConfig = result.data.state.configuration;
+    this.providerMode.set(pluginConfig.historySeriesServiceEnabled === true ? 'kip' : 'other');
+  }
+
+  private async setKipPluginConfig(): Promise<boolean> {
+    const config: IPluginConfigSaveRequest = {
+      configuration: {
+        historySeriesServiceEnabled: this.providerMode() === 'kip',
+        registerAsHistoryApiProvider: this.providerMode() === 'kip'
+      }
+    };
+    const result = await this.pluginConfig.savePluginConfig(this.KIP_DATA_PLUGIN_ID, config);
+    return result.ok;
+  }
+
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
     this.displayForm().form.markAsDirty();
     this.autoNightMode.set(e.checked);
   }
 
   private async validateAndHandleAutoNightRequirement(seq: number): Promise<boolean> {
-    const pluginResult = await this._pluginConfig.getPlugin(this.DERIVED_DATA_PLUGIN_ID);
+    const pluginResult = await this.pluginConfig.getPlugin(this.DERIVED_DATA_PLUGIN_ID);
     if (seq !== this._pluginCheckSeq) return false;
 
     if (!pluginResult.ok) {
@@ -200,7 +241,7 @@ export class SettingsDisplayComponent implements OnInit {
     const nextConfiguration = this.cloneConfig(plugin.state.configuration);
     this.writeBooleanByPath(nextConfiguration, sunFlagPath, true);
 
-    const saveResult = await this._pluginConfig.savePluginConfig(plugin.id, {
+    const saveResult = await this.pluginConfig.savePluginConfig(plugin.id, {
       configuration: nextConfiguration,
       enabled: true
     });
@@ -286,6 +327,6 @@ export class SettingsDisplayComponent implements OnInit {
   protected setBrightness(value: number): void {
     this.displayForm().form.markAsDirty();
     this.nightBrightness.set(value);
-    this._app.setBrightness(value, this._app.isNightMode());
+    this.app.setBrightness(value, this.app.isNightMode());
   }
 }

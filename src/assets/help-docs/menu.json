@@ -6,12 +6,13 @@
   { "title": "Chartplotter Mode", "file": "chartplotter.md" },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Digital Switching and PUT", "file": "putcontrols.md" },
-  { "title": "History Data for Charts", "file": "history-data-charts.md" },
+  { "title": "Historical Data", "file": "widget-historical-series.md" },
   {
     "title": "Integrations",
     "items": [
       { "title": "Node-RED (Getting Started)", "file": "nodered-control-flows.md" },
       { "title": "The Embed Page Viewer", "file": "embedwidget.md" },
+      { "title": "History API and Data Charts", "file": "history-api.md" },
       { "title": "Grafana Integration", "file": "grafana.md" },
       { "title": "InfluxDB and Signal K", "file": "influxdb.md" }
     ]
