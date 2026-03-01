@@ -494,36 +494,21 @@ export class GestureDirective {
       this.debug('pre-acquire owners', { owners });
     }
     this.ownedLanes = { h: false, v: false, p: false };
-    if (allowH && owners.h === undefined) { owners.h = this._instanceId; this.ownedLanes.h = true; }
-        if (allowH && owners.h === undefined) {
-          owners.h = this._instanceId;
-          this.ownedLanes.h = true;
-          this.debug('lane acquired', { lane: 'horizontal', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
-        }
-    if (allowV && owners.v === undefined) { owners.v = this._instanceId; this.ownedLanes.v = true; }
-        if (allowV && owners.v === undefined) {
-          owners.v = this._instanceId;
-          this.ownedLanes.v = true;
-          this.debug('lane acquired', { lane: 'vertical', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
-        }
-    if (wantP && owners.p === undefined) { owners.p = this._instanceId; this.ownedLanes.p = true; }
-        if (wantP && owners.p === undefined) {
-          owners.p = this._instanceId;
-          this.ownedLanes.p = true;
-          this.debug('lane acquired', { lane: 'press', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
-        }
-                  if (this.ownedLanes.h && owners.h === this._instanceId) {
-                    this.debug('lane released', { lane: 'horizontal', pointerId: this.pointerId, instanceId: this._instanceId, owners });
-                    delete owners.h;
-                  }
-                  if (this.ownedLanes.v && owners.v === this._instanceId) {
-                    this.debug('lane released', { lane: 'vertical', pointerId: this.pointerId, instanceId: this._instanceId, owners });
-                    delete owners.v;
-                  }
-                  if (this.ownedLanes.p && owners.p === this._instanceId) {
-                    this.debug('lane released', { lane: 'press', pointerId: this.pointerId, instanceId: this._instanceId, owners });
-                    delete owners.p;
-                  }
+    if (allowH && owners.h === undefined) {
+      owners.h = this._instanceId;
+      this.ownedLanes.h = true;
+      this.debug('lane acquired', { lane: 'horizontal', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
+    if (allowV && owners.v === undefined) {
+      owners.v = this._instanceId;
+      this.ownedLanes.v = true;
+      this.debug('lane acquired', { lane: 'vertical', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
+    if (wantP && owners.p === undefined) {
+      owners.p = this._instanceId;
+      this.ownedLanes.p = true;
+      this.debug('lane acquired', { lane: 'press', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
     this.debug('lane acquisition', {
       allowH, allowV, allowPress, allowDT,
       wantP,
@@ -898,7 +883,7 @@ export class GestureDirective {
       const dt = now - this.lastTapTime;
       const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
       if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
-        this.zone.run(() => this.doubletap.emit(new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt } })));
+        this.zone.run(() => this.emitDoubleTapEvent({ x: ev.clientX, y: ev.clientY, dt }));
         this.lastTapTime = 0;
         this.potentialDoubleTap = false; // completed
       } else {
@@ -1105,13 +1090,17 @@ export class GestureDirective {
       return;
     }
     (this as { _lastPressEmitTs?: number })._lastPressEmitTs = now;
-    const evt = new CustomEvent('press', { detail });
+    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
+    const evt = new CustomEvent('press', { detail, bubbles: true, composed: true });
+    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
     this.debug('emitPressEvent', { detail });
     this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
   }
 
   private emitDoubleTapEvent(detail: { x: number; y: number; dt: number }) {
-    const evt = new CustomEvent('doubletap', { detail });
+    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
+    const evt = new CustomEvent('doubletap', { detail, bubbles: true, composed: true });
+    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
     this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
   }
 
