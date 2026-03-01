@@ -14,6 +14,7 @@ export interface ISeriesDefinition {
   sampleTime?: number | null;
   enabled?: boolean;
   methods?: THistoryMethod[];
+  reconcileTs?: number;
 }
 
 export interface IRecordedSeriesSample {
@@ -161,6 +162,7 @@ export class HistorySeriesService {
    * console.log(result.created, result.deleted);
    */
   public reconcileSeries(desiredSeries: ISeriesDefinition[]): { created: number; updated: number; deleted: number; total: number } {
+    const now = Date.now();
     const desiredById = new Map<string, ISeriesDefinition>();
     desiredSeries.forEach(entry => {
       const normalized = this.normalizeSeries(entry);
@@ -174,15 +176,20 @@ export class HistorySeriesService {
 
     desiredById.forEach((desired, seriesKey) => {
       const existing = this.seriesById.get(seriesKey);
+      // Always update reconcile_ts on reconcile
+      const desiredWithReconcile = { ...desired, reconcileTs: now };
       if (!existing) {
-        this.seriesById.set(seriesKey, desired);
+        this.seriesById.set(seriesKey, desiredWithReconcile);
         created += 1;
         return;
       }
 
       if (JSON.stringify(existing) !== JSON.stringify(desired)) {
-        this.seriesById.set(seriesKey, desired);
+        this.seriesById.set(seriesKey, desiredWithReconcile);
         updated += 1;
+      } else {
+        // Even if not updated, update reconcileTs
+        this.seriesById.set(seriesKey, { ...existing, reconcileTs: now });
       }
     });
 

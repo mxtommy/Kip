@@ -99,9 +99,18 @@ export class DuckDbParquetStorageService {
     flushIntervalMs: 30_000
   };
 
-  // Weekly VACUUM job interval (in ms)
-  private static readonly VACUUM_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+  // 8 hour job interval (8 hours)
+  private static readonly EIGHT_HOURS_INTERVAL = 8 * 60 * 60 * 1000;
   private vacuumJob: NodeJS.Timeout | null = null;
+
+  // 4 hour job interval (4 hours)
+  private static readonly FOUR_HOURS_INTERVAL = 4 * 60 * 60 * 1000;
+  private pruneJob: NodeJS.Timeout | null = null;
+
+  // Stale series cleanup interval (6 months)
+  private static readonly STALE_SERIES_AGE_MS = 180 * 24 * 60 * 60 * 1000; // 6 months
+  private staleSeriesCleanupJob: NodeJS.Timeout | null = null;
+
 
   private logger: TLogger = {
     debug: () => undefined,
@@ -202,8 +211,14 @@ export class DuckDbParquetStorageService {
       this.lastInitError = null;
       this.initialized = true;
 
-      // Start weekly VACUUM job
+      // Start VACUUM job
       this.startVacuumJob();
+
+      // Start prune job
+      this.startPruneJob();
+
+      // Start stale series cleanup job
+      this.startStaleSeriesCleanupJob();
 
       return true;
     } catch (error) {
@@ -222,7 +237,7 @@ export class DuckDbParquetStorageService {
   }
 
   /**
-   * Starts the weekly VACUUM job for DuckDB.
+   * Starts VACUUM job for DuckDB.
    */
   private startVacuumJob(): void {
     this.stopVacuumJob();
@@ -232,7 +247,7 @@ export class DuckDbParquetStorageService {
       this.runSql('VACUUM;').catch(err => {
         this.logger.error(`[SERIES STORAGE] VACUUM failed: ${err?.message ?? err}`);
       });
-    }, DuckDbParquetStorageService.VACUUM_INTERVAL_MS);
+    }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
   }
 
   /**
@@ -242,6 +257,91 @@ export class DuckDbParquetStorageService {
     if (this.vacuumJob) {
       clearInterval(this.vacuumJob);
       this.vacuumJob = null;
+    }
+  }
+
+  /**
+   * Starts the prune job for expired and orphaned samples.
+   */
+  private startPruneJob(): void {
+    this.stopPruneJob();
+    if (!this.isDuckDbParquetReady() || !this.connection) return;
+    this.pruneJob = setInterval(async () => {
+      try {
+        this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
+        const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
+        const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
+        this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
+      } catch (err) {
+        this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
+      }
+    }, DuckDbParquetStorageService.FOUR_HOURS_INTERVAL);
+  }
+
+  /**
+   * Stops the scheduled prune job if running.
+   */
+  private stopPruneJob(): void {
+    if (this.pruneJob) {
+      clearInterval(this.pruneJob);
+      this.pruneJob = null;
+    }
+  }
+
+  /**
+   * Starts the scheduled job to delete series not reconciled in the last 6 months.
+   */
+  private startStaleSeriesCleanupJob(): void {
+    this.stopStaleSeriesCleanupJob();
+    if (!this.isDuckDbParquetReady() || !this.connection) return;
+    this.staleSeriesCleanupJob = setInterval(async () => {
+      try {
+        const cutoff = Date.now() - DuckDbParquetStorageService.STALE_SERIES_AGE_MS;
+        this.logger.debug(`[SERIES STORAGE] Running scheduled stale series cleanup (cutoff: ${new Date(cutoff).toISOString()})`);
+        const deleted = await this.deleteStaleSeries(cutoff);
+        if (deleted > 0) {
+          this.logger.debug(`[SERIES STORAGE] Deleted ${deleted} series not reconciled in the last 6 months`);
+        }
+      } catch (err) {
+        this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${err?.message ?? err}`);
+      }
+    }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
+  }
+
+  /**
+   * Deletes series not reconciled since the given cutoff timestamp.
+   * @param {number} cutoffMs - Milliseconds since epoch; series with reconcile_ts < cutoffMs will be deleted.
+   * @returns {Promise<number>} Number of deleted series.
+   *
+   * @example
+   * const deleted = await storage.deleteStaleSeries(Date.now() - 180 * 24 * 60 * 60 * 1000);
+   */
+  public async deleteStaleSeries(cutoffMs: number): Promise<number> {
+    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+      return 0;
+    }
+    // Find series to delete
+    const rows = await this.querySql<{ series_id: string }>(`
+      SELECT series_id FROM history_series
+      WHERE reconcile_ts IS NULL OR reconcile_ts < ${Math.trunc(cutoffMs)}
+    `);
+    const ids = rows.map(r => r.series_id);
+    if (ids.length === 0) return 0;
+
+    for (const id of ids) {
+      await this.deleteSeriesDefinition(id);
+    }
+
+    return ids.length;
+  }
+
+  /**
+   * Stops the scheduled stale series cleanup job if running.
+   */
+  private stopStaleSeriesCleanupJob(): void {
+    if (this.staleSeriesCleanupJob) {
+      clearInterval(this.staleSeriesCleanupJob);
+      this.staleSeriesCleanupJob = null;
     }
   }
 
@@ -537,7 +637,7 @@ export class DuckDbParquetStorageService {
    * @example
    * const removed = await storage.pruneExpiredSamples();
    */
-  public async pruneExpiredSamples(nowMs = Date.now(), expectedLifecycleToken?: number): Promise<number> {
+  public async pruneExpiredSamples(nowMs: number = Date.now(), expectedLifecycleToken?: number): Promise<number> {
     if (expectedLifecycleToken !== undefined && expectedLifecycleToken !== this.lifecycleToken) {
       return 0;
     }
@@ -748,6 +848,8 @@ export class DuckDbParquetStorageService {
     }
 
     this.initialized = false;
+    this.stopPruneJob();
+    this.stopStaleSeriesCleanupJob();
     if (!this.connection) {
       this.db = null;
       return;
@@ -790,6 +892,7 @@ export class DuckDbParquetStorageService {
         sample_time INTEGER,
         enabled BOOLEAN,
         methods_json VARCHAR,
+        reconcile_ts BIGINT,
         PRIMARY KEY (series_id)
       )
     `);
