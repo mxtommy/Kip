@@ -1,16 +1,16 @@
 # v4.5.0
 ## New Features
-* Get effortless insight into your vessel’s past with the new Widget Historical Charts—automatically track, store, and visualize key data, unlocking instant access charts showing up to the last full day of performance. Whether you’re sailing or docked, simply two-finger tap or right-click widgets to reveal a seamless history dialog—no setup, no clutter, just the trends you need. (Requires Signal K v2.22.1).
-* Start you dashboards with fully populated Data Charts. This feature is made possible with KIP's managed Times-Series History-API provider or using other history providers (Requires Signal K v2.22.1).
-* New internet availability service remote queries diagnostic.
+* Effortlessly review your vessel’s history with the new Widget Historical Charts—automatically track, store, and visualize key data. Instantly access up to the last full day of performance: just two-finger tap or right-click any widget to open a seamless history dialog—no setup, no clutter, just the trends you need. (Requires Signal K v2.22.1)
+* Dashboards now start with fully populated Data Charts, powered by KIP’s managed Time-Series History-API provider or other compatible history providers. (Requires Signal K v2.22.1)
+* Added internet availability detection for remote queries.
 ## Improvements
-* Added Days to Data Chart widget time scale.
-* Added ability to validate server plugin presence, plugin state and configuration improving integration usecases.
-* Added Node-RED introduction guide Help section.
+* Added "Days" as a selectable time scale in the Data Chart widget.
+* Improved integration by validating server plugin presence, plugin state, and configuration.
+* Added a Node-RED introduction guide to the Help section.
 ## Fixes
-* KIP plugin OpenAPI support
-* Slow Data Inspector due to high resource usage in deep loop logic.
-* Using Remote Control feature requires Admin permission. Fixes #940
+* Improved KIP plugin OpenAPI compatibility.
+* Resolved slow Data Inspector performance caused by high resource usage in deep loop logic.
+* Remote Control feature should not require Admin permission. Fixes #940
 # v4.4.0
 ## New Features
 * New AIS Radar widget: Turn AIS traffic into an instant tactical view with live targets, dynamic range rings, fast zoom controls, and smart filters—so you can spot nearby vessels quicker and make confident navigation decisions at a glance.
