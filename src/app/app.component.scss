@@ -1,11 +1,20 @@
+@use '@angular/material' as mat;
+
 .sidenav-container {
   height: 100%;
   width: 100%;
+  @include mat.sidenav-overrides((
+    scrim-color: color-mix(in srgb, var(--mat-sys-neutral-variant20) 70%, transparent), // Override the default scrim color to be fully transparent
+  ));
 }
 
 mat-sidenav-content {
  overflow-y: hidden;
  overflow-x: hidden;
+}
+
+mat-sidenav {
+  box-shadow: 0px 0px 1px 0px var(--kip-contrast-color); // subtle inner shadow for depth
 }
 
 mat-sidenav.sidenav-notifications {
