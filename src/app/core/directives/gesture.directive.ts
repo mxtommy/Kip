@@ -10,7 +10,7 @@
  * - Robust long-press logic with explicit cancellation and teardown to avoid leaked handlers or capture.
  * - Per-lane ownership (horizontal | vertical | press) to reduce contention across nested hosts.
  * - Mode/toggle gating (all | horizontal | dashboard | press | editor, plus enablePress/enableDoubleTap), and rebroadcast gating.
- * - Diagnostics are opt-in and can be toggled at runtime (console helper, localStorage persistence).
+ * - Diagnostics are gated by a runtime flag (default enabled) and can be toggled via console helper / localStorage.
  *
  * Supported gestures (emitted events):
  * - swipeleft, swiperight, swipeup, swipedown, press, doubletap
@@ -37,10 +37,10 @@ interface CancelHandlerEntry {
  *  - Context menu: the directive prevents the native contextmenu on the host to avoid pointer sequence aborts.
  *    If a widget needs right-click, place the directive on a child overlay, not the interactive element itself.
  *  - Inputs are Angular signals (`input(...)`), so everything is bindable from templates.
- *  - Pointer capture policy: capture is enabled for touch/pen (to keep continuity across child boundaries),
+ *  - Pointer capture policy: capture is enabled for touch/pen on the original event target (when available)
  *    and disabled for mouse to preserve native hover/click behaviors in Material/CDK components.
- *  - Long-press cancel sources: pointermove and lostpointercapture for all pointers; pointerleave/out and window blur
- *    only for touch/pen (mouse ignores blur to avoid aborting legitimate presses after dialog focus changes).
+ *  - Long-press cancel sources: movement beyond `pressMoveSlop`, pointercancel (element/document),
+ *    and window blur for touch/pen only. Lost pointer capture is ignored during active touch/pen long-press.
  *
  * Optional Inputs to adjust recognition. Uses optimal setting per pointer type if not specified:
  *  - `swipeMinDistance` (number) - minimum primary-axis movement in pixels to consider a swipe. Default: 30.

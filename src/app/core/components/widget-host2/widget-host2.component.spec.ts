@@ -8,6 +8,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { WidgetService } from '../../services/widget.service';
 import { AppService } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
+import { uiEventService } from '../../services/uiEvent.service';
 import { IWidget } from '../../interfaces/widgets-interface';
 
 class DashboardServiceStub {
@@ -27,6 +28,7 @@ describe('WidgetHost2Component', () => {
 	let dashboard: DashboardServiceStub;
 	let dialogServiceMock: { openWidgetOptions: jasmine.Spy; openWidgetHistoryDialog: jasmine.Spy };
 	let historySyncMock: { resolveSeriesForWidget: jasmine.Spy };
+	let bottomSheetMock: { open: jasmine.Spy };
 	let testWidget: IWidget;
 
 	beforeEach(async () => {
@@ -59,9 +61,9 @@ describe('WidgetHost2Component', () => {
 				{ provide: DialogService, useValue: dialogServiceMock },
 				{
 					provide: MatBottomSheet,
-					useValue: {
+					useValue: (bottomSheetMock = {
 						open: jasmine.createSpy('open').and.returnValue({ afterDismissed: () => of(null) })
-					}
+					})
 				},
 				{
 					provide: WidgetService,
@@ -73,6 +75,12 @@ describe('WidgetHost2Component', () => {
 					provide: AppService,
 					useValue: {
 						cssThemeColorRoles$: of({})
+					}
+				},
+				{
+					provide: uiEventService,
+					useValue: {
+						isDragging: signal(false)
 					}
 				},
 				{ provide: DashboardHistorySeriesSyncService, useValue: historySyncMock }
@@ -263,5 +271,15 @@ describe('WidgetHost2Component', () => {
 		component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
 
 		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
+	});
+
+	it('suppresses bottom sheet opening while dragging', () => {
+		dashboard.isDashboardStatic.set(false);
+		const uiEvents = TestBed.inject(uiEventService);
+		uiEvents.isDragging.set(true);
+
+		component.openBottomSheet(new Event('press'));
+
+		expect(bottomSheetMock.open).not.toHaveBeenCalled();
 	});
 });

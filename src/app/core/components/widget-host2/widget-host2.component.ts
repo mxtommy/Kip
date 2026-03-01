@@ -18,6 +18,7 @@ import { AppService } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { SettingsService } from '../../services/settings.service';
+import { uiEventService } from '../../services/uiEvent.service';
 
 // Base shape expected from view components (optional defaultConfig)
 // NOTE: Widgets should expose a static DEFAULT_CONFIG to avoid temporary instantiation.
@@ -64,6 +65,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   private readonly widgetService = inject(WidgetService);
   private readonly app = inject(AppService);
   private readonly historySync = inject(DashboardHistorySeriesSyncService);
+  private readonly _uiEvent = inject(uiEventService);
 
   private readonly settings = inject(SettingsService);
 
@@ -218,6 +220,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   /**
    * Open the widget options dialog (skips when dashboard is static).
    * @param e Event used to stop propagation (click/context menu/etc.).
+   * @returns void
+   * @example
+   * this.openWidgetOptions(event);
    */
   public openWidgetOptions(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
@@ -244,11 +249,18 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   /**
    * Open the bottom sheet for widget management (delete / duplicate actions).
    * @param e Event used to stop propagation.
+   * @returns void
+   * @example
+   * this.openBottomSheet(event);
    */
   public openBottomSheet(e: Event | CustomEvent): void {
     (e as Event).stopPropagation();
     this.debug('openBottomSheet invoked', { widgetId: this.widgetProperties?.uuid, static: this.dashboard.isDashboardStatic() });
     if (!this.dashboard.isDashboardStatic()) {
+      if (this._uiEvent.isDragging()) {
+        this.debug('bottom sheet suppressed during drag', { widgetId: this.widgetProperties?.uuid });
+        return;
+      }
       if (this._sheetOpen) { this.debug('sheet already open; ignoring'); return; }
       this._sheetOpen = true;
       const isLinuxFirefox = typeof navigator !== 'undefined' &&
