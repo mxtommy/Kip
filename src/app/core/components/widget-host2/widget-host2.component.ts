@@ -2,6 +2,7 @@ import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, Co
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
+import { TwoFingerTapDirective } from '../../directives/two-finger-tap.directive';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
 import type { NgCompInputs, NgGridStackWidget } from 'gridstack/dist/angular';
@@ -25,7 +26,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
 
 @Component({
   selector: 'widget-host2',
-  imports: [MatCardModule, MatBottomSheetModule, GestureDirective],
+  imports: [MatCardModule, MatBottomSheetModule, GestureDirective, TwoFingerTapDirective],
   templateUrl: './widget-host2.component.html',
   styleUrl: './widget-host2.component.scss',
   hostDirectives: [
@@ -73,12 +74,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   private _sheetOpen = false;
   private _optionsOpen = false;
   private _historyDialogOpen = false;
-  private readonly historyTouchPointers = new Map<number, { x: number; y: number }>();
-  private historyTwoFingerCandidate = false;
-  private historyTwoFingerMoved = false;
-  private historyTwoFingerStartedAtMs = 0;
-  private readonly historyTwoFingerMaxDurationMs = 450;
-  private readonly historyTwoFingerMoveThresholdPx = 24;
   // Debug helper gated by the same localStorage flag used by gestures directive
   private isDebugEnabled(): boolean {
     try { return typeof localStorage !== 'undefined' && localStorage.getItem('kip:gesturesDebug') === '1'; } catch { return false; }
@@ -300,114 +295,19 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   }
 
   /**
-   * Handles pointer-down events to detect two-finger tap gestures in locked dashboards.
+   * Handles a two-finger tap gesture and opens the locked-mode history dialog.
    *
-   * @param {PointerEvent} event Pointer event from the widget host card.
-   * @returns {void}
-   *
-   * @example
-   * this.onHistoryPointerDown(event);
-   */
-  public onHistoryPointerDown(event: PointerEvent): void {
-    if (!this.dashboard.isDashboardStatic() || event.pointerType !== 'touch') {
-      return;
-    }
-
-    this.historyTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-
-    if (!this.historyTwoFingerCandidate && this.historyTouchPointers.size >= 2) {
-      this.historyTwoFingerCandidate = true;
-      this.historyTwoFingerMoved = false;
-      this.historyTwoFingerStartedAtMs = Date.now();
-    }
-  }
-
-  /**
-   * Handles pointer-move events to cancel two-finger tap detection when movement exceeds threshold.
-   *
-   * @param {PointerEvent} event Pointer move event from the widget host card.
-   * @returns {void}
+   * @param event Pointer event emitted by TwoFingerTapDirective.
+   * @returns void
    *
    * @example
-   * this.onHistoryPointerMove(event);
+   * this.onHistoryTwoFingerTap(event);
    */
-  public onHistoryPointerMove(event: PointerEvent): void {
-    if (!this.historyTwoFingerCandidate || event.pointerType !== 'touch') {
-      return;
-    }
-
-    const start = this.historyTouchPointers.get(event.pointerId);
-    if (!start) {
-      return;
-    }
-
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    const distance = Math.hypot(deltaX, deltaY);
-    if (distance > this.historyTwoFingerMoveThresholdPx) {
-      this.historyTwoFingerMoved = true;
-    }
-  }
-
-  /**
-   * Handles pointer-up events and opens locked history dialog when a valid two-finger tap completes.
-   *
-   * @param {PointerEvent} event Pointer up event from the widget host card.
-   * @returns {void}
-   *
-   * @example
-   * this.onHistoryPointerUp(event);
-   */
-  public onHistoryPointerUp(event: PointerEvent): void {
-    if (event.pointerType !== 'touch') {
-      return;
-    }
-
-    this.historyTouchPointers.delete(event.pointerId);
-
-    if (!this.historyTwoFingerCandidate || this.historyTouchPointers.size > 0) {
-      return;
-    }
-
-    const elapsedMs = Date.now() - this.historyTwoFingerStartedAtMs;
-    const isValidTap = !this.historyTwoFingerMoved && elapsedMs <= this.historyTwoFingerMaxDurationMs;
-
-    this.resetTwoFingerHistoryTracking();
-
-    if (!isValidTap) {
-      return;
-    }
-
+  public onHistoryTwoFingerTap(event: PointerEvent): void {
     event.preventDefault();
     event.stopPropagation();
+
     this.openWidgetHistoryDialogInternal();
-  }
-
-  /**
-   * Handles pointer-cancel events and clears in-progress two-finger history gesture state.
-   *
-   * @param {PointerEvent} event Pointer cancel event from the widget host card.
-   * @returns {void}
-   *
-   * @example
-   * this.onHistoryPointerCancel(event);
-   */
-  public onHistoryPointerCancel(event: PointerEvent): void {
-    if (event.pointerType !== 'touch') {
-      return;
-    }
-
-    this.historyTouchPointers.delete(event.pointerId);
-    if (!this.historyTouchPointers.size) {
-      this.resetTwoFingerHistoryTracking();
-    }
-  }
-
-  private resetTwoFingerHistoryTracking(): void {
-    this.historyTouchPointers.clear();
-    this.historyTwoFingerCandidate = false;
-    this.historyTwoFingerMoved = false;
-    this.historyTwoFingerStartedAtMs = 0;
   }
 
   private openWidgetHistoryDialogInternal(): void {
