@@ -251,7 +251,10 @@ export class SettingsService {
       this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
     }
 
-    const historyApiSupported = compare(this.server.serverVersion$.getValue(), '2.22.1', ">=");
+    const serverVersion = this.server.serverVersion$.getValue();
+    const historyApiSupported = typeof serverVersion === 'string' && serverVersion.trim().length > 0
+      ? compare(serverVersion, '2.22.1', ">=")
+      : false;
     if (this.activeConfig.app.widgetHistoryDisabled === undefined) {
       this.setWidgetHistoryDisabled(historyApiSupported ? false : true);
     } else {

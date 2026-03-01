@@ -39,6 +39,7 @@ class SettingsServiceMock {
   public getSplitShellEnabled() { return false; }
   public getSplitShellSide() { return 'left' as const; }
   public getSplitShellSwipeDisabled() { return false; }
+  public getWidgetHistoryDisabled() { return false; }
   public setAutoNightMode(): void {}
   public setRedNightMode(): void {}
   public setNightModeBrightness(): void {}
@@ -48,6 +49,7 @@ class SettingsServiceMock {
   public setSplitShellEnabled(): void {}
   public setSplitShellSide(): void {}
   public setSplitShellSwipeDisabled(): void {}
+  public setWidgetHistoryDisabled(): void {}
 }
 
 class PluginConfigClientServiceMock {

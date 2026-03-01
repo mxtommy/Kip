@@ -9,6 +9,8 @@ import { WidgetService } from '../../services/widget.service';
 import { AppService } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
 import { uiEventService } from '../../services/uiEvent.service';
+import { SettingsService } from '../../services/settings.service';
+import { UnitsService } from '../../services/units.service';
 import { IWidget } from '../../interfaces/widgets-interface';
 
 class DashboardServiceStub {
@@ -59,6 +61,18 @@ describe('WidgetHost2Component', () => {
 			providers: [
 				{ provide: DashboardService, useValue: dashboard },
 				{ provide: DialogService, useValue: dialogServiceMock },
+				{
+					provide: SettingsService,
+					useValue: {
+						getWidgetHistoryDisabled: () => false
+					}
+				},
+				{
+					provide: UnitsService,
+					useValue: {
+						convertToUnit: (_unit: string, value: number) => value
+					}
+				},
 				{
 					provide: MatBottomSheet,
 					useValue: (bottomSheetMock = {
@@ -148,82 +162,16 @@ describe('WidgetHost2Component', () => {
 	it('opens history dialog from explicit two-finger tap when dashboard is locked', () => {
 		dashboard.isDashboardStatic.set(true);
 
-		component.onHistoryPointerDown(new PointerEvent('pointerdown', {
+		component.onHistoryTwoFingerTap(new PointerEvent('pointerup', {
 			pointerId: 10,
 			pointerType: 'touch',
 			clientX: 20,
 			clientY: 20,
 			isPrimary: true
-		}));
-		component.onHistoryPointerDown(new PointerEvent('pointerdown', {
-			pointerId: 11,
-			pointerType: 'touch',
-			clientX: 40,
-			clientY: 20,
-			isPrimary: false
-		}));
-
-		component.onHistoryPointerUp(new PointerEvent('pointerup', {
-			pointerId: 10,
-			pointerType: 'touch',
-			clientX: 20,
-			clientY: 20,
-			isPrimary: true
-		}));
-		component.onHistoryPointerUp(new PointerEvent('pointerup', {
-			pointerId: 11,
-			pointerType: 'touch',
-			clientX: 40,
-			clientY: 20,
-			isPrimary: false
 		}));
 
 		expect(historySyncMock.resolveSeriesForWidget).toHaveBeenCalledWith(testWidget);
 		expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
-	});
-
-	it('does not open history dialog when two-finger touch moves beyond threshold', () => {
-		dashboard.isDashboardStatic.set(true);
-
-		component.onHistoryPointerDown(new PointerEvent('pointerdown', {
-			pointerId: 10,
-			pointerType: 'touch',
-			clientX: 20,
-			clientY: 20,
-			isPrimary: true
-		}));
-		component.onHistoryPointerDown(new PointerEvent('pointerdown', {
-			pointerId: 11,
-			pointerType: 'touch',
-			clientX: 40,
-			clientY: 20,
-			isPrimary: false
-		}));
-
-		component.onHistoryPointerMove(new PointerEvent('pointermove', {
-			pointerId: 10,
-			pointerType: 'touch',
-			clientX: 80,
-			clientY: 20,
-			isPrimary: true
-		}));
-
-		component.onHistoryPointerUp(new PointerEvent('pointerup', {
-			pointerId: 10,
-			pointerType: 'touch',
-			clientX: 80,
-			clientY: 20,
-			isPrimary: true
-		}));
-		component.onHistoryPointerUp(new PointerEvent('pointerup', {
-			pointerId: 11,
-			pointerType: 'touch',
-			clientX: 40,
-			clientY: 20,
-			isPrimary: false
-		}));
-
-		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
 	});
 
 	it('does not open history dialog when widget has no numeric paths', () => {

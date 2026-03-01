@@ -6,6 +6,7 @@ import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-in
 import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
+import { WidgetService } from './widget.service';
 
 interface IGridWidgetNode extends NgGridStackWidget {
   input?: {
@@ -25,6 +26,7 @@ export class DashboardHistorySeriesSyncService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly connection = inject(SignalKConnectionService);
   private readonly pluginConfig = inject(PluginConfigClientService);
+  private readonly widgetService = inject(WidgetService);
 
   private readonly serverEndpoint = toSignal(this.connection.serverServiceEndpoint$, {
     initialValue: null
@@ -122,7 +124,7 @@ export class DashboardHistorySeriesSyncService {
   public resolveSeriesForWidget(widget: IWidget | null | undefined): IKipSeriesDefinition[] {
     const widgetType = widget?.type;
     const widgetUuid = widget?.uuid;
-    const cfg = widget?.config;
+    const cfg = this.resolveWidgetConfig(widgetType, widget?.config);
 
     if (!widgetType || !widgetUuid || cfg?.supportAutomaticHistoricalSeries === false) {
       return [];
@@ -138,6 +140,36 @@ export class DashboardHistorySeriesSyncService {
     }
 
     return this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg);
+  }
+
+  private resolveWidgetConfig(widgetType: string | undefined, cfg: IWidgetSvcConfig | undefined): IWidgetSvcConfig | undefined {
+    if (!widgetType) {
+      return cfg;
+    }
+
+    const defaultCfg = this.getDefaultConfigForType(widgetType);
+    if (!defaultCfg) {
+      return cfg;
+    }
+
+    if (!cfg) {
+      return defaultCfg;
+    }
+
+    return {
+      ...defaultCfg,
+      ...cfg,
+      paths: cfg.paths ?? defaultCfg.paths
+    };
+  }
+
+  private getDefaultConfigForType(widgetType: string): IWidgetSvcConfig | undefined {
+    try {
+      const comp = this.widgetService.getComponentType(widgetType) as { DEFAULT_CONFIG?: IWidgetSvcConfig } | undefined;
+      return comp?.DEFAULT_CONFIG;
+    } catch {
+      return undefined;
+    }
   }
 
   private collectSeriesFromNodes(nodes: IGridWidgetNode[], sink: IKipSeriesDefinition[]): void {
