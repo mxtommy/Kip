@@ -1,10 +1,12 @@
 import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
+import { createRequire } from 'module';
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { DuckDbParquetStorageService } from './duckdb-parquet-storage.service';
 
 const start = (server: ServerAPI): Plugin => {
+  const packageRequire = createRequire(__filename);
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
   const API_PATHS = {
     DISPLAYS: `/displays`,
@@ -85,6 +87,24 @@ const start = (server: ServerAPI): Plugin => {
     duration?: string | number;
   }
 
+  function resolveDependencyIdentity(dependencyName: string): string {
+    try {
+      const pkg = packageRequire(`${dependencyName}/package.json`) as { name?: unknown; version?: unknown };
+      const name = typeof pkg.name === 'string' && pkg.name.trim() ? pkg.name.trim() : dependencyName;
+      const version = typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version.trim() : 'unknown';
+      return `${name}@${version}`;
+    } catch {
+      return `${dependencyName}@unavailable`;
+    }
+  }
+
+  function logRuntimeDependencyVersions(): void {
+    const nodeIdentity = `node@${process.version}`;
+    const duckDbNodeIdentity = resolveDependencyIdentity('@duckdb/node-api');
+    const parquetIdentity = resolveDependencyIdentity('@dsnp/parquetjs');
+    server.debug(`[KIP][RUNTIME] ${nodeIdentity} duckdb=${duckDbNodeIdentity} parquet=${parquetIdentity}`);
+  }
+
   function resolveHistoryModeConfig(settings: unknown): IHistoryModeConfig {
     const root = (settings && typeof settings === 'object' ? settings : {}) as Record<string, unknown>;
 
@@ -109,13 +129,13 @@ const start = (server: ServerAPI): Plugin => {
     const tail = suffix ? `.${suffix}` : ''
     const want = `displays.${displayId}${tail}`
     const full = server.getSelfPath(want)
-    server.debug(`getDisplaySelfPath: displayId: ${displayId}, suffix: ${suffix}, want=${want}, fullPath=${JSON.stringify(full)}`)
+    server.debug(`[KIP][SELF_PATH] displayId=${displayId} suffix=${String(suffix ?? '')} requested=${want} resolved=${JSON.stringify(full)}`)
     return typeof full === 'object' && full !== null ? full : undefined;
   }
 
   function getAvailableDisplays(): object | undefined {
     const fullPath = server.getSelfPath('displays') ;
-    server.debug(`getAvailableDisplays: fullPath=${JSON.stringify(fullPath)}`);
+    server.debug(`[KIP][DISPLAYS] resolved=${JSON.stringify(fullPath)}`);
     return typeof fullPath === 'object' && fullPath !== null ? fullPath : undefined;
   }
 
@@ -251,7 +271,7 @@ const start = (server: ServerAPI): Plugin => {
 
   function applyDisplayWrite(displayId: string, suffix: 'screenIndex' | 'activeScreen' | null, value: string | number | boolean | object | null): ActionResult {
     const path = suffix ? `displays.${displayId}.${suffix}` : `displays.${displayId}`;
-    server.debug(`[WRITE TRACE] applyDisplayWrite path=${path} value=${JSON.stringify(value)}`);
+    server.debug(`[KIP][WRITE] applyDisplayWrite path=${path} value=${JSON.stringify(value)}`);
     try {
       server.handleMessage(
         plugin.id,
@@ -269,7 +289,7 @@ const start = (server: ServerAPI): Plugin => {
         },
         SKVersion.v1
       );
-      server.debug(`[WRITE TRACE] handleMessage success path=${path}`);
+      server.debug(`[KIP][WRITE] handleMessage success path=${path}`);
       return completed(200);
     } catch (error) {
       const message = (error as Error)?.message ?? 'Unable to write display path';
@@ -279,7 +299,7 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function handleSetDisplay(value: unknown): ActionResult {
-    server.debug(`[COMMAND TRACE] handleSetDisplay payload=${JSON.stringify(value)}`);
+    server.debug(`[KIP][COMMAND] handleSetDisplay payload=${JSON.stringify(value)}`);
     const command = value as { displayId?: unknown; display?: unknown } | null;
     if (!command || typeof command !== 'object') {
       return completed(400, 'Command payload is required');
@@ -298,7 +318,7 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function handleScreenWrite(value: unknown, suffix: 'screenIndex' | 'activeScreen'): ActionResult {
-    server.debug(`[COMMAND TRACE] handleScreenWrite suffix=${suffix} payload=${JSON.stringify(value)}`);
+    server.debug(`[KIP][COMMAND] handleScreenWrite suffix=${suffix} payload=${JSON.stringify(value)}`);
     const command = value as { displayId?: unknown; screenIdx?: unknown } | null;
     if (!command || typeof command !== 'object') {
       return completed(400, 'Command payload is required');
@@ -317,7 +337,7 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function sendActionAsRest(res: Response, result: ActionResult) {
-    server.debug(`[REST TRACE] sendActionAsRest statusCode=${result.statusCode} message=${result.message ?? ''}`);
+    server.debug(`[KIP][REST] sendActionAsRest statusCode=${result.statusCode} message=${result.message ?? ''}`);
     if (result.statusCode === 200) {
       return res.status(200).json({ state: 'SUCCESS', statusCode: 200 });
     }
@@ -500,7 +520,7 @@ const start = (server: ServerAPI): Plugin => {
     historyApiProviderRegistered = false;
 
     if (!isHistoryApiProviderEnabled()) {
-      server.debug('[HISTORY PROVIDER] Registration disabled by plugin configuration');
+      server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=config-disabled');
       return;
     }
 
@@ -544,11 +564,11 @@ const start = (server: ServerAPI): Plugin => {
       if (typeof registry.unregisterHistoryApiProvider === 'function') {
         historyApiRegistry = { unregisterHistoryApiProvider: registry.unregisterHistoryApiProvider.bind(registry) };
       }
-      server.debug('[HISTORY PROVIDER] Registered KIP as History API provider');
+      server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
       return;
     }
 
-    server.debug('[HISTORY PROVIDER] Registration requested but no compatible registration API was found on server host');
+    server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
   }
 
   function rebuildSeriesCaptureSubscriptions(): void {
@@ -645,7 +665,7 @@ const start = (server: ServerAPI): Plugin => {
       void storageService.flush()
         .then(result => {
           if (result.inserted > 0 || result.exported > 0) {
-            server.debug(`[SERIES STORAGE] flushed inserted=${result.inserted} exported=${result.exported}`);
+            server.debug(`[KIP][STORAGE] flush inserted=${result.inserted} exported=${result.exported}`);
           }
         })
         .catch(error => {
@@ -661,7 +681,8 @@ const start = (server: ServerAPI): Plugin => {
     name: 'KIP',
     description: 'KIP server plugin',
     start: (settings) => {
-      server.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+      server.debug('[KIP][LIFECYCLE] start');
+      logRuntimeDependencyVersions();
       const modeConfig = resolveHistoryModeConfig(settings);
       historySeriesServiceEnabled = modeConfig.historySeriesServiceEnabled;
       registerAsHistoryApiProvider = modeConfig.registerAsHistoryApiProvider;
@@ -672,14 +693,14 @@ const start = (server: ServerAPI): Plugin => {
         error: (msg: string) => server.error(msg)
       });
       const storageConfig = storageService.configure(settings);
-      server.debug(`[SERIES STORAGE] engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
+      server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
       historySeries.setSampleSink(sample => {
         storageService.enqueueSample(sample);
       });
 
       duckDbInitializationPromise = storageService.initialize();
       void duckDbInitializationPromise.then((ready) => {
-        server.debug(`[SERIES STORAGE] duckdbReady=${ready}`);
+        server.debug(`[KIP][STORAGE] duckdbReady=${ready}`);
         if (ready && storageService.isDuckDbParquetEnabled()) {
           if (isHistorySeriesServiceEnabled()) {
             void storageService.getSeriesDefinitions()
@@ -731,12 +752,12 @@ const start = (server: ServerAPI): Plugin => {
             void storageService.pruneExpiredSamples(Date.now(), lifecycleToken)
               .then(removedPersistedRows => {
                 if (removedPersistedRows > 0) {
-                  server.debug(`[SERIES RETENTION] duckdbPrune removedRows=${removedPersistedRows}`);
+                  server.debug(`[KIP][RETENTION] pruneExpired removedRows=${removedPersistedRows}`);
                 }
                 return storageService.pruneOrphanedSamples(lifecycleToken)
                   .then(removedOrphanRows => {
                     if (removedOrphanRows > 0) {
-                      server.debug(`[SERIES RETENTION] duckdbOrphanPrune removedRows=${removedOrphanRows}`);
+                      server.debug(`[KIP][RETENTION] pruneOrphaned removedRows=${removedOrphanRows}`);
                     }
                   });
               })
@@ -752,23 +773,23 @@ const start = (server: ServerAPI): Plugin => {
       rebuildSeriesCaptureSubscriptions();
 
       if (server.registerPutHandler) {
-        server.debug(`[COMMAND TRACE] Registering PUT handlers under context=${PUT_CONTEXT}`);
+        server.debug(`[KIP][COMMAND] registerPutHandlers context=${PUT_CONTEXT}`);
         server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.SET_DISPLAY, (context, path, value) => {
-          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.SET_DISPLAY}`);
+          server.debug(`[KIP][COMMAND] putHandlerHit command=${COMMAND_PATHS.SET_DISPLAY} path=${String(path)} context=${String(context)}`);
           void context;
           void path;
           return handleSetDisplay(value);
         }, plugin.id);
 
         server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.SET_SCREEN_INDEX, (context, path, value) => {
-          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.SET_SCREEN_INDEX}`);
+          server.debug(`[KIP][COMMAND] putHandlerHit command=${COMMAND_PATHS.SET_SCREEN_INDEX} path=${String(path)} context=${String(context)}`);
           void context;
           void path;
           return handleScreenWrite(value, 'screenIndex');
         }, plugin.id);
 
         server.registerPutHandler(PUT_CONTEXT, COMMAND_PATHS.REQUEST_ACTIVE_SCREEN, (context, path, value) => {
-          server.debug(`[COMMAND TRACE] PUT handler hit path=${String(path)} context=${String(context)} command=${COMMAND_PATHS.REQUEST_ACTIVE_SCREEN}`);
+          server.debug(`[KIP][COMMAND] putHandlerHit command=${COMMAND_PATHS.REQUEST_ACTIVE_SCREEN} path=${String(path)} context=${String(context)}`);
           void context;
           void path;
           return handleScreenWrite(value, 'activeScreen');
@@ -781,7 +802,7 @@ const start = (server: ServerAPI): Plugin => {
       server.setPluginStatus(`Starting...`);
     },
     stop: () => {
-      server.debug(`Stopping plugin`);
+      server.debug('[KIP][LIFECYCLE] stop');
       stopSeriesCapture();
       if (retentionSweepTimer) {
         clearInterval(retentionSweepTimer);
@@ -801,7 +822,7 @@ const start = (server: ServerAPI): Plugin => {
       if (historyApiRegistry) {
         try {
           historyApiRegistry.unregisterHistoryApiProvider();
-          server.debug('[HISTORY PROVIDER] Unregistered KIP History API provider');
+          server.debug('[KIP][HISTORY_PROVIDER] unregister success provider=kip');
         } catch (error) {
           server.error(`[HISTORY PROVIDER] unregister failed: ${String((error as Error).message || error)}`);
         }
@@ -816,7 +837,7 @@ const start = (server: ServerAPI): Plugin => {
     schema: () => CONFIG_SCHEMA,
 
     registerWithRouter(router) {
-      server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.SCREEN_INDEX}, ${API_PATHS.ACTIVATE_SCREEN}`);
+      server.debug(`[KIP][ROUTES] register displays=${API_PATHS.DISPLAYS} instance=${API_PATHS.INSTANCE} screenIndex=${API_PATHS.SCREEN_INDEX} activeScreen=${API_PATHS.ACTIVATE_SCREEN}`);
 
       // Validate/normalize :displayId where present
       router.param('displayId', (req: Request & { displayId?: string }, res: Response, next: NextFunction, displayId: string) => {
@@ -848,7 +869,7 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Invalid displayId format')
           }
           req.displayId = id
-          server.debug(`[AUTH TRACE] router.param:displayId:normalized displayId=${id}`);
+          server.debug(`[KIP][AUTH] displayIdNormalized value=${id}`);
           next()
         } catch {
           server.error(`[AUTH TRACE] router.param:displayId:failed rawDisplayId=${String(displayId)}`);
@@ -858,7 +879,7 @@ const start = (server: ServerAPI): Plugin => {
 
       router.put(`${API_PATHS.INSTANCE}`, async (req: Request & { displayId?: string }, res: Response) => {
         logAuthTrace(req, 'route:PUT:INSTANCE:entry');
-        server.debug(`** PUT ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+        server.debug(`[KIP][ROUTE] method=PUT path=${API_PATHS.INSTANCE} params=${JSON.stringify(req.params)} body=${JSON.stringify(req.body)}`);
         try {
           const displayId = req.displayId;
           if (!displayId) {
@@ -878,7 +899,7 @@ const start = (server: ServerAPI): Plugin => {
 
       router.put(`${API_PATHS.SCREEN_INDEX}`, async (req: Request & { displayId?: string }, res: Response) => {
         logAuthTrace(req, 'route:PUT:SCREEN_INDEX:entry');
-        server.debug(`** PUT ${API_PATHS.SCREEN_INDEX}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+        server.debug(`[KIP][ROUTE] method=PUT path=${API_PATHS.SCREEN_INDEX} params=${JSON.stringify(req.params)} body=${JSON.stringify(req.body)}`);
         try {
           const displayId = req.displayId;
           if (!displayId) {
@@ -901,7 +922,7 @@ const start = (server: ServerAPI): Plugin => {
 
       router.put(`${API_PATHS.ACTIVATE_SCREEN}`, async (req: Request & { displayId?: string }, res: Response) => {
         logAuthTrace(req, 'route:PUT:ACTIVATE_SCREEN:entry');
-        server.debug(`** PUT ${API_PATHS.ACTIVATE_SCREEN}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+        server.debug(`[KIP][ROUTE] method=PUT path=${API_PATHS.ACTIVATE_SCREEN} params=${JSON.stringify(req.params)} body=${JSON.stringify(req.body)}`);
         try {
           const displayId = req.displayId;
           if (!displayId) {
@@ -923,7 +944,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.get(API_PATHS.DISPLAYS, (req: Request, res: Response) => {
-        server.debug(`*** GET DISPLAY ${API_PATHS.DISPLAYS}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=GET path=${API_PATHS.DISPLAYS} params=${JSON.stringify(req.params)}`);
         try {
           const displays = getAvailableDisplays();
           const items = displays && typeof displays === 'object'
@@ -935,8 +956,8 @@ const start = (server: ServerAPI): Plugin => {
                   displayName: v?.value?.displayName ?? null
                 }))
             : [];
-          server.debug(`getAvailableDisplays returned: ${JSON.stringify(displays)}`);
-          server.debug(`Found ${items.length} displays: ${JSON.stringify(items)}`);
+          server.debug(`[KIP][DISPLAYS] raw=${JSON.stringify(displays)}`);
+          server.debug(`[KIP][DISPLAYS] count=${items.length} items=${JSON.stringify(items)}`);
           return res.status(200).json(items);
         } catch (error) {
           server.error(`Error reading displays: ${String((error as Error).message || error)}`);
@@ -945,7 +966,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.get(`${API_PATHS.INSTANCE}`, (req: Request, res: Response) => {
-        server.debug(`*** GET INSTANCE ${API_PATHS.INSTANCE}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=GET path=${API_PATHS.INSTANCE} params=${JSON.stringify(req.params)}`);
         try {
           const displayId = (req as Request & { displayId?: string }).displayId
           if (!displayId) {
@@ -967,7 +988,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.get(`${API_PATHS.SCREEN_INDEX}`, (req: Request, res: Response) => {
-        server.debug(`*** GET SCREEN_INDEX ${API_PATHS.SCREEN_INDEX}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=GET path=${API_PATHS.SCREEN_INDEX} params=${JSON.stringify(req.params)}`);
         try {
           const displayId = (req as Request & { displayId?: string }).displayId
           if (!displayId) {
@@ -989,7 +1010,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.get(`${API_PATHS.ACTIVATE_SCREEN}`, (req: Request, res: Response) => {
-        server.debug(`*** GET ACTIVATE_SCREEN ${API_PATHS.ACTIVATE_SCREEN}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=GET path=${API_PATHS.ACTIVATE_SCREEN} params=${JSON.stringify(req.params)}`);
         try {
           const displayId = (req as Request & { displayId?: string }).displayId
           if (!displayId) {
@@ -1011,7 +1032,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.get(API_PATHS.SERIES, async (req: Request, res: Response) => {
-        server.debug(`*** GET SERIES ${API_PATHS.SERIES}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=GET path=${API_PATHS.SERIES} params=${JSON.stringify(req.params)}`);
         try {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
@@ -1028,7 +1049,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.put(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
-        server.debug(`** PUT ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+        server.debug(`[KIP][ROUTE] method=PUT path=${API_PATHS.SERIES_INSTANCE} params=${JSON.stringify(req.params)} body=${JSON.stringify(req.body)}`);
         try {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
@@ -1071,7 +1092,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.delete(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
-        server.debug(`** DELETE ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)}`);
+        server.debug(`[KIP][ROUTE] method=DELETE path=${API_PATHS.SERIES_INSTANCE} params=${JSON.stringify(req.params)}`);
         try {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
@@ -1103,7 +1124,7 @@ const start = (server: ServerAPI): Plugin => {
       });
 
       router.post(API_PATHS.SERIES_RECONCILE, async (req: Request, res: Response) => {
-        server.debug(`** POST ${API_PATHS.SERIES_RECONCILE}. Body: ${JSON.stringify(req.body)}`);
+        server.debug(`[KIP][ROUTE] method=POST path=${API_PATHS.SERIES_RECONCILE} body=${JSON.stringify(req.body)}`);
         try {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
@@ -1133,7 +1154,7 @@ const start = (server: ServerAPI): Plugin => {
           const seriesOutsideScope = historySeries.listSeries();
           historySeries.reconcileSeries([...seriesOutsideScope, ...nextSeries]);
 
-          server.debug(`[SERIES RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
+          server.debug(`[KIP][SERIES_RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
           rebuildSeriesCaptureSubscriptions();
           return sendOk(res, result);
         } catch (error) {
@@ -1147,7 +1168,7 @@ const start = (server: ServerAPI): Plugin => {
       if (router.stack) {
         router.stack.forEach((layer: { route?: { path?: string; stack: { method: string }[] } }) => {
           if (layer.route && layer.route.path) {
-            server.debug(`Registered route: ${layer.route.stack[0].method.toUpperCase()} ${layer.route.path}`);
+            server.debug(`[KIP][ROUTES] registered method=${layer.route.stack[0].method.toUpperCase()} path=${layer.route.path}`);
           }
         });
       }

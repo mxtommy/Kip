@@ -1,6 +1,7 @@
 import { mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import * as duckdb from 'duckdb';
+import { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
+import { ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
 export interface IDuckDbParquetStorageConfig {
@@ -66,6 +67,17 @@ interface ICountRow {
   removed_rows: unknown;
 }
 
+interface IParquetExportRow {
+  series_id: string;
+  dataset_uuid: string;
+  owner_widget_uuid: string;
+  path: string;
+  context: string;
+  source: string | null;
+  ts_ms: unknown;
+  value: unknown;
+}
+
 interface IHistoryRangeQuery {
   userScope?: string;
   from?: string;
@@ -76,16 +88,6 @@ interface IHistoryRangeQuery {
 interface TLogger {
   debug: (msg: string) => void;
   error: (msg: string) => void;
-}
-
-interface TDuckDbConnectionLike {
-  run?: (sql: string, callback: (err?: Error | null) => void) => void;
-  all?: (sql: string, callback: (err: Error | null, rows?: unknown[]) => void) => void;
-  close?: (callback: (err?: Error | null) => void) => void;
-}
-
-interface TDuckDbDatabaseLike extends TDuckDbConnectionLike {
-  connect?: () => TDuckDbConnectionLike;
 }
 
 /**
@@ -119,8 +121,8 @@ export class DuckDbParquetStorageService {
     error: () => undefined
   };
 
-  private db: TDuckDbDatabaseLike | null = null;
-  private connection: Required<TDuckDbConnectionLike> | null = null;
+  private db: DuckDBInstance | null = null;
+  private connection: DuckDBConnection | null = null;
   private pendingRows: IRecordedSample[] = [];
   private pendingRangesBySeriesId = new Map<string, ISeriesRange>();
   private lastInitError: string | null = null;
@@ -183,27 +185,12 @@ export class DuckDbParquetStorageService {
     this.lifecycleToken += 1;
 
     try {
-      const duckdbModule = duckdb;
       const dbPath = resolve(this.config.databaseFile);
       mkdirSync(dirname(dbPath), { recursive: true });
       mkdirSync(resolve(this.config.parquetDirectory), { recursive: true });
 
-      this.db = new duckdbModule.Database(dbPath) as TDuckDbDatabaseLike;
-
-      const maybeConnection = typeof this.db.connect === 'function'
-        ? this.db.connect()
-        : this.db;
-
-      if (
-        !maybeConnection
-        || typeof maybeConnection.run !== 'function'
-        || typeof maybeConnection.all !== 'function'
-        || typeof maybeConnection.close !== 'function'
-      ) {
-        throw new Error('DuckDB connection API is unavailable in this runtime');
-      }
-
-      this.connection = maybeConnection as Required<TDuckDbConnectionLike>;
+      this.db = await DuckDBInstance.create(dbPath);
+      this.connection = await this.db.connect();
       await this.createCoreTables();
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_ts ON history_samples(series_id, ts_ms)');
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_id ON history_series(series_id)');
@@ -229,7 +216,7 @@ export class DuckDbParquetStorageService {
       const message = (error as Error)?.message ?? String(error);
       this.lastInitError = message;
       this.logger.error(`[SERIES STORAGE] DuckDB initialization failed: ${message}`);
-      this.logger.error('[SERIES STORAGE] DuckDB is required. Install runtime dependency with: npm i duckdb in the installed plugin directory, then restart Signal K.');
+      this.logger.error('[SERIES STORAGE] DuckDB Node API is required. Install runtime dependency with: npm i @duckdb/node-api in the installed plugin directory, then restart Signal K.');
       this.connection = null;
       this.db = null;
       this.pendingRows = [];
@@ -946,11 +933,21 @@ export class DuckDbParquetStorageService {
     }
 
     const connection = this.connection;
+    const db = this.db;
     this.connection = null;
 
-    await new Promise<void>((resolvePromise) => {
-      connection.close(() => resolvePromise());
-    });
+    try {
+      connection.disconnectSync();
+    } catch {
+      // ignore disconnect failures during shutdown
+    }
+
+    try {
+      db?.closeSync();
+    } catch {
+      // ignore close failures during shutdown
+    }
+
     this.db = null;
   }
 
@@ -1024,30 +1021,63 @@ export class DuckDbParquetStorageService {
     mkdirSync(seriesDir, { recursive: true });
 
     const filePath = join(seriesDir, `${fromMs}-${toMs}.parquet`);
-    const escapedSeries = this.escape(seriesId);
-    const escapedFile = this.escapePath(filePath);
+    const rows = await this.querySql<IParquetExportRow>(`
+      SELECT
+        series_id,
+        dataset_uuid,
+        owner_widget_uuid,
+        path,
+        context,
+        source,
+        ts_ms,
+        value
+      FROM history_samples
+      WHERE series_id = ${this.escape(seriesId)}
+        AND ts_ms >= ${Math.trunc(fromMs)}
+        AND ts_ms <= ${Math.trunc(toMs)}
+      ORDER BY ts_ms
+    `);
 
-    const sql = `
-      COPY (
-        SELECT
-          series_id,
-          dataset_uuid,
-          owner_widget_uuid,
-          path,
-          context,
-          source,
-          ts_ms,
-          to_timestamp(ts_ms / 1000.0) AS ts,
-          value
-        FROM history_samples
-        WHERE series_id = ${escapedSeries}
-          AND ts_ms >= ${Math.trunc(fromMs)}
-          AND ts_ms <= ${Math.trunc(toMs)}
-        ORDER BY ts_ms
-      ) TO '${escapedFile}' (FORMAT PARQUET)
-    `;
+    if (rows.length === 0) {
+      return;
+    }
 
-    await this.runSql(sql);
+    const schema = new ParquetSchema({
+      series_id: { type: 'UTF8' },
+      dataset_uuid: { type: 'UTF8' },
+      owner_widget_uuid: { type: 'UTF8' },
+      path: { type: 'UTF8' },
+      context: { type: 'UTF8' },
+      source: { type: 'UTF8', optional: true },
+      ts_ms: { type: 'INT64' },
+      ts: { type: 'TIMESTAMP_MILLIS' },
+      value: { type: 'DOUBLE' }
+    });
+
+    const writer = await ParquetWriter.openFile(schema, filePath);
+    try {
+      for (const row of rows) {
+        const timestampMs = this.toNumberOrUndefined(row.ts_ms);
+        const numericValue = this.toNumberOrUndefined(row.value);
+        if (timestampMs === undefined || numericValue === undefined) {
+          continue;
+        }
+
+        await writer.appendRow({
+          series_id: row.series_id,
+          dataset_uuid: row.dataset_uuid,
+          owner_widget_uuid: row.owner_widget_uuid,
+          path: row.path,
+          context: row.context,
+          source: row.source ?? undefined,
+          ts_ms: Math.trunc(timestampMs),
+          ts: new Date(timestampMs),
+          value: numericValue
+        });
+      }
+    } finally {
+      await writer.close();
+    }
   }
 
   private async runSql(sql: string): Promise<void> {
@@ -1055,15 +1085,7 @@ export class DuckDbParquetStorageService {
       throw new Error('DuckDB connection is not initialized');
     }
 
-    await new Promise<void>((resolvePromise, rejectPromise) => {
-      this.connection?.run(sql, (error?: Error | null) => {
-        if (error) {
-          rejectPromise(error);
-          return;
-        }
-        resolvePromise();
-      });
-    });
+    await this.connection.run(sql);
   }
 
   private async querySql<T>(sql: string): Promise<T[]> {
@@ -1071,15 +1093,8 @@ export class DuckDbParquetStorageService {
       throw new Error('DuckDB connection is not initialized');
     }
 
-    return new Promise<T[]>((resolvePromise, rejectPromise) => {
-      this.connection?.all(sql, (error, rows) => {
-        if (error) {
-          rejectPromise(error);
-          return;
-        }
-        resolvePromise((rows ?? []) as T[]);
-      });
-    });
+    const result = await this.connection.runAndReadAll(sql);
+    return result.getRowObjectsJson() as unknown as T[];
   }
 
   private async selectRowsForPaths(paths: string[], context: string, fromMs: number, toMs: number): Promise<Map<string, IPathRow[]>> {
@@ -1324,10 +1339,6 @@ export class DuckDbParquetStorageService {
 
   private escape(value: string): string {
     return `'${String(value).replace(/'/g, "''")}'`;
-  }
-
-  private escapePath(value: string): string {
-    return String(value).replace(/'/g, "''");
   }
 
   private nullableString(value?: string | null): string {

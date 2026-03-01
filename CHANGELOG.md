@@ -7,6 +7,7 @@
 * Added "Days" as a selectable time scale in the Data Chart widget.
 * Improved integration by validating server plugin presence, plugin state, and configuration.
 * Added a Node-RED introduction guide to the Help section.
+* Migrated KIP plugin historical storage internals from `duckdb` to `@duckdb/node-api` and Parquet export writing to `@dsnp/parquetjs`.
 ## Fixes
 * Improved KIP plugin OpenAPI compatibility.
 * Resolved slow Data Inspector performance caused by high resource usage in deep loop logic.

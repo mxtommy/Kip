@@ -1461,12 +1461,14 @@ test('duckdb stored paths/contexts apply requested time-range filters', async ()
 
   const allSql = [];
   storage.connection = {
-    run: (_sql, cb) => cb(null),
-    all: (sql, cb) => {
+    run: async (_sql) => undefined,
+    runAndReadAll: async (sql) => {
       allSql.push(sql);
-      cb(null, [{ value: 'environment.wind.angleApparent' }]);
+      return {
+        getRowObjectsJson: () => [{ value: 'environment.wind.angleApparent' }]
+      };
     },
-    close: (cb) => cb(null)
+    disconnectSync: () => undefined
   };
 
   const fromIso = '2026-02-18T23:30:00.000Z';
@@ -1492,11 +1494,12 @@ test('duckdb lifecycle token guards stale flush/close operations', async () => {
 
   let closeCalls = 0;
   storage.connection = {
-    run: (_sql, cb) => cb(null),
-    all: (_sql, cb) => cb(null, []),
-    close: (cb) => {
+    run: async (_sql) => undefined,
+    runAndReadAll: async (_sql) => ({
+      getRowObjectsJson: () => []
+    }),
+    disconnectSync: () => {
       closeCalls += 1;
-      cb(null);
     }
   };
 
@@ -1531,31 +1534,40 @@ test('duckdb prune removes expired rows using per-series retention windows', asy
 
   const allSql = [];
   const runSql = [];
+  let pruneSelectCall = 0;
   storage.connection = {
-    run: (sql, cb) => {
+    run: async (sql) => {
       runSql.push(sql);
-      cb(null);
     },
-    all: (sql, cb) => {
+    runAndReadAll: async (sql) => {
       allSql.push(sql);
-      if (sql.includes('COUNT(*) AS removed_rows')) {
-        cb(null, [{ removed_rows: 3 }]);
-        return;
+      if (sql.includes('SELECT rowid')) {
+        pruneSelectCall += 1;
+        if (pruneSelectCall === 1) {
+          return {
+            getRowObjectsJson: () => [{ rowid: 1 }, { rowid: 2 }, { rowid: 3 }]
+          };
+        }
+        return {
+          getRowObjectsJson: () => []
+        };
       }
-      cb(null, []);
+      return {
+        getRowObjectsJson: () => []
+      };
     },
-    close: (cb) => cb(null)
+    disconnectSync: () => undefined
   };
 
   const nowMs = Date.parse('2026-02-19T00:00:00.000Z');
   const removed = await storage.pruneExpiredSamples(nowMs);
 
   assert.equal(removed, 3);
-  assert.equal(allSql.length, 1);
+  assert.equal(allSql.length >= 1, true);
   assert.equal(runSql.length, 1);
-  assert.equal(allSql[0].includes(`history_samples.ts_ms < (${nowMs} - hs.retention_duration_ms)`), true);
+  assert.equal(allSql.some(sql => sql.includes(`history_samples.ts_ms < (${nowMs} - hs.retention_duration_ms)`)), true);
   assert.equal(runSql[0].includes('DELETE FROM history_samples'), true);
-  assert.equal(runSql[0].includes(`history_samples.ts_ms < (${nowMs} - hs.retention_duration_ms)`), true);
+  assert.equal(runSql[0].includes('WHERE rowid IN ('), true);
 });
 
 test('duckdb prune skips stale lifecycle token operations', async () => {
@@ -1564,12 +1576,14 @@ test('duckdb prune skips stale lifecycle token operations', async () => {
 
   let queryCount = 0;
   storage.connection = {
-    run: (_sql, cb) => cb(null),
-    all: (_sql, cb) => {
+    run: async (_sql) => undefined,
+    runAndReadAll: async (_sql) => {
       queryCount += 1;
-      cb(null, [{ removed_rows: 9 }]);
+      return {
+        getRowObjectsJson: () => [{ removed_rows: 9 }]
+      };
     },
-    close: (cb) => cb(null)
+    disconnectSync: () => undefined
   };
 
   storage.lifecycleToken = 8;
@@ -1789,20 +1803,23 @@ test('duckdb getValues queries requested paths in a single sql call', async () =
   let historySelectCount = 0;
   const executedSql = [];
   storage.connection = {
-    run: (_sql, cb) => cb(null),
-    all: (sql, cb) => {
+    run: async (_sql) => undefined,
+    runAndReadAll: async (sql) => {
       executedSql.push(sql);
       if (sql.includes('FROM history_samples')) {
         historySelectCount += 1;
-        cb(null, [
-          { path: 'navigation.speedOverGround', ts_ms: 1000, value: 10 },
-          { path: 'navigation.courseOverGroundTrue', ts_ms: 1000, value: 20 }
-        ]);
-        return;
+        return {
+          getRowObjectsJson: () => ([
+            { path: 'navigation.speedOverGround', ts_ms: 1000, value: 10 },
+            { path: 'navigation.courseOverGroundTrue', ts_ms: 1000, value: 20 }
+          ])
+        };
       }
-      cb(null, []);
+      return {
+        getRowObjectsJson: () => []
+      };
     },
-    close: (cb) => cb(null)
+    disconnectSync: () => undefined
   };
 
   const response = await storage.getValues({
