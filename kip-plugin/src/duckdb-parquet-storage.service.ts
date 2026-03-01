@@ -111,6 +111,8 @@ export class DuckDbParquetStorageService {
   private static readonly STALE_SERIES_AGE_MS = 180 * 24 * 60 * 60 * 1000; // 6 months
   private staleSeriesCleanupJob: NodeJS.Timeout | null = null;
 
+  private static readonly PRUNE_BATCH_SIZE = 10_000;
+
 
   private logger: TLogger = {
     debug: () => undefined,
@@ -124,6 +126,8 @@ export class DuckDbParquetStorageService {
   private lastInitError: string | null = null;
   private lifecycleToken = 0;
   private initialized = false;
+  private maintenanceInProgress = false;
+  private flushInProgress = false;
 
   /**
    * Sets logger callbacks used by the storage service.
@@ -243,11 +247,17 @@ export class DuckDbParquetStorageService {
     this.stopVacuumJob();
     if (!this.isDuckDbParquetReady() || !this.connection) return;
     this.vacuumJob = setInterval(() => {
-      this.logger.debug('[SERIES STORAGE] Running scheduled DuckDB VACUUM');
-      this.runSql('VACUUM;').catch(err => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
+      void this.runWithMaintenanceLock('vacuum', async () => {
+        this.logger.debug('[SERIES STORAGE] Running scheduled DuckDB VACUUM');
+        await this.runSql('VACUUM;');
+      }).catch(err => {
         this.logger.error(`[SERIES STORAGE] VACUUM failed: ${err?.message ?? err}`);
       });
     }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
+    this.vacuumJob.unref?.();
   }
 
   /**
@@ -267,15 +277,21 @@ export class DuckDbParquetStorageService {
     this.stopPruneJob();
     if (!this.isDuckDbParquetReady() || !this.connection) return;
     this.pruneJob = setInterval(async () => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
       try {
-        this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
-        const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
-        const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
-        this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
+        await this.runWithMaintenanceLock('prune', async () => {
+          this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
+          const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
+          const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
+          this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
+        });
       } catch (err) {
         this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
       }
     }, DuckDbParquetStorageService.FOUR_HOURS_INTERVAL);
+    this.pruneJob.unref?.();
   }
 
   /**
@@ -295,17 +311,23 @@ export class DuckDbParquetStorageService {
     this.stopStaleSeriesCleanupJob();
     if (!this.isDuckDbParquetReady() || !this.connection) return;
     this.staleSeriesCleanupJob = setInterval(async () => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
       try {
-        const cutoff = Date.now() - DuckDbParquetStorageService.STALE_SERIES_AGE_MS;
-        this.logger.debug(`[SERIES STORAGE] Running scheduled stale series cleanup (cutoff: ${new Date(cutoff).toISOString()})`);
-        const deleted = await this.deleteStaleSeries(cutoff);
-        if (deleted > 0) {
-          this.logger.debug(`[SERIES STORAGE] Deleted ${deleted} series not reconciled in the last 6 months`);
-        }
+        await this.runWithMaintenanceLock('stale-cleanup', async () => {
+          const cutoff = Date.now() - DuckDbParquetStorageService.STALE_SERIES_AGE_MS;
+          this.logger.debug(`[SERIES STORAGE] Running scheduled stale series cleanup (cutoff: ${new Date(cutoff).toISOString()})`);
+          const deleted = await this.deleteStaleSeries(cutoff);
+          if (deleted > 0) {
+            this.logger.debug(`[SERIES STORAGE] Deleted ${deleted} series not reconciled in the last 6 months`);
+          }
+        });
       } catch (err) {
         this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${err?.message ?? err}`);
       }
     }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
+    this.staleSeriesCleanupJob.unref?.();
   }
 
   /**
@@ -342,6 +364,39 @@ export class DuckDbParquetStorageService {
     if (this.staleSeriesCleanupJob) {
       clearInterval(this.staleSeriesCleanupJob);
       this.staleSeriesCleanupJob = null;
+    }
+  }
+
+  private shouldSkipMaintenance(): boolean {
+    if (!this.isDuckDbParquetReady() || !this.connection) {
+      return true;
+    }
+
+    if (this.maintenanceInProgress || this.flushInProgress) {
+      return true;
+    }
+
+    if (this.pendingRows.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async runWithMaintenanceLock(label: string, task: () => Promise<void>): Promise<void> {
+    if (this.maintenanceInProgress) {
+      this.logger.debug(`[SERIES STORAGE] Skipping ${label} (maintenance already running)`);
+      return;
+    }
+
+    this.maintenanceInProgress = true;
+    const startedAt = Date.now();
+    try {
+      await task();
+      const elapsedMs = Date.now() - startedAt;
+      this.logger.debug(`[SERIES STORAGE] ${label} completed in ${elapsedMs}ms`);
+    } finally {
+      this.maintenanceInProgress = false;
     }
   }
 
@@ -463,10 +518,17 @@ export class DuckDbParquetStorageService {
       return { inserted: 0, exported: 0 };
     }
 
+    if (this.flushInProgress) {
+      return { inserted: 0, exported: 0 };
+    }
+
+    this.flushInProgress = true;
+
     const rows = this.pendingRows;
     const ranges = new Map(this.pendingRangesBySeriesId);
     this.pendingRows = [];
     this.pendingRangesBySeriesId.clear();
+    const startedAt = Date.now();
 
     try {
       await this.insertRows(rows);
@@ -475,6 +537,8 @@ export class DuckDbParquetStorageService {
         await this.exportSeriesRange(range.seriesId, range.minTs, range.maxTs);
         exported += 1;
       }
+      const elapsedMs = Date.now() - startedAt;
+      this.logger.debug(`[SERIES STORAGE] flush inserted=${rows.length} exported=${exported} durationMs=${elapsedMs}`);
       return { inserted: rows.length, exported };
     } catch (error) {
       this.pendingRows = [...rows, ...this.pendingRows];
@@ -491,6 +555,8 @@ export class DuckDbParquetStorageService {
         });
       });
       throw error;
+    } finally {
+      this.flushInProgress = false;
     }
   }
 
@@ -658,21 +724,33 @@ export class DuckDbParquetStorageService {
       )
     `;
 
-    const countRows = await this.querySql<ICountRow>(`
-      SELECT COUNT(*) AS removed_rows
-      FROM history_samples
-      WHERE ${whereClause}
-    `);
+    let removedRows = 0;
+    while (true) {
+      const batch = await this.querySql<{ rowid: number }>(`
+        SELECT rowid
+        FROM history_samples
+        WHERE ${whereClause}
+        LIMIT ${DuckDbParquetStorageService.PRUNE_BATCH_SIZE}
+      `);
+      if (batch.length === 0) {
+        break;
+      }
 
-    const removedRows = this.toNumberOrUndefined(countRows[0]?.removed_rows) ?? 0;
-    if (removedRows <= 0) {
-      return 0;
+      const rowIds = batch.map(row => Math.trunc(Number(row.rowid))).filter(Number.isFinite);
+      if (rowIds.length === 0) {
+        break;
+      }
+
+      await this.runSql(`
+        DELETE FROM history_samples
+        WHERE rowid IN (${rowIds.join(', ')})
+      `);
+
+      removedRows += rowIds.length;
+      if (rowIds.length < DuckDbParquetStorageService.PRUNE_BATCH_SIZE) {
+        break;
+      }
     }
-
-    await this.runSql(`
-      DELETE FROM history_samples
-      WHERE ${whereClause}
-    `);
 
     return removedRows;
   }
@@ -703,21 +781,33 @@ export class DuckDbParquetStorageService {
       )
     `;
 
-    const countRows = await this.querySql<ICountRow>(`
-      SELECT COUNT(*) AS removed_rows
-      FROM history_samples
-      WHERE ${whereClause}
-    `);
+    let removedRows = 0;
+    while (true) {
+      const batch = await this.querySql<{ rowid: number }>(`
+        SELECT rowid
+        FROM history_samples
+        WHERE ${whereClause}
+        LIMIT ${DuckDbParquetStorageService.PRUNE_BATCH_SIZE}
+      `);
+      if (batch.length === 0) {
+        break;
+      }
 
-    const removedRows = this.toNumberOrUndefined(countRows[0]?.removed_rows) ?? 0;
-    if (removedRows <= 0) {
-      return 0;
+      const rowIds = batch.map(row => Math.trunc(Number(row.rowid))).filter(Number.isFinite);
+      if (rowIds.length === 0) {
+        break;
+      }
+
+      await this.runSql(`
+        DELETE FROM history_samples
+        WHERE rowid IN (${rowIds.join(', ')})
+      `);
+
+      removedRows += rowIds.length;
+      if (rowIds.length < DuckDbParquetStorageService.PRUNE_BATCH_SIZE) {
+        break;
+      }
     }
-
-    await this.runSql(`
-      DELETE FROM history_samples
-      WHERE ${whereClause}
-    `);
 
     return removedRows;
   }

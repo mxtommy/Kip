@@ -66,7 +66,7 @@ interface CancelHandlerEntry {
 @Directive({ selector: '[kipGestures]' })
 export class GestureDirective {
   // Debug flag: set to true to enable gesture debug logging
-  private static readonly DEBUG = true;
+  private static readonly DEBUG = false;
   // Service-level Chrome/macOS detection
   private readonly isChromeOnMac: boolean;
   // Firefox detection (used to suppress ghost click after long-press)
