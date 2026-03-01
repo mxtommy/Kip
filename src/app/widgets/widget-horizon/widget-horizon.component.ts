@@ -59,6 +59,7 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
 
   // Static default config (legacy parity + displayName)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Horizon',
     filterSelfPaths: true,
     paths: {

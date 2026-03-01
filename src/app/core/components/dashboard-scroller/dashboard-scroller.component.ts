@@ -10,7 +10,7 @@ import { Dashboard } from './../../services/dashboard.service';
   styleUrl: './dashboard-scroller.component.scss',
 })
 export class DashboardScrollerComponent {
-  protected activePage = input<number>();
+  protected activePage = input<number | null>();
   protected dashboards = input<Dashboard[]>();
   protected visible = signal(false);
 

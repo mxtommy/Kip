@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "version": "1.1.0",
-    "title": "KIP Remote Displays API",
-    "description": "API endpoints to list KIP displays and control dashboard for a given KIP instance via the Signal K self.displays tree.\n\nUsage:\n- List displays:\n  curl -s http://localhost:3000/plugins/kip/displays\n- Read a display's screens:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}\n- Set a display entry:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"displayName\":\"Mast\"}' http://localhost:3000/plugins/kip/displays/{displayId}\n- Get current screen index:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/screenIndex\n- Set current screen index:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/screenIndex\n- Get requested screen change index:\n  curl -s http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen\n- Request a screen change:\n  curl -s -X PUT -H 'Content-Type: application/json' -d '{\"screenIdx\":1}' http://localhost:3000/plugins/kip/displays/{displayId}/activeScreen",
+    "title": "KIP Plugin API",
+    "description": "Endpoints\n- List remote displays and control remote dashboard of a given KIP instance.\n- Configure data series for widget framework historical data series and data chart widgets.",
     "termsOfService": "http://signalk.org/terms/",
     "license": {
       "name": "Apache 2.0",
@@ -22,7 +22,11 @@
   "tags": [
     {
       "name": "Displays",
-      "description": "KIP display discovery and control."
+      "description": "KIP remote display discovery and control."
+    },
+    {
+      "name": "Series",
+      "description": "KIP widget history series configuration."
     }
   ],
   "components": {
@@ -126,6 +130,84 @@
         "type": "object",
         "nullable": true,
         "additionalProperties": true
+      },
+      "SeriesDefinition": {
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "string"
+          },
+          "datasetUuid": {
+            "type": "string"
+          },
+          "ownerWidgetUuid": {
+            "type": "string"
+          },
+          "ownerWidgetSelector": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "timeScale": {
+            "type": "string",
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "nullable": true
+          },
+          "retentionDurationMs": {
+            "type": "integer",
+            "nullable": true
+          },
+          "sampleTime": {
+            "type": "integer",
+            "nullable": true
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "seriesId",
+          "datasetUuid",
+          "ownerWidgetUuid",
+          "path"
+        ]
+      },
+      "SeriesReconcileResult": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "integer"
+          },
+          "updated": {
+            "type": "integer"
+          },
+          "deleted": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created",
+          "updated",
+          "deleted",
+          "total"
+        ]
       }
     },
     "parameters": {
@@ -134,6 +216,15 @@
         "required": true,
         "name": "displayId",
         "description": "KIP instance UUID",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SeriesIdParam": {
+        "in": "path",
+        "required": true,
+        "name": "seriesId",
+        "description": "Series identifier (dataset UUID)",
         "schema": {
           "type": "string"
         }
@@ -428,6 +519,165 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/kip/series": {
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "List all configured history series",
+        "responses": {
+          "200": {
+            "description": "Current series definitions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeriesDefinition"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/kip/series/{seriesId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/SeriesIdParam"
+        }
+      ],
+      "put": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Create or update a series definition",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeriesDefinition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Series upserted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesDefinition"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Delete a series definition",
+        "responses": {
+          "200": {
+            "description": "Series removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Series not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/kip/series/reconcile": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Reconcile full desired series set",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SeriesDefinition"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reconcile summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesReconcileResult"
                 }
               }
             }

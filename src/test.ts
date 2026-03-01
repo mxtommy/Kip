@@ -41,7 +41,7 @@ import { ReactiveFormsModule, FormGroupDirective, FormGroup } from '@angular/for
 // If a specific spec needs them, it should declare/provide local stubs in that spec.
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
-import { SignalkPluginConfigService } from './app/core/services/signalk-plugin-config.service';
+import { PluginConfigClientService } from './app/core/services/plugin-config-client.service';
 import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
@@ -55,7 +55,7 @@ import type {
   ISignalkPlugin,
 } from './app/core/interfaces/signalk-plugin-config.interfaces';
 import type { IUnitDefaults } from './app/core/services/units.service';
-import type { IDatasetServiceDatasetConfig } from './app/core/services/data-set.service';
+import type { IDatasetServiceDatasetConfig } from './app/core/services/dataset-stream.service';
 // Global provider setup (HttpClient, RouterTestingModule, animation & material stubs, etc.)
 import { getTestBed, TestBed } from '@angular/core/testing';
 import type { Provider } from '@angular/core';
@@ -149,7 +149,7 @@ class ConnectionStateMachineStub {
   onWebSocketError(): void { /* noop */ }
 }
 
-class SignalkPluginConfigServiceStub implements Partial<SignalkPluginConfigService> {
+class PluginConfigClientServiceStub implements Partial<PluginConfigClientService> {
   private readonly stubCapabilities: IPluginApiCapabilities = {
     listSupported: true,
     detailSupported: true,
@@ -275,7 +275,7 @@ class SettingsServiceStub {
   getInstanceName(): string { return this.instanceNameSubject.value; }
   setInstanceName(v: string): void { this.instanceNameSubject.next(v); }
 
-  // DataSets used by DataSetService
+  // DataSets used by DatasetStreamService
   getDataSets(): unknown[] { return this.dataSets; }
   saveDataSets(d: unknown[]): void { this.dataSets = d; }
 
@@ -284,7 +284,7 @@ class SettingsServiceStub {
   getIsRemoteControl(): boolean { return this._isRemoteControlSubject.value; }
   setIsRemoteControl(v: boolean): void { this._isRemoteControlSubject.next(v); }
 
-  // Minimal signal-like shim for configUpgrade used by DatasetService cleanup logic
+  // Minimal signal-like shim for configUpgrade used by DatasetStreamService cleanup logic
   // Supports both reading as a function and optional .set(boolean) for specs that toggle it
   // Strongly-typed signal-like shim for configUpgrade
   private _buildConfigUpgradeShim() {
@@ -415,7 +415,7 @@ testBed.configureTestingModule({
     // SignalK connection-related stubs to prevent heavy runtime and missing .pipe
     { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
     { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
-    { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceStub },
+    { provide: PluginConfigClientService, useClass: PluginConfigClientServiceStub },
     // Provide a root-level WidgetRuntimeDirective stub to satisfy injections in widget specs
     { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
     // Provide a root-level WidgetStreamsDirective stub for widget/component specs
@@ -486,7 +486,7 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
   { provide: SettingsService, useClass: SettingsServiceStub },
   { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
   { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
-  { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceStub },
+  { provide: PluginConfigClientService, useClass: PluginConfigClientServiceStub },
   { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
   { provide: WidgetStreamsDirective, useClass: WidgetStreamsDirectiveStub },
   { provide: WidgetMetadataDirective, useClass: WidgetMetadataDirectiveStub },

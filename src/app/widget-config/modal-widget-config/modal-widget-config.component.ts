@@ -14,7 +14,7 @@ import { DisplayChartOptionsComponent } from '../display-chart-options/display-c
 import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-chart-options.component';
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { AppService } from '../../core/services/app-service';
-import { DatasetService, IDatasetServiceDatasetConfig } from '../../core/services/data-set.service';
+import { DatasetStreamService, IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
 import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
@@ -40,7 +40,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private static readonly KEY_CONVERT_UNIT_TO = 'convertUnitTo';
   private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
-  private DatasetService = inject(DatasetService);
+  private DatasetStreamService = inject(DatasetStreamService);
   private units = inject(UnitsService);
   private app = inject(AppService);
   protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
@@ -62,7 +62,7 @@ export class ModalWidgetConfigComponent implements OnInit {
       this.dialogRef.close();
       return;
     }
-    this.availableDataSets = this.DatasetService.list().sort((a, b) => {
+    this.availableDataSets = this.DatasetStreamService.list().sort((a, b) => {
       const aLabel = (a as unknown as { label?: string }).label || '';
       const bLabel = (b as unknown as { label?: string }).label || '';
       return aLabel.localeCompare(bLabel, undefined, { sensitivity: 'base' });

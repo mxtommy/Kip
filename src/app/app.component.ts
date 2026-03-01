@@ -22,11 +22,12 @@ import { DialogService } from './core/services/dialog.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NotificationsService } from './core/services/notifications.service';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
-import { DatasetService } from './core/services/data-set.service';
+import { DatasetStreamService } from './core/services/dataset-stream.service';
 import { ConfigurationUpgradeService } from './core/services/configuration-upgrade.service';
 import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
 import { ToastService } from './core/services/toast.service';
 import { AppNetworkInitService, IBootstrapIssue } from './core/services/app-initNetwork.service';
+import { DashboardHistorySeriesSyncService } from './core/services/dashboard-history-series-sync.service';
 
 @Component({
   selector: 'app-root',
@@ -44,8 +45,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _deltaService = inject(SignalKDeltaService);
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _appNetworkInit = inject(AppNetworkInitService);
+  private readonly _historySeriesReconcile = inject(DashboardHistorySeriesSyncService);
   public readonly authenticationService = inject(AuthenticationService);
-  private readonly _dataSet = inject(DatasetService);
+  private readonly _dataSet = inject(DatasetStreamService);
 
   // ============================================================================
   // AppComponent - Services initialized by this component

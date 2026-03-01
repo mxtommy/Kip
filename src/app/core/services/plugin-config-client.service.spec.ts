@@ -1,26 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SignalKConnectionService } from './signalk-connection.service';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 
 class SignalKConnectionServiceStub {
   public signalKURL = { url: 'http://localhost:3000' };
 }
 
-describe('SignalkPluginConfigService', () => {
-  let service: SignalkPluginConfigService;
+describe('PluginConfigClientService', () => {
+  let service: PluginConfigClientService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
-        SignalkPluginConfigService,
+        PluginConfigClientService,
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub }
       ]
     });
 
-    service = TestBed.inject(SignalkPluginConfigService);
+    service = TestBed.inject(PluginConfigClientService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 

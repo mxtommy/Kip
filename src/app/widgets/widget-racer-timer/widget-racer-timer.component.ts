@@ -41,6 +41,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
 
   // Static config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     displayName: 'TTS',
     nextDashboard: 0,
     playBeeps: true,

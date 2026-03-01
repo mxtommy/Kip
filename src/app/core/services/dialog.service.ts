@@ -10,6 +10,7 @@ import { WidgetsListComponent } from '../components/widgets-list/widgets-list.co
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
 import { DialogAisTargetComponent } from '../../widgets/widget-ais-radar/dialog-ais-target/dialog-ais-target.component';
+import { IWidgetHistoryChartDialogData, WidgetHistoryChartDialogComponent } from '../components/widget-history-chart-dialog/widget-history-chart-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -95,6 +96,27 @@ export class DialogService {
         minWidth: "50vw",
         maxWidth: "90vw",
         closeOnNavigation: true
+      }
+    );
+  }
+
+  /**
+   * Opens a history-only chart dialog for a widget.
+   *
+   * @param {IWidgetHistoryChartDialogData} data Widget history dialog payload.
+   * @returns {MatDialogRef<WidgetHistoryChartDialogComponent>} Dialog reference.
+   *
+   * @example
+   * const ref = dialogService.openWidgetHistoryDialog({ title: 'History', widget, seriesDefinitions });
+   */
+  public openWidgetHistoryDialog(data: IWidgetHistoryChartDialogData): MatDialogRef<WidgetHistoryChartDialogComponent> {
+    return this.dialog.open(WidgetHistoryChartDialogComponent,
+      {
+        data,
+        minWidth: '70vw',
+        maxWidth: '95vw',
+        maxHeight: '95vh',
+        disableClose: false,
       }
     );
   }

@@ -1,12 +1,13 @@
-import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
-import { Component, OnDestroy, ElementRef, AfterViewInit, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
+import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
+import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
 import { UnitsService } from '../../core/services/units.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { ITheme } from '../../core/services/app-service';
+import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -36,7 +37,7 @@ interface IDataSetRow { x: number, y: number }
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss'
 })
-export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
+export class WidgetDataChartComponent implements OnDestroy {
   // Host2 functional inputs supplied by host container
   public id = input.required<string>();
   public type = input.required<string>();
@@ -45,10 +46,11 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
   // Host2 runtime directive (merged config)
   private readonly runtime = inject(WidgetRuntimeDirective);
 
-  private readonly dsService = inject(DatasetService);
+  private readonly dsService = inject(DatasetStreamService);
   private readonly ngZone = inject(NgZone);
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Chart Label',
@@ -127,7 +129,7 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
       if (!cfg || !theme) return;
       untracked(() => {
         const verticalChanged = this.lastVerticalChart !== null && this.lastVerticalChart !== cfg.verticalChart;
-        if (this.pathSignature() || verticalChanged) {
+        if (verticalChanged) {
           this.lastVerticalChart = cfg.verticalChart;
           this.rebuildForDataset(cfg);
         } else if (this.chart) {
@@ -152,22 +154,14 @@ export class WidgetDataChartComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  ngAfterViewInit(): void {
-    this.rebuildForDataset(this.runtime.options());
-  }
-
   private rebuildForDataset(cfg: IWidgetSvcConfig): void {
     if (!cfg.datachartPath) return; // Widget not yet configured
+    if (!this.widgetDataChart()) return; // View not ready yet
+
     this.dsServiceSub?.unsubscribe(); // Cleanup old subscription & chart data
     this.lineChartData.datasets = [];
 
-    const dsConfig = this.dsService.list().find(ds => ds.uuid === this.id());
-    if (dsConfig?.label !== this.pathSignature()) {
-      this.dsService.remove(this.id());
-      this.dsService.create(cfg.datachartPath, cfg.datachartSource, cfg.timeScale as TimeScaleFormat,cfg.period, this.pathSignature(), true, false, this.id());
-    }
-
-    if (!this.widgetDataChart()) return; // View not ready yet
+    this.datasetLifecycle.syncDataChartDataset(this.id(), cfg, this.pathSignature());
 
     this.datasetConfig = this.dsService.getDatasetConfig(this.id());
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.id());

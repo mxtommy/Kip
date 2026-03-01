@@ -1,5 +1,5 @@
 <form (ngSubmit)="saveAllSettings()" #displayForm="ngForm" id="displaySetting">
-  <p>Customize your display settings to improve visibility and adapt to various
+  <p>Customize your display settings to enable various integrations, improve visibility and adapt to various
     lighting conditions.</p>
      <mat-accordion>
       <mat-expansion-panel>
@@ -118,6 +118,36 @@
             <mat-error>This field is required.</mat-error>
           }
         </mat-form-field>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Widget Historical Data
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Set historical charting and data logging for widgets. This enables retrospective views and access to historical data.
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        @if (isHistoryApiSupported()) {
+          <span>Select history provider and data logging mode:</span>
+          <mat-radio-group class="radio-group"
+            name="providerMode"
+            [(ngModel)]="providerMode"
+            [value]="providerMode()"
+            required>
+            <mat-radio-button class="radio-button" value="kip">Use KIP automatic series and data logging provider.</mat-radio-button>
+            <mat-radio-button class="radio-button" value="other">Use other History API provider plugin and manual data logging configuration.</mat-radio-button>
+          </mat-radio-group>
+          <mat-slide-toggle class="full-width"
+            name="widgetHistoryDisabled"
+            [(ngModel)]="widgetHistoryDisabled">
+            Disable widget historical charts (two-finger tap or right-click to view history feature).
+          </mat-slide-toggle>
+        } @else {
+          <p>Historical data features require Signal K server version 2.22.1 or later.</p>
+        }
       </mat-expansion-panel>
     </mat-accordion>
   <div class="formActionFooter">

@@ -46,6 +46,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
   // Static config from legacy defaultConfig
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     displayName: 'DTS',
     filterSelfPaths: true,
     playBeeps: true,

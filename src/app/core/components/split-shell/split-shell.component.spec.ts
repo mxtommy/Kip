@@ -33,7 +33,7 @@ class MockSettingsService {
   getRedNightModeAsO() { return of(false); }
   getNotificationServiceConfigAsO() { return of(this.notificationConfig); }
   getNotificationConfig() { return this.notificationConfig; }
-  // Methods consumed by DatasetService (indirectly via nested components)
+  // Methods consumed by DatasetStreamService (indirectly via nested components)
   // Return true to bypass cleanup requiring additional settings API
   configUpgrade() { return true; }
   // Minimal datasets config

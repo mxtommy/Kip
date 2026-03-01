@@ -11,7 +11,7 @@ import { NotificationsService } from './app/core/services/notifications.service'
 import { SettingsService } from './app/core/services/settings.service';
 import { UnitsService } from './app/core/services/units.service';
 import { DashboardService } from './app/core/services/dashboard.service';
-import { DatasetService } from './app/core/services/data-set.service';
+import { DatasetStreamService } from './app/core/services/dataset-stream.service';
 import { SignalKDeltaService } from './app/core/services/signalk-delta.service';
 import { SignalKConnectionService } from './app/core/services/signalk-connection.service';
 import { DataService } from './app/core/services/data.service';
@@ -73,7 +73,7 @@ bootstrapApplication(AppComponent, {
     SignalKConnectionService,
     SignalKDeltaService,
     ConnectionStateMachine,
-    DatasetService,
+    DatasetStreamService,
     DashboardService,
     UnitsService,
     AppNetworkInitService,

@@ -117,6 +117,30 @@ export interface IWidgetSvcConfig {
   paths?: IPathArray | IWidgetPath[];
   /** Set to True to limit all Widget's data paths selection of the configuration UI Paths panel to Self. ie. the user's vessel. Value of True will prevent listing of all Signal K known paths that come from buoy, towers, other vessels, etc. Else all Signal K know data will be listed for selection. Should be set to True unless you need non-self data paths such as monitoring remote vessels, etc. */
   filterSelfPaths?: boolean;
+  /**
+   * Controls automatic historical series generation (KIP plugin series data capture and storage) for this widget.
+   *
+   * - When set to `false`, Dashboard history sync excludes this widget from automatic path-based series generation.
+   * - When `true` or `undefined`, Dashboard history sync includes eligible numeric paths from this widget.
+   *
+   * @example
+   * ```typescript
+   * const cfg: IWidgetSvcConfig = {
+   *   supportAutomaticHistoricalSeries: false,
+   *   paths: {
+   *     numericPath: {
+   *       description: 'Speed',
+   *       path: 'navigation.speedOverGround',
+   *       source: null,
+   *       pathType: 'number',
+   *       isPathConfigurable: true,
+   *       sampleTime: 1000
+   *     }
+   *   }
+   * };
+   * ```
+   */
+  supportAutomaticHistoricalSeries?: boolean;
 
   /** Array of sub/child component setting */
   multiChildCtrls?: IDynamicControl[];

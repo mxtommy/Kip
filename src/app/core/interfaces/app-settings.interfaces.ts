@@ -1,4 +1,4 @@
-import { IDatasetServiceDatasetConfig } from '../services/data-set.service';
+import { IDatasetServiceDatasetConfig } from '../services/dataset-stream.service';
 import { IUnitDefaults } from '../services/units.service';
 import { Dashboard } from './../services/dashboard.service';
 
@@ -34,6 +34,7 @@ export interface IAppConfig {
   splitShellSide?: 'left' | 'right';
   splitShellSwipeDisabled?: boolean;
   splitShellWidth?: number;
+  widgetHistoryDisabled?: boolean;
 }
 
 export interface IThemeConfig {

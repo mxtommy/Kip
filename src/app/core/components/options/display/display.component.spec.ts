@@ -5,7 +5,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { ToastService } from '../../../services/toast.service';
 import { AppService } from '../../../services/app-service';
 import { SettingsService } from '../../../services/settings.service';
-import { SignalkPluginConfigService } from '../../../services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../../services/plugin-config-client.service';
 
 import { SettingsDisplayComponent } from './display.component';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
@@ -39,6 +39,7 @@ class SettingsServiceMock {
   public getSplitShellEnabled() { return false; }
   public getSplitShellSide() { return 'left' as const; }
   public getSplitShellSwipeDisabled() { return false; }
+  public getWidgetHistoryDisabled() { return false; }
   public setAutoNightMode(): void {}
   public setRedNightMode(): void {}
   public setNightModeBrightness(): void {}
@@ -48,9 +49,10 @@ class SettingsServiceMock {
   public setSplitShellEnabled(): void {}
   public setSplitShellSide(): void {}
   public setSplitShellSwipeDisabled(): void {}
+  public setWidgetHistoryDisabled(): void {}
 }
 
-class SignalkPluginConfigServiceMock {
+class PluginConfigClientServiceMock {
   public getPlugin = jasmine.createSpy('getPlugin').and.resolveTo({
     ok: true,
     data: {
@@ -79,7 +81,7 @@ describe('SettingsNotificationsComponent', () => {
         { provide: AppService, useClass: AppServiceMock },
         { provide: ToastService, useClass: ToastServiceMock },
         { provide: SettingsService, useClass: SettingsServiceMock },
-        { provide: SignalkPluginConfigService, useClass: SignalkPluginConfigServiceMock }
+        { provide: PluginConfigClientService, useClass: PluginConfigClientServiceMock }
       ]
     })
     .compileComponents();
@@ -115,7 +117,7 @@ describe('SettingsNotificationsComponent', () => {
   }));
 
   it('shows prompt for enabling plugin only when plugin is disabled but sun flag is true', fakeAsync(() => {
-    const pluginService = TestBed.inject(SignalkPluginConfigService) as unknown as SignalkPluginConfigServiceMock;
+    const pluginService = TestBed.inject(PluginConfigClientService) as unknown as PluginConfigClientServiceMock;
     pluginService.getPlugin.and.resolveTo({
       ok: true,
       data: {
@@ -147,7 +149,7 @@ describe('SettingsNotificationsComponent', () => {
   }));
 
   it('shows prompt for configuring sun flag only when plugin is enabled but sun flag is false', fakeAsync(() => {
-    const pluginService = TestBed.inject(SignalkPluginConfigService) as unknown as SignalkPluginConfigServiceMock;
+    const pluginService = TestBed.inject(PluginConfigClientService) as unknown as PluginConfigClientServiceMock;
     pluginService.getPlugin.and.resolveTo({
       ok: true,
       data: {

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BehaviorSubject } from 'rxjs';
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
-import { SignalkHistoryService } from './signalk-history.service';
+import { HistoryApiClientService } from './history-api-client.service';
 
 class SignalKConnectionServiceStub {
   public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
@@ -14,8 +14,8 @@ class SignalKConnectionServiceStub {
   });
 }
 
-describe('SignalkHistoryService', () => {
-  let service: SignalkHistoryService;
+describe('HistoryApiClientService', () => {
+  let service: HistoryApiClientService;
   let httpMock: HttpTestingController;
   let connectionStub: SignalKConnectionServiceStub;
 
@@ -23,12 +23,12 @@ describe('SignalkHistoryService', () => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
-        SignalkHistoryService,
+        HistoryApiClientService,
         { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub }
       ]
     });
 
-    service = TestBed.inject(SignalkHistoryService);
+    service = TestBed.inject(HistoryApiClientService);
     httpMock = TestBed.inject(HttpTestingController);
     connectionStub = TestBed.inject(SignalKConnectionService) as unknown as SignalKConnectionServiceStub;
   });
@@ -62,6 +62,7 @@ describe('SignalkHistoryService', () => {
       duration: 'PT10M',
       resolution: 1
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/values'
@@ -97,6 +98,7 @@ describe('SignalkHistoryService', () => {
       from: '2026-02-16T12:00:00.000Z',
       resolution: 1
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/values'
@@ -131,6 +133,7 @@ describe('SignalkHistoryService', () => {
       paths: 'environment.wind.speedApparent:avg',
       resolution: 'PT1S'
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/values'
@@ -158,6 +161,7 @@ describe('SignalkHistoryService', () => {
     });
 
     const promise = service.getPaths({ duration: 'PT1H' });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/paths'
@@ -184,6 +188,7 @@ describe('SignalkHistoryService', () => {
       from: '2026-02-16T12:00:00.000Z',
       to: '2026-02-16T12:01:00.000Z'
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/contexts'
@@ -211,6 +216,7 @@ describe('SignalkHistoryService', () => {
       paths: 'navigation.courseOverGroundTrue:avg',
       resolution: 0
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/values'
@@ -241,6 +247,7 @@ describe('SignalkHistoryService', () => {
       paths: 'navigation.speedThroughWater:avg',
       resolution: 1
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/values'
@@ -265,6 +272,7 @@ describe('SignalkHistoryService', () => {
       from: '2026-02-16T12:00:00.000Z',
       to: '2026-02-16T12:01:00.000Z'
     });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/paths'
@@ -286,6 +294,7 @@ describe('SignalkHistoryService', () => {
     });
 
     const promise = service.getContexts({ duration: 'PT10M' });
+    await new Promise(resolve => setTimeout(resolve));
 
     const req = httpMock.expectOne((request) =>
       request.url === 'http://localhost:3000/signalk/v2/api/history/contexts'
@@ -295,5 +304,36 @@ describe('SignalkHistoryService', () => {
 
     const response = await promise;
     expect(response).toBeNull();
+  });
+
+  it('should still preload history when endpoint is available', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getValues({
+      paths: 'navigation.speedThroughWater:avg',
+      resolution: 1
+    });
+    await new Promise(resolve => setTimeout(resolve));
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/signalk/v2/api/history/values'
+    );
+    expect(req.request.method).toBe('GET');
+
+    req.flush({
+      context: 'vessels.self',
+      range: { from: '2026-02-16T12:00:00.000Z', to: '2026-02-16T12:01:00.000Z' },
+      values: [{ path: 'navigation.speedThroughWater', method: 'avg' }],
+      data: [['2026-02-16T12:00:00.000Z', 3.2]]
+    });
+
+    const response = await promise;
+    expect(response).toBeTruthy();
   });
 });

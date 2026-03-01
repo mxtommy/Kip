@@ -48,6 +48,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
 
   // Static default config cloned from legacy implementation
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     displayName: 'Position',
     filterSelfPaths: true,
     paths: {

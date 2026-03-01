@@ -1,34 +1,108 @@
 import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
+import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
+import { DuckDbParquetStorageService } from './duckdb-parquet-storage.service';
 
 const start = (server: ServerAPI): Plugin => {
-
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
-
   const API_PATHS = {
     DISPLAYS: `/displays`,
     INSTANCE: `/displays/:displayId`,
     SCREEN_INDEX: `/displays/:displayId/screenIndex`,
-    ACTIVATE_SCREEN: `/displays/:displayId/activeScreen`
-  } as const;
+    ACTIVATE_SCREEN: `/displays/:displayId/activeScreen`,
+    SERIES: '/series',
+    SERIES_INSTANCE: '/series/:seriesId',
+    SERIES_RECONCILE: '/series/reconcile',
 
+  } as const;
   const PUT_CONTEXT = 'vessels.self';
   const COMMAND_PATHS = {
     SET_DISPLAY: 'kip.remote.setDisplay',
     SET_SCREEN_INDEX: 'kip.remote.setScreenIndex',
     REQUEST_ACTIVE_SCREEN: 'kip.remote.requestActiveScreen'
   } as const;
-
   const CONFIG_SCHEMA = {
+    type: 'object',
+    title: 'Remote Control and Data Series',
+    description: 'NOTE: All plugin settings are also managed from within KIP\'s Display Options panel. Changes made here will be overridden when KIP applies settings from the Display Options.',
     properties: {
-      notifications: {
-        type: 'object',
-        title: 'Remote Control',
-        description: 'This plugin requires no configuration.'
+      historySeriesServiceEnabled: {
+        type: 'boolean',
+        title: 'Enable Automatic Historical Time-Series Capture and Management',
+        description: 'Historical Time-Series are data captures that supply the widget historical data and seed the Data Chart and Wind Trends widgets. If disabled, data capture must be configured in your chosen history provider plugin.',
+        default: true
+      },
+      registerAsHistoryApiProvider: {
+        type: 'boolean',
+        title: 'Enable Query Provider',
+        description: 'The built-in History-API provider is the querying engine that uses the Historical Time-Series data to seed the widget historical panel, the Data Chart and Wind Trends widgets. If you want to use another History-API provider, turn this off and configure your chosen History-API compatible provider accordingly and KIP will query that provider.',
+        default: true
       }
     }
   };
+  const historySeries = new HistorySeriesService(() => Date.now(), false);
+  const storageService = new DuckDbParquetStorageService();
+  let retentionSweepTimer: NodeJS.Timeout | null = null;
+  let storageFlushTimer: NodeJS.Timeout | null = null;
+  let duckDbInitializationPromise: Promise<boolean> | null = null;
+  const DUCKDB_INIT_WAIT_TIMEOUT_MS = 5000;
+  let streamUnsubscribes: (() => void)[] = [];
+  let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
+  let historySeriesServiceEnabled = true;
+  let registerAsHistoryApiProvider = true;
+  let historyApiProviderRegistered = false;
+
+  interface IHistoryModeConfig {
+    historySeriesServiceEnabled: boolean;
+    registerAsHistoryApiProvider: boolean;
+  }
+
+  interface IHistoryApiPathSpecLike {
+    path?: unknown;
+    aggregate?: unknown;
+    parameter?: unknown;
+  }
+
+  interface IHistoryApiValuesRequestLike {
+    context?: unknown;
+    resolution?: unknown;
+    from?: unknown;
+    to?: unknown;
+    duration?: unknown;
+    pathSpecs?: unknown;
+  }
+
+  interface IHistoryApiRangeRequestLike {
+    from?: unknown;
+    to?: unknown;
+    duration?: unknown;
+  }
+
+  interface IHistoryRangeQuery {
+    from?: string;
+    to?: string;
+    duration?: string | number;
+  }
+
+  function resolveHistoryModeConfig(settings: unknown): IHistoryModeConfig {
+    const root = (settings && typeof settings === 'object' ? settings : {}) as Record<string, unknown>;
+
+    const historySeriesServiceEnabledSetting =
+      typeof root.historySeriesServiceEnabled === 'boolean'
+        ? root.historySeriesServiceEnabled
+        : undefined;
+
+    const registerAsHistoryApiProviderSetting =
+      typeof root.registerAsHistoryApiProvider === 'boolean'
+        ? root.registerAsHistoryApiProvider
+        : undefined;
+
+    return {
+      historySeriesServiceEnabled: historySeriesServiceEnabledSetting !== false,
+      registerAsHistoryApiProvider: registerAsHistoryApiProviderSetting !== false
+    };
+  }
 
   // Helpers
   function getDisplaySelfPath(displayId: string, suffix?: string): object | undefined {
@@ -52,6 +126,107 @@ const start = (server: ServerAPI): Plugin => {
 
   function sendFail(res: Response, statusCode: number, message: string) {
     return res.status(statusCode).json({ state: 'FAILED', statusCode, message })
+  }
+
+  function getHistorySeriesServiceDisabledMessage(): string {
+    return 'KIP history-series service is disabled by plugin configuration';
+  }
+
+  function getDuckDbUnavailableMessage(): string {
+    const details = storageService.getLastInitError();
+    return details
+      ? `DuckDB storage unavailable: ${details}`
+      : 'DuckDB storage unavailable';
+  }
+
+  function isDuckDbUnavailable(): boolean {
+    return Boolean(storageService.getLastInitError());
+  }
+
+  async function waitForDuckDbInitialization(timeoutMs = DUCKDB_INIT_WAIT_TIMEOUT_MS): Promise<boolean> {
+    if (!duckDbInitializationPromise) {
+      return storageService.isDuckDbParquetReady();
+    }
+
+    try {
+      const ready = await Promise.race<boolean>([
+        duckDbInitializationPromise,
+        new Promise<boolean>(resolvePromise => {
+          setTimeout(() => resolvePromise(false), timeoutMs);
+        })
+      ]);
+
+      if (!ready && !storageService.isDuckDbParquetReady()) {
+        server.error(`[SERIES STORAGE] DuckDB initialization wait timed out after ${timeoutMs}ms`);
+      }
+
+      return ready;
+    } catch {
+      return false;
+    }
+  }
+
+  function getRouteError(error: unknown, fallbackMessage: string): { statusCode: number; message: string } {
+    const message = String((error as Error)?.message || fallbackMessage);
+    const normalized = message.toLowerCase();
+
+    if (
+      normalized.includes('invalid ')
+      || normalized.includes('missing ')
+      || normalized.includes('body must')
+      || normalized.includes('required')
+      || normalized.includes('expected an iso')
+    ) {
+      return { statusCode: 400, message };
+    }
+
+    if (
+      normalized.includes('duckdb')
+      || normalized.includes('storage unavailable')
+      || normalized.includes('not initialized')
+      || isDuckDbUnavailable()
+    ) {
+      return { statusCode: 503, message };
+    }
+
+    return { statusCode: 500, message };
+  }
+
+  function findSeriesById(seriesId: string): ISeriesDefinition | null {
+    const current = historySeries.findSeriesById(seriesId);
+    return current ? JSON.parse(JSON.stringify(current)) as ISeriesDefinition : null;
+  }
+
+  function isHistorySeriesServiceEnabled(): boolean {
+    return historySeriesServiceEnabled;
+  }
+
+  function isHistoryApiProviderEnabled(): boolean {
+    return registerAsHistoryApiProvider;
+  }
+
+  function logOperationalMode(stage: string): void {
+    server.debug(
+      `[HISTORY MODE] stage=${stage} historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`
+    );
+  }
+
+  async function ensureDuckDbReadyForRequest(res: Response): Promise<boolean> {
+    await waitForDuckDbInitialization();
+    if (storageService.isDuckDbParquetReady()) {
+      return true;
+    }
+    sendFail(res, 503, getDuckDbUnavailableMessage());
+    return false;
+  }
+
+  function ensureHistorySeriesServiceEnabledForRequest(res: Response): boolean {
+    if (isHistorySeriesServiceEnabled()) {
+      return true;
+    }
+
+    sendFail(res, 503, getHistorySeriesServiceDisabledMessage());
+    return false;
   }
 
   function logAuthTrace(req: Request, stage: string) {
@@ -149,12 +324,432 @@ const start = (server: ServerAPI): Plugin => {
     return sendFail(res, result.statusCode || 400, result.message || 'Command failed');
   }
 
+  function stopSeriesCapture(): void {
+    streamUnsubscribes.forEach(unsub => {
+      try {
+        unsub();
+      } catch {
+        // ignore unsubscribe failures
+      }
+    });
+    streamUnsubscribes = [];
+  }
+
+  function toIsoString(value: unknown): string | undefined {
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (value && typeof value === 'object' && typeof (value as { toString?: () => string }).toString === 'function') {
+      const serialized = (value as { toString: () => string }).toString();
+      return serialized && serialized !== '[object Object]' ? serialized : undefined;
+    }
+
+    return undefined;
+  }
+
+  function toDurationString(value: unknown): string | number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+
+    if (value && typeof value === 'object' && typeof (value as { toString?: () => string }).toString === 'function') {
+      const serialized = (value as { toString: () => string }).toString();
+      return serialized && serialized !== '[object Object]' ? serialized : undefined;
+    }
+
+    return undefined;
+  }
+
+  function normalizeHistoryMethod(method: unknown): THistoryMethod {
+    const raw = String(method ?? 'avg').trim().toLowerCase();
+    if (raw === 'average') {
+      return 'avg';
+    }
+    if (raw === 'min' || raw === 'max' || raw === 'sma' || raw === 'ema' || raw === 'avg') {
+      return raw;
+    }
+    return 'avg';
+  }
+
+  function normalizeHistoryPath(path: unknown): string {
+    const trimmed = typeof path === 'string' ? path.trim() : '';
+    if (!trimmed) {
+      return '';
+    }
+
+    if (trimmed.startsWith('vessels.self.')) {
+      return trimmed.slice('vessels.self.'.length);
+    }
+
+    if (trimmed.startsWith('self.')) {
+      return trimmed.slice('self.'.length);
+    }
+
+    return trimmed;
+  }
+
+  function buildPathsFromPathSpecs(pathSpecs: unknown): string {
+    if (!Array.isArray(pathSpecs)) {
+      return '';
+    }
+
+    const specs = pathSpecs as IHistoryApiPathSpecLike[];
+    const encoded = specs
+      .map(spec => {
+        const path = normalizeHistoryPath(spec.path);
+        if (!path) {
+          return '';
+        }
+        const method = normalizeHistoryMethod(spec.aggregate);
+        const params = Array.isArray(spec.parameter)
+          ? (spec.parameter as unknown[]).map(item => String(item).trim()).filter(Boolean)
+          : [];
+        return [path, method, ...params].join(':');
+      })
+      .filter(Boolean);
+
+    return encoded.join(',');
+  }
+
+  function buildHistoryQueryFromValuesRequest(query: IHistoryApiValuesRequestLike): IHistoryQueryParams {
+    const from = toIsoString(query?.from);
+    const to = toIsoString(query?.to);
+    const duration = toDurationString(query?.duration);
+    const paths = buildPathsFromPathSpecs(query?.pathSpecs);
+
+    return {
+      paths,
+      context: typeof query?.context === 'string' ? query.context : undefined,
+      from,
+      to,
+      duration,
+      resolution: typeof query?.resolution === 'number' || typeof query?.resolution === 'string' ? query.resolution : undefined
+    };
+  }
+
+  function buildHistoryQueryFromRangeRequest(query: IHistoryApiRangeRequestLike): IHistoryRangeQuery {
+    return {
+      from: toIsoString(query?.from),
+      to: toIsoString(query?.to),
+      duration: toDurationString(query?.duration)
+    };
+  }
+
+  async function resolveHistoryPaths(query?: IHistoryRangeQuery): Promise<string[]> {
+    await waitForDuckDbInitialization();
+    if (!storageService.isDuckDbParquetReady()) {
+      throw new Error(getDuckDbUnavailableMessage());
+    }
+
+    try {
+      await storageService.flush();
+    } catch (flushError) {
+      server.error(`[SERIES STORAGE] pre-paths flush failed: ${String((flushError as Error).message || flushError)}`);
+    }
+    return storageService.getStoredPaths({
+      ...(query ?? {})
+    });
+  }
+
+  async function resolveHistoryContexts(query?: IHistoryRangeQuery): Promise<string[]> {
+    await waitForDuckDbInitialization();
+    if (!storageService.isDuckDbParquetReady()) {
+      throw new Error(getDuckDbUnavailableMessage());
+    }
+
+    try {
+      await storageService.flush();
+    } catch (flushError) {
+      server.error(`[SERIES STORAGE] pre-contexts flush failed: ${String((flushError as Error).message || flushError)}`);
+    }
+    return storageService.getStoredContexts({
+      ...(query ?? {})
+    });
+  }
+
+  async function resolveHistoryValues(query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
+    await waitForDuckDbInitialization();
+    if (!storageService.isDuckDbParquetReady()) {
+      throw new Error(getDuckDbUnavailableMessage());
+    }
+
+    try {
+      await storageService.flush();
+    } catch (flushError) {
+      server.error(`[SERIES STORAGE] pre-query flush failed: ${String((flushError as Error).message || flushError)}`);
+    }
+    const values = await storageService.getValues({
+      ...query
+    });
+    if (!values) {
+      throw new Error('DuckDB storage did not return history values.');
+    }
+    return values;
+  }
+
+  function registerHistoryProvider(): void {
+    historyApiProviderRegistered = false;
+
+    if (!isHistoryApiProviderEnabled()) {
+      server.debug('[HISTORY PROVIDER] Registration disabled by plugin configuration');
+      return;
+    }
+
+    const host = server as ServerAPI & {
+      history?: { registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void; unregisterHistoryApiProvider?: () => void };
+      registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void;
+      unregisterHistoryApiProvider?: () => void;
+    };
+
+    const apiProvider = {
+      getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
+        const resolved = await resolveHistoryValues(buildHistoryQueryFromValuesRequest(query));
+        return {
+          ...resolved,
+          values: resolved.values.map(valueSpec => ({
+            path: valueSpec.path,
+            method: valueSpec.method === 'avg' ? 'average' : valueSpec.method
+          }))
+        };
+      },
+      getPaths: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
+        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)),
+      getContexts: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
+        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
+    };
+
+    const registry = host.history && typeof host.history.registerHistoryApiProvider === 'function'
+      ? host.history
+      : (typeof host.registerHistoryApiProvider === 'function'
+        ? {
+          registerHistoryApiProvider: host.registerHistoryApiProvider.bind(host),
+          unregisterHistoryApiProvider: typeof host.unregisterHistoryApiProvider === 'function'
+            ? host.unregisterHistoryApiProvider.bind(host)
+            : undefined
+        }
+        : null);
+
+    if (registry && typeof registry.registerHistoryApiProvider === 'function') {
+      registry.registerHistoryApiProvider(apiProvider);
+      historyApiProviderRegistered = true;
+      if (typeof registry.unregisterHistoryApiProvider === 'function') {
+        historyApiRegistry = { unregisterHistoryApiProvider: registry.unregisterHistoryApiProvider.bind(registry) };
+      }
+      server.debug('[HISTORY PROVIDER] Registered KIP as History API provider');
+      return;
+    }
+
+    server.debug('[HISTORY PROVIDER] Registration requested but no compatible registration API was found on server host');
+  }
+
+  function rebuildSeriesCaptureSubscriptions(): void {
+    stopSeriesCapture();
+
+    if (!isHistorySeriesServiceEnabled()) {
+      return;
+    }
+
+    const streamBundle = server.streambundle;
+    if (!streamBundle || typeof streamBundle.getBus !== 'function') {
+      // server.debug('[SERIES CAPTURE] streambundle.getBus not available; capture disabled');
+      return;
+    }
+
+    const subscriptionCandidates = new Map<string, { allSelfContext: boolean }>();
+
+    const addCandidate = (path: string, allSelfContext: boolean): void => {
+      const normalized = typeof path === 'string' ? path.trim() : '';
+      if (!normalized) {
+        return;
+      }
+
+      const existing = subscriptionCandidates.get(normalized);
+      if (!existing) {
+        subscriptionCandidates.set(normalized, { allSelfContext });
+        return;
+      }
+
+      // If any series for this path requires non-self context, force generic bus subscription.
+      existing.allSelfContext = existing.allSelfContext && allSelfContext;
+    };
+
+    historySeries.listSeries().filter(series => series.enabled !== false).forEach(series => {
+      const allSelfContext = (series.context ?? 'vessels.self') === 'vessels.self';
+      addCandidate(series.path, allSelfContext);
+
+      // Workaround: subscribe to immediate parent path so object deltas (e.g. navigation.attitude)
+      // are captured and flattened into leaf numeric paths (e.g. navigation.attitude.pitch).
+      // Remove this fallback when KIP adds first-class object-path capture support.
+      const parentIdx = series.path.lastIndexOf('.');
+      if (parentIdx > 0) {
+        addCandidate(series.path.slice(0, parentIdx), allSelfContext);
+      }
+    });
+
+    const candidates = Array.from(subscriptionCandidates.entries()).map(([path, meta]) => ({
+      path,
+      allSelfContext: meta.allSelfContext
+    }));
+
+    candidates.forEach(candidate => {
+      try {
+        const bus = candidate.allSelfContext && typeof (streamBundle as { getSelfBus?: unknown }).getSelfBus === 'function'
+          ? (streamBundle as { getSelfBus: (p: Path) => unknown }).getSelfBus(candidate.path as Path)
+          : streamBundle.getBus(candidate.path as Path);
+        if (!bus || typeof (bus as { onValue?: unknown }).onValue !== 'function') {
+          return;
+        }
+
+        const unsubscribe = (bus as { onValue: (cb: (value: unknown) => void) => (() => void) | void }).onValue((sample: unknown) => {
+          try {
+            const count = historySeries.recordFromSignalKSample(sample as { path?: unknown; value?: unknown; timestamp?: unknown; context?: unknown; source?: unknown; $source?: unknown });
+            if (count > 0) {
+              // server.debug(`[SERIES CAPTURE] path=${candidate.path} recorded=${count}`);
+            }
+          } catch (error) {
+            server.error(`[SERIES CAPTURE] failed to record sample path=${candidate.path}: ${String((error as Error).message || error)}`);
+          }
+        });
+
+        if (typeof unsubscribe === 'function') {
+          streamUnsubscribes.push(unsubscribe);
+        }
+      } catch (error) {
+        server.error(`[SERIES CAPTURE] failed to subscribe path=${candidate.path}: ${String((error as Error).message || error)}`);
+      }
+    });
+
+    // server.debug(`[SERIES CAPTURE] activePathSubscriptions=${candidates.length}`);
+  }
+
+  function startStorageFlushTimer(intervalMs: number): void {
+    if (storageFlushTimer) {
+      clearInterval(storageFlushTimer);
+      storageFlushTimer = null;
+    }
+
+    if (!storageService.isDuckDbParquetEnabled()) {
+      return;
+    }
+
+    storageFlushTimer = setInterval(() => {
+      void storageService.flush()
+        .then(result => {
+          if (result.inserted > 0 || result.exported > 0) {
+            server.debug(`[SERIES STORAGE] flushed inserted=${result.inserted} exported=${result.exported}`);
+          }
+        })
+        .catch(error => {
+          server.error(`[SERIES STORAGE] flush failed: ${String((error as Error).message || error)}`);
+        });
+    }, intervalMs);
+
+    storageFlushTimer.unref?.();
+  }
+
   const plugin: Plugin = {
     id: 'kip',
     name: 'KIP',
     description: 'KIP server plugin',
     start: (settings) => {
       server.debug(`Starting plugin with settings: ${JSON.stringify(settings)}`);
+      const modeConfig = resolveHistoryModeConfig(settings);
+      historySeriesServiceEnabled = modeConfig.historySeriesServiceEnabled;
+      registerAsHistoryApiProvider = modeConfig.registerAsHistoryApiProvider;
+      logOperationalMode('start-configured');
+
+      storageService.setLogger({
+        debug: (msg: string) => server.debug(msg),
+        error: (msg: string) => server.error(msg)
+      });
+      const storageConfig = storageService.configure(settings);
+      server.debug(`[SERIES STORAGE] engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
+      historySeries.setSampleSink(sample => {
+        storageService.enqueueSample(sample);
+      });
+
+      duckDbInitializationPromise = storageService.initialize();
+      void duckDbInitializationPromise.then((ready) => {
+        server.debug(`[SERIES STORAGE] duckdbReady=${ready}`);
+        if (ready && storageService.isDuckDbParquetEnabled()) {
+          if (isHistorySeriesServiceEnabled()) {
+            void storageService.getSeriesDefinitions()
+              .then((storedSeries) => {
+                if (storedSeries.length > 0) {
+                  historySeries.reconcileSeries(storedSeries);
+                  rebuildSeriesCaptureSubscriptions();
+                }
+                startStorageFlushTimer(storageConfig.flushIntervalMs);
+                logOperationalMode('duckdb-ready');
+                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+              })
+              .catch((loadError) => {
+                server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
+                startStorageFlushTimer(storageConfig.flushIntervalMs);
+                logOperationalMode('duckdb-ready-series-load-failed');
+                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+              });
+          } else {
+            historySeries.reconcileSeries([]);
+            stopSeriesCapture();
+            startStorageFlushTimer(storageConfig.flushIntervalMs);
+            logOperationalMode('duckdb-ready-series-disabled');
+            server.setPluginStatus(`KIP plugin started with history-series service disabled. historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+          }
+          return;
+        }
+
+        if (storageFlushTimer) {
+          clearInterval(storageFlushTimer);
+          storageFlushTimer = null;
+        }
+
+        const initError = storageService.getLastInitError();
+        if (initError) {
+          server.setPluginError(`DuckDB unavailable. ${initError}`);
+          logOperationalMode('duckdb-unavailable');
+          server.setPluginStatus(`KIP plugin started with DuckDB unavailable. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+        }
+      });
+
+      if (retentionSweepTimer) {
+        clearInterval(retentionSweepTimer);
+      }
+      retentionSweepTimer = setInterval(() => {
+        try {
+          if (storageService.isDuckDbParquetReady()) {
+            const lifecycleToken = storageService.getLifecycleToken();
+            void storageService.pruneExpiredSamples(Date.now(), lifecycleToken)
+              .then(removedPersistedRows => {
+                if (removedPersistedRows > 0) {
+                  server.debug(`[SERIES RETENTION] duckdbPrune removedRows=${removedPersistedRows}`);
+                }
+                return storageService.pruneOrphanedSamples(lifecycleToken)
+                  .then(removedOrphanRows => {
+                    if (removedOrphanRows > 0) {
+                      server.debug(`[SERIES RETENTION] duckdbOrphanPrune removedRows=${removedOrphanRows}`);
+                    }
+                  });
+              })
+              .catch(error => {
+                server.error(`[SERIES RETENTION] duckdbPrune failed: ${String((error as Error).message || error)}`);
+              });
+          }
+        } catch (error) {
+          server.error(`[SERIES RETENTION] sweep failed: ${String((error as Error).message || error)}`);
+        }
+      }, 60 * 60_000);
+      retentionSweepTimer.unref?.();
+      rebuildSeriesCaptureSubscriptions();
 
       if (server.registerPutHandler) {
         server.debug(`[COMMAND TRACE] Registering PUT handlers under context=${PUT_CONTEXT}`);
@@ -180,14 +775,46 @@ const start = (server: ServerAPI): Plugin => {
         }, plugin.id);
       }
 
+      registerHistoryProvider();
+      logOperationalMode('post-provider-registration');
+
       server.setPluginStatus(`Starting...`);
     },
     stop: () => {
       server.debug(`Stopping plugin`);
+      stopSeriesCapture();
+      if (retentionSweepTimer) {
+        clearInterval(retentionSweepTimer);
+        retentionSweepTimer = null;
+      }
+      if (storageFlushTimer) {
+        clearInterval(storageFlushTimer);
+        storageFlushTimer = null;
+      }
+
+      const storageLifecycleToken = storageService.getLifecycleToken();
+      void storageService.flush(storageLifecycleToken)
+        .catch(() => undefined)
+        .then(() => storageService.close(storageLifecycleToken))
+        .catch(() => undefined);
+
+      if (historyApiRegistry) {
+        try {
+          historyApiRegistry.unregisterHistoryApiProvider();
+          server.debug('[HISTORY PROVIDER] Unregistered KIP History API provider');
+        } catch (error) {
+          server.error(`[HISTORY PROVIDER] unregister failed: ${String((error as Error).message || error)}`);
+        }
+        historyApiRegistry = null;
+      }
+
+      duckDbInitializationPromise = null;
+
       const msg = 'Stopped.';
       server.setPluginStatus(msg);
     },
     schema: () => CONFIG_SCHEMA,
+
     registerWithRouter(router) {
       server.debug(`Registering plugin routes: ${API_PATHS.DISPLAYS}, ${API_PATHS.INSTANCE}, ${API_PATHS.SCREEN_INDEX}, ${API_PATHS.ACTIVATE_SCREEN}`);
 
@@ -383,6 +1010,139 @@ const start = (server: ServerAPI): Plugin => {
         }
       });
 
+      router.get(API_PATHS.SERIES, async (req: Request, res: Response) => {
+        server.debug(`*** GET SERIES ${API_PATHS.SERIES}. Params: ${JSON.stringify(req.params)}`);
+        try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
+          if (!(await ensureDuckDbReadyForRequest(res))) {
+            return;
+          }
+          return sendOk(res, historySeries.listSeries());
+        } catch (error) {
+          server.error(`Error reading series: ${String((error as Error).message || error)}`);
+          const mapped = getRouteError(error, 'Failed to read series');
+          return sendFail(res, mapped.statusCode, mapped.message)
+        }
+      });
+
+      router.put(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
+        server.debug(`** PUT ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)} Body: ${JSON.stringify(req.body)}`);
+        try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
+          if (!(await ensureDuckDbReadyForRequest(res))) {
+            return;
+          }
+          const seriesId = String(req.params.seriesId ?? '').trim();
+          if (!seriesId) {
+            return sendFail(res, 400, 'Missing seriesId parameter');
+          }
+
+          const payload = (req.body ?? {}) as Partial<ISeriesDefinition>;
+          const previous = findSeriesById(seriesId);
+          const next = historySeries.upsertSeries({
+            ...payload,
+            seriesId,
+            datasetUuid: String(payload.datasetUuid ?? seriesId)
+          } as ISeriesDefinition);
+
+          try {
+            await storageService.upsertSeriesDefinition(next);
+          } catch (storageError) {
+            if (previous) {
+              historySeries.upsertSeries(previous);
+            } else {
+              historySeries.deleteSeries(seriesId);
+            }
+            throw storageError;
+          }
+
+          rebuildSeriesCaptureSubscriptions();
+
+          return sendOk(res, next);
+        } catch (error) {
+          server.error(`Error writing series: ${String((error as Error).message || error)}`);
+          const mapped = getRouteError(error, 'Failed to write series');
+          return sendFail(res, mapped.statusCode, mapped.message)
+        }
+      });
+
+      router.delete(API_PATHS.SERIES_INSTANCE, async (req: Request, res: Response) => {
+        server.debug(`** DELETE ${API_PATHS.SERIES_INSTANCE}. Params: ${JSON.stringify(req.params)}`);
+        try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
+          if (!(await ensureDuckDbReadyForRequest(res))) {
+            return;
+          }
+          const seriesId = String(req.params.seriesId ?? '').trim();
+          if (!seriesId) {
+            return sendFail(res, 400, 'Missing seriesId parameter');
+          }
+
+          const previous = findSeriesById(seriesId);
+          if (!previous) {
+            return sendFail(res, 404, `Series ${seriesId} not found`);
+          }
+
+          await storageService.deleteSeriesDefinition(seriesId);
+          historySeries.deleteSeries(seriesId);
+
+          rebuildSeriesCaptureSubscriptions();
+
+          return sendOk(res, { state: 'SUCCESS', statusCode: 200 });
+        } catch (error) {
+          server.error(`Error deleting series: ${String((error as Error).message || error)}`);
+          const mapped = getRouteError(error, 'Failed to delete series');
+          return sendFail(res, mapped.statusCode, mapped.message)
+        }
+      });
+
+      router.post(API_PATHS.SERIES_RECONCILE, async (req: Request, res: Response) => {
+        server.debug(`** POST ${API_PATHS.SERIES_RECONCILE}. Body: ${JSON.stringify(req.body)}`);
+        try {
+          if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
+            return;
+          }
+          if (!(await ensureDuckDbReadyForRequest(res))) {
+            return;
+          }
+          const payload = req.body;
+          if (!Array.isArray(payload)) {
+            return sendFail(res, 400, 'Body must be an array of series definitions');
+          }
+
+          const simulated = new HistorySeriesService(() => Date.now(), false);
+          historySeries.listSeries().forEach(series => {
+            simulated.upsertSeries(series);
+          });
+
+          const scopedPayload = (payload as ISeriesDefinition[]).map(series => ({
+            ...series
+          }));
+
+          const result = simulated.reconcileSeries(scopedPayload);
+          const nextSeries = simulated.listSeries();
+
+          await storageService.replaceSeriesDefinitions(nextSeries);
+
+          const seriesOutsideScope = historySeries.listSeries();
+          historySeries.reconcileSeries([...seriesOutsideScope, ...nextSeries]);
+
+          server.debug(`[SERIES RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
+          rebuildSeriesCaptureSubscriptions();
+          return sendOk(res, result);
+        } catch (error) {
+          server.error(`Error reconciling series: ${String((error as Error).message || error)}`);
+          const mapped = getRouteError(error, 'Failed to reconcile series');
+          return sendFail(res, mapped.statusCode, mapped.message)
+        }
+      });
+
       // List all registered routes for debugging
       if (router.stack) {
         router.stack.forEach((layer: { route?: { path?: string; stack: { method: string }[] } }) => {
@@ -392,7 +1152,7 @@ const start = (server: ServerAPI): Plugin => {
         });
       }
 
-      server.setPluginStatus(`Providing remote display screen control`);
+      server.setPluginStatus(`Providing remote display screen control and history series API`);
     },
     getOpenApi: () => mutableOpenApi
   };

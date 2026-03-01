@@ -2,13 +2,14 @@ import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, in
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import { DatasetService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/data-set.service';
+import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
 import { CanvasService } from '../../core/services/canvas.service';
 import { UnitsService } from '../../core/services/units.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { ITheme } from '../../core/services/app-service';
-import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/data-set.service';
+import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/dataset-stream.service';
+import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
 import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
 import 'chartjs-adapter-date-fns';
@@ -50,7 +51,8 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     timeScale: 'Last 30 Minutes'
   };
   private readonly ngZone = inject(NgZone);
-  private readonly _dataset = inject(DatasetService);
+  private readonly _dataset = inject(DatasetStreamService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
   private readonly responsive = inject(BreakpointObserver);
@@ -318,8 +320,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       if (!cfg) return;
       const needsDataset = !this.datasetConfig || this.datasetConfig.timeScaleFormat !== cfg.timeScale;
       if (needsDataset) {
-        this.removeServiceDatasets();
-        this.createServiceDataset();
+        this.syncServiceDatasets();
         this.startWidget();
       } else if (this.chart) {
         // color-only change already handled above, but ensure labels updated
@@ -350,28 +351,10 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     this.startStreaming();
   }
 
-  private removeServiceDatasets(): void {
-    const ids = [`${this.id()}-twd`, `${this.id()}-tws`];
-    ids.forEach(uuid => {
-      if (this._dataset.list().some(ds => ds.uuid === uuid)) this._dataset.remove(uuid);
-    });
-  }
-
-  private createServiceDataset(): void {
+  private syncServiceDatasets(): void {
     const cfg = this.runtime?.options();
     if (!cfg || cfg.timeScale === '') return;
-    const pathDirection = "self.environment.wind.directionTrue";
-    const pathSpeed = "self.environment.wind.speedTrue";
-    const source = "default";
-
-    // Create datasets if it does not exist
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.id()}-twd`).length === 0) {
-      this._dataset.create(pathDirection, source, cfg.timeScale as TimeScaleFormat, 30, `windtrends-${this.id()}`, true, false, `${this.id()}-twd`);
-    }
-
-    if (this._dataset.list().filter(ds => ds.uuid === `${this.id()}-tws`).length === 0) {
-      this._dataset.create(pathSpeed, source, cfg.timeScale as TimeScaleFormat, 30, `speedtrends-${this.id()}`, true, false, `${this.id()}-tws`);
-    }
+    this.datasetLifecycle.syncWindTrendsDatasets(this.id(), cfg.timeScale as TimeScaleFormat);
   }
 
   private setChartOptions() {

@@ -5,7 +5,7 @@ import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.dir
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { IPathUpdate } from '../../core/services/data.service';
 import { CanvasService } from '../../core/services/canvas.service';
-import { DatasetService } from '../../core/services/data-set.service';
+import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 import { ITheme } from '../../core/services/app-service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { States } from '../../core/interfaces/signalk-interfaces';
@@ -21,6 +21,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   public type = input.required<string>();
   public theme = input.required<ITheme|null>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {
@@ -53,7 +54,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private readonly stream = inject(WidgetStreamsDirective);
 
   private readonly canvas = inject(CanvasService);
-  private readonly dataset = inject(DatasetService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
   protected miniChart = viewChild(MinichartComponent);
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
 
@@ -196,17 +197,12 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     const show = !!cfg.showMiniChart;
     this.showMiniChart.set(show);
     if (!show) {
-      this.dataset.removeIfExists(this.id(), false);
+      this.datasetLifecycle.removeDatasetIfExists(this.id(), false);
       return;
     }
     if (!pathInfo || !pathInfo.path) return;
     const source = pathInfo.source ?? 'default';
-    const existing = this.dataset.getDatasetConfig(this.id());
-    if (!existing) {
-      this.dataset.create(pathInfo.path, source, 'minute', 0.2, `simple-chart-${this.id()}`, false, false, this.id());
-    } else if (existing.path !== pathInfo.path || existing.pathSource !== source) {
-      this.dataset.edit({ ...existing, path: pathInfo.path, pathSource: source }, false);
-    }
+    this.datasetLifecycle.syncNumericMiniChartDataset(this.id(), pathInfo.path, source);
   }
 
   private setMiniChart(): void {
@@ -355,7 +351,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    this.dataset.removeIfExists(this.id(), false);
+    this.datasetLifecycle.removeDatasetIfExists(this.id(), false);
     try { this.canvas.unregisterCanvas(this.canvasElement); } catch { /* ignore */ }
   }
 }

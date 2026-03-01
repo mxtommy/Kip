@@ -10,7 +10,7 @@
  * - Robust long-press logic with explicit cancellation and teardown to avoid leaked handlers or capture.
  * - Per-lane ownership (horizontal | vertical | press) to reduce contention across nested hosts.
  * - Mode/toggle gating (all | horizontal | dashboard | press | editor, plus enablePress/enableDoubleTap), and rebroadcast gating.
- * - Diagnostics are opt-in and can be toggled at runtime (console helper, localStorage persistence).
+ * - Diagnostics are gated by a runtime flag (default enabled) and can be toggled via console helper / localStorage.
  *
  * Supported gestures (emitted events):
  * - swipeleft, swiperight, swipeup, swipedown, press, doubletap
@@ -37,10 +37,10 @@ interface CancelHandlerEntry {
  *  - Context menu: the directive prevents the native contextmenu on the host to avoid pointer sequence aborts.
  *    If a widget needs right-click, place the directive on a child overlay, not the interactive element itself.
  *  - Inputs are Angular signals (`input(...)`), so everything is bindable from templates.
- *  - Pointer capture policy: capture is enabled for touch/pen (to keep continuity across child boundaries),
+ *  - Pointer capture policy: capture is enabled for touch/pen on the original event target (when available)
  *    and disabled for mouse to preserve native hover/click behaviors in Material/CDK components.
- *  - Long-press cancel sources: pointermove and lostpointercapture for all pointers; pointerleave/out and window blur
- *    only for touch/pen (mouse ignores blur to avoid aborting legitimate presses after dialog focus changes).
+ *  - Long-press cancel sources: movement beyond `pressMoveSlop`, pointercancel (element/document),
+ *    and window blur for touch/pen only. Lost pointer capture is ignored during active touch/pen long-press.
  *
  * Optional Inputs to adjust recognition. Uses optimal setting per pointer type if not specified:
  *  - `swipeMinDistance` (number) - minimum primary-axis movement in pixels to consider a swipe. Default: 30.
@@ -81,6 +81,8 @@ export class GestureDirective {
   private static _laneOwners = new Map<number, { h?: number; v?: number; p?: number }>();
   // Track currently active pointerIds to detect new sequences and clear stale owners
   private static _activePointers = new Set<number>();
+  // True when more than one pointer is active (multi-finger block)
+  private static _multiPointerActive = false;
   // Track instance id -> host element, for diagnostics on lane ownership across instances
   private static _instanceToEl = new Map<number, HTMLElement>();
 
@@ -402,6 +404,18 @@ export class GestureDirective {
   };
 
   private onPointerDown = (ev: PointerEvent) => {
+    const activeSet = (this.constructor as typeof GestureDirective)._activePointers;
+    const hadPointer = activeSet.has(ev.pointerId);
+    if (!hadPointer) activeSet.add(ev.pointerId);
+    const multiPointerActive = (this.constructor as typeof GestureDirective)._multiPointerActive;
+    if (multiPointerActive || activeSet.size > 1) {
+      if (!multiPointerActive && activeSet.size > 1) {
+        this.debug('multi-pointer detected; blocking gestures', { activeCount: activeSet.size, pointerId: ev.pointerId });
+      }
+      (this.constructor as typeof GestureDirective)._multiPointerActive = true;
+      if (this.tracking) this.reset(true);
+      return;
+    }
     // Defensive: if prior state wasn't fully reset (e.g., dialog interactions), clear it now
     if (this.tracking || this.pressFired || this.longPressTimer) {
       this.debug('pointerdown with stale state; force reset', {
@@ -472,14 +486,10 @@ export class GestureDirective {
     // Try to acquire lanes for this pointer
     const wantP = allowPress || allowDT;
     const ownersMap = (this.constructor as typeof GestureDirective)._laneOwners;
-    const activeSet = (this.constructor as typeof GestureDirective)._activePointers;
     // If this is the first handler seeing this pointerId for this sequence, clear any stale owners
-    if (!activeSet.has(ev.pointerId)) {
-      activeSet.add(ev.pointerId);
-      if (ownersMap.has(ev.pointerId)) {
-        this.debug('new pointer sequence; clearing stale lane owners', { pointerId: ev.pointerId, prevOwners: ownersMap.get(ev.pointerId) });
-        ownersMap.delete(ev.pointerId);
-      }
+    if (!hadPointer && ownersMap.has(ev.pointerId)) {
+      this.debug('new pointer sequence; clearing stale lane owners', { pointerId: ev.pointerId, prevOwners: ownersMap.get(ev.pointerId) });
+      ownersMap.delete(ev.pointerId);
     }
     const owners = ownersMap.get(ev.pointerId) ?? {};
     // Diagnostic: if press lane already owned, log relationships between owner/host/target
@@ -494,9 +504,21 @@ export class GestureDirective {
       this.debug('pre-acquire owners', { owners });
     }
     this.ownedLanes = { h: false, v: false, p: false };
-    if (allowH && owners.h === undefined) { owners.h = this._instanceId; this.ownedLanes.h = true; }
-    if (allowV && owners.v === undefined) { owners.v = this._instanceId; this.ownedLanes.v = true; }
-    if (wantP && owners.p === undefined) { owners.p = this._instanceId; this.ownedLanes.p = true; }
+    if (allowH && owners.h === undefined) {
+      owners.h = this._instanceId;
+      this.ownedLanes.h = true;
+      this.debug('lane acquired', { lane: 'horizontal', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
+    if (allowV && owners.v === undefined) {
+      owners.v = this._instanceId;
+      this.ownedLanes.v = true;
+      this.debug('lane acquired', { lane: 'vertical', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
+    if (wantP && owners.p === undefined) {
+      owners.p = this._instanceId;
+      this.ownedLanes.p = true;
+      this.debug('lane acquired', { lane: 'press', pointerId: ev.pointerId, instanceId: this._instanceId, owners });
+    }
     this.debug('lane acquisition', {
       allowH, allowV, allowPress, allowDT,
       wantP,
@@ -630,6 +652,13 @@ export class GestureDirective {
       });
       this.longPressTimer = window.setTimeout(() => {
         this.debug('longpress timer fired', { tracking: this.tracking, firedAt: Math.round(performance.now()) });
+        if ((this.constructor as typeof GestureDirective)._multiPointerActive) {
+          this.debug('longpress cancelled: multi-pointer active');
+          this.reset(true);
+          this.longPressTimer = null;
+          this.removeLongpressCancelListeners();
+          return;
+        }
         if (!this.tracking) {
           this.debug('longpress cancelled: not tracking');
           return;
@@ -710,6 +739,11 @@ export class GestureDirective {
 
   private handlePointerMotion(ev: PointerEvent, source: 'move' | 'raw') {
     if (!this.tracking || ev.pointerId !== this.pointerId) return;
+    if ((this.constructor as typeof GestureDirective)._multiPointerActive) {
+      this.debug('multi-pointer block active; cancelling motion', { pointerId: ev.pointerId, source });
+      this.reset(true);
+      return;
+    }
     if (this.pressFired) return; // Suppress drag after longpress
     this.recordMove(ev, source);
     // Allow small movement during long-press; cancel only if movement exceeds pressMoveSlop
@@ -738,7 +772,10 @@ export class GestureDirective {
 
   private onPointerUp = (ev: PointerEvent) => {
     this.debug('pointerup', { x: ev.clientX, y: ev.clientY, pointerId: ev.pointerId });
-    if (!this.tracking || ev.pointerId !== this.pointerId) return;
+    if (!this.tracking || ev.pointerId !== this.pointerId) {
+      this.cleanupActivePointer(ev.pointerId);
+      return;
+    }
     this.finishGesture(ev, false);
   };
 
@@ -754,7 +791,10 @@ export class GestureDirective {
       hasPointerCapture: typeof el.hasPointerCapture === 'function' ? el.hasPointerCapture(ev.pointerId) : undefined,
       documentHidden: document.hidden
     });
-    if (!this.tracking || ev.pointerId !== this.pointerId) return;
+    if (!this.tracking || ev.pointerId !== this.pointerId) {
+      this.cleanupActivePointer(ev.pointerId);
+      return;
+    }
     // Try to salvage a swipe on cancel (common when another component captures the pointer)
     this.finishGesture(ev, true);
   };
@@ -769,10 +809,12 @@ export class GestureDirective {
       ownedLanes: this.ownedLanes
     });
     // Mark pointerId inactive for new sequences to start clean
-    try {
-      const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(ev.pointerId);
-      this.debug('activePointers delete', { pointerId: ev.pointerId, deleted });
-    } catch { /* ignore */ }
+    this.cleanupActivePointer(ev.pointerId);
+    if ((this.constructor as typeof GestureDirective)._multiPointerActive) {
+      this.debug('multi-pointer block active; ignoring finishGesture', { pointerId: ev.pointerId });
+      this.reset(true);
+      return;
+    }
     const endTime = performance.now();
     const duration = endTime - this.startTime;
     const dx = ev.clientX - this.startX;
@@ -871,7 +913,7 @@ export class GestureDirective {
       const dt = now - this.lastTapTime;
       const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
       if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
-        this.zone.run(() => this.doubletap.emit(new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt } })));
+        this.zone.run(() => this.emitDoubleTapEvent({ x: ev.clientX, y: ev.clientY, dt }));
         this.lastTapTime = 0;
         this.potentialDoubleTap = false; // completed
       } else {
@@ -937,8 +979,12 @@ export class GestureDirective {
     this.cancelLongpressHandlers = [];
   }
 
-  private reset() {
+  private reset(preserveActivePointer = false) {
     this.debug('reset gesture state');
+    if (this.longPressTimer) {
+      window.clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
     // Release pointer capture if still held before clearing pointerId
     try {
       if (this.pointerId !== null && this.captureEl && 'releasePointerCapture' in this.captureEl) {
@@ -964,12 +1010,9 @@ export class GestureDirective {
       }
     } catch { /* ignore */ }
     // Important: clear activePointers before nulling pointerId to avoid leaks on press path
-    try {
-      if (this.pointerId !== null) {
-        const deleted = (this.constructor as typeof GestureDirective)._activePointers.delete(this.pointerId);
-        this.debug('activePointers delete (reset)', { pointerId: this.pointerId, deleted });
-      }
-    } catch { /* ignore */ }
+    if (this.pointerId !== null && !preserveActivePointer) {
+      this.cleanupActivePointer(this.pointerId);
+    }
     this.pointerId = null;
   this.captureEl = null;
     this.tracking = false;
@@ -1049,6 +1092,22 @@ export class GestureDirective {
     }
   }
 
+  private cleanupActivePointer(pointerId: number) {
+    try {
+      const activeSet = (this.constructor as typeof GestureDirective)._activePointers;
+      const deleted = activeSet.delete(pointerId);
+      if (deleted) {
+        this.debug('activePointers delete', { pointerId, activeCount: activeSet.size });
+      }
+      if ((this.constructor as typeof GestureDirective)._multiPointerActive && activeSet.size === 0) {
+        (this.constructor as typeof GestureDirective)._multiPointerActive = false;
+        this.debug('multi-pointer block lifted', { activeCount: activeSet.size });
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   // Emit via Angular outputs AND dispatch a bubbling DOM CustomEvent so ancestors can listen too.
   private emitSwipeEvent(name: 'swipeleft' | 'swiperight' | 'swipeup' | 'swipedown', detail: { dx: number; dy: number; duration: number }) {
     (detail as unknown as { __gid?: number }).__gid = this._instanceId;
@@ -1078,13 +1137,17 @@ export class GestureDirective {
       return;
     }
     (this as { _lastPressEmitTs?: number })._lastPressEmitTs = now;
-    const evt = new CustomEvent('press', { detail });
+    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
+    const evt = new CustomEvent('press', { detail, bubbles: true, composed: true });
+    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
     this.debug('emitPressEvent', { detail });
     this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
   }
 
   private emitDoubleTapEvent(detail: { x: number; y: number; dt: number }) {
-    const evt = new CustomEvent('doubletap', { detail });
+    (detail as unknown as { __gid?: number }).__gid = this._instanceId;
+    const evt = new CustomEvent('doubletap', { detail, bubbles: true, composed: true });
+    try { this.host.nativeElement.dispatchEvent(evt); } catch { /* ignore */ }
     this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
   }
 

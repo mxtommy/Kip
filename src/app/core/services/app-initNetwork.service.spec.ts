@@ -10,7 +10,7 @@ import { SignalKDeltaService } from './signalk-delta.service';
 import { DataService } from './data.service';
 import { StorageService } from './storage.service';
 import { InternetReachabilityService } from './internet-reachability.service';
-import { DatasetService } from './data-set.service';
+import { DatasetStreamService } from './dataset-stream.service';
 import { Injector } from '@angular/core';
 
 describe('AppNetworkInitService', () => {
@@ -57,7 +57,7 @@ describe('AppNetworkInitService', () => {
 
   const mockInjector = {
     get: jasmine.createSpy('get').and.callFake((token: unknown) => {
-      if (token === DatasetService) {
+      if (token === DatasetStreamService) {
         return mockDatasetService;
       }
       return null;

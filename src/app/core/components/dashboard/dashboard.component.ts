@@ -16,11 +16,11 @@ import { uiEventService } from '../../services/uiEvent.service';
 import { WidgetDescription } from '../../services/widget.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Router } from '@angular/router';
-import { DatasetService } from '../../services/data-set.service';
+import { WidgetDatasetOrchestratorService } from '../../services/widget-dataset-orchestrator.service';
 import { WidgetHost2Component } from '../widget-host2/widget-host2.component';
 import { GroupWidgetComponent } from '../group-widget/group-widget.component';
 import { DashboardClipboardBottomSheetComponent } from '../dashboard-clipboard-bottom-sheet/dashboard-clipboard-bottom-sheet.component';
-import { SignalkPluginConfigService } from '../../services/signalk-plugin-config.service';
+import { PluginConfigClientService } from '../../services/plugin-config-client.service';
 
 interface PressGestureDetail { x?: number; y?: number; center?: { x: number; y: number }; }
 interface GridApi {
@@ -46,8 +46,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _uiEvent = inject(uiEventService);
-  private readonly _dataset = inject(DatasetService);
-  private readonly _pluginConfig = inject(SignalkPluginConfigService);
+  private readonly datasetLifecycle = inject(WidgetDatasetOrchestratorService);
+  private readonly _pluginConfig = inject(PluginConfigClientService);
   protected readonly _router = inject(Router);
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected isDashboardStatic = computed(() => this.dashboard.isDashboardStatic());
@@ -250,7 +250,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   protected saveDashboard(): void {
     const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
-    this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), serializedData);
+    const immutableConfiguration = cloneDeep(serializedData);
+    this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), immutableConfiguration);
   }
 
   protected saveLayoutChanges(): void {
@@ -652,15 +653,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     this._gridstack().grid.removeWidget(item);
 
-    switch (ngNode.selector) {
-      case 'widget-numeric-chart':
-      case 'widget-windtrends-chart': {
-        // Perform any specific cleanup or actions for dataset enabled widgets
-        const allDatasets = this._dataset.list() as { uuid: string }[];
-        const toRemove = allDatasets?.filter(ds => ds.uuid === ngNode.id || ds.uuid?.startsWith(`${ngNode.id}-`)) || [];
-        toRemove.forEach(ds => this._dataset.remove(ds.uuid));
-        break;
-      }
+    if (ngNode?.id) {
+      this.datasetLifecycle.removeOwnedDatasets(ngNode.id, true);
     }
   }
 

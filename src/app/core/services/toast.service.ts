@@ -81,7 +81,7 @@ export class ToastService {
           duration: 0, // No timeout - requires user to close
           verticalPosition: 'top',
           data: {
-            message: 'Sound notifications blocked by browser. Close this message will enable audio.',
+            message: 'Sound notifications blocked by browser. Closing this message will enable audio.',
             severity: 'warn'
           } as ToastSnackbarData
         });

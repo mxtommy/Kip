@@ -1,0 +1,37 @@
+.dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dialog-close-icon {
+  margin-right: 15px;
+}
+
+.history-dialog-content {
+  display: flex;
+  min-width: 70vw;
+  min-height: 55vh;
+  padding-top: 0px;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 55vh;
+}
+
+.history-message {
+  margin: 0;
+  padding: 1rem 0;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.time-select {
+  text-align: center;
+}

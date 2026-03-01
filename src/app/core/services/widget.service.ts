@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Type } from '@angular/core';
-import { SignalkPluginConfigService } from './signalk-plugin-config.service';
+import { PluginConfigClientService } from './plugin-config-client.service';
 import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
 import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
 import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
@@ -129,7 +129,7 @@ export interface WidgetDescriptionWithPluginStatus extends WidgetDescription {
   providedIn: 'root'
 })
 export class WidgetService {
-  private readonly _pluginConfig = inject(SignalkPluginConfigService);
+  private readonly _pluginConfig = inject(PluginConfigClientService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -585,7 +585,7 @@ export class WidgetService {
    * Returns the list of widget definitions, each enriched with plugin dependency status.
    *
    * For each widget, this method:
-    * - Checks all unique plugin dependencies for installation/availability using the SignalkPluginConfigService (each dependency is checked only once, even if used by multiple widgets).
+    * - Checks all unique plugin dependencies for installation/availability using the PluginConfigClientService (each dependency is checked only once, even if used by multiple widgets).
    * - Adds the following properties to each widget:
     * - `isDependencyValid`: `true` if all required plugins are installed and, if anyOfPlugins is present, at least one any-of plugin is installed. Otherwise `false`.
     * - `pluginsStatus`: an array of objects, each with `{ name: string, enabled: boolean, required: boolean }` for every dependency (required and optional).

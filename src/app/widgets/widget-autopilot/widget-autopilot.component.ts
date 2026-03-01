@@ -116,6 +116,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: false,
     filterSelfPaths: true,
     paths: {
       "autopilotState": {

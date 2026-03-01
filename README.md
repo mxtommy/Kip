@@ -24,7 +24,7 @@ With KIP, you get the **familiar feel of professional Multi-Function Displays** 
 - [Installations Showcase](#installations-showcase)
 - [Design Goal](#design-goal)
 - [User Experience](#user-experience)
-- [Dashboards and Configuration](#dashboards-and-configuration) & [Widget Library](#widget-library)
+- [Dashboards and Configuration](#dashboards-and-configuration), [Widget Library](#widget-library) & [Historical Data](#historycal-data)
 - [Night Modes](#night-modes)
 - [Chartplotter Mode](#chartplotter-mode)
 - [Remote Control](#remote-control-other-kip-displays)
@@ -54,12 +54,12 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 
 ## User Experience
 
-### Interractions
+### Interactions
 - Swipe up and down to navigate through your dashboards effortlessly.
 - Swipe left and right to access notifications and other system features quickly.
 - Use keyboard shortcuts for essential features, ensuring fast and efficient navigation across devices types.
 
-### Customyze
+### Customize
 - Effortlessly create and customize dashboards using an intuitive grid layout system.
 - Add, resize, and align widgets to design tailored displays for your specific needs.
 - Duplicate widgets or entire dashboards, including their configurations, with a single click.
@@ -136,6 +136,9 @@ Freeboard-SK Chartplotter integration with Autopilot widget
 
 Grafana integration with other widgets
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
+
+## Historical Data
+Experience effortless insight into your vessel’s past with KIP’s Widget Historical Charts—automatically track, store, and visualize key data, unlocking instant access charts showing up to the last full day of performance. Whether you’re sailing or docked, simply tap or right-click widgets to reveal a seamless history dialog—no setup, no clutter, just the trends you need. With full support for Data Driven widgets, live-to-history transitions, KIP puts your boat’s story at your fingertips—so you can make smarter decisions, spot patterns, and sail with confidence.
 
 ## Night Modes
 Keep your night vision with automatic or manual day and night switching to a color preserving dim mode or an all Red theme. The images below look very dark, but at night... they are perfect!
@@ -258,16 +261,17 @@ Once done with your work, from your fork's working branch, make a GitHub pull re
 
 For comprehensive development guidance, please refer to these instruction files:
 
-### **Primary Instructions:**
+### Primary Instructions
 - **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration.
-- **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v20+ coding standards, component patterns, and framework best practices.
+- **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v21+ coding standards, component patterns, and framework best practices.
+- **[Copilot Agent Instructions](./.github/copilot-instructions.md)**: Architecture details and coding-agent guardrails for this repository.
 
-### **Development Workflow:**
+### Development Workflow
 1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns.
 2. **Angular Standards**: Follow `.github/instructions/angular.instructions.md` for modern Angular development.
 3. **Setup & Build**: Use this README for project setup and build commands.
 
-### **Key Priorities:**
+### Key Priorities
 - **Widget Development**: Use the Host2 widget pattern (signals + directives) and scaffold new widgets with the `create-host2-widget` schematic (see `COPILOT.md`).
 - **Angular Patterns**: Use signals, standalone components, and modern control flow.
 - **Theming**: Follow KIP's theme system for consistent UI.

@@ -1,18 +1,18 @@
 import { TestBed, inject } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { DatasetService, TimeScaleFormat } from './data-set.service';
+import { DatasetStreamService, TimeScaleFormat } from './dataset-stream.service';
 import { SettingsService } from './settings.service';
 import { IAppConfig } from '../interfaces/app-settings.interfaces';
 import { DataService } from './data.service';
-import { SignalkHistoryService } from './signalk-history.service';
-import { of } from 'rxjs';
+import { HistoryApiClientService } from './history-api-client.service';
+import { firstValueFrom, of } from 'rxjs';
 
 
-describe('DatasetService', () => {
-  let historyServiceMock: jasmine.SpyObj<SignalkHistoryService>;
+describe('DatasetStreamService', () => {
+  let historyServiceMock: jasmine.SpyObj<HistoryApiClientService>;
 
   beforeEach(() => {
-    historyServiceMock = jasmine.createSpyObj<SignalkHistoryService>('SignalkHistoryService', ['getValues']);
+    historyServiceMock = jasmine.createSpyObj<HistoryApiClientService>('HistoryApiClientService', ['getValues']);
     historyServiceMock.getValues.and.resolveTo(null);
 
     const appSettingsMock: Partial<SettingsService> = {
@@ -31,19 +31,19 @@ describe('DatasetService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        DatasetService,
+        DatasetStreamService,
         { provide: SettingsService, useValue: appSettingsMock },
         { provide: DataService, useValue: dataServiceMock },
-        { provide: SignalkHistoryService, useValue: historyServiceMock }
+        { provide: HistoryApiClientService, useValue: historyServiceMock }
       ]
     });
   });
 
-  it('should be created', inject([DatasetService], (service: DatasetService) => {
+  it('should be created', inject([DatasetStreamService], (service: DatasetStreamService) => {
     expect(service).toBeTruthy();
   }));
 
-  it('derives ~120 points per window for larger windows', inject([DatasetService], (service: DatasetService) => {
+  it('derives ~120 points per window for larger windows', inject([DatasetStreamService], (service: DatasetStreamService) => {
     const mk = (timeScaleFormat: TimeScaleFormat, period: number) => ({
       uuid: 'ds-1',
       path: 'navigation.speedThroughWater',
@@ -73,7 +73,7 @@ describe('DatasetService', () => {
     expect(sixtyHours.smoothingPeriod).toBe(30);
   }));
 
-  it('enforces a minimum sampling interval for very small windows', inject([DatasetService], (service: DatasetService) => {
+  it('enforces a minimum sampling interval for very small windows', inject([DatasetStreamService], (service: DatasetStreamService) => {
     const ds = {
       uuid: 'ds-2',
       path: 'navigation.headingTrue',
@@ -91,7 +91,7 @@ describe('DatasetService', () => {
     expect(cfg.smoothingPeriod).toBe(2);
   }));
 
-  it('skips history seeding when sampleTime is below one second', inject([DatasetService], async (service: DatasetService) => {
+  it('skips history seeding when sampleTime is below one second', inject([DatasetStreamService], async (service: DatasetStreamService) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((service as any).shouldSeedHistory(999)).toBeFalse();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,7 +116,7 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
-  it('passes history resolution in seconds when seeding history', inject([DatasetService], async (service: DatasetService) => {
+  it('passes history resolution in seconds when seeding history', inject([DatasetStreamService], async (service: DatasetStreamService) => {
     historyServiceMock.getValues.calls.reset();
     historyServiceMock.getValues.and.resolveTo({
       context: 'vessels.self',
@@ -150,7 +150,7 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
-  it('hydrates dataSource history from seeded history datapoints', inject([DatasetService], async (service: DatasetService) => {
+  it('hydrates dataSource history from seeded history datapoints', inject([DatasetStreamService], async (service: DatasetStreamService) => {
     historyServiceMock.getValues.calls.reset();
     historyServiceMock.getValues.and.resolveTo({
       context: 'vessels.self',
@@ -193,7 +193,62 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
-  it('continues startup in live mode when history seeding throws', inject([DatasetService], async (service: DatasetService) => {
+  it('recomputes SMA locally for seeded history before live updates', inject([DatasetStreamService], async (service: DatasetStreamService) => {
+    historyServiceMock.getValues.calls.reset();
+    historyServiceMock.getValues.and.resolveTo({
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:05:00.000Z'
+      },
+      values: [
+        { path: 'navigation.speedThroughWater', method: 'sma' },
+        { path: 'navigation.speedThroughWater', method: 'avg' },
+        { path: 'navigation.speedThroughWater', method: 'min' },
+        { path: 'navigation.speedThroughWater', method: 'max' }
+      ],
+      // Intentionally make returned SMA equal to value to emulate backend/provider behavior
+      // that collapses the historical SMA column.
+      data: [
+        ['2026-02-16T00:00:00.000Z', 2, 2, 2, 2],
+        ['2026-02-16T00:01:00.000Z', 4, 4, 4, 4],
+        ['2026-02-16T00:02:00.000Z', 6, 6, 6, 6]
+      ]
+    });
+
+    const config = {
+      uuid: 'ds-seeded-sma',
+      path: 'navigation.speedThroughWater',
+      pathSource: 'test',
+      baseUnit: 'number',
+      timeScaleFormat: 'Last 5 Minutes' as const,
+      period: 1,
+      label: 'test-seeded-sma'
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any)._svcDatasetConfigs = [config];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any).start(config.uuid);
+
+    const batchOrLive = await firstValueFrom(service.getDatasetBatchThenLiveObservable(config.uuid)!);
+    expect(Array.isArray(batchOrLive)).toBeTrue();
+    const batch = batchOrLive as unknown as { data: { value: number; sma: number } }[];
+
+    // First 3 points are seeded history values (a first live point is emitted afterwards).
+    expect(batch[0].data.value).toBe(2);
+    expect(batch[1].data.value).toBe(4);
+    expect(batch[2].data.value).toBe(6);
+
+    // Local SMA recomputation should be [2, 3, 4], not [2, 4, 6].
+    expect(batch[0].data.sma).toBe(2);
+    expect(batch[1].data.sma).toBe(3);
+    expect(batch[2].data.sma).toBe(4);
+
+    service.ngOnDestroy();
+  }));
+
+  it('continues startup in live mode when history seeding throws', inject([DatasetStreamService], async (service: DatasetStreamService) => {
     historyServiceMock.getValues.calls.reset();
     historyServiceMock.getValues.and.rejectWith(new Error('History backend failure'));
 
@@ -224,7 +279,7 @@ describe('DatasetService', () => {
     service.ngOnDestroy();
   }));
 
-  it('sets dataset stats only on final history datapoint using datapoint values', inject([DatasetService], (service: DatasetService) => {
+  it('sets dataset stats only on final history datapoint using datapoint values', inject([DatasetStreamService], (service: DatasetStreamService) => {
     const response = {
       context: 'vessels.self',
       range: {
@@ -260,7 +315,31 @@ describe('DatasetService', () => {
     expect(datapoints[2].data.lastMaximum).toBe(6);
   }));
 
-  it('uses circular stats for final history datapoint in rad direction domain', inject([DatasetService], (service: DatasetService) => {
+  it('maps history method average as avg for datapoint value extraction', inject([DatasetStreamService], (service: DatasetStreamService) => {
+    const response = {
+      context: 'vessels.self',
+      range: {
+        from: '2026-02-16T00:00:00.000Z',
+        to: '2026-02-16T00:03:00.000Z'
+      },
+      values: [
+        { path: 'environment.wind.angleApparent', method: 'average' }
+      ],
+      data: [
+        ['2026-02-16T00:00:00.000Z', 0.5],
+        ['2026-02-16T00:01:00.000Z', 0.6]
+      ]
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datapoints = (service as any).convertHistoryToDatapoints(response, 'number', 'scalar');
+
+    expect(datapoints.length).toBe(2);
+    expect(datapoints[0].data.value).toBe(0.5);
+    expect(datapoints[1].data.value).toBe(0.6);
+  }));
+
+  it('uses circular stats for final history datapoint in rad direction domain', inject([DatasetStreamService], (service: DatasetStreamService) => {
     const response = {
       context: 'vessels.self',
       range: {

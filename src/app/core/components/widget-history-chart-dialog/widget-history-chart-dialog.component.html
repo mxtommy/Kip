@@ -1,0 +1,29 @@
+<div class="dialogue-header">
+  <h5 mat-dialog-title>{{data.title}}</h5>
+  <button mat-icon-button class="dialog-close-icon" [mat-dialog-close]="false">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<mat-dialog-content>
+  <div class="time-select">
+    <mat-button-toggle-group [(ngModel)]="selectedPeriod" hideSingleSelectionIndicator="true" aria-label="Chart Time Span Selection">
+      <mat-button-toggle value="PT15M" (click)="setPeriod('PT15M')">15 Minutes</mat-button-toggle>
+      <mat-button-toggle value="PT1H" (click)="setPeriod('PT1H')">1 Hour</mat-button-toggle>
+      <mat-button-toggle value="PT8H" (click)="setPeriod('PT8H')">8 Hours</mat-button-toggle>
+      <mat-button-toggle value="PT24H" (click)="setPeriod('PT24H')">24 Hours</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+  <div class="history-dialog-content">
+    @if (loading()) {
+      <p class="history-message">Loading historical data…</p>
+    } @else if (error()) {
+      <p class="history-message error">{{ error() }}</p>
+    } @else if (hasNoData()) {
+      <p class="history-message">No historical data is available for this widget. If you are not using the built-in KIP History API provider, validate your plugin configuration supports the widget's path and try again.</p>
+    } @else {
+      <div class="chart-wrapper">
+        <canvas #historyCanvas></canvas>
+      </div>
+    }
+  </div>
+</mat-dialog-content>

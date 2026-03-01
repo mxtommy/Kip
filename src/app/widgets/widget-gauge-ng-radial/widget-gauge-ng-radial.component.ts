@@ -39,6 +39,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
   // Static default configuration (legacy parity)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {

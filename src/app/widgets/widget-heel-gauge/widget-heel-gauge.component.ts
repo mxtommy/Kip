@@ -70,6 +70,7 @@ export class WidgetHeelGaugeComponent implements AfterViewInit {
 
   // Static Host2 default config (parity with legacy defaultConfig)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Heel',
     filterSelfPaths: true,
     paths: {

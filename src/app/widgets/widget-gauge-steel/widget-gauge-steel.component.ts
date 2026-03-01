@@ -26,6 +26,7 @@ export class WidgetSteelGaugeComponent {
 
   // Static default config (parity with legacy defaultConfig)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
+    supportAutomaticHistoricalSeries: true,
     displayName: 'Gauge Label',
     filterSelfPaths: true,
     paths: {
