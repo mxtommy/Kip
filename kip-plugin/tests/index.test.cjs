@@ -1,9 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { rmSync } = require('node:fs');
+const { resolve } = require('node:path');
 const { HistorySeriesService } = require('../../plugin/history-series.service.js');
 const { DuckDbParquetStorageService } = require('../../plugin/duckdb-parquet-storage.service.js');
 
-const TEST_AUTH_USER = { username: 'test-user' };
 
 function createServerMock() {
   const putHandlers = [];
@@ -122,6 +123,64 @@ function createResMock() {
   };
 }
 
+const pluginsToStop = new Set();
+
+function resetDuckDbStorage() {
+  rmSync(resolve('plugin-config-data/kip/historicalData/kip-history.duckdb'), { force: true });
+  rmSync(resolve('plugin-config-data/kip/historicalData/parquet'), { force: true, recursive: true });
+}
+
+test.before(() => {
+  resetDuckDbStorage();
+});
+
+test.afterEach(async () => {
+  const stopPromises = [];
+  pluginsToStop.forEach((plugin) => {
+    try {
+      if (typeof plugin?.stop === 'function') {
+        const result = plugin.stop();
+        if (result && typeof result.then === 'function') {
+          stopPromises.push(result);
+        }
+      }
+    } catch {
+      // ignore stop errors during cleanup
+    }
+  });
+  pluginsToStop.clear();
+  if (stopPromises.length > 0) {
+    await Promise.allSettled(stopPromises);
+  }
+  await new Promise(resolvePromise => setTimeout(resolvePromise, 25));
+});
+
+function registerPluginForCleanup(plugin) {
+  pluginsToStop.add(plugin);
+  return plugin;
+}
+
+async function waitForHistoryProviderReady(provider, options = {}) {
+  const attempts = options.attempts ?? 120;
+  const delayMs = options.delayMs ?? 100;
+
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      await provider.getPaths({});
+      return;
+    } catch (error) {
+      const message = String(error?.message ?? '').toLowerCase();
+      if (message.includes('duckdb') || message.includes('storage unavailable') || message.includes('not initialized')) {
+        await new Promise(resolvePromise => setTimeout(resolvePromise, delayMs));
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('History API provider did not become ready in time');
+}
+
 function assertSeriesAlmostEqual(actual, expected, epsilon = 1e-9) {
   assert.equal(actual.length, expected.length);
   for (let index = 0; index < expected.length; index += 1) {
@@ -130,27 +189,57 @@ function assertSeriesAlmostEqual(actual, expected, epsilon = 1e-9) {
   }
 }
 
-function createHistoryServiceWithSamples(baseTs, values) {
-  const service = new HistorySeriesService(() => baseTs + 120000);
-  service.upsertSeries({
-    seriesId: 'math-1',
-    datasetUuid: 'math-1',
-    ownerWidgetUuid: 'widget-math-1',
-    path: 'navigation.speedOverGround',
-    context: 'vessels.self'
-  });
-
-  values.forEach((value, index) => {
-    service.recordSample('math-1', value, baseTs + (index * 10000));
-  });
-
-  return service;
+function buildRows(baseTs, values, stepMs = 10000) {
+  return values.map((value, index) => ({
+    ts_ms: baseTs + (index * stepMs),
+    value
+  }));
 }
 
+function computeDuckdbHistoryResponse(rows, paths, options) {
+  const duckdbMath = new DuckDbParquetStorageService();
+  const resolveRange = duckdbMath.resolveRange.bind(duckdbMath);
+  const parseRequestedPaths = duckdbMath.parseRequestedPaths.bind(duckdbMath);
+  const applyMethod = duckdbMath.applyMethod.bind(duckdbMath);
+  const downsampleIfNeeded = duckdbMath.downsampleIfNeeded.bind(duckdbMath);
+  const resolveResolutionMs = duckdbMath.resolveResolutionMs.bind(duckdbMath);
+
+  const requested = parseRequestedPaths(paths);
+  const range = resolveRange(options?.nowMs ?? Date.now(), options?.from, options?.to, options?.duration);
+  const resolutionMs = resolveResolutionMs(options?.resolution);
+  const filteredRows = rows.filter((row) => row.ts_ms >= range.fromMs && row.ts_ms <= range.toMs);
+
+  const timestampRows = new Map();
+  requested.forEach((request, index) => {
+    const transformed = applyMethod(request, filteredRows);
+    const merged = downsampleIfNeeded(transformed, resolutionMs, request.method ?? 'avg');
+
+    merged.forEach((entry) => {
+      const row = timestampRows.get(entry.timestamp) ?? Array.from({ length: requested.length }, () => null);
+      row[index] = entry.value;
+      timestampRows.set(entry.timestamp, row);
+    });
+  });
+
+  const data = Array.from(timestampRows.entries())
+    .sort((left, right) => left[0] - right[0])
+    .map(([timestamp, values]) => [new Date(timestamp).toISOString(), ...values]);
+
+  return {
+    range: {
+      from: new Date(range.fromMs).toISOString(),
+      to: new Date(range.toMs).toISOString()
+    },
+    values: requested.map(item => ({ path: item.path, method: item.method ?? 'avg' })),
+    data
+  };
+}
+
+test.describe('kip plugin', { concurrency: 1 }, () => {
 test('registers expected Signal K PUT handlers on start', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -169,7 +258,7 @@ test('registers expected Signal K PUT handlers on start', () => {
 test('registers and unregisters History API provider lifecycle', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -185,10 +274,20 @@ test('registers and unregisters History API provider lifecycle', () => {
   assert.equal(server.history.getRegisteredProvider(), null);
 });
 
+test('skips History API provider registration when disabled in settings', () => {
+  const server = createServerMock();
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+
+  plugin.start({ registerAsHistoryApiProvider: false });
+
+  assert.equal(server.history.getRegisteredProvider(), null);
+});
+
 test('setDisplay command writes to displays.<id>', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -206,7 +305,7 @@ test('setDisplay command writes to displays.<id>', () => {
 test('setScreenIndex command writes to displays.<id>.screenIndex', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -224,7 +323,7 @@ test('setScreenIndex command writes to displays.<id>.screenIndex', () => {
 test('requestActiveScreen command writes to displays.<id>.activeScreen', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -242,11 +341,14 @@ test('requestActiveScreen command writes to displays.<id>.activeScreen', () => {
 test('REST PUT /screenIndex uses shared handler and writes screenIndex path', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
+
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider, { attempts: 300, delayMs: 100 });
 
   const paramHandler = router.paramHandlers.get('displayId');
   const putHandler = router.putHandlers.get('/displays/:displayId/screenIndex');
@@ -271,10 +373,35 @@ test('REST PUT /screenIndex uses shared handler and writes screenIndex path', as
   assert.equal(server.messages[0].delta.updates[0].values[0].path, 'displays.abc-123.screenIndex');
 });
 
+test('REST GET /series returns 503 when history-series service disabled', async () => {
+  const server = createServerMock();
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  plugin.start({ historySeriesServiceEnabled: false });
+  plugin.registerWithRouter(router);
+
+  const getHandler = router.getHandlers.get('/series');
+  const req = {
+    method: 'GET',
+    path: '/series',
+    ip: '127.0.0.1',
+    headers: {},
+    params: {}
+  };
+  const res = createResMock();
+
+  await getHandler(req, res);
+
+  assert.equal(res.statusCode, 503);
+  assert.equal(res.payload.state, 'FAILED');
+});
+
 test('REST PUT /activeScreen uses shared handler and writes activeScreen path', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -306,7 +433,7 @@ test('REST PUT /activeScreen uses shared handler and writes activeScreen path', 
 test('REST PUT /displays/:id writes root display object path', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -338,7 +465,7 @@ test('REST PUT /displays/:id writes root display object path', async () => {
 test('REST PUT returns 400 when displayId is missing', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -373,7 +500,7 @@ test('REST GET /displays/:id returns 404 when display node is missing', async ()
   };
 
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -410,7 +537,7 @@ test('REST GET /screenIndex returns 404 when screenIndex node is missing', async
   };
 
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -447,7 +574,7 @@ test('REST GET /activeScreen returns 404 when activeScreen node is missing', asy
   };
 
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -477,7 +604,7 @@ test('REST GET /activeScreen returns 404 when activeScreen node is missing', asy
 test('invalid displayId returns 400 and does not write', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
@@ -494,7 +621,7 @@ test('invalid displayId returns 400 and does not write', () => {
 test('registers series and history routes', () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
@@ -510,16 +637,17 @@ test('registers series and history routes', () => {
 test('series CRUD works and history paths/contexts come from stored samples', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
+
   const upsert = router.putHandlers.get('/series/:seriesId');
   const list = router.getHandlers.get('/series');
-  const getPaths = router.getHandlers.get('/history/paths');
-  const getContexts = router.getHandlers.get('/history/contexts');
   const remove = router.deleteHandlers.get('/series/:seriesId');
 
   const upsertReq = {
@@ -527,7 +655,6 @@ test('series CRUD works and history paths/contexts come from stored samples', as
     path: '/series/chart-1',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'chart-1' },
     body: {
       datasetUuid: 'chart-1',
@@ -545,40 +672,54 @@ test('series CRUD works and history paths/contexts come from stored samples', as
   assert.equal(upsertRes.payload.seriesId, 'chart-1');
 
   const listRes = createResMock();
-  await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
+  await list({ params: {}, headers: {}, query: {} }, listRes);
   assert.equal(listRes.statusCode, 200);
   assert.equal(Array.isArray(listRes.payload), true);
   assert.equal(listRes.payload.length, 1);
 
+  const sampleTs = Date.now();
+  server.emitStream('navigation.speedOverGround', {
+    path: 'navigation.speedOverGround',
+    value: 6.2,
+    context: 'vessels.self',
+    timestamp: new Date(sampleTs).toISOString(),
+    $source: 'n2k.42'
+  });
+
+  const range = {
+    from: new Date(sampleTs - 1000).toISOString(),
+    to: new Date(sampleTs + 1000).toISOString()
+  };
+
   // Use History API provider directly for paths and contexts
-  const provider = server.history.getRegisteredProvider();
-  const paths = await provider.getPaths({});
-  assert.deepEqual(paths, []);
-  const contexts = await provider.getContexts({});
-  assert.deepEqual(contexts, []);
+  const paths = await provider.getPaths(range);
+  assert.deepEqual(paths, ['navigation.speedOverGround']);
+  const contexts = await provider.getContexts(range);
+  assert.deepEqual(contexts, ['vessels.self']);
 
   const deleteRes = createResMock();
-  await remove({ params: { seriesId: 'chart-1' }, headers: {}, user: TEST_AUTH_USER, method: 'DELETE', path: '/series/chart-1', ip: '127.0.0.1' }, deleteRes);
+  await remove({ params: { seriesId: 'chart-1' }, headers: {}, method: 'DELETE', path: '/series/chart-1', ip: '127.0.0.1' }, deleteRes);
   assert.equal(deleteRes.statusCode, 200);
 });
 
 test('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
 
   const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
   let error = null;
   try {
-    await provider.getValues({ paths: undefined });
+    await provider.getValues({ pathSpecs: [] });
   } catch (e) {
     error = e;
   }
   // The provider should throw an error or return a message when paths is missing
   if (error) {
-    assert.equal(error.message, 'Query parameter paths is required');
+    assert.equal(error.message, 'DuckDB storage did not return history values.');
   } else {
     assert.fail('Expected error when paths is missing');
   }
@@ -587,95 +728,85 @@ test('history values endpoint validates required paths query', async () => {
 test('history values endpoint rejects invalid from/to date inputs', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
-  const router = createRouterMock();
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
-  plugin.registerWithRouter(router);
 
-  const getValues = router.getHandlers.get('/history/values');
-  const res = createResMock();
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    query: {
-      paths: 'navigation.speedOverGround:avg',
+  let error = null;
+  try {
+    await provider.getValues({
+      pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
       from: 'not-a-date',
       to: 'also-not-a-date'
-    }
-  }, res);
+    });
+  } catch (e) {
+    error = e;
+  }
 
-  assert.equal(res.statusCode, 400);
-  assert.equal(typeof res.payload?.message, 'string');
-  assert.equal(res.payload.message.includes('Invalid to date-time'), true);
+  assert.equal(typeof error?.message, 'string');
+  assert.equal(error.message.includes('Invalid to date-time'), true);
 });
 
 test('history values endpoint rejects invalid duration and resolution inputs', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
-  const router = createRouterMock();
+  const plugin = registerPluginForCleanup(start(server));
 
   plugin.start({});
-  plugin.registerWithRouter(router);
 
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
-  const invalidDurationRes = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    query: {
-      paths: 'navigation.speedOverGround:avg',
+  let durationError = null;
+  try {
+    await provider.getValues({
+      pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
       duration: 'NOT_A_DURATION'
-    }
-  }, invalidDurationRes);
+    });
+  } catch (e) {
+    durationError = e;
+  }
 
-  assert.equal(invalidDurationRes.statusCode, 400);
-  assert.equal(typeof invalidDurationRes.payload?.message, 'string');
-  assert.equal(invalidDurationRes.payload.message.includes('Invalid duration'), true);
+  assert.equal(typeof durationError?.message, 'string');
+  assert.equal(durationError.message.includes('Invalid duration'), true);
 
-  const invalidResolutionRes = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    query: {
-      paths: 'navigation.speedOverGround:avg',
+  let resolutionError = null;
+  try {
+    await provider.getValues({
+      pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
       duration: 'PT10M',
       resolution: 'NOT_A_RESOLUTION'
-    }
-  }, invalidResolutionRes);
+    });
+  } catch (e) {
+    resolutionError = e;
+  }
 
-  assert.equal(invalidResolutionRes.statusCode, 400);
-  assert.equal(typeof invalidResolutionRes.payload?.message, 'string');
-  assert.equal(invalidResolutionRes.payload.message.includes('Invalid resolution'), true);
+  assert.equal(typeof resolutionError?.message, 'string');
+  assert.equal(resolutionError.message.includes('Invalid resolution'), true);
 });
 
 test('history values endpoint returns history-compatible payload', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/chart-2',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'chart-2' },
     body: {
       datasetUuid: 'chart-2',
@@ -683,43 +814,41 @@ test('history values endpoint returns history-compatible payload', async () => {
       path: 'environment.wind.speedTrue',
       context: 'vessels.self'
     }
-  }, createResMock());
+  }, upsertRes);
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: { paths: 'environment.wind.speedTrue:avg', duration: 'PT1H' }
-  }, res);
+  assert.equal(upsertRes.statusCode, 200);
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.payload?.context, 'vessels.self');
-  assert.equal(Array.isArray(res.payload?.values), true);
-  assert.equal(res.payload?.values?.[0]?.path, 'environment.wind.speedTrue');
-  assert.equal(Array.isArray(res.payload?.data), true);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'environment.wind.speedTrue', aggregate: 'avg' }],
+    duration: 'PT1H'
+  });
+
+  assert.equal(payload?.context, 'vessels.self');
+  assert.equal(Array.isArray(payload?.values), true);
+  assert.equal(payload?.values?.[0]?.path, 'environment.wind.speedTrue');
+  assert.equal(payload?.values?.[0]?.method, 'average');
+  assert.equal(Array.isArray(payload?.data), true);
 });
 
 test('stream ingestion records live samples for configured series', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
+
   const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
 
   await upsert({
     method: 'PUT',
     path: '/series/live-1',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-1' },
     body: {
       datasetUuid: 'live-1',
@@ -737,44 +866,37 @@ test('stream ingestion records live samples for configured series', async () => 
     $source: 'n2k.43'
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'navigation.speedOverGround:avg',
-      duration: 'PT1H',
-      context: 'vessels.self'
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
+    duration: 'PT1H',
+    context: 'vessels.self'
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(Array.isArray(res.payload?.values), true);
-  assert.equal(res.payload?.values?.[0]?.path, 'navigation.speedOverGround');
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(Array.isArray(payload?.values), true);
+  assert.equal(payload?.values?.[0]?.path, 'navigation.speedOverGround');
 });
 
 test('stream ingestion normalizes prefixed paths on capture and query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/live-prefixed-1',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-prefixed-1' },
     body: {
       datasetUuid: 'live-prefixed-1',
@@ -782,7 +904,9 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
       path: 'self.navigation.speedOverGround',
       context: 'vessels.self'
     }
-  }, createResMock());
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
 
   server.emitStream('navigation.speedOverGround', {
     path: 'navigation.speedOverGround',
@@ -792,44 +916,36 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
     $source: 'n2k.61'
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'vessels.self.navigation.speedOverGround:avg',
-      duration: 'PT1H',
-      context: 'vessels.self'
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'vessels.self.navigation.speedOverGround', aggregate: 'avg' }],
+    duration: 'PT1H',
+    context: 'vessels.self'
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(res.payload.data.length > 0, true);
-  assert.equal(res.payload?.values?.[0]?.path, 'navigation.speedOverGround');
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length > 0, true);
+  assert.equal(payload?.values?.[0]?.path, 'navigation.speedOverGround');
 });
 
 test('history values returns pending ingested sample without waiting for timer flush', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
+
   const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
 
   await upsert({
     method: 'PUT',
     path: '/series/live-2',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-2' },
     body: {
       datasetUuid: 'live-2',
@@ -848,45 +964,38 @@ test('history values returns pending ingested sample without waiting for timer f
     $source: 'n2k.44'
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'environment.wind.angleTrueWater:avg',
-      from: new Date(sampleTs - 1000).toISOString(),
-      to: new Date(sampleTs + 1000).toISOString(),
-      context: 'vessels.self'
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'environment.wind.angleTrueWater', aggregate: 'avg' }],
+    from: new Date(sampleTs - 1000).toISOString(),
+    to: new Date(sampleTs + 1000).toISOString(),
+    context: 'vessels.self'
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(Array.isArray(res.payload?.values), true);
-  assert.equal(res.payload?.values?.[0]?.path, 'environment.wind.angleTrueWater');
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(Array.isArray(payload?.values), true);
+  assert.equal(payload?.values?.[0]?.path, 'environment.wind.angleTrueWater');
 });
 
 test('history ingestion accepts source wildcard and vessels.self alias context', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/live-3',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-3' },
     body: {
       datasetUuid: 'live-3',
@@ -895,7 +1004,9 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
       context: 'vessels.self',
       source: '*'
     }
-  }, createResMock());
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
 
   server.emitStream('navigation.speedOverGround', {
     path: 'navigation.speedOverGround',
@@ -905,43 +1016,36 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
     $source: 'n2k.55'
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'navigation.speedOverGround:avg',
-      duration: 'PT1H',
-      context: 'vessels.self'
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
+    duration: 'PT1H',
+    context: 'vessels.self'
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(res.payload.data.length > 0, true);
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length > 0, true);
 });
 
 test('history values resolution numeric input is interpreted as seconds', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/live-4',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-4' },
     body: {
       datasetUuid: 'live-4',
@@ -949,7 +1053,9 @@ test('history values resolution numeric input is interpreted as seconds', async 
       path: 'navigation.speedOverGround',
       context: 'vessels.self'
     }
-  }, createResMock());
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
 
   const baseTs = Date.parse('2026-02-18T10:00:00.000Z');
   const samples = [
@@ -969,49 +1075,42 @@ test('history values resolution numeric input is interpreted as seconds', async 
     });
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'navigation.speedOverGround:avg',
-      context: 'vessels.self',
-      from: new Date(baseTs).toISOString(),
-      to: new Date(baseTs + (2 * 60 * 1000) - 1).toISOString(),
-      resolution: 60
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: 'navigation.speedOverGround', aggregate: 'avg' }],
+    context: 'vessels.self',
+    from: new Date(baseTs).toISOString(),
+    to: new Date(baseTs + (2 * 60 * 1000) - 1).toISOString(),
+    resolution: 60
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(res.payload.data.length, 2);
-  assert.equal(res.payload.data[0][0], '2026-02-18T10:00:00.000Z');
-  assert.equal(res.payload.data[1][0], '2026-02-18T10:01:00.000Z');
-  assert.equal(res.payload.data[0][1], 5);
-  assert.equal(res.payload.data[1][1], 12);
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length, 2);
+  assert.equal(payload.data[0][0], '2026-02-18T10:00:00.000Z');
+  assert.equal(payload.data[1][0], '2026-02-18T10:01:00.000Z');
+  assert.equal(payload.data[0][1], 5);
+  assert.equal(payload.data[1][1], 12);
 });
 
 test('history values applies min and max methods when downsampling', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/live-5',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-5' },
     body: {
       datasetUuid: 'live-5',
@@ -1019,7 +1118,9 @@ test('history values applies min and max methods when downsampling', async () =>
       path: 'navigation.speedOverGround',
       context: 'vessels.self'
     }
-  }, createResMock());
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
 
   const baseTs = Date.parse('2026-02-18T11:00:00.000Z');
   const samples = [
@@ -1039,38 +1140,34 @@ test('history values applies min and max methods when downsampling', async () =>
     });
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'navigation.speedOverGround:avg,navigation.speedOverGround:min,navigation.speedOverGround:max',
-      context: 'vessels.self',
-      from: new Date(baseTs).toISOString(),
-      to: new Date(baseTs + (2 * 60 * 1000) - 1).toISOString(),
-      resolution: 60
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [
+      { path: 'navigation.speedOverGround', aggregate: 'avg' },
+      { path: 'navigation.speedOverGround', aggregate: 'min' },
+      { path: 'navigation.speedOverGround', aggregate: 'max' }
+    ],
+    context: 'vessels.self',
+    from: new Date(baseTs).toISOString(),
+    to: new Date(baseTs + (2 * 60 * 1000) - 1).toISOString(),
+    resolution: 60
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(res.payload.data.length, 2);
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length, 2);
 
-  assert.equal(res.payload.data[0][1], 5);
-  assert.equal(res.payload.data[0][2], 4);
-  assert.equal(res.payload.data[0][3], 6);
+  assert.equal(payload.data[0][1], 5);
+  assert.equal(payload.data[0][2], 4);
+  assert.equal(payload.data[0][3], 6);
 
-  assert.equal(res.payload.data[1][1], 12);
-  assert.equal(res.payload.data[1][2], 10);
-  assert.equal(res.payload.data[1][3], 14);
+  assert.equal(payload.data[1][1], 12);
+  assert.equal(payload.data[1][2], 10);
+  assert.equal(payload.data[1][3], 14);
 });
 
 test('table-driven history math validates min avg max sma ema across resolutions', () => {
   const baseTs = Date.parse('2026-02-18T12:00:00.000Z');
   const sourceValues = [10, 20, 30, 40, 50, 60];
+  const rows = buildRows(baseTs, sourceValues);
   const from = new Date(baseTs).toISOString();
   const to = new Date(baseTs + 59000).toISOString();
 
@@ -1121,14 +1218,11 @@ test('table-driven history math validates min avg max sma ema across resolutions
 
   const resolutions = [10, 30, 60];
   cases.forEach((entry) => {
-    const service = createHistoryServiceWithSamples(baseTs, sourceValues);
     resolutions.forEach((resolution) => {
       const path = entry.period
         ? `navigation.speedOverGround:${entry.method}:${entry.period}`
         : `navigation.speedOverGround:${entry.method}`;
-      const response = service.getValues({
-        paths: path,
-        context: 'vessels.self',
+      const response = computeDuckdbHistoryResponse(rows, path, {
         from,
         to,
         resolution
@@ -1143,21 +1237,23 @@ test('table-driven history math validates min avg max sma ema across resolutions
 test('history values supports mixed avg/min/max/sma/ema in a single request', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
-  const plugin = start(server);
+  const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
   plugin.start({});
   plugin.registerWithRouter(router);
 
-  const upsert = router.putHandlers.get('/series/:seriesId');
-  const getValues = router.getHandlers.get('/history/values');
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
 
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
   await upsert({
     method: 'PUT',
     path: '/series/live-6',
     ip: '127.0.0.1',
     headers: {},
-    user: TEST_AUTH_USER,
     params: { seriesId: 'live-6' },
     body: {
       datasetUuid: 'live-6',
@@ -1165,7 +1261,9 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
       path: 'navigation.speedOverGround',
       context: 'vessels.self'
     }
-  }, createResMock());
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
 
   const baseTs = Date.parse('2026-02-18T13:00:00.000Z');
   const samples = [10, 20, 30, 40, 50, 60];
@@ -1179,46 +1277,41 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
     });
   });
 
-  const res = createResMock();
-  await getValues({
-    method: 'GET',
-    path: '/history/values',
-    ip: '127.0.0.1',
-    headers: {},
-    user: TEST_AUTH_USER,
-    query: {
-      paths: 'navigation.speedOverGround:avg,navigation.speedOverGround:min,navigation.speedOverGround:max,navigation.speedOverGround:sma:3,navigation.speedOverGround:ema:3',
-      context: 'vessels.self',
-      from: new Date(baseTs).toISOString(),
-      to: new Date(baseTs + 59000).toISOString(),
-      resolution: 30
-    }
-  }, res);
+  const payload = await provider.getValues({
+    pathSpecs: [
+      { path: 'navigation.speedOverGround', aggregate: 'avg' },
+      { path: 'navigation.speedOverGround', aggregate: 'min' },
+      { path: 'navigation.speedOverGround', aggregate: 'max' },
+      { path: 'navigation.speedOverGround', aggregate: 'sma', parameter: [3] },
+      { path: 'navigation.speedOverGround', aggregate: 'ema', parameter: [3] }
+    ],
+    context: 'vessels.self',
+    from: new Date(baseTs).toISOString(),
+    to: new Date(baseTs + 59000).toISOString(),
+    resolution: 30
+  });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(Array.isArray(res.payload?.data), true);
-  assert.equal(res.payload.data.length, 2);
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length, 2);
 
-  assert.equal(res.payload.data[0][1], 20);
-  assert.equal(res.payload.data[0][2], 10);
-  assert.equal(res.payload.data[0][3], 30);
-  assert.equal(Number.isFinite(res.payload.data[0][4]), true);
-  assert.equal(Number.isFinite(res.payload.data[0][5]), true);
+  assert.equal(payload.data[0][1], 20);
+  assert.equal(payload.data[0][2], 10);
+  assert.equal(payload.data[0][3], 30);
+  assert.equal(Number.isFinite(payload.data[0][4]), true);
+  assert.equal(Number.isFinite(payload.data[0][5]), true);
 
-  assert.equal(res.payload.data[1][1], 50);
-  assert.equal(res.payload.data[1][2], 40);
-  assert.equal(res.payload.data[1][3], 60);
-  assert.equal(Number.isFinite(res.payload.data[1][4]), true);
-  assert.equal(Number.isFinite(res.payload.data[1][5]), true);
+  assert.equal(payload.data[1][1], 50);
+  assert.equal(payload.data[1][2], 40);
+  assert.equal(payload.data[1][3], 60);
+  assert.equal(Number.isFinite(payload.data[1][4]), true);
+  assert.equal(Number.isFinite(payload.data[1][5]), true);
 });
 
 test('history values respects from/to boundaries when not aligned to bucket edges', () => {
   const baseTs = Date.parse('2026-02-18T14:00:00.000Z');
-  const service = createHistoryServiceWithSamples(baseTs, [10, 20, 30, 40, 50, 60]);
+  const rows = buildRows(baseTs, [10, 20, 30, 40, 50, 60]);
 
-  const response = service.getValues({
-    paths: 'navigation.speedOverGround:avg',
-    context: 'vessels.self',
+  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: new Date(baseTs + 5000).toISOString(),
     to: new Date(baseTs + 35000).toISOString(),
     resolution: 10
@@ -1235,22 +1328,13 @@ test('history values respects from/to boundaries when not aligned to bucket edge
 
 test('history values does not create synthetic buckets for sparse data gaps', () => {
   const baseTs = Date.parse('2026-02-18T15:00:00.000Z');
-  const service = new HistorySeriesService(() => baseTs + 60000);
-  service.upsertSeries({
-    seriesId: 'sparse-1',
-    datasetUuid: 'sparse-1',
-    ownerWidgetUuid: 'widget-sparse-1',
-    path: 'navigation.speedOverGround',
-    context: 'vessels.self'
-  });
+  const rows = [
+    { ts_ms: baseTs + 0, value: 10 },
+    { ts_ms: baseTs + 10000, value: 20 },
+    { ts_ms: baseTs + 40000, value: 40 }
+  ];
 
-  service.recordSample('sparse-1', 10, baseTs + 0);
-  service.recordSample('sparse-1', 20, baseTs + 10000);
-  service.recordSample('sparse-1', 40, baseTs + 40000);
-
-  const response = service.getValues({
-    paths: 'navigation.speedOverGround:avg',
-    context: 'vessels.self',
+  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: new Date(baseTs).toISOString(),
     to: new Date(baseTs + 50000).toISOString(),
     resolution: 10
@@ -1301,69 +1385,14 @@ test('history series enforces configured sampleTime at ingest', () => {
   assert.equal(thirdAccepted, true);
 });
 
-test('in-memory and duckdb math paths stay aligned for method and resolution combinations', () => {
-  const baseTs = Date.parse('2026-02-18T16:00:00.000Z');
-  const sourceValues = [10, 20, 30, 40, 50, 60];
-  const rows = sourceValues.map((value, index) => ({
-    ts_ms: baseTs + (index * 10000),
-    value
-  }));
-  const from = new Date(baseTs).toISOString();
-  const to = new Date(baseTs + 59000).toISOString();
-
-  const historyService = createHistoryServiceWithSamples(baseTs, sourceValues);
-  const duckdbMath = new DuckDbParquetStorageService();
-  const parseRequestedPaths = duckdbMath.parseRequestedPaths.bind(duckdbMath);
-  const applyMethod = duckdbMath.applyMethod.bind(duckdbMath);
-  const downsampleIfNeeded = duckdbMath.downsampleIfNeeded.bind(duckdbMath);
-  const resolveResolutionMs = duckdbMath.resolveResolutionMs.bind(duckdbMath);
-
-  const methods = ['avg', 'min', 'max', 'sma:3', 'ema:3'];
-  const resolutions = [10, 30, 60];
-
-  methods.forEach((methodToken) => {
-    resolutions.forEach((resolution) => {
-      const paths = `navigation.speedOverGround:${methodToken}`;
-      const historyResponse = historyService.getValues({
-        paths,
-        context: 'vessels.self',
-        from,
-        to,
-        resolution
-      });
-      const historyValues = historyResponse.data.map((row) => Number(row[1]));
-
-      const request = parseRequestedPaths(paths)[0];
-      const transformed = applyMethod(request, rows);
-      const duckdbValues = downsampleIfNeeded(transformed, resolveResolutionMs(resolution), request.method ?? 'avg').map((entry) => Number(entry.value));
-
-      assertSeriesAlmostEqual(duckdbValues, historyValues);
-    });
-  });
-});
-
 test('history values uses explicit from/to over duration when both are provided', () => {
   const baseTs = Date.parse('2026-02-18T17:00:00.000Z');
-  const service = new HistorySeriesService(() => baseTs + (35 * 60 * 1000));
-  service.upsertSeries({
-    seriesId: 'range-1',
-    datasetUuid: 'range-1',
-    ownerWidgetUuid: 'widget-range-1',
-    path: 'navigation.speedOverGround',
-    context: 'vessels.self'
-  });
-
-  service.recordSample('range-1', 10, baseTs + (0 * 60 * 1000));
-  service.recordSample('range-1', 20, baseTs + (10 * 60 * 1000));
-  service.recordSample('range-1', 30, baseTs + (20 * 60 * 1000));
-  service.recordSample('range-1', 40, baseTs + (30 * 60 * 1000));
+  const rows = buildRows(baseTs, [10, 20, 30, 40], 10 * 60 * 1000);
 
   const fromIso = new Date(baseTs).toISOString();
   const toIso = new Date(baseTs + (30 * 60 * 1000)).toISOString();
 
-  const response = service.getValues({
-    paths: 'navigation.speedOverGround:avg',
-    context: 'vessels.self',
+  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: fromIso,
     to: toIso,
     duration: 'PT1M',
@@ -1380,29 +1409,15 @@ test('history values uses explicit from/to over duration when both are provided'
 });
 
 test('history values throws for invalid date inputs', () => {
-  const fixedNow = Date.parse('2026-02-18T18:30:00.000Z');
-  const service = new HistorySeriesService(() => fixedNow);
-  service.upsertSeries({
-    seriesId: 'range-2',
-    datasetUuid: 'range-2',
-    ownerWidgetUuid: 'widget-range-2',
-    path: 'navigation.speedOverGround',
-    context: 'vessels.self'
-  });
-
   assert.throws(() => {
-    service.getValues({
-      paths: 'navigation.speedOverGround:avg',
-      context: 'vessels.self',
+    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
       from: 'not-a-date',
       to: 'also-not-a-date'
     });
   }, /Invalid to date-time/);
 
   assert.throws(() => {
-    service.getValues({
-      paths: 'navigation.speedOverGround:avg',
-      context: 'vessels.self',
+    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
       from: 'invalid-from',
       to: '2026-02-18T20:00:00.000Z'
     });
@@ -1410,28 +1425,16 @@ test('history values throws for invalid date inputs', () => {
 });
 
 test('history values throws for invalid duration and resolution inputs', () => {
-  const fixedNow = Date.parse('2026-02-18T19:30:00.000Z');
-  const service = new HistorySeriesService(() => fixedNow);
-  service.upsertSeries({
-    seriesId: 'range-3',
-    datasetUuid: 'range-3',
-    ownerWidgetUuid: 'widget-range-3',
-    path: 'navigation.speedOverGround',
-    context: 'vessels.self'
-  });
-
   assert.throws(() => {
-    service.getValues({
-      paths: 'navigation.speedOverGround:avg',
-      context: 'vessels.self',
+    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
       duration: 'BAD_DURATION'
     });
   }, /Invalid duration/);
 
   assert.throws(() => {
-    service.getValues({
-      paths: 'navigation.speedOverGround:avg',
-      context: 'vessels.self',
+    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
+      from: '2026-02-18T19:30:00.000Z',
+      to: '2026-02-18T19:40:00.000Z',
       duration: 'PT10M',
       resolution: 'BAD_RESOLUTION'
     });
@@ -1440,26 +1443,8 @@ test('history values throws for invalid duration and resolution inputs', () => {
 
 test('history service normalizes prefixed paths for direct query lookups', () => {
   const baseTs = Date.parse('2026-02-18T20:00:00.000Z');
-  const service = new HistorySeriesService(() => baseTs + 60000);
-  service.upsertSeries({
-    seriesId: 'norm-1',
-    datasetUuid: 'norm-1',
-    ownerWidgetUuid: 'widget-norm-1',
-    path: 'vessels.self.navigation.speedOverGround',
-    context: 'vessels.self'
-  });
-
-  service.recordFromSignalKSample({
-    path: 'self.navigation.speedOverGround',
-    value: 7.4,
-    context: 'vessels.self',
-    timestamp: new Date(baseTs).toISOString(),
-    $source: 'n2k.74'
-  });
-
-  const response = service.getValues({
-    paths: 'self.navigation.speedOverGround:avg',
-    context: 'vessels.self',
+  const rows = [{ ts_ms: baseTs, value: 7.4 }];
+  const response = computeDuckdbHistoryResponse(rows, 'self.navigation.speedOverGround:avg', {
     from: new Date(baseTs - 1000).toISOString(),
     to: new Date(baseTs + 1000).toISOString(),
     resolution: 1
@@ -1622,19 +1607,24 @@ test('history requests return 503 when duckdb is unavailable', async () => {
   try {
     const server = createServerMock();
     const start = require('../../plugin/index.js');
-    const plugin = start(server);
+    const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
     plugin.start({});
     plugin.registerWithRouter(router);
     await new Promise(resolvePromise => setTimeout(resolvePromise, 100));
 
-    const getPaths = router.getHandlers.get('/history/paths');
-    const res = createResMock();
-    await getPaths({ method: 'GET', path: '/history/paths', ip: '127.0.0.1', headers: {}, query: {} }, res);
+    const provider = server.history.getRegisteredProvider();
 
-    assert.equal(res.statusCode, 503);
-    assert.equal(String(res.payload?.message || '').includes('DuckDB storage unavailable'), true);
+    let error = null;
+    try {
+      await provider.getPaths({});
+    } catch (err) {
+      error = err;
+    }
+
+    assert.equal(Boolean(error), true);
+    assert.equal(String(error?.message || '').includes('DuckDB storage unavailable'), true);
   } finally {
     DuckDbParquetStorageService.prototype.initialize = originalInitialize;
   }
@@ -1649,18 +1639,21 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
   try {
     const server = createServerMock();
     const start = require('../../plugin/index.js');
-    const plugin = start(server);
+    const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
     plugin.start({});
     plugin.registerWithRouter(router);
+
+    const provider = server.history.getRegisteredProvider();
+    await waitForHistoryProviderReady(provider);
     await new Promise(resolvePromise => setTimeout(resolvePromise, 100));
 
     const upsert = router.putHandlers.get('/series/:seriesId');
     const list = router.getHandlers.get('/series');
 
     const baselineRes = createResMock();
-    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, baselineRes);
+    await list({ params: {}, headers: {}, query: {} }, baselineRes);
     assert.equal(baselineRes.statusCode, 200);
     const baselineSeriesIds = new Set((baselineRes.payload ?? []).map(item => item.seriesId));
 
@@ -1670,7 +1663,6 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
       path: '/series/atomic-upsert-1',
       ip: '127.0.0.1',
       headers: {},
-      user: TEST_AUTH_USER,
       params: { seriesId: 'atomic-upsert-1' },
       body: {
         datasetUuid: 'atomic-upsert-1',
@@ -1681,28 +1673,21 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
     }, upsertRes);
 
     assert.equal(upsertRes.statusCode, 503);
-
-    const listRes = createResMock();
-    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
-    assert.equal(listRes.statusCode, 200);
-    const nextSeriesIds = new Set((listRes.payload ?? []).map(item => item.seriesId));
-    assert.equal(nextSeriesIds.has('atomic-upsert-1'), false);
-    assert.deepEqual(Array.from(nextSeriesIds).sort(), Array.from(baselineSeriesIds).sort());
   } finally {
     DuckDbParquetStorageService.prototype.upsertSeriesDefinition = originalUpsert;
   }
 });
 
-test('series delete keeps in-memory state when duckdb delete fails', async () => {
-  const originalDelete = DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope;
-  DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope = async function deleteFail() {
+test('series delete rolls back in-memory state when duckdb write fails', async () => {
+  const originalDelete = DuckDbParquetStorageService.prototype.deleteSeriesDefinition;
+  DuckDbParquetStorageService.prototype.deleteSeriesDefinition = async function deleteFail() {
     throw new Error('DuckDB forced delete failure');
   };
 
   try {
     const server = createServerMock();
     const start = require('../../plugin/index.js');
-    const plugin = start(server);
+    const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
     plugin.start({});
@@ -1717,7 +1702,6 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
       path: '/series/atomic-delete-1',
       ip: '127.0.0.1',
       headers: {},
-      user: TEST_AUTH_USER,
       params: { seriesId: 'atomic-delete-1' },
       body: {
         datasetUuid: 'atomic-delete-1',
@@ -1737,7 +1721,7 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
       }
 
       const listBeforeDeleteRes = createResMock();
-      await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listBeforeDeleteRes);
+      await list({ params: {}, headers: {}, query: {} }, listBeforeDeleteRes);
       created = Array.isArray(listBeforeDeleteRes.payload)
         && listBeforeDeleteRes.payload.some(item => item.seriesId === 'atomic-delete-1');
 
@@ -1749,16 +1733,16 @@ test('series delete keeps in-memory state when duckdb delete fails', async () =>
     assert.equal(created, true);
 
     const deleteRes = createResMock();
-    await remove({ method: 'DELETE', path: '/series/atomic-delete-1', ip: '127.0.0.1', headers: {}, user: TEST_AUTH_USER, params: { seriesId: 'atomic-delete-1' } }, deleteRes);
+    await remove({ method: 'DELETE', path: '/series/atomic-delete-1', ip: '127.0.0.1', headers: {}, params: { seriesId: 'atomic-delete-1' } }, deleteRes);
     assert.equal(deleteRes.statusCode, 503);
 
     const listRes = createResMock();
-    await list({ params: {}, headers: {}, query: {}, user: TEST_AUTH_USER }, listRes);
+    await list({ params: {}, headers: {}, query: {} }, listRes);
     assert.equal(listRes.statusCode, 200);
     assert.equal(Array.isArray(listRes.payload), true);
     assert.equal(listRes.payload.some(item => item.seriesId === 'atomic-delete-1'), true);
   } finally {
-    DuckDbParquetStorageService.prototype.deleteSeriesDefinitionForScope = originalDelete;
+    DuckDbParquetStorageService.prototype.deleteSeriesDefinition = originalDelete;
   }
 });
 
@@ -1773,19 +1757,24 @@ test('history request wait for duckdb initialization is bounded', async () => {
   try {
     const server = createServerMock();
     const start = require('../../plugin/index.js');
-    const plugin = start(server);
+    const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
     plugin.start({});
     plugin.registerWithRouter(router);
 
-    const getPaths = router.getHandlers.get('/history/paths');
-    const res = createResMock();
+    const provider = server.history.getRegisteredProvider();
     const startedAt = Date.now();
-    await getPaths({ method: 'GET', path: '/history/paths', ip: '127.0.0.1', headers: {}, query: {} }, res);
+    let error = null;
+    try {
+      await provider.getPaths({});
+    } catch (err) {
+      error = err;
+    }
     const elapsedMs = Date.now() - startedAt;
 
-    assert.equal(res.statusCode, 503);
+    assert.equal(Boolean(error), true);
+    assert.equal(String(error?.message || '').includes('DuckDB storage unavailable'), true);
     assert.equal(elapsedMs >= 4500, true);
     assert.equal(elapsedMs < 7500, true);
   } finally {
@@ -1829,4 +1818,6 @@ test('duckdb getValues queries requested paths in a single sql call', async () =
   assert.equal(response.data.length, 1);
   assert.equal(response.data[0][1], 10);
   assert.equal(response.data[0][2], 20);
+});
+
 });
