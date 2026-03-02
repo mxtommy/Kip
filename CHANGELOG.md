@@ -1,6 +1,6 @@
 # v4.5.1
 ## Fixes
-* DuckDB dependency causing build and installation errors. Fixes 
+* DuckDB dependency causing build and installation errors. Fixes #979
 * Reduced installation size. Fixes #980
 # v4.5.0
 ## New Features
