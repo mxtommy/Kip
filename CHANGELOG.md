@@ -1,3 +1,6 @@
+# v4.5.1
+## Fixes
+* DuckDB dependency causing build and installation errors.
 # v4.5.0
 ## New Features
 * Effortlessly review your vessel’s history with the new Widget Historical Charts—automatically track, store, and visualize key data. Instantly access up to the last full day of performance: just two-finger tap or right-click any widget to open a seamless history dialog—no setup, no clutter, just the trends you need. (Requires Signal K v2.22.1)
@@ -7,6 +10,7 @@
 * Added "Days" as a selectable time scale in the Data Chart widget.
 * Improved integration by validating server plugin presence, plugin state, and configuration.
 * Added a Node-RED introduction guide to the Help section.
+* Migrated KIP plugin historical storage internals from `duckdb` to `@duckdb/node-api` and Parquet export writing to `@dsnp/parquetjs`.
 ## Fixes
 * Improved KIP plugin OpenAPI compatibility.
 * Resolved slow Data Inspector performance caused by high resource usage in deep loop logic.
