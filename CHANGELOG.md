@@ -1,3 +1,7 @@
+# v4.5.2
+## Fixes
+* DuckDB initialized when features are not enabled.
+* Parquet data compression and pruning not executing.
 # v4.5.1
 ## Fixes
 * DuckDB dependency causing build and installation errors. Fixes #979
