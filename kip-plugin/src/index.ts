@@ -688,89 +688,97 @@ const start = (server: ServerAPI): Plugin => {
       registerAsHistoryApiProvider = modeConfig.registerAsHistoryApiProvider;
       logOperationalMode('start-configured');
 
-      storageService.setLogger({
-        debug: (msg: string) => server.debug(msg),
-        error: (msg: string) => server.error(msg)
-      });
-      const storageConfig = storageService.configure();
-      server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
-      historySeries.setSampleSink(sample => {
-        storageService.enqueueSample(sample);
-      });
+      const needsDuckDb = historySeriesServiceEnabled || registerAsHistoryApiProvider;
 
-      duckDbInitializationPromise = storageService.initialize();
-      void duckDbInitializationPromise.then((ready) => {
-        server.debug(`[KIP][STORAGE] duckdbReady=${ready}`);
-        if (ready && storageService.isDuckDbParquetEnabled()) {
-          if (isHistorySeriesServiceEnabled()) {
-            void storageService.getSeriesDefinitions()
-              .then((storedSeries) => {
-                if (storedSeries.length > 0) {
-                  historySeries.reconcileSeries(storedSeries);
-                  rebuildSeriesCaptureSubscriptions();
-                }
-                startStorageFlushTimer(storageConfig.flushIntervalMs);
-                logOperationalMode('duckdb-ready');
-                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
-              })
-              .catch((loadError) => {
-                server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
-                startStorageFlushTimer(storageConfig.flushIntervalMs);
-                logOperationalMode('duckdb-ready-series-load-failed');
-                server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
-              });
-          } else {
-            historySeries.reconcileSeries([]);
-            stopSeriesCapture();
-            startStorageFlushTimer(storageConfig.flushIntervalMs);
-            logOperationalMode('duckdb-ready-series-disabled');
-            server.setPluginStatus(`KIP plugin started with history-series service disabled. historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+      if (needsDuckDb) {
+        storageService.setLogger({
+          debug: (msg: string) => server.debug(msg),
+          error: (msg: string) => server.error(msg)
+        });
+        const storageConfig = storageService.configure();
+        server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
+        historySeries.setSampleSink(sample => {
+          storageService.enqueueSample(sample);
+        });
+
+        duckDbInitializationPromise = storageService.initialize();
+        void duckDbInitializationPromise.then((ready) => {
+          server.debug(`[KIP][STORAGE] duckdbReady=${ready}`);
+          if (ready && storageService.isDuckDbParquetEnabled()) {
+            if (isHistorySeriesServiceEnabled()) {
+              void storageService.getSeriesDefinitions()
+                .then((storedSeries) => {
+                  if (storedSeries.length > 0) {
+                    historySeries.reconcileSeries(storedSeries);
+                    rebuildSeriesCaptureSubscriptions();
+                  }
+                  startStorageFlushTimer(storageConfig.flushIntervalMs);
+                  logOperationalMode('duckdb-ready');
+                  server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+                })
+                .catch((loadError) => {
+                  server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
+                  startStorageFlushTimer(storageConfig.flushIntervalMs);
+                  logOperationalMode('duckdb-ready-series-load-failed');
+                  server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+                });
+            } else {
+              historySeries.reconcileSeries([]);
+              stopSeriesCapture();
+              startStorageFlushTimer(storageConfig.flushIntervalMs);
+              logOperationalMode('duckdb-ready-series-disabled');
+              server.setPluginStatus(`KIP plugin started with history-series service disabled. historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+            }
+            return;
           }
-          return;
-        }
 
-        if (storageFlushTimer) {
-          clearInterval(storageFlushTimer);
-          storageFlushTimer = null;
-        }
+          if (storageFlushTimer) {
+            clearInterval(storageFlushTimer);
+            storageFlushTimer = null;
+          }
 
-        const initError = storageService.getLastInitError();
-        if (initError) {
-          server.setPluginError(`DuckDB unavailable. ${initError}`);
-          logOperationalMode('duckdb-unavailable');
-          server.setPluginStatus(`KIP plugin started with DuckDB unavailable. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
-        }
-      });
+          const initError = storageService.getLastInitError();
+          if (initError) {
+            server.setPluginError(`DuckDB unavailable. ${initError}`);
+            logOperationalMode('duckdb-unavailable');
+            server.setPluginStatus(`KIP plugin started with DuckDB unavailable. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+          }
+        });
 
-      if (retentionSweepTimer) {
-        clearInterval(retentionSweepTimer);
+        if (retentionSweepTimer) {
+          clearInterval(retentionSweepTimer);
+        }
+        retentionSweepTimer = setInterval(() => {
+          try {
+            if (storageService.isDuckDbParquetReady()) {
+              const lifecycleToken = storageService.getLifecycleToken();
+              void storageService.pruneExpiredSamples(Date.now(), lifecycleToken)
+                .then(removedPersistedRows => {
+                  if (removedPersistedRows > 0) {
+                    server.debug(`[KIP][RETENTION] pruneExpired removedRows=${removedPersistedRows}`);
+                  }
+                  return storageService.pruneOrphanedSamples(lifecycleToken)
+                    .then(removedOrphanRows => {
+                      if (removedOrphanRows > 0) {
+                        server.debug(`[KIP][RETENTION] pruneOrphaned removedRows=${removedOrphanRows}`);
+                      }
+                    });
+                })
+                .catch(error => {
+                  server.error(`[SERIES RETENTION] duckdbPrune failed: ${String((error as Error).message || error)}`);
+                });
+            }
+          } catch (error) {
+            server.error(`[SERIES RETENTION] sweep failed: ${String((error as Error).message || error)}`);
+          }
+        }, 60 * 60_000);
+        retentionSweepTimer.unref?.();
+        rebuildSeriesCaptureSubscriptions();
+      } else {
+        server.debug('[KIP][STORAGE] duckdb init skipped reason=config-disabled');
+        duckDbInitializationPromise = null;
+        stopSeriesCapture();
       }
-      retentionSweepTimer = setInterval(() => {
-        try {
-          if (storageService.isDuckDbParquetReady()) {
-            const lifecycleToken = storageService.getLifecycleToken();
-            void storageService.pruneExpiredSamples(Date.now(), lifecycleToken)
-              .then(removedPersistedRows => {
-                if (removedPersistedRows > 0) {
-                  server.debug(`[KIP][RETENTION] pruneExpired removedRows=${removedPersistedRows}`);
-                }
-                return storageService.pruneOrphanedSamples(lifecycleToken)
-                  .then(removedOrphanRows => {
-                    if (removedOrphanRows > 0) {
-                      server.debug(`[KIP][RETENTION] pruneOrphaned removedRows=${removedOrphanRows}`);
-                    }
-                  });
-              })
-              .catch(error => {
-                server.error(`[SERIES RETENTION] duckdbPrune failed: ${String((error as Error).message || error)}`);
-              });
-          }
-        } catch (error) {
-          server.error(`[SERIES RETENTION] sweep failed: ${String((error as Error).message || error)}`);
-        }
-      }, 60 * 60_000);
-      retentionSweepTimer.unref?.();
-      rebuildSeriesCaptureSubscriptions();
 
       if (server.registerPutHandler) {
         server.debug(`[KIP][COMMAND] registerPutHandlers context=${PUT_CONTEXT}`);
