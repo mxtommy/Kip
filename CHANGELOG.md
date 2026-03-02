@@ -1,6 +1,7 @@
 # v4.5.1
 ## Fixes
-* DuckDB dependency causing build and installation errors.
+* DuckDB dependency causing build and installation errors. Fixes 
+* Reduced installation size. Fixes #980
 # v4.5.0
 ## New Features
 * Effortlessly review your vessel’s history with the new Widget Historical Charts—automatically track, store, and visualize key data. Instantly access up to the last full day of performance: just two-finger tap or right-click any widget to open a seamless history dialog—no setup, no clutter, just the trends you need. (Requires Signal K v2.22.1)

@@ -40,6 +40,15 @@
     "displayName": "KIP Instrument MFD"
   },
   "main": "plugin/index.js",
+  "files": [
+    "plugin/**",
+    "public/**",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CONTRIBUTORS.md",
+    "package.json"
+  ],
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
     "test": "CI=1 ng test --watch=false",
@@ -87,9 +96,7 @@
     "pwa-asset-generator": "^8.1.1",
     "sass": "^1.49.9",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
+    "typescript": "^5.9.3",
     "@angular/animations": "21.1.4",
     "@angular/cdk": "21.1.4",
     "@angular/common": "21.1.4",
@@ -101,10 +108,7 @@
     "@angular/platform-browser-dynamic": "21.1.4",
     "@angular/router": "21.1.4",
     "@aziham/chartjs-plugin-streaming": "^3.5.1",
-    "@dsnp/parquetjs": "^1.8.7",
-    "@duckdb/node-api": "^1.4.4-r.2",
     "@godind/ng-canvas-gauges": "^6.2.1",
-    "@signalk/server-api": "^2.22.0",
     "@zakj/no-sleep": "^0.13.5",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -125,5 +129,10 @@
     "steelseries": "^2.0.9",
     "tslib": "^2.6.2",
     "zone.js": "^0.15.1"
+  },
+  "dependencies": {
+    "@dsnp/parquetjs": "^1.8.7",
+    "@duckdb/node-api": "^1.4.4-r.2",
+    "@signalk/server-api": "^2.22.0"
   }
 }
