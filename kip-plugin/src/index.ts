@@ -696,7 +696,7 @@ const start = (server: ServerAPI): Plugin => {
           error: (msg: string) => server.error(msg)
         });
         const storageConfig = storageService.configure();
-        server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs}`);
+        server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs} parquetWindowMs=${storageConfig.parquetWindowMs} parquetCompression=${storageConfig.parquetCompression}`);
         historySeries.setSampleSink(sample => {
           storageService.enqueueSample(sample);
         });
