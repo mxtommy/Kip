@@ -1,7 +1,7 @@
-import { mkdirSync } from 'fs';
+import { mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
-import { ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
+import { ParquetCompression, ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
 export interface IDuckDbParquetStorageConfig {
@@ -9,6 +9,8 @@ export interface IDuckDbParquetStorageConfig {
   databaseFile: string;
   parquetDirectory: string;
   flushIntervalMs: number;
+  parquetWindowMs: number;
+  parquetCompression: 'none' | 'snappy' | 'gzip' | 'brotli' | 'lz4' | 'lzo';
 }
 
 export interface IRecordedSample {
@@ -88,13 +90,17 @@ interface TLogger {
 /**
  * Provides DuckDB storage and Parquet flush support for captured history samples.
  */
+const DEFAULT_STORAGE_CONFIG: IDuckDbParquetStorageConfig = {
+  engine: 'duckdb-parquet',
+  databaseFile: 'plugin-config-data/kip/historicalData/kip-history.duckdb',
+  parquetDirectory: 'plugin-config-data/kip/historicalData/parquet',
+  flushIntervalMs: 30_000,
+  parquetWindowMs: 60 * 60_000,
+  parquetCompression: 'snappy'
+};
+
 export class DuckDbParquetStorageService {
-  private config: IDuckDbParquetStorageConfig = {
-    engine: 'duckdb-parquet',
-    databaseFile: 'plugin-config-data/kip/historicalData/kip-history.duckdb',
-    parquetDirectory: 'plugin-config-data/kip/historicalData/parquet',
-    flushIntervalMs: 30_000
-  };
+  private config: IDuckDbParquetStorageConfig = { ...DEFAULT_STORAGE_CONFIG };
 
   // 8 hour job interval (8 hours)
   private static readonly EIGHT_HOURS_INTERVAL = 8 * 60 * 60 * 1000;
@@ -151,12 +157,7 @@ export class DuckDbParquetStorageService {
   public configure(): IDuckDbParquetStorageConfig {
     this.initialized = false;
 
-    this.config = {
-      engine: 'duckdb-parquet',
-      databaseFile: 'plugin-config-data/kip/historicalData/kip-history.duckdb',
-      parquetDirectory: 'plugin-config-data/kip/historicalData/parquet',
-      flushIntervalMs: 30_000
-    };
+    this.config = { ...DEFAULT_STORAGE_CONFIG };
 
     return this.config;
   }
@@ -265,7 +266,11 @@ export class DuckDbParquetStorageService {
           this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
           const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
           const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
+          const parquetRemoved = await this.pruneParquetFilesByRetention(Date.now());
           this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
+          if (parquetRemoved > 0) {
+            this.logger.debug(`[SERIES STORAGE] Pruned ${parquetRemoved} parquet files/directories`);
+          }
         });
       } catch (err) {
         this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
@@ -651,6 +656,7 @@ export class DuckDbParquetStorageService {
       return;
     }
     await this.runSql(`DELETE FROM history_series WHERE series_id = ${this.escape(seriesId)}`);
+    this.deleteParquetSeriesDir(seriesId);
   }
 
   /**
@@ -1004,68 +1010,197 @@ export class DuckDbParquetStorageService {
   }
 
   private async exportSeriesRange(seriesId: string, fromMs: number, toMs: number): Promise<void> {
+    const windowMs = this.resolveParquetWindowMs();
     const baseDir = resolve(this.config.parquetDirectory);
     const seriesDir = join(baseDir, this.safePath(seriesId));
     mkdirSync(seriesDir, { recursive: true });
 
-    const filePath = join(seriesDir, `${fromMs}-${toMs}.parquet`);
-    const rows = await this.querySql<IParquetExportRow>(`
-      SELECT
-        series_id,
-        dataset_uuid,
-        owner_widget_uuid,
-        path,
-        context,
-        source,
-        ts_ms,
-        value
-      FROM history_samples
-      WHERE series_id = ${this.escape(seriesId)}
-        AND ts_ms >= ${Math.trunc(fromMs)}
-        AND ts_ms <= ${Math.trunc(toMs)}
-      ORDER BY ts_ms
-    `);
+    const startWindow = Math.floor(fromMs / windowMs) * windowMs;
+    const endWindow = Math.floor(toMs / windowMs) * windowMs;
 
-    if (rows.length === 0) {
-      return;
+    for (let windowStart = startWindow; windowStart <= endWindow; windowStart += windowMs) {
+      const windowEnd = windowStart + windowMs - 1;
+      const filePath = join(seriesDir, `${windowStart}-${windowEnd}.parquet`);
+      const rows = await this.querySql<IParquetExportRow>(`
+        SELECT
+          series_id,
+          dataset_uuid,
+          owner_widget_uuid,
+          path,
+          context,
+          source,
+          ts_ms,
+          value
+        FROM history_samples
+        WHERE series_id = ${this.escape(seriesId)}
+          AND ts_ms >= ${Math.trunc(windowStart)}
+          AND ts_ms <= ${Math.trunc(windowEnd)}
+        ORDER BY ts_ms
+      `);
+
+      if (rows.length === 0) {
+        rmSync(filePath, { force: true });
+        continue;
+      }
+
+      const compression = this.resolveParquetCompression();
+      const schema = new ParquetSchema({
+        series_id: { type: 'UTF8', compression },
+        dataset_uuid: { type: 'UTF8', compression },
+        owner_widget_uuid: { type: 'UTF8', compression },
+        path: { type: 'UTF8', compression },
+        context: { type: 'UTF8', compression },
+        source: { type: 'UTF8', optional: true, compression },
+        ts_ms: { type: 'INT64', compression },
+        ts: { type: 'TIMESTAMP_MILLIS', compression },
+        value: { type: 'DOUBLE', compression }
+      });
+
+      const tempPath = `${filePath}.tmp-${Date.now()}`;
+      const writer = await ParquetWriter.openFile(schema, tempPath);
+
+      try {
+        for (const row of rows) {
+          const timestampMs = this.toNumberOrUndefined(row.ts_ms);
+          const numericValue = this.toNumberOrUndefined(row.value);
+          if (timestampMs === undefined || numericValue === undefined) {
+            continue;
+          }
+
+          await writer.appendRow({
+            series_id: row.series_id,
+            dataset_uuid: row.dataset_uuid,
+            owner_widget_uuid: row.owner_widget_uuid,
+            path: row.path,
+            context: row.context,
+            source: row.source ?? undefined,
+            ts_ms: Math.trunc(timestampMs),
+            ts: new Date(timestampMs),
+            value: numericValue
+          });
+        }
+      } finally {
+        await writer.close();
+      }
+
+      rmSync(filePath, { force: true });
+      renameSync(tempPath, filePath);
+    }
+  }
+
+  private resolveParquetWindowMs(): number {
+    const parsed = Number(this.config.parquetWindowMs);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.max(1, Math.trunc(parsed));
+    }
+    return 60 * 60_000;
+  }
+
+  private resolveParquetCompression(): ParquetCompression | undefined {
+    const raw = String(this.config.parquetCompression ?? 'none').trim().toLowerCase();
+    if (raw === 'snappy') {
+      return 'SNAPPY';
+    }
+    if (raw === 'gzip') {
+      return 'GZIP';
+    }
+    if (raw === 'brotli') {
+      return 'BROTLI';
+    }
+    if (raw === 'lz4') {
+      return 'LZ4';
+    }
+    if (raw === 'lzo') {
+      return 'LZO';
+    }
+    return undefined;
+  }
+
+  private pruneParquetFilesByRetention(nowMs: number): Promise<number> {
+    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+      return Promise.resolve(0);
     }
 
-    const schema = new ParquetSchema({
-      series_id: { type: 'UTF8' },
-      dataset_uuid: { type: 'UTF8' },
-      owner_widget_uuid: { type: 'UTF8' },
-      path: { type: 'UTF8' },
-      context: { type: 'UTF8' },
-      source: { type: 'UTF8', optional: true },
-      ts_ms: { type: 'INT64' },
-      ts: { type: 'TIMESTAMP_MILLIS' },
-      value: { type: 'DOUBLE' }
-    });
+    return this.querySql<{ series_id: string; retention_duration_ms: number | null }>(`
+      SELECT series_id, retention_duration_ms
+      FROM history_series
+    `).then(rows => {
+      const baseDir = resolve(this.config.parquetDirectory);
+      const seriesConfig = new Map(rows.map(row => [this.safePath(row.series_id), row.retention_duration_ms] as const));
+      let removed = 0;
 
-    const writer = await ParquetWriter.openFile(schema, filePath);
-    try {
-      for (const row of rows) {
-        const timestampMs = this.toNumberOrUndefined(row.ts_ms);
-        const numericValue = this.toNumberOrUndefined(row.value);
-        if (timestampMs === undefined || numericValue === undefined) {
+      let seriesDirs: string[] = [];
+      try {
+        seriesDirs = readdirSync(baseDir);
+      } catch {
+        return 0;
+      }
+
+      for (const dirName of seriesDirs) {
+        const fullDir = join(baseDir, dirName);
+        let dirStat: ReturnType<typeof statSync>;
+        try {
+          dirStat = statSync(fullDir);
+        } catch {
+          continue;
+        }
+        if (!dirStat.isDirectory()) {
           continue;
         }
 
-        await writer.appendRow({
-          series_id: row.series_id,
-          dataset_uuid: row.dataset_uuid,
-          owner_widget_uuid: row.owner_widget_uuid,
-          path: row.path,
-          context: row.context,
-          source: row.source ?? undefined,
-          ts_ms: Math.trunc(timestampMs),
-          ts: new Date(timestampMs),
-          value: numericValue
+        const seriesKey = dirName;
+        if (!seriesConfig.has(seriesKey)) {
+          rmSync(fullDir, { recursive: true, force: true });
+          removed += 1;
+          continue;
+        }
+
+        const retentionMs = seriesConfig.get(seriesKey);
+        if (!Number.isFinite(retentionMs) || (retentionMs ?? 0) <= 0) {
+          continue;
+        }
+
+        const cutoff = nowMs - Number(retentionMs);
+        let files: string[] = [];
+        try {
+          files = readdirSync(fullDir);
+        } catch {
+          continue;
+        }
+
+        files.forEach(fileName => {
+          const range = this.parseParquetRangeFromFileName(fileName);
+          if (!range) {
+            return;
+          }
+          if (range.toMs < cutoff) {
+            rmSync(join(fullDir, fileName), { force: true });
+            removed += 1;
+          }
         });
       }
-    } finally {
-      await writer.close();
+
+      return removed;
+    });
+  }
+
+  private parseParquetRangeFromFileName(fileName: string): { fromMs: number; toMs: number } | null {
+    const match = /^([0-9]+)-([0-9]+)\.parquet$/.exec(fileName);
+    if (!match) {
+      return null;
     }
+    const fromMs = Number(match[1]);
+    const toMs = Number(match[2]);
+    if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) {
+      return null;
+    }
+    return { fromMs, toMs };
+  }
+
+  private deleteParquetSeriesDir(seriesId: string): void {
+    const baseDir = resolve(this.config.parquetDirectory);
+    const seriesDir = join(baseDir, this.safePath(seriesId));
+    rmSync(seriesDir, { recursive: true, force: true });
   }
 
   private async runSql(sql: string): Promise<void> {
