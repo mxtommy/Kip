@@ -5,7 +5,7 @@ import { ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
 export interface IDuckDbParquetStorageConfig {
-  engine: 'memory' | 'duckdb-parquet';
+  engine: 'duckdb-parquet';
   databaseFile: string;
   parquetDirectory: string;
   flushIntervalMs: number;
@@ -63,10 +63,6 @@ interface IStringRow {
   value: string;
 }
 
-interface ICountRow {
-  removed_rows: unknown;
-}
-
 interface IParquetExportRow {
   series_id: string;
   dataset_uuid: string;
@@ -79,7 +75,6 @@ interface IParquetExportRow {
 }
 
 interface IHistoryRangeQuery {
-  userScope?: string;
   from?: string;
   to?: string;
   duration?: string | number;
@@ -145,17 +140,15 @@ export class DuckDbParquetStorageService {
   }
 
   /**
-   * Applies plugin settings into the storage backend configuration.
+   * Applies the fixed storage backend configuration.
    *
-   * @param {unknown} settings Plugin settings payload from Signal K (ignored for fixed storage defaults).
    * @returns {IDuckDbParquetStorageConfig} Fixed storage configuration.
    *
    * @example
-   * const cfg = storage.configure({});
+   * const cfg = storage.configure();
    * console.log(cfg.engine);
    */
-  public configure(settings: unknown): IDuckDbParquetStorageConfig {
-    void settings;
+  public configure(): IDuckDbParquetStorageConfig {
     this.initialized = false;
 
     this.config = {
@@ -983,11 +976,6 @@ export class DuckDbParquetStorageService {
         PRIMARY KEY (series_id)
       )
     `);
-  }
-
-  private async countRows(tableName: 'history_series' | 'history_samples'): Promise<number> {
-    const rows = await this.querySql<ICountRow>(`SELECT COUNT(*) AS removed_rows FROM ${tableName}`);
-    return this.toNumberOrUndefined(rows[0]?.removed_rows) ?? 0;
   }
 
   private async insertRows(rows: IRecordedSample[]): Promise<void> {
