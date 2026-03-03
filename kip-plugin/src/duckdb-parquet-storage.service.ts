@@ -1,8 +1,14 @@
 import { mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
-import { ParquetCompression, ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
+import { createRequire } from 'module';
+import type { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
+import type { ParquetCompression } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
+
+type DuckDbModule = typeof import('@duckdb/node-api');
+type ParquetModule = typeof import('@dsnp/parquetjs');
+
+const packageRequire = createRequire(__filename);
 
 export interface IDuckDbParquetStorageConfig {
   engine: 'duckdb-parquet';
@@ -122,6 +128,9 @@ export class DuckDbParquetStorageService {
     error: () => undefined
   };
 
+  private duckdbModule: DuckDbModule | null = null;
+  private parquetModule: ParquetModule | null = null;
+
   private db: DuckDBInstance | null = null;
   private connection: DuckDBConnection | null = null;
   private pendingRows: IRecordedSample[] = [];
@@ -143,6 +152,36 @@ export class DuckDbParquetStorageService {
    */
   public setLogger(logger: TLogger): void {
     this.logger = logger;
+  }
+
+  private resolveDuckDbModule(): DuckDbModule | null {
+    if (this.duckdbModule) {
+      return this.duckdbModule;
+    }
+
+    try {
+      this.duckdbModule = packageRequire('@duckdb/node-api') as DuckDbModule;
+      return this.duckdbModule;
+    } catch (error) {
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.error(`[SERIES STORAGE] DuckDB runtime dependency unavailable: ${message}`);
+      return null;
+    }
+  }
+
+  private resolveParquetModule(): ParquetModule | null {
+    if (this.parquetModule) {
+      return this.parquetModule;
+    }
+
+    try {
+      this.parquetModule = packageRequire('@dsnp/parquetjs') as ParquetModule;
+      return this.parquetModule;
+    } catch (error) {
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.error(`[SERIES STORAGE] Parquet runtime dependency unavailable: ${message}`);
+      return null;
+    }
   }
 
   /**
@@ -178,12 +217,37 @@ export class DuckDbParquetStorageService {
     this.initialized = false;
     this.lifecycleToken += 1;
 
+    const duckdbModule = this.resolveDuckDbModule();
+    if (!duckdbModule) {
+      this.lastInitError = 'DuckDB Node API runtime dependency unavailable';
+      this.logger.error('[SERIES STORAGE] DuckDB Node API is required. Install runtime dependency with: npm i @duckdb/node-api in the installed plugin directory, then restart Signal K.');
+      this.connection = null;
+      this.db = null;
+      this.pendingRows = [];
+      this.pendingRangesBySeriesId.clear();
+      this.initialized = false;
+      this.stopVacuumJob();
+      return false;
+    }
+
+    if (!this.resolveParquetModule()) {
+      this.lastInitError = 'Parquet runtime dependency unavailable';
+      this.logger.error('[SERIES STORAGE] ParquetJS is required. Install runtime dependency with: npm i @dsnp/parquetjs in the installed plugin directory, then restart Signal K.');
+      this.connection = null;
+      this.db = null;
+      this.pendingRows = [];
+      this.pendingRangesBySeriesId.clear();
+      this.initialized = false;
+      this.stopVacuumJob();
+      return false;
+    }
+
     try {
       const dbPath = resolve(this.config.databaseFile);
       mkdirSync(dirname(dbPath), { recursive: true });
       mkdirSync(resolve(this.config.parquetDirectory), { recursive: true });
 
-      this.db = await DuckDBInstance.create(dbPath);
+      this.db = await duckdbModule.DuckDBInstance.create(dbPath);
       this.connection = await this.db.connect();
       await this.createCoreTables();
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_ts ON history_samples(series_id, ts_ms)');
@@ -1043,6 +1107,12 @@ export class DuckDbParquetStorageService {
         continue;
       }
 
+      const parquetModule = this.resolveParquetModule();
+      if (!parquetModule) {
+        throw new Error('Parquet runtime dependency unavailable');
+      }
+
+      const { ParquetSchema, ParquetWriter } = parquetModule;
       const compression = this.resolveParquetCompression();
       const schema = new ParquetSchema({
         series_id: { type: 'UTF8', compression },

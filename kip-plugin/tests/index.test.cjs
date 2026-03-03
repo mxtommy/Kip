@@ -1610,6 +1610,25 @@ test('duckdb storage configure uses fixed defaults', () => {
   assert.equal(config.flushIntervalMs, 30000);
 });
 
+test('duckdb initialization fails when runtime dependencies are unavailable', async () => {
+  const originalDuckDbResolver = DuckDbParquetStorageService.prototype.resolveDuckDbModule;
+  const originalParquetResolver = DuckDbParquetStorageService.prototype.resolveParquetModule;
+  DuckDbParquetStorageService.prototype.resolveDuckDbModule = () => null;
+  DuckDbParquetStorageService.prototype.resolveParquetModule = () => null;
+
+  try {
+    const storage = new DuckDbParquetStorageService();
+    const ready = await storage.initialize();
+
+    assert.equal(ready, false);
+    assert.equal(storage.isDuckDbParquetReady(), false);
+    assert.equal(Boolean(storage.getLastInitError()), true);
+  } finally {
+    DuckDbParquetStorageService.prototype.resolveDuckDbModule = originalDuckDbResolver;
+    DuckDbParquetStorageService.prototype.resolveParquetModule = originalParquetResolver;
+  }
+});
+
 test('history requests return 503 when duckdb is unavailable', async () => {
   const originalInitialize = DuckDbParquetStorageService.prototype.initialize;
   DuckDbParquetStorageService.prototype.initialize = async function initializeMock() {
