@@ -1611,8 +1611,8 @@ test('duckdb storage configure uses fixed defaults', () => {
 });
 
 test('duckdb initialization fails when runtime dependencies are unavailable', async () => {
-  const originalDuckDbResolver = DuckDbParquetStorageService.prototype.resolveDuckDbModule;
-  const originalParquetResolver = DuckDbParquetStorageService.prototype.resolveParquetModule;
+  const originalResolveDuckDb = DuckDbParquetStorageService.prototype.resolveDuckDbModule;
+  const originalResolveParquet = DuckDbParquetStorageService.prototype.resolveParquetModule;
   DuckDbParquetStorageService.prototype.resolveDuckDbModule = () => null;
   DuckDbParquetStorageService.prototype.resolveParquetModule = () => null;
 
@@ -1624,8 +1624,8 @@ test('duckdb initialization fails when runtime dependencies are unavailable', as
     assert.equal(storage.isDuckDbParquetReady(), false);
     assert.equal(Boolean(storage.getLastInitError()), true);
   } finally {
-    DuckDbParquetStorageService.prototype.resolveDuckDbModule = originalDuckDbResolver;
-    DuckDbParquetStorageService.prototype.resolveParquetModule = originalParquetResolver;
+    DuckDbParquetStorageService.prototype.resolveDuckDbModule = originalResolveDuckDb;
+    DuckDbParquetStorageService.prototype.resolveParquetModule = originalResolveParquet;
   }
 });
 

@@ -5,7 +5,7 @@ import type { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
 import type { ParquetCompression } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
-type DuckDbModule = typeof import('@duckdb/node-api');
+type DuckDBModule = typeof import('@duckdb/node-api');
 type ParquetModule = typeof import('@dsnp/parquetjs');
 
 const packageRequire = createRequire(__filename);
@@ -128,7 +128,7 @@ export class DuckDbParquetStorageService {
     error: () => undefined
   };
 
-  private duckdbModule: DuckDbModule | null = null;
+  private duckdbModule: DuckDBModule | null = null;
   private parquetModule: ParquetModule | null = null;
 
   private db: DuckDBInstance | null = null;
@@ -154,13 +154,13 @@ export class DuckDbParquetStorageService {
     this.logger = logger;
   }
 
-  private resolveDuckDbModule(): DuckDbModule | null {
+  private resolveDuckDbModule(): DuckDBModule | null {
     if (this.duckdbModule) {
       return this.duckdbModule;
     }
 
     try {
-      this.duckdbModule = packageRequire('@duckdb/node-api') as DuckDbModule;
+      this.duckdbModule = packageRequire('@duckdb/node-api') as DuckDBModule;
       return this.duckdbModule;
     } catch (error) {
       const message = (error as Error)?.message ?? String(error);
