@@ -2,7 +2,7 @@
 ## Improvements
 * Built-in Time-Series storage and History-API provider now use the native node:sqlite feature, eliminating all binary and external dependencies.
   * Requires Node.js 22.5.0 or newer. If you use an older Node.js version, you must select an alternative History-API provider.
-  * **IMPORTANT:** Before upgrading Node.js, always confirm your Signal K server version supports the required Node.js version. See the [Signal K installation documentation](https://demo.signalk.org/documentation/Installation.html).
+  * **IMPORTANT:** Before upgrading Node.js, always confirm your Signal K server and OS version supports the required Node.js version. See the [Signal K installation documentation](https://demo.signalk.org/documentation/Installation.html).
 ## Fixes
 * Extending v4.5.x features to VenusOS (32bit OS) - Error: Failed to start: Error loading duckdb native binding: unsupported arch 'arm' for platform 'linux'. Fixes #979
 * Uninstallation does not remove all files. Fixes #981
