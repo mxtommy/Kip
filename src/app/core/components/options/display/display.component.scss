@@ -23,3 +23,15 @@
 .radio-button {
   margin: 5px;
 }
+
+.warning {
+  background-color: var(--mat-sys-on-error-container);
+  color: var(--mat-sys-error-container);
+  padding: 1px 14px;
+  border-radius: var(--mat-sys-corner-small);
+  p {
+    font: var(--mat-sys-body-medium);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
+  }
+
+}

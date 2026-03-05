@@ -7,12 +7,12 @@ Base path for plugin routes: `/plugins/kip`
 - `kip-plugin/` contains the TypeScript source for the Signal K server plugin.
 - The root-level `plugin/` folder (if present) is build output/packaging and is intentionally ignored by git.
 
-## History architecture (DuckDB-only reads)
+## History architecture (SQLite-only reads)
 
-- History reads (`/history/values`, `/history/paths`, `/history/contexts`) are served from DuckDB only.
+- History reads (`/history/values`, `/history/paths`, `/history/contexts`) are served from SQLite only.
 - In-memory state is metadata-only for runtime matching/routing (series definitions and stream subscription logic), not a query engine.
-- Live samples are buffered in memory only as a short write queue before periodic flush to DuckDB/Parquet.
-- If DuckDB is unavailable, history and series APIs return an error response instead of falling back to in-memory history.
+- Live samples are buffered in memory only as a short write queue before periodic flush to SQLite.
+- If SQLite is unavailable, history and series APIs return an error response instead of falling back to in-memory history.
 
 ## Endpoints
 
@@ -98,7 +98,12 @@ curl -s -X PUT \
 Notes:
 - Replace `<displayId>` with the KIP instance UUID under `self.displays`.
 - If your Signal K server requires auth, include cookies or bearer token accordingly.
-- When DuckDB is unavailable, history and series endpoints can return `503` until storage is available.
+- When SQLite is unavailable, history and series endpoints can return `503` until storage is available.
+
+Runtime requirements:
+- History capture requires node:sqlite (Node 22.5.0+).
+- Check Signal K documentation to confirm the supported Node version before attempting a manual upgrade.
+- Signal K does not yet support Node 24.
 
 Terminology:
 - `screenIndex` is the current active dashboard index for the display.

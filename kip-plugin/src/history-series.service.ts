@@ -59,8 +59,7 @@ export class HistorySeriesService {
   private sampleSink: ((sample: IRecordedSeriesSample) => void) | null = null;
 
   constructor(
-    private readonly nowProvider: () => number = () => Date.now(),
-    private readonly retainSamplesInMemory = true
+    private readonly nowProvider: () => number = () => Date.now()
   ) {}
 
   /**
@@ -236,9 +235,10 @@ export class HistorySeriesService {
       return false;
     }
 
-    const samplingIntervalMs = this.resolveSampleTimeMs(series.sampleTime);
     const previousTimestamp = this.lastAcceptedTimestampBySeriesKey.get(seriesKey);
-    if (previousTimestamp !== undefined && (timestamp - previousTimestamp) < samplingIntervalMs) {
+    // Enforces a minimum of 1 second to prevent excessive sampling on short retention durations
+    const minSampleTime = Math.max(Number(series.sampleTime) || 0, 1000);
+    if (previousTimestamp !== undefined && (timestamp - previousTimestamp) < minSampleTime) {
       return false;
     }
 
@@ -401,18 +401,19 @@ export class HistorySeriesService {
       throw new Error('path is required');
     }
 
-    // Determine if this is a data chart based widget
-    const dsSampleTime =
-      ownerWidgetUuid?.startsWith('widget-windtrends-chart') ||
-      ownerWidgetUuid?.startsWith('widget-data-chart');
-
+    // Determine if this is a chart type widget
+    const isDataWidget = ownerWidgetUuid?.startsWith('widget-windtrends-chart') || ownerWidgetUuid?.startsWith('widget-data-chart');
+    const retentionMs = this.resolveRetentionMs(input);
     let sampleTime: number;
-    const retentionMs = input.retentionDurationMs ?? this.resolveRetentionMs(input);
-    if (dsSampleTime && Number.isFinite(retentionMs) && retentionMs > 0) {
-      // regular widget sampleTime: 15 sec
-      sampleTime = Math.max(1, Math.trunc(15000));
+
+    if (isDataWidget) {
+      // For chart type widgets we use retention duration to dynamically calculate sampleTime to
+      // aims for around 120 samples.
+      sampleTime = retentionMs ? Math.max(1000, Math.round(retentionMs / 120)) : 1000;
     } else {
-      sampleTime = this.resolveSampleTimeMs(input.sampleTime);
+      // Non chart type widgets, ie historical Time-Series, have a fixed sampleTime of 15 sec that is
+      // a good median amount of samples for the dynamically queryable chart display range (15 min up to 24h).
+      sampleTime = 15000; // ms
     }
 
     return {
@@ -427,20 +428,6 @@ export class HistorySeriesService {
       retentionDurationMs: retentionMs,
       sampleTime
     };
-  }
-
-  private resolveSampleTimeMs(sampleTime: unknown): number {
-    const parsed = Number(sampleTime);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return Math.max(1, Math.trunc(parsed));
-    }
-
-    return 1000;
-  }
-
-  private buildSeriesMapKey(seriesId: string): string {
-    // userScope removed; now returns only seriesId
-    return String(seriesId).trim();
   }
 
   private resolveRetentionMs(series: ISeriesDefinition): number {

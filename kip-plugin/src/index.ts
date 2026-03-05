@@ -1,12 +1,10 @@
 import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
-import { createRequire } from 'module';
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
-import { DuckDbParquetStorageService } from './duckdb-parquet-storage.service';
+import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 
 const start = (server: ServerAPI): Plugin => {
-  const packageRequire = createRequire(__filename);
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
   const API_PATHS = {
     DISPLAYS: `/displays`,
@@ -29,6 +27,12 @@ const start = (server: ServerAPI): Plugin => {
     title: 'Remote Control and Data Series',
     description: 'NOTE: All plugin settings are also managed from within KIP\'s Display Options panel. Changes made here will be overridden when KIP applies settings from the Display Options.',
     properties: {
+      nodeSqliteAvailable: {
+        type: 'boolean',
+        title: 'node:sqlite Available',
+        description: 'Indicates if node:sqlite is available in the current runtime (requires Node.js version 22.5.0 or newer). This is set automatically and is read-only.\n\nBefore upgrading Node.js, always verify compatibility with your Signal K server version at https://demo.signalk.org/documentation.',
+        readOnly: true
+      },
       historySeriesServiceEnabled: {
         type: 'boolean',
         title: 'Enable Automatic Historical Time-Series Capture and Management',
@@ -38,26 +42,27 @@ const start = (server: ServerAPI): Plugin => {
       registerAsHistoryApiProvider: {
         type: 'boolean',
         title: 'Enable Query Provider',
-        description: 'The built-in History-API provider is the querying engine that uses the Historical Time-Series data to seed the widget historical panel, the Data Chart and Wind Trends widgets. If you want to use another History-API provider, turn this off and configure your chosen History-API compatible provider accordingly and KIP will query that provider.',
+        description: 'The built-in History-API query provider is a feature that enables the plugin to respond to History-API requests. If you want to use another History-API provider, disable this option and configure your chosen History-API compatible provider accordingly and KIP will query that provider.',
         default: true
       }
     }
   };
-  const historySeries = new HistorySeriesService(() => Date.now(), false);
-  const storageService = new DuckDbParquetStorageService();
+  const historySeries = new HistorySeriesService(() => Date.now());
+  const storageService = new SqliteHistoryStorageService();
   let retentionSweepTimer: NodeJS.Timeout | null = null;
   let storageFlushTimer: NodeJS.Timeout | null = null;
-  let duckDbInitializationPromise: Promise<boolean> | null = null;
-  const DUCKDB_INIT_WAIT_TIMEOUT_MS = 5000;
+  let sqliteInitializationPromise: Promise<boolean> | null = null;
+  const SQLITE_INIT_WAIT_TIMEOUT_MS = 5000;
+  const MIN_NODE_SQLITE_VERSION = '22.5.0';
   let streamUnsubscribes: (() => void)[] = [];
   let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
-  let historySeriesServiceEnabled = true;
-  let registerAsHistoryApiProvider = true;
   let historyApiProviderRegistered = false;
+  let runtimeSqliteUnavailableMessage: string | null = null;
 
   interface IHistoryModeConfig {
     historySeriesServiceEnabled: boolean;
     registerAsHistoryApiProvider: boolean;
+    nodeSqliteAvailable: boolean;
   }
 
   interface IHistoryApiPathSpecLike {
@@ -87,22 +92,49 @@ const start = (server: ServerAPI): Plugin => {
     duration?: string | number;
   }
 
-  function resolveDependencyIdentity(dependencyName: string): string {
+  function logRuntimeDependencyVersions(): void {
+    const nodeIdentity = `node@${process.version}`;
+    const sqliteAvailability = modeConfig && modeConfig.nodeSqliteAvailable ? 'available' : 'unavailable';
+    server.debug(`[KIP][RUNTIME] ${nodeIdentity} node:sqlite=${sqliteAvailability}`);
+  }
+
+  async function getSqliteModule(): Promise<{ DatabaseSync?: unknown; Database?: unknown } | null> {
     try {
-      const pkg = packageRequire(`${dependencyName}/package.json`) as { name?: unknown; version?: unknown };
-      const name = typeof pkg.name === 'string' && pkg.name.trim() ? pkg.name.trim() : dependencyName;
-      const version = typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version.trim() : 'unknown';
-      return `${name}@${version}`;
+      return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
     } catch {
-      return `${dependencyName}@unavailable`;
+      return null;
     }
   }
 
-  function logRuntimeDependencyVersions(): void {
-    const nodeIdentity = `node@${process.version}`;
-    const duckDbNodeIdentity = resolveDependencyIdentity('@duckdb/node-api');
-    const parquetIdentity = resolveDependencyIdentity('@dsnp/parquetjs');
-    server.debug(`[KIP][RUNTIME] ${nodeIdentity} duckdb=${duckDbNodeIdentity} parquet=${parquetIdentity}`);
+  async function detectSqliteRuntime(): Promise<boolean> {
+    const sqliteModule = await getSqliteModule();
+    if (!sqliteModule) {
+      runtimeSqliteUnavailableMessage = `node:sqlite requires Node ${MIN_NODE_SQLITE_VERSION}+`;
+      return false;
+    }
+
+    if (!sqliteModule.DatabaseSync && !sqliteModule.Database) {
+      runtimeSqliteUnavailableMessage = 'node:sqlite module missing required exports';
+      return false;
+    }
+
+    runtimeSqliteUnavailableMessage = null;
+    return true;
+  }
+
+  function getSqliteUnavailableMessage(): string {
+    if (!(modeConfig && modeConfig.nodeSqliteAvailable)) {
+      return `node:sqlite is not supported in the installed Node.js runtime. Node ${MIN_NODE_SQLITE_VERSION}+ is required.`;
+    }
+
+    const details = storageService.getLastInitError();
+    return details
+      ? `node:sqlite storage unavailable: ${details}`
+      : 'node:sqlite storage unavailable';
+  }
+
+  function isSqliteUnavailable(): boolean {
+    return !(modeConfig && modeConfig.nodeSqliteAvailable) || Boolean(storageService.getLastInitError());
   }
 
   function resolveHistoryModeConfig(settings: unknown): IHistoryModeConfig {
@@ -118,13 +150,18 @@ const start = (server: ServerAPI): Plugin => {
         ? root.registerAsHistoryApiProvider
         : undefined;
 
+    const nodeSqliteAvailable =
+      typeof root.nodeSqliteAvailable === 'boolean'
+        ? root.nodeSqliteAvailable
+        : undefined;
+
     return {
       historySeriesServiceEnabled: historySeriesServiceEnabledSetting !== false,
-      registerAsHistoryApiProvider: registerAsHistoryApiProviderSetting !== false
+      registerAsHistoryApiProvider: registerAsHistoryApiProviderSetting !== false,
+      nodeSqliteAvailable: nodeSqliteAvailable !== false
     };
   }
 
-  // Helpers
   function getDisplaySelfPath(displayId: string, suffix?: string): object | undefined {
     const tail = suffix ? `.${suffix}` : ''
     const want = `displays.${displayId}${tail}`
@@ -152,32 +189,21 @@ const start = (server: ServerAPI): Plugin => {
     return 'KIP history-series service is disabled by plugin configuration';
   }
 
-  function getDuckDbUnavailableMessage(): string {
-    const details = storageService.getLastInitError();
-    return details
-      ? `DuckDB storage unavailable: ${details}`
-      : 'DuckDB storage unavailable';
-  }
-
-  function isDuckDbUnavailable(): boolean {
-    return Boolean(storageService.getLastInitError());
-  }
-
-  async function waitForDuckDbInitialization(timeoutMs = DUCKDB_INIT_WAIT_TIMEOUT_MS): Promise<boolean> {
-    if (!duckDbInitializationPromise) {
-      return storageService.isDuckDbParquetReady();
+  async function waitForSqliteInitialization(timeoutMs = SQLITE_INIT_WAIT_TIMEOUT_MS): Promise<boolean> {
+    if (!sqliteInitializationPromise) {
+      return storageService.isSqliteReady();
     }
 
     try {
       const ready = await Promise.race<boolean>([
-        duckDbInitializationPromise,
+        sqliteInitializationPromise,
         new Promise<boolean>(resolvePromise => {
           setTimeout(() => resolvePromise(false), timeoutMs);
         })
       ]);
 
-      if (!ready && !storageService.isDuckDbParquetReady()) {
-        server.error(`[SERIES STORAGE] DuckDB initialization wait timed out after ${timeoutMs}ms`);
+      if (!ready && !storageService.isSqliteReady()) {
+        server.error(`[SERIES STORAGE] node:sqlite initialization wait timed out after ${timeoutMs}ms`);
       }
 
       return ready;
@@ -201,10 +227,10 @@ const start = (server: ServerAPI): Plugin => {
     }
 
     if (
-      normalized.includes('duckdb')
+      normalized.includes('sqlite')
       || normalized.includes('storage unavailable')
       || normalized.includes('not initialized')
-      || isDuckDbUnavailable()
+      || isSqliteUnavailable()
     ) {
       return { statusCode: 503, message };
     }
@@ -218,11 +244,11 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function isHistorySeriesServiceEnabled(): boolean {
-    return historySeriesServiceEnabled;
+    return !!(modeConfig && modeConfig.historySeriesServiceEnabled && modeConfig.nodeSqliteAvailable);
   }
 
   function isHistoryApiProviderEnabled(): boolean {
-    return registerAsHistoryApiProvider;
+    return !!(modeConfig && modeConfig.registerAsHistoryApiProvider && modeConfig.nodeSqliteAvailable);
   }
 
   function logOperationalMode(stage: string): void {
@@ -231,16 +257,20 @@ const start = (server: ServerAPI): Plugin => {
     );
   }
 
-  async function ensureDuckDbReadyForRequest(res: Response): Promise<boolean> {
-    await waitForDuckDbInitialization();
-    if (storageService.isDuckDbParquetReady()) {
+  async function ensureSqliteReadyForRequest(res: Response): Promise<boolean> {
+    await waitForSqliteInitialization();
+    if (storageService.isSqliteReady()) {
       return true;
     }
-    sendFail(res, 503, getDuckDbUnavailableMessage());
+    sendFail(res, 503, getSqliteUnavailableMessage());
     return false;
   }
 
   function ensureHistorySeriesServiceEnabledForRequest(res: Response): boolean {
+    if (!(modeConfig && modeConfig.nodeSqliteAvailable)) {
+      sendFail(res, 503, getSqliteUnavailableMessage());
+      return false;
+    }
     if (isHistorySeriesServiceEnabled()) {
       return true;
     }
@@ -465,9 +495,9 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   async function resolveHistoryPaths(query?: IHistoryRangeQuery): Promise<string[]> {
-    await waitForDuckDbInitialization();
-    if (!storageService.isDuckDbParquetReady()) {
-      throw new Error(getDuckDbUnavailableMessage());
+    await waitForSqliteInitialization();
+    if (!storageService.isSqliteReady()) {
+      throw new Error(getSqliteUnavailableMessage());
     }
 
     try {
@@ -481,9 +511,9 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   async function resolveHistoryContexts(query?: IHistoryRangeQuery): Promise<string[]> {
-    await waitForDuckDbInitialization();
-    if (!storageService.isDuckDbParquetReady()) {
-      throw new Error(getDuckDbUnavailableMessage());
+    await waitForSqliteInitialization();
+    if (!storageService.isSqliteReady()) {
+      throw new Error(getSqliteUnavailableMessage());
     }
 
     try {
@@ -497,9 +527,9 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   async function resolveHistoryValues(query: IHistoryQueryParams): Promise<IHistoryValuesResponse> {
-    await waitForDuckDbInitialization();
-    if (!storageService.isDuckDbParquetReady()) {
-      throw new Error(getDuckDbUnavailableMessage());
+    await waitForSqliteInitialization();
+    if (!storageService.isSqliteReady()) {
+      throw new Error(getSqliteUnavailableMessage());
     }
 
     try {
@@ -511,7 +541,7 @@ const start = (server: ServerAPI): Plugin => {
       ...query
     });
     if (!values) {
-      throw new Error('DuckDB storage did not return history values.');
+      throw new Error('node:sqlite storage did not return history values.');
     }
     return values;
   }
@@ -657,17 +687,12 @@ const start = (server: ServerAPI): Plugin => {
       storageFlushTimer = null;
     }
 
-    if (!storageService.isDuckDbParquetEnabled()) {
+    if (!storageService.isSqliteEnabled()) {
       return;
     }
 
     storageFlushTimer = setInterval(() => {
       void storageService.flush()
-        .then(result => {
-          if (result.inserted > 0 || result.exported > 0) {
-            server.debug(`[KIP][STORAGE] flush inserted=${result.inserted} exported=${result.exported}`);
-          }
-        })
         .catch(error => {
           server.error(`[SERIES STORAGE] flush failed: ${String((error as Error).message || error)}`);
         });
@@ -675,37 +700,44 @@ const start = (server: ServerAPI): Plugin => {
 
     storageFlushTimer.unref?.();
   }
-
+  let modeConfig: IHistoryModeConfig | null = null;
   const plugin: Plugin = {
     id: 'kip',
     name: 'KIP',
     description: 'KIP server plugin',
-    start: (settings) => {
+    start: async (settings) => {
       server.debug('[KIP][LIFECYCLE] start');
+      modeConfig = resolveHistoryModeConfig(settings);
+      // Overwrite runtime-detected properties in modeConfig
+      modeConfig.nodeSqliteAvailable = await detectSqliteRuntime();
+      if (!modeConfig.nodeSqliteAvailable) {
+        server.error(`[KIP][RUNTIME] node:sqlite unavailable. ${runtimeSqliteUnavailableMessage}`);
+      }
+      const serverWithApp = server as ServerAPI & { app?: { getDataDirPath?: () => string } };
+      const dataDirPath = serverWithApp.app?.getDataDirPath?.();
+      storageService.setDataDirPath(typeof dataDirPath === 'string' ? dataDirPath : null);
+      storageService.setRuntimeAvailability(modeConfig.nodeSqliteAvailable, runtimeSqliteUnavailableMessage ?? undefined);
       logRuntimeDependencyVersions();
-      const modeConfig = resolveHistoryModeConfig(settings);
-      historySeriesServiceEnabled = modeConfig.historySeriesServiceEnabled;
-      registerAsHistoryApiProvider = modeConfig.registerAsHistoryApiProvider;
       logOperationalMode('start-configured');
 
-      const needsDuckDb = historySeriesServiceEnabled || registerAsHistoryApiProvider;
+      const needsSqlite = (modeConfig.historySeriesServiceEnabled || modeConfig.registerAsHistoryApiProvider) && modeConfig.nodeSqliteAvailable;
 
-      if (needsDuckDb) {
+      if (needsSqlite) {
         storageService.setLogger({
           debug: (msg: string) => server.debug(msg),
           error: (msg: string) => server.error(msg)
         });
         const storageConfig = storageService.configure();
-        server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} parquetDir=${storageConfig.parquetDirectory} flushMs=${storageConfig.flushIntervalMs} parquetWindowMs=${storageConfig.parquetWindowMs} parquetCompression=${storageConfig.parquetCompression}`);
+        server.debug(`[KIP][STORAGE] config engine=${storageConfig.engine} db=${storageConfig.databaseFile} flushMs=${storageConfig.flushIntervalMs}`);
         historySeries.setSampleSink(sample => {
           storageService.enqueueSample(sample);
         });
 
-        duckDbInitializationPromise = storageService.initialize();
-        void duckDbInitializationPromise.then((ready) => {
-          server.debug(`[KIP][STORAGE] duckdbReady=${ready}`);
-          if (ready && storageService.isDuckDbParquetEnabled()) {
-            if (isHistorySeriesServiceEnabled()) {
+        sqliteInitializationPromise = storageService.initialize();
+        void sqliteInitializationPromise.then((ready) => {
+          server.debug(`[KIP][STORAGE] sqliteReady=${ready}`);
+          if (ready && storageService.isSqliteEnabled()) {
+            if (modeConfig && modeConfig.historySeriesServiceEnabled) {
               void storageService.getSeriesDefinitions()
                 .then((storedSeries) => {
                   if (storedSeries.length > 0) {
@@ -713,21 +745,21 @@ const start = (server: ServerAPI): Plugin => {
                     rebuildSeriesCaptureSubscriptions();
                   }
                   startStorageFlushTimer(storageConfig.flushIntervalMs);
-                  logOperationalMode('duckdb-ready');
-                  server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. Loaded ${storedSeries.length} persisted series. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+                  logOperationalMode('sqlite-ready');
+                  server.setPluginStatus(`Providing: Remote Control${historyApiProviderRegistered ? ', History service' : ', No History service'}${storedSeries.length > 0 ? `, ${storedSeries.length} Time-Series` : ', No Time-Series'}.`);
                 })
                 .catch((loadError) => {
                   server.error(`[SERIES STORAGE] failed to load persisted series: ${String((loadError as Error).message || loadError)}`);
                   startStorageFlushTimer(storageConfig.flushIntervalMs);
-                  logOperationalMode('duckdb-ready-series-load-failed');
-                  server.setPluginStatus(`KIP plugin started with DuckDB/Parquet history storage. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+                  logOperationalMode('sqlite-ready-series-load-failed');
+                  server.setPluginStatus(`Providing: Remote Control${historyApiProviderRegistered ? ', History service' : ', No History service'}, No Time-Series.`);
                 });
             } else {
               historySeries.reconcileSeries([]);
               stopSeriesCapture();
               startStorageFlushTimer(storageConfig.flushIntervalMs);
-              logOperationalMode('duckdb-ready-series-disabled');
-              server.setPluginStatus(`KIP plugin started with history-series service disabled. historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+              logOperationalMode('sqlite-ready-series-disabled');
+              server.setPluginStatus(`Providing: Remote Control${historyApiProviderRegistered ? ', History service' : ', No History service'}, No Time-Series.`);
             }
             return;
           }
@@ -739,9 +771,9 @@ const start = (server: ServerAPI): Plugin => {
 
           const initError = storageService.getLastInitError();
           if (initError) {
-            server.setPluginError(`DuckDB unavailable. ${initError}`);
-            logOperationalMode('duckdb-unavailable');
-            server.setPluginStatus(`KIP plugin started with DuckDB unavailable. historySeriesServiceEnabled=${isHistorySeriesServiceEnabled()} historyApiProviderEnabled=${isHistoryApiProviderEnabled()} historyApiProviderRegistered=${historyApiProviderRegistered}`);
+            server.setPluginError(`node:sqlite unavailable. ${initError}`);
+            logOperationalMode('sqlite-unavailable');
+            server.setPluginStatus(`Providing: Remote Control${historyApiProviderRegistered ? ', History service' : ', No History service'}, No Time-Series.`);
           }
         });
 
@@ -750,7 +782,7 @@ const start = (server: ServerAPI): Plugin => {
         }
         retentionSweepTimer = setInterval(() => {
           try {
-            if (storageService.isDuckDbParquetReady()) {
+            if (storageService.isSqliteReady()) {
               const lifecycleToken = storageService.getLifecycleToken();
               void storageService.pruneExpiredSamples(Date.now(), lifecycleToken)
                 .then(removedPersistedRows => {
@@ -765,18 +797,21 @@ const start = (server: ServerAPI): Plugin => {
                     });
                 })
                 .catch(error => {
-                  server.error(`[SERIES RETENTION] duckdbPrune failed: ${String((error as Error).message || error)}`);
+                  server.error(`[SERIES RETENTION] node:sqlite Prune failed: ${String((error as Error).message || error)}`);
                 });
             }
           } catch (error) {
-            server.error(`[SERIES RETENTION] sweep failed: ${String((error as Error).message || error)}`);
+            server.error(`[SERIES RETENTION] node:sqlite sweep failed: ${String((error as Error).message || error)}`);
           }
         }, 60 * 60_000);
         retentionSweepTimer.unref?.();
         rebuildSeriesCaptureSubscriptions();
       } else {
-        server.debug('[KIP][STORAGE] duckdb init skipped reason=config-disabled');
-        duckDbInitializationPromise = null;
+        if (modeConfig && !modeConfig.nodeSqliteAvailable && (modeConfig.historySeriesServiceEnabled || modeConfig.registerAsHistoryApiProvider)) {
+          server.setPluginStatus(getSqliteUnavailableMessage());
+        }
+        server.debug('[KIP][STORAGE] sqlite init skipped reason=config-disabled-or-runtime');
+        sqliteInitializationPromise = null;
         stopSeriesCapture();
       }
 
@@ -837,12 +872,27 @@ const start = (server: ServerAPI): Plugin => {
         historyApiRegistry = null;
       }
 
-      duckDbInitializationPromise = null;
+      sqliteInitializationPromise = null;
 
       const msg = 'Stopped.';
       server.setPluginStatus(msg);
     },
-    schema: () => CONFIG_SCHEMA,
+    schema: () => {
+      // Return schema with live modeConfig values
+      const schema = JSON.parse(JSON.stringify(CONFIG_SCHEMA));
+      if (schema && schema.properties && modeConfig) {
+        if (typeof modeConfig.nodeSqliteAvailable === 'boolean') {
+          schema.properties.nodeSqliteAvailable.default = modeConfig.nodeSqliteAvailable;
+        }
+        if (typeof modeConfig.historySeriesServiceEnabled === 'boolean') {
+          schema.properties.historySeriesServiceEnabled.default = modeConfig.historySeriesServiceEnabled;
+        }
+        if (typeof modeConfig.registerAsHistoryApiProvider === 'boolean') {
+          schema.properties.registerAsHistoryApiProvider.default = modeConfig.registerAsHistoryApiProvider;
+        }
+      }
+      return schema;
+    },
 
     registerWithRouter(router) {
       server.debug(`[KIP][ROUTES] register displays=${API_PATHS.DISPLAYS} instance=${API_PATHS.INSTANCE} screenIndex=${API_PATHS.SCREEN_INDEX} activeScreen=${API_PATHS.ACTIVATE_SCREEN}`);
@@ -1045,7 +1095,7 @@ const start = (server: ServerAPI): Plugin => {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
           }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
+          if (!(await ensureSqliteReadyForRequest(res))) {
             return;
           }
           return sendOk(res, historySeries.listSeries());
@@ -1062,7 +1112,7 @@ const start = (server: ServerAPI): Plugin => {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
           }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
+          if (!(await ensureSqliteReadyForRequest(res))) {
             return;
           }
           const seriesId = String(req.params.seriesId ?? '').trim();
@@ -1105,7 +1155,7 @@ const start = (server: ServerAPI): Plugin => {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
           }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
+          if (!(await ensureSqliteReadyForRequest(res))) {
             return;
           }
           const seriesId = String(req.params.seriesId ?? '').trim();
@@ -1137,7 +1187,7 @@ const start = (server: ServerAPI): Plugin => {
           if (!ensureHistorySeriesServiceEnabledForRequest(res)) {
             return;
           }
-          if (!(await ensureDuckDbReadyForRequest(res))) {
+          if (!(await ensureSqliteReadyForRequest(res))) {
             return;
           }
           const payload = req.body;
@@ -1145,7 +1195,7 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Body must be an array of series definitions');
           }
 
-          const simulated = new HistorySeriesService(() => Date.now(), false);
+          const simulated = new HistorySeriesService(() => Date.now());
           historySeries.listSeries().forEach(series => {
             simulated.upsertSeries(series);
           });

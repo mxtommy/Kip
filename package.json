@@ -1,6 +1,6 @@
 {
   "name": "@mxtommy/kip",
-  "version": "4.5.2",
+  "version": "4.6.0",
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
@@ -131,8 +131,6 @@
     "zone.js": "^0.15.1"
   },
   "dependencies": {
-    "@dsnp/parquetjs": "^1.8.7",
-    "@duckdb/node-api": "^1.4.4-r.2",
     "@signalk/server-api": "^2.22.0"
   }
 }

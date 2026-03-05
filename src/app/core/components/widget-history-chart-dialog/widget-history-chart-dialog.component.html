@@ -17,7 +17,7 @@
     @if (loading()) {
       <p class="history-message">Loading historical data…</p>
     } @else if (error()) {
-      <p class="history-message error">{{ error() }}</p>
+      <p class="history-message error">503: {{ error() }}</p>
     } @else if (hasNoData()) {
       <p class="history-message">No historical data is available for this widget. If you are not using the built-in KIP History API provider, validate your plugin configuration supports the widget's path and try again.</p>
     } @else {
