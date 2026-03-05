@@ -108,7 +108,7 @@ describe('SettingsNotificationsComponent', () => {
     flushMicrotasks();
 
     expect(toast.show).toHaveBeenCalledWith(
-      "To enable Automatic Night Mode, the Derived Data plugin must be enabled and the environment.sun path must be set to true. Do you wish to enable & configure?",
+      "To enable Automatic Night Mode, the Derived Data plugin must be enabled and the environment.sun path must be set to true. Do you wish to enable & and activate the path?",
       0,
       false,
       'warn',
@@ -140,7 +140,7 @@ describe('SettingsNotificationsComponent', () => {
     flushMicrotasks();
 
     expect(toast.show).toHaveBeenCalledWith(
-      "To enable Automatic Night Mode, the Derived Data plugin must be enabled. Do you wish to enable it?",
+      "To enable Automatic Night Mode, the Derived Data plugin must be enabled. Do you wish to enable the plugin?",
       0,
       false,
       'warn',
@@ -172,7 +172,7 @@ describe('SettingsNotificationsComponent', () => {
     flushMicrotasks();
 
     expect(toast.show).toHaveBeenCalledWith(
-      "To enable Automatic Night Mode, the environment.sun path in the Derived Data plugin must be set to true. Do you wish to configure it?",
+      "To enable Automatic Night Mode, the environment.sun path in the Derived Data plugin must be activated. Do you wish to activate the path?",
       0,
       false,
       'warn',
