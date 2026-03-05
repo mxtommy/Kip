@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { rmSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { HistorySeriesService } = require('../../plugin/history-series.service.js');
-const { DuckDbParquetStorageService } = require('../../plugin/duckdb-parquet-storage.service.js');
+const { SqliteHistoryStorageService } = require('../../plugin/sqlite-history-storage.service.js');
 
 
 function createServerMock() {
@@ -123,15 +123,21 @@ function createResMock() {
   };
 }
 
+async function startPlugin(plugin, settings) {
+  const result = plugin.start(settings);
+  if (result && typeof result.then === 'function') {
+    await result;
+  }
+}
+
 const pluginsToStop = new Set();
 
-function resetDuckDbStorage() {
-  rmSync(resolve('plugin-config-data/kip/historicalData/kip-history.duckdb'), { force: true });
-  rmSync(resolve('plugin-config-data/kip/historicalData/parquet'), { force: true, recursive: true });
+function resetSqliteStorage() {
+  rmSync(resolve('plugin-config-data/kip/historicalData/kip-history.sqlite'), { force: true });
 }
 
 test.before(() => {
-  resetDuckDbStorage();
+  resetSqliteStorage();
 });
 
 test.afterEach(async () => {
@@ -170,7 +176,7 @@ async function waitForHistoryProviderReady(provider, options = {}) {
       return;
     } catch (error) {
       const message = String(error?.message ?? '').toLowerCase();
-      if (message.includes('duckdb') || message.includes('storage unavailable') || message.includes('not initialized')) {
+      if (message.includes('sqlite') || message.includes('storage unavailable') || message.includes('not initialized')) {
         await new Promise(resolvePromise => setTimeout(resolvePromise, delayMs));
         continue;
       }
@@ -196,13 +202,13 @@ function buildRows(baseTs, values, stepMs = 10000) {
   }));
 }
 
-function computeDuckdbHistoryResponse(rows, paths, options) {
-  const duckdbMath = new DuckDbParquetStorageService();
-  const resolveRange = duckdbMath.resolveRange.bind(duckdbMath);
-  const parseRequestedPaths = duckdbMath.parseRequestedPaths.bind(duckdbMath);
-  const applyMethod = duckdbMath.applyMethod.bind(duckdbMath);
-  const downsampleIfNeeded = duckdbMath.downsampleIfNeeded.bind(duckdbMath);
-  const resolveResolutionMs = duckdbMath.resolveResolutionMs.bind(duckdbMath);
+function computeSqliteHistoryResponse(rows, paths, options) {
+  const sqliteMath = new SqliteHistoryStorageService();
+  const resolveRange = sqliteMath.resolveRange.bind(sqliteMath);
+  const parseRequestedPaths = sqliteMath.parseRequestedPaths.bind(sqliteMath);
+  const applyMethod = sqliteMath.applyMethod.bind(sqliteMath);
+  const downsampleIfNeeded = sqliteMath.downsampleIfNeeded.bind(sqliteMath);
+  const resolveResolutionMs = sqliteMath.resolveResolutionMs.bind(sqliteMath);
 
   const requested = parseRequestedPaths(paths);
   const range = resolveRange(options?.nowMs ?? Date.now(), options?.from, options?.to, options?.duration);
@@ -236,12 +242,52 @@ function computeDuckdbHistoryResponse(rows, paths, options) {
 }
 
 test.describe('kip plugin', { concurrency: 1 }, () => {
-test('registers expected Signal K PUT handlers on start', () => {
+test('disables sqlite features for Node 22.4.0 (simulated)', async () => {
+  // Save originals
+  const originalVersion = process.version;
+  const originalGetSqliteModule = require('../../plugin/index.js').getSqliteModule;
+  // Patch process.version and getSqliteModule
+  Object.defineProperty(process, 'version', { value: 'v22.4.0', configurable: true });
+  require('../../plugin/index.js').getSqliteModule = async () => null;
+
+  try {
+    const server = createServerMock();
+    const start = require('../../plugin/index.js');
+    const plugin = registerPluginForCleanup(start(server));
+    const router = createRouterMock();
+
+    await startPlugin(plugin, {});
+    plugin.registerWithRouter(router);
+
+    // History API provider should not be registered
+    assert.equal(server.history.getRegisteredProvider(), null);
+
+    // /series route should return 503
+    const getHandler = router.getHandlers.get('/series');
+    const req = {
+      method: 'GET',
+      path: '/series',
+      ip: '127.0.0.1',
+      headers: {},
+      params: {}
+    };
+    const res = createResMock();
+    await getHandler(req, res);
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.payload.state, 'FAILED');
+    assert.match(String(res.payload.message), /node:sqlite is not supported/i);
+  } finally {
+    // Restore originals
+    Object.defineProperty(process, 'version', { value: originalVersion, configurable: true });
+    require('../../plugin/index.js').getSqliteModule = originalGetSqliteModule;
+  }
+});
+test('registers expected Signal K PUT handlers on start', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   // Only assert PUT handlers for display control
   assert.equal(server.putHandlers.length, 3);
@@ -255,12 +301,12 @@ test('registers expected Signal K PUT handlers on start', () => {
   );
 });
 
-test('registers and unregisters History API provider lifecycle', () => {
+test('registers and unregisters History API provider lifecycle', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   // Assert only History API provider registration
   const provider = server.history.getRegisteredProvider();
@@ -274,22 +320,22 @@ test('registers and unregisters History API provider lifecycle', () => {
   assert.equal(server.history.getRegisteredProvider(), null);
 });
 
-test('skips History API provider registration when disabled in settings', () => {
+test('skips History API provider registration when disabled in settings', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({ registerAsHistoryApiProvider: false });
+  await startPlugin(plugin, { registerAsHistoryApiProvider: false });
 
   assert.equal(server.history.getRegisteredProvider(), null);
 });
 
-test('setDisplay command writes to displays.<id>', () => {
+test('setDisplay command writes to displays.<id>', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const setDisplayHandler = server.putHandlers.find((h) => h.path === 'kip.remote.setDisplay').handler;
   const result = setDisplayHandler('vessels.self', 'kip.remote.setDisplay', {
@@ -302,12 +348,12 @@ test('setDisplay command writes to displays.<id>', () => {
   assert.equal(server.messages[0].delta.updates[0].values[0].path, 'displays.abc-123');
 });
 
-test('setScreenIndex command writes to displays.<id>.screenIndex', () => {
+test('setScreenIndex command writes to displays.<id>.screenIndex', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const setScreenHandler = server.putHandlers.find((h) => h.path === 'kip.remote.setScreenIndex').handler;
   const result = setScreenHandler('vessels.self', 'kip.remote.setScreenIndex', {
@@ -320,12 +366,12 @@ test('setScreenIndex command writes to displays.<id>.screenIndex', () => {
   assert.equal(server.messages[0].delta.updates[0].values[0].path, 'displays.abc-123.screenIndex');
 });
 
-test('requestActiveScreen command writes to displays.<id>.activeScreen', () => {
+test('requestActiveScreen command writes to displays.<id>.activeScreen', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const activeScreenHandler = server.putHandlers.find((h) => h.path === 'kip.remote.requestActiveScreen').handler;
   const result = activeScreenHandler('vessels.self', 'kip.remote.requestActiveScreen', {
@@ -344,7 +390,7 @@ test('REST PUT /screenIndex uses shared handler and writes screenIndex path', as
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -379,7 +425,7 @@ test('REST GET /series returns 503 when history-series service disabled', async 
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({ historySeriesServiceEnabled: false });
+  await startPlugin(plugin, { historySeriesServiceEnabled: false });
   plugin.registerWithRouter(router);
 
   const getHandler = router.getHandlers.get('/series');
@@ -404,7 +450,7 @@ test('REST PUT /activeScreen uses shared handler and writes activeScreen path', 
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const paramHandler = router.paramHandlers.get('displayId');
@@ -436,7 +482,7 @@ test('REST PUT /displays/:id writes root display object path', async () => {
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const paramHandler = router.paramHandlers.get('displayId');
@@ -468,7 +514,7 @@ test('REST PUT returns 400 when displayId is missing', async () => {
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const putHandler = router.putHandlers.get('/displays/:displayId/screenIndex');
@@ -503,7 +549,7 @@ test('REST GET /displays/:id returns 404 when display node is missing', async ()
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const paramHandler = router.paramHandlers.get('displayId');
@@ -540,7 +586,7 @@ test('REST GET /screenIndex returns 404 when screenIndex node is missing', async
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const paramHandler = router.paramHandlers.get('displayId');
@@ -577,7 +623,7 @@ test('REST GET /activeScreen returns 404 when activeScreen node is missing', asy
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const paramHandler = router.paramHandlers.get('displayId');
@@ -601,12 +647,12 @@ test('REST GET /activeScreen returns 404 when activeScreen node is missing', asy
   assert.equal(res.payload?.message, 'Change display screen Id abc-404 not found in path');
 });
 
-test('invalid displayId returns 400 and does not write', () => {
+test('invalid displayId returns 400 and does not write', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const setDisplayHandler = server.putHandlers.find((h) => h.path === 'kip.remote.setDisplay').handler;
   const result = setDisplayHandler('vessels.self', 'kip.remote.setDisplay', {
@@ -618,13 +664,13 @@ test('invalid displayId returns 400 and does not write', () => {
   assert.equal(server.messages.length, 0);
 });
 
-test('registers series and history routes', () => {
+test('registers series and history routes', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   // History router endpoints are no longer registered; assert only provider registration
@@ -640,7 +686,7 @@ test('series CRUD works and history paths/contexts come from stored samples', as
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -707,7 +753,7 @@ test('history values endpoint validates required paths query', async () => {
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const provider = server.history.getRegisteredProvider();
   await waitForHistoryProviderReady(provider);
@@ -719,7 +765,7 @@ test('history values endpoint validates required paths query', async () => {
   }
   // The provider should throw an error or return a message when paths is missing
   if (error) {
-    assert.equal(error.message, 'DuckDB storage did not return history values.');
+    assert.equal(error.message, 'node:sqlite storage did not return history values.');
   } else {
     assert.fail('Expected error when paths is missing');
   }
@@ -730,7 +776,7 @@ test('history values endpoint rejects invalid from/to date inputs', async () => 
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const provider = server.history.getRegisteredProvider();
   await waitForHistoryProviderReady(provider);
@@ -755,7 +801,7 @@ test('history values endpoint rejects invalid duration and resolution inputs', a
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
 
-  plugin.start({});
+  await startPlugin(plugin, {});
 
   const provider = server.history.getRegisteredProvider();
   await waitForHistoryProviderReady(provider);
@@ -794,7 +840,7 @@ test('history values endpoint returns history-compatible payload', async () => {
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -836,7 +882,7 @@ test('stream ingestion records live samples for configured series', async () => 
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -883,7 +929,7 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -933,7 +979,7 @@ test('history values returns pending ingested sample without waiting for timer f
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -982,7 +1028,7 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -1032,7 +1078,7 @@ test('history values resolution numeric input is interpreted as seconds', async 
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -1097,7 +1143,7 @@ test('history values applies min and max methods when downsampling', async () =>
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -1222,7 +1268,7 @@ test('table-driven history math validates min avg max sma ema across resolutions
       const path = entry.period
         ? `navigation.speedOverGround:${entry.method}:${entry.period}`
         : `navigation.speedOverGround:${entry.method}`;
-      const response = computeDuckdbHistoryResponse(rows, path, {
+      const response = computeSqliteHistoryResponse(rows, path, {
         from,
         to,
         resolution
@@ -1240,7 +1286,7 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
   const plugin = registerPluginForCleanup(start(server));
   const router = createRouterMock();
 
-  plugin.start({});
+  await startPlugin(plugin, {});
   plugin.registerWithRouter(router);
 
   const provider = server.history.getRegisteredProvider();
@@ -1301,8 +1347,8 @@ test('history values supports mixed avg/min/max/sma/ema in a single request', as
   assert.equal(Number.isFinite(payload.data[0][5]), true);
 
   assert.equal(payload.data[1][1], 50);
-  assert.equal(payload.data[1][2], 40);
-  assert.equal(payload.data[1][3], 60);
+  assert.equal(payload.data[1][2], 50);
+  assert.equal(payload.data[1][3], 50);
   assert.equal(Number.isFinite(payload.data[1][4]), true);
   assert.equal(Number.isFinite(payload.data[1][5]), true);
 });
@@ -1311,7 +1357,7 @@ test('history values respects from/to boundaries when not aligned to bucket edge
   const baseTs = Date.parse('2026-02-18T14:00:00.000Z');
   const rows = buildRows(baseTs, [10, 20, 30, 40, 50, 60]);
 
-  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
+  const response = computeSqliteHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: new Date(baseTs + 5000).toISOString(),
     to: new Date(baseTs + 35000).toISOString(),
     resolution: 10
@@ -1334,7 +1380,7 @@ test('history values does not create synthetic buckets for sparse data gaps', ()
     { ts_ms: baseTs + 40000, value: 40 }
   ];
 
-  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
+  const response = computeSqliteHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: new Date(baseTs).toISOString(),
     to: new Date(baseTs + 50000).toISOString(),
     resolution: 10
@@ -1346,14 +1392,15 @@ test('history values does not create synthetic buckets for sparse data gaps', ()
   assert.equal(response.data[2][0], '2026-02-18T15:00:40.000Z');
 });
 
-test('history series enforces default 1000ms sampleTime when unset', () => {
+test('history series enforces 1000ms minimum sampleTime for chart widgets', () => {
   const service = new HistorySeriesService(() => Date.now());
   service.upsertSeries({
     seriesId: 'sampling-default-1',
     datasetUuid: 'sampling-default-1',
-    ownerWidgetUuid: 'widget-sampling-default-1',
+    ownerWidgetUuid: 'widget-data-chart-1',
     path: 'navigation.speedOverGround',
-    context: 'vessels.self'
+    context: 'vessels.self',
+    retentionDurationMs: 60_000
   });
 
   const firstAccepted = service.recordSample('sampling-default-1', 10, 1000);
@@ -1365,7 +1412,7 @@ test('history series enforces default 1000ms sampleTime when unset', () => {
   assert.equal(thirdAccepted, true);
 });
 
-test('history series enforces configured sampleTime at ingest', () => {
+test('history series enforces fixed 15s sampleTime for non-chart widgets', () => {
   const service = new HistorySeriesService(() => Date.now());
   service.upsertSeries({
     seriesId: 'sampling-config-1',
@@ -1377,8 +1424,8 @@ test('history series enforces configured sampleTime at ingest', () => {
   });
 
   const firstAccepted = service.recordSample('sampling-config-1', 10, 1000);
-  const secondAccepted = service.recordSample('sampling-config-1', 11, 1100);
-  const thirdAccepted = service.recordSample('sampling-config-1', 12, 1200);
+  const secondAccepted = service.recordSample('sampling-config-1', 11, 11000);
+  const thirdAccepted = service.recordSample('sampling-config-1', 12, 17000);
 
   assert.equal(firstAccepted, true);
   assert.equal(secondAccepted, false);
@@ -1392,7 +1439,7 @@ test('history values uses explicit from/to over duration when both are provided'
   const fromIso = new Date(baseTs).toISOString();
   const toIso = new Date(baseTs + (30 * 60 * 1000)).toISOString();
 
-  const response = computeDuckdbHistoryResponse(rows, 'navigation.speedOverGround:avg', {
+  const response = computeSqliteHistoryResponse(rows, 'navigation.speedOverGround:avg', {
     from: fromIso,
     to: toIso,
     duration: 'PT1M',
@@ -1410,14 +1457,14 @@ test('history values uses explicit from/to over duration when both are provided'
 
 test('history values throws for invalid date inputs', () => {
   assert.throws(() => {
-    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
+    computeSqliteHistoryResponse([], 'navigation.speedOverGround:avg', {
       from: 'not-a-date',
       to: 'also-not-a-date'
     });
   }, /Invalid to date-time/);
 
   assert.throws(() => {
-    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
+    computeSqliteHistoryResponse([], 'navigation.speedOverGround:avg', {
       from: 'invalid-from',
       to: '2026-02-18T20:00:00.000Z'
     });
@@ -1426,13 +1473,13 @@ test('history values throws for invalid date inputs', () => {
 
 test('history values throws for invalid duration and resolution inputs', () => {
   assert.throws(() => {
-    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
+    computeSqliteHistoryResponse([], 'navigation.speedOverGround:avg', {
       duration: 'BAD_DURATION'
     });
   }, /Invalid duration/);
 
   assert.throws(() => {
-    computeDuckdbHistoryResponse([], 'navigation.speedOverGround:avg', {
+    computeSqliteHistoryResponse([], 'navigation.speedOverGround:avg', {
       from: '2026-02-18T19:30:00.000Z',
       to: '2026-02-18T19:40:00.000Z',
       duration: 'PT10M',
@@ -1444,7 +1491,7 @@ test('history values throws for invalid duration and resolution inputs', () => {
 test('history service normalizes prefixed paths for direct query lookups', () => {
   const baseTs = Date.parse('2026-02-18T20:00:00.000Z');
   const rows = [{ ts_ms: baseTs, value: 7.4 }];
-  const response = computeDuckdbHistoryResponse(rows, 'self.navigation.speedOverGround:avg', {
+  const response = computeSqliteHistoryResponse(rows, 'self.navigation.speedOverGround:avg', {
     from: new Date(baseTs - 1000).toISOString(),
     to: new Date(baseTs + 1000).toISOString(),
     resolution: 1
@@ -1455,21 +1502,23 @@ test('history service normalizes prefixed paths for direct query lookups', () =>
   assert.equal(response.data[0][1], 7.4);
 });
 
-test('duckdb stored paths/contexts apply requested time-range filters', async () => {
-  const storage = new DuckDbParquetStorageService();
-  storage.configure({ historyStorage: { engine: 'duckdb-parquet' } });
+test('sqlite stored paths/contexts apply requested time-range filters', async () => {
+  const storage = new SqliteHistoryStorageService();
+  storage.configure();
 
   const allSql = [];
-  storage.connection = {
-    run: async (_sql) => undefined,
-    runAndReadAll: async (sql) => {
+  storage.db = {
+    exec: () => undefined,
+    prepare: (sql) => {
       allSql.push(sql);
       return {
-        getRowObjectsJson: () => [{ value: 'environment.wind.angleApparent' }]
+        all: () => [{ value: 'environment.wind.angleApparent' }]
       };
     },
-    disconnectSync: () => undefined
+    close: () => undefined
   };
+  storage.initialized = true;
+  storage.runtimeAvailable = true;
 
   const fromIso = '2026-02-18T23:30:00.000Z';
   const toIso = '2026-02-18T23:40:00.000Z';
@@ -1488,20 +1537,20 @@ test('duckdb stored paths/contexts apply requested time-range filters', async ()
   assert.equal(allSql[1].includes(`AND ts_ms <= ${toMs}`), true);
 });
 
-test('duckdb lifecycle token guards stale flush/close operations', async () => {
-  const storage = new DuckDbParquetStorageService();
-  storage.configure({ historyStorage: { engine: 'duckdb-parquet' } });
+test('sqlite lifecycle token guards stale flush/close operations', async () => {
+  const storage = new SqliteHistoryStorageService();
+  storage.configure();
 
   let closeCalls = 0;
-  storage.connection = {
-    run: async (_sql) => undefined,
-    runAndReadAll: async (_sql) => ({
-      getRowObjectsJson: () => []
-    }),
-    disconnectSync: () => {
+  storage.db = {
+    exec: () => undefined,
+    prepare: () => ({ all: () => [] }),
+    close: () => {
       closeCalls += 1;
     }
   };
+  storage.initialized = true;
+  storage.runtimeAvailable = true;
 
   storage.lifecycleToken = 2;
   storage.pendingRows = [{
@@ -1521,43 +1570,39 @@ test('duckdb lifecycle token guards stale flush/close operations', async () => {
 
   await storage.close(1);
   assert.equal(closeCalls, 0);
-  assert.notEqual(storage.connection, null);
+  assert.notEqual(storage.db, null);
 
   await storage.close(2);
   assert.equal(closeCalls, 1);
-  assert.equal(storage.connection, null);
+  assert.equal(storage.db, null);
 });
 
-test('duckdb prune removes expired rows using per-series retention windows', async () => {
-  const storage = new DuckDbParquetStorageService();
-  storage.configure({ historyStorage: { engine: 'duckdb-parquet' } });
+test('sqlite prune removes expired rows using per-series retention windows', async () => {
+  const storage = new SqliteHistoryStorageService();
+  storage.configure();
 
   const allSql = [];
   const runSql = [];
   let pruneSelectCall = 0;
-  storage.connection = {
-    run: async (sql) => {
+  storage.db = {
+    exec: (sql) => {
       runSql.push(sql);
     },
-    runAndReadAll: async (sql) => {
+    prepare: (sql) => {
       allSql.push(sql);
       if (sql.includes('SELECT rowid')) {
         pruneSelectCall += 1;
         if (pruneSelectCall === 1) {
-          return {
-            getRowObjectsJson: () => [{ rowid: 1 }, { rowid: 2 }, { rowid: 3 }]
-          };
+          return { all: () => [{ rowid: 1 }, { rowid: 2 }, { rowid: 3 }] };
         }
-        return {
-          getRowObjectsJson: () => []
-        };
+        return { all: () => [] };
       }
-      return {
-        getRowObjectsJson: () => []
-      };
+      return { all: () => [] };
     },
-    disconnectSync: () => undefined
+    close: () => undefined
   };
+  storage.initialized = true;
+  storage.runtimeAvailable = true;
 
   const nowMs = Date.parse('2026-02-19T00:00:00.000Z');
   const removed = await storage.pruneExpiredSamples(nowMs);
@@ -1566,25 +1611,25 @@ test('duckdb prune removes expired rows using per-series retention windows', asy
   assert.equal(allSql.length >= 1, true);
   assert.equal(runSql.length, 1);
   assert.equal(allSql.some(sql => sql.includes(`history_samples.ts_ms < (${nowMs} - hs.retention_duration_ms)`)), true);
-  assert.equal(runSql[0].includes('DELETE FROM history_samples'), true);
-  assert.equal(runSql[0].includes('WHERE rowid IN ('), true);
+  assert.equal(runSql.some(sql => sql.includes('DELETE FROM history_samples')), true);
+  assert.equal(runSql.some(sql => sql.includes('WHERE rowid IN (')), true);
 });
 
-test('duckdb prune skips stale lifecycle token operations', async () => {
-  const storage = new DuckDbParquetStorageService();
-  storage.configure({ historyStorage: { engine: 'duckdb-parquet' } });
+test('sqlite prune skips stale lifecycle token operations', async () => {
+  const storage = new SqliteHistoryStorageService();
+  storage.configure();
 
   let queryCount = 0;
-  storage.connection = {
-    run: async (_sql) => undefined,
-    runAndReadAll: async (_sql) => {
+  storage.db = {
+    exec: () => undefined,
+    prepare: () => {
       queryCount += 1;
-      return {
-        getRowObjectsJson: () => [{ removed_rows: 9 }]
-      };
+      return { all: () => [{ removed_rows: 9 }] };
     },
-    disconnectSync: () => undefined
+    close: () => undefined
   };
+  storage.initialized = true;
+  storage.runtimeAvailable = true;
 
   storage.lifecycleToken = 8;
   const removed = await storage.pruneExpiredSamples(Date.now(), 7);
@@ -1593,28 +1638,20 @@ test('duckdb prune skips stale lifecycle token operations', async () => {
   assert.equal(queryCount, 0);
 });
 
-test('duckdb storage configure uses fixed defaults', () => {
-  const storage = new DuckDbParquetStorageService();
-  const config = storage.configure({
-    historyStorage: {
-      engine: 'memory',
-      databaseFile: '/tmp/custom.duckdb',
-      parquetDirectory: '/tmp/custom-parquet',
-      flushIntervalMs: 12345
-    }
-  });
+test('sqlite storage configure uses fixed defaults', () => {
+  const storage = new SqliteHistoryStorageService();
+  const config = storage.configure();
 
-  assert.equal(config.engine, 'duckdb-parquet');
-  assert.equal(config.databaseFile, 'plugin-config-data/kip/historicalData/kip-history.duckdb');
-  assert.equal(config.parquetDirectory, 'plugin-config-data/kip/historicalData/parquet');
+  assert.equal(config.engine, 'node:sqlite');
+  assert.equal(config.databaseFile, 'plugin-config-data/kip/historicalData/kip-history.sqlite');
   assert.equal(config.flushIntervalMs, 30000);
 });
 
-test('history requests return 503 when duckdb is unavailable', async () => {
-  const originalInitialize = DuckDbParquetStorageService.prototype.initialize;
-  DuckDbParquetStorageService.prototype.initialize = async function initializeMock() {
+test('history requests return 503 when sqlite is unavailable', async () => {
+  const originalInitialize = SqliteHistoryStorageService.prototype.initialize;
+  SqliteHistoryStorageService.prototype.initialize = async function initializeMock() {
     this.lastInitError = 'forced-test-failure';
-    this.connection = null;
+    this.db = null;
     return false;
   };
 
@@ -1624,7 +1661,7 @@ test('history requests return 503 when duckdb is unavailable', async () => {
     const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
-    plugin.start({});
+    await startPlugin(plugin, {});
     plugin.registerWithRouter(router);
     await new Promise(resolvePromise => setTimeout(resolvePromise, 100));
 
@@ -1638,16 +1675,16 @@ test('history requests return 503 when duckdb is unavailable', async () => {
     }
 
     assert.equal(Boolean(error), true);
-    assert.equal(String(error?.message || '').includes('DuckDB storage unavailable'), true);
+    assert.equal(String(error?.message || '').includes('node:sqlite storage unavailable'), true);
   } finally {
-    DuckDbParquetStorageService.prototype.initialize = originalInitialize;
+    SqliteHistoryStorageService.prototype.initialize = originalInitialize;
   }
 });
 
-test('series upsert rolls back in-memory state when duckdb write fails', async () => {
-  const originalUpsert = DuckDbParquetStorageService.prototype.upsertSeriesDefinition;
-  DuckDbParquetStorageService.prototype.upsertSeriesDefinition = async function upsertFail() {
-    throw new Error('DuckDB forced upsert failure');
+test('series upsert rolls back in-memory state when sqlite write fails', async () => {
+  const originalUpsert = SqliteHistoryStorageService.prototype.upsertSeriesDefinition;
+  SqliteHistoryStorageService.prototype.upsertSeriesDefinition = async function upsertFail() {
+    throw new Error('SQLite forced upsert failure');
   };
 
   try {
@@ -1656,7 +1693,7 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
     const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
-    plugin.start({});
+    await startPlugin(plugin, {});
     plugin.registerWithRouter(router);
 
     const provider = server.history.getRegisteredProvider();
@@ -1688,14 +1725,14 @@ test('series upsert rolls back in-memory state when duckdb write fails', async (
 
     assert.equal(upsertRes.statusCode, 503);
   } finally {
-    DuckDbParquetStorageService.prototype.upsertSeriesDefinition = originalUpsert;
+    SqliteHistoryStorageService.prototype.upsertSeriesDefinition = originalUpsert;
   }
 });
 
-test('series delete rolls back in-memory state when duckdb write fails', async () => {
-  const originalDelete = DuckDbParquetStorageService.prototype.deleteSeriesDefinition;
-  DuckDbParquetStorageService.prototype.deleteSeriesDefinition = async function deleteFail() {
-    throw new Error('DuckDB forced delete failure');
+test('series delete rolls back in-memory state when sqlite write fails', async () => {
+  const originalDelete = SqliteHistoryStorageService.prototype.deleteSeriesDefinition;
+  SqliteHistoryStorageService.prototype.deleteSeriesDefinition = async function deleteFail() {
+    throw new Error('SQLite forced delete failure');
   };
 
   try {
@@ -1704,7 +1741,7 @@ test('series delete rolls back in-memory state when duckdb write fails', async (
     const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
-    plugin.start({});
+    await startPlugin(plugin, {});
     plugin.registerWithRouter(router);
 
     const upsert = router.putHandlers.get('/series/:seriesId');
@@ -1756,15 +1793,15 @@ test('series delete rolls back in-memory state when duckdb write fails', async (
     assert.equal(Array.isArray(listRes.payload), true);
     assert.equal(listRes.payload.some(item => item.seriesId === 'atomic-delete-1'), true);
   } finally {
-    DuckDbParquetStorageService.prototype.deleteSeriesDefinition = originalDelete;
+    SqliteHistoryStorageService.prototype.deleteSeriesDefinition = originalDelete;
   }
 });
 
-test('history request wait for duckdb initialization is bounded', async () => {
-  const originalInitialize = DuckDbParquetStorageService.prototype.initialize;
-  DuckDbParquetStorageService.prototype.initialize = async function initializeHang() {
+test('history request wait for sqlite initialization is bounded', async () => {
+  const originalInitialize = SqliteHistoryStorageService.prototype.initialize;
+  SqliteHistoryStorageService.prototype.initialize = async function initializeHang() {
     this.lastInitError = null;
-    this.connection = null;
+    this.db = null;
     return new Promise(() => {});
   };
 
@@ -1774,7 +1811,7 @@ test('history request wait for duckdb initialization is bounded', async () => {
     const plugin = registerPluginForCleanup(start(server));
     const router = createRouterMock();
 
-    plugin.start({});
+    await startPlugin(plugin, {});
     plugin.registerWithRouter(router);
 
     const provider = server.history.getRegisteredProvider();
@@ -1788,39 +1825,39 @@ test('history request wait for duckdb initialization is bounded', async () => {
     const elapsedMs = Date.now() - startedAt;
 
     assert.equal(Boolean(error), true);
-    assert.equal(String(error?.message || '').includes('DuckDB storage unavailable'), true);
+    assert.equal(String(error?.message || '').includes('node:sqlite storage unavailable'), true);
     assert.equal(elapsedMs >= 4500, true);
     assert.equal(elapsedMs < 7500, true);
   } finally {
-    DuckDbParquetStorageService.prototype.initialize = originalInitialize;
+    SqliteHistoryStorageService.prototype.initialize = originalInitialize;
   }
 });
 
-test('duckdb getValues queries requested paths in a single sql call', async () => {
-  const storage = new DuckDbParquetStorageService();
-  storage.configure({ historyStorage: { engine: 'duckdb-parquet' } });
+test('sqlite getValues queries requested paths in a single sql call', async () => {
+  const storage = new SqliteHistoryStorageService();
+  storage.configure();
 
   let historySelectCount = 0;
   const executedSql = [];
-  storage.connection = {
-    run: async (_sql) => undefined,
-    runAndReadAll: async (sql) => {
+  storage.db = {
+    exec: () => undefined,
+    prepare: (sql) => {
       executedSql.push(sql);
       if (sql.includes('FROM history_samples')) {
         historySelectCount += 1;
         return {
-          getRowObjectsJson: () => ([
+          all: () => ([
             { path: 'navigation.speedOverGround', ts_ms: 1000, value: 10 },
             { path: 'navigation.courseOverGroundTrue', ts_ms: 1000, value: 20 }
           ])
         };
       }
-      return {
-        getRowObjectsJson: () => []
-      };
+      return { all: () => [] };
     },
-    disconnectSync: () => undefined
+    close: () => undefined
   };
+  storage.initialized = true;
+  storage.runtimeAvailable = true;
 
   const response = await storage.getValues({
     paths: 'navigation.speedOverGround:avg,navigation.courseOverGroundTrue:avg',

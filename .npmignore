@@ -1,6 +1,7 @@
 # Manual project excludes
 /src
 /kip-plugin
+/plugin-config-data
 .angular/
 e2e/
 svg-templates/

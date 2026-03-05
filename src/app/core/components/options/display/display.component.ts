@@ -60,8 +60,9 @@ export class SettingsDisplayComponent implements OnInit {
   protected splitShellEnabled = model<boolean>(false);
   protected splitShellSide = model<'left' | 'right'>('left');
   protected splitShellSwipeDisabled = model<boolean>(false);
-  protected providerMode = model<'kip' | 'other'>('kip');
+  protected providerMode = model<'kip' | 'other'>('other');
   protected widgetHistoryDisabled = model<boolean>(false);
+  protected isKipHistoryProviderSelectable = signal<boolean>(false);
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
 
@@ -157,14 +158,19 @@ export class SettingsDisplayComponent implements OnInit {
     }
 
     const pluginConfig = result.data.state.configuration;
-    this.providerMode.set(pluginConfig.historySeriesServiceEnabled === true ? 'kip' : 'other');
+    const seriesEnabled = pluginConfig.historySeriesServiceEnabled === true;
+    this.isKipHistoryProviderSelectable.set((pluginConfig.nodeSqliteAvailable as boolean) ?? false);
+    this.providerMode.set(seriesEnabled && this.isKipHistoryProviderSelectable() ? 'kip' : 'other');
+
   }
 
   private async setKipPluginConfig(): Promise<boolean> {
+    const providerEnabled = this.isKipHistoryProviderSelectable();
+    const useKipProvider = this.providerMode() === 'kip' && providerEnabled;
     const config: IPluginConfigSaveRequest = {
       configuration: {
-        historySeriesServiceEnabled: this.providerMode() === 'kip',
-        registerAsHistoryApiProvider: this.providerMode() === 'kip'
+        historySeriesServiceEnabled: useKipProvider,
+        registerAsHistoryApiProvider: useKipProvider
       }
     };
     const result = await this.pluginConfig.savePluginConfig(this.KIP_DATA_PLUGIN_ID, config);
@@ -215,11 +221,11 @@ export class SettingsDisplayComponent implements OnInit {
     let message: string;
 
     if (needsEnable && needsSunFlag) {
-      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled and the environment.sun path must be set to true. Do you wish to enable & configure?";
+      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled and the environment.sun path must be set to true. Do you wish to enable & and activate the path?";
     } else if (needsEnable) {
-      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled. Do you wish to enable it?";
+      message = "To enable Automatic Night Mode, the Derived Data plugin must be enabled. Do you wish to enable the plugin?";
     } else {
-      message = "To enable Automatic Night Mode, the environment.sun path in the Derived Data plugin must be set to true. Do you wish to configure it?";
+      message = "To enable Automatic Night Mode, the environment.sun path in the Derived Data plugin must be activated. Do you wish to activate the path?";
     }
 
     return new Promise<boolean>((resolve) => {

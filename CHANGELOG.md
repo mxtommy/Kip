@@ -1,12 +1,21 @@
-# v4.5.2
+# v4.6.0
+## Improvements
+* Built-in Time-Series storage and History-API provider now use the native node:sqlite feature, eliminating all binary and external dependencies.
+  * Requires Node.js 22.5.0 or newer. If you use an older Node.js version, you must select an alternative History-API provider.
+  * **IMPORTANT:** Before upgrading Node.js, always confirm your Signal K server version supports the required Node.js version. See the [Signal K installation documentation](https://demo.signalk.org/documentation/Installation.html).
+## Fixes
+* Extending v4.5.x features to VenusOS (32bit OS) - Error: Failed to start: Error loading duckdb native binding: unsupported arch 'arm' for platform 'linux'. Fixes #979
+* Uninstallation does not remove all files. Fixes #981
+* Reduce unwarranted installation size.
+# v4.5.2 - Deprecated version due to lack of VenusOS (32bit) DuckDB binary support  
 ## Fixes
 * DuckDB initialized when features are not enabled.
 * Parquet data compression and pruning not executing.
-# v4.5.1
+# v4.5.1 - Deprecated version due to lack of VenusOS (32bit) DuckDB binary support 
 ## Fixes
 * DuckDB dependency causing build and installation errors. Fixes #979
 * Reduced installation size. Fixes #980
-# v4.5.0
+# v4.5.0 - Deprecated version due to lack of VenusOS (32bit) DuckDB binary support 
 ## New Features
 * Effortlessly review your vessel’s history with the new Widget Historical Charts—automatically track, store, and visualize key data. Instantly access up to the last full day of performance: just two-finger tap or right-click any widget to open a seamless history dialog—no setup, no clutter, just the trends you need. (Requires Signal K v2.22.1)
 * Dashboards now start with fully populated Data Charts, powered by KIP’s managed Time-Series History-API provider or other compatible history providers. (Requires Signal K v2.22.1)

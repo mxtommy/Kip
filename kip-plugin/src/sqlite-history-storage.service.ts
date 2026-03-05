@@ -1,16 +1,11 @@
-import { mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'fs';
+import { mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import { DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
-import { ParquetCompression, ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
 import { IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 
-export interface IDuckDbParquetStorageConfig {
-  engine: 'duckdb-parquet';
+export interface ISqliteHistoryStorageConfig {
+  engine: 'node:sqlite';
   databaseFile: string;
-  parquetDirectory: string;
   flushIntervalMs: number;
-  parquetWindowMs: number;
-  parquetCompression: 'none' | 'snappy' | 'gzip' | 'brotli' | 'lz4' | 'lzo';
 }
 
 export interface IRecordedSample {
@@ -22,12 +17,6 @@ export interface IRecordedSample {
   source: string;
   timestamp: number;
   value: number;
-}
-
-interface ISeriesRange {
-  seriesId: string;
-  minTs: number;
-  maxTs: number;
 }
 
 interface IRequestedPath {
@@ -59,21 +48,11 @@ interface ISeriesRow {
   sample_time: number | null;
   enabled: boolean | number;
   methods_json: string | null;
+  reconcile_ts: number | null;
 }
 
 interface IStringRow {
   value: string;
-}
-
-interface IParquetExportRow {
-  series_id: string;
-  dataset_uuid: string;
-  owner_widget_uuid: string;
-  path: string;
-  context: string;
-  source: string | null;
-  ts_ms: unknown;
-  value: unknown;
 }
 
 interface IHistoryRangeQuery {
@@ -87,50 +66,53 @@ interface TLogger {
   error: (msg: string) => void;
 }
 
-/**
- * Provides DuckDB storage and Parquet flush support for captured history samples.
- */
-const DEFAULT_STORAGE_CONFIG: IDuckDbParquetStorageConfig = {
-  engine: 'duckdb-parquet',
-  databaseFile: 'plugin-config-data/kip/historicalData/kip-history.duckdb',
-  parquetDirectory: 'plugin-config-data/kip/historicalData/parquet',
-  flushIntervalMs: 30_000,
-  parquetWindowMs: 60 * 60_000,
-  parquetCompression: 'snappy'
+interface ISqliteStatement {
+  all: () => unknown[];
+}
+
+interface ISqliteDatabase {
+  exec: (sql: string) => void;
+  prepare: (sql: string) => ISqliteStatement;
+  close: () => void;
+}
+
+interface ISqliteModule {
+  DatabaseSync?: new (path: string, options?: { timeout?: number }) => ISqliteDatabase;
+}
+
+const DEFAULT_STORAGE_CONFIG: ISqliteHistoryStorageConfig = {
+  engine: 'node:sqlite',
+  databaseFile: 'plugin-config-data/kip/historicalData/kip-history.sqlite',
+  flushIntervalMs: 30_000
 };
 
-export class DuckDbParquetStorageService {
-  private config: IDuckDbParquetStorageConfig = { ...DEFAULT_STORAGE_CONFIG };
-
-  // 8 hour job interval (8 hours)
+/**
+ * Provides node:sqlite storage for captured history samples.
+ */
+export class SqliteHistoryStorageService {
   private static readonly EIGHT_HOURS_INTERVAL = 8 * 60 * 60 * 1000;
-  private vacuumJob: NodeJS.Timeout | null = null;
-
-  // 4 hour job interval (4 hours)
   private static readonly FOUR_HOURS_INTERVAL = 4 * 60 * 60 * 1000;
-  private pruneJob: NodeJS.Timeout | null = null;
-
-  // Stale series cleanup interval (6 months)
-  private static readonly STALE_SERIES_AGE_MS = 180 * 24 * 60 * 60 * 1000; // 6 months
-  private staleSeriesCleanupJob: NodeJS.Timeout | null = null;
-
+  private static readonly STALE_SERIES_AGE_MS = 180 * 24 * 60 * 60 * 1000;
   private static readonly PRUNE_BATCH_SIZE = 10_000;
 
-
+  private config: ISqliteHistoryStorageConfig = { ...DEFAULT_STORAGE_CONFIG };
+  private dataDirPath: string | null = null;
   private logger: TLogger = {
     debug: () => undefined,
     error: () => undefined
   };
 
-  private db: DuckDBInstance | null = null;
-  private connection: DuckDBConnection | null = null;
+  private db: ISqliteDatabase | null = null;
   private pendingRows: IRecordedSample[] = [];
-  private pendingRangesBySeriesId = new Map<string, ISeriesRange>();
   private lastInitError: string | null = null;
   private lifecycleToken = 0;
   private initialized = false;
+  private runtimeAvailable = true;
   private maintenanceInProgress = false;
   private flushInProgress = false;
+  private vacuumJob: NodeJS.Timeout | null = null;
+  private pruneJob: NodeJS.Timeout | null = null;
+  private staleSeriesCleanupJob: NodeJS.Timeout | null = null;
 
   /**
    * Sets logger callbacks used by the storage service.
@@ -148,30 +130,66 @@ export class DuckDbParquetStorageService {
   /**
    * Applies the fixed storage backend configuration.
    *
-   * @returns {IDuckDbParquetStorageConfig} Fixed storage configuration.
+   * @returns {ISqliteHistoryStorageConfig} Fixed storage configuration.
    *
    * @example
    * const cfg = storage.configure();
    * console.log(cfg.engine);
    */
-  public configure(): IDuckDbParquetStorageConfig {
+  public configure(): ISqliteHistoryStorageConfig {
     this.initialized = false;
-
-    this.config = { ...DEFAULT_STORAGE_CONFIG };
-
+    const databaseFile = this.dataDirPath
+      ? join(this.dataDirPath, 'historicalData', 'kip-history.sqlite')
+      : DEFAULT_STORAGE_CONFIG.databaseFile;
+    this.config = {
+      ...DEFAULT_STORAGE_CONFIG,
+      databaseFile
+    };
     return this.config;
   }
 
   /**
-   * Initializes DuckDB storage if DuckDB engine is selected.
+   * Sets the base directory for persisted history data.
    *
-   * @returns {Promise<boolean>} True when DuckDB is initialized and ready.
+   * @param {string | null} baseDir Absolute directory path for plugin data.
+   * @returns {void}
+   *
+   * @example
+   * storage.setDataDirPath('/var/lib/signalk');
+   */
+  public setDataDirPath(baseDir: string | null): void {
+    this.dataDirPath = typeof baseDir === 'string' && baseDir.trim() ? baseDir.trim() : null;
+  }
+
+  /**
+   * Updates runtime availability of node:sqlite, clearing stored errors when enabled.
+   *
+   * @param {boolean} available Whether node:sqlite is available at runtime.
+   * @param {string | undefined} errorMessage Optional runtime error message.
+   * @returns {void}
+   *
+   * @example
+   * storage.setRuntimeAvailability(false, 'node:sqlite unavailable');
+   */
+  public setRuntimeAvailability(available: boolean, errorMessage?: string): void {
+    this.runtimeAvailable = available;
+    this.lastInitError = available ? null : (errorMessage ?? 'node:sqlite unavailable');
+    if (!available) {
+      this.initialized = false;
+      this.db = null;
+    }
+  }
+
+  /**
+   * Initializes node:sqlite storage.
+   *
+   * @returns {Promise<boolean>} True when node:sqlite is initialized and ready.
    *
    * @example
    * const ready = await storage.initialize();
    */
   public async initialize(): Promise<boolean> {
-    if (!this.isDuckDbParquetEnabled()) {
+    if (!this.isSqliteEnabled() || !this.runtimeAvailable) {
       return false;
     }
 
@@ -179,12 +197,20 @@ export class DuckDbParquetStorageService {
     this.lifecycleToken += 1;
 
     try {
+      const sqlite = await this.loadSqliteModule();
+      if (!sqlite?.DatabaseSync) {
+        throw new Error('node:sqlite DatabaseSync is unavailable');
+      }
+
       const dbPath = resolve(this.config.databaseFile);
       mkdirSync(dirname(dbPath), { recursive: true });
-      mkdirSync(resolve(this.config.parquetDirectory), { recursive: true });
 
-      this.db = await DuckDBInstance.create(dbPath);
-      this.connection = await this.db.connect();
+      this.db = new sqlite.DatabaseSync(dbPath, { timeout: 5000 });
+      this.db.exec('PRAGMA journal_mode=WAL;');
+      this.db.exec('PRAGMA synchronous=NORMAL;');
+      this.db.exec('PRAGMA temp_store=MEMORY;');
+      this.db.exec('PRAGMA foreign_keys=ON;');
+
       await this.createCoreTables();
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_ts ON history_samples(series_id, ts_ms)');
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_series_scope_id ON history_series(series_id)');
@@ -192,213 +218,31 @@ export class DuckDbParquetStorageService {
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_scope_ts_path ON history_samples(ts_ms, path)');
       await this.runSql('CREATE INDEX IF NOT EXISTS idx_history_samples_scope_ts_context ON history_samples(ts_ms, context)');
 
-      this.logger.debug(`[SERIES STORAGE] DuckDB initialized at ${dbPath}`);
+      this.logger.debug(`[SERIES STORAGE] node:sqlite initialized at ${dbPath}`);
       this.lastInitError = null;
       this.initialized = true;
 
-      // Start VACUUM job
       this.startVacuumJob();
-
-      // Start prune job
       this.startPruneJob();
-
-      // Start stale series cleanup job
       this.startStaleSeriesCleanupJob();
 
       return true;
     } catch (error) {
       const message = (error as Error)?.message ?? String(error);
       this.lastInitError = message;
-      this.logger.error(`[SERIES STORAGE] DuckDB initialization failed: ${message}`);
-      this.logger.error('[SERIES STORAGE] DuckDB Node API is required. Install runtime dependency with: npm i @duckdb/node-api in the installed plugin directory, then restart Signal K.');
-      this.connection = null;
+      this.logger.error(`[SERIES STORAGE] node:sqlite initialization failed: ${message}`);
       this.db = null;
       this.pendingRows = [];
-      this.pendingRangesBySeriesId.clear();
       this.initialized = false;
       this.stopVacuumJob();
+      this.stopPruneJob();
+      this.stopStaleSeriesCleanupJob();
       return false;
     }
   }
 
   /**
-   * Starts VACUUM job for DuckDB.
-   */
-  private startVacuumJob(): void {
-    this.stopVacuumJob();
-    if (!this.isDuckDbParquetReady() || !this.connection) return;
-    this.vacuumJob = setInterval(() => {
-      if (this.shouldSkipMaintenance()) {
-        return;
-      }
-      void this.runWithMaintenanceLock('vacuum', async () => {
-        this.logger.debug('[SERIES STORAGE] Running scheduled DuckDB VACUUM');
-        await this.runSql('VACUUM;');
-      }).catch(err => {
-        this.logger.error(`[SERIES STORAGE] VACUUM failed: ${err?.message ?? err}`);
-      });
-    }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
-    this.vacuumJob.unref?.();
-  }
-
-  /**
-   * Stops the scheduled VACUUM job if running.
-   */
-  private stopVacuumJob(): void {
-    if (this.vacuumJob) {
-      clearInterval(this.vacuumJob);
-      this.vacuumJob = null;
-    }
-  }
-
-  /**
-   * Starts the prune job for expired and orphaned samples.
-   */
-  private startPruneJob(): void {
-    this.stopPruneJob();
-    if (!this.isDuckDbParquetReady() || !this.connection) return;
-    this.pruneJob = setInterval(async () => {
-      if (this.shouldSkipMaintenance()) {
-        return;
-      }
-      try {
-        await this.runWithMaintenanceLock('prune', async () => {
-          this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
-          const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
-          const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
-          const parquetRemoved = await this.pruneParquetFilesByRetention(Date.now());
-          this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
-          if (parquetRemoved > 0) {
-            this.logger.debug(`[SERIES STORAGE] Pruned ${parquetRemoved} parquet files/directories`);
-          }
-        });
-      } catch (err) {
-        this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
-      }
-    }, DuckDbParquetStorageService.FOUR_HOURS_INTERVAL);
-    this.pruneJob.unref?.();
-  }
-
-  /**
-   * Stops the scheduled prune job if running.
-   */
-  private stopPruneJob(): void {
-    if (this.pruneJob) {
-      clearInterval(this.pruneJob);
-      this.pruneJob = null;
-    }
-  }
-
-  /**
-   * Starts the scheduled job to delete series not reconciled in the last 6 months.
-   */
-  private startStaleSeriesCleanupJob(): void {
-    this.stopStaleSeriesCleanupJob();
-    if (!this.isDuckDbParquetReady() || !this.connection) return;
-    this.staleSeriesCleanupJob = setInterval(async () => {
-      if (this.shouldSkipMaintenance()) {
-        return;
-      }
-      try {
-        await this.runWithMaintenanceLock('stale-cleanup', async () => {
-          const cutoff = Date.now() - DuckDbParquetStorageService.STALE_SERIES_AGE_MS;
-          this.logger.debug(`[SERIES STORAGE] Running scheduled stale series cleanup (cutoff: ${new Date(cutoff).toISOString()})`);
-          const deleted = await this.deleteStaleSeries(cutoff);
-          if (deleted > 0) {
-            this.logger.debug(`[SERIES STORAGE] Deleted ${deleted} series not reconciled in the last 6 months`);
-          }
-        });
-      } catch (err) {
-        this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${err?.message ?? err}`);
-      }
-    }, DuckDbParquetStorageService.EIGHT_HOURS_INTERVAL);
-    this.staleSeriesCleanupJob.unref?.();
-  }
-
-  /**
-   * Deletes series not reconciled since the given cutoff timestamp.
-   * @param {number} cutoffMs - Milliseconds since epoch; series with reconcile_ts < cutoffMs will be deleted.
-   * @returns {Promise<number>} Number of deleted series.
-   *
-   * @example
-   * const deleted = await storage.deleteStaleSeries(Date.now() - 180 * 24 * 60 * 60 * 1000);
-   */
-  public async deleteStaleSeries(cutoffMs: number): Promise<number> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
-      return 0;
-    }
-    // Find series to delete
-    const rows = await this.querySql<{ series_id: string }>(`
-      SELECT series_id FROM history_series
-      WHERE reconcile_ts IS NULL OR reconcile_ts < ${Math.trunc(cutoffMs)}
-    `);
-    const ids = rows.map(r => r.series_id);
-    if (ids.length === 0) return 0;
-
-    for (const id of ids) {
-      await this.deleteSeriesDefinition(id);
-    }
-
-    return ids.length;
-  }
-
-  /**
-   * Stops the scheduled stale series cleanup job if running.
-   */
-  private stopStaleSeriesCleanupJob(): void {
-    if (this.staleSeriesCleanupJob) {
-      clearInterval(this.staleSeriesCleanupJob);
-      this.staleSeriesCleanupJob = null;
-    }
-  }
-
-  private shouldSkipMaintenance(): boolean {
-    if (!this.isDuckDbParquetReady() || !this.connection) {
-      return true;
-    }
-
-    if (this.maintenanceInProgress || this.flushInProgress) {
-      return true;
-    }
-
-    if (this.pendingRows.length > 0) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private async runWithMaintenanceLock(label: string, task: () => Promise<void>): Promise<void> {
-    if (this.maintenanceInProgress) {
-      this.logger.debug(`[SERIES STORAGE] Skipping ${label} (maintenance already running)`);
-      return;
-    }
-
-    this.maintenanceInProgress = true;
-    const startedAt = Date.now();
-    try {
-      await task();
-      const elapsedMs = Date.now() - startedAt;
-      this.logger.debug(`[SERIES STORAGE] ${label} completed in ${elapsedMs}ms`);
-    } finally {
-      this.maintenanceInProgress = false;
-    }
-  }
-
-  /**
-   * Returns the active storage configuration.
-   *
-   * @returns {IDuckDbParquetStorageConfig} Current storage configuration.
-   *
-   * @example
-   * const cfg = storage.getConfig();
-   */
-  public getConfig(): IDuckDbParquetStorageConfig {
-    return this.config;
-  }
-
-  /**
-   * Returns last DuckDB initialization error when initialization failed.
+   * Returns last node:sqlite initialization error when initialization failed.
    *
    * @returns {string | null} Initialization error text or null.
    *
@@ -410,39 +254,35 @@ export class DuckDbParquetStorageService {
   }
 
   /**
-   * Indicates whether DuckDB/Parquet mode is selected.
+   * Indicates whether node:sqlite mode is selected.
    *
-   * @returns {boolean} True when the selected engine is `duckdb-parquet`.
+   * @returns {boolean} True when the selected engine is `node:sqlite`.
    *
    * @example
-   * if (storage.isDuckDbParquetEnabled()) {
-   *   console.log('DuckDB mode enabled');
+   * if (storage.isSqliteEnabled()) {
+   *   console.log('node:sqlite mode enabled');
    * }
    */
-  public isDuckDbParquetEnabled(): boolean {
-    return this.config.engine === 'duckdb-parquet';
+  public isSqliteEnabled(): boolean {
+    return this.config.engine === 'node:sqlite';
   }
 
   /**
-   * Indicates whether DuckDB/Parquet mode is initialized and ready.
+   * Indicates whether node:sqlite mode is initialized and ready.
    *
-   * @returns {boolean} True when DuckDB mode is selected and an active connection exists.
+   * @returns {boolean} True when node:sqlite mode is selected and an active connection exists.
    *
    * @example
-   * if (storage.isDuckDbParquetReady()) {
-   *   console.log('DuckDB ready');
+   * if (storage.isSqliteReady()) {
+   *   console.log('node:sqlite ready');
    * }
    */
-  public isDuckDbParquetReady(): boolean {
-    return this.isDuckDbParquetEnabled() && this.initialized && this.connection !== null;
+  public isSqliteReady(): boolean {
+    return this.isSqliteEnabled() && this.initialized && this.db !== null && this.runtimeAvailable;
   }
 
   /**
    * Returns the current storage lifecycle token.
-   *
-   * The token changes whenever a new initialization attempt starts and can be
-   * used by callers to scope async stop operations (flush/close) so stale work
-   * does not affect a newer startup session.
    *
    * @returns {number} Current lifecycle token.
    *
@@ -463,33 +303,18 @@ export class DuckDbParquetStorageService {
    * storage.enqueueSample(sample);
    */
   public enqueueSample(sample: IRecordedSample): void {
-    if (!this.isDuckDbParquetReady()) {
+    if (!this.isSqliteReady()) {
       return;
     }
 
     this.pendingRows.push(sample);
-    const rangeKey = sample.seriesId;
-    const existing = this.pendingRangesBySeriesId.get(rangeKey);
-    if (!existing) {
-      this.pendingRangesBySeriesId.set(rangeKey, {
-        seriesId: sample.seriesId,
-        minTs: sample.timestamp,
-        maxTs: sample.timestamp
-      });
-      return;
-    }
-
-    this.pendingRangesBySeriesId.set(rangeKey, {
-      seriesId: existing.seriesId,
-      minTs: Math.min(existing.minTs, sample.timestamp),
-      maxTs: Math.max(existing.maxTs, sample.timestamp)
-    });
   }
 
   /**
-   * Flushes queued samples into DuckDB and exports changed ranges to Parquet chunks.
+   * Flushes queued samples into node:sqlite.
    *
-   * @returns {Promise<{inserted: number; exported: number}>} Number of inserted rows and exported parquet files.
+   * @param {number} [expectedLifecycleToken] Optional lifecycle token guard to skip stale flushes.
+   * @returns {Promise<{ inserted: number; exported: number }>} Number of inserted rows (exported is always 0).
    *
    * @example
    * const result = await storage.flush();
@@ -499,7 +324,7 @@ export class DuckDbParquetStorageService {
       return { inserted: 0, exported: 0 };
     }
 
-    if (!this.isDuckDbParquetEnabled() || !this.connection || this.pendingRows.length === 0) {
+    if (!this.isSqliteEnabled() || !this.db || this.pendingRows.length === 0) {
       return { inserted: 0, exported: 0 };
     }
 
@@ -510,35 +335,16 @@ export class DuckDbParquetStorageService {
     this.flushInProgress = true;
 
     const rows = this.pendingRows;
-    const ranges = new Map(this.pendingRangesBySeriesId);
     this.pendingRows = [];
-    this.pendingRangesBySeriesId.clear();
     const startedAt = Date.now();
 
     try {
       await this.insertRows(rows);
-      let exported = 0;
-      for (const range of ranges.values()) {
-        await this.exportSeriesRange(range.seriesId, range.minTs, range.maxTs);
-        exported += 1;
-      }
       const elapsedMs = Date.now() - startedAt;
-      this.logger.debug(`[SERIES STORAGE] flush inserted=${rows.length} exported=${exported} durationMs=${elapsedMs}`);
-      return { inserted: rows.length, exported };
+      this.logger.debug(`[SERIES STORAGE] flush inserted=${rows.length} durationMs=${elapsedMs}`);
+      return { inserted: rows.length, exported: 0 };
     } catch (error) {
       this.pendingRows = [...rows, ...this.pendingRows];
-      ranges.forEach((range, rangeKey) => {
-        const current = this.pendingRangesBySeriesId.get(rangeKey);
-        if (!current) {
-          this.pendingRangesBySeriesId.set(rangeKey, range);
-          return;
-        }
-        this.pendingRangesBySeriesId.set(rangeKey, {
-          seriesId: current.seriesId,
-          minTs: Math.min(current.minTs, range.minTs),
-          maxTs: Math.max(current.maxTs, range.maxTs)
-        });
-      });
       throw error;
     } finally {
       this.flushInProgress = false;
@@ -546,7 +352,7 @@ export class DuckDbParquetStorageService {
   }
 
   /**
-   * Returns persisted series definitions from DuckDB.
+   * Returns persisted series definitions from node:sqlite.
    *
    * @returns {Promise<ISeriesDefinition[]>} Stored series definitions.
    *
@@ -554,7 +360,7 @@ export class DuckDbParquetStorageService {
    * const series = await storage.getSeriesDefinitions();
    */
   public async getSeriesDefinitions(): Promise<ISeriesDefinition[]> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return [];
     }
 
@@ -572,7 +378,8 @@ export class DuckDbParquetStorageService {
         retention_duration_ms,
         sample_time,
         enabled,
-        methods_json
+        methods_json,
+        reconcile_ts
       FROM history_series
       ORDER BY series_id ASC
     `);
@@ -590,12 +397,13 @@ export class DuckDbParquetStorageService {
       retentionDurationMs: this.toNumberOrUndefined(row.retention_duration_ms),
       sampleTime: this.toNumberOrUndefined(row.sample_time),
       enabled: this.toBoolean(row.enabled),
-      methods: this.parseMethods(row.methods_json)
+      methods: this.parseMethods(row.methods_json),
+      reconcileTs: this.toNumberOrUndefined(row.reconcile_ts)
     }));
   }
 
   /**
-   * Persists one series definition in DuckDB.
+   * Persists one series definition in node:sqlite.
    *
    * @param {ISeriesDefinition} series Series definition to persist.
    * @returns {Promise<void>}
@@ -604,7 +412,7 @@ export class DuckDbParquetStorageService {
    * await storage.upsertSeriesDefinition(series);
    */
   public async upsertSeriesDefinition(series: ISeriesDefinition): Promise<void> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return;
     }
 
@@ -623,7 +431,8 @@ export class DuckDbParquetStorageService {
         retention_duration_ms,
         sample_time,
         enabled,
-        methods_json
+        methods_json,
+        reconcile_ts
       ) VALUES (
         ${this.escape(series.seriesId)},
         ${this.escape(series.datasetUuid)},
@@ -636,14 +445,15 @@ export class DuckDbParquetStorageService {
         ${this.nullableNumber(series.period)},
         ${this.nullableNumber(series.retentionDurationMs)},
         ${this.nullableNumber(series.sampleTime)},
-        ${series.enabled === false ? 'FALSE' : 'TRUE'},
-        ${this.nullableString(series.methods ? JSON.stringify(series.methods) : null)}
+        ${series.enabled === false ? '0' : '1'},
+        ${this.nullableString(series.methods ? JSON.stringify(series.methods) : null)},
+        ${this.nullableNumber(series.reconcileTs)}
       )
     `);
   }
 
   /**
-   * Deletes one persisted series definition in DuckDB.
+   * Deletes one persisted series definition in node:sqlite.
    *
    * @param {string} seriesId Series identifier.
    * @returns {Promise<void>}
@@ -652,11 +462,10 @@ export class DuckDbParquetStorageService {
    * await storage.deleteSeriesDefinition('series-1');
    */
   public async deleteSeriesDefinition(seriesId: string): Promise<void> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return;
     }
     await this.runSql(`DELETE FROM history_series WHERE series_id = ${this.escape(seriesId)}`);
-    this.deleteParquetSeriesDir(seriesId);
   }
 
   /**
@@ -669,7 +478,7 @@ export class DuckDbParquetStorageService {
    * await storage.replaceSeriesDefinitions(series);
    */
   public async replaceSeriesDefinitions(series: ISeriesDefinition[]): Promise<void> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return;
     }
 
@@ -677,6 +486,33 @@ export class DuckDbParquetStorageService {
     for (const item of series) {
       await this.upsertSeriesDefinition(item);
     }
+  }
+
+  /**
+   * Deletes series not reconciled since the given cutoff timestamp.
+   *
+   * @param {number} cutoffMs Milliseconds since epoch; series with reconcile_ts < cutoffMs will be deleted.
+   * @returns {Promise<number>} Number of deleted series.
+   *
+   * @example
+   * const deleted = await storage.deleteStaleSeries(Date.now() - 180 * 24 * 60 * 60 * 1000);
+   */
+  public async deleteStaleSeries(cutoffMs: number): Promise<number> {
+    if (!this.isSqliteEnabled() || !this.db) {
+      return 0;
+    }
+
+    const rows = await this.querySql<{ series_id: string }>(`
+      SELECT series_id FROM history_series
+      WHERE reconcile_ts IS NULL OR reconcile_ts < ${Math.trunc(cutoffMs)}
+    `);
+
+    const ids = rows.map(row => row.series_id).filter(Boolean);
+    for (const id of ids) {
+      await this.deleteSeriesDefinition(id);
+    }
+
+    return ids.length;
   }
 
   /**
@@ -694,7 +530,7 @@ export class DuckDbParquetStorageService {
       return 0;
     }
 
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return 0;
     }
 
@@ -716,7 +552,7 @@ export class DuckDbParquetStorageService {
         SELECT rowid
         FROM history_samples
         WHERE ${whereClause}
-        LIMIT ${DuckDbParquetStorageService.PRUNE_BATCH_SIZE}
+        LIMIT ${SqliteHistoryStorageService.PRUNE_BATCH_SIZE}
       `);
       if (batch.length === 0) {
         break;
@@ -733,7 +569,7 @@ export class DuckDbParquetStorageService {
       `);
 
       removedRows += rowIds.length;
-      if (rowIds.length < DuckDbParquetStorageService.PRUNE_BATCH_SIZE) {
+      if (rowIds.length < SqliteHistoryStorageService.PRUNE_BATCH_SIZE) {
         break;
       }
     }
@@ -755,7 +591,7 @@ export class DuckDbParquetStorageService {
       return 0;
     }
 
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return 0;
     }
 
@@ -773,7 +609,7 @@ export class DuckDbParquetStorageService {
         SELECT rowid
         FROM history_samples
         WHERE ${whereClause}
-        LIMIT ${DuckDbParquetStorageService.PRUNE_BATCH_SIZE}
+        LIMIT ${SqliteHistoryStorageService.PRUNE_BATCH_SIZE}
       `);
       if (batch.length === 0) {
         break;
@@ -790,7 +626,7 @@ export class DuckDbParquetStorageService {
       `);
 
       removedRows += rowIds.length;
-      if (rowIds.length < DuckDbParquetStorageService.PRUNE_BATCH_SIZE) {
+      if (rowIds.length < SqliteHistoryStorageService.PRUNE_BATCH_SIZE) {
         break;
       }
     }
@@ -801,13 +637,14 @@ export class DuckDbParquetStorageService {
   /**
    * Lists known history paths from persisted samples.
    *
+   * @param {IHistoryRangeQuery} [query] Optional range filter.
    * @returns {Promise<string[]>} Ordered path names.
    *
    * @example
    * const paths = await storage.getStoredPaths();
    */
   public async getStoredPaths(query?: IHistoryRangeQuery): Promise<string[]> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return [];
     }
 
@@ -828,13 +665,14 @@ export class DuckDbParquetStorageService {
   /**
    * Lists known history contexts from persisted samples.
    *
+   * @param {IHistoryRangeQuery} [query] Optional range filter.
    * @returns {Promise<string[]>} Ordered context names.
    *
    * @example
    * const contexts = await storage.getStoredContexts();
    */
   public async getStoredContexts(query?: IHistoryRangeQuery): Promise<string[]> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return [];
     }
 
@@ -853,16 +691,16 @@ export class DuckDbParquetStorageService {
   }
 
   /**
-   * Queries history values directly from DuckDB in History API-compatible shape.
+   * Queries history values directly from node:sqlite in History API-compatible shape.
    *
    * @param {IHistoryQueryParams} query Incoming history values query parameters.
-   * @returns {Promise<IHistoryValuesResponse | null>} History payload when DuckDB is ready, otherwise null.
+   * @returns {Promise<IHistoryValuesResponse | null>} History payload when node:sqlite is ready, otherwise null.
    *
    * @example
    * const result = await storage.getValues({ paths: 'navigation.speedOverGround:avg', duration: 'PT1H' });
    */
   public async getValues(query: IHistoryQueryParams): Promise<IHistoryValuesResponse | null> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
+    if (!this.isSqliteEnabled() || !this.db) {
       return null;
     }
 
@@ -913,6 +751,7 @@ export class DuckDbParquetStorageService {
   /**
    * Closes open storage resources.
    *
+   * @param {number} [expectedLifecycleToken] Optional lifecycle token guard to skip stale closes.
    * @returns {Promise<void>}
    *
    * @example
@@ -924,68 +763,184 @@ export class DuckDbParquetStorageService {
     }
 
     this.initialized = false;
+    this.stopVacuumJob();
     this.stopPruneJob();
     this.stopStaleSeriesCleanupJob();
-    if (!this.connection) {
-      this.db = null;
+
+    if (!this.db) {
       return;
     }
 
-    const connection = this.connection;
     const db = this.db;
-    this.connection = null;
+    this.db = null;
 
     try {
-      connection.disconnectSync();
-    } catch {
-      // ignore disconnect failures during shutdown
-    }
-
-    try {
-      db?.closeSync();
+      db.close();
     } catch {
       // ignore close failures during shutdown
     }
+  }
 
-    this.db = null;
+  private async loadSqliteModule(): Promise<ISqliteModule | null> {
+    try {
+      return await import('node:sqlite') as ISqliteModule;
+    } catch {
+      return null;
+    }
+  }
+
+  private startVacuumJob(): void {
+    this.stopVacuumJob();
+    if (!this.isSqliteReady()) return;
+    this.vacuumJob = setInterval(() => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
+      void this.runWithMaintenanceLock('vacuum', async () => {
+        this.logger.debug('[SERIES STORAGE] Running scheduled node:sqlite VACUUM');
+        await this.runSql('VACUUM;');
+        await this.runSql('PRAGMA optimize;');
+      }).catch(err => {
+        this.logger.error(`[SERIES STORAGE] VACUUM failed: ${err?.message ?? err}`);
+      });
+    }, SqliteHistoryStorageService.EIGHT_HOURS_INTERVAL);
+    this.vacuumJob.unref?.();
+  }
+
+  private stopVacuumJob(): void {
+    if (this.vacuumJob) {
+      clearInterval(this.vacuumJob);
+      this.vacuumJob = null;
+    }
+  }
+
+  private startPruneJob(): void {
+    this.stopPruneJob();
+    if (!this.isSqliteReady()) return;
+    this.pruneJob = setInterval(async () => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
+      try {
+        await this.runWithMaintenanceLock('prune', async () => {
+          this.logger.debug('[SERIES STORAGE] Running scheduled prune of expired and orphaned samples');
+          const expired = await this.pruneExpiredSamples(Date.now(), this.lifecycleToken);
+          const orphaned = await this.pruneOrphanedSamples(this.lifecycleToken);
+          this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
+        });
+      } catch (err) {
+        this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
+      }
+    }, SqliteHistoryStorageService.FOUR_HOURS_INTERVAL);
+    this.pruneJob.unref?.();
+  }
+
+  private stopPruneJob(): void {
+    if (this.pruneJob) {
+      clearInterval(this.pruneJob);
+      this.pruneJob = null;
+    }
+  }
+
+  private startStaleSeriesCleanupJob(): void {
+    this.stopStaleSeriesCleanupJob();
+    if (!this.isSqliteReady()) return;
+    this.staleSeriesCleanupJob = setInterval(async () => {
+      if (this.shouldSkipMaintenance()) {
+        return;
+      }
+      try {
+        await this.runWithMaintenanceLock('stale-cleanup', async () => {
+          const cutoff = Date.now() - SqliteHistoryStorageService.STALE_SERIES_AGE_MS;
+          this.logger.debug(`[SERIES STORAGE] Running scheduled stale series cleanup (cutoff: ${new Date(cutoff).toISOString()})`);
+          const deleted = await this.deleteStaleSeries(cutoff);
+          if (deleted > 0) {
+            this.logger.debug(`[SERIES STORAGE] Deleted ${deleted} series not reconciled in the last 6 months`);
+          }
+        });
+      } catch (err) {
+        this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${err?.message ?? err}`);
+      }
+    }, SqliteHistoryStorageService.EIGHT_HOURS_INTERVAL);
+    this.staleSeriesCleanupJob.unref?.();
+  }
+
+  private stopStaleSeriesCleanupJob(): void {
+    if (this.staleSeriesCleanupJob) {
+      clearInterval(this.staleSeriesCleanupJob);
+      this.staleSeriesCleanupJob = null;
+    }
+  }
+
+  private shouldSkipMaintenance(): boolean {
+    if (!this.isSqliteReady() || !this.db) {
+      return true;
+    }
+
+    if (this.maintenanceInProgress || this.flushInProgress) {
+      return true;
+    }
+
+    if (this.pendingRows.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async runWithMaintenanceLock(label: string, task: () => Promise<void>): Promise<void> {
+    if (this.maintenanceInProgress) {
+      this.logger.debug(`[SERIES STORAGE] Skipping ${label} (maintenance already running)`);
+      return;
+    }
+
+    this.maintenanceInProgress = true;
+    const startedAt = Date.now();
+    try {
+      await task();
+      const elapsedMs = Date.now() - startedAt;
+      this.logger.debug(`[SERIES STORAGE] ${label} completed in ${elapsedMs}ms`);
+    } finally {
+      this.maintenanceInProgress = false;
+    }
   }
 
   private async createCoreTables(): Promise<void> {
     await this.runSql(`
       CREATE TABLE IF NOT EXISTS history_samples (
-        series_id VARCHAR,
-        dataset_uuid VARCHAR,
-        owner_widget_uuid VARCHAR,
-        path VARCHAR,
-        context VARCHAR,
-        source VARCHAR,
-        ts_ms BIGINT,
-        value DOUBLE
+        series_id TEXT,
+        dataset_uuid TEXT,
+        owner_widget_uuid TEXT,
+        path TEXT,
+        context TEXT,
+        source TEXT,
+        ts_ms INTEGER,
+        value REAL
       )
     `);
     await this.runSql(`
       CREATE TABLE IF NOT EXISTS history_series (
-        series_id VARCHAR NOT NULL,
-        dataset_uuid VARCHAR NOT NULL,
-        owner_widget_uuid VARCHAR NOT NULL,
-        owner_widget_selector VARCHAR,
-        path VARCHAR NOT NULL,
-        source VARCHAR,
-        context VARCHAR,
-        time_scale VARCHAR,
+        series_id TEXT NOT NULL,
+        dataset_uuid TEXT NOT NULL,
+        owner_widget_uuid TEXT NOT NULL,
+        owner_widget_selector TEXT,
+        path TEXT NOT NULL,
+        source TEXT,
+        context TEXT,
+        time_scale TEXT,
         period INTEGER,
-        retention_duration_ms BIGINT,
+        retention_duration_ms INTEGER,
         sample_time INTEGER,
-        enabled BOOLEAN,
-        methods_json VARCHAR,
-        reconcile_ts BIGINT,
+        enabled INTEGER,
+        methods_json TEXT,
+        reconcile_ts INTEGER,
         PRIMARY KEY (series_id)
       )
     `);
   }
 
   private async insertRows(rows: IRecordedSample[]): Promise<void> {
-    if (rows.length === 0) {
+    if (!this.db || rows.length === 0) {
       return;
     }
 
@@ -1006,218 +961,31 @@ export class DuckDbParquetStorageService {
       ) VALUES ${valuesSql}
     `;
 
-    await this.runSql(sql);
-  }
-
-  private async exportSeriesRange(seriesId: string, fromMs: number, toMs: number): Promise<void> {
-    const windowMs = this.resolveParquetWindowMs();
-    const baseDir = resolve(this.config.parquetDirectory);
-    const seriesDir = join(baseDir, this.safePath(seriesId));
-    mkdirSync(seriesDir, { recursive: true });
-
-    const startWindow = Math.floor(fromMs / windowMs) * windowMs;
-    const endWindow = Math.floor(toMs / windowMs) * windowMs;
-
-    for (let windowStart = startWindow; windowStart <= endWindow; windowStart += windowMs) {
-      const windowEnd = windowStart + windowMs - 1;
-      const filePath = join(seriesDir, `${windowStart}-${windowEnd}.parquet`);
-      const rows = await this.querySql<IParquetExportRow>(`
-        SELECT
-          series_id,
-          dataset_uuid,
-          owner_widget_uuid,
-          path,
-          context,
-          source,
-          ts_ms,
-          value
-        FROM history_samples
-        WHERE series_id = ${this.escape(seriesId)}
-          AND ts_ms >= ${Math.trunc(windowStart)}
-          AND ts_ms <= ${Math.trunc(windowEnd)}
-        ORDER BY ts_ms
-      `);
-
-      if (rows.length === 0) {
-        rmSync(filePath, { force: true });
-        continue;
-      }
-
-      const compression = this.resolveParquetCompression();
-      const schema = new ParquetSchema({
-        series_id: { type: 'UTF8', compression },
-        dataset_uuid: { type: 'UTF8', compression },
-        owner_widget_uuid: { type: 'UTF8', compression },
-        path: { type: 'UTF8', compression },
-        context: { type: 'UTF8', compression },
-        source: { type: 'UTF8', optional: true, compression },
-        ts_ms: { type: 'INT64', compression },
-        ts: { type: 'TIMESTAMP_MILLIS', compression },
-        value: { type: 'DOUBLE', compression }
-      });
-
-      const tempPath = `${filePath}.tmp-${Date.now()}`;
-      const writer = await ParquetWriter.openFile(schema, tempPath);
-
-      try {
-        for (const row of rows) {
-          const timestampMs = this.toNumberOrUndefined(row.ts_ms);
-          const numericValue = this.toNumberOrUndefined(row.value);
-          if (timestampMs === undefined || numericValue === undefined) {
-            continue;
-          }
-
-          await writer.appendRow({
-            series_id: row.series_id,
-            dataset_uuid: row.dataset_uuid,
-            owner_widget_uuid: row.owner_widget_uuid,
-            path: row.path,
-            context: row.context,
-            source: row.source ?? undefined,
-            ts_ms: Math.trunc(timestampMs),
-            ts: new Date(timestampMs),
-            value: numericValue
-          });
-        }
-      } finally {
-        await writer.close();
-      }
-
-      rmSync(filePath, { force: true });
-      renameSync(tempPath, filePath);
+    this.db.exec('BEGIN');
+    try {
+      await this.runSql(sql);
+      this.db.exec('COMMIT');
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
     }
-  }
-
-  private resolveParquetWindowMs(): number {
-    const parsed = Number(this.config.parquetWindowMs);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return Math.max(1, Math.trunc(parsed));
-    }
-    return 60 * 60_000;
-  }
-
-  private resolveParquetCompression(): ParquetCompression | undefined {
-    const raw = String(this.config.parquetCompression ?? 'none').trim().toLowerCase();
-    if (raw === 'snappy') {
-      return 'SNAPPY';
-    }
-    if (raw === 'gzip') {
-      return 'GZIP';
-    }
-    if (raw === 'brotli') {
-      return 'BROTLI';
-    }
-    if (raw === 'lz4') {
-      return 'LZ4';
-    }
-    if (raw === 'lzo') {
-      return 'LZO';
-    }
-    return undefined;
-  }
-
-  private pruneParquetFilesByRetention(nowMs: number): Promise<number> {
-    if (!this.isDuckDbParquetEnabled() || !this.connection) {
-      return Promise.resolve(0);
-    }
-
-    return this.querySql<{ series_id: string; retention_duration_ms: number | null }>(`
-      SELECT series_id, retention_duration_ms
-      FROM history_series
-    `).then(rows => {
-      const baseDir = resolve(this.config.parquetDirectory);
-      const seriesConfig = new Map(rows.map(row => [this.safePath(row.series_id), row.retention_duration_ms] as const));
-      let removed = 0;
-
-      let seriesDirs: string[] = [];
-      try {
-        seriesDirs = readdirSync(baseDir);
-      } catch {
-        return 0;
-      }
-
-      for (const dirName of seriesDirs) {
-        const fullDir = join(baseDir, dirName);
-        let dirStat: ReturnType<typeof statSync>;
-        try {
-          dirStat = statSync(fullDir);
-        } catch {
-          continue;
-        }
-        if (!dirStat.isDirectory()) {
-          continue;
-        }
-
-        const seriesKey = dirName;
-        if (!seriesConfig.has(seriesKey)) {
-          rmSync(fullDir, { recursive: true, force: true });
-          removed += 1;
-          continue;
-        }
-
-        const retentionMs = seriesConfig.get(seriesKey);
-        if (!Number.isFinite(retentionMs) || (retentionMs ?? 0) <= 0) {
-          continue;
-        }
-
-        const cutoff = nowMs - Number(retentionMs);
-        let files: string[] = [];
-        try {
-          files = readdirSync(fullDir);
-        } catch {
-          continue;
-        }
-
-        files.forEach(fileName => {
-          const range = this.parseParquetRangeFromFileName(fileName);
-          if (!range) {
-            return;
-          }
-          if (range.toMs < cutoff) {
-            rmSync(join(fullDir, fileName), { force: true });
-            removed += 1;
-          }
-        });
-      }
-
-      return removed;
-    });
-  }
-
-  private parseParquetRangeFromFileName(fileName: string): { fromMs: number; toMs: number } | null {
-    const match = /^([0-9]+)-([0-9]+)\.parquet$/.exec(fileName);
-    if (!match) {
-      return null;
-    }
-    const fromMs = Number(match[1]);
-    const toMs = Number(match[2]);
-    if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) {
-      return null;
-    }
-    return { fromMs, toMs };
-  }
-
-  private deleteParquetSeriesDir(seriesId: string): void {
-    const baseDir = resolve(this.config.parquetDirectory);
-    const seriesDir = join(baseDir, this.safePath(seriesId));
-    rmSync(seriesDir, { recursive: true, force: true });
   }
 
   private async runSql(sql: string): Promise<void> {
-    if (!this.connection) {
-      throw new Error('DuckDB connection is not initialized');
+    if (!this.db) {
+      throw new Error('node:sqlite database is not initialized');
     }
 
-    await this.connection.run(sql);
+    this.db.exec(sql);
   }
 
   private async querySql<T>(sql: string): Promise<T[]> {
-    if (!this.connection) {
-      throw new Error('DuckDB connection is not initialized');
+    if (!this.db) {
+      throw new Error('node:sqlite database is not initialized');
     }
 
-    const result = await this.connection.runAndReadAll(sql);
-    return result.getRowObjectsJson() as unknown as T[];
+    const statement = this.db.prepare(sql);
+    return statement.all() as unknown as T[];
   }
 
   private async selectRowsForPaths(paths: string[], context: string, fromMs: number, toMs: number): Promise<Map<string, IPathRow[]>> {
@@ -1454,10 +1222,6 @@ export class DuckDbParquetStorageService {
 
     const sum = values.reduce((acc, value) => acc + value, 0);
     return sum / values.length;
-  }
-
-  private safePath(value: string): string {
-    return value.replace(/[^a-zA-Z0-9._-]/g, '_');
   }
 
   private escape(value: string): string {
