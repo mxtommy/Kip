@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
+import { HistoryApi } from '@signalk/server-api/history';
 
 const start = (server: ServerAPI): Plugin => {
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
@@ -55,7 +56,6 @@ const start = (server: ServerAPI): Plugin => {
   const SQLITE_INIT_WAIT_TIMEOUT_MS = 5000;
   const MIN_NODE_SQLITE_VERSION = '22.5.0';
   let streamUnsubscribes: (() => void)[] = [];
-  let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
   let historyApiProviderRegistered = false;
   let runtimeSqliteUnavailableMessage: string | null = null;
 
@@ -554,11 +554,11 @@ const start = (server: ServerAPI): Plugin => {
       return;
     }
 
-    const host = server as ServerAPI & {
-      history?: { registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void; unregisterHistoryApiProvider?: () => void };
-      registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void;
-      unregisterHistoryApiProvider?: () => void;
-    };
+    // guard when running in older SK versions that do not support History API
+    if (!server.registerHistoryApiProvider) {
+      server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
+      return;
+    }
 
     const apiProvider = {
       getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
@@ -577,28 +577,8 @@ const start = (server: ServerAPI): Plugin => {
         resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
     };
 
-    const registry = host.history && typeof host.history.registerHistoryApiProvider === 'function'
-      ? host.history
-      : (typeof host.registerHistoryApiProvider === 'function'
-        ? {
-          registerHistoryApiProvider: host.registerHistoryApiProvider.bind(host),
-          unregisterHistoryApiProvider: typeof host.unregisterHistoryApiProvider === 'function'
-            ? host.unregisterHistoryApiProvider.bind(host)
-            : undefined
-        }
-        : null);
-
-    if (registry && typeof registry.registerHistoryApiProvider === 'function') {
-      registry.registerHistoryApiProvider(apiProvider);
-      historyApiProviderRegistered = true;
-      if (typeof registry.unregisterHistoryApiProvider === 'function') {
-        historyApiRegistry = { unregisterHistoryApiProvider: registry.unregisterHistoryApiProvider.bind(registry) };
-      }
-      server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
-      return;
-    }
-
-    server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
+    server.registerHistoryApiProvider(apiProvider as unknown as HistoryApi);
+    server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
   }
 
   function rebuildSeriesCaptureSubscriptions(): void {
@@ -861,16 +841,6 @@ const start = (server: ServerAPI): Plugin => {
         .catch(() => undefined)
         .then(() => storageService.close(storageLifecycleToken))
         .catch(() => undefined);
-
-      if (historyApiRegistry) {
-        try {
-          historyApiRegistry.unregisterHistoryApiProvider();
-          server.debug('[KIP][HISTORY_PROVIDER] unregister success provider=kip');
-        } catch (error) {
-          server.error(`[HISTORY PROVIDER] unregister failed: ${String((error as Error).message || error)}`);
-        }
-        historyApiRegistry = null;
-      }
 
       sqliteInitializationPromise = null;
 
