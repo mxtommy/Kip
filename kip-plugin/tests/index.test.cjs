@@ -202,6 +202,29 @@ function buildRows(baseTs, values, stepMs = 10000) {
   }));
 }
 
+function supportsNodeSqliteRuntime() {
+  const [majorRaw, minorRaw] = String(process.versions?.node ?? '0.0.0').split('.');
+  const major = Number.parseInt(majorRaw ?? '0', 10);
+  const minor = Number.parseInt(minorRaw ?? '0', 10);
+
+  if (!Number.isFinite(major) || !Number.isFinite(minor)) {
+    return false;
+  }
+
+  if (major < 22 || (major === 22 && minor < 5)) {
+    return false;
+  }
+
+  try {
+    const sqlite = require('node:sqlite');
+    return Boolean(sqlite?.DatabaseSync || sqlite?.Database);
+  } catch {
+    return false;
+  }
+}
+
+const testRequiresNodeSqlite = supportsNodeSqliteRuntime() ? test : test.skip;
+
 function computeSqliteHistoryResponse(rows, paths, options) {
   const sqliteMath = new SqliteHistoryStorageService();
   const resolveRange = sqliteMath.resolveRange.bind(sqliteMath);
@@ -301,7 +324,7 @@ test('registers expected Signal K PUT handlers on start', async () => {
   );
 });
 
-test('registers and unregisters History API provider lifecycle', async () => {
+testRequiresNodeSqlite('registers and unregisters History API provider lifecycle', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -384,7 +407,7 @@ test('requestActiveScreen command writes to displays.<id>.activeScreen', async (
   assert.equal(server.messages[0].delta.updates[0].values[0].path, 'displays.abc-123.activeScreen');
 });
 
-test('REST PUT /screenIndex uses shared handler and writes screenIndex path', async () => {
+testRequiresNodeSqlite('REST PUT /screenIndex uses shared handler and writes screenIndex path', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -664,7 +687,7 @@ test('invalid displayId returns 400 and does not write', async () => {
   assert.equal(server.messages.length, 0);
 });
 
-test('registers series and history routes', async () => {
+testRequiresNodeSqlite('registers series and history routes', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -680,7 +703,7 @@ test('registers series and history routes', async () => {
   assert.equal(typeof provider.getContexts, 'function');
 });
 
-test('series CRUD works and history paths/contexts come from stored samples', async () => {
+testRequiresNodeSqlite('series CRUD works and history paths/contexts come from stored samples', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -748,7 +771,7 @@ test('series CRUD works and history paths/contexts come from stored samples', as
   assert.equal(deleteRes.statusCode, 200);
 });
 
-test('history values endpoint validates required paths query', async () => {
+testRequiresNodeSqlite('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -771,7 +794,7 @@ test('history values endpoint validates required paths query', async () => {
   }
 });
 
-test('history values endpoint rejects invalid from/to date inputs', async () => {
+testRequiresNodeSqlite('history values endpoint rejects invalid from/to date inputs', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -796,7 +819,7 @@ test('history values endpoint rejects invalid from/to date inputs', async () => 
   assert.equal(error.message.includes('Invalid to date-time'), true);
 });
 
-test('history values endpoint rejects invalid duration and resolution inputs', async () => {
+testRequiresNodeSqlite('history values endpoint rejects invalid duration and resolution inputs', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -834,7 +857,7 @@ test('history values endpoint rejects invalid duration and resolution inputs', a
   assert.equal(resolutionError.message.includes('Invalid resolution'), true);
 });
 
-test('history values endpoint returns history-compatible payload', async () => {
+testRequiresNodeSqlite('history values endpoint returns history-compatible payload', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -876,7 +899,7 @@ test('history values endpoint returns history-compatible payload', async () => {
   assert.equal(Array.isArray(payload?.data), true);
 });
 
-test('stream ingestion records live samples for configured series', async () => {
+testRequiresNodeSqlite('stream ingestion records live samples for configured series', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -923,7 +946,7 @@ test('stream ingestion records live samples for configured series', async () => 
   assert.equal(payload?.values?.[0]?.path, 'navigation.speedOverGround');
 });
 
-test('stream ingestion normalizes prefixed paths on capture and query', async () => {
+testRequiresNodeSqlite('stream ingestion normalizes prefixed paths on capture and query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -973,7 +996,7 @@ test('stream ingestion normalizes prefixed paths on capture and query', async ()
   assert.equal(payload?.values?.[0]?.path, 'navigation.speedOverGround');
 });
 
-test('history values returns pending ingested sample without waiting for timer flush', async () => {
+testRequiresNodeSqlite('history values returns pending ingested sample without waiting for timer flush', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -1022,7 +1045,7 @@ test('history values returns pending ingested sample without waiting for timer f
   assert.equal(payload?.values?.[0]?.path, 'environment.wind.angleTrueWater');
 });
 
-test('history ingestion accepts source wildcard and vessels.self alias context', async () => {
+testRequiresNodeSqlite('history ingestion accepts source wildcard and vessels.self alias context', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -1072,7 +1095,7 @@ test('history ingestion accepts source wildcard and vessels.self alias context',
   assert.equal(payload.data.length > 0, true);
 });
 
-test('history values resolution numeric input is interpreted as seconds', async () => {
+testRequiresNodeSqlite('history values resolution numeric input is interpreted as seconds', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -1137,7 +1160,7 @@ test('history values resolution numeric input is interpreted as seconds', async 
   assert.equal(payload.data[1][1], 12);
 });
 
-test('history values applies min and max methods when downsampling', async () => {
+testRequiresNodeSqlite('history values applies min and max methods when downsampling', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -1280,7 +1303,7 @@ test('table-driven history math validates min avg max sma ema across resolutions
   });
 });
 
-test('history values supports mixed avg/min/max/sma/ema in a single request', async () => {
+testRequiresNodeSqlite('history values supports mixed avg/min/max/sma/ema in a single request', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
   const plugin = registerPluginForCleanup(start(server));
@@ -1647,7 +1670,7 @@ test('sqlite storage configure uses fixed defaults', () => {
   assert.equal(config.flushIntervalMs, 30000);
 });
 
-test('history requests return 503 when sqlite is unavailable', async () => {
+testRequiresNodeSqlite('history requests return 503 when sqlite is unavailable', async () => {
   const originalInitialize = SqliteHistoryStorageService.prototype.initialize;
   SqliteHistoryStorageService.prototype.initialize = async function initializeMock() {
     this.lastInitError = 'forced-test-failure';
@@ -1681,7 +1704,7 @@ test('history requests return 503 when sqlite is unavailable', async () => {
   }
 });
 
-test('series upsert rolls back in-memory state when sqlite write fails', async () => {
+testRequiresNodeSqlite('series upsert rolls back in-memory state when sqlite write fails', async () => {
   const originalUpsert = SqliteHistoryStorageService.prototype.upsertSeriesDefinition;
   SqliteHistoryStorageService.prototype.upsertSeriesDefinition = async function upsertFail() {
     throw new Error('SQLite forced upsert failure');
@@ -1797,7 +1820,7 @@ test('series delete rolls back in-memory state when sqlite write fails', async (
   }
 });
 
-test('history request wait for sqlite initialization is bounded', async () => {
+testRequiresNodeSqlite('history request wait for sqlite initialization is bounded', async () => {
   const originalInitialize = SqliteHistoryStorageService.prototype.initialize;
   SqliteHistoryStorageService.prototype.initialize = async function initializeHang() {
     this.lastInitError = null;
@@ -1833,7 +1856,7 @@ test('history request wait for sqlite initialization is bounded', async () => {
   }
 });
 
-test('sqlite getValues queries requested paths in a single sql call', async () => {
+testRequiresNodeSqlite('sqlite getValues queries requested paths in a single sql call', async () => {
   const storage = new SqliteHistoryStorageService();
   storage.configure();
 
