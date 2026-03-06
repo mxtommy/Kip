@@ -30,7 +30,10 @@ jobs:
     - name: Lint
       run: npm run lint
 
-    - name: Run tests
+    - name: Run KIP plugin tests
+      run: npm run build:plugin && node --test --test-concurrency=1 kip-plugin/tests/index.test.cjs
+
+    - name: Run KIP headless tests
       run: npm run test:headless
 
     - name: Build All (Webapp & Plugin)

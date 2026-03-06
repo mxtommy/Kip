@@ -3,6 +3,18 @@ import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
+import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
+
+type TSqliteModule = { DatabaseSync?: unknown; Database?: unknown } | null;
+type TGetSqliteModule = () => Promise<TSqliteModule>;
+
+async function defaultGetSqliteModule(): Promise<TSqliteModule> {
+  try {
+    return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
+  } catch {
+    return null;
+  }
+}
 
 const start = (server: ServerAPI): Plugin => {
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
@@ -55,7 +67,6 @@ const start = (server: ServerAPI): Plugin => {
   const SQLITE_INIT_WAIT_TIMEOUT_MS = 5000;
   const MIN_NODE_SQLITE_VERSION = '22.5.0';
   let streamUnsubscribes: (() => void)[] = [];
-  let historyApiRegistry: { unregisterHistoryApiProvider: () => void } | null = null;
   let historyApiProviderRegistered = false;
   let runtimeSqliteUnavailableMessage: string | null = null;
 
@@ -98,16 +109,12 @@ const start = (server: ServerAPI): Plugin => {
     server.debug(`[KIP][RUNTIME] ${nodeIdentity} node:sqlite=${sqliteAvailability}`);
   }
 
-  async function getSqliteModule(): Promise<{ DatabaseSync?: unknown; Database?: unknown } | null> {
-    try {
-      return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
-    } catch {
-      return null;
-    }
-  }
-
   async function detectSqliteRuntime(): Promise<boolean> {
-    const sqliteModule = await getSqliteModule();
+    const exportedStart = start as typeof start & { getSqliteModule?: TGetSqliteModule };
+    const resolveSqliteModule = typeof exportedStart.getSqliteModule === 'function'
+      ? exportedStart.getSqliteModule
+      : defaultGetSqliteModule;
+    const sqliteModule = await resolveSqliteModule();
     if (!sqliteModule) {
       runtimeSqliteUnavailableMessage = `node:sqlite requires Node ${MIN_NODE_SQLITE_VERSION}+`;
       return false;
@@ -554,14 +561,29 @@ const start = (server: ServerAPI): Plugin => {
       return;
     }
 
-    const host = server as ServerAPI & {
-      history?: { registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void; unregisterHistoryApiProvider?: () => void };
-      registerHistoryApiProvider?: (provider: { getValues: (query: IHistoryApiValuesRequestLike) => Promise<unknown>; getPaths: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; getContexts: (query: IHistoryApiRangeRequestLike) => Promise<string[]>; }) => void;
+    const serverWithHistoryApi = server as ServerAPI & {
+      registerHistoryApiProvider?: (provider: HistoryApi) => void;
       unregisterHistoryApiProvider?: () => void;
+      history?: {
+        registerHistoryApiProvider?: (provider: HistoryApi) => void;
+        unregisterHistoryApiProvider?: () => void;
+      };
     };
+    const registerHistoryApiProvider =
+      typeof serverWithHistoryApi.registerHistoryApiProvider === 'function'
+        ? serverWithHistoryApi.registerHistoryApiProvider.bind(serverWithHistoryApi)
+        : (typeof serverWithHistoryApi.history?.registerHistoryApiProvider === 'function'
+            ? serverWithHistoryApi.history.registerHistoryApiProvider.bind(serverWithHistoryApi.history)
+            : null);
 
-    const apiProvider = {
-      getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
+    // guard when running in SK variants that do not support History API registration
+    if (!registerHistoryApiProvider) {
+      server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
+      return;
+    }
+
+    const apiProvider: HistoryApi = {
+      getValues: async (query: ValuesRequest): Promise<ValuesResponse> => {
         const resolved = await resolveHistoryValues(buildHistoryQueryFromValuesRequest(query));
         return {
           ...resolved,
@@ -569,36 +591,17 @@ const start = (server: ServerAPI): Plugin => {
             path: valueSpec.path,
             method: valueSpec.method === 'avg' ? 'average' : valueSpec.method
           }))
-        };
+        } as ValuesResponse;
       },
-      getPaths: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)),
-      getContexts: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
+      getPaths: (query: PathsRequest): Promise<PathsResponse> =>
+        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)) as Promise<PathsResponse>,
+      getContexts: (query: ContextsRequest): Promise<ContextsResponse> =>
+        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query)) as Promise<ContextsResponse>
     };
 
-    const registry = host.history && typeof host.history.registerHistoryApiProvider === 'function'
-      ? host.history
-      : (typeof host.registerHistoryApiProvider === 'function'
-        ? {
-          registerHistoryApiProvider: host.registerHistoryApiProvider.bind(host),
-          unregisterHistoryApiProvider: typeof host.unregisterHistoryApiProvider === 'function'
-            ? host.unregisterHistoryApiProvider.bind(host)
-            : undefined
-        }
-        : null);
-
-    if (registry && typeof registry.registerHistoryApiProvider === 'function') {
-      registry.registerHistoryApiProvider(apiProvider);
-      historyApiProviderRegistered = true;
-      if (typeof registry.unregisterHistoryApiProvider === 'function') {
-        historyApiRegistry = { unregisterHistoryApiProvider: registry.unregisterHistoryApiProvider.bind(registry) };
-      }
-      server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
-      return;
-    }
-
-    server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
+    registerHistoryApiProvider(apiProvider);
+    historyApiProviderRegistered = true;
+    server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
   }
 
   function rebuildSeriesCaptureSubscriptions(): void {
@@ -862,15 +865,22 @@ const start = (server: ServerAPI): Plugin => {
         .then(() => storageService.close(storageLifecycleToken))
         .catch(() => undefined);
 
-      if (historyApiRegistry) {
-        try {
-          historyApiRegistry.unregisterHistoryApiProvider();
-          server.debug('[KIP][HISTORY_PROVIDER] unregister success provider=kip');
-        } catch (error) {
-          server.error(`[HISTORY PROVIDER] unregister failed: ${String((error as Error).message || error)}`);
-        }
-        historyApiRegistry = null;
+      const serverWithHistoryApi = server as ServerAPI & {
+        unregisterHistoryApiProvider?: () => void;
+        history?: {
+          unregisterHistoryApiProvider?: () => void;
+        };
+      };
+      const unregisterHistoryApiProvider =
+        typeof serverWithHistoryApi.unregisterHistoryApiProvider === 'function'
+          ? serverWithHistoryApi.unregisterHistoryApiProvider.bind(serverWithHistoryApi)
+          : (typeof serverWithHistoryApi.history?.unregisterHistoryApiProvider === 'function'
+              ? serverWithHistoryApi.history.unregisterHistoryApiProvider.bind(serverWithHistoryApi.history)
+              : null);
+      if (unregisterHistoryApiProvider) {
+        unregisterHistoryApiProvider();
       }
+      historyApiProviderRegistered = false;
 
       sqliteInitializationPromise = null;
 
@@ -1238,4 +1248,6 @@ const start = (server: ServerAPI): Plugin => {
 
   return plugin;
 }
+const startWithHooks = start as typeof start & { getSqliteModule?: TGetSqliteModule };
+startWithHooks.getSqliteModule = defaultGetSqliteModule;
 module.exports = start;
