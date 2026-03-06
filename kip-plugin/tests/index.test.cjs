@@ -1752,7 +1752,7 @@ testRequiresNodeSqlite('series upsert rolls back in-memory state when sqlite wri
   }
 });
 
-test('series delete rolls back in-memory state when sqlite write fails', async () => {
+testRequiresNodeSqlite('series delete rolls back in-memory state when sqlite write fails', async () => {
   const originalDelete = SqliteHistoryStorageService.prototype.deleteSeriesDefinition;
   SqliteHistoryStorageService.prototype.deleteSeriesDefinition = async function deleteFail() {
     throw new Error('SQLite forced delete failure');
