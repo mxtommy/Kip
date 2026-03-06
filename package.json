@@ -89,7 +89,7 @@
     "@types/js-quantities": "^1.6.6",
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^24.1.0",
-    "angular-eslint": "21.2.0",
+    "angular-eslint": "21.3.0",
     "codelyzer": "^6.0.0",
     "eslint": "^9.29.0",
     "jasmine-core": "~4.0.1",
