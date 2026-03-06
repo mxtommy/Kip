@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
-import { HistoryApi } from '@signalk/server-api/history';
+import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
 
 const start = (server: ServerAPI): Plugin => {
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
@@ -560,8 +560,8 @@ const start = (server: ServerAPI): Plugin => {
       return;
     }
 
-    const apiProvider = {
-      getValues: async (query: IHistoryApiValuesRequestLike): Promise<unknown> => {
+    const apiProvider: HistoryApi = {
+      getValues: async (query: ValuesRequest): Promise<ValuesResponse> => {
         const resolved = await resolveHistoryValues(buildHistoryQueryFromValuesRequest(query));
         return {
           ...resolved,
@@ -569,15 +569,15 @@ const start = (server: ServerAPI): Plugin => {
             path: valueSpec.path,
             method: valueSpec.method === 'avg' ? 'average' : valueSpec.method
           }))
-        };
+        } as ValuesResponse;
       },
-      getPaths: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)),
-      getContexts: (query: IHistoryApiRangeRequestLike): Promise<string[]> =>
-        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query))
+      getPaths: (query: PathsRequest): Promise<PathsResponse> =>
+        resolveHistoryPaths(buildHistoryQueryFromRangeRequest(query)) as Promise<PathsResponse>,
+      getContexts: (query: ContextsRequest): Promise<ContextsResponse> =>
+        resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query)) as Promise<ContextsResponse>
     };
 
-    server.registerHistoryApiProvider(apiProvider as unknown as HistoryApi);
+    server.registerHistoryApiProvider(apiProvider);
     server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
   }
 
