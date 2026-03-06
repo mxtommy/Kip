@@ -4,7 +4,7 @@ Use KIP digital switching controls when you want to do real actions from your da
 
 The focus here is practical KIP setup: what path type to use, what PUT support is needed, and how to avoid common configuration mistakes. This guide supports built-in server handlers, custom plugins, and Node-RED flows.
 
-If you are new to Node-RED, start with this guide, then continue with **[Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md)** for beginner flow examples.
+If you are new to Node-RED, start with this guide, then continue with **[Node-RED Control Flows for KIP Widgets (Beginner Guide)](#/help/nodered-control-flows.md)** for beginner flow examples.
 
 ## What PUT Does (and Does Not Do)
 
@@ -14,8 +14,8 @@ PUT writes a value to a Signal K path. By itself, that write does not trigger ha
 
 Examples of server-side handlers:
 - A built-in server handler
-- A Signal K plugin (see [Popular Digital Switching Plugins](#popular-digital-switching-plugins))
-- A Node-RED flow (see [Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md))
+- A Signal K plugin (see Popular Digital Switching Plugins)
+- A Node-RED flow (see Node-RED Control Flows for KIP Widgets - Beginner Guide)
 
 ## Basic Requirements
 
@@ -96,6 +96,6 @@ If something does not work, check these first.
 
 Use these guides next as needed.
 
-- **Node-RED beginners:** [Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md)
-- **Path discovery and validation:** [Data Inspector](datainspector.md)
-- **Widget overview and placement:** [Dashboards and Layout](dashboards.md)
+- **Node-RED beginners:** [Node-RED Control Flows for KIP Widgets (Beginner Guide)](#/help/nodered-control-flows.md)
+- **Path discovery and validation:** [Data Inspector](#/help/datainspector.md)
+- **Widget overview and placement:** [Dashboards and Layout](#/help/dashboards.md)

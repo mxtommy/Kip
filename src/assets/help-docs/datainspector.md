@@ -24,7 +24,7 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 2. **PUT Support**:
    - You can see if a path supports PUT operations, indicated by a green checkmark in the **PUT Support** column.
-   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](putcontrols.md) help documentation.
+   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](#/help/putcontrols.md) help documentation.
 
 3. **Multiple Data Sources**:
    - The Data Inspector displays how many sources are providing data for each path.
@@ -42,8 +42,8 @@ The Data Inspector is a good way to validate raw data and available paths withou
 
 - **Verify PUT Support**:
    - Check if a path supports PUT operations. It is required to configure widgets like Switch Panel, Slider, or Multi State Switch.
-   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](putcontrols.md) help documentation.
-   - If you are learning Node-RED flows and want your flow to work with KIP digital switching widgets, continue with [Node-RED Control Flows for KIP Widgets (Beginner Guide)](nodered-control-flows.md).
+   - For more details on PUT support and how to use it, refer to the [Updating Signal K Data](#/help/putcontrols.md) help documentation.
+   - If you are learning Node-RED flows and want your flow to work with KIP digital switching widgets, continue with [Node-RED Control Flows for KIP Widgets (Beginner Guide)](#/help/nodered-control-flows.md).
 
 - **Troubleshoot Data Issues**:
    - The Data Inspector is a good troubleshooting tool, but it should be used with the Signal K Data Browser when trying to understand raw data and behavior. The combination of these tools provides a more complete picture of the data, its processing, and its behavior.

@@ -2,7 +2,7 @@
 
 This guide is for first-time Node-RED users who want KIP control widgets to trigger real actions (like GPIO or relay switching) through Signal K. It is not a full Node-RED product guide or a complete flow-programming course. It focuses on the Signal K and KIP-specific parts you need for digital switching.
 
-Before you start building flows, read **[Digital Switching and PUT Path Setup](putcontrols.md)** so you understand the core concepts, data flow, and control logic.
+Before you start building flows, read **[Digital Switching and PUT Path Setup](#/help/putcontrols.md)** so you understand the core concepts, data flow, and control logic.
 
 ## What You Are Building
 
@@ -120,6 +120,6 @@ Use these terms consistently while setting up your flow.
 Use these guides next as needed.
 
 - SignalK signalk-node-red: [Show and tell](https://github.com/SignalK/signalk-node-red/discussions/categories/show-and-tell)
-- Path requirements and widget compatibility: [Digital Switching and PUT Path Setup](putcontrols.md)
-- Finding paths and checking PUT support: [Data Inspector](datainspector.md)
-- Adding and configuring widgets: [Dashboards and Layout](dashboards.md)
+- Path requirements and widget compatibility: [Digital Switching and PUT Path Setup](#/help/putcontrols.md)
+- Finding paths and checking PUT support: [Data Inspector](#/help/datainspector.md)
+- Adding and configuring widgets: [Dashboards and Layout](#/help/dashboards.md)

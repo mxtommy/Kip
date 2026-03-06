@@ -6,7 +6,7 @@ Stay informed about your vessel’s data with Signal K’s state notifications. 
 ## Zones & Notification Configuration
 
 **Zones** are value ranges defined as metadata for each data path. Learn more at the [Signal K Metadata documentation](https://signalk.org/specification/1.7.0/doc/data_model_metadata.html).  
-To configure metadata in Signal K, visit the [Data Browser server page](/admin/#/databrowser) and enable the **Meta Data** switch. Here, you can add or edit **methods** and **zones** for any path you want to monitor.
+To configure metadata in Signal K, visit the [Data Browser server page](/../../admin/#/databrowser) and enable the **Meta Data** switch. Here, you can add or edit **methods** and **zones** for any path you want to monitor.
 
 > **Note:** Zone values use base units (e.g., wind speed in meters per second). Define your zone ranges using the base unit for each path. KIP will automatically convert and display these values according to your widget’s unit settings.
 

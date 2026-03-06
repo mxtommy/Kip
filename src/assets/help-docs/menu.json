@@ -12,7 +12,7 @@
     "items": [
       { "title": "Node-RED (Getting Started)", "file": "nodered-control-flows.md" },
       { "title": "The Embed Page Viewer", "file": "embedwidget.md" },
-      { "title": "Using The History-API", "file": "history-api.md" },
+      { "title": "External History-API Provider", "file": "history-api.md" },
       { "title": "Grafana Integration", "file": "grafana.md" },
       { "title": "InfluxDB and Signal K", "file": "influxdb.md" }
     ]
