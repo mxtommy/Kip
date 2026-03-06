@@ -5,6 +5,17 @@ import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISer
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
 
+type TSqliteModule = { DatabaseSync?: unknown; Database?: unknown } | null;
+type TGetSqliteModule = () => Promise<TSqliteModule>;
+
+async function defaultGetSqliteModule(): Promise<TSqliteModule> {
+  try {
+    return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
+  } catch {
+    return null;
+  }
+}
+
 const start = (server: ServerAPI): Plugin => {
   const mutableOpenApi = JSON.parse(JSON.stringify((openapi as { default?: unknown }).default ?? openapi));
   const API_PATHS = {
@@ -98,16 +109,12 @@ const start = (server: ServerAPI): Plugin => {
     server.debug(`[KIP][RUNTIME] ${nodeIdentity} node:sqlite=${sqliteAvailability}`);
   }
 
-  async function getSqliteModule(): Promise<{ DatabaseSync?: unknown; Database?: unknown } | null> {
-    try {
-      return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
-    } catch {
-      return null;
-    }
-  }
-
   async function detectSqliteRuntime(): Promise<boolean> {
-    const sqliteModule = await getSqliteModule();
+    const exportedStart = start as typeof start & { getSqliteModule?: TGetSqliteModule };
+    const resolveSqliteModule = typeof exportedStart.getSqliteModule === 'function'
+      ? exportedStart.getSqliteModule
+      : defaultGetSqliteModule;
+    const sqliteModule = await resolveSqliteModule();
     if (!sqliteModule) {
       runtimeSqliteUnavailableMessage = `node:sqlite requires Node ${MIN_NODE_SQLITE_VERSION}+`;
       return false;
@@ -554,8 +561,23 @@ const start = (server: ServerAPI): Plugin => {
       return;
     }
 
-    // guard when running in older SK versions that do not support History API
-    if (!server.registerHistoryApiProvider) {
+    const serverWithHistoryApi = server as ServerAPI & {
+      registerHistoryApiProvider?: (provider: HistoryApi) => void;
+      unregisterHistoryApiProvider?: () => void;
+      history?: {
+        registerHistoryApiProvider?: (provider: HistoryApi) => void;
+        unregisterHistoryApiProvider?: () => void;
+      };
+    };
+    const registerHistoryApiProvider =
+      typeof serverWithHistoryApi.registerHistoryApiProvider === 'function'
+        ? serverWithHistoryApi.registerHistoryApiProvider.bind(serverWithHistoryApi)
+        : (typeof serverWithHistoryApi.history?.registerHistoryApiProvider === 'function'
+            ? serverWithHistoryApi.history.registerHistoryApiProvider.bind(serverWithHistoryApi.history)
+            : null);
+
+    // guard when running in SK variants that do not support History API registration
+    if (!registerHistoryApiProvider) {
       server.debug('[KIP][HISTORY_PROVIDER] registration skipped reason=api-unavailable');
       return;
     }
@@ -577,7 +599,8 @@ const start = (server: ServerAPI): Plugin => {
         resolveHistoryContexts(buildHistoryQueryFromRangeRequest(query)) as Promise<ContextsResponse>
     };
 
-    server.registerHistoryApiProvider(apiProvider);
+    registerHistoryApiProvider(apiProvider);
+    historyApiProviderRegistered = true;
     server.debug('[KIP][HISTORY_PROVIDER] registration success provider=kip');
   }
 
@@ -841,6 +864,23 @@ const start = (server: ServerAPI): Plugin => {
         .catch(() => undefined)
         .then(() => storageService.close(storageLifecycleToken))
         .catch(() => undefined);
+
+      const serverWithHistoryApi = server as ServerAPI & {
+        unregisterHistoryApiProvider?: () => void;
+        history?: {
+          unregisterHistoryApiProvider?: () => void;
+        };
+      };
+      const unregisterHistoryApiProvider =
+        typeof serverWithHistoryApi.unregisterHistoryApiProvider === 'function'
+          ? serverWithHistoryApi.unregisterHistoryApiProvider.bind(serverWithHistoryApi)
+          : (typeof serverWithHistoryApi.history?.unregisterHistoryApiProvider === 'function'
+              ? serverWithHistoryApi.history.unregisterHistoryApiProvider.bind(serverWithHistoryApi.history)
+              : null);
+      if (unregisterHistoryApiProvider) {
+        unregisterHistoryApiProvider();
+      }
+      historyApiProviderRegistered = false;
 
       sqliteInitializationPromise = null;
 
@@ -1208,4 +1248,6 @@ const start = (server: ServerAPI): Plugin => {
 
   return plugin;
 }
+const startWithHooks = start as typeof start & { getSqliteModule?: TGetSqliteModule };
+startWithHooks.getSqliteModule = defaultGetSqliteModule;
 module.exports = start;
