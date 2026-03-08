@@ -247,6 +247,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       case 'location':
         battery.location = value as string;
         break;
+      case 'chemistry':
+        battery.chemistry = value as string;
+        break;
       case 'voltage':
         battery.voltage = this.toNumber(value, 'V');
         break;
@@ -501,14 +504,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const iconGroupNode = iconGroup.node() as SVGGElement | null;
         iconGroupNode?.appendChild(iconNode);
       });
-
-     /*     batteryMerged.select('text.bms-card-meta')
-      .attr('x', 5)
-      .attr('y', 30)
-      .attr('fill', theme.contrast)
-      .attr('font-size', 10)
-      .attr('opacity', 0.75)
-      .text(item => this.formatCapacity(item.capacityRemaining)); */
 
     batterySelection.exit().remove();
 

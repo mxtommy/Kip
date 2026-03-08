@@ -62,6 +62,13 @@ export interface BmsBatterySnapshot {
    */
   location?: string | null;
   /**
+   * Type of battery FLA, LiFePO4, AMG, etc.
+   *
+   * @example
+   * const battery: BmsBatterySnapshot = { id: '1', chemistry: 'LiFePO4' };
+   */
+  chemistry?: string | null;
+  /**
    * Voltage in volts.
    *
    * @example
