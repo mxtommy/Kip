@@ -1,218 +1,102 @@
-# KIP – Copilot Instructions (for AI coding agents)
+# KIP Copilot Routing Instructions
 
-Use this quick-start map to be productive in this repo. Prefer these concrete patterns over generic Angular tips. For depth, see `COPILOT.md` (root entrypoint), this file, and `.github/instructions/angular.instructions.md`.
+This file defines how AI agents must route and apply instructions in this repository.
+It is intentionally short. Detailed rules live in:
 
-## Big picture
-- Angular v20+ PWA served under base path /@mxtommy/kip/ (angular.json baseHref, package.json scripts).
-- Data flow: SignalKConnectionService → SignalKDeltaService → DataService → Widgets.
-- UI: Dashboard(s) with draggable/resizable widgets (gridstack). Themes: light/dark/night via SCSS roles + CSS variables.
-- Storage: Config lives in Signal K when logged in, else local (StorageService). App init via APP_INITIALIZER (AppNetworkInitService).
+- `.github/instructions/best-practices.instructions.md`
+- `.github/instructions/angular.instructions.md`
+- `.github/instructions/project.instructions.md`
 
-## Final architecture (2026 Q1)
-- Historical-series orchestration path: `DashboardService` → `DashboardHistorySeriesSyncService` → `KipSeriesApiClientService` → plugin `/plugins/kip/series/reconcile`.
-- Dataset write ownership is centralized in `WidgetDatasetOrchestratorService`; avoid direct dataset create/edit/remove calls from widget/dashboard flows.
-- Shared history mapping path: `HistoryToChartMapperService` performs history-values → chart datapoint adaptation; `DatasetStreamService` delegates to it.
-- Widget delete cleanup uses owner UUID matching (`ownerUuid` and `ownerUuid-*`) through lifecycle service, replacing selector-specific cleanup.
+## Instruction Load Order
 
-### Migration guardrails
-1. For chart/trend widgets, use lifecycle sync helpers (`syncDataChartDataset`, `syncNumericMiniChartDataset`, `syncWindTrendsDatasets`).
-2. Keep widget UUIDs stable and unique; ownership drives both dataset cleanup and history-series reconciliation.
-3. Route history response mapping changes through `HistoryToChartMapperService` only.
-4. Do not reintroduce legacy selector-branch dataset cleanup in dashboard/widget code.
+Always load and apply instruction files in this order:
 
-## Daily workflows
-- Dev: npm run dev, then open http://localhost:4200/@mxtommy/kip/ (needs a running Signal K server).
-- Build KIP app: npm run build:dev | npm run build:prod (outputs KIP to public/ and respects baseHref).
-- Build KIP app and KIP plugin: npm run build:all (outputs KIP to public/ and respects baseHref. Outputs plugin to kip-plugin).
-- Quality: npm run lint, npm test (Karma). E2E (Protractor) is legacy/optional.
+1. `.github/instructions/best-practices.instructions.md`
+2. `.github/instructions/angular.instructions.md`
+3. `.github/instructions/project.instructions.md`
 
-## Host2 widget contract (critical)
-All widgets now follow the Host2 architecture (legacy BaseWidgetComponent removed).
+## Precedence Rules
 
-1. Standalone component with required functional inputs:
-	 ```ts
-	 id = input.required<string>();
-	 type = input.required<string>();
-	 theme = input.required<ITheme | null>();
-	 ```
-2. Provide a static `DEFAULT_CONFIG: IWidgetSvcConfig` fully describing initial config (paths + options).
-3. Inject directives for runtime + streams (and optionally metadata):
-	 ```ts
-	 private runtime = inject(WidgetRuntimeDirective);
-	 private streams = inject(WidgetStreamsDirective);
-	 // optional
-	 // private meta = inject(WidgetMetadataDirective);
-	 ```
-4. Register data observers in a single effect:
-	 ```ts
-	 effect(() => {
-		 const cfg = this.runtime.options();
-		 if (!cfg) return;
-		 untracked(() => {
-			 if (cfg.paths?.numericPath?.path) {
-				 this.streams.observe('numericPath', pkt => this.value.set(pkt?.data?.value ?? null));
-			 }
-			 // repeat for other path keys
-		 });
-	 });
-	 ```
-5. Always guard for missing config or optional paths (check `cfg?.paths?.key?.path`).
-6. Avoid mutating the merged config object; store transient UI state in signals.
-7. Use UnitsService and existing formatting helpers; do not hardcode conversions. Using streams directive handles path unit conversion settings automatically for number types.
-8. Timeout settings honored automatically (`enableTimeout`, `dataTimeout`)—`WidgetStreamsDirective`.
-9. Provide meaningful path keys (e.g. `numericPath`, `headingTrue`, `windSpeed`) and keep them stable.
-10. Destroy logic is usually implicit (streams directive centralizes subscriptions); only tear down custom resources manually if you allocate them (e.g., canvases, animation frames).
+- `project.instructions.md` overrides Angular guidance when KIP architecture requires it.
+- `angular.instructions.md` overrides generic guidance for framework-specific behavior.
+- `best-practices.instructions.md` is always in effect unless an explicit project override exists.
 
-### Path definition recap
-Each entry in `DEFAULT_CONFIG.paths`:
-```ts
-someKey: {
-	description: 'User label',
-	path: 'navigation.speedThroughWater',
-	pathType: 'number' | 'string' | 'Date' | 'boolean',
-	convertUnitTo: 'knots',       // For numeric path only. Sets automatic conversion to this unit
-	sampleTime: 1000,              // ms, typical 500+
-	source: null,                 // optional source selection. null = default source
-	isPathConfigurable: true,     // false to hide path in path options UI
-	pathRequired: true,           // set false for optional
-	showPathSkUnitsFilter: false, // Show numeric UI filter support
-	pathSkUnitsFilter: null       // Set and apply a path unit filter (e.g. 'knots' for speed)
-}
-```
+## Scope Separation Contract
 
-### Data stream behavior (via WidgetStreamsDirective)
-- Respects per-path `sampleTime`.
-- Converts units for number paths using UnitsService.
-- Optional timeout logic based on widget config flags.
-- Centralized unsubscribe when host destroys the widget.
+- `best-practices.instructions.md`: Cross-cutting quality rules only (TypeScript quality, testing expectations, accessibility, documentation).
+- `angular.instructions.md`: Angular framework patterns only (signals, templates, DI, routing, forms).
+- `project.instructions.md`: KIP architecture and domain conventions only (Host2 widgets, Signal K data paths, dataset orchestration, base path).
 
-### Embedded widgets (composite pattern)
-Use this patterns when a parent widget (e.g. Autopilot) displays other widgets:
+Do not duplicate detailed rules across files. Reference the owning file instead.
 
-#### `<widget-embedded>`
-Supply a complete `widgetProperties` object (no persistence writes):
-```ts
-xteWidgetProps = {
-	uuid: this.id() + '-xte',
-	type: 'widget-numeric',
-	config: {
-		type: 'widget-numeric',
-		title: 'XTE',
-		paths: { numericPath: { description: 'Cross Track Error', path: 'navigation.course.crossTrackError', pathType: 'number', convertUnitTo: 'nm', sampleTime: 1000, isPathConfigurable: false } },
-		numDecimal: 2
-	}
-};
-```
-Template:
-```html
-<widget-embedded [widgetProperties]="xteWidgetProps"></widget-embedded>
-```
-`widget-embedded` internally wires runtime + streams + metadata and instantiates the child.
+## Instruction File Ownership Rules
 
-### Safety patterns
-- Null guard every `runtime.options()` access in effects & template (`runtime.options()?.paths?.key`).
-- Avoid repeated `runtime.options()` chains in template: expose a computed `cfg = computed(() => this.runtime.options())`.
-- For performance, do all `streams.observe` calls in one untracked block.
+Use this map whenever creating or editing instruction content:
 
-## Widget path options (important)
-- pathType: Controls pipeline behavior (see features above). Must be accurate: 'number' | 'string' | 'Date' | 'boolean'.
-- path: Signal K path string (e.g., navigation.speedThroughWater). Empty allowed only when pathRequired=false.
-- sampleTime: Sampling period for the observer (ms). Keep modest (e.g., 250–1000) to reduce churn.
-- convertUnitTo: Target display unit understood by UnitsService (e.g., 'knots', 'celsius', 'deg'). If omitted, treat value as base/metadata unit.
-- source: Optional Signal K source filter; omit to accept any uniquely available source.
-- isPathConfigurable: When false, hides the path from the widget-config UI (for fixed/internal paths). Validation is skipped for this key.
-- pathRequired: Defaults to true. When false, empty path is valid; your widget must handle “no path” gracefully (don’t subscribe; show placeholder).
-- Timeouts: At widgetProperties.config level, enableTimeout + dataTimeout are respected by observeDataStream—don’t add custom timeouts downstream.
+- Put content in `best-practices.instructions.md` when it applies across frameworks and features (quality, testing posture, accessibility, documentation, change hygiene).
+- Put content in `angular.instructions.md` when it is Angular API/framework behavior (signals, template control flow, DI patterns, component patterns, routing/forms/http framework usage).
+- Put content in `project.instructions.md` when it is KIP-specific architecture or domain behavior (service boundaries, ownership contracts, Signal K/plugin integration constraints, Host2 policy constraints).
+- Put content in `COPILOT.md` when it is long-form architecture context, rationale, and extended implementation reference material that should not be policy text.
 
-## Data, metadata, zones
-- Use DataService for values and metadata. observeDataStream wraps DataService.subscribePath.
-- zones$ emits Signal K zones metadata when observeMetaStream is used; map states to theme roles.
+If a rule could fit in multiple files, keep it in the most specific owning file and reference it from the others.
 
-## Theming
-- TS: live theme via this.theme().<role> (from AppService.cssThemeColorRoles$).
-- SCSS: use variables from src/themes/_m3*.scss; avoid hardcoded hex.
+## Instruction Update Discipline
 
-## Datasets & charts
-- Historical/trend data: DatasetStreamService (src/app/core/services/dataset-stream.service.ts). Create/update/remove in widget lifecycle.
-- Example: src/app/widgets/widget-windtrends-chart uses Chart.js + date-fns and DatasetStreamService for batch-then-live streams.
-- Preferred write path: `WidgetDatasetOrchestratorService` (centralized dataset orchestration for Data Chart / Numeric minichart / Windtrends and owner-based cleanup).
+When updating instruction files:
 
-## Signal K PUT/requests
-- Read via DataService; write via SignalKRequestsService. UI filters PUT-enabled paths (see src/assets/help-docs/putcontrols.md).
+1. Keep each rule in one owning file; do not duplicate rule text.
+2. Prefer short references over repeated paragraphs.
+3. Keep `copilot-instructions.md` routing/governance only.
+4. Keep skills implementation-focused; instruction files stay policy-authoritative.
+5. Add new rules once in the owner file and verify overlap was not introduced.
+6. Treat `COPILOT.md` as supporting context, not policy authority.
 
-## Project specifics & gotchas
-- Always respect serve path /@mxtommy/kip/ (dev/prod). Assets and routing assume this base.
-- CommonJS deps are explicitly allowed (js-quantities). Avoid introducing new CJS without adding to allowedCommonJsDependencies.
-- Use standalone components, signals, @if/@for; follow .github/instructions/angular.instructions.md for style.
-- Widget config UIs live under src/app/widget-config; path controls use custom validators (no Validators.required). Respect isPathConfigurable and pathRequired.
-- Documentation standard: Every public property and public method in TypeScript code MUST include full JSDoc with: purpose, parameters, return value, and at least one usage example. Apply this by default for all generated/edited code unless a file explicitly cannot use comments.
+Before finalizing instruction edits, run this quick check:
 
-## Widgets: do this, not that (Host2)
-- Do: Provide a complete `DEFAULT_CONFIG` with all paths & options. Don’t: Scatter defaults across lifecycle hooks.
-- Do: Centralize `streams.observe` calls in a single effect. Don’t: Register observers in multiple hooks.
-- Do: Keep transient state in signals. Don’t: Mutate merged config objects.
-- Do: Use UnitsService / formatting helpers. Don’t: Hardcode conversion factors.
-- Do: Guard `options()` & path existence. Don’t: Assume presence.
-- Do: Use widget-embedded or inline directives for composites. Don’t: Reintroduce legacy host wrappers.
+- `Scope check`: each new rule belongs to exactly one owning instruction file.
+- `Duplication check`: no repeated rule blocks across instruction files.
+- `Routing check`: skill matrix still maps task type to the right skills without adding policy text.
 
-## Key files/dirs
-- Core services: `src/app/core/services/` (DataService, SignalKConnectionService, SignalKDeltaService, AppNetworkInitService, UnitsService, DatasetStreamService, NotificationsService)
-- Plugin config foundation: `src/app/core/services/signalk-plugin-config.service.ts` (plugin-only detection, dependency validation, schema normalization metadata, and config persistence via `/plugins` endpoints)
-- Directives: `src/app/core/directives/` (widget-runtime, widget-streams, widget-metadata)
-- Widgets: `src/app/widgets/` (e.g., widget-numeric, widget-gauge-ng-*, widget-data-chart, widget-windtrends-chart, widget-autopilot)
-- Embedded host: `src/app/core/components/widget-embedded/`
-- Config UI: `src/app/widget-config/`
-- Plugin management (server plugins) is handled separately through `PluginConfigClientService` and `/plugins` REST endpoints. Keep install/uninstall out of scope unless explicitly added.
-- Build: `angular.json`, `package.json` scripts
+## Skill Selection Matrix
 
-## Debugging
-- Use Data Inspector (src/app/core/components/data-inspector) to verify live paths/metadata.
-- Dev with source maps: npm run dev. Watch console from DataService/DatasetStreamService for timeouts/lifecycle logs.
-- Embeds (widget-iframe): prefer same-origin or relative URLs to avoid CORS and input-injection limits (see embedwidget.md).
+Use project skills plus Angular skills based on edit type:
 
-## SVG Animation Helpers (rAF)
-High-frequency SVG updates (rotations, path morphs) should NOT trigger Angular change detection every frame.
+- Component or widget UI changes:
+  - `angular-component`
+  - `angular-signals`
+  - `angular-directives` (if host bindings/directives are involved)
+  - `kip-host2-widget` (for Host2 widget contract work)
+- Service and dependency wiring:
+  - `angular-di`
+  - `angular-http` (if API calls are involved)
+- Forms and widget config UIs:
+  - `angular-forms`
+- Routing and navigation:
+  - `angular-routing`
+- Test creation and refactors:
+  - `angular-testing`
+- Build and generation workflow:
+  - `angular-tooling`
+- Dataset lifecycle, ownership cleanup, and dataset write paths:
+  - `kip-dataset-orchestration`
+- History series reconciliation and mapping flow changes:
+  - `kip-history-series-reconcile`
 
-Core utilities (src/app/widgets/utils/svg-animate.util.ts):
-- animateRotation(el, fromDeg, toDeg, durationMs, onDone?, ngZone?)
-- animateRudderWidth(rectEl, from, to, durationMs, onDone?, ngZone?)
-- animateAngleTransition(fromDeg, toDeg, durationMs, applyFn(angle), onDone?, ngZone?)
-- animateSectorTransition(fromAngles, toAngles, durationMs, applyFn(sector), onDone?, ngZone?)
+For multi-concern edits, apply all matching skills and prioritize project constraints when conflicts occur.
 
-Pattern:
-1. Inject NgZone; pass it so frames run outside Angular.
-2. Cancel prior frame id before starting a new conceptual animation (store returned id from the generic helpers).
-3. Skip tiny angle deltas (< ~0.25°) to prevent jitter.
-4. On destroy: cancel outstanding ids (including those tracked internally for animateRotation/animateRudderWidth via element refs).
+Skills provide implementation patterns. Instruction files remain the policy source of truth.
 
-Example (angle interpolation):
-```
-if (this.portLaylineAnimId) cancelAnimationFrame(this.portLaylineAnimId);
-this.portLaylineAnimId = animateAngleTransition(
-	prev,
-	next,
-	300,
-	angle => this.drawLayline(angle, true),
-	() => { this.portLaylineAnimId = null; },
-	this.ngZone
-);
-```
+For all work touching this repository, always apply `project.instructions.md` in addition to the relevant Angular skill(s).
 
-See COPILOT.md Section 12 for full rationale, cancellation rules, and future extension ideas.
+## Required Output Checklist For Agent Responses
 
-## Pointer Swipe Guard (tap vs swipe)
-Use the shared swipe guard utility to prevent swipe gestures from triggering click/tap actions on SVG controls.
+When making code changes, include a short checklist in the response:
 
-Utility (core): `src/app/core/utils/pointer-swipe-guard.util.ts`
+1. Instruction files applied.
+2. Skills used (Angular + KIP as applicable).
+3. Project-specific constraints validated.
+4. Tests or validation run (or why not run).
 
-When to use:
-- Any widget that accepts pointer input and should ignore swipe gestures (e.g., multi-state switch, boolean switch).
+## Project Anchors
 
-Pattern:
-1. Create a guard in the component: `private readonly swipeGuard = createSwipeGuard();`
-2. Wire `pointerdown`, `pointermove`, `pointerup`, and `pointercancel` events.
-3. Trigger action only when `swipeGuard.onPointerUp(...)` returns true.
-
-Notes:
-- The guard uses pointer capture for robust fast drags and releases capture on `pointerup`/`pointercancel`.
-- Default swipe threshold is 30px (override via `createSwipeGuard({ threshold })` if needed).
+- Project anchors and architecture context are maintained in `.github/instructions/project.instructions.md` and `COPILOT.md`.
