@@ -1,12 +1,15 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, NgZone, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs/operators';
+import { getColors } from '../../core/utils/themeColors.utils';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import type { BmsBankConfig, BmsBankSummary, BmsBatterySnapshot, BmsWidgetConfig } from './bms.types';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 
 interface BmsRenderBank extends BmsBankSummary {
   x: number;
@@ -27,37 +30,13 @@ interface BmsRenderBattery extends BmsBatterySnapshot {
   templateUrl: './widget-bms.component.html',
   styleUrl: './widget-bms.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: []
+  imports: [MatIconModule]
 })
 export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
-  /**
-   * Unique widget instance id assigned by the dashboard host.
-   *
-   * @example
-   * const widgetId = this.id();
-   */
   public id = input.required<string>();
-  /**
-   * Widget type identifier registered in WidgetService.
-   *
-   * @example
-   * const widgetType = this.type();
-   */
   public type = input.required<string>();
-  /**
-   * Current theme roles for the active color scheme.
-   *
-   * @example
-   * const theme = this.theme();
-   */
   public theme = input.required<ITheme | null>();
 
-  /**
-   * Default configuration for the BMS widget.
-   *
-   * @example
-   * const defaults = WidgetBmsComponent.DEFAULT_CONFIG;
-   */
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig & { bms: BmsWidgetConfig } = {
     displayName: 'BMS',
     filterSelfPaths: true,
@@ -72,17 +51,18 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  private static readonly VIEWBOX_WIDTH = 1200;
-  private static readonly VIEWBOX_HEIGHT = 700;
-  private static readonly BANK_CARD_HEIGHT = 180;
-  private static readonly BANK_CARD_WIDTH = 340;
-  private static readonly BATTERY_CARD_HEIGHT = 140;
-  private static readonly BATTERY_CARD_WIDTH = 300;
-  private static readonly CARD_GAP = 24;
+  private static readonly VIEWBOX_WIDTH = 200;
+  private static readonly VIEWBOX_HEIGHT = 200;
+  private static readonly BANK_CARD_HEIGHT = 200;
+  private static readonly BANK_CARD_WIDTH = 200;
+  private static readonly BATTERY_CARD_HEIGHT = 50;
+  private static readonly BATTERY_CARD_WIDTH = 190;
+  private static readonly CARD_GAP = 5;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
   private readonly units = inject(UnitsService);
+  private readonly iconRegistry = inject(MatIconRegistry);
   private readonly destroyRef = inject(DestroyRef);
   private readonly ngZone = inject(NgZone);
 
@@ -93,6 +73,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private batteryLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
 
   private renderFrameId: number | null = null;
+  private powerAvailableIconTemplate: SVGElement | null = null;
+  private powerRenewalIconTemplate: SVGElement | null = null;
 
   protected readonly discoveredBatteryIds = signal<string[]>([]);
   protected readonly trackedBatteryIds = signal<string[]>([]);
@@ -141,29 +123,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       });
   }
 
-  /**
-   * Initializes the SVG canvas after view creation.
-   *
-   * @returns void
-   *
-   * @example
-   * // Triggered automatically by Angular once the view is initialized.
-   */
   ngAfterViewInit(): void {
     this.initializeSvg();
+    this.loadPowerIcons();
     const theme = this.theme();
     if (!theme) return;
     this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme);
   }
 
-  /**
-   * Cancels pending render work on destroy.
-   *
-   * @returns void
-   *
-   * @example
-   * // Triggered automatically by Angular when the widget is removed.
-   */
   ngOnDestroy(): void {
     if (this.renderFrameId !== null) {
       cancelAnimationFrame(this.renderFrameId);
@@ -176,11 +143,43 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.svg
       .attr('viewBox', `0 0 ${WidgetBmsComponent.VIEWBOX_WIDTH} ${WidgetBmsComponent.VIEWBOX_HEIGHT}`)
       .attr('role', 'img')
-      .attr('aria-label', 'Battery management system view');
+      .attr('aria-label', 'Battery Management System View');
 
     this.root = this.svg.append('g').attr('class', 'bms-root');
     this.bankLayer = this.root.append('g').attr('class', 'bms-banks');
     this.batteryLayer = this.root.append('g').attr('class', 'bms-batteries');
+  }
+
+  private loadPowerIcons(): void {
+    this.loadNamedIcon('power_available', icon => {
+      this.powerAvailableIconTemplate = icon;
+    });
+    this.loadNamedIcon('power_renewal', icon => {
+      this.powerRenewalIconTemplate = icon;
+    });
+  }
+
+  private loadNamedIcon(iconName: string, onLoaded: (icon: SVGElement) => void): void {
+    this.iconRegistry.getNamedSvgIcon(iconName)
+      .pipe(take(1))
+      .subscribe({
+        next: icon => {
+          onLoaded(icon);
+          const theme = this.theme();
+          if (theme && this.svg) {
+            this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme);
+          }
+        },
+        error: () => {
+        }
+      });
+  }
+
+  private iconForCurrent(current: number | null | undefined): SVGElement | null {
+    if (current != null && current > 0) {
+      return this.powerRenewalIconTemplate;
+    }
+    return this.powerAvailableIconTemplate;
   }
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
@@ -268,12 +267,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private toNumber(value: unknown, unit: string): number | null {
-    if (value == null) return null;
-    if (typeof value !== 'number') return null;
-    return this.units.convertToUnit(unit, value) ?? value;
-  }
-
   private buildBankSummary(bank: BmsBankConfig, map: Record<string, BmsBatterySnapshot>): BmsBankSummary {
     const items = bank.batteryIds.map(id => map[id]).filter((item): item is BmsBatterySnapshot => !!item);
     const totalCurrent = this.sumNumbers(items.map(item => item.current));
@@ -292,24 +285,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       avgSoc,
       timeRemaining
     };
-  }
-
-  private sumNumbers(values: (number | null | undefined)[]): number | null {
-    const filtered = values.filter((value): value is number => typeof value === 'number');
-    if (!filtered.length) return null;
-    return filtered.reduce((acc, value) => acc + value, 0);
-  }
-
-  private averageNumbers(values: (number | null | undefined)[]): number | null {
-    const filtered = values.filter((value): value is number => typeof value === 'number');
-    if (!filtered.length) return null;
-    return filtered.reduce((acc, value) => acc + value, 0) / filtered.length;
-  }
-
-  private minNumber(values: (number | null | undefined)[]): number | null {
-    const filtered = values.filter((value): value is number => typeof value === 'number');
-    if (!filtered.length) return null;
-    return Math.min(...filtered);
   }
 
   private scheduleRender(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme): void {
@@ -335,7 +310,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .append('g')
       .attr('class', 'bank-card');
 
-    bankEnter.append('rect').attr('class', 'bms-card bms-card--bank').attr('rx', 16).attr('ry', 16);
+    bankEnter.append('rect').attr('class', 'bms-card bms-card--bank').attr('rx', 4).attr('ry', 4);
     bankEnter.append('text').attr('class', 'bms-card-title');
     bankEnter.append('text').attr('class', 'bms-card-metric');
     bankEnter.append('text').attr('class', 'bms-card-sub');
@@ -347,42 +322,42 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankMerged.select('rect')
       .attr('width', item => item.width)
       .attr('height', item => item.height)
-      .attr('fill', theme.cardColor)
+      .attr('fill', getColors(this.runtime.options().color, this.theme()).dimmer)
       .attr('stroke', theme.contrast)
-      .attr('stroke-width', 2);
+      .attr('stroke-width', 0);
     bankMerged.select('text.bms-card-title')
-      .attr('x', 20)
-      .attr('y', 32)
+      .attr('x', 5)
+      .attr('y', 10)
       .attr('fill', theme.contrast)
-      .attr('font-size', 20)
+      .attr('font-size', 10)
       .attr('font-weight', 600)
       .text(item => item.name || 'Bank');
     bankMerged.select('text.bms-card-metric')
-      .attr('x', 20)
-      .attr('y', 82)
+      .attr('x', 5)
+      .attr('y', 20)
       .attr('fill', theme.contrast)
-      .attr('font-size', 30)
+      .attr('font-size', 10)
       .attr('font-weight', 700)
       .text(item => this.formatPower(item.totalPower));
     bankMerged.select('text.bms-card-sub')
-      .attr('x', 20)
-      .attr('y', 112)
+      .attr('x', 5)
+      .attr('y', 30)
       .attr('fill', theme.contrast)
-      .attr('font-size', 18)
+      .attr('font-size', 10)
       .attr('opacity', 0.9)
       .text(item => this.formatCurrent(item.totalCurrent));
     bankMerged.select('text.bms-card-meta')
-      .attr('x', 20)
-      .attr('y', 134)
+      .attr('x', 5)
+      .attr('y', 40)
       .attr('fill', theme.contrast)
-      .attr('font-size', 15)
+      .attr('font-size', 10)
       .attr('opacity', 0.75)
       .text(item => this.formatCapacity(item.remainingCapacity));
     bankMerged.select('text.bms-card-footer')
-      .attr('x', 20)
-      .attr('y', 158)
+      .attr('x', 5)
+      .attr('y', 50)
       .attr('fill', theme.contrast)
-      .attr('font-size', 16)
+      .attr('font-size', 10)
       .attr('opacity', 0.8)
       .text(item => `${this.formatSoc(item.avgSoc)}  ${this.formatDuration(item.timeRemaining)}`.trim());
 
@@ -397,66 +372,101 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .append('g')
       .attr('class', 'battery-card');
 
-    batteryEnter.append('rect').attr('class', 'bms-card bms-card--battery').attr('rx', 14).attr('ry', 14);
+    batteryEnter.append('rect').attr('class', 'bms-card-battery').attr('rx', 4).attr('ry', 4);
+    batteryEnter.append('rect').attr('class', 'bms-card-tip').attr('rx', 1).attr('ry', 1);
+    batteryEnter.append('rect').attr('class', 'bms-card-charge').attr('rx', 3).attr('ry', 3);
     batteryEnter.append('text').attr('class', 'bms-card-title');
-    batteryEnter.append('text').attr('class', 'bms-card-metric');
-    batteryEnter.append('text').attr('class', 'bms-card-sub');
-    batteryEnter.append('text').attr('class', 'bms-card-meta');
-    batteryEnter.append('text').attr('class', 'bms-card-footer');
-    batteryEnter.append('line').attr('class', 'bms-flow-line');
+    batteryEnter.append('text').attr('class', 'bms-card-ampere');
+    batteryEnter.append('text').attr('class', 'bms-volt-power');
+    batteryEnter.append('text').attr('class', 'bms-card-soc');
+    batteryEnter.append('text').attr('class', 'bms-card-remaining');
+    batteryEnter.append('g').attr('class', 'bms-card-icon');
 
     const batteryMerged = batteryEnter.merge(batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>);
     batteryMerged.attr('transform', item => `translate(${item.x},${item.y})`);
-    batteryMerged.select('rect')
-      .attr('width', item => item.width)
+    batteryMerged.select('rect.bms-card-battery')
+      .attr('width', item => item.width - 5)
       .attr('height', item => item.height)
-      .attr('fill', theme.cardColor)
-      .attr('stroke', theme.contrast)
-      .attr('stroke-width', 2);
+      .attr('fill', getColors('contrast', this.theme()).dimmer)
+      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('stroke-width', 0);
+    batteryMerged.select('rect.bms-card-tip')
+      .attr('x', item => item.width - 4)
+      .attr('y', item => item.height / 2 - 10)
+      .attr('width', 4)
+      .attr('height', 20)
+      .attr('fill', getColors('contrast', this.theme()).dimmer)
+      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('stroke-width', 0);
+    batteryMerged.select('rect.bms-card-charge')
+      .attr('x', 1.5)
+      .attr('y', 1.5)
+      .attr('width', item => (item.width - 3) * (item.stateOfCharge ?? 0))
+      .attr('height', item => item.height - 3)
+      .attr('fill', getColors(this.runtime.options().color, this.theme()).dim);
     batteryMerged.select('text.bms-card-title')
-      .attr('x', 18)
-      .attr('y', 28)
+      .attr('x', 5)
+      .attr('y', 11)
       .attr('fill', theme.contrast)
-      .attr('font-size', 18)
-      .attr('font-weight', 600)
+      .attr('font-size', 8)
+      .attr('opacity', 0.8)
       .text(item => item.name || `Battery ${item.id}`);
-    batteryMerged.select('text.bms-card-metric')
-      .attr('x', 18)
-      .attr('y', 70)
+    batteryMerged.select('text.bms-card-ampere')
+      .attr('x', 33)
+      .attr('y', 32)
       .attr('fill', theme.contrast)
-      .attr('font-size', 30)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 16)
+      .text(item => `${this.formatCurrent(item.current)}`.trim());
+    batteryMerged.select('text.bms-volt-power')
+      .attr('x', 5)
+      .attr('y', 45)
+      .attr('fill', theme.contrast)
+      .attr('font-size', 8)
+      .attr('opacity', 0.8)
+      .text(item => `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatPower(item.power)}`.trim());
+    batteryMerged.select('text.bms-card-soc')
+      .attr('x', item => item.width - 38)
+      .attr('y', 34)
+      .attr('fill', theme.contrast)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 25)
       .attr('font-weight', 700)
       .text(item => this.formatSoc(item.stateOfCharge));
-    batteryMerged.select('text.bms-card-sub')
-      .attr('x', 18)
-      .attr('y', 94)
-      .attr('fill', theme.contrast)
-      .attr('font-size', 18)
-      .attr('opacity', 0.9)
-      .text(item => `${this.formatVoltage(item.voltage)}  ${this.formatCurrent(item.current)}`.trim());
-    batteryMerged.select('text.bms-card-meta')
-      .attr('x', 18)
-      .attr('y', 114)
-      .attr('fill', theme.contrast)
-      .attr('font-size', 15)
-      .attr('opacity', 0.75)
-      .text(item => this.formatCapacity(item.capacityRemaining));
-    batteryMerged.select('text.bms-card-footer')
-      .attr('x', 18)
-      .attr('y', 132)
-      .attr('fill', theme.contrast)
-      .attr('font-size', 16)
-      .attr('opacity', 0.8)
-      .text(item => `${this.formatPower(item.power)} ${this.formatDuration(item.timeRemaining)}`.trim());
+    batteryMerged.select('text.bms-card-remaining')
+      .attr('x', item => item.width - 38)
+      .attr('y', 42)
+      .attr('fill', getColors('contrast', this.theme()).dim)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 8)
+      .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
+    batteryMerged.select('g.bms-card-icon')
+      .attr('transform', item => `translate(${item.width / 2 - 18}, ${item.height / 2 - 18})`)
+      .attr('color', getColors(this.runtime.options().color, this.theme()).color)
+      .each((item, index, nodes) => {
+        const iconGroup = d3.select(nodes[index]);
+        iconGroup.selectAll('*').remove();
+        const iconTemplate = this.iconForCurrent(item.current);
+        if (!iconTemplate) return;
 
-    batteryMerged.select('line.bms-flow-line')
-      .attr('x1', item => item.width - 80)
-      .attr('x2', item => item.width - 20)
-      .attr('y1', item => item.height - 28)
-      .attr('y2', item => item.height - 28)
-      .attr('stroke', item => this.flowColor(item.current, theme))
-      .attr('stroke-width', 3)
-      .attr('stroke-dasharray', item => item.current == null ? 'none' : '6 6');
+        const iconNode = iconTemplate.cloneNode(true) as SVGSVGElement;
+        iconNode.removeAttribute('id');
+        iconNode.setAttribute('width', '36');
+        iconNode.setAttribute('height', '36');
+        if (!iconNode.getAttribute('viewBox')) {
+          iconNode.setAttribute('viewBox', '0 0 24 24');
+        }
+        const iconGroupNode = iconGroup.node() as SVGGElement | null;
+        iconGroupNode?.appendChild(iconNode);
+      });
+
+     /*     batteryMerged.select('text.bms-card-meta')
+      .attr('x', 5)
+      .attr('y', 30)
+      .attr('fill', theme.contrast)
+      .attr('font-size', 10)
+      .attr('opacity', 0.75)
+      .text(item => this.formatCapacity(item.capacityRemaining)); */
 
     batterySelection.exit().remove();
 
@@ -464,9 +474,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private layoutBanks(banks: BmsBankSummary[]): BmsRenderBank[] {
-    const startX = 40;
-    const startY = 30;
-    const columns = 2;
+    const startX = 0;
+    const startY = 0;
+    const columns = 1;
     return banks.map((bank, index) => {
       const column = index % columns;
       const row = Math.floor(index / columns);
@@ -483,9 +493,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private layoutBatteries(batteries: BmsBatterySnapshot[]): BmsRenderBattery[] {
-    const startX = 40;
-    const startY = 280;
-    const columns = 3;
+    const startX = WidgetBmsComponent.CARD_GAP;
+    const startY = 55;
+    const columns = 1;
     return batteries.map((battery, index) => {
       const column = index % columns;
       const row = Math.floor(index / columns);
@@ -531,15 +541,30 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private formatDuration(seconds: number | null | undefined): string {
     if (seconds == null) return '';
-    const total = Math.max(0, Math.round(seconds));
-    const hours = Math.floor(total / 3600);
-    const minutes = Math.floor((total % 3600) / 60);
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    return this.units.convertToUnit('D HH:MM:SS', seconds).toString();
   }
 
-  private flowColor(current: number | null | undefined, theme: ITheme): string {
-    if (current == null) return theme.contrast;
-    return current >= 0 ? theme.zoneWarn : theme.zoneNominal;
+  private sumNumbers(values: (number | null | undefined)[]): number | null {
+    const filtered = values.filter((value): value is number => typeof value === 'number');
+    if (!filtered.length) return null;
+    return filtered.reduce((acc, value) => acc + value, 0);
+  }
+
+  private averageNumbers(values: (number | null | undefined)[]): number | null {
+    const filtered = values.filter((value): value is number => typeof value === 'number');
+    if (!filtered.length) return null;
+    return filtered.reduce((acc, value) => acc + value, 0) / filtered.length;
+  }
+
+  private minNumber(values: (number | null | undefined)[]): number | null {
+    const filtered = values.filter((value): value is number => typeof value === 'number');
+    if (!filtered.length) return null;
+    return Math.min(...filtered);
+  }
+
+  private toNumber(value: unknown, unit: string): number | null {
+    if (value == null) return null;
+    if (typeof value !== 'number') return null;
+    return this.units.convertToUnit(unit, value) ?? value;
   }
 }

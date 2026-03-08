@@ -170,19 +170,6 @@ export class WidgetService {
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
-      name: 'BMS',
-      description: 'Displays battery management system data with bank aggregation and per-battery details.',
-      icon: 'data',
-      minWidth: 4,
-      minHeight: 4,
-      defaultWidth: 8,
-      defaultHeight: 6,
-      category: 'Component',
-      requiredPlugins: [],
-      selector: 'widget-bms',
-      componentClassName: 'WidgetBmsComponent'
-    },
-    {
       name: 'Numeric',
       description: 'Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.',
       icon: 'numericWidget',
@@ -376,6 +363,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-horizon',
       componentClassName: 'WidgetHorizonComponent'
+    },
+  {
+      name: 'Battery Management System',
+      description: 'Displays battery management system data with bank aggregation and per-battery details.',
+      icon: 'data',
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-bms',
+      componentClassName: 'WidgetBmsComponent'
     },
     {
       name: 'Classic Steel',

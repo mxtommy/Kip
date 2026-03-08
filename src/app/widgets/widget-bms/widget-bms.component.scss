@@ -14,18 +14,7 @@
 .bms-svg {
   height: 100%;
   width: 100%;
-}
-
-.bms-card {
-  fill: var(--kip-widget-card-background-color);
-  stroke: var(--kip-widget-card-border-color);
-  stroke-width: 2px;
-}
-
-.bms-card-title {
-  fill: var(--mat-sys-on-surface);
-  font-size: 20px;
-  font-weight: 600;
+  padding: 12px;
 }
 
 .bms-card-metric {
