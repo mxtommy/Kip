@@ -58,6 +58,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private static readonly BATTERY_CARD_HEIGHT = 50;
   private static readonly BATTERY_CARD_WIDTH = 190;
   private static readonly CARD_GAP = 5;
+  private static readonly BANK_GAUGE_RADIUS = 30;
+  private static readonly BANK_GAUGE_BG_STROKE = 10;
+  private static readonly BANK_GAUGE_VALUE_STROKE = 10;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
@@ -312,10 +315,15 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
     bankEnter.append('rect').attr('class', 'bms-card bms-card--bank').attr('rx', 4).attr('ry', 4);
     bankEnter.append('text').attr('class', 'bms-card-title');
-    bankEnter.append('text').attr('class', 'bms-card-metric');
-    bankEnter.append('text').attr('class', 'bms-card-sub');
-    bankEnter.append('text').attr('class', 'bms-card-meta');
-    bankEnter.append('text').attr('class', 'bms-card-footer');
+    bankEnter.append('text').attr('class', 'bms-card-power');
+    bankEnter.append('text').attr('class', 'bms-card-current');
+    bankEnter.append('text').attr('class', 'bms-card-capacity');
+    bankEnter.append('text').attr('class', 'bms-card-remaining');
+    const gaugeEnter = bankEnter.append('g').attr('class', 'bms-bank-gauge');
+    gaugeEnter.append('path').attr('class', 'bms-gauge-bg');
+    gaugeEnter.append('path').attr('class', 'bms-gauge-value');
+    gaugeEnter.append('circle').attr('class', 'bms-gauge-center');
+    gaugeEnter.append('text').attr('class', 'bms-gauge-label');
 
     const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
     bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
@@ -329,37 +337,63 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('x', 5)
       .attr('y', 10)
       .attr('fill', theme.contrast)
-      .attr('font-size', 10)
-      .attr('font-weight', 600)
+      .attr('font-size', 8)
+      .attr('opacity', 0.8)
       .text(item => item.name || 'Bank');
-    bankMerged.select('text.bms-card-metric')
-      .attr('x', 5)
-      .attr('y', 20)
+    bankMerged.select('text.bms-card-current')
+      .attr('x', 33)
+      .attr('y', 32)
       .attr('fill', theme.contrast)
-      .attr('font-size', 10)
-      .attr('font-weight', 700)
-      .text(item => this.formatPower(item.totalPower));
-    bankMerged.select('text.bms-card-sub')
-      .attr('x', 5)
-      .attr('y', 30)
-      .attr('fill', theme.contrast)
-      .attr('font-size', 10)
-      .attr('opacity', 0.9)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 16)
       .text(item => this.formatCurrent(item.totalCurrent));
-    bankMerged.select('text.bms-card-meta')
-      .attr('x', 5)
-      .attr('y', 40)
+    bankMerged.select('text.bms-card-power')
+      .attr('x', 33)
+      .attr('y', 45)
       .attr('fill', theme.contrast)
-      .attr('font-size', 10)
-      .attr('opacity', 0.75)
-      .text(item => this.formatCapacity(item.remainingCapacity));
-    bankMerged.select('text.bms-card-footer')
-      .attr('x', 5)
-      .attr('y', 50)
-      .attr('fill', theme.contrast)
+      .attr('text-anchor', 'middle')
       .attr('font-size', 10)
       .attr('opacity', 0.8)
-      .text(item => `${this.formatSoc(item.avgSoc)}  ${this.formatDuration(item.timeRemaining)}`.trim());
+      .text(item => this.formatPower(item.totalPower));
+
+
+
+    bankMerged.select('g.bms-bank-gauge')
+      .attr('transform', item => `translate(${item.width - 45}, 37)`);
+    bankMerged.select('path.bms-gauge-bg')
+      .attr('d', () => this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, 1))
+      .attr('fill', 'none')
+      .attr('stroke', getColors('contrast', this.theme()).dimmer)
+      .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_BG_STROKE)
+      .attr('stroke-linecap', 'round');
+    bankMerged.select('path.bms-gauge-value')
+      .attr('d', item => this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, item.avgSoc))
+      .attr('fill', 'none')
+      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_VALUE_STROKE)
+      .attr('stroke-linecap', 'round');
+    bankMerged.select('circle.bms-gauge-center')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', 30)
+      .attr('fill', 'none') //getColors(this.runtime.options().color, this.theme()).dimmer)
+      .attr('stroke', theme.contrast)
+      .attr('stroke-width', 0);
+    bankMerged.select('text.bms-gauge-label')
+      .attr('x', 0)
+      .attr('y', 6)
+      .attr('text-anchor', 'middle')
+      .attr('fill', theme.contrast)
+      .attr('font-size', 25)
+      .attr('font-weight', 700)
+      .text(item => this.formatSoc(item.avgSoc));
+    bankMerged.select('text.bms-card-remaining')
+      .attr('x', item => item.width - 45)
+      .attr('y', 50)
+      .attr('fill', getColors('contrast', this.theme()).dim)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 8)
+      .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
 
     bankSelection.exit().remove();
 
@@ -560,6 +594,24 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const filtered = values.filter((value): value is number => typeof value === 'number');
     if (!filtered.length) return null;
     return Math.min(...filtered);
+  }
+
+  private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {
+    const safeRatio = Math.max(0, ratio);
+    const startAngle = -Math.PI * 0.6;
+    const fullRange = Math.PI * 1.2;
+    const endAngle = startAngle + fullRange * safeRatio;
+    if (safeRatio <= 0) {
+      const x = radius * Math.cos(startAngle);
+      const y = radius * Math.sin(startAngle);
+      return `M ${x} ${y}`;
+    }
+    return d3.arc()({
+      innerRadius: radius,
+      outerRadius: radius,
+      startAngle,
+      endAngle
+    }) ?? '';
   }
 
   private toNumber(value: unknown, unit: string): number | null {
