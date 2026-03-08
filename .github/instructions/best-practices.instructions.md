@@ -48,11 +48,8 @@ KIP architecture rules belong in `.github/instructions/project.instructions.md`.
   - parameters
   - return value
   - at least one usage example
-  - Host2 widget boilerplate members are exempt when declarations are  self-explanatory and standardized:
-    - `public id`
-    - `public type`
-    - `public theme`
-    - `public static readonly DEFAULT_CONFIG: IWidgetSvcConfig`
+  - Methods that implement framework lifecycle interfaces or match Angular lifecycle hook signatures are exempt when behavior is self-explanatory.
+  - Host2 widget boilerplate members are exempt when declarations are  self-explanatory and standardized across widgets.
 
 ## Change Hygiene
 
