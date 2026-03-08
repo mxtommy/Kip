@@ -597,7 +597,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {
-    const safeRatio = Math.max(0, ratio);
+    const safeRatio = Math.max(0, Math.min(1, ratio ?? 0));
     const startAngle = -Math.PI * 0.6;
     const fullRange = Math.PI * 1.2;
     const endAngle = startAngle + fullRange * safeRatio;
