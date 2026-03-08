@@ -113,10 +113,12 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
     effect(() => {
       const theme = this.theme();
+      const options = this.runtime.options();
       const banks = this.bankSummaries();
       const batteries = this.visibleBatteries();
       if (!theme || !this.svg) return;
-      this.scheduleRender(banks, batteries, theme);
+      const colorRole = options?.color ?? WidgetBmsComponent.DEFAULT_CONFIG.color;
+      this.scheduleRender(banks, batteries, theme, colorRole);
     });
 
     this.data.subscribePathTree('self.electrical.batteries.*')
@@ -131,7 +133,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.loadPowerIcons();
     const theme = this.theme();
     if (!theme) return;
-    this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme);
+    const options = this.runtime.options();
+    const colorRole = options?.color ?? WidgetBmsComponent.DEFAULT_CONFIG.color;
+    this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme, colorRole);
   }
 
   ngOnDestroy(): void {
@@ -170,7 +174,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
           onLoaded(icon);
           const theme = this.theme();
           if (theme && this.svg) {
-            this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme);
+            const options = this.runtime.options();
+            const colorRole = options?.color ?? WidgetBmsComponent.DEFAULT_CONFIG.color;
+            this.scheduleRender(this.bankSummaries(), this.visibleBatteries(), theme, colorRole);
           }
         },
         error: () => {
@@ -290,16 +296,18 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private scheduleRender(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme): void {
+  private scheduleRender(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme, colorRole: string): void {
     if (this.renderFrameId !== null) return;
     this.renderFrameId = requestAnimationFrame(() => {
       this.renderFrameId = null;
-      this.ngZone.runOutsideAngular(() => this.render(banks, batteries, theme));
+      this.ngZone.runOutsideAngular(() => this.render(banks, batteries, theme, colorRole));
     });
   }
 
-  private render(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme): void {
+  private render(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme, colorRole: string): void {
     if (!this.bankLayer || !this.batteryLayer) return;
+    const widgetColors = getColors(colorRole, theme);
+    const contrastColors = getColors('contrast', theme);
 
     const bankItems = this.layoutBanks(banks);
     const batteryItems = this.layoutBatteries(batteries);
@@ -330,7 +338,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankMerged.select('rect')
       .attr('width', item => item.width)
       .attr('height', item => item.height)
-      .attr('fill', getColors(this.runtime.options().color, this.theme()).dimmer)
+      .attr('fill', widgetColors.dimmer)
       .attr('stroke', theme.contrast)
       .attr('stroke-width', 0);
     bankMerged.select('text.bms-card-title')
@@ -363,20 +371,20 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankMerged.select('path.bms-gauge-bg')
       .attr('d', () => this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, 1))
       .attr('fill', 'none')
-      .attr('stroke', getColors('contrast', this.theme()).dimmer)
+      .attr('stroke', contrastColors.dimmer)
       .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_BG_STROKE)
       .attr('stroke-linecap', 'round');
     bankMerged.select('path.bms-gauge-value')
       .attr('d', item => this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, item.avgSoc))
       .attr('fill', 'none')
-      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('stroke', widgetColors.color)
       .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_VALUE_STROKE)
       .attr('stroke-linecap', 'round');
     bankMerged.select('circle.bms-gauge-center')
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', 30)
-      .attr('fill', 'none') //getColors(this.runtime.options().color, this.theme()).dimmer)
+      .attr('fill', 'none')
       .attr('stroke', theme.contrast)
       .attr('stroke-width', 0);
     bankMerged.select('text.bms-gauge-label')
@@ -390,7 +398,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankMerged.select('text.bms-card-remaining')
       .attr('x', item => item.width - 45)
       .attr('y', 50)
-      .attr('fill', getColors('contrast', this.theme()).dim)
+      .attr('fill', contrastColors.dim)
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
       .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
@@ -421,23 +429,23 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     batteryMerged.select('rect.bms-card-battery')
       .attr('width', item => item.width - 5)
       .attr('height', item => item.height)
-      .attr('fill', getColors('contrast', this.theme()).dimmer)
-      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('fill', contrastColors.dimmer)
+      .attr('stroke', widgetColors.color)
       .attr('stroke-width', 0);
     batteryMerged.select('rect.bms-card-tip')
       .attr('x', item => item.width - 4)
       .attr('y', item => item.height / 2 - 10)
       .attr('width', 4)
       .attr('height', 20)
-      .attr('fill', getColors('contrast', this.theme()).dimmer)
-      .attr('stroke', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('fill', contrastColors.dimmer)
+      .attr('stroke', widgetColors.color)
       .attr('stroke-width', 0);
     batteryMerged.select('rect.bms-card-charge')
       .attr('x', 1.5)
       .attr('y', 1.5)
       .attr('width', item => (item.width - 3) * (item.stateOfCharge ?? 0))
       .attr('height', item => item.height - 3)
-      .attr('fill', getColors(this.runtime.options().color, this.theme()).dim);
+      .attr('fill', widgetColors.dim);
     batteryMerged.select('text.bms-card-title')
       .attr('x', 5)
       .attr('y', 11)
@@ -470,13 +478,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     batteryMerged.select('text.bms-card-remaining')
       .attr('x', item => item.width - 38)
       .attr('y', 42)
-      .attr('fill', getColors('contrast', this.theme()).dim)
+      .attr('fill', contrastColors.dim)
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
       .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
     batteryMerged.select('g.bms-card-icon')
       .attr('transform', item => `translate(${item.width / 2 - 18}, ${item.height / 2 - 18})`)
-      .attr('color', getColors(this.runtime.options().color, this.theme()).color)
+      .attr('color', widgetColors.color)
       .each((item, index, nodes) => {
         const iconGroup = d3.select(nodes[index]);
         iconGroup.selectAll('*').remove();
@@ -558,14 +566,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private formatPower(value: number | null | undefined): string {
     if (value == null) return '-- W';
     return `${value.toFixed(0)}W`;
-  }
-
-  private formatCapacity(value: number | null | undefined): string {
-    if (value == null) return '-- J';
-    const abs = Math.abs(value);
-    if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}MJ`;
-    if (abs >= 1_000) return `${(value / 1_000).toFixed(1)}kJ`;
-    return `${value.toFixed(0)}J`;
   }
 
   private formatSoc(value: number | null | undefined): string {
