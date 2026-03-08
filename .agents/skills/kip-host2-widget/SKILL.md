@@ -21,6 +21,9 @@ Load `.github/instructions/project.instructions.md` first, then apply this skill
 - Keep widget defaults complete in `DEFAULT_CONFIG`.
 - Guard `runtime.options()` and optional path keys before observing streams.
 - Register stream observations together in one effect and group observer registration in one `untracked()` block.
+- Use deterministic explicit-path stream wiring by default.
+- Allow `DataService.subscribePathTree()` only for wildcard-based dynamic path discovery scenarios where path keys are not known ahead of time.
+- Keep `subscribePathTree()` usage scoped to discovery/aggregation flows and normalize discovered values into deterministic widget state.
 - Keep transient UI state in signals; do not mutate merged config objects.
 - Use existing units/formatting services instead of hardcoded conversions.
 
@@ -28,6 +31,7 @@ Load `.github/instructions/project.instructions.md` first, then apply this skill
 
 - Reintroducing legacy base-widget inheritance patterns.
 - Scattering `streams.observe(...)` registrations across multiple lifecycle locations.
+- Using `subscribePathTree()` as a generic replacement for deterministic explicit-path stream patterns.
 - Adding widget-local logic that bypasses existing runtime/stream directives.
 
 ## References
