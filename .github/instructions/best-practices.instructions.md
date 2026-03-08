@@ -1,59 +1,56 @@
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+# Cross-Cutting Best Practices
 
-## TypeScript Best Practices
+This file defines non-framework, cross-cutting quality rules that apply to all code in this repository.
+Angular-specific patterns belong in `.github/instructions/angular.instructions.md`.
+KIP architecture rules belong in `.github/instructions/project.instructions.md`.
 
-- Use strict type checking
-- Prefer type inference when the type is obvious
-- Avoid the `any` type; use `unknown` when type is uncertain
+## TypeScript Quality
 
-## Angular Best Practices
+- Keep strict typing. Do not weaken TypeScript config to bypass errors.
+- Prefer explicit domain types over ad hoc inline shapes.
+- Avoid `any`; use `unknown` and narrow with type guards.
+- Prefer immutable patterns for shared data structures.
+- Keep function signatures small and focused.
 
-- Always use standalone components over NgModules
-- Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
-- Use signals for state management
-- Implement lazy loading for feature routes
-- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-- Use `NgOptimizedImage` for all static images.
-  - `NgOptimizedImage` does not work for inline base64 images.
+## Readability And Maintainability
+
+- Write cohesive units with single responsibility.
+- Use descriptive names that communicate intent.
+- Extract repeated logic into utilities/services.
+- Keep files organized and avoid unrelated changes in one edit.
+- Add brief comments only where intent is non-obvious.
+
+## Testing Expectations
+
+- Add or update tests when behavior changes.
+- Prioritize tests for critical flows, edge cases, and regressions.
+- Keep tests deterministic and avoid hidden timing dependencies.
+- Do not rely on implementation details when observable behavior can be asserted.
 
 ## Accessibility Requirements
 
-- It MUST pass all AXE checks.
-- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+- Meet WCAG AA minimum expectations.
+- Ensure keyboard access and visible focus states.
+- Keep semantic structure and labels accurate.
+- Validate color contrast for interactive and informational UI.
 
-### Components
+## Performance Baseline
 
-- Keep components small and focused on a single responsibility
-- Use `input()` and `output()` functions instead of decorators
-- Use `computed()` for derived state
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
-- Prefer inline templates for small components
-- Prefer Reactive forms instead of Template-driven ones
-- Do NOT use `ngClass`, use `class` bindings instead
-- Do NOT use `ngStyle`, use `style` bindings instead
-- When using external templates/styles, use paths relative to the component TS file.
+- Avoid unnecessary allocations in hot paths.
+- Minimize repeated heavy computations; cache or precompute where appropriate.
+- Avoid large synchronous work on the main thread during interaction-heavy flows.
 
-## State Management
+## Documentation Standards
 
-- Use signals for local component state
-- Use `computed()` for derived state
-- Keep state transformations pure and predictable
-- Do NOT use `mutate` on signals, use `update` or `set` instead
+- Document non-trivial public APIs and business rules.
+- Public APIs and non-trivial public TypeScript properties/methods should include full JSDoc with:
+  - purpose
+  - parameters
+  - return value
+  - at least one usage example
 
-## Templates
+## Change Hygiene
 
-- Keep templates simple and avoid complex logic
-- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Use the async pipe to handle observables
-- Avoid non-deterministic work in templates (e.g., calling `new Date()` or `Math.random()` in bindings); compute values in TypeScript and bind to signals/`computed()`.
-- Do not write arrow functions in templates (they are not supported).
-
-## Services
-
-- Design services around a single responsibility
-- Use the `providedIn: 'root'` option for singleton services
-- Use the `inject()` function instead of constructor injection
-
-## Documentation
-
-- Every public TypeScript property and public method MUST include full JSDoc with: purpose, parameters, return value, and at least one usage example.
+- Keep diffs scoped to the task.
+- Preserve backward compatibility unless a change is explicitly breaking.
+- If a breaking change is unavoidable, call it out clearly in the response.
