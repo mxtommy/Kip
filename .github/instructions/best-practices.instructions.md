@@ -48,6 +48,11 @@ KIP architecture rules belong in `.github/instructions/project.instructions.md`.
   - parameters
   - return value
   - at least one usage example
+  - Host2 widget boilerplate members are exempt when declarations are  self-explanatory and standardized:
+    - `public id`
+    - `public type`
+    - `public theme`
+    - `public static readonly DEFAULT_CONFIG: IWidgetSvcConfig`
 
 ## Change Hygiene
 
