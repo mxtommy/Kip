@@ -67,6 +67,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private static readonly BANK_GAUGE_RADIUS = 38;
   private static readonly BANK_GAUGE_BG_STROKE = 8;
   private static readonly BANK_GAUGE_VALUE_STROKE = 8;
+  private static readonly PATH_BATCH_WINDOW_MS = 500;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
@@ -82,6 +83,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private batteryLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
 
   private renderFrameId: number | null = null;
+  private pathBatchTimerId: number | null = null;
+  private initialPathPaintDone = false;
+  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown }>();
   private powerAvailableIconTemplate: SVGElement | null = null;
   private powerRenewalIconTemplate: SVGElement | null = null;
 
@@ -130,7 +134,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.data.subscribePathTree('self.electrical.batteries.*')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(update => {
-        this.handlePathUpdate(update);
+        this.enqueuePathUpdate(update);
       });
   }
 
@@ -145,6 +149,11 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.pathBatchTimerId !== null) {
+      clearTimeout(this.pathBatchTimerId);
+      this.pathBatchTimerId = null;
+    }
+
     if (this.renderFrameId !== null) {
       cancelAnimationFrame(this.renderFrameId);
       this.renderFrameId = null;
@@ -219,24 +228,68 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return mode === 'series' ? 'series' : 'parallel';
   }
 
-  private handlePathUpdate(update: IPathUpdateWithPath): void {
+  private enqueuePathUpdate(update: IPathUpdateWithPath): void {
     const match = this.parseBatteryPath(update.path);
     if (!match) return;
 
     const { id, key } = match;
     const value = update.update?.data?.value ?? null;
-    this.trackDiscoveredBattery(id);
+    const updateKey = `${id}::${key}`;
+    this.pendingPathUpdates.set(updateKey, { id, key, value });
+
+    if (!this.initialPathPaintDone) {
+      this.initialPathPaintDone = true;
+      this.flushPendingPathUpdates();
+      return;
+    }
+
+    if (this.pathBatchTimerId !== null) return;
+    this.pathBatchTimerId = window.setTimeout(() => {
+      this.pathBatchTimerId = null;
+      this.flushPendingPathUpdates();
+    }, WidgetBmsComponent.PATH_BATCH_WINDOW_MS);
+  }
+
+  private flushPendingPathUpdates(): void {
+    if (!this.pendingPathUpdates.size) return;
+
+    const updates = Array.from(this.pendingPathUpdates.values());
+    this.pendingPathUpdates.clear();
+
+    const uniqueBatteryIds = new Set(updates.map(update => update.id));
+    uniqueBatteryIds.forEach(id => this.trackDiscoveredBattery(id));
 
     this.batteries.update(current => {
-      const existing = current[id] ?? { id } as BmsBatterySnapshot;
-      const next = { ...existing } as BmsBatterySnapshot;
-      this.applyBatteryValue(next, key, value);
-      if (next.voltage != null && next.current != null) {
-        next.power = Number.isFinite(next.voltage) && Number.isFinite(next.current)
-          ? next.voltage * next.current
-          : null;
+      let nextState = current;
+      let hasChanges = false;
+
+      for (const update of updates) {
+        const existing = nextState[update.id] ?? { id: update.id } as BmsBatterySnapshot;
+        const next = { ...existing } as BmsBatterySnapshot;
+        const valueChanged = this.applyBatteryValue(next, update.key, update.value);
+
+        let powerChanged = false;
+        if (next.voltage != null && next.current != null) {
+          const power = Number.isFinite(next.voltage) && Number.isFinite(next.current)
+            ? next.voltage * next.current
+            : null;
+          if (!Object.is(next.power, power)) {
+            next.power = power;
+            powerChanged = true;
+          }
+        }
+
+        if (!valueChanged && !powerChanged) continue;
+
+        if (!hasChanges) {
+          nextState = { ...nextState };
+          hasChanges = true;
+        }
+
+        nextState[update.id] = next;
       }
-      return { ...current, [id]: next };
+
+      return hasChanges ? nextState : current;
     });
   }
 
@@ -253,43 +306,76 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.discoveredBatteryIds.set(next);
   }
 
-  private applyBatteryValue(battery: BmsBatterySnapshot, key: string, value: unknown): void {
+  private applyBatteryValue(battery: BmsBatterySnapshot, key: string, value: unknown): boolean {
     switch (key) {
-      case 'name':
-        battery.name = value as string;
-        break;
-      case 'location':
-        battery.location = value as string;
-        break;
-      case 'chemistry':
-        battery.chemistry = value as string;
-        break;
-      case 'voltage':
-        battery.voltage = this.toNumber(value, 'V');
-        break;
-      case 'current':
-        battery.current = this.toNumber(value, 'A');
-        break;
-      case 'temperature':
-        battery.temperature = this.toNumber(value, this.units.getDefaults().Temperature);
-        break;
-      case 'capacity.nominal':
-        battery.capacityNominal = this.toNumber(value, 'J');
-        break;
-      case 'capacity.actual':
-        battery.capacityActual = this.toNumber(value, 'J');
-        break;
-      case 'capacity.remaining':
-        battery.capacityRemaining = this.toNumber(value, 'J');
-        break;
-      case 'capacity.stateOfCharge':
-        battery.stateOfCharge = this.toNumber(value, 'ratio');
-        break;
-      case 'capacity.timeRemaining':
-        battery.timeRemaining = this.toNumber(value, 's');
-        break;
+      case 'name': {
+        const nextValue = value as string;
+        if (battery.name === nextValue) return false;
+        battery.name = nextValue;
+        return true;
+      }
+      case 'location': {
+        const nextValue = value as string;
+        if (battery.location === nextValue) return false;
+        battery.location = nextValue;
+        return true;
+      }
+      case 'chemistry': {
+        const nextValue = value as string;
+        if (battery.chemistry === nextValue) return false;
+        battery.chemistry = nextValue;
+        return true;
+      }
+      case 'voltage': {
+        const nextValue = this.toNumber(value, 'V');
+        if (Object.is(battery.voltage, nextValue)) return false;
+        battery.voltage = nextValue;
+        return true;
+      }
+      case 'current': {
+        const nextValue = this.toNumber(value, 'A');
+        if (Object.is(battery.current, nextValue)) return false;
+        battery.current = nextValue;
+        return true;
+      }
+      case 'temperature': {
+        const nextValue = this.toNumber(value, this.units.getDefaults().Temperature);
+        if (Object.is(battery.temperature, nextValue)) return false;
+        battery.temperature = nextValue;
+        return true;
+      }
+      case 'capacity.nominal': {
+        const nextValue = this.toNumber(value, 'J');
+        if (Object.is(battery.capacityNominal, nextValue)) return false;
+        battery.capacityNominal = nextValue;
+        return true;
+      }
+      case 'capacity.actual': {
+        const nextValue = this.toNumber(value, 'J');
+        if (Object.is(battery.capacityActual, nextValue)) return false;
+        battery.capacityActual = nextValue;
+        return true;
+      }
+      case 'capacity.remaining': {
+        const nextValue = this.toNumber(value, 'J');
+        if (Object.is(battery.capacityRemaining, nextValue)) return false;
+        battery.capacityRemaining = nextValue;
+        return true;
+      }
+      case 'capacity.stateOfCharge': {
+        const nextValue = this.toNumber(value, 'ratio');
+        if (Object.is(battery.stateOfCharge, nextValue)) return false;
+        battery.stateOfCharge = nextValue;
+        return true;
+      }
+      case 'capacity.timeRemaining': {
+        const nextValue = this.toNumber(value, 's');
+        if (Object.is(battery.timeRemaining, nextValue)) return false;
+        battery.timeRemaining = nextValue;
+        return true;
+      }
       default:
-        break;
+        return false;
     }
   }
 
@@ -454,7 +540,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const inBankMerged = inBankEnter.merge(
           inBankSelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
         );
-        this.renderBatteryCards(inBankMerged, theme, widgetColors);
+        this.renderBatteryCards(inBankMerged, widgetColors);
 
         inBankSelection.exit().remove();
       });
@@ -475,7 +561,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const batteryMerged = batteryEnter.merge(
       batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
     );
-    this.renderBatteryCards(batteryMerged, theme, widgetColors);
+    this.renderBatteryCards(batteryMerged, widgetColors);
 
     batterySelection.exit().remove();
 
@@ -591,7 +677,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private renderBatteryCards(
     selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
-    theme: ITheme,
     widgetColors: ReturnType<typeof getColors>
   ): void {
     selection.attr('transform', item => `translate(${item.x},${item.y}) scale(${item.scale})`);
@@ -616,7 +701,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT - 3)
       .attr('fill', item => item.compact ? widgetColors.dimmer : widgetColors.dim);
     selection.select('text.bms-card-title')
-      .attr('x', item => item.compact ? 5 : 5)
+      .attr('x', 5)
       .attr('y', item => item.compact ? 11 : 14)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', item => item.compact ? 8 : 12)
@@ -633,7 +718,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', 8)
       .attr('opacity', 0.8)
-      .text(item => item.compact ? `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature) ?? ''}` : `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatPower(item.power)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature)}`.trim());
+      .text(item => item.compact ? `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature)}` : `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatPower(item.power)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature)}`.trim());
     selection.select('text.bms-card-soc')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 34)
@@ -655,9 +740,20 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('color', item => item.compact ? widgetColors.dim : widgetColors.color)
       .each((item, index, nodes) => {
         const iconGroup = d3.select(nodes[index]);
-        iconGroup.selectAll('*').remove();
         const iconTemplate = this.iconForCurrent(item.current);
-        if (!iconTemplate) return;
+        if (!iconTemplate) {
+          iconGroup.selectAll('*').remove();
+          iconGroup.attr('data-icon-key', null);
+          return;
+        }
+
+        const iconKey = item.current != null && item.current > 0 ? 'power_renewal' : 'power_available';
+        const iconGroupNode = iconGroup.node() as SVGGElement | null;
+        if (!iconGroupNode) return;
+        const currentIconKey = iconGroup.attr('data-icon-key');
+        if (currentIconKey === iconKey && iconGroupNode.firstElementChild) return;
+
+        iconGroup.selectAll('*').remove();
 
         const iconNode = iconTemplate.cloneNode(true) as SVGSVGElement;
         iconNode.removeAttribute('id');
@@ -666,8 +762,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         if (!iconNode.getAttribute('viewBox')) {
           iconNode.setAttribute('viewBox', '0 0 24 24');
         }
-        const iconGroupNode = iconGroup.node() as SVGGElement | null;
-        iconGroupNode?.appendChild(iconNode);
+        iconGroupNode.appendChild(iconNode);
+        iconGroup.attr('data-icon-key', iconKey);
       });
   }
 
