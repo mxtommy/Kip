@@ -8,15 +8,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { BmsBankConfig } from '../../widgets/widget-bms/bms.types';
+import type { BmsBankConfig, BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'bms-bank-setup',
   templateUrl: './bms-bank-setup.component.html',
   styleUrl: './bms-bank-setup.component.scss',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatDividerModule]
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatDividerModule, TitleCasePipe]
 })
 export class BmsBankSetupComponent implements OnInit, OnDestroy {
+  protected readonly connectionModes: BmsBankConnectionMode[] = ['parallel', 'series'];
+
   /**
    * Reactive form group name containing the BMS config object.
    *
@@ -58,7 +61,8 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
     const bank: BmsBankConfig = {
       id: `bank-${Date.now()}`,
       name: 'New Bank',
-      batteryIds: []
+      batteryIds: [],
+      connectionMode: 'parallel'
     };
     this.banksFormArray.push(this.createBankGroup(bank));
     this.banksFormArray.markAsDirty();
@@ -109,7 +113,8 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
     return new UntypedFormGroup({
       id: new UntypedFormControl(bank.id, Validators.required),
       name: new UntypedFormControl(bank.name, Validators.required),
-      batteryIds: new UntypedFormControl(bank.batteryIds ?? [])
+      batteryIds: new UntypedFormControl(bank.batteryIds ?? []),
+      connectionMode: new UntypedFormControl(bank.connectionMode ?? 'parallel', Validators.required)
     });
   }
 

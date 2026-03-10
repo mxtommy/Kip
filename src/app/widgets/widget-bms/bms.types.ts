@@ -1,3 +1,5 @@
+export type BmsBankConnectionMode = 'parallel' | 'series';
+
 export interface BmsBankConfig {
   /**
    * Unique identifier for the bank.
@@ -20,6 +22,14 @@ export interface BmsBankConfig {
    * const bank: BmsBankConfig = { id: 'bank-1', name: 'House', batteryIds: ['1', '2'] };
    */
   batteryIds: string[];
+
+  /**
+   * Electrical connection mode for aggregation behavior.
+   *
+   * @example
+   * const bank: BmsBankConfig = { id: 'bank-1', name: 'House', batteryIds: ['1', '2'], connectionMode: 'parallel' };
+   */
+  connectionMode: BmsBankConnectionMode;
 }
 
 export interface BmsWidgetConfig {

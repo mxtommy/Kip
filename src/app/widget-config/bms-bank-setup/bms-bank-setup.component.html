@@ -47,6 +47,14 @@
               }
             </mat-select>
           </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Connection Mode</mat-label>
+            <mat-select formControlName="connectionMode">
+              @for (mode of connectionModes; track mode) {
+                <mat-option [value]="mode">{{ mode | titlecase }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
       }
     </div>

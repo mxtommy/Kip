@@ -633,12 +633,12 @@ export class UnitsService implements OnDestroy {
   }
 
   /**
-   * Returns the list KIP base unit conversion settings applied before presentation.
-   * See KIP's Units Settings configuration.
+   * Returns the list KIP configured preferred unit conversion settings.
+   * as configured by user in KIP's Units configuration.
    *
-   * Ex: If a Signal K path's meta Units is set to 'm/s', could KIP automatically
-   * convert to say, 'knots' before presentation. Received Signal K data is always
-   * kept in native format.
+   * Ex: If a Signal K path's meta Units is set to 'm/s', KIP can automatically
+   * convert to a given unit, says 'knots'. Received Signal K data is always
+   * in SI units.
    *
    * @return {*}  {IUnitDefaults}
    * @memberof UnitsService
