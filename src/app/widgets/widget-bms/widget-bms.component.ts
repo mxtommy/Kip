@@ -345,19 +345,19 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         return true;
       }
       case 'capacity.nominal': {
-        const nextValue = this.toNumber(value, 'J');
+        const nextValue = this.toNumber(value, 'kWh');
         if (Object.is(battery.capacityNominal, nextValue)) return false;
         battery.capacityNominal = nextValue;
         return true;
       }
       case 'capacity.actual': {
-        const nextValue = this.toNumber(value, 'J');
+        const nextValue = this.toNumber(value, 'kWh');
         if (Object.is(battery.capacityActual, nextValue)) return false;
         battery.capacityActual = nextValue;
         return true;
       }
       case 'capacity.remaining': {
-        const nextValue = this.toNumber(value, 'J');
+        const nextValue = this.toNumber(value, 'kWh');
         if (Object.is(battery.capacityRemaining, nextValue)) return false;
         battery.capacityRemaining = nextValue;
         return true;
@@ -458,6 +458,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankEnter.append('text').attr('class', 'bms-card-power');
     bankEnter.append('text').attr('class', 'bms-card-current');
     bankEnter.append('text').attr('class', 'bms-card-capacity');
+    bankEnter.append('text').attr('class', 'bms-card-actualCapacity');
     bankEnter.append('text').attr('class', 'bms-card-remaining');
     const gaugeEnter = bankEnter.append('g').attr('class', 'bms-bank-gauge');
     gaugeEnter.append('path').attr('class', 'bms-gauge-bg');
@@ -517,12 +518,18 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .text(item => this.formatSoc(item.avgSoc));
     bankMerged.select('text.bms-card-remaining')
       .attr('x', 150)
+      .attr('y', 22)
+      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 6)
+      .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
+    bankMerged.select('text.bms-card-actualCapacity')
+      .attr('x', 150)
       .attr('y', 53)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .text(item => `${this.formatDuration(item.timeRemaining)}`.trim());
-
+      .text(item => item.remainingCapacity ? `${item.remainingCapacity} kWh` : '');
     bankMerged
       .select<SVGGElement>('g.bms-bank-batteries')
       .each((bankItem, index, nodes) => {
@@ -671,6 +678,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.append('text').attr('class', 'bms-card-ampere');
     selection.append('text').attr('class', 'bms-volt-power');
     selection.append('text').attr('class', 'bms-card-soc');
+    selection.append('text').attr('class', 'bms-card-actualCapacity');
     selection.append('text').attr('class', 'bms-card-remaining');
     selection.append('g').attr('class', 'bms-card-icon');
   }
@@ -727,12 +735,19 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('font-size', 25)
       .attr('font-weight', 700)
       .text(item => this.formatSoc(item.stateOfCharge));
-    selection.select('text.bms-card-remaining')
+    selection.select('text.bms-card-actualCapacity')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
-      .attr('y', 42)
+      .attr('y', 45)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
+      .text(item => item.compact ? '' : item.capacityActual ? `${item.capacityActual} kWh` : '');
+    selection.select('text.bms-card-remaining')
+      .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
+      .attr('y', 12)
+      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 6)
       .text(item => item.compact ? '' : `${this.formatDuration(item.timeRemaining)}`.trim());
     selection.select('g.bms-card-icon')
       .attr('transform', `translate(${WidgetBmsComponent.BATTERY_CARD_WIDTH / 2 - 18}, ${WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 18})`)
