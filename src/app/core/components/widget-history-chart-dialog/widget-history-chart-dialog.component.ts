@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementR
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Chart, ChartConfiguration, ChartDataset, LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend } from 'chart.js';
+import { Chart, ChartConfiguration, ChartDataset, Color, LegendItem, LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { IWidget } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
@@ -15,6 +15,18 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormsModule} from '@angular/forms';
 
 Chart.register(LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend);
+
+interface ChartPoint {
+  x: number;
+  y: number;
+}
+type HistoryChartDataset = ChartDataset<'line', ChartPoint[]>;
+type BmsMetric = 'soc' | 'current';
+
+interface IBmsSeriesDescriptor {
+  batteryId: string;
+  metric: BmsMetric;
+}
 
 /****
  * Dialog payload used by WidgetHistoryChartDialogComponent.
@@ -51,7 +63,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   protected readonly hasNoData = computed<boolean>(() => !this.loading() && !this.error() && this.datasetCount() === 0);
   private chart: Chart<'line'> | null = null;
   private viewReady = false;
-  private pendingDatasets: ChartDataset<'line', { x: number; y: number }[]>[] = [];
+  private pendingDatasets: HistoryChartDataset[] = [];
 
   constructor() {
     effect(() => {
@@ -86,7 +98,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
         this.data.seriesDefinitions.map((series, index) => this.buildDatasetForSeries(series, index))
       );
 
-      this.pendingDatasets = datasets.filter((dataset): dataset is ChartDataset<'line', { x: number; y: number }[]> => !!dataset);
+      this.pendingDatasets = datasets.filter((dataset): dataset is HistoryChartDataset => !!dataset);
       this.datasetCount.set(this.pendingDatasets.length);
       this.tryRenderChart();
     } catch (error) {
@@ -158,7 +170,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     this.tryRenderChart();
   }
 
-  private async buildDatasetForSeries(series: IKipSeriesDefinition, index: number): Promise<ChartDataset<'line', { x: number; y: number }[]> | null> {
+  private async buildDatasetForSeries(series: IKipSeriesDefinition, index: number): Promise<HistoryChartDataset | null> {
     const rawPath = series.path;
     if (!rawPath) {
       return null;
@@ -168,7 +180,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     const resolutionSeconds = this.resolveResolutionSeconds(duration);
 
     const requestCandidates = this.buildHistoryRequestCandidates(rawPath, series.context);
-    let chartPoints: { x: number; y: number }[] = [];
+    const bmsSeries = this.describeBmsSeries(rawPath);
+    let chartPoints: ChartPoint[] = [];
     let labelPath = this.normalizeHistoryPath(rawPath);
 
     // Get widget config for this path (if available)
@@ -213,7 +226,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       // Apply unit conversion if needed
       chartPoints = datapoints.map(point => {
         let y = point.data.value as number;
-        if (convertUnitTo && typeof y === 'number' && Number.isFinite(y)) {
+        if (bmsSeries?.metric === 'soc' && typeof y === 'number' && Number.isFinite(y)) {
+          y *= 100;
+        } else if (convertUnitTo && typeof y === 'number' && Number.isFinite(y)) {
           y = this.units.convertToUnit(convertUnitTo, y);
         }
         return { x: point.timestamp, y };
@@ -230,29 +245,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     }
 
 
-    // Build palette and shift so config color is first, removing duplicate if present
-    const configColor = this.data.widget?.config?.color || 'blue';
-    let palette = [
-      this.theme().green,
-      this.theme().orange,
-      this.theme().pink,
-      this.theme().purple,
-      this.theme().yellow,
-      this.theme().grey,
-      this.theme().blue,
-      this.theme().contrast
-    ];
-
-    // Find if configColor is in palette (case-insensitive)
-    const idx = palette.findIndex(c => c?.toLowerCase() === this.theme()[configColor].toLowerCase());
-    if (idx !== -1) {
-      // Move configColor to front
-      palette = [palette[idx], ...palette.slice(0, idx), ...palette.slice(idx + 1)];
-    } else {
-      // Insert configColor at front if not present
-      palette = [configColor, ...palette];
-    }
-    const color = palette[index % palette.length];
+    const color = this.resolveSeriesColor(index, bmsSeries);
 
     const sourceLabel = series.source ? ` (${series.source})` : '';
 
@@ -264,8 +257,84 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       pointRadius: 0,
       borderWidth: 2,
       tension: 0.25,
+      yAxisID: bmsSeries ? this.getBmsAxisId(bmsSeries.metric) : 'y',
+      borderDash: bmsSeries?.metric === 'soc' ? [6, 4] : undefined,
       fill: false
     };
+  }
+
+  private describeBmsSeries(path: string | null | undefined): IBmsSeriesDescriptor | null {
+    const normalizedPath = this.normalizeHistoryPath(path ?? '');
+    const socMatch = /^electrical\.batteries\.([^.]+)\.(?:capacity\.)?stateOfCharge$/i.exec(normalizedPath);
+    if (socMatch) {
+      return { batteryId: socMatch[1], metric: 'soc' };
+    }
+
+    const currentMatch = /^electrical\.batteries\.([^.]+)\.current$/i.exec(normalizedPath);
+    if (currentMatch) {
+      return { batteryId: currentMatch[1], metric: 'current' };
+    }
+
+    return null;
+  }
+
+  private resolveSeriesColor(index: number, bmsSeries: IBmsSeriesDescriptor | null): string {
+    const palette = this.getSeriesPalette();
+    if (!bmsSeries) {
+      return palette[index % palette.length];
+    }
+
+    const batteryIndex = this.getBmsBatteryOrderIndex(bmsSeries.batteryId);
+    return palette[batteryIndex % palette.length];
+  }
+
+  private getSeriesPalette(): string[] {
+    const configColorKey = this.data.widget?.config?.color || 'blue';
+    const preferredColor = this.resolveThemeColor(configColorKey);
+    let palette = [
+      this.theme().green,
+      this.theme().orange,
+      this.theme().pink,
+      this.theme().purple,
+      this.theme().yellow,
+      this.theme().grey,
+      this.theme().blue,
+      this.theme().contrast
+    ];
+
+    const existingIndex = palette.findIndex(color => color?.toLowerCase() === preferredColor.toLowerCase());
+    if (existingIndex !== -1) {
+      palette = [palette[existingIndex], ...palette.slice(0, existingIndex), ...palette.slice(existingIndex + 1)];
+    } else {
+      palette = [preferredColor, ...palette];
+    }
+
+    return palette;
+  }
+
+  private resolveThemeColor(colorKey: string): string {
+    const themeColor = this.theme()[colorKey as keyof ReturnType<typeof this.theme>];
+    return typeof themeColor === 'string' && themeColor.length > 0 ? themeColor : colorKey;
+  }
+
+  private getBmsBatteryOrderIndex(batteryId: string): number {
+    const orderedBatteryIds: string[] = [];
+
+    this.data.seriesDefinitions.forEach(series => {
+      const descriptor = this.describeBmsSeries(series.path);
+      if (!descriptor || orderedBatteryIds.includes(descriptor.batteryId)) {
+        return;
+      }
+
+      orderedBatteryIds.push(descriptor.batteryId);
+    });
+
+    const resolvedIndex = orderedBatteryIds.indexOf(batteryId);
+    return resolvedIndex >= 0 ? resolvedIndex : 0;
+  }
+
+  private getBmsAxisId(metric: BmsMetric): 'ySoc' | 'yCurrent' {
+    return metric === 'soc' ? 'ySoc' : 'yCurrent';
   }
 
   private buildHistoryRequestCandidates(rawPath: string, context: string | null | undefined): { paths: string; context: string | undefined; labelPath: string }[] {
@@ -321,24 +390,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
     this.chart?.destroy();
 
-    // Determine y-axis unit label from widget config (prefer per-path, fallback to top-level)
-    let unitLabel = '';
-    const widgetConfig = this.data.widget?.config;
-    let convertUnitTo: string | null = null;
-    if (widgetConfig) {
-      // Try to get from first path config if available
-      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
-        const firstPathKey = Object.keys(widgetConfig.paths)[0];
-        if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
-          convertUnitTo = widgetConfig.paths[firstPathKey].convertUnitTo;
-        }
-      }
-      if (!convertUnitTo && widgetConfig.convertUnitTo) {
-        convertUnitTo = widgetConfig.convertUnitTo;
-      }
-    }
-
-    unitLabel = this.getUnitsLabel(convertUnitTo);
+    const unitLabel = this.getPrimaryAxisUnitLabel();
 
     const config: ChartConfiguration<'line'> = {
       type: 'line',
@@ -379,24 +431,30 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
               color: this.theme().contrastDimmer
             }
           },
-          y: {
-            ticks: {
-              color: this.theme().contrastDim
-            },
-            grid: {
-              color: this.theme().contrastDimmer
-            },
-            title: {
-              display: !!unitLabel,
-              text: unitLabel ? `${unitLabel}` : '',
-              color: this.theme().contrastDim
-            }
-          }
+          ...this.buildYScales(unitLabel)
         },
         plugins: {
           legend: {
             labels: {
-              color: this.theme().contrastDim
+              color: this.theme().contrastDim,
+              generateLabels: chart => this.buildLegendLabels(chart)
+            }
+          },
+          tooltip: {
+            callbacks: {
+              labelColor: tooltipItem => {
+                const legendColors = this.getLegendColorsForDataset(tooltipItem.chart, tooltipItem.datasetIndex);
+                const dataset = tooltipItem.dataset as HistoryChartDataset;
+                const borderDash = Array.isArray(dataset.borderDash) && dataset.borderDash.length >= 2
+                  ? [dataset.borderDash[0], dataset.borderDash[1]] as [number, number]
+                  : undefined;
+
+                return {
+                  borderColor: this.darkenColor(legendColors.stroke, 0.25),
+                  backgroundColor: legendColors.fill,
+                  borderDash
+                };
+              }
             }
           }
         }
@@ -404,6 +462,142 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     };
 
     this.chart = new Chart(canvas.nativeElement.getContext('2d')!, config);
+  }
+
+  private getPrimaryAxisUnitLabel(): string {
+    const widgetConfig = this.data.widget?.config;
+    let convertUnitTo: string | null = null;
+    if (widgetConfig) {
+      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
+        const firstPathKey = Object.keys(widgetConfig.paths)[0];
+        if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
+          convertUnitTo = widgetConfig.paths[firstPathKey].convertUnitTo;
+        }
+      }
+      if (!convertUnitTo && widgetConfig.convertUnitTo) {
+        convertUnitTo = widgetConfig.convertUnitTo;
+      }
+    }
+
+    return this.getUnitsLabel(convertUnitTo);
+  }
+
+  private buildYScales(unitLabel: string): NonNullable<NonNullable<ChartConfiguration<'line'>['options']>['scales']> {
+    if (this.isBmsChart()) {
+      return {
+        ySoc: {
+          type: 'linear',
+          position: 'left',
+          min: 0,
+          max: 100,
+          ticks: {
+            color: this.theme().contrastDim,
+            callback: value => `${value}%`
+          },
+          grid: {
+            color: this.theme().contrastDimmer
+          },
+          title: {
+            display: true,
+            text: 'SoC (%)',
+            color: this.theme().contrastDim
+          }
+        },
+        yCurrent: {
+          type: 'linear',
+          position: 'right',
+          ticks: {
+            color: this.theme().contrastDim,
+            callback: value => `${value} A`
+          },
+          grid: {
+            drawOnChartArea: false,
+            color: this.theme().contrastDimmer
+          },
+          title: {
+            display: true,
+            text: 'Current (A)',
+            color: this.theme().contrastDim
+          }
+        }
+      };
+    }
+
+    return {
+      y: {
+        ticks: {
+          color: this.theme().contrastDim
+        },
+        grid: {
+          color: this.theme().contrastDimmer
+        },
+        title: {
+          display: !!unitLabel,
+          text: unitLabel ? `${unitLabel}` : '',
+          color: this.theme().contrastDim
+        }
+      }
+    };
+  }
+
+  private buildLegendLabels(chart: Chart): LegendItem[] {
+    return Chart.defaults.plugins.legend.labels.generateLabels(chart).map(label => ({
+      ...label,
+      fillStyle: this.darkenColor(label.fillStyle, 0.25),
+      strokeStyle: label.strokeStyle
+    }));
+  }
+
+  private darkenColor(color: Color, amount: number): Color {
+    if (typeof color !== 'string') {
+      return color;
+    }
+
+    const trimmed = color.trim();
+    const hexMatch = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(trimmed);
+    if (hexMatch) {
+      const normalized = hexMatch[1].length === 3
+        ? hexMatch[1].split('').map(char => `${char}${char}`).join('')
+        : hexMatch[1];
+      const red = Number.parseInt(normalized.slice(0, 2), 16);
+      const green = Number.parseInt(normalized.slice(2, 4), 16);
+      const blue = Number.parseInt(normalized.slice(4, 6), 16);
+      const darken = (value: number) => Math.max(0, Math.round(value * (1 - amount)));
+      return `rgb(${darken(red)}, ${darken(green)}, ${darken(blue)})`;
+    }
+
+    const rgbMatch = /^rgba?\(([^)]+)\)$/i.exec(trimmed);
+    if (rgbMatch) {
+      const [redRaw = '0', greenRaw = '0', blueRaw = '0'] = rgbMatch[1].split(',').map(part => part.trim());
+      const red = Number.parseFloat(redRaw);
+      const green = Number.parseFloat(greenRaw);
+      const blue = Number.parseFloat(blueRaw);
+      const darken = (value: number) => Math.max(0, Math.round(value * (1 - amount)));
+      return `rgb(${darken(red)}, ${darken(green)}, ${darken(blue)})`;
+    }
+
+    return color;
+  }
+
+  private getLegendColorsForDataset(chart: Chart, datasetIndex: number): { fill: Color; stroke: Color } {
+    const labels = this.buildLegendLabels(chart);
+    const label = labels.find(entry => entry.datasetIndex === datasetIndex);
+    if (!label) {
+      return {
+        fill: this.darkenColor(this.theme().contrast, 0.25),
+        stroke: this.theme().contrast
+      };
+    }
+
+    return {
+      fill: label.fillStyle,
+      stroke: label.strokeStyle
+    };
+  }
+
+  private isBmsChart(): boolean {
+    return this.data.widget?.type === 'widget-bms'
+      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'ySoc' || dataset.yAxisID === 'yCurrent');
   }
 
   protected setPeriod(period: string) {

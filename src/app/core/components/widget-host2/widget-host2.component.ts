@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, untracked, ChangeDetectionStrategy, inputBinding } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -16,6 +16,8 @@ import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widg
 import { WidgetService } from '../../services/widget.service';
 import { AppService } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
+import { IKipSeriesDefinition, KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
+import { isKipSeriesEnabled, isKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { SettingsService } from '../../services/settings.service';
 import { uiEventService } from '../../services/uiEvent.service';
@@ -24,6 +26,8 @@ import { uiEventService } from '../../services/uiEvent.service';
 // NOTE: Widgets should expose a static DEFAULT_CONFIG to avoid temporary instantiation.
 // If absent, Host2 will create & immediately destroy a temp instance to read instance.defaultConfig.
 interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
+
+type TOverlayGate = 'history' | 'options' | 'sheet';
 
 @Component({
   selector: 'widget-host2',
@@ -52,7 +56,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
  * 5. Applying diff-based data & metadata configs (no wholesale resets) via directives.
  * 6. Persisting the merged runtime config during serialize for Gridstack state.
  */
-export class WidgetHost2Component extends BaseWidget implements OnInit {
+export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestroy {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet
   @Input({ required: true }) protected widgetProperties!: IWidget;
   @ViewChild('childOutlet', { read: ViewContainerRef, static: true }) private outlet!: ViewContainerRef;
@@ -65,22 +69,35 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
   private readonly widgetService = inject(WidgetService);
   private readonly app = inject(AppService);
   private readonly historySync = inject(DashboardHistorySeriesSyncService);
+  private readonly kipSeries = inject(KipSeriesApiClientService);
   private readonly _uiEvent = inject(uiEventService);
 
   private readonly settings = inject(SettingsService);
 
   protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
-  private childRef: ComponentRef<WidgetViewComponentBase>;
+  private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
   private compType: Type<WidgetViewComponentBase>
   private _hasInitialized = false;
-  private _sheetOpen = false;
-  private _optionsOpen = false;
-  private _historyDialogOpen = false;
+  private readonly openOverlays = new Set<TOverlayGate>();
   // Debug helper gated by the same localStorage flag used by gestures directive
   private isDebugEnabled(): boolean {
     try { return typeof localStorage !== 'undefined' && localStorage.getItem('kip:gesturesDebug') === '1'; } catch { return false; }
   }
   private debug(...args: unknown[]) { if (this.isDebugEnabled()) console.debug('[Host2]', ...args); }
+
+  private acquireOverlay(kind: TOverlayGate): boolean {
+    if (this.openOverlays.has(kind)) {
+      this.debug(`${kind} already open; ignoring`, { widgetId: this.widgetProperties?.uuid });
+      return false;
+    }
+
+    this.openOverlays.add(kind);
+    return true;
+  }
+
+  private releaseOverlay(kind: TOverlayGate): void {
+    this.openOverlays.delete(kind);
+  }
 
   constructor() {
     super();
@@ -123,6 +140,12 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       });
     }
     this._hasInitialized = true;
+  }
+
+  ngOnDestroy(): void {
+    this.childRef?.destroy();
+    this.childRef = null;
+    this.openOverlays.clear();
   }
 
   /**
@@ -176,8 +199,11 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       this.streams?.applyStreamsConfigDiff?.(merged);
       this.meta?.applyMetaConfigDiff?.(merged);
       // console.debug('[Host2] cancel revert applied', this.widgetProperties.uuid, { found: !!saved });
-    } catch {
-      // no-op
+    } catch (error) {
+      console.error('[Host2] failed to reinitialize saved config', {
+        widgetId: this.widgetProperties?.uuid,
+        error
+      });
     }
   }
 
@@ -228,21 +254,34 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
     (e as Event).stopPropagation();
     this.debug('openWidgetOptions invoked', { widgetId: this.widgetProperties?.uuid, static: this.dashboard.isDashboardStatic() });
     if (!this.dashboard.isDashboardStatic()) {
-      if (this._optionsOpen) { this.debug('options already open; ignoring'); return; }
-      this._optionsOpen = true;
-      if (!this.widgetProperties) return;
-      this.dialog.openWidgetOptions({
-        title: 'Widget Options',
-        config: this.widgetProperties.config,
-        confirmBtnText: 'Save',
-        cancelBtnText: 'Cancel'
-      }).afterClosed().subscribe(result => {
-        this._optionsOpen = false;
-        if (result) {
-          this.debug('options saved', { widgetId: this.widgetProperties?.uuid });
-          this.applyRuntimeConfig(result);
-        }
-      });
+      if (!this.acquireOverlay('options')) {
+        return;
+      }
+      if (!this.widgetProperties) {
+        this.releaseOverlay('options');
+        return;
+      }
+
+      try {
+        this.dialog.openWidgetOptions({
+          title: 'Widget Options',
+          config: this.widgetProperties.config,
+          confirmBtnText: 'Save',
+          cancelBtnText: 'Cancel'
+        }).afterClosed().subscribe(result => {
+          this.releaseOverlay('options');
+          if (result) {
+            this.debug('options saved', { widgetId: this.widgetProperties?.uuid });
+            this.applyRuntimeConfig(result);
+          }
+        });
+      } catch (error) {
+        this.releaseOverlay('options');
+        console.error('[Host2] failed to open widget options', {
+          widgetId: this.widgetProperties?.uuid,
+          error
+        });
+      }
     }
   }
 
@@ -261,32 +300,42 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
         this.debug('bottom sheet suppressed during drag', { widgetId: this.widgetProperties?.uuid });
         return;
       }
-      if (this._sheetOpen) { this.debug('sheet already open; ignoring'); return; }
-      this._sheetOpen = true;
+      if (!this.acquireOverlay('sheet')) {
+        return;
+      }
       const isLinuxFirefox = typeof navigator !== 'undefined' &&
         /Linux/.test(navigator.platform) &&
         /Firefox/.test(navigator.userAgent);
-      const sheetRef = this.bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
-      sheetRef.afterDismissed().subscribe((action) => {
-        this._sheetOpen = false;
-        this.debug('bottom sheet dismissed', { widgetId: this.widgetProperties?.uuid, action });
-        switch (action) {
-          case 'delete':
-            this.dashboard.deleteWidget(this.widgetProperties.uuid);
-            break;
-          case 'duplicate':
-            this.dashboard.duplicateWidget(this.widgetProperties.uuid);
-            break;
-          case 'copy':
-            this.dashboard.copyWidget(this.widgetProperties.uuid);
-            break;
-          case 'cut':
-            this.dashboard.cutWidget(this.widgetProperties.uuid);
-            break;
-          default:
-            break;
-        }
-      });
+
+      try {
+        const sheetRef = this.bottomSheet.open(WidgetHostBottomSheetComponent, isLinuxFirefox ? { disableClose: true, data: { showCancel: true } } : {});
+        sheetRef.afterDismissed().subscribe((action) => {
+          this.releaseOverlay('sheet');
+          this.debug('bottom sheet dismissed', { widgetId: this.widgetProperties?.uuid, action });
+          switch (action) {
+            case 'delete':
+              this.dashboard.deleteWidget(this.widgetProperties.uuid);
+              break;
+            case 'duplicate':
+              this.dashboard.duplicateWidget(this.widgetProperties.uuid);
+              break;
+            case 'copy':
+              this.dashboard.copyWidget(this.widgetProperties.uuid);
+              break;
+            case 'cut':
+              this.dashboard.cutWidget(this.widgetProperties.uuid);
+              break;
+            default:
+              break;
+          }
+        });
+      } catch (error) {
+        this.releaseOverlay('sheet');
+        console.error('[Host2] failed to open bottom sheet', {
+          widgetId: this.widgetProperties?.uuid,
+          error
+        });
+      }
     }
   }
 
@@ -303,7 +352,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    this.openWidgetHistoryDialogInternal();
+    void this.openWidgetHistoryDialogInternal();
   }
 
   /**
@@ -319,10 +368,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    this.openWidgetHistoryDialogInternal();
+    void this.openWidgetHistoryDialogInternal();
   }
 
-  private openWidgetHistoryDialogInternal(): void {
+  private async openWidgetHistoryDialogInternal(): Promise<void> {
 
     if (this.settings.getWidgetHistoryDisabled()) {
       return;
@@ -332,30 +381,76 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
       return;
     }
 
-    if (this._historyDialogOpen) {
+    if (!this.acquireOverlay('history')) {
       return;
     }
 
-    const seriesDefinitions = this.historySync.resolveSeriesForWidget(this.widgetProperties);
-    if (!this.isHistoryDialogEligible(this.widgetProperties, seriesDefinitions)) {
-      return;
+    try {
+      const seriesDefinitions = await this.resolveEffectiveSeriesDefinitions();
+      if (!this.isHistoryDialogEligible(this.widgetProperties, seriesDefinitions)) {
+        this.releaseOverlay('history');
+        return;
+      }
+
+      const title = this.widgetProperties?.config?.displayName || (this.widgetProperties?.type === 'widget-bms' ? 'Battery Monitor' : 'Widget History');
+
+      this.dialog.openWidgetHistoryDialog({
+        title,
+        widget: this.widgetProperties,
+        seriesDefinitions
+      }).afterClosed().subscribe(() => {
+        this.releaseOverlay('history');
+      });
+    } catch (error) {
+      this.releaseOverlay('history');
+      console.error('[Host2] failed to open history dialog', {
+        widgetId: this.widgetProperties?.uuid,
+        error
+      });
+    }
+  }
+
+  private async resolveEffectiveSeriesDefinitions(): Promise<IKipSeriesDefinition[]> {
+    const resolved = this.historySync.resolveSeriesForWidget(this.widgetProperties);
+    const hasTemplateSeries = resolved.some(isKipTemplateSeriesDefinition);
+
+    if (!hasTemplateSeries) {
+      return resolved;
     }
 
-    const title = this.widgetProperties?.config?.displayName || this.widgetProperties?.type || 'Widget History';
-    this._historyDialogOpen = true;
+    const effective = await this.kipSeries.getSeriesDefinitions();
+    if (!effective) {
+      return resolved;
+    }
 
-    this.dialog.openWidgetHistoryDialog({
-      title,
-      widget: this.widgetProperties,
-      seriesDefinitions
-    }).afterClosed().subscribe(() => {
-      this._historyDialogOpen = false;
+    const widgetUuid = this.widgetProperties?.uuid;
+    if (!widgetUuid) {
+      return resolved;
+    }
+
+    const bmsMetricPaths = new Set(['electrical.batteries', 'self.electrical.batteries']);
+
+    return effective.filter(series => {
+      if (series.ownerWidgetUuid !== widgetUuid || !isKipSeriesEnabled(series)) {
+        return false;
+      }
+
+      const path = (series.path ?? '').trim();
+      if (!path.length) {
+        return false;
+      }
+
+      return Array.from(bmsMetricPaths).some(prefix => path.startsWith(`${prefix}.`));
     });
   }
 
-  private isHistoryDialogEligible(widget: IWidget | null | undefined, seriesDefinitions: { path?: string | null; enabled?: boolean }[]): boolean {
+  private isHistoryDialogEligible(widget: IWidget | null | undefined, seriesDefinitions: { path?: string | null; enabled?: boolean; expansionMode?: string | null }[]): boolean {
     if (!widget?.config || widget.config.supportAutomaticHistoricalSeries === false) {
       return false;
+    }
+
+    if (widget.type === 'widget-bms') {
+      return seriesDefinitions.some(series => series.enabled === true);
     }
 
     const numericPaths = this.extractNumericPaths(widget.config.paths);
@@ -370,7 +465,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit {
         return false;
       }
 
-      return series.enabled !== false;
+      return series.enabled === true;
     });
   }
 

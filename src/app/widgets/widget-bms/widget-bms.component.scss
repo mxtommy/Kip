@@ -1,0 +1,86 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.bms-svg {
+  height: 100%;
+  width: 100%;
+  padding: 12px;
+}
+
+.bms-card-metric {
+  fill: var(--mat-sys-on-surface);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.bms-card-sub {
+  fill: var(--mat-sys-on-surface);
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.bms-card-meta {
+  fill: var(--mat-sys-on-surface);
+  font-size: 15px;
+  opacity: 0.75;
+}
+
+.bms-card-footer {
+  fill: var(--mat-sys-on-surface);
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.bms-flow-line {
+  stroke: var(--kip-zone-nominal-color);
+  stroke-width: 3px;
+  stroke-dasharray: 6 6;
+  animation: flow-dash 2s linear infinite;
+}
+
+.bms-flow-line--out {
+  stroke: var(--kip-zone-warn-color);
+}
+
+.bms-flow-line--in {
+  stroke: var(--kip-zone-nominal-color);
+}
+
+.bms-flow-line--neutral {
+  stroke: var(--kip-widget-card-border-color);
+  animation: none;
+}
+
+.bms-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--mat-sys-on-surface);
+  background: color-mix(in srgb, var(--kip-widget-card-background-color) 92%, transparent);
+}
+
+.bms-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.bms-empty-sub {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}

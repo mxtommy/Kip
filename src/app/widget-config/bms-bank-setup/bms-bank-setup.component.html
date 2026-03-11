@@ -1,0 +1,62 @@
+<div class="bms-config" [formGroup]="bmsFormGroup">
+  <div class="bms-config-section">
+    <h3>Tracked Batteries</h3>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Battery Instances</mat-label>
+      <mat-select formControlName="trackedBatteryIds" multiple>
+        @for (id of discoveredBatteryIds(); track $index) {
+          <mat-option [value]="id">{{ id }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="hint">
+      Leave empty to display all discovered batteries.
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="bms-config-section">
+    <div class="section-header">
+      <h3>Battery Banks</h3>
+      <button mat-raised-button color="primary" type="button" (click)="addBank()">
+        Add Bank
+      </button>
+    </div>
+
+    <div formArrayName="banks" class="bank-list">
+      @if (!hasBanks()) {
+        <div class="hint">No banks configured yet.</div>
+      }
+      @for (bankGroup of banksFormArray.controls; track $index) {
+        <div class="bank-card" [formGroupName]="$index">
+          <div class="bank-row">
+            <mat-form-field appearance="outline" class="bank-name">
+              <mat-label>Bank Name</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+            <button mat-icon-button type="button" (click)="removeBank($index)" aria-label="Remove bank">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Battery Members</mat-label>
+            <mat-select formControlName="batteryIds" multiple>
+              @for (id of discoveredBatteryIds(); track $index) {
+                <mat-option [value]="id">{{ id }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Connection Mode</mat-label>
+            <mat-select formControlName="connectionMode">
+              @for (mode of connectionModes; track mode) {
+                <mat-option [value]="mode">{{ mode | titlecase }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+    </div>
+  </div>
+</div>

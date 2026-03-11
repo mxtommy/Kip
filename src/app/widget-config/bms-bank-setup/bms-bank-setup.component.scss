@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bms-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 4px;
+}
+
+.bms-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.bank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bank-card {
+  border: 1px solid var(--kip-widget-card-border-color);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--kip-contrast-dimmer-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bank-name {
+  flex: 1;
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.7;
+}

@@ -10,5 +10,6 @@
     "module": "commonjs",
     "moduleResolution": "node"
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts", "../src/app/core/contracts/**/*.ts"],
+  "exclude": ["../src/app/core/contracts/**/*.spec.ts"]
 }

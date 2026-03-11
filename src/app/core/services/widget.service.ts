@@ -30,6 +30,7 @@ import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switc
 import { WidgetMultiStateSwitchComponent } from '../../widgets/widget-multi-state-switch/widget-multi-state-switch.component';
 import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
+import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -164,7 +165,8 @@ export class WidgetService {
     WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
     WidgetMultiStateSwitchComponent: WidgetMultiStateSwitchComponent,
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
-    WidgetAutopilotComponent: WidgetAutopilotComponent
+    WidgetAutopilotComponent: WidgetAutopilotComponent,
+    WidgetBmsComponent: WidgetBmsComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -361,6 +363,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-horizon',
       componentClassName: 'WidgetHorizonComponent'
+    },
+  {
+      name: 'Battery Monitor',
+      description: 'Monitors battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. Displays key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
+      icon: 'battery_charging',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-bms',
+      componentClassName: 'WidgetBmsComponent'
     },
     {
       name: 'Classic Steel',

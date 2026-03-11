@@ -1,21 +1,14 @@
-export type THistoryMethod = 'min' | 'max' | 'avg' | 'sma' | 'ema';
+import {
+  IKipSeriesDefinition,
+  isKipConcreteSeriesDefinition,
+  isKipSeriesEnabled,
+  isKipTemplateSeriesDefinition,
+  THistoryMethod
+} from '../../src/app/core/contracts/kip-series-contract';
 
-export interface ISeriesDefinition {
-  seriesId: string;
-  datasetUuid: string;
-  ownerWidgetUuid: string;
-  ownerWidgetSelector?: string;
-  path: string;
-  source?: string | null;
-  context?: string | null;
-  timeScale?: string | null;
-  period?: number | null;
-  retentionDurationMs?: number | null;
-  sampleTime?: number | null;
-  enabled?: boolean;
-  methods?: THistoryMethod[];
-  reconcileTs?: number;
-}
+export type ISeriesDefinition = IKipSeriesDefinition;
+export type { THistoryMethod };
+export { isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition };
 
 export interface IRecordedSeriesSample {
   seriesId: string;
@@ -55,11 +48,13 @@ export interface IHistoryQueryParams {
  */
 export class HistorySeriesService {
   private readonly seriesById = new Map<string, ISeriesDefinition>();
+  private readonly enabledSeriesKeysByPath = new Map<string, string[]>();
   private readonly lastAcceptedTimestampBySeriesKey = new Map<string, number>();
   private sampleSink: ((sample: IRecordedSeriesSample) => void) | null = null;
 
   constructor(
-    private readonly nowProvider: () => number = () => Date.now()
+    private readonly nowProvider: () => number = () => Date.now(),
+    private readonly selfContext: string | null = null
   ) {}
 
   /**
@@ -108,6 +103,7 @@ export class HistorySeriesService {
     const normalized = this.normalizeSeries(input);
     const key = normalized.seriesId;
     this.seriesById.set(key, normalized);
+    this.rebuildEnabledPathIndex();
     return normalized;
   }
 
@@ -147,6 +143,8 @@ export class HistorySeriesService {
       this.lastAcceptedTimestampBySeriesKey.delete(key);
     });
 
+    this.rebuildEnabledPathIndex();
+
     return true;
   }
 
@@ -161,7 +159,7 @@ export class HistorySeriesService {
    * console.log(result.created, result.deleted);
    */
   public reconcileSeries(desiredSeries: ISeriesDefinition[]): { created: number; updated: number; deleted: number; total: number } {
-    const now = Date.now();
+    const now = this.nowProvider();
     const desiredById = new Map<string, ISeriesDefinition>();
     desiredSeries.forEach(entry => {
       const normalized = this.normalizeSeries(entry);
@@ -183,7 +181,7 @@ export class HistorySeriesService {
         return;
       }
 
-      if (JSON.stringify(existing) !== JSON.stringify(desired)) {
+      if (!this.areSeriesEquivalent(existing, desired)) {
         this.seriesById.set(seriesKey, desiredWithReconcile);
         updated += 1;
       } else {
@@ -199,6 +197,8 @@ export class HistorySeriesService {
         deleted += 1;
       }
     });
+
+    this.rebuildEnabledPathIndex();
 
     return {
       created,
@@ -220,13 +220,11 @@ export class HistorySeriesService {
    * service.recordSample('abc', 12.4, Date.now());
    */
   public recordSample(seriesId: string, value: number, timestamp: number): boolean {
-    const seriesEntry = Array.from(this.seriesById.entries())
-      .find(([, series]) => series.seriesId === seriesId);
-    if (!seriesEntry) {
+    if (!this.seriesById.has(seriesId)) {
       return false;
     }
 
-    return this.recordSampleByKey(seriesEntry[0], value, timestamp);
+    return this.recordSampleByKey(seriesId, value, timestamp);
   }
 
   private recordSampleByKey(seriesKey: string, value: number, timestamp: number): boolean {
@@ -285,8 +283,14 @@ export class HistorySeriesService {
 
     let recorded = 0;
     leafSamples.forEach(leaf => {
-      this.seriesById.forEach((series, seriesKey) => {
-        if (series.path !== leaf.path || series.enabled === false) {
+      const seriesKeys = this.enabledSeriesKeysByPath.get(leaf.path);
+      if (!seriesKeys || seriesKeys.length === 0) {
+        return;
+      }
+
+      seriesKeys.forEach(seriesKey => {
+        const series = this.seriesById.get(seriesKey);
+        if (!series) {
           return;
         }
 
@@ -380,6 +384,81 @@ export class HistorySeriesService {
     return Array.from(contexts).sort();
   }
 
+  private rebuildEnabledPathIndex(): void {
+    this.enabledSeriesKeysByPath.clear();
+
+    this.seriesById.forEach((series, seriesKey) => {
+      if (series.enabled === false) {
+        return;
+      }
+
+      const keys = this.enabledSeriesKeysByPath.get(series.path) ?? [];
+      keys.push(seriesKey);
+      this.enabledSeriesKeysByPath.set(series.path, keys);
+    });
+  }
+
+  private areSeriesEquivalent(left: ISeriesDefinition, right: ISeriesDefinition): boolean {
+    const leftComparable = this.toComparableSeries(left);
+    const rightComparable = this.toComparableSeries(right);
+
+    return leftComparable.seriesId === rightComparable.seriesId
+      && leftComparable.datasetUuid === rightComparable.datasetUuid
+      && leftComparable.ownerWidgetUuid === rightComparable.ownerWidgetUuid
+      && leftComparable.ownerWidgetSelector === rightComparable.ownerWidgetSelector
+      && leftComparable.path === rightComparable.path
+      && leftComparable.expansionMode === rightComparable.expansionMode
+      && this.areStringArraysEquivalent(leftComparable.allowedBatteryIds, rightComparable.allowedBatteryIds)
+      && leftComparable.source === rightComparable.source
+      && leftComparable.context === rightComparable.context
+      && leftComparable.timeScale === rightComparable.timeScale
+      && leftComparable.period === rightComparable.period
+      && leftComparable.retentionDurationMs === rightComparable.retentionDurationMs
+      && leftComparable.sampleTime === rightComparable.sampleTime
+      && leftComparable.enabled === rightComparable.enabled
+      && this.areStringArraysEquivalent(leftComparable.methods, rightComparable.methods);
+  }
+
+  private toComparableSeries(series: ISeriesDefinition): Omit<ISeriesDefinition, 'reconcileTs'> {
+    const { reconcileTs, ...comparable } = series;
+    void reconcileTs;
+    return {
+      ...comparable,
+      allowedBatteryIds: this.normalizeComparableStringArray(comparable.allowedBatteryIds),
+      methods: this.normalizeComparableStringArray(comparable.methods)
+    };
+  }
+
+  private areStringArraysEquivalent<T extends string>(left?: readonly T[] | null, right?: readonly T[] | null): boolean {
+    const normalizedLeft = this.normalizeComparableStringArray(left) ?? [];
+    const normalizedRight = this.normalizeComparableStringArray(right) ?? [];
+
+    if (normalizedLeft.length !== normalizedRight.length) {
+      return false;
+    }
+
+    return normalizedLeft.every((value, index) => value === normalizedRight[index]);
+  }
+
+  private normalizeComparableStringArray<T extends string>(values?: readonly T[] | null): T[] | undefined {
+    if (!Array.isArray(values) || values.length === 0) {
+      return undefined;
+    }
+
+    return [...values]
+      .filter((value): value is T => typeof value === 'string')
+      .sort((left, right) => left.localeCompare(right));
+  }
+
+  private isChartWidget(ownerWidgetSelector: string | null, ownerWidgetUuid?: string): boolean {
+    if (ownerWidgetSelector === 'widget-data-chart' || ownerWidgetSelector === 'widget-windtrends-chart') {
+      return true;
+    }
+
+    return ownerWidgetUuid?.startsWith('widget-windtrends-chart') === true
+      || ownerWidgetUuid?.startsWith('widget-data-chart') === true;
+  }
+
   private normalizeSeries(input: ISeriesDefinition): ISeriesDefinition {
     const seriesId = (input.seriesId || input.datasetUuid || '').trim();
     if (!seriesId) {
@@ -401,8 +480,18 @@ export class HistorySeriesService {
       throw new Error('path is required');
     }
 
-    // Determine if this is a chart type widget
-    const isDataWidget = ownerWidgetUuid?.startsWith('widget-windtrends-chart') || ownerWidgetUuid?.startsWith('widget-data-chart');
+    const ownerWidgetSelector = typeof input.ownerWidgetSelector === 'string' ? input.ownerWidgetSelector.trim() : null;
+    const expansionMode = input.expansionMode ?? null;
+    if (expansionMode === 'bms-battery-tree' && ownerWidgetSelector !== 'widget-bms') {
+      throw new Error('BMS template series must use ownerWidgetSelector "widget-bms"');
+    }
+
+    const normalizedMethods = this.normalizeComparableStringArray(input.methods);
+    const normalizedAllowedBatteryIds = expansionMode === 'bms-battery-tree'
+      ? this.normalizeComparableStringArray(input.allowedBatteryIds)
+      : undefined;
+
+    const isDataWidget = this.isChartWidget(ownerWidgetSelector, ownerWidgetUuid);
     const retentionMs = this.resolveRetentionMs(input);
     let sampleTime: number;
 
@@ -416,18 +505,41 @@ export class HistorySeriesService {
       sampleTime = 15000; // ms
     }
 
-    return {
-      ...input,
+    const normalizedBase = {
       seriesId,
       datasetUuid,
       ownerWidgetUuid,
+      ownerWidgetSelector,
       path,
       source: input.source ?? 'default',
       context: input.context ?? 'vessels.self',
+      timeScale: input.timeScale ?? null,
+      period: Number.isFinite(input.period as number) ? input.period ?? null : null,
       enabled: input.enabled !== false,
       retentionDurationMs: retentionMs,
-      sampleTime
+      sampleTime,
+      methods: normalizedMethods,
+      reconcileTs: input.reconcileTs
     };
+
+    if (expansionMode === 'bms-battery-tree') {
+      const templateSeries: ISeriesDefinition = {
+        ...normalizedBase,
+        ownerWidgetSelector: 'widget-bms',
+        expansionMode,
+        allowedBatteryIds: normalizedAllowedBatteryIds ?? null
+      };
+
+      return templateSeries;
+    }
+
+    const concreteSeries: ISeriesDefinition = {
+      ...normalizedBase,
+      expansionMode: null,
+      allowedBatteryIds: null
+    };
+
+    return concreteSeries;
   }
 
   private resolveRetentionMs(series: ISeriesDefinition): number {
@@ -510,11 +622,19 @@ export class HistorySeriesService {
       return true;
     }
 
-    if (seriesContext === 'vessels.self') {
-      return sampleContext === 'vessels.self' || sampleContext.startsWith('vessels.');
+    if (this.isSelfContext(seriesContext) && this.isSelfContext(sampleContext)) {
+      return true;
     }
 
     return false;
+  }
+
+  private isSelfContext(context: string): boolean {
+    if (context === 'vessels.self') {
+      return true;
+    }
+
+    return !!this.selfContext && context === this.selfContext;
   }
 
   private isSourceMatch(seriesSource: string, sampleSource: string): boolean {

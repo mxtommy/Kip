@@ -388,7 +388,7 @@ export class SqliteHistoryStorageService {
       seriesId: row.series_id,
       datasetUuid: row.dataset_uuid,
       ownerWidgetUuid: row.owner_widget_uuid,
-      ownerWidgetSelector: row.owner_widget_selector ?? undefined,
+      ownerWidgetSelector: row.owner_widget_selector ?? null,
       path: row.path,
       source: row.source ?? undefined,
       context: row.context ?? undefined,
