@@ -1,5 +1,4 @@
 import {
-  IKipConcreteSeriesDefinition,
   IKipSeriesDefinition,
   isKipConcreteSeriesDefinition,
   isKipSeriesEnabled,
@@ -430,7 +429,7 @@ export class HistorySeriesService {
     };
   }
 
-  private areStringArraysEquivalent<T extends string>(left?: ReadonlyArray<T> | null, right?: ReadonlyArray<T> | null): boolean {
+  private areStringArraysEquivalent<T extends string>(left?: readonly T[] | null, right?: readonly T[] | null): boolean {
     const normalizedLeft = this.normalizeComparableStringArray(left) ?? [];
     const normalizedRight = this.normalizeComparableStringArray(right) ?? [];
 
@@ -441,7 +440,7 @@ export class HistorySeriesService {
     return normalizedLeft.every((value, index) => value === normalizedRight[index]);
   }
 
-  private normalizeComparableStringArray<T extends string>(values?: ReadonlyArray<T> | null): T[] | undefined {
+  private normalizeComparableStringArray<T extends string>(values?: readonly T[] | null): T[] | undefined {
     if (!Array.isArray(values) || values.length === 0) {
       return undefined;
     }
@@ -524,15 +523,17 @@ export class HistorySeriesService {
     };
 
     if (expansionMode === 'bms-battery-tree') {
-      return {
+      const templateSeries: ISeriesDefinition = {
         ...normalizedBase,
         ownerWidgetSelector: 'widget-bms',
         expansionMode,
         allowedBatteryIds: normalizedAllowedBatteryIds ?? null
       };
+
+      return templateSeries;
     }
 
-    const concreteSeries: IKipConcreteSeriesDefinition = {
+    const concreteSeries: ISeriesDefinition = {
       ...normalizedBase,
       expansionMode: null,
       allowedBatteryIds: null
