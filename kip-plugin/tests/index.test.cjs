@@ -10,8 +10,10 @@ function createServerMock() {
   const putHandlers = [];
   const messages = [];
   const streamSubscribersByPath = new Map();
+  const selfPathOverrides = new Map();
   let legacyHistoryProvider = null;
   let historyApiProvider = null;
+  const selfId = 'urn:mrn:signalk:uuid:test-self';
 
   const streambundle = {
     getBus(path) {
@@ -30,6 +32,7 @@ function createServerMock() {
   };
 
   return {
+    selfId,
     putHandlers,
     messages,
     streambundle,
@@ -58,12 +61,18 @@ function createServerMock() {
       messages.push({ pluginId, delta, version });
     },
     getSelfPath(path) {
+      if (selfPathOverrides.has(path)) {
+        return selfPathOverrides.get(path);
+      }
       if (path === 'displays') {
         return {
           abc: { value: { displayName: 'Helm' } }
         };
       }
       return { value: null };
+    },
+    setSelfPath(path, value) {
+      selfPathOverrides.set(path, value);
     },
     emitStream(path, sample) {
       const callbacks = streamSubscribersByPath.get(path) ?? [];
@@ -771,6 +780,144 @@ testRequiresNodeSqlite('series CRUD works and history paths/contexts come from s
   assert.equal(deleteRes.statusCode, 200);
 });
 
+testRequiresNodeSqlite('series reconcile expands widget-bms template entries into concrete battery metric series', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.batteries', {
+    value: {
+      house: { stateOfCharge: 0.81 },
+      start: { stateOfCharge: 0.93 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+
+  const reconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: [
+      {
+        seriesId: 'widget-bms-1:bms-template',
+        datasetUuid: 'widget-bms-1:bms-template',
+        ownerWidgetUuid: 'widget-bms-1',
+        ownerWidgetSelector: 'widget-bms',
+        path: 'self.electrical.batteries.*',
+        expansionMode: 'bms-battery-tree',
+        allowedBatteryIds: ['house'],
+        source: 'default',
+        enabled: true
+      }
+    ]
+  }, reconcileRes);
+
+  assert.equal(reconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+
+  const seriesIds = listRes.payload.map(item => item.seriesId).sort();
+  assert.deepEqual(seriesIds, [
+    'widget-bms-1:bms:house:capacity.stateOfCharge:default',
+    'widget-bms-1:bms:house:current:default'
+  ]);
+});
+
+testRequiresNodeSqlite('series reconcile preserves existing widget-bms concrete series when battery discovery is temporarily unavailable', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.batteries', {
+    value: {
+      house: { stateOfCharge: 0.81 },
+      start: { stateOfCharge: 0.93 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+  const templateBody = [
+    {
+      seriesId: 'widget-bms-2:bms-template',
+      datasetUuid: 'widget-bms-2:bms-template',
+      ownerWidgetUuid: 'widget-bms-2',
+      ownerWidgetSelector: 'widget-bms',
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree',
+      allowedBatteryIds: ['house'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const firstReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, firstReconcileRes);
+
+  assert.equal(firstReconcileRes.statusCode, 200);
+  assert.equal(firstReconcileRes.payload?.created, 2);
+
+  server.setSelfPath('electrical.batteries', { value: null });
+
+  const secondReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, secondReconcileRes);
+
+  assert.equal(secondReconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+  const secondSeriesIds = listRes.payload.map(item => item.seriesId).sort();
+  assert.equal(secondSeriesIds.includes('widget-bms-2:bms:house:capacity.stateOfCharge:default'), true);
+  assert.equal(secondSeriesIds.includes('widget-bms-2:bms:house:current:default'), true);
+
+  await plugin.stop();
+  pluginsToStop.delete(plugin);
+
+  const restartServer = createServerMock();
+  const restartPlugin = registerPluginForCleanup(start(restartServer));
+  const restartRouter = createRouterMock();
+  await startPlugin(restartPlugin, {});
+  restartPlugin.registerWithRouter(restartRouter);
+
+  const restartList = restartRouter.getHandlers.get('/series');
+  const restartListRes = createResMock();
+  await restartList({ params: {}, headers: {}, query: {} }, restartListRes);
+  assert.equal(restartListRes.statusCode, 200);
+  assert.equal(Array.isArray(restartListRes.payload), true);
+  const restartSeriesIds = restartListRes.payload.map(item => item.seriesId).sort();
+  assert.equal(restartSeriesIds.includes('widget-bms-2:bms:house:capacity.stateOfCharge:default'), true);
+  assert.equal(restartSeriesIds.includes('widget-bms-2:bms:house:current:default'), true);
+});
+
 testRequiresNodeSqlite('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');
@@ -1093,6 +1240,57 @@ testRequiresNodeSqlite('history ingestion accepts source wildcard and vessels.se
 
   assert.equal(Array.isArray(payload?.data), true);
   assert.equal(payload.data.length > 0, true);
+});
+
+testRequiresNodeSqlite('history ingestion rejects non-self vessel contexts for vessels.self series', async () => {
+  const server = createServerMock();
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+  const isolatedPath = 'navigation.speedOverGroundReject';
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const provider = server.history.getRegisteredProvider();
+  await waitForHistoryProviderReady(provider);
+
+  const upsert = router.putHandlers.get('/series/:seriesId');
+
+  const upsertRes = createResMock();
+  await upsert({
+    method: 'PUT',
+    path: '/series/live-3b',
+    ip: '127.0.0.1',
+    headers: {},
+    params: { seriesId: 'live-3b' },
+    body: {
+      datasetUuid: 'live-3b',
+      ownerWidgetUuid: 'widget-live-3b',
+      path: isolatedPath,
+      context: 'vessels.self',
+      source: '*'
+    }
+  }, upsertRes);
+
+  assert.equal(upsertRes.statusCode, 200);
+
+  server.emitStream(isolatedPath, {
+    path: isolatedPath,
+    value: 7.1,
+    context: 'vessels.urn:mrn:signalk:uuid:other-vessel',
+    timestamp: new Date().toISOString(),
+    $source: 'n2k.55'
+  });
+
+  const payload = await provider.getValues({
+    pathSpecs: [{ path: isolatedPath, aggregate: 'avg' }],
+    duration: 'PT1H',
+    context: 'vessels.self'
+  });
+
+  assert.equal(Array.isArray(payload?.data), true);
+  assert.equal(payload.data.length, 0);
 });
 
 testRequiresNodeSqlite('history values resolution numeric input is interpreted as seconds', async () => {
@@ -1420,7 +1618,8 @@ test('history series enforces 1000ms minimum sampleTime for chart widgets', () =
   service.upsertSeries({
     seriesId: 'sampling-default-1',
     datasetUuid: 'sampling-default-1',
-    ownerWidgetUuid: 'widget-data-chart-1',
+    ownerWidgetUuid: 'widget-instance-1',
+    ownerWidgetSelector: 'widget-data-chart',
     path: 'navigation.speedOverGround',
     context: 'vessels.self',
     retentionDurationMs: 60_000
@@ -1433,6 +1632,45 @@ test('history series enforces 1000ms minimum sampleTime for chart widgets', () =
   assert.equal(firstAccepted, true);
   assert.equal(secondAccepted, false);
   assert.equal(thirdAccepted, true);
+});
+
+test('history reconcile treats reordered array fields as equivalent', () => {
+  const service = new HistorySeriesService(() => 1234567890);
+
+  const first = service.reconcileSeries([{
+    seriesId: 'reconcile-stable-1',
+    datasetUuid: 'reconcile-stable-1',
+    ownerWidgetUuid: 'widget-instance-2',
+    ownerWidgetSelector: 'widget-bms',
+    path: 'electrical.batteries.house.current',
+    expansionMode: 'bms-battery-tree',
+    allowedBatteryIds: ['house', 'start'],
+    context: 'vessels.self',
+    source: 'default',
+    methods: ['avg', 'max'],
+    retentionDurationMs: 60_000,
+    enabled: true
+  }]);
+
+  const second = service.reconcileSeries([{
+    ownerWidgetSelector: 'widget-bms',
+    enabled: true,
+    retentionDurationMs: 60_000,
+    methods: ['max', 'avg'],
+    source: 'default',
+    context: 'vessels.self',
+    allowedBatteryIds: ['start', 'house'],
+    expansionMode: 'bms-battery-tree',
+    path: 'electrical.batteries.house.current',
+    ownerWidgetUuid: 'widget-instance-2',
+    datasetUuid: 'reconcile-stable-1',
+    seriesId: 'reconcile-stable-1'
+  }]);
+
+  assert.equal(first.created, 1);
+  assert.equal(second.updated, 0);
+  assert.equal(second.deleted, 0);
+  assert.equal(second.created, 0);
 });
 
 test('history series enforces fixed 15s sampleTime for non-chart widgets', () => {

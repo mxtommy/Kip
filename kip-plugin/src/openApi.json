@@ -131,7 +131,7 @@
         "nullable": true,
         "additionalProperties": true
       },
-      "SeriesDefinition": {
+      "SeriesDefinitionBase": {
         "type": "object",
         "properties": {
           "seriesId": {
@@ -177,13 +177,101 @@
           "enabled": {
             "type": "boolean",
             "default": true
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "min",
+                "max",
+                "avg",
+                "sma",
+                "ema"
+              ]
+            }
+          },
+          "reconcileTs": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "required": [
           "seriesId",
           "datasetUuid",
           "ownerWidgetUuid",
-          "path"
+          "ownerWidgetSelector",
+          "path",
+          "enabled"
+        ]
+      },
+      "ConcreteSeriesDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SeriesDefinitionBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "expansionMode": {
+                "nullable": true,
+                "description": "Null for concrete series definitions."
+              },
+              "allowedBatteryIds": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Concrete series do not use battery filters and should leave this null."
+              }
+            }
+          }
+        ]
+      },
+      "TemplateSeriesDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SeriesDefinitionBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "ownerWidgetSelector": {
+                "type": "string",
+                "enum": [
+                  "widget-bms"
+                ]
+              },
+              "expansionMode": {
+                "type": "string",
+                "enum": [
+                  "bms-battery-tree"
+                ]
+              },
+              "allowedBatteryIds": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "ownerWidgetSelector",
+              "expansionMode"
+            ]
+          }
+        ]
+      },
+      "SeriesDefinition": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ConcreteSeriesDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/TemplateSeriesDefinition"
+          }
         ]
       },
       "SeriesReconcileResult": {

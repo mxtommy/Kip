@@ -4,6 +4,7 @@ import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard, DashboardService } from './dashboard.service';
 import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
+import { IKipConcreteSeriesDefinition, IKipTemplateSeriesDefinition } from '../contracts/kip-series-contract';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
 import { WidgetService } from './widget.service';
@@ -15,6 +16,15 @@ interface IGridWidgetNode extends NgGridStackWidget {
   subGridOpts?: {
     children?: IGridWidgetNode[];
   };
+}
+
+interface IBmsConfigLike {
+  trackedBatteryIds?: unknown;
+  banks?: unknown;
+}
+
+interface IBmsBankLike {
+  batteryIds?: unknown;
 }
 
 @Injectable({
@@ -48,8 +58,12 @@ export class DashboardHistorySeriesSyncService {
         return;
       }
 
-      const desiredSeries = this.extractSeriesFromDashboards(dashboards);
-      this.scheduleReconcile(desiredSeries);
+      try {
+        const desiredSeries = this.extractSeriesFromDashboards(dashboards);
+        this.scheduleReconcile(desiredSeries);
+      } catch (error) {
+        console.error('[DashboardHistorySeriesSyncService] Error extracting series from dashboards:', error);
+      }
     });
 
     this.destroyRef.onDestroy(() => {
@@ -61,7 +75,7 @@ export class DashboardHistorySeriesSyncService {
   }
 
   private scheduleReconcile(seriesDefinitions: IKipSeriesDefinition[]): void {
-    const signature = JSON.stringify(seriesDefinitions);
+    const signature = this.getCanonicalSeriesSignature(seriesDefinitions);
     if (signature === this.lastSubmittedSignature) {
       return;
     }
@@ -95,8 +109,13 @@ export class DashboardHistorySeriesSyncService {
       return;
     }
 
-    await this.kipSeries.reconcileSeries(nextSeries);
-    this.lastSubmittedSignature = nextSignature;
+    try {
+      await this.kipSeries.reconcileSeries(nextSeries);
+      this.lastSubmittedSignature = nextSignature;
+    } catch (error) {
+      console.error('[DashboardHistorySeriesSyncService] Reconcile failed:', error);
+      // Don't update lastSubmittedSignature so next cycle will retry
+    }
   }
 
   private extractSeriesFromDashboards(dashboards: Dashboard[]): IKipSeriesDefinition[] {
@@ -137,6 +156,10 @@ export class DashboardHistorySeriesSyncService {
 
     if (widgetType === 'widget-windtrends-chart') {
       return this.mapWindTrendsWidget(widgetUuid, widgetType, cfg);
+    }
+
+    if (widgetType === 'widget-bms') {
+      return this.mapBmsWidget(widgetUuid, widgetType, cfg);
     }
 
     return this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg);
@@ -184,7 +207,7 @@ export class DashboardHistorySeriesSyncService {
     });
   }
 
-  private mapDataChartWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipSeriesDefinition | null {
+  private mapDataChartWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipConcreteSeriesDefinition | null {
     const path = this.normalizeString(cfg?.datachartPath);
     if (!path) {
       return null;
@@ -206,7 +229,7 @@ export class DashboardHistorySeriesSyncService {
     };
   }
 
-  private mapWindTrendsWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipSeriesDefinition[] {
+  private mapWindTrendsWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipConcreteSeriesDefinition[] {
     const shared = {
       ownerWidgetUuid: widgetUuid,
       ownerWidgetSelector: widgetType,
@@ -235,9 +258,76 @@ export class DashboardHistorySeriesSyncService {
     ];
   }
 
-  private mapAutomaticHistorySeries(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipSeriesDefinition[] {
+  private mapBmsWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipTemplateSeriesDefinition[] {
+    const allowedBatteryIds = this.resolveBmsAllowedBatteryIds(cfg);
+    void widgetType;
+
+    const templateSeries: IKipTemplateSeriesDefinition = {
+      seriesId: `${widgetUuid}:bms-template`,
+      datasetUuid: `${widgetUuid}:bms-template`,
+      ownerWidgetUuid: widgetUuid,
+      ownerWidgetSelector: 'widget-bms' as const,
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree' as const,
+      allowedBatteryIds: allowedBatteryIds.length > 0 ? [...allowedBatteryIds] : null,
+      context: null,
+      source: 'default',
+      timeScale: this.normalizeString(cfg?.timeScale),
+      period: this.normalizeNumber(cfg?.period),
+      retentionDurationMs: this.AUTO_RETENTION_MS,
+      sampleTime: null,
+      enabled: true,
+    };
+
+    return [templateSeries];
+  }
+
+  private resolveBmsAllowedBatteryIds(cfg: IWidgetSvcConfig | undefined): string[] {
+    const bmsCfg = (cfg as IWidgetSvcConfig & { bms?: IBmsConfigLike } | undefined)?.bms;
+    if (!bmsCfg) {
+      return [];
+    }
+
+    const tracked = Array.isArray(bmsCfg.trackedBatteryIds) ? bmsCfg.trackedBatteryIds : [];
+    // Rule: when tracked list is empty, plugin should track all discovered batteries.
+    if (tracked.length === 0) {
+      return [];
+    }
+
+    const ids = new Set<string>();
+
+    tracked.forEach(id => {
+      if (typeof id !== 'string') {
+        return;
+      }
+
+      const normalized = id.trim();
+      if (normalized.length > 0) {
+        ids.add(normalized);
+      }
+    });
+
+    const banks = Array.isArray(bmsCfg.banks) ? bmsCfg.banks as IBmsBankLike[] : [];
+    banks.forEach(bank => {
+      const batteryIds = Array.isArray(bank?.batteryIds) ? bank.batteryIds : [];
+      batteryIds.forEach(id => {
+        if (typeof id !== 'string') {
+          return;
+        }
+
+        const normalized = id.trim();
+        if (normalized.length > 0) {
+          ids.add(normalized);
+        }
+      });
+    });
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }
+
+  private mapAutomaticHistorySeries(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipConcreteSeriesDefinition[] {
     const paths = this.extractWidgetPaths(cfg?.paths);
-    const seriesBySignature = new Map<string, IKipSeriesDefinition>();
+    const seriesBySignature = new Map<string, IKipConcreteSeriesDefinition>();
 
     paths.forEach(pathCfg => {
       if (pathCfg.pathType !== 'number') {
@@ -319,5 +409,32 @@ export class DashboardHistorySeriesSyncService {
     }
 
     return nodes as IGridWidgetNode[];
+  }
+
+  /**
+   * Creates a canonical signature for series definitions using field-by-field comparison.
+   * Normalizes arrays (sorting) and null/undefined values to ensure stable comparison
+   * independent of insertion order or property mutations.
+   *
+   * Mirrors the plugin's robust comparator logic for consistency.
+   */
+  private getCanonicalSeriesSignature(series: IKipSeriesDefinition[]): string {
+    const normalized = series.map(s => ({
+      seriesId: s.seriesId,
+      datasetUuid: s.datasetUuid,
+      ownerWidgetUuid: s.ownerWidgetUuid,
+      ownerWidgetSelector: s.ownerWidgetSelector,
+      path: s.path,
+      expansionMode: s.expansionMode ?? null,
+      allowedBatteryIds: Array.isArray(s.allowedBatteryIds) ? [...s.allowedBatteryIds].sort() : null,
+      context: s.context ?? null,
+      source: s.source ?? null,
+      timeScale: s.timeScale ?? null,
+      period: s.period ?? null,
+      retentionDurationMs: s.retentionDurationMs ?? null,
+      sampleTime: s.sampleTime ?? null,
+      enabled: s.enabled,
+    }));
+    return JSON.stringify(normalized);
   }
 }

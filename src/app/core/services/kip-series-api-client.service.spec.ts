@@ -61,7 +61,9 @@ describe('KipSeriesApiClientService', () => {
         seriesId: 'widget-1:datachart',
         datasetUuid: 'widget-1',
         ownerWidgetUuid: 'widget-1',
-        path: 'navigation.speedThroughWater'
+        ownerWidgetSelector: 'widget-data-chart',
+        path: 'navigation.speedThroughWater',
+        enabled: true
       }
     ]);
 
@@ -127,11 +129,45 @@ describe('KipSeriesApiClientService', () => {
         seriesId: 'widget-1:datachart',
         datasetUuid: 'widget-1',
         ownerWidgetUuid: 'widget-1',
-        path: 'navigation.speedThroughWater'
+        ownerWidgetSelector: 'widget-data-chart',
+        path: 'navigation.speedThroughWater',
+        enabled: true
       }
     ]);
 
     expect(response).toBeNull();
     httpMock.expectNone(() => true);
+  });
+
+  it('should fetch effective series definitions from kip plugin', async () => {
+    connectionStub.serverServiceEndpoint$.next({
+      operation: 2,
+      message: 'Connected',
+      serverDescription: 'Signal K',
+      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    });
+
+    const promise = service.getSeriesDefinitions();
+    await new Promise(resolve => setTimeout(resolve));
+
+    const req = httpMock.expectOne((request) =>
+      request.url === 'http://localhost:3000/plugins/kip/series'
+    );
+    expect(req.request.method).toBe('GET');
+
+    req.flush([
+      {
+        seriesId: 'widget-1:auto:navigation-speedthroughwater:default',
+        datasetUuid: 'widget-1:navigation-speedthroughwater:default',
+        ownerWidgetUuid: 'widget-1',
+        ownerWidgetSelector: 'widget-numeric',
+        path: 'navigation.speedThroughWater',
+        enabled: true
+      }
+    ]);
+
+    const response = await promise;
+    expect(response?.length).toBe(1);
   });
 });

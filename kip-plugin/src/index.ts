@@ -1,7 +1,7 @@
 import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
-import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod } from './history-series.service';
+import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
 
@@ -59,7 +59,10 @@ const start = (server: ServerAPI): Plugin => {
       }
     }
   };
-  const historySeries = new HistorySeriesService(() => Date.now());
+  const historySeries = new HistorySeriesService(
+    () => Date.now(),
+    typeof server.selfId === 'string' && server.selfId.trim().length > 0 ? `vessels.${server.selfId.trim()}` : null
+  );
   const storageService = new SqliteHistoryStorageService();
   let retentionSweepTimer: NodeJS.Timeout | null = null;
   let storageFlushTimer: NodeJS.Timeout | null = null;
@@ -167,6 +170,114 @@ const start = (server: ServerAPI): Plugin => {
       registerAsHistoryApiProvider: registerAsHistoryApiProviderSetting !== false,
       nodeSqliteAvailable: nodeSqliteAvailable !== false
     };
+  }
+
+  function slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function resolveBmsBatteryIdsFromSelfPath(): string[] {
+    const batteriesPath = server.getSelfPath('electrical.batteries') as unknown;
+
+    const readCandidate = (node: unknown): Record<string, unknown> | null => {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) {
+        return null;
+      }
+
+      const root = node as Record<string, unknown>;
+      if (Object.prototype.hasOwnProperty.call(root, 'value')) {
+        const value = root.value;
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          return value as Record<string, unknown>;
+        }
+
+        return null;
+      }
+
+      return root;
+    };
+
+    const candidates = readCandidate(batteriesPath);
+    if (!candidates) {
+      return [];
+    }
+
+    return Object.keys(candidates)
+      .filter(id => /^[a-z0-9_-]+$/i.test(id))
+      .sort((left, right) => left.localeCompare(right));
+  }
+
+  function getExistingConcreteBmsSeries(templateSeries: ISeriesDefinition, existingSeries: ISeriesDefinition[]): ISeriesDefinition[] {
+    return existingSeries
+      .filter(series => series.ownerWidgetUuid === templateSeries.ownerWidgetUuid)
+      .filter(isKipConcreteSeriesDefinition)
+      .filter(series => series.seriesId !== templateSeries.seriesId)
+      .map(series => ({ ...series }));
+  }
+
+  function mergeSeriesDefinitions(series: ISeriesDefinition[]): ISeriesDefinition[] {
+    const mergedById = new Map<string, ISeriesDefinition>();
+    series.forEach(item => {
+      mergedById.set(item.seriesId, item);
+    });
+    return Array.from(mergedById.values());
+  }
+
+  function expandTemplateSeriesDefinitions(payload: ISeriesDefinition[], existingSeries: ISeriesDefinition[] = []): ISeriesDefinition[] {
+    const bmsMetrics: ('capacity.stateOfCharge' | 'current')[] = ['capacity.stateOfCharge', 'current'];
+    const expandedById = new Map<string, ISeriesDefinition>();
+    const discoveredBatteryIds = resolveBmsBatteryIdsFromSelfPath();
+
+    payload.forEach(series => {
+      if (!isKipTemplateSeriesDefinition(series)) {
+        expandedById.set(series.seriesId, series);
+        return;
+      }
+
+      if (discoveredBatteryIds.length === 0) {
+        getExistingConcreteBmsSeries(series, existingSeries).forEach(existing => {
+          expandedById.set(existing.seriesId, existing);
+        });
+        return;
+      }
+
+      const allowedBatteryIds = Array.isArray(series.allowedBatteryIds)
+        ? series.allowedBatteryIds
+          .filter((id): id is string => typeof id === 'string')
+          .map(id => id.trim())
+          .filter(id => id.length > 0)
+        : [];
+
+      const allowedSet = allowedBatteryIds.length > 0 ? new Set(allowedBatteryIds) : null;
+      const batteryIds = discoveredBatteryIds.filter(id => !allowedSet || allowedSet.has(id));
+      if (batteryIds.length === 0) {
+        return;
+      }
+
+      const source = series.source ?? 'default';
+      const sourceKey = slugify(source || 'default') || 'default';
+
+      batteryIds.forEach(batteryId => {
+        bmsMetrics.forEach(metric => {
+          const path = `self.electrical.batteries.${batteryId}.${metric}`;
+          const seriesId = `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`;
+
+          expandedById.set(seriesId, {
+            ...series,
+            seriesId,
+            datasetUuid: `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`,
+            path,
+            retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
+            expansionMode: null
+          });
+        });
+      });
+    });
+
+    return Array.from(expandedById.values());
   }
 
   function getDisplaySelfPath(displayId: string, suffix?: string): object | undefined {
@@ -635,7 +746,7 @@ const start = (server: ServerAPI): Plugin => {
       existing.allSelfContext = existing.allSelfContext && allSelfContext;
     };
 
-    historySeries.listSeries().filter(series => series.enabled !== false).forEach(series => {
+    historySeries.listSeries().filter(isKipSeriesEnabled).forEach(series => {
       const allSelfContext = (series.context ?? 'vessels.self') === 'vessels.self';
       addCandidate(series.path, allSelfContext);
 
@@ -1205,8 +1316,15 @@ const start = (server: ServerAPI): Plugin => {
             return sendFail(res, 400, 'Body must be an array of series definitions');
           }
 
-          const simulated = new HistorySeriesService(() => Date.now());
-          historySeries.listSeries().forEach(series => {
+          const simulated = new HistorySeriesService(
+            () => Date.now(),
+            typeof server.selfId === 'string' && server.selfId.trim().length > 0 ? `vessels.${server.selfId.trim()}` : null
+          );
+          const currentSeries = mergeSeriesDefinitions([
+            ...(await storageService.getSeriesDefinitions()),
+            ...historySeries.listSeries()
+          ]);
+          currentSeries.forEach(series => {
             simulated.upsertSeries(series);
           });
 
@@ -1214,7 +1332,19 @@ const start = (server: ServerAPI): Plugin => {
             ...series
           }));
 
-          const result = simulated.reconcileSeries(scopedPayload);
+          const isBatteryDiscoveryUnavailable = resolveBmsBatteryIdsFromSelfPath().length === 0;
+          const preservedBmsSeries = isBatteryDiscoveryUnavailable
+            ? scopedPayload
+              .filter(isKipTemplateSeriesDefinition)
+              .flatMap(series => currentSeries.filter(current => current.ownerWidgetUuid === series.ownerWidgetUuid && isKipConcreteSeriesDefinition(current) && current.seriesId !== series.seriesId))
+            : [];
+
+          const expandedPayload = mergeSeriesDefinitions([
+            ...expandTemplateSeriesDefinitions(scopedPayload, currentSeries),
+            ...preservedBmsSeries
+          ]);
+
+          const result = simulated.reconcileSeries(expandedPayload);
           const nextSeries = simulated.listSeries();
 
           await storageService.replaceSeriesDefinitions(nextSeries);

@@ -4,25 +4,15 @@ import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
+import type { IKipSeriesDefinition } from '../contracts/kip-series-contract';
 import type { AggregateMethod, TimeRangeQueryParams } from '@signalk/server-api/history';
 
-/**
- * Series definition expected by the KIP plugin `/plugins/kip/series/reconcile` endpoint.
- */
-export interface IKipSeriesDefinition {
-  seriesId: string;
-  datasetUuid: string;
-  ownerWidgetUuid: string;
-  ownerWidgetSelector?: string | null;
-  path: string;
-  context?: string | null;
-  source?: string | null;
-  timeScale?: string | null;
-  period?: number | null;
-  retentionDurationMs?: number | null;
-  sampleTime?: number | null;
-  enabled?: boolean;
-}
+export type {
+  IKipConcreteSeriesDefinition,
+  IKipSeriesDefinition,
+  IKipTemplateSeriesDefinition,
+  THistoryMethod
+} from '../contracts/kip-series-contract';
 
 /**
  * Reconcile summary returned by the KIP plugin `/plugins/kip/series/reconcile` endpoint.
@@ -159,6 +149,38 @@ export class KipSeriesApiClientService {
       return response;
     } catch (error) {
       console.error('[KipSeriesApiClientService] Series reconcile request failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetches all effective history-series definitions currently known by the KIP plugin.
+   *
+   * @returns {Promise<IKipSeriesDefinition[] | null>} Series definitions when successful, otherwise null.
+   *
+   * @example
+   * const rows = await kipSeriesApiClientService.getSeriesDefinitions();
+   * if (rows) {
+   *   console.log(rows.length);
+   * }
+   */
+  public async getSeriesDefinitions(): Promise<IKipSeriesDefinition[] | null> {
+    try {
+      const modeConfig = await this.pluginConfig.getKipRuntimeModeConfigCached('kip');
+      if (!modeConfig.historySeriesServiceEnabled) {
+        console.warn('[KipSeriesApiClientService] Series list skipped because history-series service is disabled in KIP plugin settings');
+        return null;
+      }
+
+      if (!this.kipPluginServiceUrl) {
+        console.warn('[KipSeriesApiClientService] No KIP plugin endpoint available for series list');
+        return null;
+      }
+
+      const listUrl = `${this.kipPluginServiceUrl}series`;
+      return await firstValueFrom(this.http.get<IKipSeriesDefinition[]>(listUrl));
+    } catch (error) {
+      console.error('[KipSeriesApiClientService] Series list request failed:', error);
       return null;
     }
   }

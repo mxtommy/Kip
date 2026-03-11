@@ -11,6 +11,7 @@ import { DashboardHistorySeriesSyncService } from '../../services/dashboard-hist
 import { uiEventService } from '../../services/uiEvent.service';
 import { SettingsService } from '../../services/settings.service';
 import { UnitsService } from '../../services/units.service';
+import { KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
 import { IWidget } from '../../interfaces/widgets-interface';
 
 class DashboardServiceStub {
@@ -30,6 +31,7 @@ describe('WidgetHost2Component', () => {
 	let dashboard: DashboardServiceStub;
 	let dialogServiceMock: { openWidgetOptions: jasmine.Spy; openWidgetHistoryDialog: jasmine.Spy };
 	let historySyncMock: { resolveSeriesForWidget: jasmine.Spy };
+	let kipSeriesMock: { getSeriesDefinitions: jasmine.Spy };
 	let bottomSheetMock: { open: jasmine.Spy };
 	let testWidget: IWidget;
 
@@ -54,6 +56,9 @@ describe('WidgetHost2Component', () => {
 					enabled: true
 				}
 			])
+		};
+		kipSeriesMock = {
+			getSeriesDefinitions: jasmine.createSpy('getSeriesDefinitions').and.resolveTo([])
 		};
 
 		await TestBed.configureTestingModule({
@@ -97,7 +102,8 @@ describe('WidgetHost2Component', () => {
 						isDragging: signal(false)
 					}
 				},
-				{ provide: DashboardHistorySeriesSyncService, useValue: historySyncMock }
+				{ provide: DashboardHistorySeriesSyncService, useValue: historySyncMock },
+				{ provide: KipSeriesApiClientService, useValue: kipSeriesMock }
 			]
 		}).compileComponents();
 
@@ -125,11 +131,12 @@ describe('WidgetHost2Component', () => {
 		(component as unknown as { widgetProperties: IWidget }).widgetProperties = testWidget;
 	});
 
-	it('opens history dialog from context menu when dashboard is locked', () => {
+	it('opens history dialog from context menu when dashboard is locked', async () => {
 		dashboard.isDashboardStatic.set(true);
 		const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
 
 		component.openWidgetHistoryDialog(event);
+		await Promise.resolve();
 
 		expect(historySyncMock.resolveSeriesForWidget).toHaveBeenCalledWith(testWidget);
 		expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
@@ -141,11 +148,12 @@ describe('WidgetHost2Component', () => {
 		);
 	});
 
-	it('does not open history dialog from context menu when dashboard is unlocked', () => {
+	it('does not open history dialog from context menu when dashboard is unlocked', async () => {
 		dashboard.isDashboardStatic.set(false);
 		const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
 
 		component.openWidgetHistoryDialog(event);
+		await Promise.resolve();
 
 		expect(historySyncMock.resolveSeriesForWidget).not.toHaveBeenCalled();
 		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
@@ -159,7 +167,7 @@ describe('WidgetHost2Component', () => {
 		expect(dialogServiceMock.openWidgetOptions).not.toHaveBeenCalled();
 	});
 
-	it('opens history dialog from explicit two-finger tap when dashboard is locked', () => {
+	it('opens history dialog from explicit two-finger tap when dashboard is locked', async () => {
 		dashboard.isDashboardStatic.set(true);
 
 		component.onHistoryTwoFingerTap(new PointerEvent('pointerup', {
@@ -169,12 +177,13 @@ describe('WidgetHost2Component', () => {
 			clientY: 20,
 			isPrimary: true
 		}));
+		await Promise.resolve();
 
 		expect(historySyncMock.resolveSeriesForWidget).toHaveBeenCalledWith(testWidget);
 		expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
 	});
 
-	it('does not open history dialog when widget has no numeric paths', () => {
+	it('does not open history dialog when widget has no numeric paths', async () => {
 		dashboard.isDashboardStatic.set(true);
 		testWidget.config.paths = {
 			textPath: {
@@ -188,20 +197,22 @@ describe('WidgetHost2Component', () => {
 		};
 
 		component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+		await Promise.resolve();
 
 		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
 	});
 
-	it('does not open history dialog when supportAutomaticHistoricalSeries is false', () => {
+	it('does not open history dialog when supportAutomaticHistoricalSeries is false', async () => {
 		dashboard.isDashboardStatic.set(true);
 		testWidget.config.supportAutomaticHistoricalSeries = false;
 
 		component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+		await Promise.resolve();
 
 		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
 	});
 
-	it('does not open history dialog when resolved series is inactive', () => {
+	it('does not open history dialog when resolved series is inactive', async () => {
 		dashboard.isDashboardStatic.set(true);
 		historySyncMock.resolveSeriesForWidget.and.returnValue([
 			{
@@ -217,8 +228,46 @@ describe('WidgetHost2Component', () => {
 		]);
 
 		component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+		await Promise.resolve();
 
 		expect(dialogServiceMock.openWidgetHistoryDialog).not.toHaveBeenCalled();
+	});
+
+	it('opens history dialog for widget-bms using effective plugin-expanded series', async () => {
+		dashboard.isDashboardStatic.set(true);
+		testWidget.type = 'widget-bms';
+		testWidget.config = {
+			displayName: 'BMS',
+		};
+
+		historySyncMock.resolveSeriesForWidget.and.returnValue([
+			{
+				seriesId: 'widget-1:bms-template',
+				datasetUuid: 'widget-1:bms-template',
+				ownerWidgetUuid: 'widget-1',
+				ownerWidgetSelector: 'widget-bms',
+				path: 'self.electrical.batteries.*',
+				expansionMode: 'bms-battery-tree',
+				enabled: true
+			}
+		]);
+
+		kipSeriesMock.getSeriesDefinitions.and.resolveTo([
+			{
+				seriesId: 'widget-1:bms:bank-1:stateOfCharge:default',
+				datasetUuid: 'widget-1:bms:bank-1:stateOfCharge:default',
+				ownerWidgetUuid: 'widget-1',
+				ownerWidgetSelector: 'widget-bms',
+				path: 'electrical.batteries.bank-1.stateOfCharge',
+				enabled: true
+			}
+		]);
+
+		component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
 	});
 
 	it('suppresses bottom sheet opening while dragging', () => {

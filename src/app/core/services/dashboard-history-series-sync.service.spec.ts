@@ -565,6 +565,64 @@ describe('DashboardHistorySeriesSyncService', () => {
     ]);
   });
 
+  it('resolves widget-bms template mappings for plugin-side battery expansion', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-bms-1',
+      type: 'widget-bms',
+      config: {
+        timeScale: 'minute',
+        period: 15,
+      }
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(seriesIds(series)).toEqual([
+      'widget-bms-1:bms-template'
+    ]);
+    expect(series.every(item => item.expansionMode === 'bms-battery-tree')).toBeTrue();
+  });
+
+  it('includes configured BMS battery scope in template series payload', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-bms-2',
+      type: 'widget-bms',
+      config: {
+        bms: {
+          trackedBatteryIds: ['house', 'starter'],
+          banks: [
+            { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house', 'aux'] }
+          ]
+        }
+      } as IWidget['config']
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedBatteryIds).toEqual(['aux', 'house', 'starter']);
+  });
+
+  it('uses all discovered batteries when trackedBatteryIds is empty, even if banks exist', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-bms-3',
+      type: 'widget-bms',
+      config: {
+        bms: {
+          trackedBatteryIds: [],
+          banks: [
+            { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house'] }
+          ]
+        }
+      } as IWidget['config']
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedBatteryIds).toBeUndefined();
+  });
+
   it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {
     const service = TestBed.inject(DashboardHistorySeriesSyncService);
     const widget: IWidget = {
