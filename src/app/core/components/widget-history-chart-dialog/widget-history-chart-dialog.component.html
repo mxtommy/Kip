@@ -4,7 +4,7 @@
     <mat-icon>close</mat-icon>
   </button>
 </div>
-<mat-dialog-content>
+<mat-dialog-content class="history-dialog-content">
   <div class="time-select">
     <mat-button-toggle-group [(ngModel)]="selectedPeriod" hideSingleSelectionIndicator="true" aria-label="Chart Time Span Selection">
       <mat-button-toggle value="PT15M" (click)="setPeriod('PT15M')">15 Minutes</mat-button-toggle>
@@ -13,7 +13,7 @@
       <mat-button-toggle value="PT24H" (click)="setPeriod('PT24H')">24 Hours</mat-button-toggle>
     </mat-button-toggle-group>
   </div>
-  <div class="history-dialog-content">
+  <div class="chart-area">
     @if (loading()) {
       <p class="history-message">Loading historical data…</p>
     } @else if (error()) {

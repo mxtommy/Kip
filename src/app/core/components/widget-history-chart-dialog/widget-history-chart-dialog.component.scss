@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
 .dialogue-header {
   display: flex;
   justify-content: space-between;
@@ -8,19 +13,43 @@
   margin-right: 15px;
 }
 
-.history-dialog-content {
+mat-dialog-content.history-dialog-content {
+  padding: 0px 24px 20px 24px;
   display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   min-width: 70vw;
   min-height: 55vh;
-  padding-top: 0px;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.time-select {
+  flex-grow: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.chart-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
 }
 
 .chart-wrapper {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
-  height: 55vh;
+
+  canvas {
+    flex: 1 1 0;
+    min-height: 0;
+  }
 }
 
 .history-message {
@@ -30,8 +59,4 @@
 
 .error {
   color: var(--mat-sys-error);
-}
-
-.time-select {
-  text-align: center;
 }
