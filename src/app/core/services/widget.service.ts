@@ -365,9 +365,9 @@ export class WidgetService {
       componentClassName: 'WidgetHorizonComponent'
     },
   {
-      name: 'Battery Management System',
-      description: 'Displays battery management system data with bank aggregation and per-battery details.',
-      icon: 'data',
+      name: 'Battery Monitor',
+      description: 'Monitors battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. Displays key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
+      icon: 'battery_charging',
       minWidth: 2,
       minHeight: 2,
       defaultWidth: 8,

@@ -392,7 +392,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
         return;
       }
 
-      const title = this.widgetProperties?.config?.displayName || this.widgetProperties?.type || 'Widget History';
+      const title = this.widgetProperties?.config?.displayName || (this.widgetProperties?.type === 'widget-bms' ? 'Battery Monitor' : 'Widget History');
 
       this.dialog.openWidgetHistoryDialog({
         title,
