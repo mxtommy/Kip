@@ -71,6 +71,8 @@ export class PathDiscoveryService implements OnDestroy {
   private readonly registrations = new Map<PathDiscoveryToken, PathDiscoveryRegistration>();
 
   constructor() {
+    this.seedFromDataCache();
+
     this.data.observePathUpdates()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(event => this.applyPathUpdate(event));
@@ -78,6 +80,12 @@ export class PathDiscoveryService implements OnDestroy {
     this.data.isResetService()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.reset());
+  }
+
+  private seedFromDataCache(): void {
+    for (const path of this.data.getCachedPaths()) {
+      this.addPath(path);
+    }
   }
 
   /**

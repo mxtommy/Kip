@@ -629,6 +629,21 @@ export class DataService implements OnDestroy {
       .map(item => item.path);
   }
 
+  /**
+   * Returns a snapshot of currently known Signal K full paths from the local cache.
+   *
+   * This is intended for startup/backfill consumers that need current path presence
+   * without waiting for the next live delta update event.
+   *
+   * @param {boolean} selfOnly When true, only paths under `self.` are returned.
+   * @returns {string[]} Snapshot array of known full paths.
+   */
+  public getCachedPaths(selfOnly = false): string[] {
+    return this.getSkDataArray()
+      .map(item => item.path)
+      .filter(path => !selfOnly || path.startsWith('self.'));
+  }
+
   public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
     return this.getSkDataArray()
       .filter(item => {
