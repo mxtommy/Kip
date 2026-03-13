@@ -165,7 +165,7 @@ export class PathDiscoveryService implements OnDestroy {
     const fullPath = event?.fullPath;
     if (!fullPath) return;
 
-    if (event.update?.value === null) {
+    if (event.kind === 'data' && event.update?.value === null) {
       //TODO: fix delete on timeout
       //this.removePath(fullPath);
       return;

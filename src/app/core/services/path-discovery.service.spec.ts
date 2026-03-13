@@ -7,6 +7,7 @@ import { IPathUpdateEvent } from '../interfaces/app-interfaces';
 function makeEvent(fullPath: string, value: unknown): IPathUpdateEvent {
   return {
     fullPath,
+    kind: 'data',
     update: {
       context: 'self',
       path: fullPath.replace(/^self\./, ''),
@@ -14,6 +15,13 @@ function makeEvent(fullPath: string, value: unknown): IPathUpdateEvent {
       timestamp: '2026-03-12T00:00:00.000Z',
       value
     }
+  };
+}
+
+function makeStateEvent(fullPath: string): IPathUpdateEvent {
+  return {
+    fullPath,
+    kind: 'state'
   };
 }
 
@@ -86,5 +94,19 @@ describe('PathDiscoveryService', () => {
     reset$.next(true);
 
     expect(service.activePaths(token).size).toBe(0);
+  });
+
+  it('should add path on state-only event', () => {
+    service = TestBed.inject(PathDiscoveryService);
+
+    const token = service.register({
+      patterns: ['self.electrical.batteries.*'],
+      contextTypes: ['self'],
+      pathPrefixes: ['electrical.batteries.']
+    });
+
+    pathUpdates$.next(makeStateEvent('self.electrical.batteries.12.capacity.stateOfCharge'));
+
+    expect(service.activePaths(token).has('self.electrical.batteries.12.capacity.stateOfCharge')).toBeTrue();
   });
 });

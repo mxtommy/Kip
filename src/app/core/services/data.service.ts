@@ -154,6 +154,11 @@ export class DataService implements OnDestroy {
       if (pathItem && pathItem.state !== (msg.value as ISignalKNotification).state) {
         pathItem.state = (msg.value as ISignalKNotification).state;
 
+        this._pathUpdates$.next({
+          fullPath: cleanedPath,
+          kind: 'state'
+        });
+
         const pathRegisterItems = this._pathRegisterByPath.get(cleanedPath);
         if (pathRegisterItems?.length) {
           for (const registration of pathRegisterItems) {
@@ -424,6 +429,7 @@ export class DataService implements OnDestroy {
     // Emit post-processed path update
     this._pathUpdates$.next({
       fullPath: updatePath,
+      kind: 'data',
       update: dataPath
     });
   }
