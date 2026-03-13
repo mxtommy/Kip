@@ -1,3 +1,5 @@
+import type { TState } from '../../core/interfaces/signalk-interfaces';
+
 export type BmsBankConnectionMode = 'parallel' | 'series';
 
 export interface BmsBankConfig {
@@ -141,6 +143,14 @@ export interface BmsBatterySnapshot {
    * const battery: BmsBatterySnapshot = { id: '1', timeRemaining: 7200 };
    */
   timeRemaining?: number | null;
+  /**
+   * Zone state for the current path.
+   */
+  currentState?: TState | null;
+  /**
+   * Zone state for the state-of-charge path.
+   */
+  stateOfChargeState?: TState | null;
 }
 
 export interface BmsBankSummary {

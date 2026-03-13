@@ -8,6 +8,7 @@ import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.dir
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
+import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import type { BmsBankConfig, BmsBankConnectionMode, BmsBankSummary, BmsBatterySnapshot, BmsWidgetConfig } from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 
@@ -85,7 +86,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private renderFrameId: number | null = null;
   private pathBatchTimerId: number | null = null;
   private initialPathPaintDone = false;
-  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown }>();
+  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
   private powerAvailableIconTemplate: SVGElement | null = null;
   private powerRenewalIconTemplate: SVGElement | null = null;
 
@@ -234,8 +235,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
     const { id, key } = match;
     const value = update.update?.data?.value ?? null;
+    const state = update.update?.state ?? null;
     const updateKey = `${id}::${key}`;
-    this.pendingPathUpdates.set(updateKey, { id, key, value });
+    this.pendingPathUpdates.set(updateKey, { id, key, value, state });
 
     if (!this.initialPathPaintDone) {
       this.initialPathPaintDone = true;
@@ -266,7 +268,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       for (const update of updates) {
         const existing = nextState[update.id] ?? { id: update.id } as BmsBatterySnapshot;
         const next = { ...existing } as BmsBatterySnapshot;
-        const valueChanged = this.applyBatteryValue(next, update.key, update.value);
+        const valueChanged = this.applyBatteryValue(next, update.key, update.value, update.state);
 
         let powerChanged = false;
         if (next.voltage != null && next.current != null) {
@@ -306,7 +308,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.discoveredBatteryIds.set(next);
   }
 
-  private applyBatteryValue(battery: BmsBatterySnapshot, key: string, value: unknown): boolean {
+  private applyBatteryValue(battery: BmsBatterySnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
       case 'name': {
         const nextValue = value as string;
@@ -334,8 +336,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       }
       case 'current': {
         const nextValue = this.toNumber(value, 'A');
-        if (Object.is(battery.current, nextValue)) return false;
+        const stateChanged = !Object.is(battery.currentState ?? null, state ?? null);
+        if (Object.is(battery.current, nextValue) && !stateChanged) return false;
         battery.current = nextValue;
+        battery.currentState = state;
         return true;
       }
       case 'temperature': {
@@ -364,8 +368,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       }
       case 'capacity.stateOfCharge': {
         const nextValue = this.toNumber(value, 'ratio');
-        if (Object.is(battery.stateOfCharge, nextValue)) return false;
+        const stateChanged = !Object.is(battery.stateOfChargeState ?? null, state ?? null);
+        if (Object.is(battery.stateOfCharge, nextValue) && !stateChanged) return false;
         battery.stateOfCharge = nextValue;
+        battery.stateOfChargeState = state;
         return true;
       }
       case 'capacity.timeRemaining': {
@@ -442,6 +448,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private render(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[], theme: ITheme, colorRole: string): void {
     if (!this.bankLayer || !this.batteryLayer) return;
     const widgetColors = getColors(colorRole, theme);
+    const ignoreZones = this.runtime.options()?.ignoreZones ?? false;
 
     const renderLayout = this.buildRenderLayout(banks, batteries);
     const viewBoxHeight = Math.max(WidgetBmsComponent.MIN_VIEWBOX_HEIGHT, renderLayout.contentHeight);
@@ -547,7 +554,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const inBankMerged = inBankEnter.merge(
           inBankSelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
         );
-        this.renderBatteryCards(inBankMerged, widgetColors);
+        this.renderBatteryCards(inBankMerged, widgetColors, theme, ignoreZones);
 
         inBankSelection.exit().remove();
       });
@@ -568,7 +575,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const batteryMerged = batteryEnter.merge(
       batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
     );
-    this.renderBatteryCards(batteryMerged, widgetColors);
+    this.renderBatteryCards(batteryMerged, widgetColors, theme, ignoreZones);
 
     batterySelection.exit().remove();
 
@@ -685,7 +692,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private renderBatteryCards(
     selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
-    widgetColors: ReturnType<typeof getColors>
+    widgetColors: ReturnType<typeof getColors>,
+    theme: ITheme,
+    ignoreZones: boolean
   ): void {
     selection.attr('transform', item => `translate(${item.x},${item.y}) scale(${item.scale})`);
     selection.select('rect.bms-card-battery')
@@ -707,7 +716,12 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('y', 1.5)
       .attr('width', item => (WidgetBmsComponent.BATTERY_CARD_WIDTH - 3) * (item.stateOfCharge ?? 0))
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT - 3)
-      .attr('fill', item => item.compact ? widgetColors.dimmer : widgetColors.dim);
+      .attr('fill', item => WidgetBmsComponent.resolveZoneAwareColor(
+        item.stateOfChargeState,
+        item.compact ? widgetColors.dimmer : widgetColors.dim,
+        theme,
+        ignoreZones
+      ));
     selection.select('text.bms-card-title')
       .attr('x', 5)
       .attr('y', item => item.compact ? 11 : 14)
@@ -717,7 +731,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.select('text.bms-card-ampere')
       .attr('x', 10)
       .attr('y', 33)
-      .attr('fill', item => item.compact ? 'var(--kip-contrast-dim-color)' : 'var(--kip-contrast-color)')
+      .attr('fill', item => WidgetBmsComponent.resolveZoneAwareColor(
+        item.currentState,
+        item.compact ? 'var(--kip-contrast-dim-color)' : 'var(--kip-contrast-color)',
+        theme,
+        ignoreZones
+      ))
+      .attr('stroke', 'var(--kip-widget-card-background-color)')
+      .attr('stroke-width', item => item.currentState !== 'normal' ? 0.5 : 0)
       .attr('font-size', 16)
       .text(item => `${this.formatCurrent(item.current)}`.trim());
     selection.select('text.bms-volt-power')
@@ -835,6 +856,24 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     if (value == null) return '';
     if (typeof value !== 'number') return '';
     return `${value.toFixed(1)} ${this.units.getDefaults().Temperature === 'celsius' ? '°C' : '°F'}`;
+  }
+
+  private static resolveZoneAwareColor(state: TState | null | undefined, fallbackColor: string, theme: ITheme, ignoreZones: boolean): string {
+    if (ignoreZones) return fallbackColor;
+    if (!state) return fallbackColor;
+
+    switch (state) {
+      case States.Nominal:
+        return theme.zoneNominal;
+      case States.Alarm:
+        return theme.zoneAlarm;
+      case States.Warn:
+        return theme.zoneWarn;
+      case States.Alert:
+        return theme.zoneAlert;
+      default:
+        return fallbackColor;
+    }
   }
 
   private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {
