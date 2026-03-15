@@ -48,6 +48,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig & { bms: BmsWidgetConfig } = {
     color: 'contrast',
+    ignoreZones: false,
     bms: {
       trackedBatteryIds: [],
       banks: []
@@ -461,17 +462,17 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
     const bankEnter = bankSelection.enter().append('g').attr('class', 'bank-card');
     bankEnter.append('rect').attr('class', 'bms-card bms-card--bank').attr('rx', 4).attr('ry', 4);
-    bankEnter.append('text').attr('class', 'bms-card-title');
     bankEnter.append('text').attr('class', 'bms-card-power');
     bankEnter.append('text').attr('class', 'bms-card-current');
     bankEnter.append('text').attr('class', 'bms-card-capacity');
-    bankEnter.append('text').attr('class', 'bms-card-actualCapacity');
-    bankEnter.append('text').attr('class', 'bms-card-remaining');
     const gaugeEnter = bankEnter.append('g').attr('class', 'bms-bank-gauge');
     gaugeEnter.append('path').attr('class', 'bms-gauge-bg');
     gaugeEnter.append('path').attr('class', 'bms-gauge-value');
-    gaugeEnter.append('text').attr('class', 'bms-gauge-label');
+    gaugeEnter.append('text').attr('class', 'bms-gauge-soc');
+    bankEnter.append('text').attr('class', 'bms-card-actualCapacity');
+    bankEnter.append('text').attr('class', 'bms-card-remaining');
     bankEnter.append('g').attr('class', 'bms-bank-batteries');
+    bankEnter.append('text').attr('class', 'bms-card-title');
 
     const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
     bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
@@ -515,7 +516,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('stroke', widgetColors.color)
       .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_VALUE_STROKE)
       .attr('stroke-linecap', 'round');
-    bankMerged.select('text.bms-gauge-label')
+    bankMerged.select('text.bms-gauge-soc')
       .attr('x', 0)
       .attr('y', -2)
       .attr('text-anchor', 'middle')
@@ -681,13 +682,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.append('rect').attr('class', 'bms-card-battery').attr('rx', 4).attr('ry', 4);
     selection.append('rect').attr('class', 'bms-card-tip').attr('rx', 1).attr('ry', 1);
     selection.append('rect').attr('class', 'bms-card-charge').attr('rx', 3).attr('ry', 3);
-    selection.append('text').attr('class', 'bms-card-title');
+    selection.append('g').attr('class', 'bms-card-icon');
     selection.append('text').attr('class', 'bms-card-ampere');
     selection.append('text').attr('class', 'bms-volt-power');
     selection.append('text').attr('class', 'bms-card-soc');
     selection.append('text').attr('class', 'bms-card-actualCapacity');
     selection.append('text').attr('class', 'bms-card-remaining');
-    selection.append('g').attr('class', 'bms-card-icon');
+    selection.append('text').attr('class', 'bms-card-title');
   }
 
   private renderBatteryCards(
