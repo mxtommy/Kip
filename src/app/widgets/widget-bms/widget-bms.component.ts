@@ -21,6 +21,7 @@ import type {
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 
 interface BmsRenderBank extends BmsBankSummary {
+  displayModel: BmsBankDisplayModel;
   x: number;
   y: number;
   width: number;
@@ -29,6 +30,7 @@ interface BmsRenderBank extends BmsBankSummary {
 }
 
 interface BmsRenderBattery extends BmsBatterySnapshot {
+  displayModel: BmsBatteryDisplayModel;
   key: string;
   x: number;
   y: number;
@@ -571,7 +573,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     if (!this.bankLayer || !this.batteryLayer) return;
     const { banks, batteries, bankDisplayModels, batteryDisplayModels, widgetColors } = snapshot;
 
-    const renderLayout = this.buildRenderLayout(banks, batteries);
+    const renderLayout = this.buildRenderLayout(banks, batteries, bankDisplayModels, batteryDisplayModels);
     const viewBoxHeight = Math.max(WidgetBmsComponent.MIN_VIEWBOX_HEIGHT, renderLayout.contentHeight);
     this.svg?.attr('viewBox', `0 0 ${WidgetBmsComponent.VIEWBOX_WIDTH} ${viewBoxHeight}`);
     this.root?.attr('transform', null);
@@ -606,20 +608,20 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', 15.5)
       .attr('opacity', 0.8)
-      .text(item => bankDisplayModels[item.id]?.titleText ?? (item.name || 'Bank'));
+      .text(item => item.displayModel.titleText);
     bankMerged.select('text.bank-card-current')
       .attr('x', 10)
       .attr('y', 37)
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 16)
-      .text(item => bankDisplayModels[item.id]?.currentText ?? this.formatCurrent(item.totalCurrent));
+      .text(item => item.displayModel.currentText);
     bankMerged.select('text.bank-card-power')
       .attr('x', 10)
       .attr('y', 49)
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 10)
       .attr('opacity', 0.8)
-      .text(item => bankDisplayModels[item.id]?.powerText ?? this.formatPower(item.totalPower));
+      .text(item => item.displayModel.powerText);
 
     bankMerged.select('g.bank-gauge')
       .attr('transform', 'translate(150, 46)');
@@ -630,9 +632,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_BG_STROKE)
       .attr('stroke-linecap', 'round');
     bankMerged.select('path.bank-gauge-value')
-      .attr('d', item => bankDisplayModels[item.id]?.gaugeValuePath ?? this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, item.avgSoc))
+      .attr('d', item => item.displayModel.gaugeValuePath)
       .attr('fill', 'none')
-      .attr('stroke', item => bankDisplayModels[item.id]?.gaugeValueColor ?? widgetColors.color)
+      .attr('stroke', item => item.displayModel.gaugeValueColor)
       .attr('stroke-width', WidgetBmsComponent.BANK_GAUGE_VALUE_STROKE)
       .attr('stroke-linecap', 'round');
     bankMerged.select('text.bank-gauge-soc')
@@ -642,21 +644,21 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 25)
       .attr('font-weight', 700)
-      .text(item => bankDisplayModels[item.id]?.socText ?? this.formatSoc(item.avgSoc));
+      .text(item => item.displayModel.socText);
     bankMerged.select('text.bank-remaining')
       .attr('x', 150)
       .attr('y', 22)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
-      .text(item => bankDisplayModels[item.id]?.remainingText ?? `${this.formatDuration(item.timeRemaining)}`.trim());
+      .text(item => item.displayModel.remainingText);
     bankMerged.select('text.bank-actualCapacity')
       .attr('x', 150)
       .attr('y', 53)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .text(item => bankDisplayModels[item.id]?.remainingCapacityText ?? (item.remainingCapacity ? `${item.remainingCapacity} kWh` : ''));
+      .text(item => item.displayModel.remainingCapacityText);
     bankMerged
       .select<SVGGElement>('g.bank-bms-batteries')
       .each((bankItem, index, nodes) => {
@@ -674,7 +676,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const inBankMerged = inBankEnter.merge(
           inBankSelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
         );
-        this.renderBatteryCards(inBankMerged, batteryDisplayModels, widgetColors);
+        this.renderBatteryCards(inBankMerged, widgetColors);
 
         inBankSelection.exit().remove();
       });
@@ -695,14 +697,19 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const batteryMerged = batteryEnter.merge(
       batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
     );
-    this.renderBatteryCards(batteryMerged, batteryDisplayModels, widgetColors);
+    this.renderBatteryCards(batteryMerged, widgetColors);
 
     batterySelection.exit().remove();
 
     this.root?.attr('data-theme', 'ready');
   }
 
-  private buildRenderLayout(banks: BmsBankSummary[], batteries: BmsBatterySnapshot[]): BmsRenderLayout {
+  private buildRenderLayout(
+    banks: BmsBankSummary[],
+    batteries: BmsBatterySnapshot[],
+    bankDisplayModels: Record<string, BmsBankDisplayModel>,
+    batteryDisplayModels: Record<string, BmsBatteryDisplayModel>
+  ): BmsRenderLayout {
     const batteryById = new Map<string, BmsBatterySnapshot>(batteries.map(battery => [battery.id, battery]));
     const assignedBatteryIds = new Set<string>();
     const inBankScale = this.computeInBankBatteryScale();
@@ -739,7 +746,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const x = WidgetBmsComponent.IN_BANK_PADDING_X + column * (inBankSlotWidth + WidgetBmsComponent.IN_BANK_COLUMN_GAP);
         const y = WidgetBmsComponent.BANK_HEADER_HEIGHT + row * (inBankRenderedHeight + WidgetBmsComponent.CARD_GAP);
         return {
-          ...battery,
+          id: battery.id,
+          displayModel: batteryDisplayModels[battery.id],
           key: `${bank.id}::${battery.id}`,
           x,
           y,
@@ -749,7 +757,15 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       });
 
       const renderBank: BmsRenderBank = {
-        ...bank,
+        id: bank.id,
+        name: bank.name,
+        batteryIds: bank.batteryIds,
+        totalCurrent: bank.totalCurrent,
+        totalPower: bank.totalPower,
+        avgSoc: bank.avgSoc,
+        remainingCapacity: bank.remainingCapacity,
+        timeRemaining: bank.timeRemaining,
+        displayModel: bankDisplayModels[bank.id],
         x: 0,
         y: nextBankY,
         width: WidgetBmsComponent.BANK_CARD_WIDTH,
@@ -765,7 +781,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .filter(battery => !assignedBatteryIds.has(battery.id))
       .sort((a, b) => a.id.localeCompare(b.id))
       .map((battery, index): BmsRenderBattery => ({
-        ...battery,
+        id: battery.id,
+        displayModel: batteryDisplayModels[battery.id],
         key: battery.id,
         x: 0,
         y: unassignedStartY + index * (WidgetBmsComponent.BATTERY_CARD_HEIGHT + WidgetBmsComponent.CARD_GAP),
@@ -812,7 +829,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private renderBatteryCards(
     selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
-    batteryDisplayModels: Record<string, BmsBatteryDisplayModel>,
     widgetColors: ReturnType<typeof getColors>
   ): void {
     selection.attr('transform', item => `translate(${item.x},${item.y}) scale(${item.scale})`);
@@ -833,46 +849,30 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.select('rect.bms-charge-fill')
       .attr('x', 1.5)
       .attr('y', 1.5)
-      .attr('width', item => batteryDisplayModels[item.id]?.chargeWidth ?? (WidgetBmsComponent.BATTERY_CARD_WIDTH - 3) * (item.stateOfCharge ?? 0))
+      .attr('width', item => item.displayModel.chargeWidth)
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT - 3)
-      .attr('fill', item => {
-        const model = batteryDisplayModels[item.id];
-        if (!model) return item.compact ? widgetColors.dimmer : widgetColors.dim;
-        return item.compact ? model.chargeBarColorCompact : model.chargeBarColorRegular;
-      });
+      .attr('fill', item => item.compact ? item.displayModel.chargeBarColorCompact : item.displayModel.chargeBarColorRegular);
     selection.select('text.bms-title')
       .attr('x', 5)
       .attr('y', item => item.compact ? 11 : 14)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', item => item.compact ? 8 : 12)
-      .text(item => batteryDisplayModels[item.id]?.titleText ?? (item.name || `Battery ${item.id}`));
+      .text(item => item.displayModel.titleText);
     selection.select('text.bms-ampere')
       .attr('x', 10)
       .attr('y', 33)
-      .attr('fill', item => {
-        const model = batteryDisplayModels[item.id];
-        if (!model) return item.compact ? 'var(--kip-contrast-dim-color)' : 'var(--kip-contrast-color)';
-        return item.compact ? model.currentTextColorCompact : model.currentTextColorRegular;
-      })
+      .attr('fill', item => item.compact ? item.displayModel.currentTextColorCompact : item.displayModel.currentTextColorRegular)
       .attr('stroke', 'var(--kip-widget-card-background-color)')
-      .attr('stroke-width', item => batteryDisplayModels[item.id]?.currentStrokeWidth ?? (item.currentState !== 'normal' ? 0.5 : 0))
+      .attr('stroke-width', item => item.displayModel.currentStrokeWidth)
       .attr('font-size', 16)
-      .text(item => batteryDisplayModels[item.id]?.currentText ?? `${this.formatCurrent(item.current)}`.trim());
+      .text(item => item.displayModel.currentText);
     selection.select('text.bms-volt-power')
       .attr('x', 10)
       .attr('y', 45)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', 8)
       .attr('opacity', 0.8)
-      .text(item => {
-        const model = batteryDisplayModels[item.id];
-        if (!model) {
-          return item.compact
-            ? `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature)}`
-            : `${this.formatVoltage(item.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatPower(item.power)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(item.temperature)}`.trim();
-        }
-        return item.compact ? model.detailLineCompact : model.detailLineRegular;
-      });
+      .text(item => item.compact ? item.displayModel.detailLineCompact : item.displayModel.detailLineRegular);
     selection.select('text.bms-soc')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 34)
@@ -880,34 +880,28 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 25)
       .attr('font-weight', 700)
-      .text(item => batteryDisplayModels[item.id]?.socText ?? this.formatSoc(item.stateOfCharge));
+      .text(item => item.displayModel.socText);
     selection.select('text.bms-actualCapacity')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 45)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .text(item => {
-        if (item.compact) return '';
-        return batteryDisplayModels[item.id]?.actualCapacityText ?? (item.capacityActual ? `${item.capacityActual} kWh` : '');
-      });
+      .text(item => item.compact ? '' : item.displayModel.actualCapacityText);
     selection.select('text.bms-remaining')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 12)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
-      .text(item => {
-        if (item.compact) return '';
-        return batteryDisplayModels[item.id]?.remainingText ?? `${this.formatDuration(item.timeRemaining)}`.trim();
-      });
+      .text(item => item.compact ? '' : item.displayModel.remainingText);
     selection.select('g.bms-state-icon')
       .attr('transform', `translate(${WidgetBmsComponent.BATTERY_CARD_WIDTH / 2 - 18}, ${WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 18})`)
       .attr('display', item => item.compact && item.scale < 0.45 ? 'none' : null)
       .attr('color', item => item.compact ? widgetColors.dim : widgetColors.color)
       .each((item, index, nodes) => {
         const iconGroup = d3.select(nodes[index]);
-        const iconKey = batteryDisplayModels[item.id]?.iconKey ?? 'power_available';
+        const iconKey = item.displayModel.iconKey;
         const iconTemplate = iconKey === 'power_renewal' ? this.powerRenewalIconTemplate : this.powerAvailableIconTemplate;
         if (!iconTemplate) {
           iconGroup.selectAll('*').remove();
