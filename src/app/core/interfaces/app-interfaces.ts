@@ -28,11 +28,13 @@ import { ISkMetadata, TState } from "./signalk-interfaces";
 /**
  * Post-processed Signal K path update emitted by DataService.
  * - fullPath is normalized with context (self, vessels, atons, etc.)
- * - update contains the raw delta payload
+ * - kind identifies whether the change is a data delta or a state-only change
+ * - update contains the raw delta payload for data events
  */
 export interface IPathUpdateEvent {
   fullPath: string;
-  update: IPathValueData;
+  kind: 'data' | 'state';
+  update?: IPathValueData;
 }
 
 /**

@@ -120,6 +120,8 @@ export class DataService implements OnDestroy {
   // Service data variables
   private _selfUrn = 'self'; // self urn, should get updated on first delta or rest call.
   private _skData = new Map<string, ISkPathData>(); // Local map of paths containing received Signal K Data and used to source Observers
+  /** Notification states received before a path exists in `_skData`, keyed by normalized full path. */
+  private _pendingPathStates = new Map<string, TState>();
   /** Full-tree cache (mutated in place); subscribers must not rely on array identity changes. */
   private _skDataArrayCache: ISkPathData[] = [];
   /** Path -> index lookup for `_skDataArrayCache` to enable O(1) upserts. */
@@ -149,10 +151,16 @@ export class DataService implements OnDestroy {
     // Observer router of Delta service Notification updates
     this.delta.subscribeNotificationsUpdates().pipe(takeUntilDestroyed(this._destroyRef)).subscribe((msg: ISignalKDataValueUpdate) => {
       const cleanedPath = msg.path.replace('notifications.', 'self.');
+      const nextState = (msg.value as ISignalKNotification).state;
 
       const pathItem = this._skData.get(cleanedPath);
-      if (pathItem && pathItem.state !== (msg.value as ISignalKNotification).state) {
-        pathItem.state = (msg.value as ISignalKNotification).state;
+      if (pathItem && pathItem.state !== nextState) {
+        pathItem.state = nextState;
+
+        this._pathUpdates$.next({
+          fullPath: cleanedPath,
+          kind: 'state'
+        });
 
         const pathRegisterItems = this._pathRegisterByPath.get(cleanedPath);
         if (pathRegisterItems?.length) {
@@ -160,6 +168,8 @@ export class DataService implements OnDestroy {
             registration._pathState$.next(pathItem.state);
           }
         }
+      } else if (!pathItem) {
+        this._pendingPathStates.set(cleanedPath, nextState);
       }
 
       this._skNotificationMsg$.next(msg);
@@ -186,6 +196,7 @@ export class DataService implements OnDestroy {
 
   private resetSignalKData() {
     this._skData = new Map<string, ISkPathData>();
+    this._pendingPathStates.clear();
     this._skDataArrayCache = [];
     this._skDataIndexByPath.clear();
     this._selfUrn = 'self';
@@ -352,6 +363,7 @@ export class DataService implements OnDestroy {
   private updatePathData(dataPath: IPathValueData): void {
     this._deltaUpdatesCounter++;
     const updatePath = this.setPathContext(dataPath.context, dataPath.path);
+    const pendingState = this._pendingPathStates.get(updatePath);
 
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.get(updatePath);
@@ -367,7 +379,7 @@ export class DataService implements OnDestroy {
         pathTimestamp: dataPath.timestamp,  // timestamp of the last update. Be mindful of source priorities
         defaultSource: dataPath.source,
         type: pathType,
-        state: States.Normal,
+        state: pendingState ?? States.Normal,
         sources: {
           [dataPath.source]: {
             sourceTimestamp: dataPath.timestamp,
@@ -377,6 +389,9 @@ export class DataService implements OnDestroy {
       };
 
       this._skData.set(updatePath, pathItem);
+      if (pendingState !== undefined) {
+        this._pendingPathStates.delete(updatePath);
+      }
     } else {
       // Update the existing path item
       if (pathItem.defaultSource === undefined) {
@@ -424,6 +439,7 @@ export class DataService implements OnDestroy {
     // Emit post-processed path update
     this._pathUpdates$.next({
       fullPath: updatePath,
+      kind: 'data',
       update: dataPath
     });
   }
@@ -433,6 +449,7 @@ export class DataService implements OnDestroy {
       this._skNotificationMeta$.next(meta);
     } else {
       const metaPath = this.setPathContext(meta.context, meta.path);
+      const pendingState = this._pendingPathStates.get(metaPath);
       let pathObject = this._skData.get(metaPath);
 
       if (!pathObject) { // not in our list yet. The Meta update came before the Source update.
@@ -441,12 +458,15 @@ export class DataService implements OnDestroy {
           pathValue: undefined,
           pathTimestamp: undefined,
           type: typeFromUnits(meta.meta.units),
-          state: States.Normal,
+          state: pendingState ?? States.Normal,
           defaultSource: undefined,
           sources: {},
           meta: meta.meta ? cloneDeep(meta.meta) : null,
         };
         this._skData.set(metaPath, pathObject);
+        if (pendingState !== undefined) {
+          this._pendingPathStates.delete(metaPath);
+        }
         if (this._isSkDataFullTreeActive) {
           this.upsertSkDataCache(pathObject);
           this.scheduleSkDataFullTreeEmit();
@@ -627,6 +647,21 @@ export class DataService implements OnDestroy {
     return this.getSkDataArray()
       .filter(item => item.type === valueType && (!selfOnly || item.path.startsWith("self")))
       .map(item => item.path);
+  }
+
+  /**
+   * Returns a snapshot of currently known Signal K full paths from the local cache.
+   *
+   * This is intended for startup/backfill consumers that need current path presence
+   * without waiting for the next live delta update event.
+   *
+   * @param {boolean} selfOnly When true, only paths under `self.` are returned.
+   * @returns {string[]} Snapshot array of known full paths.
+   */
+  public getCachedPaths(selfOnly = false): string[] {
+    return this.getSkDataArray()
+      .map(item => item.path)
+      .filter(path => !selfOnly || path.startsWith('self.'));
   }
 
   public getPathsAndMetaByType(valueType: string, supportsPutOnly = false, hasZones = false, selfOnly = true): IPathMetaData[] {
