@@ -82,7 +82,7 @@ interface ISqliteModule {
 
 const DEFAULT_STORAGE_CONFIG: ISqliteHistoryStorageConfig = {
   engine: 'node:sqlite',
-  databaseFile: 'plugin-config-data/kip/historicalData/kip-history.sqlite',
+  databaseFile: '',
   flushIntervalMs: 30_000
 };
 
@@ -95,8 +95,7 @@ export class SqliteHistoryStorageService {
   private static readonly STALE_SERIES_AGE_MS = 180 * 24 * 60 * 60 * 1000;
   private static readonly PRUNE_BATCH_SIZE = 10_000;
 
-  private config: ISqliteHistoryStorageConfig = { ...DEFAULT_STORAGE_CONFIG };
-  private dataDirPath: string | null = null;
+  private config: ISqliteHistoryStorageConfig;
   private logger: TLogger = {
     debug: () => undefined,
     error: () => undefined
@@ -113,6 +112,18 @@ export class SqliteHistoryStorageService {
   private vacuumJob: NodeJS.Timeout | null = null;
   private pruneJob: NodeJS.Timeout | null = null;
   private staleSeriesCleanupJob: NodeJS.Timeout | null = null;
+
+  constructor(dataDirPath: string) {
+    const normalizedDataDirPath = String(dataDirPath);
+    if (!normalizedDataDirPath) {
+      throw new Error('SqliteHistoryStorageService requires a valid dataDirPath from server.getDataDirPath()');
+    }
+
+    this.config = {
+      ...DEFAULT_STORAGE_CONFIG,
+      databaseFile: join(normalizedDataDirPath, 'historicalData', 'kip-history.sqlite')
+    };
+  }
 
   /**
    * Sets logger callbacks used by the storage service.
@@ -138,27 +149,11 @@ export class SqliteHistoryStorageService {
    */
   public configure(): ISqliteHistoryStorageConfig {
     this.initialized = false;
-    const databaseFile = this.dataDirPath
-      ? join(this.dataDirPath, 'historicalData', 'kip-history.sqlite')
-      : DEFAULT_STORAGE_CONFIG.databaseFile;
     this.config = {
       ...DEFAULT_STORAGE_CONFIG,
-      databaseFile
+      databaseFile: this.config.databaseFile
     };
     return this.config;
-  }
-
-  /**
-   * Sets the base directory for persisted history data.
-   *
-   * @param {string | null} baseDir Absolute directory path for plugin data.
-   * @returns {void}
-   *
-   * @example
-   * storage.setDataDirPath('/var/lib/signalk');
-   */
-  public setDataDirPath(baseDir: string | null): void {
-    this.dataDirPath = typeof baseDir === 'string' && baseDir.trim() ? baseDir.trim() : null;
   }
 
   /**

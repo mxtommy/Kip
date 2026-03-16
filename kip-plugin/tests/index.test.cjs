@@ -5,6 +5,9 @@ const { resolve } = require('node:path');
 const { HistorySeriesService } = require('../../plugin/history-series.service.js');
 const { SqliteHistoryStorageService } = require('../../plugin/sqlite-history-storage.service.js');
 
+const TEST_DATA_DIR = resolve('.tmp-kip-plugin-test-data');
+const TEST_SQLITE_PATH = resolve(TEST_DATA_DIR, 'historicalData', 'kip-history.sqlite');
+
 
 function createServerMock() {
   const putHandlers = [];
@@ -51,6 +54,9 @@ function createServerMock() {
     error() {},
     setPluginStatus() {},
     setPluginError() {},
+    getDataDirPath() {
+      return TEST_DATA_DIR;
+    },
     registerHistoryProvider(provider) {
       legacyHistoryProvider = provider;
     },
@@ -142,7 +148,7 @@ async function startPlugin(plugin, settings) {
 const pluginsToStop = new Set();
 
 function resetSqliteStorage() {
-  rmSync(resolve('plugin-config-data/kip/historicalData/kip-history.sqlite'), { force: true });
+  rmSync(TEST_SQLITE_PATH, { force: true });
 }
 
 test.before(() => {
@@ -235,7 +241,7 @@ function supportsNodeSqliteRuntime() {
 const testRequiresNodeSqlite = supportsNodeSqliteRuntime() ? test : test.skip;
 
 function computeSqliteHistoryResponse(rows, paths, options) {
-  const sqliteMath = new SqliteHistoryStorageService();
+  const sqliteMath = new SqliteHistoryStorageService(TEST_DATA_DIR);
   const resolveRange = sqliteMath.resolveRange.bind(sqliteMath);
   const parseRequestedPaths = sqliteMath.parseRequestedPaths.bind(sqliteMath);
   const applyMethod = sqliteMath.applyMethod.bind(sqliteMath);
@@ -1764,7 +1770,7 @@ test('history service normalizes prefixed paths for direct query lookups', () =>
 });
 
 test('sqlite stored paths/contexts apply requested time-range filters', async () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   storage.configure();
 
   const allSql = [];
@@ -1799,7 +1805,7 @@ test('sqlite stored paths/contexts apply requested time-range filters', async ()
 });
 
 test('sqlite lifecycle token guards stale flush/close operations', async () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   storage.configure();
 
   let closeCalls = 0;
@@ -1839,7 +1845,7 @@ test('sqlite lifecycle token guards stale flush/close operations', async () => {
 });
 
 test('sqlite prune removes expired rows using per-series retention windows', async () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   storage.configure();
 
   const allSql = [];
@@ -1877,7 +1883,7 @@ test('sqlite prune removes expired rows using per-series retention windows', asy
 });
 
 test('sqlite prune skips stale lifecycle token operations', async () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   storage.configure();
 
   let queryCount = 0;
@@ -1900,11 +1906,11 @@ test('sqlite prune skips stale lifecycle token operations', async () => {
 });
 
 test('sqlite storage configure uses fixed defaults', () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   const config = storage.configure();
 
   assert.equal(config.engine, 'node:sqlite');
-  assert.equal(config.databaseFile, 'plugin-config-data/kip/historicalData/kip-history.sqlite');
+  assert.equal(config.databaseFile, TEST_SQLITE_PATH);
   assert.equal(config.flushIntervalMs, 30000);
 });
 
@@ -2095,7 +2101,7 @@ testRequiresNodeSqlite('history request wait for sqlite initialization is bounde
 });
 
 testRequiresNodeSqlite('sqlite getValues queries requested paths in a single sql call', async () => {
-  const storage = new SqliteHistoryStorageService();
+  const storage = new SqliteHistoryStorageService(TEST_DATA_DIR);
   storage.configure();
 
   let historySelectCount = 0;
