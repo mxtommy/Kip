@@ -8,6 +8,39 @@ import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse,
 type TSqliteModule = { DatabaseSync?: unknown; Database?: unknown } | null;
 type TGetSqliteModule = () => Promise<TSqliteModule>;
 
+interface IHistoryModeConfig {
+  historySeriesServiceEnabled: boolean;
+  registerAsHistoryApiProvider: boolean;
+  nodeSqliteAvailable: boolean;
+}
+
+interface IHistoryApiPathSpecLike {
+  path?: unknown;
+  aggregate?: unknown;
+  parameter?: unknown;
+}
+
+interface IHistoryApiValuesRequestLike {
+  context?: unknown;
+  resolution?: unknown;
+  from?: unknown;
+  to?: unknown;
+  duration?: unknown;
+  pathSpecs?: unknown;
+}
+
+interface IHistoryApiRangeRequestLike {
+  from?: unknown;
+  to?: unknown;
+  duration?: unknown;
+}
+
+interface IHistoryRangeQuery {
+  from?: string;
+  to?: string;
+  duration?: string | number;
+}
+
 async function defaultGetSqliteModule(): Promise<TSqliteModule> {
   try {
     return await import('node:sqlite') as { DatabaseSync?: unknown; Database?: unknown } | null;
@@ -63,7 +96,7 @@ const start = (server: ServerAPI): Plugin => {
     () => Date.now(),
     typeof server.selfId === 'string' && server.selfId.trim().length > 0 ? `vessels.${server.selfId.trim()}` : null
   );
-  const storageService = new SqliteHistoryStorageService();
+  const storageService = new SqliteHistoryStorageService(server.getDataDirPath());
   let retentionSweepTimer: NodeJS.Timeout | null = null;
   let storageFlushTimer: NodeJS.Timeout | null = null;
   let sqliteInitializationPromise: Promise<boolean> | null = null;
@@ -72,39 +105,6 @@ const start = (server: ServerAPI): Plugin => {
   let streamUnsubscribes: (() => void)[] = [];
   let historyApiProviderRegistered = false;
   let runtimeSqliteUnavailableMessage: string | null = null;
-
-  interface IHistoryModeConfig {
-    historySeriesServiceEnabled: boolean;
-    registerAsHistoryApiProvider: boolean;
-    nodeSqliteAvailable: boolean;
-  }
-
-  interface IHistoryApiPathSpecLike {
-    path?: unknown;
-    aggregate?: unknown;
-    parameter?: unknown;
-  }
-
-  interface IHistoryApiValuesRequestLike {
-    context?: unknown;
-    resolution?: unknown;
-    from?: unknown;
-    to?: unknown;
-    duration?: unknown;
-    pathSpecs?: unknown;
-  }
-
-  interface IHistoryApiRangeRequestLike {
-    from?: unknown;
-    to?: unknown;
-    duration?: unknown;
-  }
-
-  interface IHistoryRangeQuery {
-    from?: string;
-    to?: string;
-    duration?: string | number;
-  }
 
   function logRuntimeDependencyVersions(): void {
     const nodeIdentity = `node@${process.version}`;
@@ -815,6 +815,7 @@ const start = (server: ServerAPI): Plugin => {
     storageFlushTimer.unref?.();
   }
   let modeConfig: IHistoryModeConfig | null = null;
+
   const plugin: Plugin = {
     id: 'kip',
     name: 'KIP',
@@ -827,9 +828,6 @@ const start = (server: ServerAPI): Plugin => {
       if (!modeConfig.nodeSqliteAvailable) {
         server.error(`[KIP][RUNTIME] node:sqlite unavailable. ${runtimeSqliteUnavailableMessage}`);
       }
-      const serverWithApp = server as ServerAPI & { app?: { getDataDirPath?: () => string } };
-      const dataDirPath = serverWithApp.app?.getDataDirPath?.();
-      storageService.setDataDirPath(typeof dataDirPath === 'string' ? dataDirPath : null);
       storageService.setRuntimeAvailability(modeConfig.nodeSqliteAvailable, runtimeSqliteUnavailableMessage ?? undefined);
       logRuntimeDependencyVersions();
       logOperationalMode('start-configured');
@@ -1378,6 +1376,9 @@ const start = (server: ServerAPI): Plugin => {
 
   return plugin;
 }
+
 const startWithHooks = start as typeof start & { getSqliteModule?: TGetSqliteModule };
+
 startWithHooks.getSqliteModule = defaultGetSqliteModule;
+
 module.exports = start;

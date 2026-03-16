@@ -4,7 +4,7 @@ import {
   isKipSeriesEnabled,
   isKipTemplateSeriesDefinition,
   THistoryMethod
-} from '../../src/app/core/contracts/kip-series-contract';
+} from './kip-series-contract';
 
 export type ISeriesDefinition = IKipSeriesDefinition;
 export type { THistoryMethod };
