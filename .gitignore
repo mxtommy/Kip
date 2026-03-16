@@ -38,8 +38,10 @@ testem.log
 /typings
 yarn-error.log
 
-# plugin runtime data
+# plugin runtime and testing data
 /plugin-config-data
+/.tmp
+/.tmp-kip-plugin-test-data
 
 # e2e
 /e2e/*.js
