@@ -96,7 +96,10 @@ const start = (server: ServerAPI): Plugin => {
     () => Date.now(),
     typeof server.selfId === 'string' && server.selfId.trim().length > 0 ? `vessels.${server.selfId.trim()}` : null
   );
-  const storageService = new SqliteHistoryStorageService(server.getDataDirPath());
+
+  // Constructed in plugin.start — server.getDataDirPath() is only available after SK fully initializes
+  let storageService!: SqliteHistoryStorageService;
+
   let retentionSweepTimer: NodeJS.Timeout | null = null;
   let storageFlushTimer: NodeJS.Timeout | null = null;
   let sqliteInitializationPromise: Promise<boolean> | null = null;
@@ -822,6 +825,7 @@ const start = (server: ServerAPI): Plugin => {
     description: 'KIP server plugin',
     start: async (settings) => {
       server.debug('[KIP][LIFECYCLE] start');
+      storageService = new SqliteHistoryStorageService(server.getDataDirPath());
       modeConfig = resolveHistoryModeConfig(settings);
       // Overwrite runtime-detected properties in modeConfig
       modeConfig.nodeSqliteAvailable = await detectSqliteRuntime();
