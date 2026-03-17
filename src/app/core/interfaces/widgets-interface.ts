@@ -45,6 +45,8 @@ export interface IWidget {
   type: string;
    /** The Widget's configuration Object */
   config: IWidgetSvcConfig;
+  /** Transient flag to auto-open options once when a widget is first created. */
+  autoOpenOptionsOnCreate?: boolean;
 }
 
 /**
