@@ -116,6 +116,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   ngOnInit(): void {
     const type = this.widgetProperties.type;
     if (!type) return;
+    const shouldAutoOpenOptions = this.widgetProperties.autoOpenOptionsOnCreate === true;
+    if (shouldAutoOpenOptions) {
+      delete this.widgetProperties.autoOpenOptionsOnCreate;
+    }
     this.compType = this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
 
     // Resolve default configuration for this component type using helper
@@ -140,6 +144,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
       });
     }
     this._hasInitialized = true;
+
+    if (shouldAutoOpenOptions) {
+      queueMicrotask(() => this.openWidgetOptions(new Event('kip:auto-open-options')));
+    }
   }
 
   ngOnDestroy(): void {

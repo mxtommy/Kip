@@ -279,4 +279,38 @@ describe('WidgetHost2Component', () => {
 
 		expect(bottomSheetMock.open).not.toHaveBeenCalled();
 	});
+
+	it('auto-opens options once on init for brand-new widgets', async () => {
+		dashboard.isDashboardStatic.set(false);
+		testWidget.autoOpenOptionsOnCreate = true;
+
+		fixture.detectChanges();
+		await Promise.resolve();
+
+		expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
+		expect(testWidget.autoOpenOptionsOnCreate).toBeUndefined();
+	});
+
+	it('does not auto-open options on init when create flag is absent (duplicate/paste flows)', async () => {
+		dashboard.isDashboardStatic.set(false);
+
+		fixture.detectChanges();
+		await Promise.resolve();
+
+		expect(dialogServiceMock.openWidgetOptions).not.toHaveBeenCalled();
+	});
+
+	it('keeps widget config unchanged when auto-open options dialog is canceled', async () => {
+		dashboard.isDashboardStatic.set(false);
+		testWidget.autoOpenOptionsOnCreate = true;
+		const configSnapshot = JSON.parse(JSON.stringify(testWidget.config));
+
+		dialogServiceMock.openWidgetOptions.and.returnValue({ afterClosed: () => of(null) });
+
+		fixture.detectChanges();
+		await Promise.resolve();
+
+		expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
+		expect(testWidget.config).toEqual(configSnapshot);
+	});
 });

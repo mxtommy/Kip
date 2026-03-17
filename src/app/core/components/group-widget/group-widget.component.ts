@@ -40,8 +40,17 @@ export class GroupWidgetComponent extends BaseWidget implements OnInit {
   }
 
   ngOnInit(): void {
+    const shouldAutoOpenOptions = this.widgetProperties.autoOpenOptionsOnCreate === true;
+    if (shouldAutoOpenOptions) {
+      delete this.widgetProperties.autoOpenOptionsOnCreate;
+    }
+
     // Resolve default and user configuration
     this.runtime?.initialize?.(GroupWidgetComponent.DEFAULT_CONFIG, this.widgetProperties.config);
+
+    if (shouldAutoOpenOptions) {
+      queueMicrotask(() => this.openWidgetOptions(new Event('kip:auto-open-options')));
+    }
   }
 
   /**

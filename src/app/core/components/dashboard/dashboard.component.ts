@@ -469,7 +469,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             config: {
               displayName: "Group Widget",
               color: "contrast"
-            }
+            },
+            autoOpenOptionsOnCreate: true
           }
         },
         subGridOpts: {
@@ -490,6 +491,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           widgetProperties: {
             type: widget.selector,
             uuid: ID,
+            autoOpenOptionsOnCreate: true,
           }
         }
       };
