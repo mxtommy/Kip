@@ -620,7 +620,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
     const series = service.resolveSeriesForWidget(widget);
     expect(series.length).toBe(1);
-    expect(series[0].allowedBatteryIds).toBeUndefined();
+    expect(series[0].allowedBatteryIds).toBeNull();
   });
 
   it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {

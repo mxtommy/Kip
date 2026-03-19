@@ -108,10 +108,10 @@ describe('WidgetHistoryChartDialogComponent', () => {
 
   it('pairs BMS SoC and current series by color, converts SoC to percent, and dashes SoC lines', async () => {
     const socDataset = await (component as unknown as {
-      buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{ data: Array<{ x: number; y: number }>; borderColor: string; yAxisID: string; borderDash?: number[] } | null>;
+      buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{ data: { x: number; y: number }[]; borderColor: string; yAxisID: string; borderDash?: number[] } | null>;
     }).buildDatasetForSeries(seriesDefinitions[0], 0);
     const currentDataset = await (component as unknown as {
-      buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{ data: Array<{ x: number; y: number }>; borderColor: string; yAxisID: string; borderDash?: number[] } | null>;
+      buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{ data: { x: number; y: number }[]; borderColor: string; yAxisID: string; borderDash?: number[] } | null>;
     }).buildDatasetForSeries(seriesDefinitions[1], 1);
 
     expect(socDataset).not.toBeNull();
@@ -125,7 +125,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
   });
 
   it('builds dual y-axes for BMS charts', () => {
-    (component as unknown as { pendingDatasets: Array<{ yAxisID?: string }> }).pendingDatasets = [{ yAxisID: 'ySoc' }];
+    (component as unknown as { pendingDatasets: { yAxisID?: string }[] }).pendingDatasets = [{ yAxisID: 'ySoc' }];
 
     const scales = (component as unknown as {
       buildYScales: (unitLabel: string) => Record<string, unknown>;
