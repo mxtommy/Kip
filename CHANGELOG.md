@@ -1,3 +1,14 @@
+# v4.7.0
+## New Features
+* Battery Monitor Widget: Stay on top of your vessel’s power system with a dedicated compact Battery Monitor Widget. Instantly view individual batteries or whole banks, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Batteries are detected automatically, with Signal K Zones support for clear warning and alarm visibility at a glance.
+## Improvements
+* Faster first-load widget data display so dashboards feel more immediate and alive
+* Smoother dashboard transitions with reduced startup animation on Radial, Linear, Compass, Compact Linear, Windsteer, Racesteer, and Autopilot widgets
+* More robust History API integration using the server-provided HistoryAPI type and improved registration cleanup. Thanks to @tkurki
+* Newly added widgets now open their options automatically, speeding up setup and reducing extra taps
+## Fixes
+* Fixed the plugin-config-data directory location. Fixes #1006
+* Fixed documentation link references
 # v4.6.0
 ## Improvements
 * Built-in Time-Series storage and History-API provider now use the native node:sqlite feature, eliminating binary and external dependencies.
