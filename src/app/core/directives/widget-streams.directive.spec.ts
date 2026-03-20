@@ -269,7 +269,7 @@ describe('WidgetStreamsDirective', () => {
     const cfg = makeCfg({ path: 'env.bootstrap', source: null, pathType: 'number', sampleTime: 50, suppressBootstrapNull: true });
     directive.setStreamsConfig(cfg);
 
-    const hits: Array<number | null> = [];
+    const hits: (number | null)[] = [];
     directive.observe('p', u => hits.push((u?.data?.value as number | null) ?? null));
 
     const subj = dataSvc.subjects.get('env.bootstrap|default')!;
@@ -285,7 +285,7 @@ describe('WidgetStreamsDirective', () => {
     const cfg = makeCfg({ path: 'env.bootstrap-reset', source: null, pathType: 'number', sampleTime: 30, suppressBootstrapNull: true });
     directive.setStreamsConfig(cfg);
 
-    const hits: Array<number | null> = [];
+    const hits: (number | null)[] = [];
     directive.observe('p', u => hits.push((u?.data?.value as number | null) ?? null));
 
     const subj = dataSvc.subjects.get('env.bootstrap-reset|default')!;
