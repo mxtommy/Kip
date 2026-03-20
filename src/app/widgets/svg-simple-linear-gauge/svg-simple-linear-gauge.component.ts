@@ -25,6 +25,7 @@ export class SvgSimpleLinearGaugeComponent implements OnDestroy {
   });
   protected readonly newGaugeValue = signal<number | null>(null);
   protected readonly oldGaugeValue = signal<number | null>(null);
+  private firstRenderApplied = false;
 
   private scheduleRafId: number | null = null;
 
@@ -34,14 +35,23 @@ export class SvgSimpleLinearGaugeComponent implements OnDestroy {
       const min = this.gaugeMinValue();
       let value = this.dataValue();
 
-      if (value === null) {
+      if (value == null) {
         // Set initial values if not already set
         value = min;
       }
 
+      const nextGaugeValue = (value - min) * this.scaleSliceValue();
+
       untracked(() => {
-        this.oldGaugeValue.set(this.newGaugeValue() !== null ? this.newGaugeValue() : min);
-        this.newGaugeValue.set(this.dataValue() !== null ? (value - min) * this.scaleSliceValue() : min);
+        const previousGaugeValue = this.newGaugeValue();
+        if (!this.firstRenderApplied || previousGaugeValue === null) {
+          this.oldGaugeValue.set(nextGaugeValue);
+          this.newGaugeValue.set(nextGaugeValue);
+          this.firstRenderApplied = true;
+        } else {
+          this.oldGaugeValue.set(previousGaugeValue);
+          this.newGaugeValue.set(nextGaugeValue);
+        }
 
         if (this.gaugeBarAnimate()?.nativeElement) {
           // Cancel any previous animation frame
