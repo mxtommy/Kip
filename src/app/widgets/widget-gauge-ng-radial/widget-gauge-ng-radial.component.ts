@@ -48,6 +48,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
         path: null,
         source: null,
         pathType: 'number',
+        suppressBootstrapNull: true,
         isPathConfigurable: true,
         showPathSkUnitsFilter: true,
         pathSkUnitsFilter: null,
@@ -78,13 +79,19 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   private readonly LINE: string = "line";
   private readonly ANIMATION_TARGET_NEEDLE: string = "needle";
 
-  readonly ngGauge = viewChild.required<RadialGauge>('radialGauge');
+  readonly ngGauge = viewChild<RadialGauge>('radialGauge');
   readonly gauge = viewChild('radialGauge', { read: ElementRef });
 
   // Reactive state
-  protected value = signal(0);
-  protected textValue = signal('');
+  protected value = signal<number | null | undefined>(undefined);
+  /** True after first datapoint has been received (including zero). */
+  protected shouldRenderGauge = computed(() => this.value() !== undefined);
+  protected textValue = signal('--');
   protected colorStrokeTicks = signal('');
+  /** True after first non-animated frame has been rendered. */
+  private gaugeBootstrapped = signal(false);
+  /** Enables smooth transitions only after the first static frame. */
+  private animationEnabled = computed(() => this.gaugeBootstrapped());
   private adjustedScale = computed<IScale>(() => {
     const cfg = this.runtime.options();
     if (!cfg) return { min: 0, max: 100, majorTicks: [] };
@@ -186,6 +193,20 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
       });
     });
 
+    // Enable animation only after the first rendered frame to avoid startup motion.
+    effect(() => {
+      const gauge = this.ngGauge();
+      if (!gauge || this.gaugeBootstrapped()) return;
+      untracked(() => {
+        try {
+          requestAnimationFrame(() => {
+            this.gaugeBootstrapped.set(true);
+            try { gauge.update({ animation: true, animatedValue: true }); } catch { /* ignore */ }
+          });
+        } catch { /* ignore */ }
+      });
+    });
+
     // Apply state-based colors (after view ready)
     effect(() => {
       const state = this.pathDataState();
@@ -277,7 +298,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     g.fontNumbers = 'Roboto'; g.fontNumbersWeight = 'bold';
     g.valueInt = cfg.numInt ?? 1; g.valueDec = cfg.numDecimal ?? 2; g.majorTicksInt = g.valueInt; g.majorTicksDec = g.valueDec;
     g.highlightsWidth = cfg.gauge?.highlightsWidth;
-    g.animation = true; g.animateOnInit = false; g.animatedValue = false; g.animationRule = 'linear';
+    g.animation = this.animationEnabled(); g.animateOnInit = false; g.animatedValue = this.animationEnabled(); g.animationRule = 'linear';
     const st = cfg.paths?.['gaugePath']?.sampleTime ?? 500; g.animationDuration = st - 25;
     g.colorBorderShadow = false; g.colorBorderOuter = theme.cardColor; g.colorBorderOuterEnd = ''; g.colorBorderMiddle = theme.cardColor; g.colorBorderMiddleEnd = '';
     g.colorPlate = g.colorPlateEnd = theme.cardColor; g.colorBar = theme.background;

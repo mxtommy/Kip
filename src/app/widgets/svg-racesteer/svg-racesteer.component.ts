@@ -49,6 +49,12 @@ export class SvgRacesteerComponent implements OnDestroy {
   protected wpt: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected tack: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected set: ISVGRotationObject = { oldValue: 0, newValue: 0 };
+  private compassInitialized = false;
+  private twaInitialized = false;
+  private wptInitialized = false;
+  private tackInitialized = false;
+  private setInitialized = false;
+  private laylinesInitialized = false;
 
   protected headingValue = signal<string>("--");
   private windSectorsInitialized = false;
@@ -121,9 +127,14 @@ export class SvgRacesteerComponent implements OnDestroy {
   private speedLinePrevRatio = 0;
   private speedLinePrevTipY = 600;
   private speedLineAnimId: number | null = null;
+  private speedLineInitialized = false;
   // Rotation Animation
   private animationFrameIds = new WeakMap<SVGGElement, number>();
   private readonly ngZone = inject(NgZone);
+
+  private setRotationImmediate(element: SVGGElement, angle: number): void {
+    element.setAttribute('transform', `rotate(${angle} 600 620)`);
+  }
 
   constructor() {
     effect(() => {
@@ -140,11 +151,21 @@ export class SvgRacesteerComponent implements OnDestroy {
       if (heading == null) return;
 
       untracked(() => {
-        this.compass.oldValue = this.compass.newValue;
-        this.compass.newValue = heading;
+        if (!this.compassInitialized) {
+          this.compass.oldValue = heading;
+          this.compass.newValue = heading;
+          this.compassInitialized = true;
+        } else {
+          this.compass.oldValue = this.compass.newValue;
+          this.compass.newValue = heading;
+        }
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
-          animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          if (this.compass.oldValue === this.compass.newValue) {
+            this.setRotationImmediate(this.rotatingDial().nativeElement, -this.compass.newValue);
+          } else {
+            animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          }
           this.updateWindSectors();
         }
       });
@@ -157,10 +178,20 @@ export class SvgRacesteerComponent implements OnDestroy {
       if (targetAngle == null) return;
 
       untracked(() => {
-        this.tack.oldValue = this.tack.newValue;
-        this.tack.newValue =  targetAngle;
+        if (!this.tackInitialized) {
+          this.tack.oldValue = targetAngle;
+          this.tack.newValue = targetAngle;
+          this.tackInitialized = true;
+        } else {
+          this.tack.oldValue = this.tack.newValue;
+          this.tack.newValue =  targetAngle;
+        }
         if (this.tackIndicator()?.nativeElement) {
-          animateRotation(this.tackIndicator().nativeElement, this.tack.oldValue, this.tack.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          if (this.tack.oldValue === this.tack.newValue) {
+            this.setRotationImmediate(this.tackIndicator().nativeElement, this.tack.newValue);
+          } else {
+            animateRotation(this.tackIndicator().nativeElement, this.tack.oldValue, this.tack.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          }
         }
         this.updateLaylines();
       });
@@ -180,10 +211,20 @@ export class SvgRacesteerComponent implements OnDestroy {
         } else {
           this.waypointActive.set(false);
         }
-        this.wpt.oldValue = this.wpt.newValue;
-        this.wpt.newValue = wptAngle;
+        if (!this.wptInitialized) {
+          this.wpt.oldValue = wptAngle;
+          this.wpt.newValue = wptAngle;
+          this.wptInitialized = true;
+        } else {
+          this.wpt.oldValue = this.wpt.newValue;
+          this.wpt.newValue = wptAngle;
+        }
         if (this.wptIndicator()?.nativeElement) {
-          animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          if (this.wpt.oldValue === this.wpt.newValue) {
+            this.setRotationImmediate(this.wptIndicator().nativeElement, this.wpt.newValue);
+          } else {
+            animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620]);
+          }
         }
       });
     });
@@ -191,14 +232,27 @@ export class SvgRacesteerComponent implements OnDestroy {
     effect(() => {
       const raw = this.trueWindAngle();
       const trueWindAngle = Number.isFinite(raw) ? Math.round(raw as number) : null;
-      if (trueWindAngle == null) return;
+      const compassRaw = this.compassHeading();
+      const compassHeading = Number.isFinite(compassRaw) ? Math.round(compassRaw as number) : null;
+      if (trueWindAngle == null || compassHeading == null) return;
 
       untracked(() => {
-        this.twa.oldValue = this.twa.newValue;
         this.trueWindHeading = trueWindAngle;
-        this.twa.newValue = this.addHeading(this.trueWindHeading, (this.compass.newValue * -1));
+        const nextTwa = this.addHeading(this.trueWindHeading, (compassHeading * -1));
+        if (!this.twaInitialized) {
+          this.twa.oldValue = nextTwa;
+          this.twa.newValue = nextTwa;
+          this.twaInitialized = true;
+        } else {
+          this.twa.oldValue = this.twa.newValue;
+          this.twa.newValue = nextTwa;
+        }
          if (this.twaIndicator()?.nativeElement) {
-          animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          if (this.twa.oldValue === this.twa.newValue) {
+            this.setRotationImmediate(this.twaIndicator().nativeElement, this.twa.newValue);
+          } else {
+            animateRotation(this.twaIndicator().nativeElement, this.twa.oldValue, this.twa.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          }
           this.updateLaylines();
         }
       });
@@ -214,6 +268,19 @@ export class SvgRacesteerComponent implements OnDestroy {
       const length = yBase - yTop;
       const newTipY = yBase - length * clampedRatio;
 
+      if (!this.speedLineInitialized) {
+        this.speedLineInitialized = true;
+        this.speedLineTipY.set(newTipY);
+        const tipHeight = 30;
+        const tipBaseHalf = 20;
+        const tipApexY = newTipY - tipHeight;
+        this.speedTipPoints.set(`${600},${tipApexY} ${600 - tipBaseHalf},${newTipY} ${600 + tipBaseHalf},${newTipY}`);
+        this.speedRatioColor.set(this.interpolateColor(this.gradianColor().start, this.gradianColor().stop, clampedRatio));
+        this.speedLinePrevTipY = newTipY;
+        this.speedLinePrevRatio = clampedRatio;
+        return;
+      }
+
       // Animate from previous tipY to new tipY
       this.animateSpeedLine(this.speedLinePrevTipY, newTipY);
 
@@ -228,16 +295,28 @@ export class SvgRacesteerComponent implements OnDestroy {
       if (driftSet == null) return;
 
       untracked(() => {
-        this.set.oldValue = this.set.newValue;
-        this.set.newValue =  driftSet;
+        if (!this.setInitialized) {
+          this.set.oldValue = driftSet;
+          this.set.newValue = driftSet;
+          this.setInitialized = true;
+        } else {
+          this.set.oldValue = this.set.newValue;
+          this.set.newValue =  driftSet;
+        }
         if (this.setIndicator()?.nativeElement) {
-          animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          if (this.set.oldValue === this.set.newValue) {
+            this.setRotationImmediate(this.setIndicator().nativeElement, this.set.newValue);
+          } else {
+            animateRotation(this.setIndicator().nativeElement, this.set.oldValue, this.set.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, [600, 620], this.ngZone);
+          }
         }
       });
     });
   }
 
   private updateLaylines(): void {
+    if (!this.twaInitialized) return;
+
     const raw = this.targetAngle();
     let targetAngle = Number.isFinite(raw) ? Math.round(raw as number) : null;
     if (targetAngle == null) return;
@@ -246,11 +325,19 @@ export class SvgRacesteerComponent implements OnDestroy {
 
     // Animate Port Layline
     const portLaylineRotate = base - targetAngle;
+    const stbdLaylineRotate = base + targetAngle;
+    if (!this.laylinesInitialized) {
+      this.laylinesInitialized = true;
+      this.setLaylinePath(portLaylineRotate, true);
+      this.setLaylinePath(stbdLaylineRotate, false);
+      this.portLaylinePrev = portLaylineRotate;
+      this.stbdLaylinePrev = stbdLaylineRotate;
+      return;
+    }
+
     this.animateLayline(this.portLaylinePrev, portLaylineRotate, true);
     this.portLaylinePrev = portLaylineRotate;
 
-    // Animate Starboard Layline
-    const stbdLaylineRotate = base + targetAngle;
     this.animateLayline(this.stbdLaylinePrev, stbdLaylineRotate, false);
     this.stbdLaylinePrev = stbdLaylineRotate;
   }

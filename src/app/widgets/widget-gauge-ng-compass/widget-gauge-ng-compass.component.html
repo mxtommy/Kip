@@ -1,9 +1,11 @@
-<radial-gauge
-  #compassGauge
-  kipResizeObserver
-  (resizeChange)="onResized($event)"
-  [options]="gaugeOptions"
-  [value]="value()"
-  [attr.value-text]="textValue()"
-  [attr.color-stroke-ticks]="colorStrokeTicks"
-></radial-gauge>
+@if (shouldRenderGauge()) {
+  <radial-gauge
+    #compassGauge
+    kipResizeObserver
+    (resizeChange)="onResized($event)"
+    [options]="gaugeOptions"
+    [value]="value()"
+    [attr.value-text]="textValue()"
+    [attr.color-stroke-ticks]="colorStrokeTicks"
+  ></radial-gauge>
+}

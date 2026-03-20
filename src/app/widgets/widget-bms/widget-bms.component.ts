@@ -248,7 +248,17 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    this.data.subscribePathTree('self.electrical.batteries.*')
+    const batteryTree = this.data.subscribePathTreeWithInitial('self.electrical.batteries.*');
+
+    if (batteryTree.initial.length) {
+      for (const update of batteryTree.initial) {
+        this.enqueuePathUpdate(update, true);
+      }
+      this.flushPendingPathUpdates();
+      this.initialPathPaintDone = true;
+    }
+
+    batteryTree.live$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(update => {
         this.enqueuePathUpdate(update);
@@ -331,7 +341,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return mode === 'series' ? 'series' : 'parallel';
   }
 
-  private enqueuePathUpdate(update: IPathUpdateWithPath): void {
+  private enqueuePathUpdate(update: IPathUpdateWithPath, fromInitial = false): void {
     const match = this.parseBatteryPath(update.path);
     if (!match) return;
 
@@ -340,6 +350,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const state = update.update?.state ?? null;
     const updateKey = `${id}::${key}`;
     this.pendingPathUpdates.set(updateKey, { id, key, value, state });
+
+    if (fromInitial) return;
 
     if (!this.initialPathPaintDone) {
       this.initialPathPaintDone = true;

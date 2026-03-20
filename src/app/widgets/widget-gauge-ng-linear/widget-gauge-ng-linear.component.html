@@ -1,9 +1,11 @@
-<linear-gauge
-  class="linearGauge"
-  #linearGauge
-  kipResizeObserver
-  (resizeChange)="onResized($event)"
-  [options]="gaugeOptions"
-  [value]="value()"
-  [attr.value-text]="textValue()"
-></linear-gauge>
+@if (shouldRenderGauge()) {
+  <linear-gauge
+    class="linearGauge"
+    #linearGauge
+    kipResizeObserver
+    (resizeChange)="onResized($event)"
+    [options]="gaugeOptions"
+    [value]="value()"
+    [attr.value-text]="textValue()"
+  ></linear-gauge>
+}

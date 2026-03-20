@@ -73,6 +73,8 @@ export class MinichartComponent implements OnDestroy {
   private dsServiceSub: Subscription = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
+  private isDestroyed = false;
+  private lastChartSignature: string | null = null;
 
   private config = {
     datasetAverageArray: 'sma',
@@ -99,26 +101,51 @@ export class MinichartComponent implements OnDestroy {
   }
 
   public startChart(): void {
-    if (!this.datasetUUID) return;
+    if (this.isDestroyed || !this.datasetUUID) return;
     this.datasetConfig = this.dsService.getDatasetConfig(this.datasetUUID);
     this.dataSourceInfo = this.dsService.getDataSourceInfo(this.datasetUUID);
 
     if (this.datasetConfig) {
+      const chartSignature = this.buildChartSignature();
+      if (this.chart && chartSignature === this.lastChartSignature) {
+        return;
+      }
+
+      if (this.chart && chartSignature !== this.lastChartSignature) {
+        this.destroyChart();
+      }
+
       this.setChartOptions();
       this.createDatasets();
+      const canvasEl = this.widgetDataChart()?.nativeElement as HTMLCanvasElement | undefined;
+      const ctx = canvasEl?.getContext('2d');
+      if (!ctx) return;
 
-      if (!this.chart) {
-        this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
-          type: this.lineChartType,
-          data: this.lineChartData,
-          options: this.lineChartOptions
-        });
-      } else {
-        this.chart.update();
-      }
+      this.chart = new Chart(ctx, {
+        type: this.lineChartType,
+        data: this.lineChartData,
+        options: this.lineChartOptions
+      });
+
+      this.lastChartSignature = chartSignature;
 
       this.startStreaming();
     }
+  }
+
+  private buildChartSignature(): string {
+    return [
+      this.datasetUUID,
+      this.dataPath,
+      this.dataSource,
+      this.convertUnitTo,
+      this.numDecimal,
+      this.yScaleMin,
+      this.yScaleMax,
+      this.inverseYAxis ? '1' : '0',
+      this.verticalChart ? '1' : '0',
+      this.color
+    ].join('|');
   }
 
   private setChartOptions() {
@@ -474,6 +501,10 @@ export class MinichartComponent implements OnDestroy {
     );
 
     this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+      if (this.isDestroyed || !this.chart) return;
+      const chartWithCtx = this.chart as { ctx?: CanvasRenderingContext2D | null };
+      if (!chartWithCtx.ctx) return;
+
       if (Array.isArray(dsPointOrBatch)) {
         // Initial batch: fill the chart with the last N points
         const valueRows = this.transformDatasetRows(dsPointOrBatch, 0);
@@ -500,9 +531,20 @@ export class MinichartComponent implements OnDestroy {
       }
 
       this.ngZone.runOutsideAngular(() => {
-        this.chart?.update('none');
+        if (this.isDestroyed || !this.chart) return;
+        const safeChart = this.chart as { ctx?: CanvasRenderingContext2D | null; update: (mode?: string) => void };
+        if (!safeChart.ctx) return;
+        safeChart.update('none');
       });
     });
+  }
+
+  private destroyChart(): void {
+    this.dsServiceSub?.unsubscribe();
+    this.dsServiceSub = null;
+    this.chart?.destroy();
+    this.chart = null;
+    this.lastChartSignature = null;
   }
 
   private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
@@ -541,9 +583,8 @@ export class MinichartComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.dsServiceSub?.unsubscribe();
-    // we need to destroy when moving Pages to remove Chart Objects
-    this.chart?.destroy();
+    this.isDestroyed = true;
+    this.destroyChart();
     const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;
     this.canvasService.releaseCanvas(canvas, { clear: true, removeFromDom: true });
   }

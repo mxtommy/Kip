@@ -2,7 +2,7 @@ import { Directive, DestroyRef, inject, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
+import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, skipWhile, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Directive({
@@ -23,7 +23,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
  * - Automatic unit conversion for numeric paths via UnitsService
  * - Optional timeout + retry handling (enableTimeout, dataTimeout config)
  * - Path validation: null/undefined/empty paths trigger cleanup
- * - Signature tracking: path + pathType + sampleTime + convertUnitTo + source
+ * - Signature tracking: path + pathType + sampleTime + convertUnitTo + source + bootstrap null policy
  *
  * Usage Pattern:
  * - Call observe(pathKey, callback) once per required path
@@ -56,10 +56,10 @@ export class WidgetStreamsDirective {
     };
   }
 
-  private computePathSignature(pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string }): string {
+  private computePathSignature(pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string; suppressBootstrapNull?: boolean }): string {
     const normalizedPath = this.normalizePath(pathCfg.path) ?? '';
     const src = (pathCfg.source?.trim() || 'default');
-    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, src].join('|');
+    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, src, pathCfg.suppressBootstrapNull ? '1' : '0'].join('|');
   }
 
   private computeBaseKey(path: string, source?: string): string {
@@ -84,7 +84,7 @@ export class WidgetStreamsDirective {
   }
 
   /** Create (or reuse) base observable, assemble pipeline, and subscribe with diff-aware replacement. */
-  private buildAndSubscribe(pathName: string, next: (value: IPathUpdate) => void, cfg: IWidgetSvcConfig, pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string }): void {
+  private buildAndSubscribe(pathName: string, next: (value: IPathUpdate) => void, cfg: IWidgetSvcConfig, pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string; suppressBootstrapNull?: boolean }): void {
     const normalizedPath = this.normalizePath(pathCfg.path);
     if (!normalizedPath) {
       const existing = this.subscriptions.get(pathName);
@@ -113,6 +113,7 @@ export class WidgetStreamsDirective {
 
     const pathType = pathCfg.pathType;
     const convert = pathCfg.convertUnitTo;
+    const suppressBootstrapNull = !!pathCfg.suppressBootstrapNull;
     let sample = Number(pathCfg.sampleTime);
     if (!Number.isFinite(sample) || sample <= 0) sample = 1000;
     const toUnit = (val: number) => convert ? this.unitsService.convertToUnit(convert, val) : val;
@@ -120,8 +121,17 @@ export class WidgetStreamsDirective {
     let data$: Observable<IPathUpdate> = base$;
     if (pathType === 'number') {
       data$ = data$.pipe(
-        map(x => ({ data: { value: toUnit(x.data.value as number), timestamp: x.data.timestamp }, state: x.state } as IPathUpdate))
+        map(x => ({
+          data: {
+            value: x.data.value == null ? null : toUnit(x.data.value as number),
+            timestamp: x.data.timestamp
+          },
+          state: x.state
+        } as IPathUpdate))
       );
+    }
+    if (suppressBootstrapNull) {
+      data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
     }
     const initial$ = data$.pipe(take(1));
     const sampled$ = data$.pipe(sampleTime(sample));
@@ -198,7 +208,7 @@ export class WidgetStreamsDirective {
    * Called automatically by Host2 when widget config updates.
    *
    * Behavior:
-   * - Compares path signatures (path + pathType + sampleTime + convertUnitTo + source)
+  * - Compares path signatures (path + pathType + sampleTime + convertUnitTo + source + bootstrap null policy)
    * - Compares root signature (timeout settings: enableTimeout + dataTimeout)
    * - Only rebuilds subscriptions for paths with changed signatures
    * - Removes subscriptions for deleted paths
@@ -282,7 +292,7 @@ export class WidgetStreamsDirective {
    * - Subsequent calls with same callback are no-op (idempotent)
    * - Different callback for same path replaces the previous registration
    * - Invalid paths (null/empty) clear any existing subscription
-   * - Pipeline rebuilds automatically when path config signature changes. Signature is made of: path, pathType, source, sampleTime, convertUnitTo
+  * - Pipeline rebuilds automatically when path config signature changes. Signature is made of: path, pathType, source, sampleTime, convertUnitTo, suppressBootstrapNull
    *
    * Lifecycle / Cleanup:
    * - Subscriptions auto-cleanup on directive destroy
