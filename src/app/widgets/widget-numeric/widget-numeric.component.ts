@@ -1,4 +1,4 @@
-import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, untracked, input, OnInit } from '@angular/core';
+import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, untracked, input, OnInit, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -80,6 +80,22 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private streamRegistered = false;
   private pathDataState: States | null = null;
   private isDestroyed = false;
+  private lastSubscriptionSignature: string | null = null;
+
+  private subscriptionSignature = computed(() => {
+    const cfg = this.runtime?.options();
+    const pathCfg = cfg?.paths?.['numericPath'];
+    if (!pathCfg?.path) return null;
+    const src = (pathCfg.source?.trim() || 'default');
+    return [
+      pathCfg.path,
+      pathCfg.pathType,
+      pathCfg.sampleTime,
+      pathCfg.convertUnitTo,
+      src,
+      pathCfg.suppressBootstrapNull ? '1' : '0'
+    ].join('|');
+  });
 
   private onNumericValue = (newValue: IPathUpdate) => {
     this.dataValue = newValue.data.value as number;
@@ -115,9 +131,10 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     this.showMiniChart.set(this.runtime.options().showMiniChart);
     effect(() => {
       const theme = this.theme();
+      const color = this.runtime?.options()?.color;
 
       untracked(() => {
-        if (theme) {
+        if (theme && color !== undefined) {
           this.setColors();
           this.drawWidget();
         }
@@ -125,21 +142,48 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     });
 
     effect(() => {
-      const cfg = this.runtime?.options();
-      if (!cfg) return;
+      const sig = this.subscriptionSignature();
       untracked(() => {
         if (this.isDestroyed || !this.canvasCtx) return;
-        this.manageDatasetAndChart();
-        this.setColors();
-        this.startWidget();
+
+        // Guard: if subscription signature unchanged and already subscribed, skip
+        if (sig === this.lastSubscriptionSignature && this.streamRegistered) {
+          return;
+        }
+
+        // Subscription changed: reset state and subscribe
+        this.minValue = null;
+        this.maxValue = null;
+        this.dataValue = null;
         this.pathDataState = null;
-        this.drawWidget();
+        this.lastSubscriptionSignature = sig;
+
+        if (sig) {
+          this.stream?.observe('numericPath', this.onNumericValue);
+          this.streamRegistered = true;
+          this.manageDatasetAndChart();
+        }
       });
     });
 
     effect(() => {
       const show = this.showMiniChart();
       const chart = this.miniChart();
+      const cfg = this.runtime?.options();
+      const pathInfo = cfg?.paths?.['numericPath'];
+      const miniChartSignature = [
+        cfg?.showMiniChart ? '1' : '0',
+        pathInfo?.path ?? '',
+        pathInfo?.source ?? 'default',
+        pathInfo?.convertUnitTo ?? '',
+        cfg?.numDecimal ?? '',
+        cfg?.yScaleMin ?? '',
+        cfg?.yScaleMax ?? '',
+        cfg?.inverseYAxis ? '1' : '0',
+        cfg?.verticalChart ? '1' : '0',
+        cfg?.color ?? ''
+      ].join('|');
+      if (!miniChartSignature) return;
       if (!show) return;
       if (!chart) return; // will re-run when present
       this.setMiniChart();
@@ -164,8 +208,14 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngAfterViewInit(): void {
     if (this.isDestroyed) return;
-    this.startWidget();
-    this.manageDatasetAndChart();
+
+    // Effects will auto-run when subscriptionSignature is first accessed
+    // This is a sanity check in case subscription effect hasn't fired yet
+    if (!this.streamRegistered && this.subscriptionSignature()) {
+      this.stream?.observe('numericPath', this.onNumericValue);
+      this.streamRegistered = true;
+      this.manageDatasetAndChart();
+    }
   }
 
   private calculateMaxMinTextDimensions(): void {
@@ -173,20 +223,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     this.maxValueTextHeight = Math.floor(this.cssHeight * 0.70);
     this.maxMinMaxTextWidth = Math.floor(this.cssWidth * 0.57);
     this.maxMinMaxTextHeight = Math.floor(this.cssHeight * 0.1);
-  }
-
-  private startWidget(): void {
-    this.minValue = null;
-    this.maxValue = null;
-    this.dataValue = null;
-    if (!this.streamRegistered) {
-      if (this.runtime?.options()?.paths?.['numericPath']?.path) {
-        this.stream?.observe('numericPath', this.onNumericValue);
-        this.streamRegistered = true;
-      } else {
-        this.drawValue();
-      }
-    }
   }
 
   private manageDatasetAndChart(): void {
