@@ -65,6 +65,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
         path: null,
         source: null,
         pathType: 'number',
+        suppressBootstrapNull: true,
         isPathConfigurable: true,
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: 'rad',
@@ -97,7 +98,13 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
 
   // Data/state
   protected textValue = signal('--');
-  protected value = signal(0);
+  protected value = signal<number | null | undefined>(undefined);
+  /** True after first datapoint has been received (including zero). */
+  protected shouldRenderGauge = computed(() => this.value() !== undefined);
+  /** True after first non-animated frame has been rendered. */
+  private gaugeBootstrapped = signal(false);
+  /** Enables smooth transitions only after the first static frame. */
+  private animationEnabled = computed(() => this.gaugeBootstrapped());
 
   readonly ngGauge = viewChild<RadialGauge>('compassGauge');
   readonly gauge = viewChild('compassGauge', { read: ElementRef });
@@ -158,6 +165,22 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
       });
     });
 
+    // Enable animatedValue transition only after the gauge canvas is first mounted.
+    // buildGaugeOptions starts with animatedValue=false so the initial @if render
+    // places the needle at the real value without any sweep animation.
+    effect(() => {
+      const gauge = this.ngGauge();
+      if (!gauge || this.gaugeBootstrapped()) return;
+      untracked(() => {
+        try {
+          requestAnimationFrame(() => {
+            this.gaugeBootstrapped.set(true);
+            try { gauge.update({ animation: true, animatedValue: true }); } catch { /* ignore */ }
+          });
+        } catch { /* ignore */ }
+      });
+    });
+
     // Apply state-based value color post-init
     effect(() => {
       const cfg = this.runtime.options();
@@ -199,9 +222,13 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
     g.barStrokeWidth = 0; g.barShadow = 0; g.fontValue = 'Roboto'; g.fontValueWeight = 'bold'; g.valueTextShadow = false; g.colorValueBoxShadow = '';
     g.fontNumbers = 'Roboto'; g.fontNumbersWeight = 'bold';
     // animation mode by subtype
-    if (cfg.gauge?.subType === 'marineCompass') { g.animationTarget = this.ANIMATION_TARGET_PLATE; g.useMinPath = true; }
-    else { g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = true; }
-    g.animation = true; g.animateOnInit = true; g.animatedValue = true; g.animationRule = 'linear'; g.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 50;
+    if (cfg.gauge?.subType === 'marineCompass') {
+      g.animationTarget = this.ANIMATION_TARGET_PLATE; g.useMinPath = true;
+    }
+    else {
+      g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = true;
+    }
+    g.animateOnInit = false; g.animation = this.animationEnabled(); g.animatedValue = this.animationEnabled(); g.animationRule = 'linear'; g.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 50;
     // Colors (RGBA unsupported -> convert)
     const palette = getColors(cfg.color, theme);
     const dim = rgbaToHex(palette.dim);

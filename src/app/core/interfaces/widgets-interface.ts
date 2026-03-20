@@ -523,6 +523,16 @@ export interface IWidgetPath {
    * to data type and human perception. Value in milliseconds.
    */
   sampleTime: number;
+  /**
+   * Optional: Suppress leading bootstrap `null` emissions until the first
+   * non-null datapoint is observed for this subscription.
+   *
+   * This is intended for widgets that should not animate or repaint from a
+   * placeholder/default value before the first real path value arrives.
+   * Later `null` values still emit normally after the stream has received its
+   * first non-null datapoint.
+   */
+  suppressBootstrapNull?: boolean;
   /** Used as a reference ID when path is an Array and array index is not appropriate. */
   pathID?: string | null | '';
   /** NOT IMPLEMENTED - Signal K - smoothingPeriod=[milliseconds] becomes the transmission rate, e.g. every smoothingPeriod/1000 seconds. Default: 1000 */

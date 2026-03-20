@@ -1,8 +1,10 @@
-<radial-gauge
-  #radialGauge
-  kipResizeObserver
-  [options]="gaugeOptions"
-  [value]="value()"
-  [attr.value-text]="textValue()"
-  (resizeChange)="onResized($event)"
-></radial-gauge>
+@if (shouldRenderGauge()) {
+  <radial-gauge
+    #radialGauge
+    kipResizeObserver
+    [options]="gaugeOptions"
+    [value]="value()"
+    [attr.value-text]="textValue()"
+    (resizeChange)="onResized($event)"
+  ></radial-gauge>
+}

@@ -48,6 +48,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
         path: null,
         source: null,
         pathType: 'number',
+        suppressBootstrapNull: true,
         isPathConfigurable: true,
         showPathSkUnitsFilter: true,
         pathSkUnitsFilter: null,
@@ -76,9 +77,15 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
   // Reactive presentation
   protected textValue = signal('--');
-  protected value = signal(0);
+  protected value = signal<number | null | undefined>(undefined);
+  /** True after first datapoint has been received (including zero). */
+  protected shouldRenderGauge = computed(() => this.value() !== undefined);
   protected gaugeOptions: LinearGaugeOptions = {} as LinearGaugeOptions;
   private viewReady = signal(false);
+  /** True after first non-animated frame has been rendered. */
+  private gaugeBootstrapped = signal(false);
+  /** Enables smooth transitions only after the first static frame. */
+  private animationEnabled = computed(() => this.gaugeBootstrapped());
   private currentState = signal<string>(States.Normal);
 
   private adjustedScale = computed<IScale>(() => {
@@ -165,6 +172,20 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
             this.applyInitialSize();
           } catch { /* ignore */ }
         }
+      });
+    });
+
+    // Enable animation only after the first rendered frame to avoid startup motion.
+    effect(() => {
+      const gauge = this.ngGauge();
+      if (!gauge || this.gaugeBootstrapped()) return;
+      untracked(() => {
+        try {
+          requestAnimationFrame(() => {
+            this.gaugeBootstrapped.set(true);
+            try { gauge.update({ animation: true, animatedValue: true }); } catch { /* ignore */ }
+          });
+        } catch { /* ignore */ }
       });
     });
 
@@ -271,7 +292,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.ticksWidth = ticks ? (enableNeedle ? (isVertical ? 15 : 10) : 10) : 0;
     opt.ticksPadding = ticks ? (isVertical ? (enableNeedle ? 0 : 5) : (enableNeedle ? 9 : 8)) : 0;
     opt.tickSide = 'left';
-    opt.animation = true; opt.animationRule = 'linear'; opt.animatedValue = false; opt.animateOnInit = false; opt.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 25;
+    opt.animation = this.animationEnabled(); opt.animationRule = 'linear'; opt.animatedValue = this.animationEnabled(); opt.animateOnInit = false; opt.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 25;
     opt.highlights = []; opt.highlightsWidth = cfg.gauge?.highlightsWidth;
     // pre-populate highlights if already available
     const h = this.highlights();

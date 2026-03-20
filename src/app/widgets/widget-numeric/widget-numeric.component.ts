@@ -30,6 +30,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         path: null,
         source: null,
         pathType: "number",
+        suppressBootstrapNull: true,
         isPathConfigurable: true,
         convertUnitTo: "unitless",
         showPathSkUnitsFilter: true,
@@ -70,9 +71,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private dataValue: number = null;
   private maxValue: number = null;
   private minValue: number = null;
-  private lastDrawnValue: number | null = undefined;
-  private lastDrawnMin: number | null = undefined;
-  private lastDrawnMax: number | null = undefined;
   private valueColor: string = undefined;
   private valueStateColor: string = undefined;
   private maxValueTextWidth = 0;
@@ -283,8 +281,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     this.drawValue();
     if (cfg.showMax || cfg.showMin) {
       this.drawMinMax();
-      this.lastDrawnMin = this.minValue;
-      this.lastDrawnMax = this.maxValue;
     }
   }
 
@@ -300,7 +296,6 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       'bold',
       this.valueStateColor
     );
-    this.lastDrawnValue = this.dataValue;
   }
 
   private getValueText(): string {

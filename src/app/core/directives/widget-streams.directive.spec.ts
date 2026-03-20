@@ -39,6 +39,7 @@ function makeCfg(opts: {
   sampleTime?: number;
   convertUnitTo?: string | null;
   source?: string | null;
+  suppressBootstrapNull?: boolean;
   displayName?: string;
   enableTimeout?: boolean;
   dataTimeout?: number;
@@ -51,6 +52,7 @@ function makeCfg(opts: {
       pathID: 'id-1',
       source: (opts.source ?? null),
       pathType: opts.pathType ?? 'string',
+      suppressBootstrapNull: opts.suppressBootstrapNull ?? false,
       isPathConfigurable: true,
       showPathSkUnitsFilter: false,
       pathSkUnitsFilter: null,
@@ -261,6 +263,55 @@ describe('WidgetStreamsDirective', () => {
     // Next emission should reflect new pipeline (converted by x10)
     subj.next({ data: { value: 3, timestamp: new Date() }, state: 'normal' } as IPathUpdate);
     expect(hits).toEqual([2, 30]);
+  });
+
+  it('suppresses leading bootstrap null values when configured', fakeAsync(() => {
+    const cfg = makeCfg({ path: 'env.bootstrap', source: null, pathType: 'number', sampleTime: 50, suppressBootstrapNull: true });
+    directive.setStreamsConfig(cfg);
+
+    const hits: Array<number | null> = [];
+    directive.observe('p', u => hits.push((u?.data?.value as number | null) ?? null));
+
+    const subj = dataSvc.subjects.get('env.bootstrap|default')!;
+    subj.next({ data: { value: null, timestamp: null }, state: 'normal' } as IPathUpdate);
+    tick(60);
+    expect(hits).toEqual([]);
+
+    subj.next({ data: { value: 12, timestamp: new Date() }, state: 'normal' } as IPathUpdate);
+    expect(hits).toEqual([12]);
+  }));
+
+  it('still emits later null values after the first non-null when suppressBootstrapNull is enabled', fakeAsync(() => {
+    const cfg = makeCfg({ path: 'env.bootstrap-reset', source: null, pathType: 'number', sampleTime: 30, suppressBootstrapNull: true });
+    directive.setStreamsConfig(cfg);
+
+    const hits: Array<number | null> = [];
+    directive.observe('p', u => hits.push((u?.data?.value as number | null) ?? null));
+
+    const subj = dataSvc.subjects.get('env.bootstrap-reset|default')!;
+    subj.next({ data: { value: null, timestamp: null }, state: 'normal' } as IPathUpdate);
+    tick(35);
+    expect(hits).toEqual([]);
+
+    subj.next({ data: { value: 21, timestamp: new Date() }, state: 'normal' } as IPathUpdate);
+    expect(hits).toEqual([21]);
+
+    subj.next({ data: { value: null, timestamp: null }, state: 'normal' } as IPathUpdate);
+    tick(35);
+    expect(hits).toEqual([21, null]);
+  }));
+
+  it('treats suppressBootstrapNull as part of the path signature', () => {
+    const cfg1 = makeCfg({ path: 'env.sig', source: null, pathType: 'number', sampleTime: 50, suppressBootstrapNull: false });
+    directive.setStreamsConfig(cfg1);
+    directive.observe('p', () => { /* noop */ });
+
+    expect(dataSvc.calls.length).toBe(1);
+
+    const cfg2 = makeCfg({ path: 'env.sig', source: null, pathType: 'number', sampleTime: 50, suppressBootstrapNull: true });
+    directive.applyStreamsConfigDiff(cfg2);
+
+    expect(dataSvc.calls.length).toBe(1);
   });
 
   it('applies sampleTime: emits initial immediately and latest per interval', fakeAsync(() => {
