@@ -5,7 +5,7 @@
   display: block;
   height: 100%;
   width: 100%;
-  overflow: none;
+  overflow-y: auto;
 }
 
 .tutorial-container {
@@ -39,3 +39,10 @@
   gap: 20px;
 }
 
+a:visited {
+  color: var(--kip-blue-color);
+}
+
+a:link {
+  color: var(--kip-blue-color);
+}
