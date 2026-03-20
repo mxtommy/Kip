@@ -13,7 +13,7 @@ export const DefaultAppConfig: IAppConfig = {
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,
-  "splitShellEnabled": false,
+  "splitShellEnabled": true,
   "splitShellSide": "left",
   "splitShellSwipeDisabled": false,
   "splitShellWidth": 0.5
