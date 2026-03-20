@@ -87,6 +87,11 @@ export interface IPathUpdateWithPath {
   update: IPathUpdate;
 }
 
+export interface IPathTreeSubscription {
+  initial: IPathUpdateWithPath[];
+  live$: Observable<IPathUpdateWithPath>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -307,35 +312,57 @@ export class DataService implements OnDestroy {
    *
    * @example
    * // Receive all battery child updates under self.electric.battery
-  * dataService.subscribePathTree('self.electric.battery.*')
+   * dataService.subscribePathTree('self.electric.battery.*')
    *   .subscribe(({ path, update }) => console.log(path, update.data.value));
    */
   public subscribePathTree(pathPrefix: string, source = 'default'): Observable<IPathUpdateWithPath> {
-    const normalizedPrefix = this.normalizePathPrefix(pathPrefix);
+    const tree = this.subscribePathTreeWithInitial(pathPrefix, source);
 
     return new Observable<IPathUpdateWithPath>(subscriber => {
-      for (const item of this._skData.values()) {
-        if (item.path.startsWith(normalizedPrefix)) {
-          subscriber.next({
-            path: item.path,
-            update: this.buildPathUpdate(item, source)
-          });
-        }
+      for (const item of tree.initial) {
+        subscriber.next(item);
       }
 
-      const sub = this._pathUpdates$
-        .pipe(filter(update => update.fullPath.startsWith(normalizedPrefix)))
-        .subscribe(update => {
-          const item = this._skData.get(update.fullPath);
-          if (!item) return;
-          subscriber.next({
-            path: item.path,
-            update: this.buildPathUpdate(item, source)
-          });
-        });
-
+      const sub = tree.live$.subscribe(subscriber);
       return () => sub.unsubscribe();
     }).pipe(takeUntilDestroyed(this._destroyRef));
+  }
+
+  /**
+   * Returns a two-phase subscription object for a path tree:
+   * - `initial`: snapshot of all currently cached matching paths (synchronous)
+   * - `live$`: observable for future matching path updates only
+   *
+   * Useful when consumers need to render all cached data first, then process
+   * incremental updates with their own batching strategy.
+   */
+  public subscribePathTreeWithInitial(pathPrefix: string, source = 'default'): IPathTreeSubscription {
+    const normalizedPrefix = this.normalizePathPrefix(pathPrefix);
+
+    const initial: IPathUpdateWithPath[] = [];
+    for (const item of this._skData.values()) {
+      if (!item.path.startsWith(normalizedPrefix)) continue;
+      initial.push({
+        path: item.path,
+        update: this.buildPathUpdate(item, source)
+      });
+    }
+
+    const live$ = this._pathUpdates$.pipe(
+      filter(update => update.fullPath.startsWith(normalizedPrefix)),
+      map(update => {
+        const item = this._skData.get(update.fullPath);
+        if (!item) return null;
+        return {
+          path: item.path,
+          update: this.buildPathUpdate(item, source)
+        } as IPathUpdateWithPath;
+      }),
+      filter((update): update is IPathUpdateWithPath => update !== null),
+      takeUntilDestroyed(this._destroyRef)
+    );
+
+    return { initial, live$ };
   }
 
   /**
