@@ -536,6 +536,19 @@ export class WidgetService {
       componentClassName: 'WidgetRacerTimerComponent',
     },
     {
+      name: 'Countdown Timer',
+      description: 'A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.',
+      icon: 'racetimerWidget',
+      minWidth: 4,
+      minHeight: 4,
+      defaultWidth: 6,
+      defaultHeight: 7,
+      category: 'Racing',
+      requiredPlugins: [],
+      selector: 'widget-racetimer',
+      componentClassName: 'WidgetRaceTimerComponent'
+    },
+    {
       name: 'Wind Trends',
       description: 'A real-time wind trends graph with dual axes for direction and speed. Displays live values and simple moving averages over the current period’s average.',
       icon: 'windtrendsWidget',

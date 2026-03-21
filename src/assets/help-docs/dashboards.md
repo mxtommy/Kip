@@ -81,6 +81,7 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Classic Steel** – Traditional steel-look linear & radial gauges with range sizes and zone highlights.
 - **Windsteer** – Combines wind, wind sectors, heading, COG, and waypoint info for wind steering.
 - **Wind Trends** – Real-time True Wind trends with dual axes for direction and speed, live values, and averages.
+- **Battery Monitor** - Display batteries or whole banks state State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature.
 - **Freeboard-SK** – Adds the Freeboard-SK chart plotter as a widget with automatic sign-in.
 - **Autopilot Head** – Typical autopilot controls for compatible Signal K Autopilot devices.
 - **Realtime Data Chart** – Visualizes data on a real-time chart with actuals, averages, and min/max.
