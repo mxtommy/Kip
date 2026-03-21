@@ -96,31 +96,33 @@ Organize your dashboards and access tools.
 
 ## Widget Library
 All KIP widgets are visual presentation controls that are very versatile, with multiple advanced configuration options available to suit your needs:
-- **Numeric display**: Create gauges to display any numerical data sent by your system: SOG, depth, wind speed, VMG, refrigerator temperature, weather data, etc.
-- **Text display**: Create gauges to display any textual data sent by your system: MPPT state, vessel details, next waypoint, Fusion radio song information, noon and sun phases, any system component configuration detail or status available, etc.
-- **Label**: A static text widget.
-- **Date display**: A timezone-aware control with flexible presentation formatting support.
-- **Position display**: Position coordinates in textual format.
-- **Zones State Panel**: Monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each control uses KIP’s zone severity colors and status messages (driven by Signal K metadata zones) so warnings and alarms stand out immediately.
-- **Boolean Control Panel**: A switchboard to configure and operate remote devices: light switches, bilge pumps, solenoids, or any Signal K path that supports boolean PUT operations.
-- **Slider**: A versatile control that allows users to adjust values within a defined range by sliding. Commonly used for settings like light intensity, volume control, or any parameter requiring fine-tuned adjustments.
-- **Multi State Switch**: Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.
+- **Numeric**: Create gauges to display any numerical data sent by your system: SOG, depth, wind speed, VMG, refrigerator temperature, weather data, etc.
+- **Text**: Create gauges to display any textual data sent by your system: MPPT state, vessel details, next waypoint, Fusion radio song information, noon and sun phases, any system component configuration detail or status available, etc.
+- **Date & Time**: A timezone-aware control with flexible presentation formatting support.
+- **Position**: Position coordinates in textual format.
 - **Simple Linear gauge**: A visual display for electrical numerical data: chargers, MPPT, shunt, etc.
 - **Linear gauge**: Visually display any numerical data on a vertical or horizontal scale: tank and reservoir levels, battery remaining capacity, etc.
 - **Radial gauge**: Visually display any numerical data on a radial scale: boat speed, wind speed, engine RPM, etc.
 - **Compass gauge**: A card or marine compass to display directional data such as heading, bearing to next waypoint, wind angle, etc.
 - **Radial and linear Steel gauge**: Old-school look & feel gauges.
 - **Level gauge**: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.
-- **Pitch & Roll**: Horizon-style attitude indicator showing live pitch and roll for monitoring trim, heel, and sea-state response.
-- **Wind Steering Display**: Your typical sailboat wind gauge.
-- **Freeboard-SK Chart Plotter**: A high-quality Signal K implementation of the Freeboard integration widget.
-- **Autopilot Head**: Operate your autopilot from any device remotely.
-- **Data Chart**: Visualize data trends over time.
-- **AIS Radar**: Display AIS targets with range rings, interactive target details, and quick zoom and filtering controls.
-- **Race Timer**: Track regatta start sequences.
-- **Start Line Insight**: Analyze and visualize the start line for tactical racing advantage, including favored end and distance-to-line.
+- **Pitch & Roll gauge**: Horizon-style attitude indicator showing live pitch and roll for monitoring trim, heel, and sea-state response.
+- **Battery Monitor**: Stay on top of batteries or whole banks state with a compact view displaying State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature.
+- **Windsteer**: Combines wind, wind sectors, heading, COG, and waypoint info for sailboat wind steering.
+- **Racesteer**: Sailboat race steering display fusing polar performance data with live conditions for optimal tactics.
+- **Countdown Timer**: A simple start sequences timer.
 - **Racer Start Timer**: Advanced race countdown timer with OCS (On Course Side) detection and automatic dashboard switching.
+- **Start Line Insight**: Analyze and visualize the start line for tactical racing advantage, including favored end and distance-to-line.
+- **Boolean Control Panel**: A digital switchboard to configure and operate remote devices: lights, bilge pumps, solenoids, or any Signal K compatible device that supports On/Off operations.
+- **Slider**: A versatile control that allows users to adjust values within a defined range by sliding. Commonly used for settings like light intensity, volume control, or any parameter requiring fine-tuned adjustments.
+- **Multi State Switch**: Lists all available device modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.
+- **Zones State Panel**: Monitor the health/state of multiple sensors and devices at a glance. Configure multiple paths per panel; each control uses KIP’s zone severity colors and status messages so warnings and alarms stand out immediately.
+- **Freeboard-SK Chart Plotter**: High-quality Signal K chartplotter integration widget.
+- **Autopilot Head**: Operate your autopilot from any device remotely.
+- **AIS Radar**: Display AIS targets with range rings, interactive target details, and quick zoom and filtering controls.
+- **Data Chart**: Visualize data trends over time.
 - **Embedded Webpage**: A powerful way to display web-based apps published on your Signal K server, such as Grafana and Node-RED dashboards, or your own standalone web app.
+- **Label**: A static text widget.
 
 Get the latest version of KIP to see what's new!
 
