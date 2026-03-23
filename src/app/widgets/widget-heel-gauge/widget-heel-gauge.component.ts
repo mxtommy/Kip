@@ -1,4 +1,4 @@
-import { Component, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit, input, untracked } from '@angular/core';
+import { Component, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit, input, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { ITheme } from '../../core/services/app-service';
@@ -12,7 +12,8 @@ interface ILabelPoint { x: number; y: number; text: string; value: number; }
 @Component({
   selector: 'widget-heel-gauge',
   templateUrl: './widget-heel-gauge.component.html',
-  styleUrls: ['./widget-heel-gauge.component.scss']
+  styleUrls: ['./widget-heel-gauge.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetHeelGaugeComponent implements AfterViewInit {
   // Functional Host2 inputs

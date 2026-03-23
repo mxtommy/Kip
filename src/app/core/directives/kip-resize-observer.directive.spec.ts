@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { ElementRef, NgZone } from '@angular/core';
+import { ElementRef } from '@angular/core';
 import { KipResizeObserverDirective } from './kip-resize-observer.directive';
 
 describe('KipResizeObserverDirective', () => {
@@ -33,10 +33,6 @@ describe('KipResizeObserverDirective', () => {
                 {
                     provide: ElementRef,
                     useValue: new ElementRef(document.createElement('div')),
-                },
-                {
-                    provide: NgZone,
-                    useFactory: () => new NgZone({ enableLongStackTrace: false }),
                 },
             ],
         });

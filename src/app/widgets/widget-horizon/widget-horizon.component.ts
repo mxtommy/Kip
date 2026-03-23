@@ -1,4 +1,4 @@
-import { Component, OnDestroy, AfterViewInit, inject, effect, viewChild, ElementRef, input, untracked, NgZone } from '@angular/core';
+import { Component, OnDestroy, AfterViewInit, inject, effect, viewChild, ElementRef, input, untracked, NgZone, ChangeDetectionStrategy, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -46,6 +46,7 @@ function getSteelFrameDesign(ss: any) {
   selector: 'widget-horizon',
   templateUrl: './widget-horizon.component.html',
   styleUrls: ['./widget-horizon.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   // Functional inputs (Host2)
@@ -113,6 +114,7 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   // Gauge internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected gaugeOptions: any = {};
+  protected readonly frameVisibleView = computed(() => !(this.runtime.options()?.gauge?.noFrameVisible ?? false));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private gauge: any = null;
   // Structural options cache key removed – always rebuild on size / config change for simplicity

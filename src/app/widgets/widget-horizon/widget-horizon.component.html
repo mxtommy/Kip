@@ -1,4 +1,4 @@
-<div #hWrapper class="canvas-wrap" [style.padding]="gaugeOptions.frameVisible ? '10px' : '0px'">
+<div #hWrapper class="canvas-wrap" [style.padding]="frameVisibleView() ? '10px' : '0px'">
   <canvas [id]="id() + '-canvas'" style="z-index: inherit;">
     Browser does not support canvas element.
   </canvas>

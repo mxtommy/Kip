@@ -887,7 +887,7 @@
   <mat-divider></mat-divider>
   <mat-dialog-actions>
     <button type="button" mat-dialog-close mat-flat-button>Cancel</button>
-    <button mat-flat-button type="submit" [disabled]="!formMaster.valid">
+    <button mat-flat-button type="submit" [disabled]="saveDisabled()">
       Save
     </button>
   </mat-dialog-actions>

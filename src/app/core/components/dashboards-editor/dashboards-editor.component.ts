@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { Dashboard, DashboardService } from '../../services/dashboard.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'dashboards-editor',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatBottomSheetModule, MatButtonModule, MatIconModule, CdkDropList, CdkDrag, MatRippleModule, GestureDirective],
   templateUrl: './dashboards-editor.component.html',
   styleUrl: './dashboards-editor.component.scss',

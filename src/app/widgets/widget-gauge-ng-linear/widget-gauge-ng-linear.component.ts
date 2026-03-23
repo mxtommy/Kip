@@ -6,6 +6,7 @@
  *  - Resize handling and scale recalculation
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
 import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
@@ -21,6 +22,7 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-gauge-ng-linear',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-gauge-ng-linear.component.html',
   styleUrls: ['./widget-gauge-ng-linear.component.scss'],
   imports: [KipResizeObserverDirective, GaugesModule]

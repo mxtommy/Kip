@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { CanvasService } from '../../core/services/canvas.service';
@@ -12,6 +12,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-racetimer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatButtonModule, MatIconModule]
 })
 export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
@@ -29,14 +30,7 @@ export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     timerLength: -300,
     color: 'contrast',
-    playBeeps: true,
-    // host2 widgets expect core shape fields when saved; minimal additions:
-    displayName: 'Race',
-    filterSelfPaths: true,
-    paths: {},
-    enableTimeout: false,
-    dataTimeout: 5,
-    ignoreZones: true
+    playBeeps: true
   };
 
   private canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');

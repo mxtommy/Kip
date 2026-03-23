@@ -22,7 +22,7 @@
  *
  * @requires HttpClient, Angular Signals
  */
-import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -106,6 +106,7 @@ const DEFAULTS = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetEmbeddedComponent],
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {

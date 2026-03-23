@@ -1,5 +1,5 @@
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnChanges, SimpleChanges, OnInit, OnDestroy, input, inject, ElementRef, viewChild } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, OnInit, OnDestroy, input, inject, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
 import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
@@ -61,9 +61,10 @@ export const SteelFrameColors = {
 }
 
 @Component({
-    selector: 'gauge-steel',
-    templateUrl: './gauge-steel.component.html',
-    styleUrls: ['./gauge-steel.component.scss'],
+  selector: 'gauge-steel',
+  templateUrl: './gauge-steel.component.html',
+  styleUrls: ['./gauge-steel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective]
 })
 export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {

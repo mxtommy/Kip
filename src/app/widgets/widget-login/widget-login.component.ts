@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthenticationService } from "../../core/services/authentication.service";
 import { SettingsService } from '../../core/services/settings.service';
@@ -9,10 +10,10 @@ import { ToastService } from '../../core/services/toast.service';
 
 
 @Component({
-    selector: 'app-widget-login',
-    templateUrl: './widget-login.component.html',
-    styleUrls: ['./widget-login.component.css'],
-    standalone: true
+  selector: 'app-widget-login',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './widget-login.component.html',
+  styleUrls: ['./widget-login.component.css']
 })
 export class WidgetLoginComponent implements OnInit {
   dialog = inject(MatDialog);

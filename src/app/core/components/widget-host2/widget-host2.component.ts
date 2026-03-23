@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -75,6 +75,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   private readonly settings = inject(SettingsService);
 
   protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+  protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
   private compType: Type<WidgetViewComponentBase>
   private _hasInitialized = false;

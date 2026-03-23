@@ -18,6 +18,8 @@ Do not place KIP business architecture or project workflow rules here.
 - Use `effect()` for side effects, and keep effects narrow and deterministic.
 - Prefer `inject()` over constructor injection unless constructor injection is clearer.
 - Use `ChangeDetectionStrategy.OnPush` for components unless there is a documented reason not to.
+- This repository runs zoneless; do not add `zone.js` back into app runtime/build configuration.
+- Prefer signal/event-driven updates over `NgZone.run(...)` or `NgZone.runOutsideAngular(...)`; only use `NgZone` for documented compatibility edge cases.
 
 ## Template Rules
 

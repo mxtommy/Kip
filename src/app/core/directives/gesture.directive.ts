@@ -15,7 +15,7 @@
  * Supported gestures (emitted events):
  * - swipeleft, swiperight, swipeup, swipedown, press, doubletap
  */
-import { Directive, DestroyRef, ElementRef, NgZone, inject, input, output } from '@angular/core';
+import { Directive, DestroyRef, ElementRef, inject, input, output } from '@angular/core';
 
 
 // Cancel handler metadata used for long-press cancellation listeners.
@@ -142,7 +142,6 @@ export class GestureDirective {
   /** Emitted on a double-tap. Event.detail contains { x, y, dt }. */
   doubletap = output<CustomEvent<{ x: number; y: number; dt: number }>>();
 
-  private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
 
@@ -194,8 +193,7 @@ export class GestureDirective {
     this.debug('GestureDirective instance created', { instanceId: this._instanceId });
     // Track instance host element for cross-instance ownership diagnostics
     try { (GestureDirective as typeof GestureDirective)._instanceToEl.set(this._instanceId, this.host.nativeElement); } catch { /* ignore */ }
-    this.zone.runOutsideAngular(() => {
-      const el = this.host.nativeElement;
+    const el = this.host.nativeElement;
       // Disable native touch panning so vertical swipes register as pointer events (iOS Safari)
       if (!el.style.touchAction) {
         el.style.touchAction = 'none';
@@ -283,47 +281,44 @@ export class GestureDirective {
           host: this.elDesc(this.host.nativeElement),
           mode: this.mode()
         });
-        // Ensure parent outputs run inside Angular so listeners trigger change detection
-        this.zone.run(() => {
-          switch (evt.type) {
-            case 'press':
-              if (allowP) {
-                this.debug('rebroadcast emit: press');
-                this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
-              }
-              break;
-            case 'doubletap':
-              if (allowDT) {
-                this.debug('rebroadcast emit: doubletap');
-                this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
-              }
-              break;
-            case 'swipeleft':
-              if (allowH) {
-                this.debug('rebroadcast emit: swipeleft');
-                this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
-              }
-              break;
-            case 'swiperight':
-              if (allowH) {
-                this.debug('rebroadcast emit: swiperight');
-                this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
-              }
-              break;
-            case 'swipeup':
-              if (allowV) {
-                this.debug('rebroadcast emit: swipeup');
-                this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
-              }
-              break;
-            case 'swipedown':
-              if (allowV) {
-                this.debug('rebroadcast emit: swipedown');
-                this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
-              }
-              break;
-          }
-        });
+        switch (evt.type) {
+          case 'press':
+            if (allowP) {
+              this.debug('rebroadcast emit: press');
+              this.press.emit(evt as CustomEvent<{ x: number; y: number; center?: { x: number; y: number } }>);
+            }
+            break;
+          case 'doubletap':
+            if (allowDT) {
+              this.debug('rebroadcast emit: doubletap');
+              this.doubletap.emit(evt as CustomEvent<{ x: number; y: number; dt: number }>);
+            }
+            break;
+          case 'swipeleft':
+            if (allowH) {
+              this.debug('rebroadcast emit: swipeleft');
+              this.swipeleft.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+            }
+            break;
+          case 'swiperight':
+            if (allowH) {
+              this.debug('rebroadcast emit: swiperight');
+              this.swiperight.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+            }
+            break;
+          case 'swipeup':
+            if (allowV) {
+              this.debug('rebroadcast emit: swipeup');
+              this.swipeup.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+            }
+            break;
+          case 'swipedown':
+            if (allowV) {
+              this.debug('rebroadcast emit: swipedown');
+              this.swipedown.emit(evt as CustomEvent<{ dx: number; dy: number; duration: number }>);
+            }
+            break;
+        }
       };
       const rebroadcastOpts: AddEventListenerOptions = { passive: true };
       el.addEventListener('press', rebroadcast as EventListener, rebroadcastOpts);
@@ -336,7 +331,7 @@ export class GestureDirective {
       // Block context menu to avoid Chrome aborting pointer sequences
       el.addEventListener('contextmenu', this.onContextMenu, { passive: false });
 
-      this.destroyRef.onDestroy(() => {
+    this.destroyRef.onDestroy(() => {
         el.removeEventListener('pointerdown', this.onPointerDown, { capture: true } as AddEventListenerOptions);
         el.removeEventListener('pointermove', this.onPointerMove, { capture: true } as AddEventListenerOptions);
         el.removeEventListener('pointerrawupdate', this.onPointerRawUpdate as EventListener, { capture: true } as AddEventListenerOptions);
@@ -390,7 +385,6 @@ export class GestureDirective {
         this.captureEl = null;
         this.tracking = false;
         try { (GestureDirective as typeof GestureDirective)._instanceToEl.delete(this._instanceId); } catch { /* ignore */ }
-      });
     });
   }
 
@@ -399,7 +393,7 @@ export class GestureDirective {
     if (this.disableGestures()) return;
     if (!this.modeAllowsDoubleTap()) return;
     const evt = new CustomEvent('doubletap', { detail: { x: ev.clientX, y: ev.clientY, dt: 0 } });
-    this.zone.run(() => this.doubletap.emit(evt));
+    this.doubletap.emit(evt);
     this.lastTapTime = 0; // reset sequence to avoid immediate re-trigger from pointer logic
   };
 
@@ -677,7 +671,7 @@ export class GestureDirective {
           }
           this.pressFired = true;
           const detail = { x: this.startX, y: this.startY, center: { x: this.startX, y: this.startY } };
-          this.zone.run(() => this.emitPressEvent(detail));
+          this.emitPressEvent(detail);
           // Immediately reset to release lane owners for this pointer sequence
           this.reset();
         }
@@ -861,10 +855,8 @@ export class GestureDirective {
           reason: cancelled ? 'horizontal swipe (on cancel)' : 'horizontal swipe',
         });
         this.debug('swipe detected', { direction: dx > 0 ? 'right' : 'left', dx, dy, duration });
-        this.zone.run(() => {
-          if (dx > 0) this.emitSwipeEvent('swiperight', { dx, dy, duration });
-          else this.emitSwipeEvent('swipeleft', { dx, dy, duration });
-        });
+        if (dx > 0) this.emitSwipeEvent('swiperight', { dx, dy, duration });
+        else this.emitSwipeEvent('swipeleft', { dx, dy, duration });
         this.reset();
         return;
       } else if (verticalOk) {
@@ -875,10 +867,8 @@ export class GestureDirective {
           reason: cancelled ? 'vertical swipe (on cancel)' : 'vertical swipe',
         });
         this.debug('swipe detected', { direction: dy > 0 ? 'down' : 'up', dx, dy, duration });
-        this.zone.run(() => {
-          if (dy > 0) this.emitSwipeEvent('swipedown', { dx, dy, duration });
-          else this.emitSwipeEvent('swipeup', { dx, dy, duration });
-        });
+        if (dy > 0) this.emitSwipeEvent('swipedown', { dx, dy, duration });
+        else this.emitSwipeEvent('swipeup', { dx, dy, duration });
         this.reset();
         return;
       }
@@ -913,7 +903,7 @@ export class GestureDirective {
       const dt = now - this.lastTapTime;
       const dist = Math.hypot(ev.clientX - this.lastTapX, ev.clientY - this.lastTapY);
       if (dt <= this._doubleTapInterval && dist <= this._tapSlop) {
-        this.zone.run(() => this.emitDoubleTapEvent({ x: ev.clientX, y: ev.clientY, dt }));
+        this.emitDoubleTapEvent({ x: ev.clientX, y: ev.clientY, dt });
         this.lastTapTime = 0;
         this.potentialDoubleTap = false; // completed
       } else {

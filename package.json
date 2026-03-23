@@ -116,7 +116,6 @@
     "sk-ais-status-plugin": "^1.0.0",
     "steelseries": "^2.0.9",
     "tslib": "^2.6.2",
-    "zone.js": "^0.15.1",
     "jsdom": "^26.1.0"
   },
   "dependencies": {

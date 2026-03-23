@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
@@ -8,6 +9,7 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-iframe',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-iframe.component.html',
   styleUrls: ['./widget-iframe.component.scss']
 })
