@@ -1,4 +1,4 @@
-import { enableProdMode, importProvidersFrom, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideAppInitializer, provideCheckNoChangesConfig, provideZoneChangeDetection, inject } from '@angular/core';
 import { routes } from './app/app.routes';
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -33,7 +33,9 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-  provideZoneChangeDetection(),importProvidersFrom(BrowserModule),
+    provideZoneChangeDetection(),
+    provideCheckNoChangesConfig({ exhaustive: true, interval: 500 }),
+    importProvidersFrom(BrowserModule),
     // Imports Interceptor that capture http requests and inserts authorization
     // Token automatically in every httpClient outbound calls.
     // NOTE: it does not work for WebSockets. Only http/REST calls

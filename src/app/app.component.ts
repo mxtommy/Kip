@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
@@ -31,6 +31,7 @@ import { DashboardHistorySeriesSyncService } from './core/services/dashboard-his
 
 @Component({
   selector: 'app-root',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]

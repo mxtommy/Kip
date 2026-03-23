@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, NgGridStackNode, NgGridStackWidget, NgGridStackOptions, } from 'gridstack/dist/angular';
 import { GridItemHTMLElement, GridStackOptions } from 'gridstack';
@@ -31,6 +31,7 @@ interface GridApi {
 
 @Component({
   selector: 'dashboard',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [GridstackComponent, DashboardScrollerComponent, MatIconModule, MatButtonModule, GestureDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
