@@ -1,4 +1,4 @@
-import { DestroyRef, inject, Injectable, NgZone, OnDestroy } from '@angular/core';
+import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
@@ -68,7 +68,6 @@ export class SignalKDeltaService implements OnDestroy {
   private server = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
   private connectionStateMachine = inject(ConnectionStateMachine);
-  private zones = inject(NgZone); // NgZone to run outside Angular zone - NOT to be confused with SK zones
 
   // Object flattening configuration - conservative settings for performance
   private readonly FLATTEN_CONFIG = {
@@ -199,18 +198,15 @@ export class SignalKDeltaService implements OnDestroy {
 
     this.socketWS$ = this.getNewWebSocket();
 
-    // Running outside Angular's zone to prevent unnecessary change detection cycles
-    this.zones.runOutsideAngular(() => {
-      this.socketWS$.pipe(takeUntilDestroyed(this._destroyRef))
-        .subscribe({
-          next: msgWS => this.processWebsocketMessage(msgWS),
-          error: err => {
-            console.error('[Delta Service] WebSocket error:', err);
-            // Note: ConnectionStateMachine error reporting is handled in the close event handler
-            // to avoid duplicate error reports for the same connection failure
-          }
-        });
-    });
+    this.socketWS$.pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: msgWS => this.processWebsocketMessage(msgWS),
+        error: err => {
+          console.error('[Delta Service] WebSocket error:', err);
+          // Note: ConnectionStateMachine error reporting is handled in the close event handler
+          // to avoid duplicate error reports for the same connection failure
+        }
+      });
   }
 
   /**

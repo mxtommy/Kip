@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { ElementRef, NgZone } from '@angular/core';
+import { ElementRef } from '@angular/core';
 import { KipResizeObserverDirective } from './kip-resize-observer.directive';
 
 describe('KipResizeObserverDirective', () => {
@@ -28,20 +28,11 @@ describe('KipResizeObserverDirective', () => {
         }).ResizeObserver =
             ResizeObserverMock as unknown as typeof ResizeObserver;
 
-        const ngZoneMock: Pick<NgZone, 'run' | 'runOutsideAngular'> = {
-            run: <T>(fn: (...args: unknown[]) => T): T => fn(),
-            runOutsideAngular: <T>(fn: (...args: unknown[]) => T): T => fn(),
-        };
-
         TestBed.configureTestingModule({
             providers: [
                 {
                     provide: ElementRef,
                     useValue: new ElementRef(document.createElement('div')),
-                },
-                {
-                    provide: NgZone,
-                    useValue: ngZoneMock,
                 },
             ],
         });

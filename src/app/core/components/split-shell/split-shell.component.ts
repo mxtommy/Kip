@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, NgZone, ElementRef, viewChild, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SettingsService } from '../../services/settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -21,7 +21,6 @@ export class SplitShellComponent implements OnDestroy {
   private readonly _settings = inject(SettingsService);
   private readonly _dashboard = inject(DashboardService);
   private readonly breakpointObserver = inject(BreakpointObserver);
-  private readonly ngZone = inject(NgZone);
   public readonly side = signal<'left' | 'right'>(this._settings.getSplitShellSide());
   // Stored as ratio (0-1)
   public panelRatio = signal<number>(this._settings.getSplitShellWidth());
@@ -129,11 +128,8 @@ export class SplitShellComponent implements OnDestroy {
     this.ghostActive.set(true);
     this.updateGhostTransform(this.startW);
     (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
-    // Attach listeners only for active resize (outside Angular for perf)
-    this.ngZone.runOutsideAngular(() => {
-      window.addEventListener('pointermove', this.boundMove, { passive: true });
-      window.addEventListener('pointerup', this.boundUp, { passive: true });
-    });
+    window.addEventListener('pointermove', this.boundMove, { passive: true });
+    window.addEventListener('pointerup', this.boundUp, { passive: true });
   }
 
   protected onMove(ev: PointerEvent): void {
@@ -148,8 +144,7 @@ export class SplitShellComponent implements OnDestroy {
     const newW = Math.min(maxPx, Math.max(minPx, raw));
     if (Math.abs(newW - this.ghostWidth) < SplitShellComponent.MIN_DELTA_PX) return;
     this.ghostWidth = newW;
-    // Update ghost transform outside Angular; no width mutation to shell to avoid layout churn
-    this.ngZone.runOutsideAngular(() => this.updateGhostTransform(newW));
+    this.updateGhostTransform(newW);
   }
 
   protected onUp(): void {
@@ -166,17 +161,15 @@ export class SplitShellComponent implements OnDestroy {
     if (panelRef && !this.panelCollapsed()) {
       panelRef.nativeElement.style.width = finalW + 'px';
     }
-    this.ngZone.run(() => {
-      this.panelWidth.set(finalW);
-      const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
-      const total = host?.clientWidth ?? finalW;
-      const ratio = total ? finalW / total : 0.3;
-      const prev = this.panelRatio();
-      if (Math.abs(ratio - prev) > 0.0005) {
-        this.panelRatio.set(ratio);
-        // DO NOT persist here; defer until layoutEditSaved effect
-      }
-    });
+    this.panelWidth.set(finalW);
+    const host = this.panelEl()?.nativeElement.parentElement as HTMLElement | null;
+    const total = host?.clientWidth ?? finalW;
+    const ratio = total ? finalW / total : 0.3;
+    const prev = this.panelRatio();
+    if (Math.abs(ratio - prev) > 0.0005) {
+      this.panelRatio.set(ratio);
+      // DO NOT persist here; defer until layoutEditSaved effect
+    }
   }
 
   private updateGhostTransform(width: number) {
