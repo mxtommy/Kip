@@ -1,10 +1,11 @@
-import { ElementRef, Component, input, viewChild, computed, signal, untracked, effect, OnDestroy } from '@angular/core';
+import { ElementRef, Component, input, viewChild, computed, signal, untracked, effect, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { IDataHighlight } from '../../core/interfaces/widgets-interface';
 
 @Component({
-    selector: 'svg-simple-linear-gauge',
-    templateUrl: './svg-simple-linear-gauge.component.svg',
-    styleUrl: './svg-simple-linear-gauge.component.scss',
+  selector: 'svg-simple-linear-gauge',
+  templateUrl: './svg-simple-linear-gauge.component.svg',
+  styleUrl: './svg-simple-linear-gauge.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SvgSimpleLinearGaugeComponent implements OnDestroy {
   protected readonly gaugeBarAnimate = viewChild<ElementRef>('gaugeBarAnimate');

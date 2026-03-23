@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, signal } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -75,7 +75,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   private readonly settings = inject(SettingsService);
 
   protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
-  protected readonly dashboardStaticView = signal<boolean>(this.dashboard.isDashboardStatic());
+  protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
   private compType: Type<WidgetViewComponentBase>
   private _hasInitialized = false;
@@ -110,15 +110,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
       if (!this._hasInitialized || !tick) return;
       untracked(() => {
         this.reinitFromSavedConfig();
-      });
-    });
-
-    effect(() => {
-      const isStatic = this.dashboard.isDashboardStatic();
-      untracked(() => {
-        queueMicrotask(() => {
-          this.dashboardStaticView.set(isStatic);
-        });
       });
     });
   }
