@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -9,6 +9,7 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-anchor-alarm',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-anchor-alarm.component.html',
   styleUrls: ['./widget-anchor-alarm.component.scss']
 })

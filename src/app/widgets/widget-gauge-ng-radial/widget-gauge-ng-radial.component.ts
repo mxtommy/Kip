@@ -6,6 +6,7 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, inject, input, untracked, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
@@ -21,6 +22,7 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-gauge-ng-radial',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss'],
   imports: [KipResizeObserverDirective, GaugesModule]

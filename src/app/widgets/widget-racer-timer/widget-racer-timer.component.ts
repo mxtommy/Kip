@@ -12,6 +12,7 @@ import {
   untracked,
   viewChild
 } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
 import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
 import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
@@ -29,6 +30,7 @@ import {MatInput} from '@angular/material/input';
 
 @Component({
   selector: 'widget-racer-timer',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
   imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, MatInput]
