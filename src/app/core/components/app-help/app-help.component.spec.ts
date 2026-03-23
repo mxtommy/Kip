@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppHelpComponent } from './app-help.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
@@ -10,62 +11,68 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { BehaviorSubject } from 'rxjs';
 
-type NavArgs = [unknown]; // minimal tuple placeholder for single-arg navigate signature used
-class MockRouter { navigateCalls: NavArgs[] = []; navigate(commands: unknown[]): void { this.navigateCalls.push([commands]); } }
+type NavArgs = [
+    unknown
+]; // minimal tuple placeholder for single-arg navigate signature used
+class MockRouter {
+    navigateCalls: NavArgs[] = [];
+    navigate(commands: unknown[]): void { this.navigateCalls.push([commands]); }
+}
 class MockActivatedRoute {
-  private readonly _paramMap = new BehaviorSubject(convertToParamMap({}));
-  readonly paramMap = this._paramMap.asObservable();
+    private readonly _paramMap = new BehaviorSubject(convertToParamMap({}));
+    readonly paramMap = this._paramMap.asObservable();
 
-  setPage(page: string | null): void {
-    this._paramMap.next(page ? convertToParamMap({ page }) : convertToParamMap({}));
-  }
+    setPage(page: string | null): void {
+        this._paramMap.next(page ? convertToParamMap({ page }) : convertToParamMap({}));
+    }
 }
 
 // Minimal stub replacing <markdown [src]="..."> usage so we avoid real MarkdownService dependency
 @Component({
-  selector: 'markdown',
-  standalone: true,
-  template: '<ng-content></ng-content>'
+    selector: 'markdown',
+    standalone: true,
+    template: '<ng-content></ng-content>'
 })
-class MarkdownStubComponent {}
+class MarkdownStubComponent {
+}
 
 describe('AppHelpComponent', () => {
-  let component: AppHelpComponent;
-  let fixture: import('@angular/core/testing').ComponentFixture<AppHelpComponent>;
-  let router: MockRouter;
-  let activatedRoute: MockActivatedRoute;
-  let httpMock: HttpTestingController;
-  let appRef: ApplicationRef;
+    let component: AppHelpComponent;
+    let fixture: import('@angular/core/testing').ComponentFixture<AppHelpComponent>;
+    let router: MockRouter;
+    let activatedRoute: MockActivatedRoute;
+    let httpMock: HttpTestingController;
+    let appRef: ApplicationRef;
 
-  const mockMenu = [
-    {
-      title: 'Group A',
-      items: [
-        { title: 'Intro', file: 'intro.md' },
-        { title: 'Ignored', file: 'image.png' } // non-md filtered out
-      ]
-    },
-    { title: 'Usage', file: 'usage.md' }
-  ];
+    const mockMenu = [
+        {
+            title: 'Group A',
+            items: [
+                { title: 'Intro', file: 'intro.md' },
+                { title: 'Ignored', file: 'image.png' } // non-md filtered out
+            ]
+        },
+        { title: 'Usage', file: 'usage.md' }
+    ];
 
-  beforeEach(async () => {
-    router = new MockRouter();
-    activatedRoute = new MockActivatedRoute();
-    await TestBed.configureTestingModule({
-      imports: [AppHelpComponent],
-      providers: [
-        { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: activatedRoute },
-        provideHttpClient(withInterceptorsFromDi()),
-        provideHttpClientTesting()
-      ]
-    })
-      .overrideComponent(AppHelpComponent, {
-        set: {
-          // Re-declare only needed imports without real MarkdownComponent
-          imports: [MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule, MarkdownStubComponent],
-          // Simplified template (no <markdown> usage) to focus on logic
-          template: `
+    beforeEach(async () => {
+        router = new MockRouter();
+        activatedRoute = new MockActivatedRoute();
+        await TestBed.configureTestingModule({
+            imports: [AppHelpComponent],
+            providers: [
+                { provide: Router, useValue: router },
+                { provide: ActivatedRoute, useValue: activatedRoute },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
+            ]
+        })
+            .overrideComponent(AppHelpComponent, {
+            set: {
+                // Re-declare only needed imports without real MarkdownComponent
+                imports: [MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule, MarkdownStubComponent],
+                // Simplified template (no <markdown> usage) to focus on logic
+                template: `
           <div class="fullpage-header">
             <h6 class="fullpage-header-title">{{ pageTitle }}</h6>
             <button mat-flat-button [matMenuTriggerFor]="helpMenu" [disabled]="isLoading() || hasError() || helpFiles().length === 0">
@@ -98,81 +105,81 @@ describe('AppHelpComponent', () => {
           } @else if (selectedFile()) {
             <div class="markdown-content">Selected: {{ selectedFile() }}</div>
           }`
-        }
-      })
-      .compileComponents();
+            }
+        })
+            .compileComponents();
 
-    httpMock = TestBed.inject(HttpTestingController);
-    appRef = TestBed.inject(ApplicationRef);
-    fixture = TestBed.createComponent(AppHelpComponent); // httpResource constructed eagerly
-    component = fixture.componentInstance;
-  });
+        httpMock = TestBed.inject(HttpTestingController);
+        appRef = TestBed.inject(ApplicationRef);
+        fixture = TestBed.createComponent(AppHelpComponent); // httpResource constructed eagerly
+        component = fixture.componentInstance;
+    });
 
-  afterEach(() => {
-    httpMock.verify();
-  });
+    afterEach(() => {
+        httpMock.verify();
+    });
 
-  function expectFiles(expected: string[]) {
-    const files = component['helpFiles']();
-    expect(files.map(f => f.file)).toEqual(expected);
-  }
+    function expectFiles(expected: string[]) {
+        const files = component['helpFiles']();
+        expect(files.map(f => f.file)).toEqual(expected);
+    }
 
-  async function flushMenu(res: unknown = mockMenu) {
-    const req = httpMock.expectOne('assets/help-docs/menu.json');
-    expect(req.request.method).toBe('GET');
-    req.flush(res);
-    await appRef.whenStable(); // propagate to resource signals
-    fixture.detectChanges();
-  }
+    async function flushMenu(res: unknown = mockMenu) {
+        const req = httpMock.expectOne('assets/help-docs/menu.json');
+        expect(req.request.method).toBe('GET');
+        req.flush(res);
+        await appRef.whenStable(); // propagate to resource signals
+        fixture.detectChanges();
+    }
 
-  it('should create', async () => {
-    fixture.detectChanges();
-    await flushMenu();
-    expect(component).toBeTruthy();
-  });
+    it('should create', async () => {
+        fixture.detectChanges();
+        await flushMenu();
+        expect(component).toBeTruthy();
+    });
 
-  it('should fetch and filter .md help files', async () => {
-    fixture.detectChanges();
-    await flushMenu();
-    expectFiles(['intro.md', 'usage.md']);
-  });
+    it('should fetch and filter .md help files', async () => {
+        fixture.detectChanges();
+        await flushMenu();
+        expectFiles(['intro.md', 'usage.md']);
+    });
 
-  it('should auto-select first file after load', async () => {
-    fixture.detectChanges();
-    await flushMenu();
-    expect(component['selectedFile']()).toBe('intro.md');
-  });
+    it('should auto-select first file after load', async () => {
+        fixture.detectChanges();
+        await flushMenu();
+        expect(component['selectedFile']()).toBe('intro.md');
+    });
 
-  it('should allow selecting another file', async () => {
-    fixture.detectChanges();
-    await flushMenu();
-    component['selectFile']('usage.md');
-    expect(component['selectedFile']()).toBe('usage.md');
-    expect(router.navigateCalls[0][0]).toEqual(['/help', 'usage']);
-  });
+    it('should allow selecting another file', async () => {
+        fixture.detectChanges();
+        await flushMenu();
+        component['selectFile']('usage.md');
+        expect(component['selectedFile']()).toBe('usage.md');
+        expect(router.navigateCalls[0][0]).toEqual(['/help', 'usage']);
+    });
 
-  it('should use route page parameter to select help file', async () => {
-    activatedRoute.setPage('usage');
-    fixture.detectChanges();
-    await flushMenu();
-    expect(component['selectedFile']()).toBe('usage.md');
-  });
+    it('should use route page parameter to select help file', async () => {
+        activatedRoute.setPage('usage');
+        fixture.detectChanges();
+        await flushMenu();
+        expect(component['selectedFile']()).toBe('usage.md');
+    });
 
-  it('should expose error state on failure', async () => {
-    fixture.detectChanges();
-    const req = httpMock.expectOne('assets/help-docs/menu.json');
-    req.flush('fail', { status: 500, statusText: 'Server Error' });
-    await appRef.whenStable();
-    fixture.detectChanges();
-    expect(component['hasError']()).toBeTrue();
-    expect(component['helpFiles']().length).toBe(0);
-  });
+    it('should expose error state on failure', async () => {
+        fixture.detectChanges();
+        const req = httpMock.expectOne('assets/help-docs/menu.json');
+        req.flush('fail', { status: 500, statusText: 'Server Error' });
+        await appRef.whenStable();
+        fixture.detectChanges();
+        expect(component['hasError']()).toBe(true);
+        expect(component['helpFiles']().length).toBe(0);
+    });
 
-  it('should navigate to dashboard on closePage', async () => {
-    fixture.detectChanges();
-    await flushMenu();
-    component['closePage']();
-    expect(router.navigateCalls.length).toBe(1);
-    expect(router.navigateCalls[0][0]).toEqual(['/dashboard']);
-  });
+    it('should navigate to dashboard on closePage', async () => {
+        fixture.detectChanges();
+        await flushMenu();
+        component['closePage']();
+        expect(router.navigateCalls.length).toBe(1);
+        expect(router.navigateCalls[0][0]).toEqual(['/dashboard']);
+    });
 });

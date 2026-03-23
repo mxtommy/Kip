@@ -14,9 +14,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "ES2022",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
     "module": "es2020",
     "baseUrl": "./",
     "isolatedModules": false,

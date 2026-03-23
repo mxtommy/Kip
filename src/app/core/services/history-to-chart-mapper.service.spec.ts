@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { HistoryToChartMapperService } from './history-to-chart-mapper.service';
 import { IHistoryValuesResponse } from './history-api-client.service';
 

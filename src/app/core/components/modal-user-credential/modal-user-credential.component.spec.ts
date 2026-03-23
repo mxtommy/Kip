@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ModalUserCredentialComponent } from './modal-user-credential.component';
 
 describe('ModalUserCredentialComponent', () => {

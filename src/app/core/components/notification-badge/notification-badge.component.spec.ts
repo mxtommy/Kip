@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NotificationBadgeComponent } from './notification-badge.component';
 
 describe('NotificationBadgeComponent', () => {

@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { IDynamicControl } from '../../core/interfaces/widgets-interface';
 
@@ -11,21 +12,23 @@ describe('PathControlConfigComponent', () => {
   let component: PathControlConfigComponent;
   let fixture: ComponentFixture<PathControlConfigComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    imports: [PathControlConfigComponent],
-    providers: [
-      { provide: SignalKConnectionService, useValue: { skServerVersion: '2.14.0' } }
-      ,{ provide: DataService, useValue: {
-          getPathObject: () => ({ displayName: 'Speed', meta: { units: 'knots' } }),
-          getPathsAndMetaByType: () => ([])
-        }
-      },
-      { provide: UnitsService, useValue: { skBaseUnits: [], getConversions: () => [] } }
-    ]
-})
-    .compileComponents();
-  }));
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [PathControlConfigComponent],
+      providers: [
+        { provide: SignalKConnectionService, useValue: { skServerVersion: '2.14.0' } },
+        {
+          provide: DataService,
+          useValue: {
+            getPathObject: () => ({ displayName: 'Speed', meta: { units: 'knots' } }),
+            getPathsAndMetaByType: () => ([])
+          }
+        },
+        { provide: UnitsService, useValue: { skBaseUnits: [], getConversions: () => [] } }
+      ]
+    })
+      .compileComponents();
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PathControlConfigComponent);

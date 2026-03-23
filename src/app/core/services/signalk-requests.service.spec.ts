@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SignalkRequestsService } from './signalk-requests.service';
 
 describe('SignalkRequestsService', () => {

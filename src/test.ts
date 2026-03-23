@@ -1,7 +1,6 @@
-// Angular 20+ test setup: use the public testing entrypoint instead of deep zone.js paths.
-// Deep imports like 'zone.js/dist/async-test' were removed from the package exports in zone.js >=0.14.
-// The single 'zone.js/testing' import wires up jasmine patches & async/fakeAsync helpers.
-import 'zone.js'; // Included for completeness (often auto-included by CLI polyfills)
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { cwd } from 'node:process';
 // Mark global test flag before anything else so app code can detect test context
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).__KIP_TEST__ = true;
@@ -18,7 +17,124 @@ try {
     }
   });
 } catch { /* ignore if not allowed */ }
-import 'zone.js/testing';
+
+if (!('fonts' in document)) {
+  Object.defineProperty(document, 'fonts', {
+    configurable: true,
+    value: {
+      status: 'loaded',
+      ready: Promise.resolve(),
+      add: () => undefined,
+    },
+  });
+}
+
+if (typeof window.matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  });
+}
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class TestResizeObserver {
+    constructor(private readonly callback?: ResizeObserverCallback) {}
+
+    observe(target: Element): void {
+      this.callback?.([
+        {
+          target,
+          contentRect: target.getBoundingClientRect?.() ?? new DOMRectReadOnly(0, 0, 0, 0),
+        } as ResizeObserverEntry,
+      ], this as unknown as ResizeObserver);
+    }
+
+    unobserve(): void {}
+
+    disconnect(): void {}
+  }
+
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    value: TestResizeObserver,
+    writable: true,
+  });
+}
+
+const createCanvasContextStub = (): CanvasRenderingContext2D => {
+  const gradient = { addColorStop: () => undefined };
+  const baseContext: Record<string, unknown> = {
+    save: () => undefined,
+    restore: () => undefined,
+    scale: () => undefined,
+    rotate: () => undefined,
+    translate: () => undefined,
+    transform: () => undefined,
+    setTransform: () => undefined,
+    resetTransform: () => undefined,
+    clearRect: () => undefined,
+    fillRect: () => undefined,
+    strokeRect: () => undefined,
+    beginPath: () => undefined,
+    closePath: () => undefined,
+    moveTo: () => undefined,
+    lineTo: () => undefined,
+    arc: () => undefined,
+    stroke: () => undefined,
+    fill: () => undefined,
+    fillText: () => undefined,
+    strokeText: () => undefined,
+    drawImage: () => undefined,
+    clip: () => undefined,
+    setLineDash: () => undefined,
+    getLineDash: () => [],
+    measureText: (text: string) => ({ width: String(text).length * 8 }),
+    getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+    createLinearGradient: () => gradient,
+    createRadialGradient: () => gradient,
+    createPattern: () => null,
+    getImageData: () => ({ data: new Uint8ClampedArray(), width: 0, height: 0 }),
+    putImageData: () => undefined,
+  };
+
+  return new Proxy(baseContext, {
+    get(target, prop) {
+      if (prop in target) {
+        return target[prop as keyof typeof target];
+      }
+
+      return () => undefined;
+    },
+    set(target, prop, value) {
+      target[prop as string] = value;
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+};
+
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  configurable: true,
+  value: () => createCanvasContextStub(),
+});
+
+Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+  configurable: true,
+  value: () => Promise.resolve(),
+});
+
+Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+  configurable: true,
+  value: () => undefined,
+});
 import './test-shims/steelseries-shim';
 // Global test configuration (providers, stubs) inlined to avoid module resolution issues.
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -57,16 +173,16 @@ import type {
 import type { IUnitDefaults } from './app/core/services/units.service';
 import type { IDatasetServiceDatasetConfig } from './app/core/services/dataset-stream.service';
 // Global provider setup (HttpClient, RouterTestingModule, animation & material stubs, etc.)
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import type { Provider } from '@angular/core';
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting
-} from '@angular/platform-browser-dynamic/testing';
 
-// First, initialize the Angular testing environment.
-const testBed = getTestBed();
-testBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
+// NOTE: initTestEnvironment is handled by the Angular CLI (@angular/build:unit-test) via its
+// internal init-testbed.js setup file. We must NOT call it here to avoid NG0400 platform conflict.
+
+function readTestIconsSvg(): string {
+  const basePath = cwd() || process.cwd() || '.';
+  return readFileSync(join(basePath, 'src/assets/svg/icons.svg'), 'utf-8');
+}
 
 // Note: Icon sprite registration happens in ENVIRONMENT_INITIALIZER and/or per-spec helper.
 // Note: Keep logs strict, but apply a very narrow filter for known MatIcon noise only.
@@ -350,82 +466,6 @@ class WidgetMetadataDirectiveStub implements Partial<WidgetMetadataDirective> {
   public observe(): void { /* noop */ }
   public reset(): void { /* noop */ }
 }
-// Consolidated global TestBed configuration to avoid ordering surprises and make
-// global providers explicit in one place.
-testBed.configureTestingModule({
-  imports: [RouterTestingModule, ReactiveFormsModule, MatIconModule],
-  providers: [
-    // Register SVG icons and normalize leading-colon icon names at environment init
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useValue: () => {
-        try {
-          // Ensure we only register once across multiple configureTestingModule calls
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const w = window as any;
-          if (w.__KIP_ICONS_REGISTERED__) return;
-          const iconRegistry = diInject(MatIconRegistry);
-          const sanitizer = diInject(DomSanitizer);
-          const xhr = new XMLHttpRequest();
-          // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
-          xhr.open('GET', '/assets/svg/icons.svg', false);
-          xhr.send(null);
-          if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
-            // Register the whole set in supported namespaces (default and 'kip')
-            const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
-            // Default (no namespace, svgIcon="name")
-            iconRegistry.addSvgIconSetLiteral(trusted);
-            // App-level namespace commonly used in KIP (svgIcon="kip:name")
-            iconRegistry.addSvgIconSetInNamespace('kip', trusted);
-            const svgs = Array.from(doc.querySelectorAll('svg[id]')) as SVGSVGElement[];
-            for (const svg of svgs) {
-              const id = svg.getAttribute('id');
-              if (!id) continue;
-              iconRegistry.addSvgIconLiteral(id, sanitizer.bypassSecurityTrustHtml(svg.outerHTML));
-            }
-            // Mark as registered to avoid rework in subsequent modules
-            w.__KIP_ICONS_REGISTERED__ = true;
-          } else {
-            console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
-          }
-        } catch (err) {
-          console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);
-        }
-      }
-    },
-    // HTTP helpers: testing provider is preferred for specs; keep interceptor wiring if some tests rely on it
-    provideHttpClient(withInterceptorsFromDi()),
-    provideHttpClientTesting(),
-    // Animation & utility services
-    provideNoopAnimations(),
-    UnitsService,
-    // Material stubs and tokens
-    { provide: MAT_DIALOG_DATA, useValue: {} },
-    { provide: MatBottomSheetRef, useClass: MatBottomSheetRefStub },
-    { provide: MatDialogRef, useClass: MatDialogRefStub },
-    { provide: MAT_BOTTOM_SHEET_DATA, useValue: {} },
-    // Common DI stubs used by many suites
-    { provide: AppNetworkInitService, useClass: AppNetworkInitServiceStub },
-    { provide: AuthenticationService, useClass: AuthenticationServiceStub },
-    { provide: ActivatedRoute, useValue: ActivatedRouteStub },
-    { provide: SettingsService, useClass: SettingsServiceStub },
-    // SignalK connection-related stubs to prevent heavy runtime and missing .pipe
-    { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
-    { provide: ConnectionStateMachine, useClass: ConnectionStateMachineStub },
-    { provide: PluginConfigClientService, useClass: PluginConfigClientServiceStub },
-    // Provide a root-level WidgetRuntimeDirective stub to satisfy injections in widget specs
-    { provide: WidgetRuntimeDirective, useClass: WidgetRuntimeDirectiveStub },
-    // Provide a root-level WidgetStreamsDirective stub for widget/component specs
-    { provide: WidgetStreamsDirective, useClass: WidgetStreamsDirectiveStub },
-    // Provide metadata directive stub globally
-    { provide: WidgetMetadataDirective, useClass: WidgetMetadataDirectiveStub },
-    // Forms control stub to satisfy FormGroupDirective injections
-    { provide: FormGroupDirective, useValue: { control: new FormGroup({}) } as Partial<FormGroupDirective> }
-  ]
-});
 
 // Monkey-patch TestBed to always merge in our global imports/providers for every spec
 const GLOBAL_IMPORTS = [RouterTestingModule, ReactiveFormsModule, MatIconModule];
@@ -443,15 +483,12 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
         if (w2.__KIP_ICONS_REGISTERED__) return;
         const iconRegistry = diInject(MatIconRegistry);
         const sanitizer = diInject(DomSanitizer);
-        const xhr = new XMLHttpRequest();
-        // Angular CLI test runner serves assets at /assets/... (see angular.json:test.options.assets)
-        xhr.open('GET', '/assets/svg/icons.svg', false);
-        xhr.send(null);
-        if (xhr.status >= 200 && xhr.status < 300 && typeof xhr.responseText === 'string') {
+        const iconSvg = readTestIconsSvg();
+        if (typeof iconSvg === 'string' && iconSvg.length > 0) {
           const parser = new DOMParser();
-          const doc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
+          const doc = parser.parseFromString(iconSvg, 'image/svg+xml');
           // Register the whole set in supported namespaces (default and 'kip')
-          const trusted = sanitizer.bypassSecurityTrustHtml(xhr.responseText);
+          const trusted = sanitizer.bypassSecurityTrustHtml(iconSvg);
           // Default (no namespace, svgIcon="name")
           iconRegistry.addSvgIconSetLiteral(trusted);
           // App-level namespace commonly used in KIP (svgIcon="kip:name")
@@ -465,7 +502,7 @@ const GLOBAL_PROVIDERS: GlobalProvider[] = [
           // Mark as registered to avoid rework in subsequent modules
           w2.__KIP_ICONS_REGISTERED__ = true;
         } else {
-          console.error(`[TEST BOOTSTRAP] Failed to load /assets/svg/icons.svg (status ${xhr.status}) — SVG icon ids will not be validated.`);
+          console.error('[TEST BOOTSTRAP] Failed to load src/assets/svg/icons.svg. SVG icon ids will not be validated.');
         }
       } catch (err) {
         console.error('[TEST BOOTSTRAP] Error while registering SVG icons for tests:', err);

@@ -112,7 +112,8 @@ export class SvgWindsteerComponent implements OnDestroy {
 
       untracked(() => {
         const dialHeading = modeEnabled ? heading : 0;
-        if (!this.compassInitialized) {
+        const isFirstCompass = !this.compassInitialized;
+        if (isFirstCompass) {
           this.compass.oldValue = dialHeading;
           this.compass.newValue = dialHeading;
           this.compassInitialized = true;
@@ -122,7 +123,7 @@ export class SvgWindsteerComponent implements OnDestroy {
         }
         this.headingValue.set(heading.toString());
         if (this.rotatingDial()?.nativeElement) {
-          if (!this.compassInitialized || this.compass.oldValue === this.compass.newValue) {
+          if (isFirstCompass || this.compass.oldValue === this.compass.newValue) {
             this.setRotationImmediate(this.rotatingDial().nativeElement, -this.compass.newValue);
           } else {
             animateRotation(this.rotatingDial().nativeElement, -this.compass.oldValue, -this.compass.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);
@@ -143,7 +144,8 @@ export class SvgWindsteerComponent implements OnDestroy {
       untracked(() => {
         const headingOffset = modeEnabled ? this.compass.newValue : 0;
         const nextCog = cogAngle - headingOffset;
-        if (!this.cogInitialized) {
+        const isFirstCog = !this.cogInitialized;
+        if (isFirstCog) {
           this.cog.oldValue = nextCog;
           this.cog.newValue = nextCog;
           this.cogInitialized = true;
@@ -152,7 +154,7 @@ export class SvgWindsteerComponent implements OnDestroy {
           this.cog.newValue = nextCog;
         }
         if (this.cogIndicator()?.nativeElement) {
-          if (!this.cogInitialized || this.cog.oldValue === this.cog.newValue) {
+          if (isFirstCog || this.cog.oldValue === this.cog.newValue) {
             this.setRotationImmediate(this.cogIndicator().nativeElement, this.cog.newValue);
           } else {
             animateRotation(this.cogIndicator().nativeElement, this.cog.oldValue, this.cog.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);
@@ -175,7 +177,8 @@ export class SvgWindsteerComponent implements OnDestroy {
         } else {
           this.waypointActive.set(false);
         }
-        if (!this.wptInitialized) {
+        const isFirstWaypoint = !this.wptInitialized;
+        if (isFirstWaypoint) {
           this.wpt.oldValue = wptAngle;
           this.wpt.newValue = wptAngle;
           this.wptInitialized = true;
@@ -184,7 +187,7 @@ export class SvgWindsteerComponent implements OnDestroy {
           this.wpt.newValue = wptAngle;
         }
         if (this.wptIndicator()?.nativeElement) {
-          if (!this.wptInitialized || this.wpt.oldValue === this.wpt.newValue) {
+          if (isFirstWaypoint || this.wpt.oldValue === this.wpt.newValue) {
             this.setRotationImmediate(this.wptIndicator().nativeElement, this.wpt.newValue);
           } else {
             animateRotation(this.wptIndicator().nativeElement, this.wpt.oldValue, this.wpt.newValue, this.ANIMATION_DURATION, undefined, this.animationFrameIds, undefined, this.ngZone);

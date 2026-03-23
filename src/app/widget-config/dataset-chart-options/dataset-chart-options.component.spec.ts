@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { UntypedFormControl } from '@angular/forms';
 import { DatasetChartOptionsComponent } from './dataset-chart-options.component';
+import { DataService } from '../../core/services/data.service';
+import { UnitsService } from '../../core/services/units.service';
 
 describe('DatasetChartOptionsComponent', () => {
   let component: DatasetChartOptionsComponent;
@@ -8,7 +11,22 @@ describe('DatasetChartOptionsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DatasetChartOptionsComponent]
+      imports: [DatasetChartOptionsComponent],
+      providers: [
+        {
+          provide: DataService,
+          useValue: {
+            getPathsAndMetaByType: () => [],
+            getPathObject: () => null,
+          },
+        },
+        {
+          provide: UnitsService,
+          useValue: {
+            getConversionsForPath: () => ({ default: undefined, conversions: [] }),
+          },
+        },
+      ],
     })
     .compileComponents();
 

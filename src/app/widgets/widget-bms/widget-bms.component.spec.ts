@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, Subject } from 'rxjs';
 import { MatIconRegistry } from '@angular/material/icon';
 import { WidgetBmsComponent } from './widget-bms.component';
@@ -9,99 +10,112 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 import type { ITheme } from '../../core/services/app-service';
 
 describe('WidgetBmsComponent', () => {
-  let fixture: ComponentFixture<WidgetBmsComponent>;
-  let component: WidgetBmsComponent;
-  let liveSubject: Subject<IPathUpdateWithPath>;
+    let fixture: ComponentFixture<WidgetBmsComponent>;
+    let component: WidgetBmsComponent;
+    let liveSubject: Subject<IPathUpdateWithPath>;
 
-  const dataServiceMock = {
-    subscribePathTreeWithInitial: jasmine.createSpy('subscribePathTreeWithInitial')
-  };
+    const dataServiceMock = {
+        subscribePathTreeWithInitial: vi.fn()
+    };
 
-  const runtimeMock = {
-    options: () => ({
-      color: 'contrast',
-      ignoreZones: false,
-      bms: {
-        trackedBatteryIds: [],
-        banks: []
-      }
-    })
-  };
+    const runtimeMock = {
+        options: () => ({
+            color: 'contrast',
+            ignoreZones: false,
+            bms: {
+                trackedBatteryIds: [],
+                banks: []
+            }
+        })
+    };
 
-  const unitsMock = {
-    convertToUnit: (_unit: string, value: unknown) => value,
-    getDefaults: () => ({ Temperature: 'celsius' })
-  };
+    const unitsMock = {
+        convertToUnit: (_unit: string, value: unknown) => value,
+        getDefaults: () => ({ Temperature: 'celsius' })
+    };
 
-  const iconRegistryMock = {
-    addSvgIconSetLiteral: () => iconRegistryMock,
-    getNamedSvgIcon: () => of(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
-  };
+    const iconRegistryMock = {
+        addSvgIconSetLiteral: () => iconRegistryMock,
+        addSvgIconSetInNamespace: () => iconRegistryMock,
+        addSvgIconLiteral: () => iconRegistryMock,
+        getNamedSvgIcon: () => of(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
+    };
 
-  const themeMock = {
-    contrast: '#fff',
-    dim: '#ccc',
-    dimmer: '#999',
-    zoneNominal: '#00ff00',
-    zoneWarn: '#ffaa00',
-    zoneAlarm: '#ff0000',
-    zoneAlert: '#ff00ff'
-  } as unknown as ITheme;
+    const themeMock = {
+        contrast: '#fff',
+        dim: '#ccc',
+        dimmer: '#999',
+        zoneNominal: '#00ff00',
+        zoneWarn: '#ffaa00',
+        zoneAlarm: '#ff0000',
+        zoneAlert: '#ff00ff'
+    } as unknown as ITheme;
 
-  const makeUpdate = (path: string, value: number | string | null): IPathUpdateWithPath => ({
-    path,
-    update: {
-      data: { value, timestamp: new Date('2026-01-01T00:00:00.000Z') },
-      state: States.Normal
-    }
-  });
-
-  beforeEach(async () => {
-    liveSubject = new Subject<IPathUpdateWithPath>();
-
-    dataServiceMock.subscribePathTreeWithInitial.and.returnValue({
-      initial: [
-        makeUpdate('self.electrical.batteries.bat1.voltage', 12.4),
-        makeUpdate('self.electrical.batteries.bat2.voltage', 12.6)
-      ],
-      live$: liveSubject.asObservable()
+    const makeUpdate = (path: string, value: number | string | null): IPathUpdateWithPath => ({
+        path,
+        update: {
+            data: { value, timestamp: new Date('2026-01-01T00:00:00.000Z') },
+            state: States.Normal
+        }
     });
 
-    await TestBed.configureTestingModule({
-      imports: [WidgetBmsComponent],
-      providers: [
-        { provide: DataService, useValue: dataServiceMock },
-        { provide: WidgetRuntimeDirective, useValue: runtimeMock },
-        { provide: UnitsService, useValue: unitsMock },
-        { provide: MatIconRegistry, useValue: iconRegistryMock }
-      ]
-    }).compileComponents();
+    beforeEach(async () => {
+        liveSubject = new Subject<IPathUpdateWithPath>();
 
-    fixture = TestBed.createComponent(WidgetBmsComponent);
-    component = fixture.componentInstance;
-    fixture.componentRef.setInput('id', 'w-bms-1');
-    fixture.componentRef.setInput('type', 'widget-bms');
-    fixture.componentRef.setInput('theme', themeMock);
-  });
+        dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+            initial: [
+                makeUpdate('self.electrical.batteries.bat1.voltage', 12.4),
+                makeUpdate('self.electrical.batteries.bat2.voltage', 12.6)
+            ],
+            live$: liveSubject.asObservable()
+        });
 
-  it('flushes all initial cached paths once, then batches live updates', fakeAsync(() => {
-    fixture.detectChanges();
+        await TestBed.configureTestingModule({
+            imports: [WidgetBmsComponent],
+            providers: [
+                { provide: DataService, useValue: dataServiceMock },
+                { provide: WidgetRuntimeDirective, useValue: runtimeMock },
+                { provide: UnitsService, useValue: unitsMock },
+                { provide: MatIconRegistry, useValue: iconRegistryMock }
+            ]
+        }).compileComponents();
 
-    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith('self.electrical.batteries.*');
-    expect((component as unknown as { discoveredBatteryIds: () => string[] }).discoveredBatteryIds()).toEqual(['bat1', 'bat2']);
+        fixture = TestBed.createComponent(WidgetBmsComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('id', 'w-bms-1');
+        fixture.componentRef.setInput('type', 'widget-bms');
+        fixture.componentRef.setInput('theme', themeMock);
+    });
 
-    const flushSpy = spyOn(component as unknown as { flushPendingPathUpdates: () => void }, 'flushPendingPathUpdates').and.callThrough();
+    it('flushes all initial cached paths once, then batches live updates', async () => {
+        vi.useFakeTimers();
+        try {
+            fixture.detectChanges();
 
-    flushSpy.calls.reset();
+            expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith('self.electrical.batteries.*');
+            expect((component as unknown as {
+                discoveredBatteryIds: () => string[];
+            }).discoveredBatteryIds()).toEqual(['bat1', 'bat2']);
 
-    liveSubject.next(makeUpdate('self.electrical.batteries.bat3.voltage', 12.7));
+            const flushSpy = vi.spyOn(component as unknown as {
+                flushPendingPathUpdates: () => void;
+            }, 'flushPendingPathUpdates');
 
-    expect(flushSpy).not.toHaveBeenCalled();
-    tick(499);
-    expect(flushSpy).not.toHaveBeenCalled();
+            flushSpy.mockClear();
 
-    tick(1);
-    expect(flushSpy.calls.count()).toBe(1);
-    expect((component as unknown as { discoveredBatteryIds: () => string[] }).discoveredBatteryIds()).toEqual(['bat1', 'bat2', 'bat3']);
-  }));
+            liveSubject.next(makeUpdate('self.electrical.batteries.bat3.voltage', 12.7));
+
+            expect(flushSpy).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(499);
+            expect(flushSpy).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(vi.mocked(flushSpy).mock.calls.length).toBe(1);
+            expect((component as unknown as {
+                discoveredBatteryIds: () => string[];
+            }).discoveredBatteryIds()).toEqual(['bat1', 'bat2', 'bat3']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });

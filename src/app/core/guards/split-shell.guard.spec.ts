@@ -1,127 +1,130 @@
 import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Router, UrlSegment, UrlTree } from '@angular/router';
 import { SettingsService } from '../services/settings.service';
 import { splitShellGuard } from './split-shell.guard';
 
 class MockSettingsService {
-  public splitShellEnabled = false;
+    public splitShellEnabled = false;
 
-  public getSplitShellEnabled(): boolean {
-    return this.splitShellEnabled;
-  }
+    public getSplitShellEnabled(): boolean {
+        return this.splitShellEnabled;
+    }
 }
 
 describe('splitShellGuard', () => {
-  let settings: MockSettingsService;
-  let router: jasmine.SpyObj<Router>;
-  let defaultTree: UrlTree;
+    let settings: MockSettingsService;
+    let router: Router;
+    let createUrlTreeMock: ReturnType<typeof vi.fn>;
+    let defaultTree: UrlTree;
 
-  const runGuard = (segments: string[]) => TestBed.runInInjectionContext(() =>
-    splitShellGuard({} as Route, segments.map(s => new UrlSegment(s, {})))
-  );
+    const runGuard = (segments: string[]) => TestBed.runInInjectionContext(() => splitShellGuard({} as Route, segments.map(s => new UrlSegment(s, {}))));
 
-  beforeEach(() => {
-    router = jasmine.createSpyObj<Router>('Router', ['createUrlTree']);
-    defaultTree = {} as UrlTree;
-    router.createUrlTree.and.returnValue(defaultTree);
+    beforeEach(() => {
+        createUrlTreeMock = vi.fn().mockName("Router.createUrlTree");
+        router = {
+            createUrlTree: createUrlTreeMock
+        } as unknown as Router;
+        defaultTree = {} as UrlTree;
+        createUrlTreeMock.mockReturnValue(defaultTree);
 
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: SettingsService, useClass: MockSettingsService },
-        { provide: Router, useValue: router }
-      ]
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: SettingsService, useClass: MockSettingsService },
+                { provide: Router, useValue: router }
+            ]
+        });
+
+        settings = TestBed.inject(SettingsService) as unknown as MockSettingsService;
     });
 
-    settings = TestBed.inject(SettingsService) as unknown as MockSettingsService;
-  });
+    it('normalizes root URL to chartplotter/0 when split-shell is enabled', () => {
+        settings.splitShellEnabled = true;
 
-  it('normalizes root URL to chartplotter/0 when split-shell is enabled', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard([]);
 
-    const result = runGuard([]);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['chartplotter', '0']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['chartplotter', '0']);
-    expect(result).toBe(defaultTree);
-  });
+    it('normalizes root URL to dashboard/0 when split-shell is disabled', () => {
+        settings.splitShellEnabled = false;
 
-  it('normalizes root URL to dashboard/0 when split-shell is disabled', () => {
-    settings.splitShellEnabled = false;
+        const result = runGuard([]);
 
-    const result = runGuard([]);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['dashboard', '0']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['dashboard', '0']);
-    expect(result).toBe(defaultTree);
-  });
+    it('normalizes /chartplotter without id to /chartplotter/0 when split-shell is enabled', () => {
+        settings.splitShellEnabled = true;
 
-  it('normalizes /chartplotter without id to /chartplotter/0 when split-shell is enabled', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard(['chartplotter']);
 
-    const result = runGuard(['chartplotter']);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['chartplotter', '0']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['chartplotter', '0']);
-    expect(result).toBe(defaultTree);
-  });
+    it('normalizes /dashboard without id to /chartplotter/0 when split-shell is enabled', () => {
+        settings.splitShellEnabled = true;
 
-  it('normalizes /dashboard without id to /chartplotter/0 when split-shell is enabled', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard(['dashboard']);
 
-    const result = runGuard(['dashboard']);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['chartplotter', '0']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['chartplotter', '0']);
-    expect(result).toBe(defaultTree);
-  });
+    it('normalizes /chartplotter without id to /dashboard/0 when split-shell is disabled', () => {
+        settings.splitShellEnabled = false;
 
-  it('normalizes /chartplotter without id to /dashboard/0 when split-shell is disabled', () => {
-    settings.splitShellEnabled = false;
+        const result = runGuard(['chartplotter']);
 
-    const result = runGuard(['chartplotter']);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['dashboard', '0']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['dashboard', '0']);
-    expect(result).toBe(defaultTree);
-  });
+    it('redirects /dashboard/:id to /chartplotter/:id when split-shell is enabled', () => {
+        settings.splitShellEnabled = true;
 
-  it('redirects /dashboard/:id to /chartplotter/:id when split-shell is enabled', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard(['dashboard', '3']);
 
-    const result = runGuard(['dashboard', '3']);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['chartplotter', '3']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['chartplotter', '3']);
-    expect(result).toBe(defaultTree);
-  });
+    it('redirects /chartplotter/:id to /dashboard/:id when split-shell is disabled', () => {
+        settings.splitShellEnabled = false;
 
-  it('redirects /chartplotter/:id to /dashboard/:id when split-shell is disabled', () => {
-    settings.splitShellEnabled = false;
+        const result = runGuard(['chartplotter', '4']);
 
-    const result = runGuard(['chartplotter', '4']);
+        expect(createUrlTreeMock).toHaveBeenCalledWith(['dashboard', '4']);
+        expect(result).toBe(defaultTree);
+    });
 
-    expect(router.createUrlTree).toHaveBeenCalledWith(['dashboard', '4']);
-    expect(result).toBe(defaultTree);
-  });
+    it('allows /chartplotter/:id when split-shell is enabled', () => {
+        settings.splitShellEnabled = true;
 
-  it('allows /chartplotter/:id when split-shell is enabled', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard(['chartplotter', '1']);
 
-    const result = runGuard(['chartplotter', '1']);
+        expect(result).toBe(true);
+        expect(createUrlTreeMock).not.toHaveBeenCalled();
+    });
 
-    expect(result).toBeTrue();
-    expect(router.createUrlTree).not.toHaveBeenCalled();
-  });
+    it('allows /dashboard/:id when split-shell is disabled', () => {
+        settings.splitShellEnabled = false;
 
-  it('allows /dashboard/:id when split-shell is disabled', () => {
-    settings.splitShellEnabled = false;
+        const result = runGuard(['dashboard', '1']);
 
-    const result = runGuard(['dashboard', '1']);
+        expect(result).toBe(true);
+        expect(createUrlTreeMock).not.toHaveBeenCalled();
+    });
 
-    expect(result).toBeTrue();
-    expect(router.createUrlTree).not.toHaveBeenCalled();
-  });
+    it('allows unrelated routes', () => {
+        settings.splitShellEnabled = true;
 
-  it('allows unrelated routes', () => {
-    settings.splitShellEnabled = true;
+        const result = runGuard(['settings']);
 
-    const result = runGuard(['settings']);
-
-    expect(result).toBeTrue();
-    expect(router.createUrlTree).not.toHaveBeenCalled();
-  });
+        expect(result).toBe(true);
+        expect(createUrlTreeMock).not.toHaveBeenCalled();
+    });
 });

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { signal } from '@angular/core';
 import { <%= className %> } from './<%= selector %>.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';

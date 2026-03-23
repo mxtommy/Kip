@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MenuNotificationsComponent } from './menu-notifications.component';
 
 describe('AlarmMenuComponent', () => {
   let component: MenuNotificationsComponent;
   let fixture: ComponentFixture<MenuNotificationsComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    imports: [MenuNotificationsComponent]
-})
-    .compileComponents();
-  }));
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MenuNotificationsComponent]
+    })
+      .compileComponents();
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(MenuNotificationsComponent);

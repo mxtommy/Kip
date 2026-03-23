@@ -1,17 +1,26 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsUnitsComponent } from './units.component';
+import { UnitsService } from '../../../services/units.service';
 
 describe('SettingsUnitsComponent', () => {
   let component: SettingsUnitsComponent;
   let fixture: ComponentFixture<SettingsUnitsComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    imports: [SettingsUnitsComponent]
-})
-    .compileComponents();
-  }));
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SettingsUnitsComponent],
+      providers: [
+        {
+          provide: UnitsService,
+          useValue: {
+            getConversions: () => [],
+          },
+        },
+      ],
+    })
+      .compileComponents();
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(SettingsUnitsComponent);
