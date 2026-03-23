@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { BooleanControlConfigComponent } from './boolean-control-config.component';
 
 describe('BooleanControlConfigComponent', () => {

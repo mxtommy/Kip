@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsComponent } from './settings.component';
 import { ensureTestIconsReady } from '../../../../test-helpers/icon-test-utils';
 

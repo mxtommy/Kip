@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { WidgetHostBottomSheetComponent } from './widget-host-bottom-sheet.component';
 import { ensureTestIconsReady } from '../../../../test-helpers/icon-test-utils';
 

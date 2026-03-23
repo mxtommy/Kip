@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsNotificationsComponent } from './notifications.component';
 
 describe('SettingsNotificationsComponent', () => {
   let component: SettingsNotificationsComponent;
   let fixture: ComponentFixture<SettingsNotificationsComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    imports: [SettingsNotificationsComponent]
-})
-    .compileComponents();
-  }));
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SettingsNotificationsComponent]
+    })
+      .compileComponents();
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(SettingsNotificationsComponent);

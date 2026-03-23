@@ -1,4 +1,6 @@
+import type { Mock } from "vitest";
 import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BehaviorSubject } from 'rxjs';
 import { IEndpointStatus, SignalKConnectionService } from './signalk-connection.service';
@@ -6,168 +8,164 @@ import { KipSeriesApiClientService } from './kip-series-api-client.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
 
 class SignalKConnectionServiceStub {
-  public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
-    operation: 0,
-    message: 'Not connected',
-    serverDescription: null,
-    httpServiceUrl: null,
-    WsServiceUrl: null
-  });
+    public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatus>({
+        operation: 0,
+        message: 'Not connected',
+        serverDescription: null,
+        httpServiceUrl: null,
+        WsServiceUrl: null
+    });
 }
 
 describe('KipSeriesApiClientService', () => {
-  let service: KipSeriesApiClientService;
-  let httpMock: HttpTestingController;
-  let connectionStub: SignalKConnectionServiceStub;
-  let historySeriesServiceEnabled = true;
-  let pluginConfigMock: {
-    getKipRuntimeModeConfigCached: jasmine.Spy;
-  };
-
-  beforeEach(() => {
-    historySeriesServiceEnabled = true;
-    pluginConfigMock = {
-      getKipRuntimeModeConfigCached: jasmine.createSpy('getKipRuntimeModeConfigCached').and.callFake(async () => ({
-        historySeriesServiceEnabled,
-        registerAsHistoryApiProvider: true
-      }))
+    let service: KipSeriesApiClientService;
+    let httpMock: HttpTestingController;
+    let connectionStub: SignalKConnectionServiceStub;
+    let historySeriesServiceEnabled = true;
+    let pluginConfigMock: {
+        getKipRuntimeModeConfigCached: Mock;
     };
 
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
-        KipSeriesApiClientService,
-        { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
-        { provide: PluginConfigClientService, useValue: pluginConfigMock }
-      ]
+    beforeEach(() => {
+        historySeriesServiceEnabled = true;
+        pluginConfigMock = {
+            getKipRuntimeModeConfigCached: vi.fn().mockImplementation(async () => ({
+                historySeriesServiceEnabled,
+                registerAsHistoryApiProvider: true
+            }))
+        };
+
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
+            providers: [
+                KipSeriesApiClientService,
+                { provide: SignalKConnectionService, useClass: SignalKConnectionServiceStub },
+                { provide: PluginConfigClientService, useValue: pluginConfigMock }
+            ]
+        });
+
+        service = TestBed.inject(KipSeriesApiClientService);
+        httpMock = TestBed.inject(HttpTestingController);
+        connectionStub = TestBed.inject(SignalKConnectionService) as unknown as SignalKConnectionServiceStub;
     });
 
-    service = TestBed.inject(KipSeriesApiClientService);
-    httpMock = TestBed.inject(HttpTestingController);
-    connectionStub = TestBed.inject(SignalKConnectionService) as unknown as SignalKConnectionServiceStub;
-  });
-
-  afterEach(() => {
-    httpMock.verify();
-  });
-
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
-  it('should return null when plugin endpoint is unavailable', async () => {
-    const response = await service.reconcileSeries([
-      {
-        seriesId: 'widget-1:datachart',
-        datasetUuid: 'widget-1',
-        ownerWidgetUuid: 'widget-1',
-        ownerWidgetSelector: 'widget-data-chart',
-        path: 'navigation.speedThroughWater',
-        enabled: true
-      }
-    ]);
-
-    expect(response).toBeNull();
-    httpMock.expectNone(() => true);
-  });
-
-  it('should post series definitions to kip plugin reconcile endpoint', async () => {
-    connectionStub.serverServiceEndpoint$.next({
-      operation: 2,
-      message: 'Connected',
-      serverDescription: 'Signal K',
-      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
-      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+    afterEach(() => {
+        httpMock.verify();
     });
 
-    const payload = [
-      {
-        seriesId: 'widget-1:datachart',
-        datasetUuid: 'widget-1',
-        ownerWidgetUuid: 'widget-1',
-        ownerWidgetSelector: 'widget-data-chart',
-        path: 'navigation.speedThroughWater',
-        source: 'default',
-        timeScale: 'minute',
-        period: 10,
-        enabled: true
-      }
-    ];
-
-    const promise = service.reconcileSeries(payload);
-    await new Promise(resolve => setTimeout(resolve));
-
-    const req = httpMock.expectOne((request) =>
-      request.url === 'http://localhost:3000/plugins/kip/series/reconcile'
-    );
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(payload);
-
-    req.flush({
-      created: 1,
-      updated: 0,
-      deleted: 0,
-      total: 1
+    it('should be created', () => {
+        expect(service).toBeTruthy();
     });
 
-    const response = await promise;
-    expect(response).toEqual({ created: 1, updated: 0, deleted: 0, total: 1 });
-  });
+    it('should return null when plugin endpoint is unavailable', async () => {
+        const response = await service.reconcileSeries([
+            {
+                seriesId: 'widget-1:datachart',
+                datasetUuid: 'widget-1',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-data-chart',
+                path: 'navigation.speedThroughWater',
+                enabled: true
+            }
+        ]);
 
-  it('should skip reconcile when history-series service is disabled in plugin config', async () => {
-    historySeriesServiceEnabled = false;
-    connectionStub.serverServiceEndpoint$.next({
-      operation: 2,
-      message: 'Connected',
-      serverDescription: 'Signal K',
-      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
-      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        expect(response).toBeNull();
+        httpMock.expectNone(() => true);
     });
 
-    const response = await service.reconcileSeries([
-      {
-        seriesId: 'widget-1:datachart',
-        datasetUuid: 'widget-1',
-        ownerWidgetUuid: 'widget-1',
-        ownerWidgetSelector: 'widget-data-chart',
-        path: 'navigation.speedThroughWater',
-        enabled: true
-      }
-    ]);
+    it('should post series definitions to kip plugin reconcile endpoint', async () => {
+        connectionStub.serverServiceEndpoint$.next({
+            operation: 2,
+            message: 'Connected',
+            serverDescription: 'Signal K',
+            httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+            WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        });
 
-    expect(response).toBeNull();
-    httpMock.expectNone(() => true);
-  });
+        const payload = [
+            {
+                seriesId: 'widget-1:datachart',
+                datasetUuid: 'widget-1',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-data-chart',
+                path: 'navigation.speedThroughWater',
+                source: 'default',
+                timeScale: 'minute',
+                period: 10,
+                enabled: true
+            }
+        ];
 
-  it('should fetch effective series definitions from kip plugin', async () => {
-    connectionStub.serverServiceEndpoint$.next({
-      operation: 2,
-      message: 'Connected',
-      serverDescription: 'Signal K',
-      httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
-      WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        const promise = service.reconcileSeries(payload);
+        await new Promise(resolve => setTimeout(resolve));
+
+        const req = httpMock.expectOne((request) => request.url === 'http://localhost:3000/plugins/kip/series/reconcile');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(payload);
+
+        req.flush({
+            created: 1,
+            updated: 0,
+            deleted: 0,
+            total: 1
+        });
+
+        const response = await promise;
+        expect(response).toEqual({ created: 1, updated: 0, deleted: 0, total: 1 });
     });
 
-    const promise = service.getSeriesDefinitions();
-    await new Promise(resolve => setTimeout(resolve));
+    it('should skip reconcile when history-series service is disabled in plugin config', async () => {
+        historySeriesServiceEnabled = false;
+        connectionStub.serverServiceEndpoint$.next({
+            operation: 2,
+            message: 'Connected',
+            serverDescription: 'Signal K',
+            httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+            WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        });
 
-    const req = httpMock.expectOne((request) =>
-      request.url === 'http://localhost:3000/plugins/kip/series'
-    );
-    expect(req.request.method).toBe('GET');
+        const response = await service.reconcileSeries([
+            {
+                seriesId: 'widget-1:datachart',
+                datasetUuid: 'widget-1',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-data-chart',
+                path: 'navigation.speedThroughWater',
+                enabled: true
+            }
+        ]);
 
-    req.flush([
-      {
-        seriesId: 'widget-1:auto:navigation-speedthroughwater:default',
-        datasetUuid: 'widget-1:navigation-speedthroughwater:default',
-        ownerWidgetUuid: 'widget-1',
-        ownerWidgetSelector: 'widget-numeric',
-        path: 'navigation.speedThroughWater',
-        enabled: true
-      }
-    ]);
+        expect(response).toBeNull();
+        httpMock.expectNone(() => true);
+    });
 
-    const response = await promise;
-    expect(response?.length).toBe(1);
-  });
+    it('should fetch effective series definitions from kip plugin', async () => {
+        connectionStub.serverServiceEndpoint$.next({
+            operation: 2,
+            message: 'Connected',
+            serverDescription: 'Signal K',
+            httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+            WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        });
+
+        const promise = service.getSeriesDefinitions();
+        await new Promise(resolve => setTimeout(resolve));
+
+        const req = httpMock.expectOne((request) => request.url === 'http://localhost:3000/plugins/kip/series');
+        expect(req.request.method).toBe('GET');
+
+        req.flush([
+            {
+                seriesId: 'widget-1:auto:navigation-speedthroughwater:default',
+                datasetUuid: 'widget-1:navigation-speedthroughwater:default',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-numeric',
+                path: 'navigation.speedThroughWater',
+                enabled: true
+            }
+        ]);
+
+        const response = await promise;
+        expect(response?.length).toBe(1);
+    });
 });

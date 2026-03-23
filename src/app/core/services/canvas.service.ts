@@ -9,7 +9,7 @@ export class CanvasService {
   /** Enable verbose canvas diagnostics (dev only) */
   public debug = false;
   public scaleFactor = window.devicePixelRatio || 1;
-  private fontsReadyPromise: Promise<FontFaceSet>;
+  private fontsReadyPromise: Promise<void>;
   private sharedResizeObserver: ResizeObserver | null = null;
   private observedCanvases = new Map<HTMLCanvasElement, { autoRelease?: boolean }>();
   private dprMediaQuery: MediaQueryList | null = null;
@@ -17,7 +17,21 @@ export class CanvasService {
 
   constructor() {
     // Wait for font loading to complete
-    this.fontsReadyPromise = document.fonts.ready;
+    this.fontsReadyPromise = this.createFontsReadyPromise();
+  }
+
+  private getDocumentFonts(): FontFaceSet | null {
+    return typeof document !== 'undefined' && 'fonts' in document ? document.fonts : null;
+  }
+
+  private createFontsReadyPromise(): Promise<void> {
+    const fonts = this.getDocumentFonts();
+    return fonts ? fonts.ready.then(() => undefined) : Promise.resolve();
+  }
+
+  private areFontsLoaded(): boolean {
+    const fonts = this.getDocumentFonts();
+    return !fonts || fonts.status === 'loaded';
   }
 
   /**
@@ -307,7 +321,7 @@ export class CanvasService {
       }
     };
 
-    if (document.fonts.status === 'loaded') {
+    if (this.areFontsLoaded()) {
       this.fontsReadyPromise.then(() => requestAnimationFrame(runDraw)).catch(() => requestAnimationFrame(runDraw));
     } else {
       // If fonts not ready, schedule draw once fonts settle (and still use RAF)
@@ -393,7 +407,7 @@ export class CanvasService {
       }
     };
 
-    if (document.fonts.status === 'loaded') {
+    if (this.areFontsLoaded()) {
       runDraw();
     } else {
       this.fontsReadyPromise
@@ -492,8 +506,8 @@ export class CanvasService {
       // If fonts are not yet ready, schedule a re-render when they load so
       // the offscreen bitmap updates with correct metrics. Widgets that cache
       // the returned canvas should redraw when they detect the bitmap changed.
-      if (document.fonts.status !== 'loaded') {
-        document.fonts.ready.then(() => {
+      if (!this.areFontsLoaded()) {
+        this.fontsReadyPromise.then(() => {
           try {
             // re-scale in case DPR changed
             offCtx.setTransform(this.scaleFactor, 0, 0, this.scaleFactor, 0, 0);

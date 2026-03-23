@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
-
+import { beforeEach, describe, expect, it } from 'vitest';
 import { IMeta, IPathValueData } from '../interfaces/app-interfaces';
 import { ISignalKDataValueUpdate, States } from '../interfaces/signalk-interfaces';
 import { DataService, IPathUpdate, IPathUpdateWithPath } from './data.service';
