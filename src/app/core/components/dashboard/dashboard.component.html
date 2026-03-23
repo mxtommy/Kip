@@ -1,4 +1,4 @@
-@let dashboardStatic = dashboard.isDashboardStatic();
+@let dashboardStatic = dashboardStaticView();
 <gridstack kipGestures [mode]="dashboardStatic ? 'dashboard' : 'editor'" [enablePress]="dashboardStatic ? false : true" [enableDoubleTap]="false" #grid
   [options]="gridOptions()"
   (swipeup)="previousDashboard()"
