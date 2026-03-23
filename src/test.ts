@@ -161,7 +161,7 @@ import { PluginConfigClientService } from './app/core/services/plugin-config-cli
 import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
-import { ENVIRONMENT_INITIALIZER, signal, inject as diInject } from '@angular/core';
+import { ENVIRONMENT_INITIALIZER, signal, inject as diInject, provideZonelessChangeDetection } from '@angular/core';
 import type { IWidgetSvcConfig } from './app/core/interfaces/widgets-interface';
 import type { IAppConfig } from './app/core/interfaces/app-settings.interfaces';
 import type {
@@ -471,6 +471,7 @@ class WidgetMetadataDirectiveStub implements Partial<WidgetMetadataDirective> {
 const GLOBAL_IMPORTS = [RouterTestingModule, ReactiveFormsModule, MatIconModule];
 type GlobalProvider = Provider | import('@angular/core').EnvironmentProviders;
 const GLOBAL_PROVIDERS: GlobalProvider[] = [
+  provideZonelessChangeDetection(),
   {
     provide: ENVIRONMENT_INITIALIZER,
     multi: true,
