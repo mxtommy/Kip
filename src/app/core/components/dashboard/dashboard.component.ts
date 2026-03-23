@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked, afterNextRender } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, signal, viewChild, ElementRef, computed, effect, untracked } from '@angular/core';
 import { GestureDirective } from '../../directives/gesture.directive';
 import { GridstackComponent, NgGridStackNode, NgGridStackWidget, NgGridStackOptions, } from 'gridstack/dist/angular';
 import { GridItemHTMLElement, GridStackOptions } from 'gridstack';
@@ -96,7 +96,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const isStatic = this.dashboard.isDashboardStatic();
 
       untracked(() => {
-        afterNextRender(() => {
+        queueMicrotask(() => {
           this.dashboardStaticView.set(isStatic);
         });
 
