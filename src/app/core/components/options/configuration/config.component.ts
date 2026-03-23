@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
-import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
+import { AuthenticationService } from '../../../services/authentication.service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
@@ -21,60 +21,70 @@ interface IRemoteConfig {
   name: string
 }
 
+interface IRemoteConfigOption extends IRemoteConfig {
+  key: string
+}
+
 @Component({
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
     imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, MatInputModule]
 })
-export class SettingsConfigComponent implements OnInit, OnDestroy {
+export class SettingsConfigComponent {
   private settings = inject(SettingsService);
   private storageSvc = inject(StorageService);
   private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
   private fb = inject(UntypedFormBuilder);
 
-  protected readonly pageTitle: string = "Configurations";
-  public hasToken = false;
-  public isTokenTypeDevice = false;
-  private tokenSub: Subscription;
+  private authToken = toSignal(this.auth.authToken$, { initialValue: null });
+  private serverConfigListSignal = signal<IRemoteConfig[]>([]);
+  private hasTokenSignal = computed(() => Boolean(this.authToken()?.token));
+  private isTokenTypeDeviceSignal = computed(() => Boolean(this.authToken()?.isDeviceAccessToken));
 
-  public supportApplicationData = false;
-  public serverConfigList: IRemoteConfig[] = [];
+  protected readonly pageTitle: string = "Configurations";
+
+  public get hasToken(): boolean {
+    return this.hasTokenSignal();
+  }
+
+  public get isTokenTypeDevice(): boolean {
+    return this.isTokenTypeDeviceSignal();
+  }
+
+  public supportApplicationData = this.storageSvc.isAppDataSupported;
+  public serverConfigOptions = computed<IRemoteConfigOption[]>(() => this.serverConfigListSignal().map((config) => ({
+    scope: config.scope,
+    name: config.name,
+    key: `${config.scope}::${config.name}`
+  })));
   public serverUpgradableConfigList: IRemoteConfig[] = [];
 
-  public copyConfigForm: UntypedFormGroup;
+  public copyConfigForm: UntypedFormGroup = this.fb.group({
+    sourceTarget: [{value: '', disabled: false}, Validators.required]
+  });
   public storageLocation: string = null;
   public locations: string[] = ["Local Storage", "Server Storage"];
 
   public saveConfigName: string = null;
   public saveConfigScope: string = null;
-  public deleteConfigItem: IRemoteConfig;
+  public deleteConfigKey: string = null;
   public jsonData: IConfig = null;
 
-  ngOnInit() {
-    // Token observer
-    this.tokenSub = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
-      if (token && token.token) {
-        this.hasToken = true;
-        this.isTokenTypeDevice = token.isDeviceAccessToken;
-        if (!token.isDeviceAccessToken) {
-          this.saveConfigScope ='user';
-        } else {
-          this.saveConfigScope ='global';
-        }
-      } else {
-        this.hasToken = false;
-      }
-    });
+  private readonly authStateEffect = effect(() => {
+    if (!this.supportApplicationData) {
+      return;
+    }
 
-    this.copyConfigForm = this.fb.group({
-      sourceTarget: [{value: '', disabled: false}, Validators.required]
-    });
+    if (this.hasTokenSignal()) {
+      this.saveConfigScope = this.isTokenTypeDeviceSignal() ? 'global' : 'user';
+      this.getServerConfigList();
+      return;
+    }
 
-    this.supportApplicationData = this.storageSvc.isAppDataSupported;
-    if(this.hasToken) this.getServerConfigList();
-  }
+    this.deleteConfigKey = null;
+  });
 
   public getServerConfigList(configFileVersionName?: number) {
     if (this.supportApplicationData) {
@@ -87,7 +97,7 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
         if(configFileVersionName) {
           this.serverUpgradableConfigList = filteredConfigs;
         } else {
-          this.serverConfigList = filteredConfigs;
+          this.serverConfigListSignal.set(filteredConfigs);
         }
       })
       .catch((error: HttpErrorResponse) => {
@@ -132,9 +142,15 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
   }
 
   public async copyConfig() {
+    const sourceTarget = this.parseConfigKey(this.copyConfigForm.value.sourceTarget);
+    if (!sourceTarget) {
+      this.toast.show('Please select a valid configuration to restore.', 0, false, 'error');
+      return;
+    }
+
     let conf: IConfig = null;
     try {
-      await this.storageSvc.getConfig(this.copyConfigForm.value.sourceTarget.scope, this.copyConfigForm.value.sourceTarget.name)
+      await this.storageSvc.getConfig(sourceTarget.scope, sourceTarget.name)
       .then((config: IConfig) => {
         conf = config
       });
@@ -147,12 +163,36 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     this.settings.reloadApp();
   }
 
+  public deleteConfigByKey(configKey: string) {
+    const config = this.parseConfigKey(configKey);
+    if (!config) {
+      this.toast.show('Please select a valid configuration to delete.', 0, false, 'error');
+      return;
+    }
+
+    this.deleteConfig(config.scope, config.name);
+  }
+
   public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
     this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
     this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
     }
+  }
+
+  private parseConfigKey(configKey: string | null): IRemoteConfig | null {
+    if (!configKey) {
+      return null;
+    }
+
+    const [scope, ...nameParts] = configKey.split('::');
+    const name = nameParts.join('::');
+    if (!scope || !name) {
+      return null;
+    }
+
+    return { scope, name };
   }
 
   public resetConfigToDefault() {
@@ -238,7 +278,4 @@ export class SettingsConfigComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    this.tokenSub?.unsubscribe();
-  }
 }

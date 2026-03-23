@@ -67,7 +67,7 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="deleteConfigForm"
-        (ngSubmit)="deleteConfig(deleteConfigItem.scope, deleteConfigItem.name)"
+        (ngSubmit)="deleteConfigByKey(deleteConfigKey)"
         #deleteConfigForm="ngForm"
         >
         <h3>Delete</h3>
@@ -80,12 +80,12 @@
               <mat-label>Configuration</mat-label>
               <mat-select
                 name="selectedDeleteItem"
-                [(ngModel)]="deleteConfigItem"
+                [(ngModel)]="deleteConfigKey"
                 required
                 >
-                @for (config of serverConfigList; track config) {
+                @for (config of serverConfigOptions(); track config.key) {
                   <mat-option
-                    [value]="config"
+                    [value]="config.key"
                     >
                     {{ config.scope }} / {{ config.name }}
                   </mat-option>
@@ -122,9 +122,9 @@
             <mat-form-field style="width: 100%">
               <mat-label>Configuration</mat-label>
               <mat-select formControlName="sourceTarget">
-                @for (config of serverConfigList; track $index) {
+                @for (config of serverConfigOptions(); track config.key) {
                   <mat-option
-                    [value]="config"
+                    [value]="config.key"
                     >
                     {{ config.scope }} / {{ config.name }}
                   </mat-option>

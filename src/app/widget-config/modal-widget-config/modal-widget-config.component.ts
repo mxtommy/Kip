@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators, UntypedFormBuilder, UntypedFormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -44,6 +45,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private DatasetStreamService = inject(DatasetStreamService);
   private units = inject(UnitsService);
   private app = inject(AppService);
+  private readonly destroyRef = inject(DestroyRef);
   protected widgetConfig = inject<IWidgetSvcConfig & { bms?: unknown }>(MAT_DIALOG_DATA);
 
   public titleDialog = "Widget Options";
@@ -55,6 +57,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   public delPathEvent: string;
   public updatePathEvent: IDynamicControl[];
   public colors = [];
+  protected readonly saveDisabled = signal(true);
 
   ngOnInit() {
     // Defensive guard: if dialog opened without required data, close early to avoid runtime errors.
@@ -70,6 +73,10 @@ export class ModalWidgetConfigComponent implements OnInit {
     });
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
+    this.formMaster.statusChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.saveDisabled.set(this.formMaster.invalid));
+    queueMicrotask(() => this.saveDisabled.set(this.formMaster.invalid));
     this.colors = this.app.configurableThemeColors;
   }
 
