@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked, ChangeDetectionStrategy, computed } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
@@ -15,7 +15,8 @@ import { KipResizeObserverDirective } from '../../core/directives/kip-resize-obs
   selector: 'widget-slider',
   imports: [ KipResizeObserverDirective, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
-  styleUrl: './widget-slider.component.scss'
+  styleUrl: './widget-slider.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetSliderComponent implements OnInit, OnDestroy {
   public id = input.required<string>();
@@ -65,11 +66,11 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
 
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  protected handlePosition = 20;
+  protected readonly handlePositionView = signal<number>(20);
+  protected readonly lineWidthView = computed(() => `${Math.max(0, this.handlePositionView() - this.LINE_START)}px`);
   protected pathValue = 0;
-  private lineStart = this.handlePosition;
+  private lineStart = 20;
   private isDragStarted = false;
-  protected lineWidth = '0px';
   private readonly VIEWBOX_WIDTH = 200;
   private readonly LINE_START = 20;
   private readonly LINE_WIDTH = 160;
@@ -99,10 +100,10 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
 
         this.streams.observe('gaugePath', (newValue) => {
           if (!newValue || !newValue.data) {
-            this.handlePosition = this.mapValueToPosition(cfg.displayScale.lower);
+            queueMicrotask(() => this.updateHandlePosition(this.mapValueToPosition(cfg.displayScale.lower)));
             return;
           }
-          this.updateHandlePosition(this.mapValueToPosition(newValue.data.value as number));
+          queueMicrotask(() => this.updateHandlePosition(this.mapValueToPosition(newValue.data.value as number)));
         });
       });
     });
@@ -189,8 +190,8 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   private updateHandlePosition(position: number): void {
-    this.handlePosition = position;
-    this.lineWidth = `${position - this.lineStart}px`;
+    const constrained = Math.max(this.LINE_START, Math.min(this.LINE_START + this.LINE_WIDTH, position));
+    this.handlePositionView.set(constrained);
   }
 
   private getPointerX(e: PointerEvent): number {
@@ -211,14 +212,15 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
       if (pointerX >= this.lineStartPx && pointerX <= this.lineEndPx) {
         const constrainedX = ((pointerX - this.lineStartPx) / this.lineWidthPx) * this.LINE_WIDTH + this.LINE_START;
         this.updateHandlePosition(constrainedX);
+        const handlePosition = this.handlePositionView();
 
         const cfg = this.runtime.options();
-        if (cfg && this.handlePosition <= this.LINE_START) {
+        if (cfg && handlePosition <= this.LINE_START) {
           this.pathValue = cfg.displayScale.lower; // Exact lower bound
-        } else if (cfg && this.handlePosition >= this.LINE_START + this.LINE_WIDTH) {
+        } else if (cfg && handlePosition >= this.LINE_START + this.LINE_WIDTH) {
           this.pathValue = cfg.displayScale.upper; // Exact upper bound
         } else {
-          this.pathValue = this.mapPositionToValue(this.handlePosition);
+          this.pathValue = this.mapPositionToValue(handlePosition);
         }
 
         // Emit the raw value to the Subject

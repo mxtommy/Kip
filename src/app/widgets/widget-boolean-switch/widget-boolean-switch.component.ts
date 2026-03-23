@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { ITheme } from '../../core/services/app-service';
@@ -23,6 +23,7 @@ export interface IDimensions {
   selector: 'widget-boolean-switch',
   templateUrl: './widget-boolean-switch.component.html',
   styleUrls: ['./widget-boolean-switch.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
 export class WidgetBooleanSwitchComponent implements OnDestroy {

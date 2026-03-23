@@ -11,7 +11,7 @@
         y="56"
         style="display:inline;stroke-width:1.57144" />
       <rect
-        [attr.width]="lineWidth"
+        [attr.width]="lineWidthView()"
         [attr.fill]="barColor()"
         height="8"
         rx="4.5"
@@ -22,14 +22,14 @@
       <g
         id="g22">
         <circle
-          [attr.cx]="handlePosition"
+          [attr.cx]="handlePositionView()"
           cy="60"
           fill="#ffffff"
           id="circle3"
           style="display:inline;fill:#4d4d4d;fill-opacity:1;stroke:#8c8c8c;stroke-width:0.9;stroke-dasharray:none;stroke-opacity:1"
           r="19.549999" />
         <circle
-          [attr.cx]="handlePosition"
+          [attr.cx]="handlePositionView()"
           cy="60"
           fill="#ffffff"
           id="circle3-3"

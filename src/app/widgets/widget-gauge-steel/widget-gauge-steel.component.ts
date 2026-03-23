@@ -1,4 +1,4 @@
-import { Component, effect, signal, input, inject, untracked, computed } from '@angular/core';
+import { Component, effect, signal, input, inject, untracked, computed, ChangeDetectionStrategy } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { ISkZone } from '../../core/interfaces/signalk-interfaces';
@@ -11,6 +11,7 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-gauge-steel',
   templateUrl: './widget-gauge-steel.component.html',
   styleUrls: ['./widget-gauge-steel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [GaugeSteelComponent],
 })
 export class WidgetSteelGaugeComponent {
