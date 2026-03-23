@@ -9,7 +9,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
             "baseHref": "/@mxtommy/kip/",
             "aot": true,
@@ -20,7 +20,6 @@
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
             "polyfills": [
-              "zone.js",
               "src/polyfills.ts"
             ],
             "assets": [

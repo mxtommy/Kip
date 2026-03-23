@@ -28,6 +28,11 @@ describe('KipResizeObserverDirective', () => {
         }).ResizeObserver =
             ResizeObserverMock as unknown as typeof ResizeObserver;
 
+        const ngZoneMock: Pick<NgZone, 'run' | 'runOutsideAngular'> = {
+            run: <T>(fn: (...args: unknown[]) => T): T => fn(),
+            runOutsideAngular: <T>(fn: (...args: unknown[]) => T): T => fn(),
+        };
+
         TestBed.configureTestingModule({
             providers: [
                 {
@@ -36,7 +41,7 @@ describe('KipResizeObserverDirective', () => {
                 },
                 {
                     provide: NgZone,
-                    useFactory: () => new NgZone({ enableLongStackTrace: false }),
+                    useValue: ngZoneMock,
                 },
             ],
         });

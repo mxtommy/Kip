@@ -89,7 +89,10 @@ describe('SettingsConfigComponent', () => {
 
   it('derives auth state and config options from signals', async () => {
     authTokenSubject.next(createToken({ isDeviceAccessToken: true }));
+    fixture.detectChanges();
+    await Promise.resolve();
     await fixture.whenStable();
+    fixture.detectChanges();
 
     expect(component.hasToken).toBe(true);
     expect(component.isTokenTypeDevice).toBe(true);
