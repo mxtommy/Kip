@@ -7,6 +7,40 @@ description: Write unit and integration tests for Angular v20+ applications usin
 
 Test Angular v20+ applications with Vitest (recommended) or Jasmine, focusing on signal-based components and modern patterns.
 
+## Zoneless TestBed Requirements
+
+This project runs `provideZonelessChangeDetection()` at bootstrap. Every `TestBed.configureTestingModule` call **must** include it so that `ComponentFixture` uses the same `ZonelessChangeDetectionScheduler` as production. Without it, TestBed initialises with a mock Zone.js environment and change detection behaviour diverges from reality.
+
+> **KIP project note:** `src/test.ts` monkey-patches `TestBed.configureTestingModule` to inject `provideZonelessChangeDetection()` globally. New spec files get it automatically. Do **not** add `zone.js` to the build or remove the global patch.
+
+### Required boilerplate
+
+```typescript
+import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
+
+describe('MyComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        // mock providers here
+      ],
+    }).compileComponents();
+  });
+});
+```
+
+### TestBed style rules
+
+| Category | Requirement |
+|---|---|
+| Provider alignment | Always include `provideZonelessChangeDetection()` in `providers` |
+| Component type | Prefer standalone components; use `imports:` not `declarations:` |
+| Manual triggering | Use `await fixture.whenStable()` or `fixture.detectChanges()` strategically; rely on signals for reactive state assertions |
+| Schema strictness | Use `NO_ERRORS_SCHEMA` only as last resort; prefer mocking dependencies to preserve type safety |
+
 ## Vitest Setup (Angular v20+)
 
 Angular v20+ has native Vitest support through the `@angular/build` package.
@@ -50,6 +84,7 @@ For Vitest migration from Jasmine and advanced configuration, see [references/vi
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { Counter } from './counter.component';
 
 describe('Counter', () => {
@@ -59,6 +94,7 @@ describe('Counter', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Counter], // Standalone component
+      providers: [provideZonelessChangeDetection()],
     }).compileComponents();
     
     fixture = TestBed.createComponent(Counter);
@@ -146,6 +182,7 @@ describe('TodoList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TodoList],
+      providers: [provideZonelessChangeDetection()],
     }).compileComponents();
     
     fixture = TestBed.createComponent(TodoList);
@@ -217,7 +254,9 @@ describe('CounterService', () => {
   let service: CounterService;
   
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection()],
+    });
     service = TestBed.inject(CounterService);
   });
   
@@ -242,6 +281,7 @@ describe('UserService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -290,6 +330,7 @@ describe('UserProfile', () => {
     await TestBed.configureTestingModule({
       imports: [UserProfile],
       providers: [
+        provideZonelessChangeDetection(),
         { provide: UserService, useValue: mockUserService },
       ],
     }).compileComponents();
@@ -318,6 +359,7 @@ beforeEach(async () => {
   await TestBed.configureTestingModule({
     imports: [ProtectedPage],
     providers: [
+      provideZonelessChangeDetection(),
       { provide: AuthService, useValue: mockAuth },
     ],
   }).compileComponents();
@@ -369,41 +411,44 @@ describe('ItemCmpt', () => {
 
 ## Testing Async Operations
 
-### Using fakeAsync
+### Using vi.useFakeTimers (zoneless — preferred)
+
+In a zoneless app, use Vitest's own fake timer API. `fakeAsync`/`tick` are Zone.js utilities and should not be used in zoneless specs.
 
 ```typescript
-import { fakeAsync, tick, flush } from '@angular/core/testing';
+it('should debounce search', async () => {
+  vi.useFakeTimers();
+  try {
+    const fixture = TestBed.createComponent(SearchCmpt);
+    fixture.detectChanges();
 
-it('should debounce search', fakeAsync(() => {
-  const fixture = TestBed.createComponent(SearchCmpt);
-  fixture.detectChanges();
-  
-  fixture.componentInstance.query.set('test');
-  
-  tick(300); // Advance time for debounce
-  fixture.detectChanges();
-  
-  expect(fixture.componentInstance.results().length).toBeGreaterThan(0);
-  
-  flush(); // Flush remaining timers
-}));
+    fixture.componentInstance.query.set('test');
+
+    await vi.advanceTimersByTimeAsync(300); // Advance time for debounce
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.results().length).toBeGreaterThan(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
 ```
 
-### Using waitForAsync
+### Using whenStable
 
 ```typescript
-import { waitForAsync } from '@angular/core/testing';
-
-it('should load data', waitForAsync(() => {
+it('should load data', async () => {
   const fixture = TestBed.createComponent(DataCmpt);
   fixture.detectChanges();
-  
-  fixture.whenStable().then(() => {
-    fixture.detectChanges();
-    expect(fixture.componentInstance.data()).toBeDefined();
-  });
-}));
+
+  await fixture.whenStable();
+  fixture.detectChanges();
+
+  expect(fixture.componentInstance.data()).toBeDefined();
+});
 ```
+
+> **Do not use** `fakeAsync`, `tick`, or `flush` from `@angular/core/testing` in zoneless specs — these utilities depend on Zone.js patching. They are documented on the [Zone.js Testing Utilities](https://angular.dev/guide/testing/zone-js-testing-utilities) page as a legacy pattern.
 
 ## Testing HTTP Resources
 
@@ -429,6 +474,7 @@ describe('UserCmpt', () => {
     await TestBed.configureTestingModule({
       imports: [UserCmpt],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
