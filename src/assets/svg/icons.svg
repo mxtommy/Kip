@@ -348,6 +348,18 @@
     <svg id="power_renewal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <path fill="currentColor" d="M4.06445 13C4.55672 16.9461 7.92051 20 12 20c2.3364 -0.0002 4.4372 -1.0031 5.8994 -2.6006L15.5 15h6v6l-2.1855 -2.1855C17.4894 20.7734 14.8887 21.9998 12 22c-5.18532 0 -9.44843 -3.9467 -9.9502 -9zM12.5 10H16l-4.5 9v-5H8l4.5 -9zM12 2c5.1851 0.00028 9.4485 3.94685 9.9502 9h-2.0147C19.4434 7.05399 16.0793 4.00027 12 4 9.66354 4 7.56264 5.00292 6.10059 6.60059L8.5 9h-6V3l2.18457 2.18457C6.50965 3.22563 9.11128 2 12 2" stroke-width="1"></path>
     </svg>
+    <svg id="solar_charger" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24" width="24">
+      <path fill="currentColor" stroke="currentColor" stroke-width="1" d="M7.666666666666667 2a3.8333333333333335 3.8333333333333335 0 0 0 7.666666666666667 0z"></path>
+      <path stroke="currentColor" d="M3.8333333333333335 2.875h0.9583333333333334" stroke-width="1.5"></path>
+      <path stroke="currentColor" d="M18.208333333333336 2.875h0.9583333333333334" stroke-width="1.5"></path>
+      <path stroke="currentColor" d="M11.5 8.625v0.9583333333333334" stroke-width="1.5"></path>
+      <path stroke="currentColor" d="m16.483333333333334 6.9 0.6775416666666667 0.6775416666666667" stroke-width="1.5"></path>
+      <path stroke="currentColor" d="m6.516666666666667 6.9 -0.6708333333333333 0.6708333333333333" stroke-width="1.5"></path>
+      <path fill="var(--mat-sys-primary)" fill-opacity="0.5" stroke="var(--mat-sys-primary)" stroke-opacity="1" d="M4.1016666666666675 20.125h14.796666666666667a0.9583333333333334 0.9583333333333334 0 0 0 0.9295833333333333 -1.1912083333333334l-1.4375 -5.75a0.9583333333333334 0.9583333333333334 0 0 0 -0.9295833333333333 -0.7254583333333333H5.5391666666666675a0.9583333333333334 0.9583333333333334 0 0 0 -0.9295833333333333 0.7254583333333333l-1.4375 5.75A0.9583333333333334 0.9583333333333334 0 0 0 4.1016666666666675 20.125z" stroke-width="1"></path>
+      <path stroke="var(--mat-sys-primary)" stroke-width="1" d="M3.8333333333333335 16.291666666666668h15.333333333333334"></path>
+      <path stroke="var(--mat-sys-primary)" stroke-width="1" d="m9.583333333333334 12.458333333333334 -0.9583333333333334 7.666666666666667"></path>
+      <path stroke="var(--mat-sys-primary)" stroke-width="1" d="m13.416666666666668 12.458333333333334 0.9583333333333334 7.666666666666667"></path>
+    </svg>
     <svg id="dashboard-beating-starboard" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <g id="g9" transform="matrix(-0.70710678,0.70710678,0.70710678,0.70710678,8.8211956,-6.2237242)">
         <path d="M 12,5.9999999 C 16,9.777778 17.777778,15.444445 16,23 H 8.0000001 C 6.2222223,15.444445 8.0000001,9.777778 12,5.9999999 Z" fill="var(--mat-sys-tertiary)" id="path1" style="stroke-width:0.229061" />

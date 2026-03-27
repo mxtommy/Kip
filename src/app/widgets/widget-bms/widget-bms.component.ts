@@ -3,20 +3,17 @@ import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { getColors } from '../../core/utils/themeColors.utils';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import type {
-  BmsBankConfig,
-  BmsBankConnectionMode,
   BmsBankDisplayModel,
   BmsBankSummary,
   BmsBatteryDisplayModel,
-  BmsBatterySnapshot,
-  BmsWidgetConfig
+  BmsBatterySnapshot
 } from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 
@@ -64,7 +61,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
 
-  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig & { bms: BmsWidgetConfig } = {
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     color: 'contrast',
     ignoreZones: false,
     bms: {
@@ -327,7 +324,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private resolveBmsConfig(cfg: IWidgetSvcConfig): BmsWidgetConfig {
-    const bms = (cfg as IWidgetSvcConfig & { bms?: BmsWidgetConfig }).bms;
+    const bms = cfg.bms;
     return {
       trackedBatteryIds: Array.isArray(bms?.trackedBatteryIds) ? bms.trackedBatteryIds : [],
       banks: (Array.isArray(bms?.banks) ? bms.banks : []).map(bank => ({

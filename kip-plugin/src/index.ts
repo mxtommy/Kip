@@ -1,7 +1,7 @@
 import { ActionResult, Path, Plugin, ServerAPI, SKVersion } from '@signalk/server-api'
 import { Request, Response, NextFunction } from 'express'
 import * as openapi from './openApi.json';
-import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition } from './history-series.service';
+import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod, isKipBmsTemplateSeriesDefinition, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipSolarTemplateSeriesDefinition, isKipTemplateSeriesDefinition } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
 
@@ -213,11 +213,51 @@ const start = (server: ServerAPI): Plugin => {
       .sort((left, right) => left.localeCompare(right));
   }
 
+  function resolveSolarChargerIdsFromSelfPath(): string[] {
+    const solarPath = server.getSelfPath('electrical.solar') as unknown;
+
+    const readCandidate = (node: unknown): Record<string, unknown> | null => {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) {
+        return null;
+      }
+
+      const root = node as Record<string, unknown>;
+      if (Object.prototype.hasOwnProperty.call(root, 'value')) {
+        const value = root.value;
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          return value as Record<string, unknown>;
+        }
+
+        return null;
+      }
+
+      return root;
+    };
+
+    const candidates = readCandidate(solarPath);
+    if (!candidates) {
+      return [];
+    }
+
+    return Object.keys(candidates)
+      .filter(id => /^[a-z0-9_-]+$/i.test(id))
+      .sort((left, right) => left.localeCompare(right));
+  }
+
   function getExistingConcreteBmsSeries(templateSeries: ISeriesDefinition, existingSeries: ISeriesDefinition[]): ISeriesDefinition[] {
     return existingSeries
       .filter(series => series.ownerWidgetUuid === templateSeries.ownerWidgetUuid)
       .filter(isKipConcreteSeriesDefinition)
       .filter(series => series.seriesId !== templateSeries.seriesId)
+      .map(series => ({ ...series }));
+  }
+
+  function getExistingConcreteSolarSeries(templateSeries: ISeriesDefinition, existingSeries: ISeriesDefinition[]): ISeriesDefinition[] {
+    return existingSeries
+      .filter(series => series.ownerWidgetUuid === templateSeries.ownerWidgetUuid)
+      .filter(isKipConcreteSeriesDefinition)
+      .filter(series => series.seriesId !== templateSeries.seriesId)
+      .filter(series => series.path.startsWith('electrical.solar.'))
       .map(series => ({ ...series }));
   }
 
@@ -231,8 +271,10 @@ const start = (server: ServerAPI): Plugin => {
 
   function expandTemplateSeriesDefinitions(payload: ISeriesDefinition[], existingSeries: ISeriesDefinition[] = []): ISeriesDefinition[] {
     const bmsMetrics: ('capacity.stateOfCharge' | 'current')[] = ['capacity.stateOfCharge', 'current'];
+    const solarMetrics: ('current' | 'panelCurrent')[] = ['current', 'panelCurrent'];
     const expandedById = new Map<string, ISeriesDefinition>();
     const discoveredBatteryIds = resolveBmsBatteryIdsFromSelfPath();
+    const discoveredSolarChargerIds = resolveSolarChargerIdsFromSelfPath();
 
     payload.forEach(series => {
       if (!isKipTemplateSeriesDefinition(series)) {
@@ -240,44 +282,93 @@ const start = (server: ServerAPI): Plugin => {
         return;
       }
 
-      if (discoveredBatteryIds.length === 0) {
-        getExistingConcreteBmsSeries(series, existingSeries).forEach(existing => {
-          expandedById.set(existing.seriesId, existing);
-        });
-        return;
-      }
+      if (isKipBmsTemplateSeriesDefinition(series)) {
+        if (discoveredBatteryIds.length === 0) {
+          getExistingConcreteBmsSeries(series, existingSeries).forEach(existing => {
+            expandedById.set(existing.seriesId, existing);
+          });
+          return;
+        }
 
-      const allowedBatteryIds = Array.isArray(series.allowedBatteryIds)
-        ? series.allowedBatteryIds
-          .filter((id): id is string => typeof id === 'string')
-          .map(id => id.trim())
-          .filter(id => id.length > 0)
-        : [];
+        const allowedBatteryIds = Array.isArray(series.allowedBatteryIds)
+          ? series.allowedBatteryIds
+            .filter((id): id is string => typeof id === 'string')
+            .map(id => id.trim())
+            .filter(id => id.length > 0)
+          : [];
 
-      const allowedSet = allowedBatteryIds.length > 0 ? new Set(allowedBatteryIds) : null;
-      const batteryIds = discoveredBatteryIds.filter(id => !allowedSet || allowedSet.has(id));
-      if (batteryIds.length === 0) {
-        return;
-      }
+        const allowedSet = allowedBatteryIds.length > 0 ? new Set(allowedBatteryIds) : null;
+        const batteryIds = discoveredBatteryIds.filter(id => !allowedSet || allowedSet.has(id));
+        if (batteryIds.length === 0) {
+          return;
+        }
 
-      const source = series.source ?? 'default';
-      const sourceKey = slugify(source || 'default') || 'default';
+        const source = series.source ?? 'default';
+        const sourceKey = slugify(source || 'default') || 'default';
 
-      batteryIds.forEach(batteryId => {
-        bmsMetrics.forEach(metric => {
-          const path = `self.electrical.batteries.${batteryId}.${metric}`;
-          const seriesId = `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`;
+        batteryIds.forEach(batteryId => {
+          bmsMetrics.forEach(metric => {
+            const path = `self.electrical.batteries.${batteryId}.${metric}`;
+            const seriesId = `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`;
 
-          expandedById.set(seriesId, {
-            ...series,
-            seriesId,
-            datasetUuid: `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`,
-            path,
-            retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
-            expansionMode: null
+            expandedById.set(seriesId, {
+              ...series,
+              seriesId,
+              datasetUuid: `${series.ownerWidgetUuid}:bms:${batteryId}:${metric}:${sourceKey}`,
+              path,
+              retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
+              expansionMode: null,
+              allowedBatteryIds: null,
+              allowedChargerIds: null
+            });
           });
         });
-      });
+
+        return;
+      }
+
+      if (isKipSolarTemplateSeriesDefinition(series)) {
+        if (discoveredSolarChargerIds.length === 0) {
+          getExistingConcreteSolarSeries(series, existingSeries).forEach(existing => {
+            expandedById.set(existing.seriesId, existing);
+          });
+          return;
+        }
+
+        const allowedChargerIds = Array.isArray(series.allowedChargerIds)
+          ? series.allowedChargerIds
+            .filter((id): id is string => typeof id === 'string')
+            .map(id => id.trim())
+            .filter(id => id.length > 0)
+          : [];
+
+        const allowedSet = allowedChargerIds.length > 0 ? new Set(allowedChargerIds) : null;
+        const chargerIds = discoveredSolarChargerIds.filter(id => !allowedSet || allowedSet.has(id));
+        if (chargerIds.length === 0) {
+          return;
+        }
+
+        const source = series.source ?? 'default';
+        const sourceKey = slugify(source || 'default') || 'default';
+
+        chargerIds.forEach(chargerId => {
+          solarMetrics.forEach(metric => {
+            const path = `self.electrical.solar.${chargerId}.${metric}`;
+            const seriesId = `${series.ownerWidgetUuid}:solar:${chargerId}:${metric}:${sourceKey}`;
+
+            expandedById.set(seriesId, {
+              ...series,
+              seriesId,
+              datasetUuid: `${series.ownerWidgetUuid}:solar:${chargerId}:${metric}:${sourceKey}`,
+              path,
+              retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
+              expansionMode: null,
+              allowedBatteryIds: null,
+              allowedChargerIds: null
+            });
+          });
+        });
+      }
     });
 
     return Array.from(expandedById.values());

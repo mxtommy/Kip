@@ -61,6 +61,29 @@ export type IPathArray = Record<
   IWidgetPath
 >;
 
+export type BmsBankConnectionMode = 'parallel' | 'series';
+
+export interface BmsBankConfig {
+  id: string;
+  name: string;
+  batteryIds: string[];
+  connectionMode: BmsBankConnectionMode;
+}
+
+export interface BmsWidgetConfig {
+  trackedBatteryIds: string[];
+  banks: BmsBankConfig[];
+}
+
+export interface SolarChargerOptionConfig {
+  arrayRatedPowerW: number | null;
+}
+
+export interface SolarChargerWidgetConfig {
+  trackedChargerIds: string[];
+  chargerOptionsById: Record<string, SolarChargerOptionConfig>;
+}
+
 
 
 /**
@@ -94,6 +117,12 @@ export interface IWidgetSvcConfig {
 
   /** Radar widget configuration */
   ais?: IAISRadarConfig;
+
+  /** BMS widget configuration */
+  bms?: BmsWidgetConfig;
+
+  /** Solar charger widget configuration */
+  solarCharger?: SolarChargerWidgetConfig;
 
   /** Color from KIP selection tool to use as main display color */
   color?: string;

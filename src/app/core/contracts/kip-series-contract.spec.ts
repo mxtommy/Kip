@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { IKipConcreteSeriesDefinition, IKipSeriesDefinition, IKipTemplateSeriesDefinition, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition, } from './kip-series-contract';
 
 describe('kip-series-contract guards', () => {
@@ -26,6 +27,23 @@ describe('kip-series-contract guards', () => {
         path: 'self.electrical.batteries.*',
         expansionMode: 'bms-battery-tree',
         allowedBatteryIds: ['house', 'start'],
+        context: 'vessels.self',
+        source: 'default',
+        timeScale: 'hour',
+        period: 24,
+        retentionDurationMs: 86400000,
+        sampleTime: null,
+        enabled: true,
+    };
+
+    const solarTemplateSeries: IKipTemplateSeriesDefinition = {
+        seriesId: 'widget-3:solar-template',
+        datasetUuid: 'widget-3:solar-template',
+        ownerWidgetUuid: 'widget-3',
+        ownerWidgetSelector: 'widget-solar-charger',
+        path: 'self.electrical.solar.*',
+        expansionMode: 'solar-charger-tree',
+        allowedChargerIds: ['port', 'starboard'],
         context: 'vessels.self',
         source: 'default',
         timeScale: 'hour',
@@ -65,6 +83,17 @@ describe('kip-series-contract guards', () => {
         expect(value.allowedBatteryIds).toEqual(['house', 'start']);
     });
 
+    it('preserves template-only charger filters for solar templates', () => {
+        const value: IKipSeriesDefinition = solarTemplateSeries;
+
+        if (!isKipTemplateSeriesDefinition(value)) {
+            throw new Error('Expected template series definition');
+            return;
+        }
+
+        expect(value.allowedChargerIds).toEqual(['port', 'starboard']);
+    });
+
     it('keeps concrete series free of template expansion state', () => {
         const value: IKipSeriesDefinition = concreteSeries;
 
@@ -75,5 +104,6 @@ describe('kip-series-contract guards', () => {
 
         expect(value.expansionMode ?? null).toBeNull();
         expect(value.allowedBatteryIds ?? null).toBeNull();
+        expect(value.allowedChargerIds ?? null).toBeNull();
     });
 });

@@ -401,7 +401,12 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
         return;
       }
 
-      const title = this.widgetProperties?.config?.displayName || (this.widgetProperties?.type === 'widget-bms' ? 'Battery Monitor' : 'Widget History');
+      const title = this.widgetProperties?.config?.displayName
+        || (this.widgetProperties?.type === 'widget-bms'
+          ? 'Battery Monitor'
+          : this.widgetProperties?.type === 'widget-solar-charger'
+            ? 'Solar Charger'
+            : 'Widget History');
 
       this.dialog.openWidgetHistoryDialog({
         title,
@@ -437,7 +442,24 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
       return resolved;
     }
 
-    const bmsMetricPaths = new Set(['electrical.batteries', 'self.electrical.batteries']);
+    const templatePathPrefixes = new Set(
+      resolved
+        .filter(isKipTemplateSeriesDefinition)
+        .map(series => {
+          const path = (series.path ?? '').trim();
+          const basePath = path.endsWith('.*') ? path.slice(0, -2) : path;
+          if (!basePath.length) {
+            return null;
+          }
+
+          return basePath.startsWith('self.') ? basePath.slice('self.'.length) : basePath;
+        })
+        .filter((path): path is string => !!path)
+    );
+
+    if (templatePathPrefixes.size === 0) {
+      return resolved;
+    }
 
     return effective.filter(series => {
       if (series.ownerWidgetUuid !== widgetUuid || !isKipSeriesEnabled(series)) {
@@ -449,7 +471,8 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
         return false;
       }
 
-      return Array.from(bmsMetricPaths).some(prefix => path.startsWith(`${prefix}.`));
+      const normalizedPath = path.startsWith('self.') ? path.slice('self.'.length) : path;
+      return Array.from(templatePathPrefixes).some(prefix => normalizedPath.startsWith(`${prefix}.`));
     });
   }
 
@@ -458,7 +481,8 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
       return false;
     }
 
-    if (widget.type === 'widget-bms') {
+    if (seriesDefinitions.some(series => typeof series.expansionMode === 'string' || series.enabled === true) &&
+      (widget.type === 'widget-bms' || widget.type === 'widget-solar-charger')) {
       return seriesDefinitions.some(series => series.enabled === true);
     }
 
