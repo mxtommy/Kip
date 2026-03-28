@@ -58,7 +58,7 @@ jobs:
     - name: Run Angular Vitest suite
       env:
         CI: '1'
-      run: ng test --watch=false --browsers=ChromeHeadless
+      run: ng test --watch=false
 
   plugin-node-test:
     runs-on: ubuntu-latest
