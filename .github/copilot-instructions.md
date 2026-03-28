@@ -81,7 +81,7 @@ Use this workflow whenever editing AI documentation files (`COPILOT.md`, `.githu
 
 Use project skills plus Angular skills based on edit type:
 
-- Component or widget UI changes:
+- Modifying existing widgets/components (editing code, UI changes, features, styling):
   - `angular-component`
   - `angular-signals`
   - `angular-directives` (if host bindings/directives are involved)
@@ -97,6 +97,10 @@ Use project skills plus Angular skills based on edit type:
   - `angular-testing`
 - Build and generation workflow:
   - `angular-tooling`
+- Creating new widgets (from schematic, scaffolding):
+  - `angular-tooling`
+  - `kip-host2-widget`
+  - `kip-widget-creation`
 - Dataset lifecycle, ownership cleanup, and dataset write paths:
   - `kip-dataset-orchestration`
 - History series reconciliation and mapping flow changes:

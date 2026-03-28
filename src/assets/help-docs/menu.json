@@ -14,13 +14,15 @@
       { "title": "The Embed Page Viewer", "file": "embedwidget.md" },
       { "title": "External History-API Provider", "file": "history-api.md" },
       { "title": "Grafana Integration", "file": "grafana.md" },
-      { "title": "InfluxDB and Signal K", "file": "influxdb.md" }
+      { "title": "InfluxDB and Signal K", "file": "influxdb.md" },
+      { "title": "Contributing Widgets", "file": "contributing-widgets.md" }
     ]
   },
   {
     "title": "Advanced Features",
     "items": [
-      { "title": "Kiosk Mode", "file": "kiosk.md" }
+      { "title": "Kiosk Mode", "file": "kiosk.md" },
+      { "title": "Contributing Widgets", "file": "contributing-widgets.md" }
     ]
   },
   { "title": "Online Community Content", "file": "community.md" },

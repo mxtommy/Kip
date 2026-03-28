@@ -93,6 +93,11 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Racer - Start Timer** – Advanced racing countdown timer with OCS status and auto dashboard switching.
 - **Countdown Timer** – Simple race start countdown timer with start, pause, sync, and reset options.
 
+### Need a Widget Not Listed Here?
+
+- Check the community first: someone may already have a reusable setup or branch.
+- If you are a developer, see [Contributing Widgets](#/help/contributing-widgets.md) for the contribution path.
+- If you only need external visuals, consider [The Embed Page Viewer](#/help/embedwidget.md) for web dashboards.
 
 ## Performance & Layout Tips
 - Favor clarity over cramming: leave space around high‑priority values
