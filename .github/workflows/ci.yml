@@ -24,7 +24,7 @@ jobs:
       run: npm install
 
     - name: Lint
-      run: npm run lint
+      run: ng lint
 
   angular-vitest:
     runs-on: ubuntu-latest
@@ -49,7 +49,7 @@ jobs:
     - name: Run Angular Vitest suite
       env:
         CI: '1'
-      run: npx ng test --watch=false
+      run: ng test --watch=false --browsers=ChromeHeadless
 
   plugin-node-test:
     runs-on: ubuntu-latest
