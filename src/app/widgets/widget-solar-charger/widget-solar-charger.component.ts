@@ -42,6 +42,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly GAUGE_RADIUS = 38;
   private static readonly GAUGE_BG_STROKE = 8;
   private static readonly GAUGE_VALUE_STROKE = 8;
+  private static readonly SOLAR_PANEL_X = 135;
+  private static readonly SOLAR_PANEL_Y = 0;
   private static readonly PATH_BATCH_WINDOW_MS = 500;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -437,25 +439,27 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     solarPanelIconEnter.append('use')
       .attr('class', 'solar-panel-bg')
       .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
-      .attr('x', 135)
-      .attr('y', 0);
+      .attr('x', WidgetSolarChargerComponent.SOLAR_PANEL_X)
+      .attr('y', WidgetSolarChargerComponent.SOLAR_PANEL_Y);
 
     // Progress layer with clip path
     const progressGroup = solarPanelIconEnter.append('g').attr('class', 'solar-panel-progress');
     progressGroup.append('defs')
       .append('clipPath')
+      .attr('clipPathUnits', 'objectBoundingBox')
       .attr('id', item => `solar-panel-clip-${this.id()}-${item.id}`)
       .append('rect')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('height', 94.949027);
+      .attr('height', 1)
+      .attr('width', 0);
 
     progressGroup.append('use')
       .attr('class', 'solar-panel-colored')
       .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
-      .attr('x', 135)
-      .attr('y', 0)
-      .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`); 
+      .attr('x', WidgetSolarChargerComponent.SOLAR_PANEL_X)
+      .attr('y', WidgetSolarChargerComponent.SOLAR_PANEL_Y)
+      .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`);
     progressGroup.append('text').attr('class', 'solar-panel-power');
     progressGroup.append('text').attr('class', 'solar-panel-values');
 
@@ -530,9 +534,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     merged.select('g.solar-panel-progress')
       .each((item, index, nodes) => {
         const progressGroup = d3.select(nodes[index]);
-        const clipWidth = 158.90796 * item.model.gaugeProgress;
         progressGroup.select('rect')
-          .attr('width', clipWidth);
+          .attr('width', item.model.gaugeProgress);
       });
 
     merged.select('use.solar-panel-colored')
