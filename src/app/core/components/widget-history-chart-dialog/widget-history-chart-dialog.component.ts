@@ -22,11 +22,15 @@ interface ChartPoint {
   y: number;
 }
 type HistoryChartDataset = ChartDataset<'line', ChartPoint[]>;
-type BmsMetric = 'soc' | 'current';
+type TDualAxisWidgetType = 'widget-bms' | 'widget-solar-charger';
+type TDualAxisMetric = 'soc' | 'current' | 'panelPower';
+type TDualAxisAxisId = 'ySoc' | 'yCurrent' | 'yPower';
 
-interface IBmsSeriesDescriptor {
-  batteryId: string;
-  metric: BmsMetric;
+interface IDualAxisSeriesDescriptor {
+  widgetType: TDualAxisWidgetType;
+  entityId: string;
+  metric: TDualAxisMetric;
+  axisId: TDualAxisAxisId;
 }
 
 /****
@@ -182,7 +186,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     const resolutionSeconds = this.resolveResolutionSeconds(duration);
 
     const requestCandidates = this.buildHistoryRequestCandidates(rawPath, series.context);
-    const bmsSeries = this.describeBmsSeries(rawPath);
+    const dualAxisSeries = this.describeDualAxisSeries(rawPath);
     let chartPoints: ChartPoint[] = [];
     let labelPath = this.normalizeHistoryPath(rawPath);
 
@@ -228,10 +232,14 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       // Apply unit conversion if needed
       chartPoints = datapoints.map(point => {
         let y = point.data.value as number;
-        if (bmsSeries?.metric === 'soc' && typeof y === 'number' && Number.isFinite(y)) {
-          y *= 100;
-        } else if (convertUnitTo && typeof y === 'number' && Number.isFinite(y)) {
-          y = this.units.convertToUnit(convertUnitTo, y);
+        if (typeof y === 'number' && Number.isFinite(y)) {
+          if (dualAxisSeries?.metric === 'soc') {
+            y *= 100;
+          } else if (dualAxisSeries?.metric === 'panelPower') {
+            y /= 1000;
+          } else if (!dualAxisSeries && convertUnitTo) {
+            y = this.units.convertToUnit(convertUnitTo, y);
+          }
         }
         return { x: point.timestamp, y };
       });
@@ -247,7 +255,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     }
 
 
-    const color = this.resolveSeriesColor(index, bmsSeries);
+    const color = this.resolveSeriesColor(index, dualAxisSeries);
 
     const sourceLabel = series.source ? ` (${series.source})` : '';
 
@@ -259,35 +267,65 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       pointRadius: 0,
       borderWidth: 2,
       tension: 0.25,
-      yAxisID: bmsSeries ? this.getBmsAxisId(bmsSeries.metric) : 'y',
-      borderDash: bmsSeries?.metric === 'soc' ? [6, 4] : undefined,
+      yAxisID: dualAxisSeries?.axisId ?? 'y',
+      borderDash: this.isDualAxisSecondaryMetric(dualAxisSeries) ? [6, 4] : undefined,
       fill: false
     };
   }
 
-  private describeBmsSeries(path: string | null | undefined): IBmsSeriesDescriptor | null {
+  private describeDualAxisSeries(path: string | null | undefined): IDualAxisSeriesDescriptor | null {
     const normalizedPath = this.normalizeHistoryPath(path ?? '');
     const socMatch = /^electrical\.batteries\.([^.]+)\.(?:capacity\.)?stateOfCharge$/i.exec(normalizedPath);
     if (socMatch) {
-      return { batteryId: socMatch[1], metric: 'soc' };
+      return {
+        widgetType: 'widget-bms',
+        entityId: socMatch[1],
+        metric: 'soc',
+        axisId: 'ySoc'
+      };
     }
 
-    const currentMatch = /^electrical\.batteries\.([^.]+)\.current$/i.exec(normalizedPath);
-    if (currentMatch) {
-      return { batteryId: currentMatch[1], metric: 'current' };
+    const bmsCurrentMatch = /^electrical\.batteries\.([^.]+)\.current$/i.exec(normalizedPath);
+    if (bmsCurrentMatch) {
+      return {
+        widgetType: 'widget-bms',
+        entityId: bmsCurrentMatch[1],
+        metric: 'current',
+        axisId: 'yCurrent'
+      };
+    }
+
+    const solarCurrentMatch = /^electrical\.solar\.([^.]+)\.current$/i.exec(normalizedPath);
+    if (solarCurrentMatch) {
+      return {
+        widgetType: 'widget-solar-charger',
+        entityId: solarCurrentMatch[1],
+        metric: 'current',
+        axisId: 'yCurrent'
+      };
+    }
+
+    const solarPowerMatch = /^electrical\.solar\.([^.]+)\.panelPower$/i.exec(normalizedPath);
+    if (solarPowerMatch) {
+      return {
+        widgetType: 'widget-solar-charger',
+        entityId: solarPowerMatch[1],
+        metric: 'panelPower',
+        axisId: 'yPower'
+      };
     }
 
     return null;
   }
 
-  private resolveSeriesColor(index: number, bmsSeries: IBmsSeriesDescriptor | null): string {
+  private resolveSeriesColor(index: number, dualAxisSeries: IDualAxisSeriesDescriptor | null): string {
     const palette = this.getSeriesPalette();
-    if (!bmsSeries) {
+    if (!dualAxisSeries) {
       return palette[index % palette.length];
     }
 
-    const batteryIndex = this.getBmsBatteryOrderIndex(bmsSeries.batteryId);
-    return palette[batteryIndex % palette.length];
+    const entityIndex = this.getDualAxisEntityOrderIndex(dualAxisSeries.entityId, dualAxisSeries.widgetType);
+    return palette[entityIndex % palette.length];
   }
 
   private getSeriesPalette(): string[] {
@@ -319,24 +357,31 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     return typeof themeColor === 'string' && themeColor.length > 0 ? themeColor : colorKey;
   }
 
-  private getBmsBatteryOrderIndex(batteryId: string): number {
-    const orderedBatteryIds: string[] = [];
+  /** Defines which metric is primary (solid, index 0) and secondary (dashed, index 1) per widget type. */
+  private readonly dualAxisMetricOrder: Record<TDualAxisWidgetType, TDualAxisMetric[]> = {
+    'widget-bms': ['soc', 'current'],
+    'widget-solar-charger': ['panelPower', 'current']
+  };
+
+  private isDualAxisSecondaryMetric(descriptor: IDualAxisSeriesDescriptor | null): boolean {
+    if (!descriptor) return false;
+    return this.dualAxisMetricOrder[descriptor.widgetType].indexOf(descriptor.metric) === 1;
+  }
+
+  private getDualAxisEntityOrderIndex(entityId: string, widgetType: TDualAxisWidgetType): number {
+    const orderedEntityIds: string[] = [];
 
     this.data.seriesDefinitions.forEach(series => {
-      const descriptor = this.describeBmsSeries(series.path);
-      if (!descriptor || orderedBatteryIds.includes(descriptor.batteryId)) {
+      const descriptor = this.describeDualAxisSeries(series.path);
+      if (!descriptor || descriptor.widgetType !== widgetType || orderedEntityIds.includes(descriptor.entityId)) {
         return;
       }
 
-      orderedBatteryIds.push(descriptor.batteryId);
+      orderedEntityIds.push(descriptor.entityId);
     });
 
-    const resolvedIndex = orderedBatteryIds.indexOf(batteryId);
+    const resolvedIndex = orderedEntityIds.indexOf(entityId);
     return resolvedIndex >= 0 ? resolvedIndex : 0;
-  }
-
-  private getBmsAxisId(metric: BmsMetric): 'ySoc' | 'yCurrent' {
-    return metric === 'soc' ? 'ySoc' : 'yCurrent';
   }
 
   private buildHistoryRequestCandidates(rawPath: string, context: string | null | undefined): { paths: string; context: string | undefined; labelPath: string }[] {
@@ -360,7 +405,36 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       expandedSeries.push(...concreteSeries);
     }
 
-    return expandedSeries;
+    return this.sortExpandedSeries(expandedSeries);
+  }
+
+  /**
+   * Sorts dual-axis series by entity id first (preserves entity grouping),
+   * then by the metric position defined in dualAxisMetricOrder (primary before secondary).
+   * Non-dual-axis series are left at the end in their original relative order.
+   */
+  private sortExpandedSeries(series: IKipSeriesDefinition[]): IKipSeriesDefinition[] {
+    const hasDualAxis = series.some(s => this.describeDualAxisSeries(s.path) !== null);
+    if (!hasDualAxis) {
+      return series;
+    }
+
+    return [...series].sort((a, b) => {
+      const descA = this.describeDualAxisSeries(a.path);
+      const descB = this.describeDualAxisSeries(b.path);
+
+      if (!descA && !descB) return 0;
+      if (!descA) return 1;
+      if (!descB) return -1;
+
+      if (descA.entityId !== descB.entityId) {
+        return descA.entityId.localeCompare(descB.entityId);
+      }
+
+      const orderA = this.dualAxisMetricOrder[descA.widgetType]?.indexOf(descA.metric) ?? 0;
+      const orderB = this.dualAxisMetricOrder[descB.widgetType]?.indexOf(descB.metric) ?? 0;
+      return orderA - orderB;
+    });
   }
 
   private async expandTemplateSeries(series: IKipSeriesDefinition): Promise<IKipSeriesDefinition[]> {
@@ -419,7 +493,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     const suffix = path.slice(prefix.length + 1);
 
     if (series.expansionMode === 'solar-charger-tree') {
-      return suffix.endsWith('.current') || suffix.endsWith('.panelCurrent');
+      return suffix.endsWith('.current') || suffix.endsWith('.panelPower');
     }
 
     return suffix.endsWith('.current') || suffix.endsWith('.capacity.stateOfCharge') || suffix.endsWith('.stateOfCharge');
@@ -463,7 +537,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     }
 
     const [firstSegment] = parts;
-    if (firstSegment === 'current' || firstSegment === 'panelCurrent' || firstSegment === 'capacity' || firstSegment === 'stateOfCharge') {
+    if (firstSegment === 'current' || firstSegment === 'panelCurrent' || firstSegment === 'panelPower' || firstSegment === 'capacity' || firstSegment === 'stateOfCharge') {
       return null;
     }
 
@@ -561,17 +635,24 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
             }
           },
           tooltip: {
+            boxWidth: 15,
+            boxHeight: 15,
+            bodyFont: {
+              size: 14
+            },
+            multiKeyBackground: 'rgba(0, 0, 0, 0)',
             callbacks: {
               labelColor: tooltipItem => {
-                const legendColors = this.getLegendColorsForDataset(tooltipItem.chart, tooltipItem.datasetIndex);
-                const dataset = tooltipItem.dataset as HistoryChartDataset;
-                const borderDash = Array.isArray(dataset.borderDash) && dataset.borderDash.length >= 2
-                  ? [dataset.borderDash[0], dataset.borderDash[1]] as [number, number]
+                const legendItem = this.getLegendItemForDataset(tooltipItem.chart, tooltipItem.datasetIndex);
+                const borderDash = Array.isArray(legendItem?.lineDash) && legendItem.lineDash.length >= 2
+                  ? [legendItem.lineDash[0], legendItem.lineDash[1]] as [number, number]
                   : undefined;
 
                 return {
-                  borderColor: this.darkenColor(legendColors.stroke, 0.25),
-                  backgroundColor: legendColors.fill,
+                  borderColor: (legendItem?.strokeStyle ?? this.theme().contrast) as string,
+                  backgroundColor: 'rgba(0, 0, 0, 0)',
+                  borderWidth: 2,
+                  borderRadius: 0,
                   borderDash
                 };
               }
@@ -603,7 +684,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private buildYScales(unitLabel: string): NonNullable<NonNullable<ChartConfiguration<'line'>['options']>['scales']> {
-    if (this.isBmsChart()) {
+    const dualAxisWidgetType = this.resolveDualAxisWidgetType();
+
+    if (dualAxisWidgetType === 'widget-bms') {
       return {
         ySoc: {
           type: 'linear',
@@ -620,6 +703,44 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           title: {
             display: true,
             text: 'SoC (%)',
+            color: this.theme().contrastDim
+          }
+        },
+        yCurrent: {
+          type: 'linear',
+          position: 'right',
+          ticks: {
+            color: this.theme().contrastDim,
+            callback: value => `${value} A`
+          },
+          grid: {
+            drawOnChartArea: false,
+            color: this.theme().contrastDimmer
+          },
+          title: {
+            display: true,
+            text: 'Current (A)',
+            color: this.theme().contrastDim
+          }
+        }
+      };
+    }
+
+    if (dualAxisWidgetType === 'widget-solar-charger') {
+      return {
+        yPower: {
+          type: 'linear',
+          position: 'left',
+          ticks: {
+            color: this.theme().contrastDim,
+            callback: value => `${value} kW`
+          },
+          grid: {
+            color: this.theme().contrastDimmer
+          },
+          title: {
+            display: true,
+            text: 'Power (kW)',
             color: this.theme().contrastDim
           }
         },
@@ -661,11 +782,21 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private buildLegendLabels(chart: Chart): LegendItem[] {
-    return Chart.defaults.plugins.legend.labels.generateLabels(chart).map(label => ({
-      ...label,
-      fillStyle: this.darkenColor(label.fillStyle, 0.25),
-      strokeStyle: label.strokeStyle
-    }));
+    return Chart.defaults.plugins.legend.labels.generateLabels(chart).map(label => {
+      const dataset = label.datasetIndex != null
+        ? chart.data.datasets[label.datasetIndex] as HistoryChartDataset
+        : null;
+      const borderDash = Array.isArray(dataset?.borderDash) ? dataset.borderDash : [];
+      return {
+        ...label,
+        fillStyle: 'transparent' as Color,
+        lineDash: borderDash
+      };
+    });
+  }
+
+  private getLegendItemForDataset(chart: Chart, datasetIndex: number): LegendItem | null {
+    return this.buildLegendLabels(chart).find(label => label.datasetIndex === datasetIndex) ?? null;
   }
 
   private darkenColor(color: Color, amount: number): Color {
@@ -699,25 +830,20 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     return color;
   }
 
-  private getLegendColorsForDataset(chart: Chart, datasetIndex: number): { fill: Color; stroke: Color } {
-    const labels = this.buildLegendLabels(chart);
-    const label = labels.find(entry => entry.datasetIndex === datasetIndex);
-    if (!label) {
-      return {
-        fill: this.darkenColor(this.theme().contrast, 0.25),
-        stroke: this.theme().contrast
-      };
+  private resolveDualAxisWidgetType(): TDualAxisWidgetType | null {
+    const widgetType = this.data.widget?.type;
+
+    if (widgetType === 'widget-bms'
+      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'ySoc' || dataset.yAxisID === 'yCurrent')) {
+      return 'widget-bms';
     }
 
-    return {
-      fill: label.fillStyle,
-      stroke: label.strokeStyle
-    };
-  }
+    if (widgetType === 'widget-solar-charger'
+      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'yPower' || dataset.yAxisID === 'yCurrent')) {
+      return 'widget-solar-charger';
+    }
 
-  private isBmsChart(): boolean {
-    return this.data.widget?.type === 'widget-bms'
-      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'ySoc' || dataset.yAxisID === 'yCurrent');
+    return null;
   }
 
   protected setPeriod(period: string) {

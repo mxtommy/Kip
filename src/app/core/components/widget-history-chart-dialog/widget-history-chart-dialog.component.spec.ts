@@ -118,7 +118,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('pairs BMS SoC and current series by color, converts SoC to percent, and dashes SoC lines', async () => {
+    it('pairs BMS SoC and current series by color, converts SoC to percent, SoC solid and current dashed', async () => {
         const socDataset = await (component as unknown as {
             buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
                 data: {
@@ -147,8 +147,8 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(socDataset?.data[0].y).toBe(62);
         expect(socDataset?.yAxisID).toBe('ySoc');
         expect(currentDataset?.yAxisID).toBe('yCurrent');
-        expect(socDataset?.borderDash).toEqual([6, 4]);
-        expect(currentDataset?.borderDash).toBeUndefined();
+        expect(socDataset?.borderDash).toBeUndefined();
+        expect(currentDataset?.borderDash).toEqual([6, 4]);
         expect(currentDataset?.borderColor).toBe(socDataset?.borderColor);
     });
 
@@ -174,6 +174,108 @@ describe('WidgetHistoryChartDialogComponent', () => {
         }).darkenColor('#2266dd', 0.25);
 
         expect(darkerColor).toBe('rgb(26, 77, 166)');
+    });
+
+    it('classifies solar panelPower/current on dual axes and converts power W to kW', async () => {
+        historyApiClientMock.getValues.mockImplementation(({ paths }: {
+            paths: string;
+        }) => Promise.resolve({
+            data: [{}],
+            requestedPath: paths
+        }));
+
+        historyMapperMock.mapValuesToChartDatapoints.mockImplementation((response: {
+            requestedPath?: string;
+        }) => {
+            if (response.requestedPath?.includes('panelPower')) {
+                return [{ timestamp: 1000, data: { value: 8200 } }];
+            }
+
+            return [{ timestamp: 1000, data: { value: 12.5 } }];
+        });
+
+        const panelPowerSeries: IKipSeriesDefinition = {
+            seriesId: 'widget-solar-1:solar:charger-1:panelPower:default',
+            datasetUuid: 'widget-solar-1:solar:charger-1:panelPower:default',
+            ownerWidgetUuid: 'widget-solar-1',
+            ownerWidgetSelector: 'widget-solar-charger',
+            path: 'self.electrical.solar.charger-1.panelPower',
+            enabled: true
+        };
+        const currentSeries: IKipSeriesDefinition = {
+            seriesId: 'widget-solar-1:solar:charger-1:current:default',
+            datasetUuid: 'widget-solar-1:solar:charger-1:current:default',
+            ownerWidgetUuid: 'widget-solar-1',
+            ownerWidgetSelector: 'widget-solar-charger',
+            path: 'self.electrical.solar.charger-1.current',
+            enabled: true
+        };
+
+        const panelPowerDataset = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                data: {
+                    x: number;
+                    y: number;
+                }[];
+                borderColor: string;
+                yAxisID: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(panelPowerSeries, 0);
+
+        const currentDataset = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                data: {
+                    x: number;
+                    y: number;
+                }[];
+                borderColor: string;
+                yAxisID: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(currentSeries, 1);
+
+        expect(panelPowerDataset).not.toBeNull();
+        expect(currentDataset).not.toBeNull();
+        expect(panelPowerDataset?.data[0].y).toBe(8.2);
+        expect(panelPowerDataset?.yAxisID).toBe('yPower');
+        expect(currentDataset?.yAxisID).toBe('yCurrent');
+        expect(panelPowerDataset?.borderDash).toBeUndefined();
+        expect(currentDataset?.borderDash).toEqual([6, 4]);
+        expect(currentDataset?.borderColor).toBe(panelPowerDataset?.borderColor);
+    });
+
+    it('builds dual y-axes for solar charts', () => {
+        (component as unknown as {
+            data: {
+                widget: IWidget;
+            };
+            pendingDatasets: {
+                yAxisID?: string;
+            }[];
+        }).data = {
+            widget: {
+                uuid: 'widget-solar-1',
+                type: 'widget-solar-charger',
+                config: {
+                    displayName: 'Solar Charger'
+                }
+            } as IWidget
+        };
+
+        (component as unknown as {
+            pendingDatasets: {
+                yAxisID?: string;
+            }[];
+        }).pendingDatasets = [{ yAxisID: 'yPower' }, { yAxisID: 'yCurrent' }];
+
+        const scales = (component as unknown as {
+            buildYScales: (unitLabel: string) => Record<string, unknown>;
+        }).buildYScales('');
+
+        expect(scales['yPower']).toBeDefined();
+        expect(scales['yCurrent']).toBeDefined();
+        expect(scales['y']).toBeUndefined();
     });
 
     it('expands solar wildcard template paths into concrete history requests', async () => {
@@ -209,17 +311,26 @@ describe('WidgetHistoryChartDialogComponent', () => {
 
         historyApiClientMock.getPaths.mockResolvedValue([
             'electrical.solar.charger-1.current',
-            'electrical.solar.charger-1.panelCurrent',
+            'electrical.solar.charger-1.panelPower',
             'electrical.solar.charger-1.voltage'
         ]);
 
         await component.loadHistoryDatasets();
 
+        const calls = historyApiClientMock.getValues.mock.calls.map((c: [{ paths: string }]) => c[0].paths);
+        const panelPowerIdx = calls.findIndex((p: string) => p.includes('panelPower'));
+        const currentIdx = calls.findIndex((p: string) => p.includes('.current'));
+
+        expect(panelPowerIdx).toBeGreaterThanOrEqual(0);
+        expect(currentIdx).toBeGreaterThanOrEqual(0);
+        // panelPower is primary metric (index 0) so its request must precede current
+        expect(panelPowerIdx).toBeLessThan(currentIdx);
+
         expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
             paths: 'electrical.solar.charger-1.current:avg'
         }));
         expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
-            paths: 'electrical.solar.charger-1.panelCurrent:avg'
+            paths: 'electrical.solar.charger-1.panelPower:avg'
         }));
         expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
             paths: 'electrical.solar.*:avg'
