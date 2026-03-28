@@ -47,7 +47,9 @@ jobs:
       run: npm install
 
     - name: Run Angular Vitest suite
-      run: npm run test:headless
+      env:
+        CI: '1'
+      run: npx ng test --watch=false
 
   plugin-node-test:
     runs-on: ubuntu-latest
