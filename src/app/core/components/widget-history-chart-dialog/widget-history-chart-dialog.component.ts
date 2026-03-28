@@ -189,28 +189,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     const dualAxisSeries = this.describeDualAxisSeries(rawPath);
     let chartPoints: ChartPoint[] = [];
     let labelPath = this.normalizeHistoryPath(rawPath);
-
-    // Get widget config for this path (if available)
-    const widgetConfig = this.data.widget?.config;
-    // Try to find config for this path (by path key or by matching path string)
-    // Fallback to widgetConfig.convertUnitTo if not per-path
-    let convertUnitTo: string | null = null;
-    if (widgetConfig) {
-      // If widgetConfig.paths exists and is an object, try to find matching path config
-      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
-        for (const key of Object.keys(widgetConfig.paths)) {
-          const pathCfg = widgetConfig.paths[key];
-          if (pathCfg?.path === rawPath && pathCfg.convertUnitTo) {
-            convertUnitTo = pathCfg.convertUnitTo;
-            break;
-          }
-        }
-      }
-      // Fallback to top-level convertUnitTo
-      if (!convertUnitTo && widgetConfig.convertUnitTo) {
-        convertUnitTo = widgetConfig.convertUnitTo;
-      }
-    }
+    const convertUnitTo = this.resolveConvertUnitTo(rawPath);
 
     for (const candidate of requestCandidates) {
       const response = await this.historyApiClient.getValues({
@@ -396,7 +375,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   private buildHistoryRequestCandidates(rawPath: string, context: string | null | undefined): { paths: string; context: string | undefined; labelPath: string }[] {
     const normalizedPath = this.normalizeHistoryPath(rawPath);
     const contextCandidate = this.resolveHistoryContext(rawPath, context);
-    const pathVariants = [...new Set([normalizedPath].filter(path => path.length > 0))];
+    const pathVariants = [normalizedPath].filter(path => path.length > 0);
     const requests: { paths: string; context: string | undefined; labelPath: string }[] = [];
 
     pathVariants.forEach(path => {
@@ -675,21 +654,34 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private getPrimaryAxisUnitLabel(): string {
+    const convertUnitTo = this.resolveConvertUnitTo();
+
+    return this.getUnitsLabel(convertUnitTo);
+  }
+
+  private resolveConvertUnitTo(rawPath?: string): string | null {
     const widgetConfig = this.data.widget?.config;
-    let convertUnitTo: string | null = null;
-    if (widgetConfig) {
-      if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
-        const firstPathKey = Object.keys(widgetConfig.paths)[0];
-        if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
-          convertUnitTo = widgetConfig.paths[firstPathKey].convertUnitTo;
+    if (!widgetConfig) {
+      return null;
+    }
+
+    if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
+      if (rawPath) {
+        for (const key of Object.keys(widgetConfig.paths)) {
+          const pathCfg = widgetConfig.paths[key];
+          if (pathCfg?.path === rawPath && pathCfg.convertUnitTo) {
+            return pathCfg.convertUnitTo;
+          }
         }
       }
-      if (!convertUnitTo && widgetConfig.convertUnitTo) {
-        convertUnitTo = widgetConfig.convertUnitTo;
+
+      const firstPathKey = Object.keys(widgetConfig.paths)[0];
+      if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
+        return widgetConfig.paths[firstPathKey].convertUnitTo;
       }
     }
 
-    return this.getUnitsLabel(convertUnitTo);
+    return widgetConfig.convertUnitTo ?? null;
   }
 
   private buildYScales(unitLabel: string): NonNullable<NonNullable<ChartConfiguration<'line'>['options']>['scales']> {
@@ -810,37 +802,6 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private getLegendItemForDataset(chart: Chart, datasetIndex: number): LegendItem | null {
     return this.buildLegendLabels(chart).find(label => label.datasetIndex === datasetIndex) ?? null;
-  }
-
-  private darkenColor(color: Color, amount: number): Color {
-    if (typeof color !== 'string') {
-      return color;
-    }
-
-    const trimmed = color.trim();
-    const hexMatch = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(trimmed);
-    if (hexMatch) {
-      const normalized = hexMatch[1].length === 3
-        ? hexMatch[1].split('').map(char => `${char}${char}`).join('')
-        : hexMatch[1];
-      const red = Number.parseInt(normalized.slice(0, 2), 16);
-      const green = Number.parseInt(normalized.slice(2, 4), 16);
-      const blue = Number.parseInt(normalized.slice(4, 6), 16);
-      const darken = (value: number) => Math.max(0, Math.round(value * (1 - amount)));
-      return `rgb(${darken(red)}, ${darken(green)}, ${darken(blue)})`;
-    }
-
-    const rgbMatch = /^rgba?\(([^)]+)\)$/i.exec(trimmed);
-    if (rgbMatch) {
-      const [redRaw = '0', greenRaw = '0', blueRaw = '0'] = rgbMatch[1].split(',').map(part => part.trim());
-      const red = Number.parseFloat(redRaw);
-      const green = Number.parseFloat(greenRaw);
-      const blue = Number.parseFloat(blueRaw);
-      const darken = (value: number) => Math.max(0, Math.round(value * (1 - amount)));
-      return `rgb(${darken(red)}, ${darken(green)}, ${darken(blue)})`;
-    }
-
-    return color;
   }
 
   private resolveDualAxisWidgetType(): TDualAxisWidgetType | null {

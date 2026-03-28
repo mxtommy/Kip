@@ -266,14 +266,6 @@ describe('WidgetHistoryChartDialogComponent', () => {
         }).title?.color).toBe(theme.green);
     });
 
-    it('darkens legend/tooltip fill colors consistently', () => {
-        const darkerColor = (component as unknown as {
-            darkenColor: (color: unknown, amount: number) => unknown;
-        }).darkenColor('#2266dd', 0.25);
-
-        expect(darkerColor).toBe('rgb(26, 77, 166)');
-    });
-
     it('classifies solar panelPower/current on dual axes, converts power W to kW, and keeps first-entity lines solid', async () => {
         historyApiClientMock.getValues.mockImplementation(({ paths }: {
             paths: string;
