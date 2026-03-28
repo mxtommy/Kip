@@ -1,18 +1,5 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
-
-export type BmsBankConnectionMode = 'parallel' | 'series';
-
-export interface BmsBankConfig {
-  id: string;
-  name: string;
-  batteryIds: string[];
-  connectionMode: BmsBankConnectionMode;
-}
-
-export interface BmsWidgetConfig {
-  trackedBatteryIds: string[];
-  banks: BmsBankConfig[];
-}
+export type { BmsBankConnectionMode, BmsBankConfig, BmsWidgetConfig } from '../../core/interfaces/widgets-interface';
 
 export interface BmsBatterySnapshot {
   id: string;

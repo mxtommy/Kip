@@ -23,13 +23,14 @@ import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.c
 import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.component';
 import { BmsBankSetupComponent } from '../bms-bank-setup/bms-bank-setup.component';
 import { AisTargetOptionsComponent } from '../ais-target-options/ais-target-options.component';
+import { SolarChargerSetupComponent } from '../solar-charger-setup/solar-charger-setup.component';
 import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'modal-widget-config',
   templateUrl: './modal-widget-config.component.html',
   styleUrls: ['./modal-widget-config.component.scss'],
-  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent]
+  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent, SolarChargerSetupComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   // Property name constants to avoid magic strings
@@ -46,7 +47,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private units = inject(UnitsService);
   private app = inject(AppService);
   private readonly destroyRef = inject(DestroyRef);
-  protected widgetConfig = inject<IWidgetSvcConfig & { bms?: unknown }>(MAT_DIALOG_DATA);
+  protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
 
   public titleDialog = "Widget Options";
   public formMaster: UntypedFormGroup;

@@ -924,6 +924,299 @@ testRequiresNodeSqlite('series reconcile preserves existing widget-bms concrete 
   assert.equal(restartSeriesIds.includes('widget-bms-2:bms:house:current:default'), true);
 });
 
+testRequiresNodeSqlite('series reconcile expands widget-solar-charger template entries into concrete charger metric series', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.solar', {
+    value: {
+      port: { current: 12.4, panelPower: 8.1 },
+      starboard: { current: 11.8, panelPower: 7.9 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+
+  const reconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: [
+      {
+        seriesId: 'widget-solar-1:solar-template',
+        datasetUuid: 'widget-solar-1:solar-template',
+        ownerWidgetUuid: 'widget-solar-1',
+        ownerWidgetSelector: 'widget-solar-charger',
+        path: 'self.electrical.solar.*',
+        expansionMode: 'solar-tree',
+        allowedSolarIds: ['port'],
+        source: 'default',
+        enabled: true
+      }
+    ]
+  }, reconcileRes);
+
+  assert.equal(reconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+
+  const seriesIds = listRes.payload
+    .filter(item => item.ownerWidgetUuid === 'widget-solar-1')
+    .map(item => item.seriesId)
+    .sort();
+  assert.deepEqual(seriesIds, [
+    'widget-solar-1:solar:port:current:default',
+    'widget-solar-1:solar:port:panelPower:default'
+  ]);
+});
+
+testRequiresNodeSqlite('series reconcile preserves existing widget-solar-charger concrete series when charger discovery is temporarily unavailable', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.solar', {
+    value: {
+      port: { current: 12.4, panelPower: 8.1 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+  const templateBody = [
+    {
+      seriesId: 'widget-solar-2:solar-template',
+      datasetUuid: 'widget-solar-2:solar-template',
+      ownerWidgetUuid: 'widget-solar-2',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['port'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const firstReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, firstReconcileRes);
+
+  assert.equal(firstReconcileRes.statusCode, 200);
+  assert.equal(firstReconcileRes.payload?.created, 2);
+
+  server.setSelfPath('electrical.solar', { value: null });
+
+  const secondReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, secondReconcileRes);
+
+  assert.equal(secondReconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+  const secondSeriesIds = listRes.payload.map(item => item.seriesId).sort();
+  assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:current:default'), true);
+  assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:panelPower:default'), true);
+});
+
+testRequiresNodeSqlite('series reconcile only preserves templates for domains with unavailable discovery', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.batteries', {
+    value: {
+      house: { stateOfCharge: 0.81 }
+    }
+  });
+  server.setSelfPath('electrical.solar', {
+    value: {
+      port: { current: 12.4, panelPower: 8.1 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+  const templateBody = [
+    {
+      seriesId: 'widget-bms-3:bms-template',
+      datasetUuid: 'widget-bms-3:bms-template',
+      ownerWidgetUuid: 'widget-bms-3',
+      ownerWidgetSelector: 'widget-bms',
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree',
+      allowedBatteryIds: ['house'],
+      source: 'default',
+      enabled: true
+    },
+    {
+      seriesId: 'widget-solar-3:solar-template',
+      datasetUuid: 'widget-solar-3:solar-template',
+      ownerWidgetUuid: 'widget-solar-3',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['port'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const firstReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, firstReconcileRes);
+
+  assert.equal(firstReconcileRes.statusCode, 200);
+
+  // Keep battery discovery available but make solar discovery unavailable.
+  server.setSelfPath('electrical.solar', { value: null });
+
+  const secondReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, secondReconcileRes);
+
+  assert.equal(secondReconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+
+  const seriesIds = listRes.payload.map(item => item.seriesId).sort();
+  assert.equal(seriesIds.includes('widget-bms-3:bms:house:capacity.stateOfCharge:default'), true);
+  assert.equal(seriesIds.includes('widget-bms-3:bms:house:current:default'), true);
+  assert.equal(seriesIds.includes('widget-solar-3:solar:port:current:default'), true);
+  assert.equal(seriesIds.includes('widget-solar-3:solar:port:panelPower:default'), true);
+});
+
+testRequiresNodeSqlite('series reconcile does not re-delete the same stale series on repeated identical payloads', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.batteries', {
+    value: {
+      house: { stateOfCharge: 0.81 }
+    }
+  });
+  server.setSelfPath('electrical.solar', {
+    value: {
+      bimini: { current: 12.4, panelPower: 8.1 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+
+  const broadPayload = [
+    {
+      seriesId: 'widget-bms-old:bms-template',
+      datasetUuid: 'widget-bms-old:bms-template',
+      ownerWidgetUuid: 'widget-bms-old',
+      ownerWidgetSelector: 'widget-bms',
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree',
+      allowedBatteryIds: ['house'],
+      source: 'default',
+      enabled: true
+    },
+    {
+      seriesId: 'widget-solar-old:solar-template',
+      datasetUuid: 'widget-solar-old:solar-template',
+      ownerWidgetUuid: 'widget-solar-old',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['bimini'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const narrowPayload = [
+    {
+      seriesId: 'widget-bms-new:bms-template',
+      datasetUuid: 'widget-bms-new:bms-template',
+      ownerWidgetUuid: 'widget-bms-new',
+      ownerWidgetSelector: 'widget-bms',
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree',
+      allowedBatteryIds: ['house'],
+      source: 'default',
+      enabled: true
+    },
+    {
+      seriesId: 'widget-solar-new:solar-template',
+      datasetUuid: 'widget-solar-new:solar-template',
+      ownerWidgetUuid: 'widget-solar-new',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['bimini'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const firstBroadRes = createResMock();
+  await reconcile({ method: 'POST', path: '/series/reconcile', ip: '127.0.0.1', headers: {}, body: broadPayload }, firstBroadRes);
+  assert.equal(firstBroadRes.statusCode, 200);
+
+  const firstNarrowRes = createResMock();
+  await reconcile({ method: 'POST', path: '/series/reconcile', ip: '127.0.0.1', headers: {}, body: narrowPayload }, firstNarrowRes);
+  assert.equal(firstNarrowRes.statusCode, 200);
+  assert.equal((firstNarrowRes.payload?.deleted ?? 0) > 0, true);
+
+  const secondNarrowRes = createResMock();
+  await reconcile({ method: 'POST', path: '/series/reconcile', ip: '127.0.0.1', headers: {}, body: narrowPayload }, secondNarrowRes);
+  assert.equal(secondNarrowRes.statusCode, 200);
+  assert.equal(secondNarrowRes.payload?.deleted, 0);
+});
+
 testRequiresNodeSqlite('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');

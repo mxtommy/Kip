@@ -3,20 +3,17 @@ import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { getColors } from '../../core/utils/themeColors.utils';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import type {
-  BmsBankConfig,
-  BmsBankConnectionMode,
   BmsBankDisplayModel,
   BmsBankSummary,
   BmsBatteryDisplayModel,
-  BmsBatterySnapshot,
-  BmsWidgetConfig
+  BmsBatterySnapshot
 } from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 
@@ -64,7 +61,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
 
-  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig & { bms: BmsWidgetConfig } = {
+  public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     color: 'contrast',
     ignoreZones: false,
     bms: {
@@ -134,8 +131,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return banks.map(bank => this.buildBankSummary(bank, map));
   });
 
-  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? WidgetBmsComponent.DEFAULT_CONFIG.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color);
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -327,7 +324,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private resolveBmsConfig(cfg: IWidgetSvcConfig): BmsWidgetConfig {
-    const bms = (cfg as IWidgetSvcConfig & { bms?: BmsWidgetConfig }).bms;
+    const bms = cfg.bms;
     return {
       trackedBatteryIds: Array.isArray(bms?.trackedBatteryIds) ? bms.trackedBatteryIds : [],
       banks: (Array.isArray(bms?.banks) ? bms.banks : []).map(bank => ({
@@ -608,10 +605,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankEnter.append('text').attr('class', 'bank-title');
 
     const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
-    bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
+    bankMerged.attr('transform', item => `translate(${item.x + 0.5},${item.y + 0.5})`);
     bankMerged.select('rect')
-      .attr('width', item => item.width)
-      .attr('height', item => item.height)
+      .attr('width', item => item.width - 1)
+      .attr('height', item => item.height - 1)
       .attr('stroke', 'var(--mat-sys-outline-variant)')
       .attr('stroke-width', 0.5);
     bankMerged.select('text.bank-title')
@@ -847,7 +844,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.select('rect.bms-battery')
       .attr('width', WidgetBmsComponent.BATTERY_CARD_WIDTH)
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT)
-      .attr('fill', 'var(--mat-sys-background)')
+      .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', 'var(--kip-contrast-dimmer-color)')
       .attr('stroke-width', 0);
     selection.select('rect.bms-battery-tip')
@@ -855,7 +852,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('y', WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 10)
       .attr('width', 4)
       .attr('height', 20)
-      .attr('fill', 'var(--mat-sys-background)')
+      .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', widgetColors.color)
       .attr('stroke-width', 0);
     selection.select('rect.bms-charge-fill')
@@ -994,10 +991,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return `${value.toFixed(1)} ${this.units.getDefaults().Temperature === 'celsius' ? '°C' : '°F'}`;
   }
 
-  private static resolveZoneAwareColor(state: TState | null | undefined, fallbackColor: string, theme: ITheme | null, ignoreZones: boolean): string {
-    if (ignoreZones) return fallbackColor;
-    if (!state) return fallbackColor;
-    if (!theme) return fallbackColor;
+  private static resolveZoneAwareColor(state: TState | null | undefined, defaultColor: string, theme: ITheme | null, ignoreZones: boolean): string {
+    if (ignoreZones) return defaultColor;
+    if (!state) return defaultColor;
+    if (!theme) return defaultColor;
 
     switch (state) {
       case States.Nominal:
@@ -1009,7 +1006,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       case States.Alert:
         return theme.zoneAlert;
       default:
-        return fallbackColor;
+        return defaultColor;
     }
   }
 

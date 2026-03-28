@@ -27,6 +27,10 @@ interface IBmsBankLike {
   batteryIds?: unknown;
 }
 
+interface ISolarConfigLike {
+  trackedSolarIds?: unknown;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -162,6 +166,10 @@ export class DashboardHistorySeriesSyncService {
       return this.mapBmsWidget(widgetUuid, widgetType, cfg);
     }
 
+    if (widgetType === 'widget-solar-charger') {
+      return this.mapSolarWidget(widgetUuid, widgetType, cfg);
+    }
+
     return this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg);
   }
 
@@ -282,8 +290,32 @@ export class DashboardHistorySeriesSyncService {
     return [templateSeries];
   }
 
+  private mapSolarWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipTemplateSeriesDefinition[] {
+    const allowedSolarIds = this.resolveSolarAllowedIds(cfg);
+    void widgetType;
+
+    const templateSeries: IKipTemplateSeriesDefinition = {
+      seriesId: `${widgetUuid}:solar-template`,
+      datasetUuid: `${widgetUuid}:solar-template`,
+      ownerWidgetUuid: widgetUuid,
+      ownerWidgetSelector: 'widget-solar-charger' as const,
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-tree' as const,
+      allowedSolarIds: allowedSolarIds.length > 0 ? [...allowedSolarIds] : null,
+      context: null,
+      source: 'default',
+      timeScale: this.normalizeString(cfg?.timeScale),
+      period: this.normalizeNumber(cfg?.period),
+      retentionDurationMs: this.AUTO_RETENTION_MS,
+      sampleTime: null,
+      enabled: true,
+    };
+
+    return [templateSeries];
+  }
+
   private resolveBmsAllowedBatteryIds(cfg: IWidgetSvcConfig | undefined): string[] {
-    const bmsCfg = (cfg as IWidgetSvcConfig & { bms?: IBmsConfigLike } | undefined)?.bms;
+    const bmsCfg = cfg?.bms as IBmsConfigLike | undefined;
     if (!bmsCfg) {
       return [];
     }
@@ -320,6 +352,32 @@ export class DashboardHistorySeriesSyncService {
           ids.add(normalized);
         }
       });
+    });
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }
+
+  private resolveSolarAllowedIds(cfg: IWidgetSvcConfig | undefined): string[] {
+    const solarCfg = cfg?.solarCharger as ISolarConfigLike | undefined;
+    if (!solarCfg) {
+      return [];
+    }
+
+    const tracked = Array.isArray(solarCfg.trackedSolarIds) ? solarCfg.trackedSolarIds : [];
+    if (tracked.length === 0) {
+      return [];
+    }
+
+    const ids = new Set<string>();
+    tracked.forEach(id => {
+      if (typeof id !== 'string') {
+        return;
+      }
+
+      const normalized = id.trim();
+      if (normalized.length > 0) {
+        ids.add(normalized);
+      }
     });
 
     return [...ids].sort((left, right) => left.localeCompare(right));
@@ -427,6 +485,7 @@ export class DashboardHistorySeriesSyncService {
       path: s.path,
       expansionMode: s.expansionMode ?? null,
       allowedBatteryIds: Array.isArray(s.allowedBatteryIds) ? [...s.allowedBatteryIds].sort() : null,
+      allowedSolarIds: Array.isArray(s.allowedSolarIds) ? [...s.allowedSolarIds].sort() : null,
       context: s.context ?? null,
       source: s.source ?? null,
       timeScale: s.timeScale ?? null,

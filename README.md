@@ -108,6 +108,7 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **Level gauge**: Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.
 - **Pitch & Roll gauge**: Horizon-style attitude indicator showing live pitch and roll for monitoring trim, heel, and sea-state response.
 - **Battery Monitor**: Stay on top of batteries or whole banks state with a compact view displaying State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature.
+- **Solar Charger**: Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.
 - **Windsteer**: Combines wind, wind sectors, heading, COG, and waypoint info for sailboat wind steering.
 - **Racesteer**: Sailboat race steering display fusing polar performance data with live conditions for optimal tactics.
 - **Countdown Timer**: A simple start sequences timer.

@@ -295,6 +295,47 @@ describe('WidgetHost2Component', () => {
         expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
     });
 
+    it('opens history dialog for widget-solar-charger using effective plugin-expanded series', async () => {
+        dashboard.isDashboardStatic.set(true);
+        testWidget.type = 'widget-solar-charger';
+        testWidget.config = {
+            displayName: 'Solar Charger',
+            solarCharger: {
+                trackedSolarIds: [],
+                solarOptionsById: {}
+            }
+        } as IWidget['config'];
+
+        historySyncMock.resolveSeriesForWidget.mockReturnValue([
+            {
+                seriesId: 'widget-1:solar-template',
+                datasetUuid: 'widget-1:solar-template',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-solar-charger',
+                path: 'self.electrical.solar.*',
+                expansionMode: 'solar-tree',
+                enabled: true
+            }
+        ]);
+
+        kipSeriesMock.getSeriesDefinitions.mockResolvedValue([
+            {
+                seriesId: 'widget-1:solar:charger-1:current:default',
+                datasetUuid: 'widget-1:solar:charger-1:current:default',
+                ownerWidgetUuid: 'widget-1',
+                ownerWidgetSelector: 'widget-solar-charger',
+                path: 'electrical.solar.charger-1.current',
+                enabled: true
+            }
+        ]);
+
+        component.openWidgetHistoryDialog(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(dialogServiceMock.openWidgetHistoryDialog).toHaveBeenCalledTimes(1);
+    });
+
     it('suppresses bottom sheet opening while dragging', () => {
         dashboard.isDashboardStatic.set(false);
         const uiEvents = TestBed.inject(uiEventService);

@@ -57,6 +57,26 @@ Before finalizing instruction edits, run this quick check:
 - `Duplication check`: no repeated rule blocks across instruction files.
 - `Routing check`: skill matrix still maps task type to the right skills without adding policy text.
 
+## Documentation Edit Workflow (Mandatory)
+
+Use this workflow whenever editing AI documentation files (`COPILOT.md`, `.github/instructions/*.md`, `.agents/skills/*/SKILL.md`, or this file).
+
+1. Run required preflight reads first:
+  - `COPILOT.md` (`Expansion Boundaries (Anti-Drift)` section)
+  - `.github/instructions/best-practices.instructions.md`
+  - `.github/instructions/angular.instructions.md`
+  - `.github/instructions/project.instructions.md`
+2. Declare ownership mapping before editing:
+  - which file is policy owner
+  - which file is context/rationale only
+  - which file is implementation companion only
+3. Keep enforceable behavior in instruction files only.
+4. Keep `COPILOT.md` pointer-oriented and rationale-focused; do not duplicate policy bullets there.
+5. Run final self-checks before concluding edits:
+  - `Ownership check`
+  - `Duplication check`
+  - `Drift check`
+
 ## Skill Selection Matrix
 
 Use project skills plus Angular skills based on edit type:
@@ -96,6 +116,16 @@ When making code changes, include a short checklist in the response:
 2. Skills used (Angular + KIP as applicable).
 3. Project-specific constraints validated.
 4. Tests or validation run (or why not run).
+
+## Required Output Checklist For Documentation Edits
+
+When editing AI documentation files, include this checklist in the response:
+
+1. Preflight reads completed (including `COPILOT.md` anti-drift section and instruction load order files).
+2. Policy owner identified for each changed rule.
+3. Context-only vs policy-authoritative file roles confirmed.
+4. No duplicated policy text added to `COPILOT.md`.
+5. Ownership, duplication, and drift checks completed.
 
 ## Project Anchors
 

@@ -1,0 +1,37 @@
+<div class="solar-config" [formGroup]="solarFormGroup">
+  <div class="solar-config-section">
+    <h3>Tracked Solar Chargers</h3>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Charger Instances</mat-label>
+      <mat-select formControlName="trackedSolarIds" multiple>
+        @for (id of discoveredSolarIds(); track id) {
+          <mat-option [value]="id">{{ id }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="hint">Leave empty to display all discovered chargers.</div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="solar-config-section" formGroupName="solarOptionsById">
+    <h3>Solar Array Rated Power</h3>
+    <div class="hint">Set each charger's panel/array rated capacity in watts (W).</div>
+
+    <div class="option-list">
+      @if (!optionIds().length) {
+        <div class="hint">No chargers discovered yet.</div>
+      }
+
+      @for (id of optionIds(); track id) {
+        <div class="option-card" [formGroupName]="id">
+          <div class="option-title">{{ id }}</div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Array Rated Power (W)</mat-label>
+            <input matInput type="number" required min="0" formControlName="arrayRatedPowerW" placeholder="e.g. 800" />
+          </mat-form-field>
+        </div>
+      }
+    </div>
+  </div>
+</div>

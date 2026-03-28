@@ -882,6 +882,11 @@
           <bms-bank-setup formGroupName="bms" class="tab-content" />
         </mat-tab>
       }
+      @if (widgetConfig?.solarCharger) {
+        <mat-tab label="Solar Chargers">
+          <solar-charger-setup formGroupName="solarCharger" class="tab-content" />
+        </mat-tab>
+      }
     </mat-tab-group>
   </mat-dialog-content>
   <mat-divider></mat-divider>

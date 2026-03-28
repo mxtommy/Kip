@@ -224,6 +224,14 @@
                   "type": "string"
                 },
                 "description": "Concrete series do not use battery filters and should leave this null."
+              },
+              "allowedSolarIds": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Concrete series do not use solar charger filters and should leave this null."
               }
             }
           }
@@ -240,16 +248,25 @@
               "ownerWidgetSelector": {
                 "type": "string",
                 "enum": [
-                  "widget-bms"
+                  "widget-bms",
+                  "widget-solar-charger"
                 ]
               },
               "expansionMode": {
                 "type": "string",
                 "enum": [
-                  "bms-battery-tree"
+                  "bms-battery-tree",
+                  "solar-tree"
                 ]
               },
               "allowedBatteryIds": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowedSolarIds": {
                 "type": "array",
                 "nullable": true,
                 "items": {

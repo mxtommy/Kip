@@ -637,6 +637,60 @@ describe('DashboardHistorySeriesSyncService', () => {
         expect(series[0].allowedBatteryIds).toBeNull();
     });
 
+    it('resolves widget-solar-charger template mappings for plugin-side charger expansion', () => {
+        const service = TestBed.inject(DashboardHistorySeriesSyncService);
+        const widget: IWidget = {
+            uuid: 'widget-solar-1',
+            type: 'widget-solar-charger',
+            config: {
+                timeScale: 'minute',
+                period: 15,
+            }
+        };
+
+        const series = service.resolveSeriesForWidget(widget);
+        expect(seriesIds(series)).toEqual([
+            'widget-solar-1:solar-template'
+        ]);
+        expect(series.every(item => item.expansionMode === 'solar-tree')).toBe(true);
+    });
+
+    it('includes configured Solar charger scope in template series payload', () => {
+        const service = TestBed.inject(DashboardHistorySeriesSyncService);
+        const widget: IWidget = {
+            uuid: 'widget-solar-2',
+            type: 'widget-solar-charger',
+            config: {
+                solarCharger: {
+                    trackedSolarIds: ['port-array', 'starboard-array'],
+                    solarOptionsById: {}
+                }
+            } as IWidget['config']
+        };
+
+        const series = service.resolveSeriesForWidget(widget);
+        expect(series.length).toBe(1);
+        expect(series[0].allowedSolarIds).toEqual(['port-array', 'starboard-array']);
+    });
+
+    it('uses all discovered solar units when trackedSolarIds is empty', () => {
+        const service = TestBed.inject(DashboardHistorySeriesSyncService);
+        const widget: IWidget = {
+            uuid: 'widget-solar-3',
+            type: 'widget-solar-charger',
+            config: {
+                solarCharger: {
+                    trackedSolarIds: [],
+                    solarOptionsById: {}
+                }
+            } as IWidget['config']
+        };
+
+        const series = service.resolveSeriesForWidget(widget);
+        expect(series.length).toBe(1);
+        expect(series[0].allowedSolarIds).toBeNull();
+    });
+
     it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {

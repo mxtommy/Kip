@@ -53,6 +53,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private readonly _hostEl = inject(ElementRef<HTMLElement>);
   protected isDashboardStatic = computed(() => this.dashboard.isDashboardStatic());
   protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
+  protected readonly gridIsEmpty = signal<boolean>(true);
   private readonly _gridstack = viewChild.required<GridstackComponent>('grid');
   private _previousIsStaticState = true;
   /** Suppress starting a drag sequence right after a long-press add (until pointer released) */
@@ -116,6 +117,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this._gridstack().grid?.setStatic(this._previousIsStaticState);
+    this.syncGridEmptyState();
     this.resizeGridColumns();
     this.setupResizeObserver();
     this._uiEvent.addHotkeyListener(
@@ -248,6 +250,21 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     _gridstack.grid.batchUpdate();
     _gridstack.grid.load(dashboard.configuration);
     _gridstack.grid.batchUpdate(false);
+    this.syncGridEmptyState();
+  }
+
+  protected onGridItemsChanged(): void {
+    this.syncGridEmptyState();
+  }
+
+  private syncGridEmptyState(): void {
+    try {
+      const items = this._gridstack().grid?.getGridItems?.() ?? [];
+      const isEmpty = items.length === 0;
+      this.gridIsEmpty.set(isEmpty);
+    } catch {
+      this.gridIsEmpty.set(true);
+    }
   }
 
   protected saveDashboard(): void {
@@ -675,7 +692,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected editDashboard(): void {
-    this.dashboard.isDashboardStatic.set(false);
+    this.dashboard.setStaticDashboard(false);
   }
 
   protected navigateToHelp(): void {

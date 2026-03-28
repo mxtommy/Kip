@@ -1,14 +1,16 @@
 import {
+  isKipBmsTemplateSeriesDefinition,
   IKipSeriesDefinition,
   isKipConcreteSeriesDefinition,
   isKipSeriesEnabled,
+  isKipSolarTemplateSeriesDefinition,
   isKipTemplateSeriesDefinition,
   THistoryMethod
 } from './kip-series-contract';
 
 export type ISeriesDefinition = IKipSeriesDefinition;
 export type { THistoryMethod };
-export { isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition };
+export { isKipBmsTemplateSeriesDefinition, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipSolarTemplateSeriesDefinition, isKipTemplateSeriesDefinition };
 
 export interface IRecordedSeriesSample {
   seriesId: string;
@@ -409,6 +411,7 @@ export class HistorySeriesService {
       && leftComparable.path === rightComparable.path
       && leftComparable.expansionMode === rightComparable.expansionMode
       && this.areStringArraysEquivalent(leftComparable.allowedBatteryIds, rightComparable.allowedBatteryIds)
+      && this.areStringArraysEquivalent(leftComparable.allowedSolarIds, rightComparable.allowedSolarIds)
       && leftComparable.source === rightComparable.source
       && leftComparable.context === rightComparable.context
       && leftComparable.timeScale === rightComparable.timeScale
@@ -425,6 +428,7 @@ export class HistorySeriesService {
     return {
       ...comparable,
       allowedBatteryIds: this.normalizeComparableStringArray(comparable.allowedBatteryIds),
+      allowedSolarIds: this.normalizeComparableStringArray(comparable.allowedSolarIds),
       methods: this.normalizeComparableStringArray(comparable.methods)
     };
   }
@@ -485,10 +489,16 @@ export class HistorySeriesService {
     if (expansionMode === 'bms-battery-tree' && ownerWidgetSelector !== 'widget-bms') {
       throw new Error('BMS template series must use ownerWidgetSelector "widget-bms"');
     }
+    if (expansionMode === 'solar-tree' && ownerWidgetSelector !== 'widget-solar-charger') {
+      throw new Error('Solar template series must use ownerWidgetSelector "widget-solar-charger"');
+    }
 
     const normalizedMethods = this.normalizeComparableStringArray(input.methods);
     const normalizedAllowedBatteryIds = expansionMode === 'bms-battery-tree'
       ? this.normalizeComparableStringArray(input.allowedBatteryIds)
+      : undefined;
+    const normalizedAllowedSolarIds = expansionMode === 'solar-tree'
+      ? this.normalizeComparableStringArray(input.allowedSolarIds)
       : undefined;
 
     const isDataWidget = this.isChartWidget(ownerWidgetSelector, ownerWidgetUuid);
@@ -527,7 +537,20 @@ export class HistorySeriesService {
         ...normalizedBase,
         ownerWidgetSelector: 'widget-bms',
         expansionMode,
-        allowedBatteryIds: normalizedAllowedBatteryIds ?? null
+        allowedBatteryIds: normalizedAllowedBatteryIds ?? null,
+        allowedSolarIds: null
+      };
+
+      return templateSeries;
+    }
+
+    if (expansionMode === 'solar-tree') {
+      const templateSeries: ISeriesDefinition = {
+        ...normalizedBase,
+        ownerWidgetSelector: 'widget-solar-charger',
+        expansionMode,
+        allowedBatteryIds: null,
+        allowedSolarIds: normalizedAllowedSolarIds ?? null
       };
 
       return templateSeries;
@@ -536,7 +559,8 @@ export class HistorySeriesService {
     const concreteSeries: ISeriesDefinition = {
       ...normalizedBase,
       expansionMode: null,
-      allowedBatteryIds: null
+      allowedBatteryIds: null,
+      allowedSolarIds: null
     };
 
     return concreteSeries;

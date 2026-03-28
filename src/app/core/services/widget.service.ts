@@ -31,6 +31,7 @@ import { WidgetMultiStateSwitchComponent } from '../../widgets/widget-multi-stat
 import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
+import { WidgetSolarChargerComponent } from '../../widgets/widget-solar-charger/widget-solar-charger.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -166,7 +167,8 @@ export class WidgetService {
     WidgetMultiStateSwitchComponent: WidgetMultiStateSwitchComponent,
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent,
-    WidgetBmsComponent: WidgetBmsComponent
+    WidgetBmsComponent: WidgetBmsComponent,
+    WidgetSolarChargerComponent: WidgetSolarChargerComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -366,7 +368,7 @@ export class WidgetService {
     },
   {
       name: 'Battery Monitor',
-      description: 'Monitors battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. Displays key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
+      description: 'Displays battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. See key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
       icon: 'battery_charging',
       minWidth: 2,
       minHeight: 2,
@@ -376,6 +378,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-bms',
       componentClassName: 'WidgetBmsComponent'
+    },
+    {
+      name: 'Solar Charger',
+      description: 'Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.',
+      icon: 'solar_charger',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-solar-charger',
+      componentClassName: 'WidgetSolarChargerComponent'
     },
     {
       name: 'Classic Steel',
