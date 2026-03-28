@@ -67,7 +67,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run KIP plugin tests
       run: npm run test:plugin
@@ -91,7 +91,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Build webapp
       run: npm run build:prod
@@ -115,7 +115,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Build plugin
       run: npm run build:plugin
