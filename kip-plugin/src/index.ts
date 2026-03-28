@@ -271,7 +271,7 @@ const start = (server: ServerAPI): Plugin => {
 
   function expandTemplateSeriesDefinitions(payload: ISeriesDefinition[], existingSeries: ISeriesDefinition[] = []): ISeriesDefinition[] {
     const bmsMetrics: ('capacity.stateOfCharge' | 'current')[] = ['capacity.stateOfCharge', 'current'];
-    const solarMetrics: ('current' | 'panelCurrent')[] = ['current', 'panelCurrent'];
+    const solarMetrics: ('current' | 'panelPower')[] = ['current', 'panelPower'];
     const expandedById = new Map<string, ISeriesDefinition>();
     const discoveredBatteryIds = resolveBmsBatteryIdsFromSelfPath();
     const discoveredSolarChargerIds = resolveSolarChargerIdsFromSelfPath();
@@ -1452,8 +1452,9 @@ const start = (server: ServerAPI): Plugin => {
 
           await storageService.replaceSeriesDefinitions(nextSeries);
 
-          const seriesOutsideScope = historySeries.listSeries();
-          historySeries.reconcileSeries([...seriesOutsideScope, ...nextSeries]);
+          // /series/reconcile expects the full desired set for KIP-managed series.
+          // Keep in-memory state aligned with persisted state to avoid reintroducing stale series.
+          historySeries.reconcileSeries(nextSeries);
 
           server.debug(`[KIP][SERIES_RECONCILE] created=${result.created} updated=${result.updated} deleted=${result.deleted} total=${result.total}`);
           rebuildSeriesCaptureSubscriptions();
