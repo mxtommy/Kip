@@ -467,14 +467,15 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('rect.solar-card-bg')
-      .attr('x', 0)
-      .attr('y', 0)
+      .attr('x', 0.5)
+      .attr('y', 0.5)
       .attr('rx', 4)
       .attr('ry', 4)
-      .attr('width', WidgetSolarChargerComponent.VIEWBOX_WIDTH)
-      .attr('height', WidgetSolarChargerComponent.CARD_HEIGHT)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--kip-widget-card-border-color)');
+      .attr('width', WidgetSolarChargerComponent.VIEWBOX_WIDTH - 1)
+      .attr('height', WidgetSolarChargerComponent.CARD_HEIGHT - 1)
+      .attr('stroke', 'var(--mat-sys-outline-variant)')
+      .attr('stroke-width', 0.5)
+      .attr('fill', 'none');
 
     merged.select('text.solar-title')
       .attr('x', 5)

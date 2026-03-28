@@ -605,10 +605,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankEnter.append('text').attr('class', 'bank-title');
 
     const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
-    bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
+    bankMerged.attr('transform', item => `translate(${item.x + 0.5},${item.y + 0.5})`);
     bankMerged.select('rect')
-      .attr('width', item => item.width)
-      .attr('height', item => item.height)
+      .attr('width', item => item.width - 1)
+      .attr('height', item => item.height - 1)
       .attr('stroke', 'var(--mat-sys-outline-variant)')
       .attr('stroke-width', 0.5);
     bankMerged.select('text.bank-title')
