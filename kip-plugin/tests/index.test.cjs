@@ -1046,6 +1046,90 @@ testRequiresNodeSqlite('series reconcile preserves existing widget-solar-charger
   assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:panelCurrent:default'), true);
 });
 
+testRequiresNodeSqlite('series reconcile only preserves templates for domains with unavailable discovery', async () => {
+  const server = createServerMock();
+  server.setSelfPath('electrical.batteries', {
+    value: {
+      house: { stateOfCharge: 0.81 }
+    }
+  });
+  server.setSelfPath('electrical.solar', {
+    value: {
+      port: { current: 12.4, panelCurrent: 8.1 }
+    }
+  });
+
+  const start = require('../../plugin/index.js');
+  const plugin = registerPluginForCleanup(start(server));
+  const router = createRouterMock();
+
+  await startPlugin(plugin, {});
+  plugin.registerWithRouter(router);
+
+  const reconcile = router.postHandlers.get('/series/reconcile');
+  const list = router.getHandlers.get('/series');
+  const templateBody = [
+    {
+      seriesId: 'widget-bms-3:bms-template',
+      datasetUuid: 'widget-bms-3:bms-template',
+      ownerWidgetUuid: 'widget-bms-3',
+      ownerWidgetSelector: 'widget-bms',
+      path: 'self.electrical.batteries.*',
+      expansionMode: 'bms-battery-tree',
+      allowedBatteryIds: ['house'],
+      source: 'default',
+      enabled: true
+    },
+    {
+      seriesId: 'widget-solar-3:solar-template',
+      datasetUuid: 'widget-solar-3:solar-template',
+      ownerWidgetUuid: 'widget-solar-3',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.*',
+      expansionMode: 'solar-charger-tree',
+      allowedChargerIds: ['port'],
+      source: 'default',
+      enabled: true
+    }
+  ];
+
+  const firstReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, firstReconcileRes);
+
+  assert.equal(firstReconcileRes.statusCode, 200);
+
+  // Keep battery discovery available but make solar discovery unavailable.
+  server.setSelfPath('electrical.solar', { value: null });
+
+  const secondReconcileRes = createResMock();
+  await reconcile({
+    method: 'POST',
+    path: '/series/reconcile',
+    ip: '127.0.0.1',
+    headers: {},
+    body: templateBody
+  }, secondReconcileRes);
+
+  assert.equal(secondReconcileRes.statusCode, 200);
+
+  const listRes = createResMock();
+  await list({ params: {}, headers: {}, query: {} }, listRes);
+  assert.equal(listRes.statusCode, 200);
+  assert.equal(Array.isArray(listRes.payload), true);
+
+  const seriesIds = listRes.payload.map(item => item.seriesId).sort();
+  assert.equal(seriesIds.includes('widget-bms-3:bms:house:capacity.stateOfCharge:default'), true);
+  assert.equal(seriesIds.includes('widget-bms-3:bms:house:current:default'), true);
+  assert.equal(seriesIds.includes('widget-solar-3:solar:port:current:default'), true);
+  assert.equal(seriesIds.includes('widget-solar-3:solar:port:panelCurrent:default'), true);
+});
+
 testRequiresNodeSqlite('history values endpoint validates required paths query', async () => {
   const server = createServerMock();
   const start = require('../../plugin/index.js');

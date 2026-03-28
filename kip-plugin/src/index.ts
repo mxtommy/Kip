@@ -1426,15 +1426,25 @@ const start = (server: ServerAPI): Plugin => {
           }));
 
           const isBatteryDiscoveryUnavailable = resolveBmsBatteryIdsFromSelfPath().length === 0;
-          const preservedBmsSeries = isBatteryDiscoveryUnavailable
-            ? scopedPayload
-              .filter(isKipTemplateSeriesDefinition)
-              .flatMap(series => currentSeries.filter(current => current.ownerWidgetUuid === series.ownerWidgetUuid && isKipConcreteSeriesDefinition(current) && current.seriesId !== series.seriesId))
-            : [];
+          const isSolarDiscoveryUnavailable = resolveSolarChargerIdsFromSelfPath().length === 0;
+
+          const preservedTemplateConcreteSeries = scopedPayload
+            .filter(isKipTemplateSeriesDefinition)
+            .flatMap(series => {
+              if (isKipBmsTemplateSeriesDefinition(series) && isBatteryDiscoveryUnavailable) {
+                return getExistingConcreteBmsSeries(series, currentSeries);
+              }
+
+              if (isKipSolarTemplateSeriesDefinition(series) && isSolarDiscoveryUnavailable) {
+                return getExistingConcreteSolarSeries(series, currentSeries);
+              }
+
+              return [];
+            });
 
           const expandedPayload = mergeSeriesDefinitions([
             ...expandTemplateSeriesDefinitions(scopedPayload, currentSeries),
-            ...preservedBmsSeries
+            ...preservedTemplateConcreteSeries
           ]);
 
           const result = simulated.reconcileSeries(expandedPayload);
