@@ -6,6 +6,7 @@ import { Chart, ChartConfiguration, ChartDataset, Color, LegendItem, LineControl
 import 'chartjs-adapter-date-fns';
 import { IWidget } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
+import { isKipTemplateSeriesDefinition, type IKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
 import { UnitsService } from '../../services/units.service';
@@ -94,8 +95,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     this.error.set(null);
 
     try {
+      const querySeriesDefinitions = await this.resolveQueryableSeriesDefinitions();
       const datasets = await Promise.all(
-        this.data.seriesDefinitions.map((series, index) => this.buildDatasetForSeries(series, index))
+        querySeriesDefinitions.map((series, index) => this.buildDatasetForSeries(series, index))
       );
 
       this.pendingDatasets = datasets.filter((dataset): dataset is HistoryChartDataset => !!dataset);
@@ -348,6 +350,124 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     });
 
     return requests;
+  }
+
+  private async resolveQueryableSeriesDefinitions(): Promise<IKipSeriesDefinition[]> {
+    const expandedSeries: IKipSeriesDefinition[] = [];
+
+    for (const series of this.data.seriesDefinitions) {
+      const concreteSeries = await this.expandTemplateSeries(series);
+      expandedSeries.push(...concreteSeries);
+    }
+
+    return expandedSeries;
+  }
+
+  private async expandTemplateSeries(series: IKipSeriesDefinition): Promise<IKipSeriesDefinition[]> {
+    const normalizedPath = this.normalizeHistoryPath(series.path ?? '');
+    const isWildcardPath = normalizedPath.endsWith('.*');
+
+    if (!isKipTemplateSeriesDefinition(series) && !isWildcardPath) {
+      return [series];
+    }
+
+    const prefix = normalizedPath.replace(/\.\*$/, '');
+    if (!prefix.length) {
+      return [series];
+    }
+
+    const duration = this.resolveDuration(series);
+    const availablePaths = await this.historyApiClient.getPaths({ duration });
+    if (!availablePaths?.length) {
+      return [series];
+    }
+
+    const matchedPaths = this.findConcreteTemplatePaths(series, prefix, availablePaths);
+    if (matchedPaths.length === 0) {
+      return [series];
+    }
+
+    return matchedPaths.map((path, index) => ({
+      ...series,
+      seriesId: `${series.seriesId}:resolved:${index}`,
+      datasetUuid: `${series.datasetUuid}:resolved:${index}`,
+      path,
+      expansionMode: null,
+      allowedBatteryIds: null,
+      allowedChargerIds: null
+    }));
+  }
+
+  private findConcreteTemplatePaths(series: IKipSeriesDefinition, prefix: string, availablePaths: string[]): string[] {
+    const normalized = Array.from(new Set(availablePaths
+      .map(path => this.normalizeHistoryPath(path))
+      .filter(path => path.startsWith(`${prefix}.`))));
+
+    if (normalized.length === 0) {
+      return [];
+    }
+
+    if (!isKipTemplateSeriesDefinition(series)) {
+      return normalized;
+    }
+
+    const filteredByMetric = normalized.filter(path => this.matchesTemplateMetric(path, prefix, series));
+    return filteredByMetric.filter(path => this.matchesTemplateAllowedIds(path, prefix, series));
+  }
+
+  private matchesTemplateMetric(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
+    const suffix = path.slice(prefix.length + 1);
+
+    if (series.expansionMode === 'solar-charger-tree') {
+      return suffix.endsWith('.current') || suffix.endsWith('.panelCurrent');
+    }
+
+    return suffix.endsWith('.current') || suffix.endsWith('.capacity.stateOfCharge') || suffix.endsWith('.stateOfCharge');
+  }
+
+  private matchesTemplateAllowedIds(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
+    if (series.expansionMode === 'solar-charger-tree') {
+      const allowed = Array.isArray(series.allowedChargerIds)
+        ? series.allowedChargerIds.map(id => String(id).trim()).filter(id => id.length > 0)
+        : [];
+
+      if (allowed.length === 0) {
+        return true;
+      }
+
+      const entityId = this.extractEntityId(path, prefix);
+      return !!entityId && allowed.includes(entityId);
+    }
+
+    const allowed = Array.isArray(series.allowedBatteryIds)
+      ? series.allowedBatteryIds.map(id => String(id).trim()).filter(id => id.length > 0)
+      : [];
+
+    if (allowed.length === 0) {
+      return true;
+    }
+
+    const entityId = this.extractEntityId(path, prefix);
+    return !!entityId && allowed.includes(entityId);
+  }
+
+  private extractEntityId(path: string, prefix: string): string | null {
+    const suffix = path.slice(prefix.length + 1);
+    if (!suffix.length) {
+      return null;
+    }
+
+    const parts = suffix.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    const [firstSegment] = parts;
+    if (firstSegment === 'current' || firstSegment === 'panelCurrent' || firstSegment === 'capacity' || firstSegment === 'stateOfCharge') {
+      return null;
+    }
+
+    return firstSegment;
   }
 
   private normalizeHistoryPath(path: string): string {

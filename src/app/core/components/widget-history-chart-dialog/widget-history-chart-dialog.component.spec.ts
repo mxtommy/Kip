@@ -15,6 +15,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
     let fixture: ComponentFixture<WidgetHistoryChartDialogComponent>;
     let component: WidgetHistoryChartDialogComponent;
     let historyApiClientMock: {
+        getPaths: Mock;
         getValues: Mock;
     };
     let historyMapperMock: {
@@ -64,6 +65,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
 
     beforeEach(async () => {
         historyApiClientMock = {
+            getPaths: vi.fn().mockResolvedValue([]),
             getValues: vi.fn().mockImplementation(({ paths }: {
                 paths: string;
             }) => Promise.resolve({
@@ -172,5 +174,55 @@ describe('WidgetHistoryChartDialogComponent', () => {
         }).darkenColor('#2266dd', 0.25);
 
         expect(darkerColor).toBe('rgb(26, 77, 166)');
+    });
+
+    it('expands solar wildcard template paths into concrete history requests', async () => {
+        (component as unknown as {
+            data: {
+                title: string;
+                widget: IWidget;
+                seriesDefinitions: IKipSeriesDefinition[];
+            };
+        }).data = {
+            title: 'Solar History',
+            widget: {
+                uuid: 'widget-solar-1',
+                type: 'widget-solar-charger',
+                config: {
+                    displayName: 'Solar Charger'
+                }
+            } as IWidget,
+            seriesDefinitions: [
+                {
+                    seriesId: 'widget-solar-1:solar-template',
+                    datasetUuid: 'widget-solar-1:solar-template',
+                    ownerWidgetUuid: 'widget-solar-1',
+                    ownerWidgetSelector: 'widget-solar-charger',
+                    path: 'self.electrical.solar.*',
+                    expansionMode: 'solar-charger-tree',
+                    allowedBatteryIds: null,
+                    allowedChargerIds: null,
+                    enabled: true
+                }
+            ]
+        };
+
+        historyApiClientMock.getPaths.mockResolvedValue([
+            'electrical.solar.charger-1.current',
+            'electrical.solar.charger-1.panelCurrent',
+            'electrical.solar.charger-1.voltage'
+        ]);
+
+        await component.loadHistoryDatasets();
+
+        expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+            paths: 'electrical.solar.charger-1.current:avg'
+        }));
+        expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+            paths: 'electrical.solar.charger-1.panelCurrent:avg'
+        }));
+        expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+            paths: 'electrical.solar.*:avg'
+        }));
     });
 });
