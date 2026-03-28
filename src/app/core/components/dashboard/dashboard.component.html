@@ -1,13 +1,17 @@
-@let dashboardStatic = dashboardStaticView();
-<gridstack kipGestures [mode]="dashboardStatic ? 'dashboard' : 'editor'" [enablePress]="dashboardStatic ? false : true" [enableDoubleTap]="false" #grid
+@let dashboardStatic = dashboardStaticView() ?? true;
+<gridstack kipGestures [mode]="dashboardStatic === true ? 'dashboard' : 'editor'" [enablePress]="dashboardStatic === false" [enableDoubleTap]="false" #grid
+  [isEmpty]="false"
   [options]="gridOptions()"
+  (addedCB)="onGridItemsChanged()"
+  (removedCB)="onGridItemsChanged()"
   (swipeup)="previousDashboard()"
   (swipedown)="nextDashboard()"
   (press)="addNewWidget($event)"
   (window:resize)="resizeGridColumns()"
 >
-  <!-- Empty state content - shown when grid has no widgets -->
-  <div empty-content class="dashboard-empty-state-container">
+</gridstack>
+@if (gridIsEmpty()) {
+  <div class="dashboard-empty-state-container">
     <div class="dashboard-empty-state-action">
       <mat-icon class="empty-state-icon">dashboard</mat-icon>
       @if (!dashboardStatic) {
@@ -30,7 +34,7 @@
         </div>
     </div>
   </div>
-</gridstack>
+}
 @if (!dashboardStatic) {
   <div class="edit-layout-close-icon">
     <button

@@ -131,8 +131,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return banks.map(bank => this.buildBankSummary(bank, map));
   });
 
-  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? WidgetBmsComponent.DEFAULT_CONFIG.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color);
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();

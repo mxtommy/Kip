@@ -39,9 +39,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly VIEWBOX_WIDTH = 200;
   private static readonly CARD_HEIGHT = 92;
   private static readonly CARD_GAP = 8;
-  private static readonly GAUGE_RADIUS = 38;
-  private static readonly GAUGE_BG_STROKE = 8;
-  private static readonly GAUGE_VALUE_STROKE = 8;
   private static readonly SOLAR_PANEL_X = 135;
   private static readonly SOLAR_PANEL_Y = 0;
   private static readonly PATH_BATCH_WINDOW_MS = 500;
@@ -55,7 +52,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('solarSvg');
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private layer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private readonly gaugeBackgroundPath = this.buildSemiGaugeArcPath(WidgetSolarChargerComponent.GAUGE_RADIUS, 1);
 
   private renderFrameId: number | null = null;
   private pendingRenderSnapshot: SolarRenderSnapshot | null = null;
@@ -105,45 +101,40 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         ? Math.max(0, Math.min(1, panelPower / ratedPower))
         : 0;
 
-      const panelState = charger.panelCurrentState ?? null;
-      const chargerState = charger.currentState ?? null;
+      const panelPowerState = charger.panelPowerState ?? charger.panelCurrentState ?? null;
+      const chargerCurrentState = charger.currentState ?? null;
       const panelPowerColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
-        panelState,
-        widgetColors?.dim,
+        panelPowerState,
+        widgetColors?.dim ?? 'var(--kip-contrast-dim-color)',
         theme,
         ignoreZones
       );
-      const panelSectionColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
-        panelState,
-        widgetColors?.color,
-        theme,
-        ignoreZones
-      );
-      const chargerSectionColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
-        chargerState,
-        widgetColors?.color,
+      const chargerCurrentTextColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
+        chargerCurrentState,
+        'var(--kip-contrast-color)',
         theme,
         ignoreZones
       );
       const mode = this.valueOrDash(charger.controllerMode);
+      const relaySectionVisible = this.isRelayActive(charger.load);
+      const relaySectionText = relaySectionVisible
+        ? `${this.formatRelayState(charger.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(charger.loadCurrent)}`.trim()
+        : '';
 
       models[charger.id] = {
         id: charger.id,
         titleText: charger.name || `Controller ${charger.id}`,
-        busText: charger.associatedBus ? `Bus: ${charger.associatedBus}` : 'Bus: --',
         panelPowerText: panelPowerDisplay.value,
         panelPowerUnitText: panelPowerDisplay.unit,
         panelPowerColor,
+        chargerCurrentTextColor,
         gaugeProgress: progress,
-        gaugeValuePath: this.buildSemiGaugeArcPath(WidgetSolarChargerComponent.GAUGE_RADIUS, progress),
-        gaugeValueColor: panelPowerColor,
-        gaugeSectionText: `${this.formatVoltage(charger.panelVoltage)}` + (charger.panelCurrent ? `, ${this.formatCurrent(charger.panelCurrent)}` : '') + (charger.panelTemperature ? `, ${this.formatTemperature(charger.panelTemperature)}` : ''),
-        panelSectionColor,
-        chargerSectionColor,
+        gaugeSectionText: `${this.formatVoltage(charger.panelVoltage)}` + (charger.panelCurrent != null ? `, ${this.formatCurrent(charger.panelCurrent)}` : '') + (charger.panelTemperature != null ? `, ${this.formatTemperature(charger.panelTemperature)}` : ''),
         chargerSectionCurrent: `${this.formatCurrent(charger.current)}`,
         chargerMode: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
-        chargerSectionMetadata: `${charger.voltage ? this.formatVoltage(charger.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${charger.temperature ? this.formatTemperature(charger.temperature) : ''}`.trim(),
-        relaySectionText: `${this.formatRelayState(charger.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(charger.loadCurrent)}`.trim()
+        chargerSectionMetadata: `${charger.voltage != null ? this.formatVoltage(charger.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${charger.temperature != null ? this.formatTemperature(charger.temperature) : ''}`.trim(),
+        relaySectionVisible,
+        relaySectionText
       };
     }
 
@@ -342,7 +333,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         charger.panelCurrentState = state;
         return true;
       }
-      case 'panelPower': return this.setPowerPathValue(charger, 'rawPanelPower', value);
+      case 'panelPower': {
+        const nextValue = this.toNumber(value, 'W');
+        const stateChanged = !Object.is(charger.panelPowerState ?? null, state ?? null);
+        if (Object.is(charger.rawPanelPower, nextValue) && !stateChanged) return false;
+        charger.rawPanelPower = nextValue;
+        charger.panelPowerState = state;
+        return true;
+      }
       case 'panelTemperature': return this.setValue(charger, 'panelTemperature', this.toNumber(value, this.units.getDefaults().Temperature));
       case 'load':
       case 'loadState':
@@ -460,7 +458,9 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('x', WidgetSolarChargerComponent.SOLAR_PANEL_X)
       .attr('y', WidgetSolarChargerComponent.SOLAR_PANEL_Y)
       .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`);
-    progressGroup.append('text').attr('class', 'solar-panel-power');
+    const panelPowerText = progressGroup.append('text').attr('class', 'solar-panel-power');
+    panelPowerText.append('tspan').attr('class', 'solar-panel-power-value');
+    panelPowerText.append('tspan').attr('class', 'solar-panel-power-unit');
     progressGroup.append('text').attr('class', 'solar-panel-values');
 
     const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; model: SolarChargerDisplayModel; y: number }, SVGGElement, unknown>);
@@ -488,7 +488,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('x', 10)
       .attr('y', 37)
       .attr('font-size', 16)
-      .attr('fill', 'var(--kip-contrast-color)')
+      .attr('fill', item => item.model.chargerCurrentTextColor)
       .text(item => item.model.chargerSectionCurrent);
 
     merged.select('text.solar-charger')
@@ -512,14 +512,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('y', 74)
       .attr('font-size', 8)
       .attr('fill', item => item.model.panelPowerColor)
-      .text(item => item.model.relaySectionText !== 'Off' ? item.model.relaySectionText !== '' ? 'Load Output' : '' : '');
+      .text(item => item.model.relaySectionVisible ? 'Load Output' : '');
 
     merged.select('text.solar-relay-values')
       .attr('x', 15)
       .attr('y', 83)
       .attr('font-size', 6)
       .attr('fill', 'var(--kip-contrast-color)')
-      .attr('opacity', item => item.model.relaySectionText !== 'Off' ? 0.8 : 0)
+      .attr('opacity', item => item.model.relaySectionVisible ? 0.8 : 0)
       .text(item => item.model.relaySectionText);
 
     merged.select('g.solar-panel-icon')
@@ -544,26 +544,18 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 40)
       .attr('font-weight', 700)
+      .attr('fill', 'var(--kip-contrast-color)');
+
+    merged.select('tspan.solar-panel-power-value')
+      .text(item => item.model.panelPowerText);
+
+    merged.select('tspan.solar-panel-power-unit')
+      .attr('dx', item => item.model.panelPowerUnitText ? 1 : 0)
+      .attr('font-size', 22)
+      .attr('font-weight', 500)
       .attr('fill', 'var(--kip-contrast-color)')
-      .each((item, index, nodes) => {
-        const text = d3.select(nodes[index]);
-        text.selectAll('*').remove();
-        text.append('tspan')
-          .attr('class', 'solar-panel-power-value')
-          .text(item.model.panelPowerText);
-
-        if (!item.model.panelPowerUnitText) {
-          return;
-        }
-
-        text.append('tspan')
-          .attr('class', 'solar-panel-power-unit')
-          .attr('dx', 0)
-          .attr('font-size', 22)
-          .attr('font-weight', 500)
-          .attr('fill', 'var(--kip-contrast-color)')
-          .text(item.model.panelPowerUnitText);
-      });
+      .attr('opacity', item => item.model.panelPowerUnitText ? 1 : 0)
+      .text(item => item.model.panelPowerUnitText);
 
     merged.select('text.solar-panel-values')
       .attr('x', 235)
@@ -578,30 +570,20 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     selection.exit().remove();
   }
 
-  private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {
-    const normalizedRatio = Math.max(0, Math.min(1, ratio ?? 0));
-    const safeRatio = normalizedRatio >= 0.999 ? 1 : normalizedRatio;
-    const startAngle = -Math.PI * 0.55;
-    const fullRange = Math.PI * 1.1;
-    const endAngle = startAngle + fullRange * safeRatio;
-
-    if (safeRatio <= 0) {
-      const x = radius * Math.cos(startAngle);
-      const y = radius * Math.sin(startAngle);
-      return `M ${x} ${y}`;
-    }
-
-    return d3.arc()({
-      innerRadius: radius,
-      outerRadius: radius,
-      startAngle,
-      endAngle
-    }) ?? '';
-  }
-
   private toNumber(value: unknown, unit: string): number | null {
     if (value == null || typeof value !== 'number') return null;
     return this.units.convertToUnit(unit, value) ?? value;
+  }
+
+  private isRelayActive(value: string | number | boolean | null | undefined): boolean {
+    if (value == null) return false;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value > 0;
+
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return false;
+    if (normalized === 'off' || normalized === 'false' || normalized === '0') return false;
+    return true;
   }
 
   private toStringValue(value: unknown): string | null {

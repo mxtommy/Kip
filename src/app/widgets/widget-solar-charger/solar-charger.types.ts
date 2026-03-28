@@ -22,6 +22,7 @@ export interface SolarChargerSnapshot {
   panelCurrent?: number | null;
   panelCurrentState?: TState | null;
   panelPower?: number | null;
+  panelPowerState?: TState | null;
   rawPanelPower?: number | null;
   panelTemperature?: number | null;
   load?: string | number | boolean | null;
@@ -31,18 +32,15 @@ export interface SolarChargerSnapshot {
 export interface SolarChargerDisplayModel {
   id: string;
   titleText: string;
-  busText: string;
   panelPowerText: string;
   panelPowerUnitText: string;
   panelPowerColor: string;
+  chargerCurrentTextColor: string;
   gaugeProgress: number;
-  gaugeValuePath: string;
-  gaugeValueColor: string;
   gaugeSectionText: string;
-  panelSectionColor: string;
-  chargerSectionColor: string;
   chargerMode: string;
   chargerSectionCurrent: string;
   chargerSectionMetadata: string;
+  relaySectionVisible: boolean;
   relaySectionText: string;
 }
