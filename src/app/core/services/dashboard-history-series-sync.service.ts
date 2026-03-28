@@ -28,7 +28,7 @@ interface IBmsBankLike {
 }
 
 interface ISolarConfigLike {
-  trackedChargerIds?: unknown;
+  trackedSolarIds?: unknown;
 }
 
 @Injectable({
@@ -291,7 +291,7 @@ export class DashboardHistorySeriesSyncService {
   }
 
   private mapSolarWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipTemplateSeriesDefinition[] {
-    const allowedChargerIds = this.resolveSolarAllowedChargerIds(cfg);
+    const allowedSolarIds = this.resolveSolarAllowedIds(cfg);
     void widgetType;
 
     const templateSeries: IKipTemplateSeriesDefinition = {
@@ -300,8 +300,8 @@ export class DashboardHistorySeriesSyncService {
       ownerWidgetUuid: widgetUuid,
       ownerWidgetSelector: 'widget-solar-charger' as const,
       path: 'self.electrical.solar.*',
-      expansionMode: 'solar-charger-tree' as const,
-      allowedChargerIds: allowedChargerIds.length > 0 ? [...allowedChargerIds] : null,
+      expansionMode: 'solar-tree' as const,
+      allowedSolarIds: allowedSolarIds.length > 0 ? [...allowedSolarIds] : null,
       context: null,
       source: 'default',
       timeScale: this.normalizeString(cfg?.timeScale),
@@ -357,13 +357,13 @@ export class DashboardHistorySeriesSyncService {
     return [...ids].sort((left, right) => left.localeCompare(right));
   }
 
-  private resolveSolarAllowedChargerIds(cfg: IWidgetSvcConfig | undefined): string[] {
+  private resolveSolarAllowedIds(cfg: IWidgetSvcConfig | undefined): string[] {
     const solarCfg = cfg?.solarCharger as ISolarConfigLike | undefined;
     if (!solarCfg) {
       return [];
     }
 
-    const tracked = Array.isArray(solarCfg.trackedChargerIds) ? solarCfg.trackedChargerIds : [];
+    const tracked = Array.isArray(solarCfg.trackedSolarIds) ? solarCfg.trackedSolarIds : [];
     if (tracked.length === 0) {
       return [];
     }
@@ -485,7 +485,7 @@ export class DashboardHistorySeriesSyncService {
       path: s.path,
       expansionMode: s.expansionMode ?? null,
       allowedBatteryIds: Array.isArray(s.allowedBatteryIds) ? [...s.allowedBatteryIds].sort() : null,
-      allowedChargerIds: Array.isArray(s.allowedChargerIds) ? [...s.allowedChargerIds].sort() : null,
+      allowedSolarIds: Array.isArray(s.allowedSolarIds) ? [...s.allowedSolarIds].sort() : null,
       context: s.context ?? null,
       source: s.source ?? null,
       timeScale: s.timeScale ?? null,

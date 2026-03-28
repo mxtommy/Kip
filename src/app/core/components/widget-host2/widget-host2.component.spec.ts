@@ -301,8 +301,8 @@ describe('WidgetHost2Component', () => {
         testWidget.config = {
             displayName: 'Solar Charger',
             solarCharger: {
-                trackedChargerIds: [],
-                chargerOptionsById: {}
+                trackedSolarIds: [],
+                solarOptionsById: {}
             }
         } as IWidget['config'];
 
@@ -313,7 +313,7 @@ describe('WidgetHost2Component', () => {
                 ownerWidgetUuid: 'widget-1',
                 ownerWidgetSelector: 'widget-solar-charger',
                 path: 'self.electrical.solar.*',
-                expansionMode: 'solar-charger-tree',
+                expansionMode: 'solar-tree',
                 enabled: true
             }
         ]);

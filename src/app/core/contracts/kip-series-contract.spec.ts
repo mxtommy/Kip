@@ -42,8 +42,8 @@ describe('kip-series-contract guards', () => {
         ownerWidgetUuid: 'widget-3',
         ownerWidgetSelector: 'widget-solar-charger',
         path: 'self.electrical.solar.*',
-        expansionMode: 'solar-charger-tree',
-        allowedChargerIds: ['port', 'starboard'],
+        expansionMode: 'solar-tree',
+        allowedSolarIds: ['port', 'starboard'],
         context: 'vessels.self',
         source: 'default',
         timeScale: 'hour',
@@ -91,7 +91,7 @@ describe('kip-series-contract guards', () => {
             return;
         }
 
-        expect(value.allowedChargerIds).toEqual(['port', 'starboard']);
+        expect(value.allowedSolarIds).toEqual(['port', 'starboard']);
     });
 
     it('keeps concrete series free of template expansion state', () => {
@@ -104,6 +104,6 @@ describe('kip-series-contract guards', () => {
 
         expect(value.expansionMode ?? null).toBeNull();
         expect(value.allowedBatteryIds ?? null).toBeNull();
-        expect(value.allowedChargerIds ?? null).toBeNull();
+        expect(value.allowedSolarIds ?? null).toBeNull();
     });
 });

@@ -3,8 +3,8 @@
     <h3>Tracked Solar Chargers</h3>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Charger Instances</mat-label>
-      <mat-select formControlName="trackedChargerIds" multiple>
-        @for (id of discoveredChargerIds(); track id) {
+      <mat-select formControlName="trackedSolarIds" multiple>
+        @for (id of discoveredSolarIds(); track id) {
           <mat-option [value]="id">{{ id }}</mat-option>
         }
       </mat-select>
@@ -14,7 +14,7 @@
 
   <mat-divider></mat-divider>
 
-  <div class="solar-config-section" formGroupName="chargerOptionsById">
+  <div class="solar-config-section" formGroupName="solarOptionsById">
     <h3>Solar Array Rated Power</h3>
     <div class="hint">Set each charger's panel/array rated capacity in watts (W).</div>
 

@@ -456,7 +456,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       path,
       expansionMode: null,
       allowedBatteryIds: null,
-      allowedChargerIds: null
+      allowedSolarIds: null
     }));
   }
 
@@ -480,7 +480,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   private matchesTemplateMetric(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
     const suffix = path.slice(prefix.length + 1);
 
-    if (series.expansionMode === 'solar-charger-tree') {
+    if (series.expansionMode === 'solar-tree') {
       return suffix.endsWith('.current') || suffix.endsWith('.panelPower');
     }
 
@@ -488,9 +488,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private matchesTemplateAllowedIds(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
-    if (series.expansionMode === 'solar-charger-tree') {
-      const allowed = Array.isArray(series.allowedChargerIds)
-        ? series.allowedChargerIds.map(id => String(id).trim()).filter(id => id.length > 0)
+    if (series.expansionMode === 'solar-tree') {
+      const allowed = Array.isArray(series.allowedSolarIds)
+        ? series.allowedSolarIds.map(id => String(id).trim()).filter(id => id.length > 0)
         : [];
 
       if (allowed.length === 0) {

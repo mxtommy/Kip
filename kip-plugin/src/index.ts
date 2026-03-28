@@ -213,7 +213,7 @@ const start = (server: ServerAPI): Plugin => {
       .sort((left, right) => left.localeCompare(right));
   }
 
-  function resolveSolarChargerIdsFromSelfPath(): string[] {
+  function resolveSolarIdsFromSelfPath(): string[] {
     const solarPath = server.getSelfPath('electrical.solar') as unknown;
 
     const readCandidate = (node: unknown): Record<string, unknown> | null => {
@@ -274,7 +274,7 @@ const start = (server: ServerAPI): Plugin => {
     const solarMetrics: ('current' | 'panelPower')[] = ['current', 'panelPower'];
     const expandedById = new Map<string, ISeriesDefinition>();
     const discoveredBatteryIds = resolveBmsBatteryIdsFromSelfPath();
-    const discoveredSolarChargerIds = resolveSolarChargerIdsFromSelfPath();
+    const discoveredSolarIds = resolveSolarIdsFromSelfPath();
 
     payload.forEach(series => {
       if (!isKipTemplateSeriesDefinition(series)) {
@@ -319,7 +319,7 @@ const start = (server: ServerAPI): Plugin => {
               retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
               expansionMode: null,
               allowedBatteryIds: null,
-              allowedChargerIds: null
+              allowedSolarIds: null
             });
           });
         });
@@ -328,22 +328,22 @@ const start = (server: ServerAPI): Plugin => {
       }
 
       if (isKipSolarTemplateSeriesDefinition(series)) {
-        if (discoveredSolarChargerIds.length === 0) {
+        if (discoveredSolarIds.length === 0) {
           getExistingConcreteSolarSeries(series, existingSeries).forEach(existing => {
             expandedById.set(existing.seriesId, existing);
           });
           return;
         }
 
-        const allowedChargerIds = Array.isArray(series.allowedChargerIds)
-          ? series.allowedChargerIds
+        const allowedSolarIds = Array.isArray(series.allowedSolarIds)
+          ? series.allowedSolarIds
             .filter((id): id is string => typeof id === 'string')
             .map(id => id.trim())
             .filter(id => id.length > 0)
           : [];
 
-        const allowedSet = allowedChargerIds.length > 0 ? new Set(allowedChargerIds) : null;
-        const chargerIds = discoveredSolarChargerIds.filter(id => !allowedSet || allowedSet.has(id));
+        const allowedSet = allowedSolarIds.length > 0 ? new Set(allowedSolarIds) : null;
+        const chargerIds = discoveredSolarIds.filter(id => !allowedSet || allowedSet.has(id));
         if (chargerIds.length === 0) {
           return;
         }
@@ -364,7 +364,7 @@ const start = (server: ServerAPI): Plugin => {
               retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
               expansionMode: null,
               allowedBatteryIds: null,
-              allowedChargerIds: null
+              allowedSolarIds: null
             });
           });
         });
@@ -1426,7 +1426,7 @@ const start = (server: ServerAPI): Plugin => {
           }));
 
           const isBatteryDiscoveryUnavailable = resolveBmsBatteryIdsFromSelfPath().length === 0;
-          const isSolarDiscoveryUnavailable = resolveSolarChargerIdsFromSelfPath().length === 0;
+          const isSolarDiscoveryUnavailable = resolveSolarIdsFromSelfPath().length === 0;
 
           const preservedTemplateConcreteSeries = scopedPayload
             .filter(isKipTemplateSeriesDefinition)

@@ -928,8 +928,8 @@ testRequiresNodeSqlite('series reconcile expands widget-solar-charger template e
   const server = createServerMock();
   server.setSelfPath('electrical.solar', {
     value: {
-      port: { current: 12.4, panelCurrent: 8.1 },
-      starboard: { current: 11.8, panelCurrent: 7.9 }
+      port: { current: 12.4, panelPower: 8.1 },
+      starboard: { current: 11.8, panelPower: 7.9 }
     }
   });
 
@@ -956,8 +956,8 @@ testRequiresNodeSqlite('series reconcile expands widget-solar-charger template e
         ownerWidgetUuid: 'widget-solar-1',
         ownerWidgetSelector: 'widget-solar-charger',
         path: 'self.electrical.solar.*',
-        expansionMode: 'solar-charger-tree',
-        allowedChargerIds: ['port'],
+        expansionMode: 'solar-tree',
+        allowedSolarIds: ['port'],
         source: 'default',
         enabled: true
       }
@@ -977,7 +977,7 @@ testRequiresNodeSqlite('series reconcile expands widget-solar-charger template e
     .sort();
   assert.deepEqual(seriesIds, [
     'widget-solar-1:solar:port:current:default',
-    'widget-solar-1:solar:port:panelCurrent:default'
+    'widget-solar-1:solar:port:panelPower:default'
   ]);
 });
 
@@ -985,7 +985,7 @@ testRequiresNodeSqlite('series reconcile preserves existing widget-solar-charger
   const server = createServerMock();
   server.setSelfPath('electrical.solar', {
     value: {
-      port: { current: 12.4, panelCurrent: 8.1 }
+      port: { current: 12.4, panelPower: 8.1 }
     }
   });
 
@@ -1005,8 +1005,8 @@ testRequiresNodeSqlite('series reconcile preserves existing widget-solar-charger
       ownerWidgetUuid: 'widget-solar-2',
       ownerWidgetSelector: 'widget-solar-charger',
       path: 'self.electrical.solar.*',
-      expansionMode: 'solar-charger-tree',
-      allowedChargerIds: ['port'],
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['port'],
       source: 'default',
       enabled: true
     }
@@ -1043,7 +1043,7 @@ testRequiresNodeSqlite('series reconcile preserves existing widget-solar-charger
   assert.equal(Array.isArray(listRes.payload), true);
   const secondSeriesIds = listRes.payload.map(item => item.seriesId).sort();
   assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:current:default'), true);
-  assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:panelCurrent:default'), true);
+  assert.equal(secondSeriesIds.includes('widget-solar-2:solar:port:panelPower:default'), true);
 });
 
 testRequiresNodeSqlite('series reconcile only preserves templates for domains with unavailable discovery', async () => {
@@ -1055,7 +1055,7 @@ testRequiresNodeSqlite('series reconcile only preserves templates for domains wi
   });
   server.setSelfPath('electrical.solar', {
     value: {
-      port: { current: 12.4, panelCurrent: 8.1 }
+      port: { current: 12.4, panelPower: 8.1 }
     }
   });
 
@@ -1086,8 +1086,8 @@ testRequiresNodeSqlite('series reconcile only preserves templates for domains wi
       ownerWidgetUuid: 'widget-solar-3',
       ownerWidgetSelector: 'widget-solar-charger',
       path: 'self.electrical.solar.*',
-      expansionMode: 'solar-charger-tree',
-      allowedChargerIds: ['port'],
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['port'],
       source: 'default',
       enabled: true
     }
@@ -1127,7 +1127,7 @@ testRequiresNodeSqlite('series reconcile only preserves templates for domains wi
   assert.equal(seriesIds.includes('widget-bms-3:bms:house:capacity.stateOfCharge:default'), true);
   assert.equal(seriesIds.includes('widget-bms-3:bms:house:current:default'), true);
   assert.equal(seriesIds.includes('widget-solar-3:solar:port:current:default'), true);
-  assert.equal(seriesIds.includes('widget-solar-3:solar:port:panelCurrent:default'), true);
+  assert.equal(seriesIds.includes('widget-solar-3:solar:port:panelPower:default'), true);
 });
 
 testRequiresNodeSqlite('series reconcile does not re-delete the same stale series on repeated identical payloads', async () => {
@@ -1139,7 +1139,7 @@ testRequiresNodeSqlite('series reconcile does not re-delete the same stale serie
   });
   server.setSelfPath('electrical.solar', {
     value: {
-      bimini: { current: 12.4, panelCurrent: 8.1 }
+      bimini: { current: 12.4, panelPower: 8.1 }
     }
   });
 
@@ -1170,8 +1170,8 @@ testRequiresNodeSqlite('series reconcile does not re-delete the same stale serie
       ownerWidgetUuid: 'widget-solar-old',
       ownerWidgetSelector: 'widget-solar-charger',
       path: 'self.electrical.solar.*',
-      expansionMode: 'solar-charger-tree',
-      allowedChargerIds: ['bimini'],
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['bimini'],
       source: 'default',
       enabled: true
     }
@@ -1195,8 +1195,8 @@ testRequiresNodeSqlite('series reconcile does not re-delete the same stale serie
       ownerWidgetUuid: 'widget-solar-new',
       ownerWidgetSelector: 'widget-solar-charger',
       path: 'self.electrical.solar.*',
-      expansionMode: 'solar-charger-tree',
-      allowedChargerIds: ['bimini'],
+      expansionMode: 'solar-tree',
+      allowedSolarIds: ['bimini'],
       source: 'default',
       enabled: true
     }

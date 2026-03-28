@@ -402,9 +402,9 @@ describe('WidgetHistoryChartDialogComponent', () => {
                     ownerWidgetUuid: 'widget-solar-1',
                     ownerWidgetSelector: 'widget-solar-charger',
                     path: 'self.electrical.solar.*',
-                    expansionMode: 'solar-charger-tree',
+                    expansionMode: 'solar-tree',
                     allowedBatteryIds: null,
-                    allowedChargerIds: null,
+                    allowedSolarIds: null,
                     enabled: true
                 }
             ]

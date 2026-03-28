@@ -17,8 +17,8 @@ describe('WidgetSolarChargerComponent', () => {
     color?: string;
     ignoreZones?: boolean;
     solarCharger?: {
-      trackedChargerIds?: string[];
-      chargerOptionsById?: Record<string, { arrayRatedPowerW?: number | null }>;
+      trackedSolarIds?: string[];
+      solarOptionsById?: Record<string, { arrayRatedPowerW?: number | null }>;
     };
   };
 
@@ -62,8 +62,8 @@ describe('WidgetSolarChargerComponent', () => {
     liveSubject = new Subject<IPathUpdateWithPath>();
     runtimeOptions = {
       solarCharger: {
-        trackedChargerIds: [],
-        chargerOptionsById: {}
+        trackedSolarIds: [],
+        solarOptionsById: {}
       }
     };
 
@@ -97,7 +97,7 @@ describe('WidgetSolarChargerComponent', () => {
       fixture.detectChanges();
 
       expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith('self.electrical.solar.*');
-      expect((component as unknown as { discoveredChargerIds: () => string[] }).discoveredChargerIds()).toEqual(['sc1', 'sc2']);
+      expect((component as unknown as { discoveredSolarIds: () => string[] }).discoveredSolarIds()).toEqual(['sc1', 'sc2']);
 
       const flushSpy = vi.spyOn(component as unknown as { flushPendingPathUpdates: () => void }, 'flushPendingPathUpdates');
       flushSpy.mockClear();
@@ -110,7 +110,7 @@ describe('WidgetSolarChargerComponent', () => {
 
       await vi.advanceTimersByTimeAsync(1);
       expect(vi.mocked(flushSpy).mock.calls.length).toBe(1);
-      expect((component as unknown as { discoveredChargerIds: () => string[] }).discoveredChargerIds()).toEqual(['sc1', 'sc2', 'sc3']);
+      expect((component as unknown as { discoveredSolarIds: () => string[] }).discoveredSolarIds()).toEqual(['sc1', 'sc2', 'sc3']);
     } finally {
       vi.useRealTimers();
     }

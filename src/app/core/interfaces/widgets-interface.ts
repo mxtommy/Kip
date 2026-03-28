@@ -75,13 +75,13 @@ export interface BmsWidgetConfig {
   banks: BmsBankConfig[];
 }
 
-export interface SolarChargerOptionConfig {
+export interface SolarOptionConfig {
   arrayRatedPowerW: number | null;
 }
 
-export interface SolarChargerWidgetConfig {
-  trackedChargerIds: string[];
-  chargerOptionsById: Record<string, SolarChargerOptionConfig>;
+export interface SolarWidgetConfig {
+  trackedSolarIds: string[];
+  solarOptionsById: Record<string, SolarOptionConfig>;
 }
 
 
@@ -122,7 +122,7 @@ export interface IWidgetSvcConfig {
   bms?: BmsWidgetConfig;
 
   /** Solar charger widget configuration */
-  solarCharger?: SolarChargerWidgetConfig;
+  solarCharger?: SolarWidgetConfig;
 
   /** Color from KIP selection tool to use as main display color */
   color?: string;

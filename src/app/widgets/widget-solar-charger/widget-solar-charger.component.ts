@@ -7,11 +7,11 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { IWidgetSvcConfig, SolarChargerOptionConfig, SolarChargerWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
 import type { SolarChargerDisplayModel, SolarChargerSnapshot } from './solar-charger.types';
 
 interface SolarRenderSnapshot {
-  chargers: SolarChargerSnapshot[];
+  solarUnits: SolarChargerSnapshot[];
   displayModels: Record<string, SolarChargerDisplayModel>;
   widgetColors: ReturnType<typeof getColors>;
 }
@@ -31,8 +31,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     solarCharger: {
-      trackedChargerIds: [],
-      chargerOptionsById: {}
+      trackedSolarIds: [],
+      solarOptionsById: {}
     }
   };
 
@@ -59,19 +59,19 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private initialPathPaintDone = false;
   private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
 
-  protected readonly discoveredChargerIds = signal<string[]>([]);
-  protected readonly trackedChargerIds = signal<string[]>([]);
-  protected readonly chargerOptionsById = signal<Record<string, SolarChargerOptionConfig>>({});
+  protected readonly discoveredSolarIds = signal<string[]>([]);
+  protected readonly trackedSolarIds = signal<string[]>([]);
+  protected readonly solarOptionsById = signal<Record<string, SolarOptionConfig>>({});
   protected readonly chargers = signal<Record<string, SolarChargerSnapshot>>({});
 
-  protected readonly visibleChargerIds = computed(() => {
-    const tracked = this.trackedChargerIds();
+  protected readonly visibleSolarIds = computed(() => {
+    const tracked = this.trackedSolarIds();
     if (tracked.length) return tracked;
-    return this.discoveredChargerIds();
+    return this.discoveredSolarIds();
   });
 
-  protected readonly visibleChargers = computed<SolarChargerSnapshot[]>(() => {
-    const ids = this.visibleChargerIds();
+  protected readonly visibleSolarUnits = computed<SolarChargerSnapshot[]>(() => {
+    const ids = this.visibleSolarIds();
     const map = this.chargers();
     return ids.map(id => map[id]).filter((item): item is SolarChargerSnapshot => !!item);
   });
@@ -86,23 +86,23 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   });
 
   protected readonly displayModels = computed<Record<string, SolarChargerDisplayModel>>(() => {
-    const chargers = this.visibleChargers();
-    const options = this.chargerOptionsById();
+    const solarUnits = this.visibleSolarUnits();
+    const options = this.solarOptionsById();
     const theme = this.theme();
     const widgetColors = this.widgetColors();
     const ignoreZones = this.ignoreZones();
 
     const models: Record<string, SolarChargerDisplayModel> = {};
-    for (const charger of chargers) {
-      const ratedPower = options[charger.id]?.arrayRatedPowerW ?? null;
-      const panelPower = charger.panelPower ?? null;
+    for (const solar of solarUnits) {
+      const ratedPower = options[solar.id]?.arrayRatedPowerW ?? null;
+      const panelPower = solar.panelPower ?? null;
       const panelPowerDisplay = this.formatPowerAuto(panelPower);
       const progress = ratedPower && ratedPower > 0 && panelPower != null
         ? Math.max(0, Math.min(1, panelPower / ratedPower))
         : 0;
 
-      const panelPowerState = charger.panelPowerState ?? charger.panelCurrentState ?? null;
-      const chargerCurrentState = charger.currentState ?? null;
+      const panelPowerState = solar.panelPowerState ?? solar.panelCurrentState ?? null;
+      const chargerCurrentState = solar.currentState ?? null;
       const panelPowerColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
         panelPowerState,
         widgetColors?.dim ?? 'var(--kip-contrast-dim-color)',
@@ -115,24 +115,24 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         theme,
         ignoreZones
       );
-      const mode = this.valueOrDash(charger.controllerMode);
-      const relaySectionVisible = this.isRelayActive(charger.load);
+      const mode = this.valueOrDash(solar.controllerMode);
+      const relaySectionVisible = this.isRelayActive(solar.load);
       const relaySectionText = relaySectionVisible
-        ? `${this.formatRelayState(charger.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(charger.loadCurrent)}`.trim()
+        ? `${this.formatRelayState(solar.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(solar.loadCurrent)}`.trim()
         : '';
 
-      models[charger.id] = {
-        id: charger.id,
-        titleText: charger.name || `Controller ${charger.id}`,
+      models[solar.id] = {
+        id: solar.id,
+        titleText: solar.name || `Controller ${solar.id}`,
         panelPowerText: panelPowerDisplay.value,
         panelPowerUnitText: panelPowerDisplay.unit,
         panelPowerColor,
         chargerCurrentTextColor,
         gaugeProgress: progress,
-        gaugeSectionText: `${this.formatVoltage(charger.panelVoltage)}` + (charger.panelCurrent != null ? `, ${this.formatCurrent(charger.panelCurrent)}` : '') + (charger.panelTemperature != null ? `, ${this.formatTemperature(charger.panelTemperature)}` : ''),
-        chargerSectionCurrent: `${this.formatCurrent(charger.current)}`,
+        gaugeSectionText: `${this.formatVoltage(solar.panelVoltage)}` + (solar.panelCurrent != null ? `, ${this.formatCurrent(solar.panelCurrent)}` : '') + (solar.panelTemperature != null ? `, ${this.formatTemperature(solar.panelTemperature)}` : ''),
+        chargerSectionCurrent: `${this.formatCurrent(solar.current)}`,
         chargerMode: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
-        chargerSectionMetadata: `${charger.voltage != null ? this.formatVoltage(charger.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${charger.temperature != null ? this.formatTemperature(charger.temperature) : ''}`.trim(),
+        chargerSectionMetadata: `${solar.voltage != null ? this.formatVoltage(solar.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${solar.temperature != null ? this.formatTemperature(solar.temperature) : ''}`.trim(),
         relaySectionVisible,
         relaySectionText
       };
@@ -141,7 +141,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return models;
   });
 
-  protected readonly hasChargers = computed(() => this.visibleChargers().length > 0);
+  protected readonly hasChargers = computed(() => this.visibleSolarUnits().length > 0);
 
   constructor() {
     effect(() => {
@@ -152,10 +152,10 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     effect(() => {
       const models = this.displayModels();
-      const chargers = this.visibleChargers();
+      const solarUnits = this.visibleSolarUnits();
       const widgetColors = this.widgetColors();
       if (!this.svg || !widgetColors) return;
-      this.requestRender({ chargers, displayModels: models, widgetColors });
+      this.requestRender({ solarUnits, displayModels: models, widgetColors });
     });
 
     const solarTree = this.data.subscribePathTreeWithInitial('self.electrical.solar.*');
@@ -207,16 +207,16 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const solarCfg = this.resolveSolarConfig(cfg);
-    this.trackedChargerIds.set(solarCfg.trackedChargerIds);
-    this.chargerOptionsById.set(solarCfg.chargerOptionsById);
+    this.trackedSolarIds.set(solarCfg.trackedSolarIds);
+    this.solarOptionsById.set(solarCfg.solarOptionsById);
   }
 
-  private resolveSolarConfig(cfg: IWidgetSvcConfig): SolarChargerWidgetConfig {
+  private resolveSolarConfig(cfg: IWidgetSvcConfig): SolarWidgetConfig {
     const solar = cfg.solarCharger;
-    const chargerOptionsById = solar?.chargerOptionsById ?? {};
+    const solarOptionsById = solar?.solarOptionsById ?? {};
     return {
-      trackedChargerIds: Array.isArray(solar?.trackedChargerIds) ? solar.trackedChargerIds : [],
-      chargerOptionsById
+      trackedSolarIds: Array.isArray(solar?.trackedSolarIds) ? solar.trackedSolarIds : [],
+      solarOptionsById
     };
   }
 
@@ -252,7 +252,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     this.pendingPathUpdates.clear();
 
     const uniqueIds = new Set(updates.map(update => update.id));
-    uniqueIds.forEach(id => this.trackDiscoveredCharger(id));
+    uniqueIds.forEach(id => this.trackDiscoveredSolar(id));
 
     this.chargers.update(current => {
       let nextState = current;
@@ -296,10 +296,10 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return { id: match[1], key: match[2] };
   }
 
-  private trackDiscoveredCharger(id: string): void {
-    const ids = this.discoveredChargerIds();
+  private trackDiscoveredSolar(id: string): void {
+    const ids = this.discoveredSolarIds();
     if (ids.includes(id)) return;
-    this.discoveredChargerIds.set([...ids, id].sort());
+    this.discoveredSolarIds.set([...ids, id].sort());
   }
 
   private applyChargerValue(charger: SolarChargerSnapshot, key: string, value: unknown, state: TState | null): boolean {
@@ -397,7 +397,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     if (!widgetColors) return null;
 
     return {
-      chargers: this.visibleChargers(),
+      solarUnits: this.visibleSolarUnits(),
       displayModels: this.displayModels(),
       widgetColors
     };
@@ -406,9 +406,9 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private render(snapshot: SolarRenderSnapshot): void {
     if (!this.layer || !this.svg) return;
 
-    const cards = snapshot.chargers.map((charger, index) => ({
-      id: charger.id,
-      model: snapshot.displayModels[charger.id],
+    const cards = snapshot.solarUnits.map((solar, index) => ({
+      id: solar.id,
+      model: snapshot.displayModels[solar.id],
       y: index * (WidgetSolarChargerComponent.CARD_HEIGHT + WidgetSolarChargerComponent.CARD_GAP)
     }));
 

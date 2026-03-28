@@ -411,7 +411,7 @@ export class HistorySeriesService {
       && leftComparable.path === rightComparable.path
       && leftComparable.expansionMode === rightComparable.expansionMode
       && this.areStringArraysEquivalent(leftComparable.allowedBatteryIds, rightComparable.allowedBatteryIds)
-      && this.areStringArraysEquivalent(leftComparable.allowedChargerIds, rightComparable.allowedChargerIds)
+      && this.areStringArraysEquivalent(leftComparable.allowedSolarIds, rightComparable.allowedSolarIds)
       && leftComparable.source === rightComparable.source
       && leftComparable.context === rightComparable.context
       && leftComparable.timeScale === rightComparable.timeScale
@@ -428,7 +428,7 @@ export class HistorySeriesService {
     return {
       ...comparable,
       allowedBatteryIds: this.normalizeComparableStringArray(comparable.allowedBatteryIds),
-      allowedChargerIds: this.normalizeComparableStringArray(comparable.allowedChargerIds),
+      allowedSolarIds: this.normalizeComparableStringArray(comparable.allowedSolarIds),
       methods: this.normalizeComparableStringArray(comparable.methods)
     };
   }
@@ -489,7 +489,7 @@ export class HistorySeriesService {
     if (expansionMode === 'bms-battery-tree' && ownerWidgetSelector !== 'widget-bms') {
       throw new Error('BMS template series must use ownerWidgetSelector "widget-bms"');
     }
-    if (expansionMode === 'solar-charger-tree' && ownerWidgetSelector !== 'widget-solar-charger') {
+    if (expansionMode === 'solar-tree' && ownerWidgetSelector !== 'widget-solar-charger') {
       throw new Error('Solar template series must use ownerWidgetSelector "widget-solar-charger"');
     }
 
@@ -497,8 +497,8 @@ export class HistorySeriesService {
     const normalizedAllowedBatteryIds = expansionMode === 'bms-battery-tree'
       ? this.normalizeComparableStringArray(input.allowedBatteryIds)
       : undefined;
-    const normalizedAllowedChargerIds = expansionMode === 'solar-charger-tree'
-      ? this.normalizeComparableStringArray(input.allowedChargerIds)
+    const normalizedAllowedSolarIds = expansionMode === 'solar-tree'
+      ? this.normalizeComparableStringArray(input.allowedSolarIds)
       : undefined;
 
     const isDataWidget = this.isChartWidget(ownerWidgetSelector, ownerWidgetUuid);
@@ -538,19 +538,19 @@ export class HistorySeriesService {
         ownerWidgetSelector: 'widget-bms',
         expansionMode,
         allowedBatteryIds: normalizedAllowedBatteryIds ?? null,
-        allowedChargerIds: null
+        allowedSolarIds: null
       };
 
       return templateSeries;
     }
 
-    if (expansionMode === 'solar-charger-tree') {
+    if (expansionMode === 'solar-tree') {
       const templateSeries: ISeriesDefinition = {
         ...normalizedBase,
         ownerWidgetSelector: 'widget-solar-charger',
         expansionMode,
         allowedBatteryIds: null,
-        allowedChargerIds: normalizedAllowedChargerIds ?? null
+        allowedSolarIds: normalizedAllowedSolarIds ?? null
       };
 
       return templateSeries;
@@ -560,7 +560,7 @@ export class HistorySeriesService {
       ...normalizedBase,
       expansionMode: null,
       allowedBatteryIds: null,
-      allowedChargerIds: null
+      allowedSolarIds: null
     };
 
     return concreteSeries;

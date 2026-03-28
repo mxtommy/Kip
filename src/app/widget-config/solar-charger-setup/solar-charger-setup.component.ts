@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { SolarChargerOptionConfig } from '../../widgets/widget-solar-charger/solar-charger.types';
+import type { SolarOptionConfig } from '../../widgets/widget-solar-charger/solar-charger.types';
 
 @Component({
   selector: 'solar-charger-setup',
@@ -22,12 +22,12 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   protected solarFormGroup!: UntypedFormGroup;
-  protected trackedChargerIdsControl!: UntypedFormControl;
-  protected chargerOptionsGroup!: UntypedFormGroup;
-  protected readonly discoveredChargerIds = signal<string[]>([]);
+  protected trackedSolarIdsControl!: UntypedFormControl;
+  protected solarOptionsGroup!: UntypedFormGroup;
+  protected readonly discoveredSolarIds = signal<string[]>([]);
   protected readonly optionIds = computed(() => {
-    const discovered = this.discoveredChargerIds();
-    const configured = Object.keys(this.chargerOptionsGroup?.controls ?? {});
+    const discovered = this.discoveredSolarIds();
+    const configured = Object.keys(this.solarOptionsGroup?.controls ?? {});
     return [...new Set([...configured, ...discovered])].sort();
   });
 
@@ -48,32 +48,32 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected ensureChargerOption(id: string): void {
-    if (this.chargerOptionsGroup.get(id)) return;
-    this.chargerOptionsGroup.addControl(id, this.createOptionGroup({ arrayRatedPowerW: null }));
+  protected ensureSolarOption(id: string): void {
+    if (this.solarOptionsGroup.get(id)) return;
+    this.solarOptionsGroup.addControl(id, this.createOptionGroup({ arrayRatedPowerW: null }));
   }
 
   private ensureTrackedControl(): void {
-    const trackedControl = this.solarFormGroup.get('trackedChargerIds');
+    const trackedControl = this.solarFormGroup.get('trackedSolarIds');
     if (trackedControl instanceof UntypedFormControl) {
-      this.trackedChargerIdsControl = trackedControl;
+      this.trackedSolarIdsControl = trackedControl;
       return;
     }
-    this.trackedChargerIdsControl = new UntypedFormControl([]);
-    this.solarFormGroup.addControl('trackedChargerIds', this.trackedChargerIdsControl);
+    this.trackedSolarIdsControl = new UntypedFormControl([]);
+    this.solarFormGroup.addControl('trackedSolarIds', this.trackedSolarIdsControl);
   }
 
   private ensureOptionsGroup(): void {
-    const optionsControl = this.solarFormGroup.get('chargerOptionsById');
+    const optionsControl = this.solarFormGroup.get('solarOptionsById');
     if (optionsControl instanceof UntypedFormGroup) {
-      this.chargerOptionsGroup = optionsControl;
+      this.solarOptionsGroup = optionsControl;
       return;
     }
-    this.chargerOptionsGroup = new UntypedFormGroup({});
-    this.solarFormGroup.addControl('chargerOptionsById', this.chargerOptionsGroup);
+    this.solarOptionsGroup = new UntypedFormGroup({});
+    this.solarFormGroup.addControl('solarOptionsById', this.solarOptionsGroup);
   }
 
-  private createOptionGroup(option: SolarChargerOptionConfig): UntypedFormGroup {
+  private createOptionGroup(option: SolarOptionConfig): UntypedFormGroup {
     return new UntypedFormGroup({
       arrayRatedPowerW: new UntypedFormControl(option.arrayRatedPowerW, [Validators.min(0)])
     });
@@ -87,27 +87,27 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
       pathPrefixes: ['electrical.solar.']
     });
 
-    this.updateDiscoveredChargerIds();
+    this.updateDiscoveredSolarIds();
 
     this.discovery.changes(this.discoveryToken)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateDiscoveredChargerIds());
+      .subscribe(() => this.updateDiscoveredSolarIds());
   }
 
-  private updateDiscoveredChargerIds(): void {
+  private updateDiscoveredSolarIds(): void {
     if (!this.discoveryToken) return;
     const ids = Array.from(this.discovery.activePaths(this.discoveryToken))
-      .map(path => this.extractChargerId(path))
+      .map(path => this.extractSolarId(path))
       .filter((id): id is string => !!id);
 
     const sorted = [...new Set(ids)].sort();
     for (const id of sorted) {
-      this.ensureChargerOption(id);
+      this.ensureSolarOption(id);
     }
-    this.discoveredChargerIds.set(sorted);
+    this.discoveredSolarIds.set(sorted);
   }
 
-  private extractChargerId(path: string): string | null {
+  private extractSolarId(path: string): string | null {
     const match = path.match(/self\.electrical\.solar\.([^.]+)\./);
     return match ? match[1] : null;
   }

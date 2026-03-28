@@ -1,5 +1,5 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
-export type { SolarChargerOptionConfig, SolarChargerWidgetConfig } from '../../core/interfaces/widgets-interface';
+export type { SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
 
 export interface SolarChargerSnapshot {
   id: string;

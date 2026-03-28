@@ -652,7 +652,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         expect(seriesIds(series)).toEqual([
             'widget-solar-1:solar-template'
         ]);
-        expect(series.every(item => item.expansionMode === 'solar-charger-tree')).toBe(true);
+        expect(series.every(item => item.expansionMode === 'solar-tree')).toBe(true);
     });
 
     it('includes configured Solar charger scope in template series payload', () => {
@@ -662,33 +662,33 @@ describe('DashboardHistorySeriesSyncService', () => {
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedChargerIds: ['port-array', 'starboard-array'],
-                    chargerOptionsById: {}
+                    trackedSolarIds: ['port-array', 'starboard-array'],
+                    solarOptionsById: {}
                 }
             } as IWidget['config']
         };
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedChargerIds).toEqual(['port-array', 'starboard-array']);
+        expect(series[0].allowedSolarIds).toEqual(['port-array', 'starboard-array']);
     });
 
-    it('uses all discovered chargers when trackedChargerIds is empty', () => {
+    it('uses all discovered solar units when trackedSolarIds is empty', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {
             uuid: 'widget-solar-3',
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedChargerIds: [],
-                    chargerOptionsById: {}
+                    trackedSolarIds: [],
+                    solarOptionsById: {}
                 }
             } as IWidget['config']
         };
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedChargerIds).toBeNull();
+        expect(series[0].allowedSolarIds).toBeNull();
     });
 
     it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {

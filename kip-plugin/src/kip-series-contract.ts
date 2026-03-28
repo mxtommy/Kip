@@ -20,21 +20,21 @@ interface IKipSeriesDefinitionBase {
 export interface IKipConcreteSeriesDefinition extends IKipSeriesDefinitionBase {
   expansionMode?: null;
   allowedBatteryIds?: null;
-  allowedChargerIds?: null;
+  allowedSolarIds?: null;
 }
 
 export interface IBmsTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
   ownerWidgetSelector: 'widget-bms';
   expansionMode: 'bms-battery-tree';
   allowedBatteryIds?: readonly string[] | null;
-  allowedChargerIds?: null;
+  allowedSolarIds?: null;
 }
 
 export interface ISolarTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
   ownerWidgetSelector: 'widget-solar-charger';
-  expansionMode: 'solar-charger-tree';
+  expansionMode: 'solar-tree';
   allowedBatteryIds?: null;
-  allowedChargerIds?: readonly string[] | null;
+  allowedSolarIds?: readonly string[] | null;
 }
 
 export type IKipTemplateSeriesDefinition = IBmsTemplateSeriesDefinition | ISolarTemplateSeriesDefinition;
@@ -42,7 +42,7 @@ export type IKipTemplateSeriesDefinition = IBmsTemplateSeriesDefinition | ISolar
 export type IKipSeriesDefinition = IKipConcreteSeriesDefinition | IKipTemplateSeriesDefinition;
 
 export function isKipTemplateSeriesDefinition(series: IKipSeriesDefinition): series is IKipTemplateSeriesDefinition {
-  return series.expansionMode === 'bms-battery-tree' || series.expansionMode === 'solar-charger-tree';
+  return series.expansionMode === 'bms-battery-tree' || series.expansionMode === 'solar-tree';
 }
 
 export function isKipBmsTemplateSeriesDefinition(series: IKipSeriesDefinition): series is IBmsTemplateSeriesDefinition {
@@ -50,7 +50,7 @@ export function isKipBmsTemplateSeriesDefinition(series: IKipSeriesDefinition): 
 }
 
 export function isKipSolarTemplateSeriesDefinition(series: IKipSeriesDefinition): series is ISolarTemplateSeriesDefinition {
-  return series.expansionMode === 'solar-charger-tree';
+  return series.expansionMode === 'solar-tree';
 }
 
 export function isKipConcreteSeriesDefinition(series: IKipSeriesDefinition): series is IKipConcreteSeriesDefinition {
