@@ -25,6 +25,19 @@ Do not place generic Angular framework style rules here.
 - Route history mapping changes through `HistoryToChartMapperService` only.
 - Preserve existing plugin reconciliation behavior and endpoint contract.
 
+## Widget History Dialog Contract
+
+- Treat widget history dialog flows as read-only history consumers; do not add dataset create/edit/remove behavior in dialog code paths.
+- Keep wildcard/template expansion behavior deterministic so repeated loads preserve stable dataset ordering.
+- Keep reconcile payload ownership in dashboard sync + API client services; do not move reconcile orchestration into dialog components.
+- Dual-axis widget history behavior must preserve explicit metric-to-axis mapping contracts and stay test-covered.
+- Dual-axis visual semantics must stay deterministic and test-covered:
+  - metric determines color mapping
+  - series order determines solid/dashed stroke style
+  - line, legend, and tooltip stroke styles remain aligned
+- Keep axis title coloring aligned to the axis metric color it represents.
+- Fallback behavior for unresolved/wildcard paths must remain explicit and test-covered.
+
 ## Host2 Widget Contract
 
 - Follow Host2 architecture for widgets; do not reintroduce legacy base-widget inheritance patterns.
