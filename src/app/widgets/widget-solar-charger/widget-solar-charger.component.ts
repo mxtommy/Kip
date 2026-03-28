@@ -78,8 +78,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return ids.map(id => map[id]).filter((item): item is SolarChargerSnapshot => !!item);
   });
 
-  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? WidgetSolarChargerComponent.DEFAULT_CONFIG.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color);
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -104,25 +104,26 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         : 0;
 
       const panelState = charger.panelCurrentState ?? null;
-      const batteryState = charger.currentState ?? null;
+      const chargerState = charger.currentState ?? null;
       const panelPowerColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
         panelState,
-        widgetColors?.color ?? 'var(--kip-contrast-color)',
+        widgetColors?.dim,
         theme,
         ignoreZones
       );
       const panelSectionColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
         panelState,
-        widgetColors?.color ?? 'var(--kip-contrast-color)',
+        widgetColors?.color,
         theme,
         ignoreZones
       );
-      const batterySectionColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
-        batteryState,
-        widgetColors?.color ?? 'var(--kip-contrast-color)',
+      const chargerSectionColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
+        chargerState,
+        widgetColors?.color,
         theme,
         ignoreZones
       );
+      const mode = this.valueOrDash(charger.controllerMode);
 
       models[charger.id] = {
         id: charger.id,
@@ -136,11 +137,11 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         gaugeValueColor: panelPowerColor,
         gaugeSectionText: `${this.formatVoltage(charger.panelVoltage)}` + (charger.panelCurrent ? `, ${this.formatCurrent(charger.panelCurrent)}` : '') + (charger.panelTemperature ? `, ${this.formatTemperature(charger.panelTemperature)}` : ''),
         panelSectionColor,
-        batterySectionText: `${this.formatVoltage(charger.voltage)} ${this.formatCurrent(charger.current)}`,
-        batterySectionColor,
-        charger: `${this.valueOrDash(charger.controllerMode)} mode, ${this.formatTemperature(charger.temperature)}`,
-        chargerMetadata: `Location ${this.valueOrDash(charger.location)}`,
-        relaySectionText: `State ${this.formatRelayState(charger.load)}   Current ${this.formatCurrent(charger.loadCurrent)}`
+        chargerSectionColor,
+        chargerSectionCurrent: `${this.formatCurrent(charger.current)}`,
+        chargerMode: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
+        chargerSectionMetadata: `${charger.voltage ? this.formatVoltage(charger.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${charger.temperature ? this.formatTemperature(charger.temperature) : ''}`.trim(),
+        relaySectionText: `${this.formatRelayState(charger.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(charger.loadCurrent)}`.trim()
       };
     }
 
@@ -341,7 +342,10 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       }
       case 'panelPower': return this.setPowerPathValue(charger, 'rawPanelPower', value);
       case 'panelTemperature': return this.setValue(charger, 'panelTemperature', this.toNumber(value, this.units.getDefaults().Temperature));
-      case 'load': return this.setValue(charger, 'load', value as string | number | boolean | null);
+      case 'load':
+      case 'loadState':
+      case 'load.state':
+        return this.setValue(charger, 'load', value as string | number | boolean | null);
       case 'loadCurrent': return this.setValue(charger, 'loadCurrent', this.toNumber(value, 'A'));
       default:
         return false;
@@ -422,19 +426,38 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     enter.append('rect').attr('class', 'solar-card-bg');
     enter.append('text').attr('class', 'solar-title');
     enter.append('text').attr('class', 'solar-charger');
-    enter.append('text').attr('class', 'solar-battery-label').text('Charger Output');
-    enter.append('text').attr('class', 'solar-battery-values');
-    enter.append('text').attr('class', 'solar-relay-label').text('Relay');
+    enter.append('text').attr('class', 'solar-charger-current');
+    enter.append('text').attr('class', 'solar-charger-meta');
+    enter.append('text').attr('class', 'solar-relay-label');
     enter.append('text').attr('class', 'solar-relay-values');
 
     const solarPanelIconEnter = enter.append('g').attr('class', 'solar-panel-icon');
-    solarPanelIconEnter.append('path').attr('d', 'M16.40666666666667 53.66666666666667h59.18666666666667a3.8333333333333335 3.8333333333333335 0 0 0 3.7183333333333333 -4.764833333333334l-5.75 -23A3.8333333333333335 3.8333333333333335 0 0 0 69.84333333333333 23H22.15666666666667a3.8333333333333335 3.8333333333333335 0 0 0 -3.7183333333333333 2.9018333333333333l-5.75 23A3.8333333333333335 3.8333333333333335 0 0 0 16.40666666666667 53.66666666666667z M15.333333333333334 38.333333333333336h61.333333333333336 M38.333333333333336 23l-3.8333333333333335 30.666666666666668 M53.66666666666667 23l3.8333333333333335 30.666666666666668 M46 53.66666666666667v15.333333333333334 M26.833333333333336 69h38.333333333333336');
 
-    const gaugeEnter = enter.append('g').attr('class', 'solar-gauge');
-    gaugeEnter.append('path').attr('class', 'solar-gauge-bg');
-    gaugeEnter.append('path').attr('class', 'solar-gauge-value');
-    gaugeEnter.append('text').attr('class', 'solar-gauge-power');
-    gaugeEnter.append('text').attr('class', 'solar-panel-values');
+    // Background layer
+    solarPanelIconEnter.append('use')
+      .attr('class', 'solar-panel-bg')
+      .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
+      .attr('x', 135)
+      .attr('y', 0);
+
+    // Progress layer with clip path
+    const progressGroup = solarPanelIconEnter.append('g').attr('class', 'solar-panel-progress');
+    progressGroup.append('defs')
+      .append('clipPath')
+      .attr('id', item => `solar-panel-clip-${item.id}`)
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('height', 94.949027);
+
+    progressGroup.append('use')
+      .attr('class', 'solar-panel-colored')
+      .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
+      .attr('x', 135)
+      .attr('y', 0)
+      .attr('clip-path', item => `url(#solar-panel-clip-${item.id})`);
+    progressGroup.append('text').attr('class', 'solar-panel-power');
+    progressGroup.append('text').attr('class', 'solar-panel-values');
 
     const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; model: SolarChargerDisplayModel; y: number }, SVGGElement, unknown>);
 
@@ -446,7 +469,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('ry', 4)
       .attr('width', WidgetSolarChargerComponent.VIEWBOX_WIDTH)
       .attr('height', WidgetSolarChargerComponent.CARD_HEIGHT)
-      .attr('fill', 'var(--mat-sys-background)')
+      .attr('fill', 'none')
       .attr('stroke', 'var(--kip-widget-card-border-color)');
 
     merged.select('text.solar-title')
@@ -456,76 +479,79 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .text(item => item.model.titleText);
 
-    merged.select('text.solar-battery-label')
-      .attr('x', 100)
-      .attr('y', 16)
-      .attr('font-size', 8)
-      .attr('fill', 'var(--kip-contrast-dim-color)');
+    merged.select('text.solar-charger-current')
+      .attr('x', 10)
+      .attr('y', 37)
+      .attr('font-size', 16)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text(item => item.model.chargerSectionCurrent);
 
     merged.select('text.solar-charger')
-      .attr('x', 100)
-      .attr('y', 26)
+      .attr('x', 10)
+      .attr('y', 47)
+      .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 6)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
-      .text(item => item.model.charger);
+      .attr('opacity', 0.8)
+      .text(item => item.model.chargerMode);
 
-    merged.select('text.solar-battery-values')
-      .attr('x', 100)
-      .attr('y', 36)
+    merged.select('text.solar-charger-meta')
+      .attr('x', 10)
+      .attr('y', 53)
       .attr('font-size', 6)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
-      .text(item => item.model.batterySectionText);
+      .attr('opacity', 0.8)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text(item => item.model.chargerSectionMetadata);
 
     merged.select('text.solar-relay-label')
-      .attr('x', 100)
-      .attr('y', 76)
+      .attr('x', 10)
+      .attr('y', 74)
       .attr('font-size', 8)
-      .attr('fill', 'var(--kip-contrast-dim-color)');
+      .attr('fill', item => item.model.panelPowerColor)
+      .text(item => item.model.relaySectionText !== 'Off' ? item.model.relaySectionText !== '' ? 'Load Output' : '' : '');
 
     merged.select('text.solar-relay-values')
-      .attr('x', 100)
-      .attr('y', 86)
+      .attr('x', 15)
+      .attr('y', 83)
       .attr('font-size', 6)
       .attr('fill', 'var(--kip-contrast-color)')
+      .attr('opacity', item => item.model.relaySectionText !== 'Off' ? 0.8 : 0)
       .text(item => item.model.relaySectionText);
 
+
+
+
+
     merged.select('g.solar-panel-icon')
-      .attr('transform', 'translate(100, 0)')
-      .attr('fill', 'none')
-      .attr('stroke', item => item.model.panelPowerColor)
-      .attr('stroke-opacity', 0.5)
-      .attr('stroke-width', 1)
-      .attr('stroke-linecap', 'round')
-      .attr('stroke-linejoin', 'round');
+      .attr('transform', 'translate(-3, 25) scale(0.63)');
 
-    merged.select('g.solar-gauge').attr('transform', 'translate(50, 70)');
+    merged.select('use.solar-panel-bg')
+      .attr('color', 'var(--kip-contrast-dimmer-color)');
 
-    merged.select('path.solar-gauge-bg')
-      .attr('d', this.gaugeBackgroundPath)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--kip-contrast-dimmer-color)')
-      .attr('stroke-width', WidgetSolarChargerComponent.GAUGE_BG_STROKE)
-      .attr('stroke-linecap', 'round');
+    merged.select('g.solar-panel-progress')
+      .each((item, index, nodes) => {
+        const progressGroup = d3.select(nodes[index]);
+        const clipWidth = 158.90796 * item.model.gaugeProgress;
+        progressGroup.select('rect')
+          .attr('width', clipWidth);
+      });
 
-    merged.select('path.solar-gauge-value')
-      .attr('d', item => item.model.gaugeValuePath)
-      .attr('fill', 'none')
-      .attr('stroke', item => item.model.gaugeValueColor)
-      .attr('stroke-width', WidgetSolarChargerComponent.GAUGE_VALUE_STROKE)
-      .attr('stroke-linecap', 'round');
+    merged.select('use.solar-panel-colored')
+      .attr('color', item => item.model.panelPowerColor);
 
-    merged.select('text.solar-gauge-power')
-      .attr('x', 0)
-      .attr('y', 0)
+
+
+    merged.select('text.solar-panel-power')
+      .attr('x', 235)
+      .attr('y', 58)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 25)
+      .attr('font-size', 40)
       .attr('font-weight', 700)
       .attr('fill', 'var(--kip-contrast-color)')
       .each((item, index, nodes) => {
         const text = d3.select(nodes[index]);
         text.selectAll('*').remove();
         text.append('tspan')
-          .attr('class', 'solar-gauge-power-value')
+          .attr('class', 'solar-panel-power-value')
           .text(item.model.panelPowerText);
 
         if (!item.model.panelPowerUnitText) {
@@ -533,20 +559,22 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         }
 
         text.append('tspan')
-          .attr('class', 'solar-gauge-power-unit')
+          .attr('class', 'solar-panel-power-unit')
           .attr('dx', 0)
-          .attr('font-size', 11)
+          .attr('font-size', 22)
           .attr('font-weight', 500)
-          .attr('fill', 'var(--kip-contrast-dim-color)')
+          .attr('fill', 'var(--kip-contrast-color)')
           .text(item.model.panelPowerUnitText);
       });
 
     merged.select('text.solar-panel-values')
-      .attr('x', 0)
-      .attr('y', 10)
+      .attr('x', 235)
+      .attr('y', 76)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 6)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .attr('font-size', 12)
+      .attr('font-weight', 500)
+      .attr('opacity', 0.8)
+      .attr('fill', 'var(--kip-contrast-color)')
       .text(item => item.model.gaugeSectionText);
 
     selection.exit().remove();
@@ -626,20 +654,22 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return { value: value.toFixed(0), unit: 'W' };
   }
 
-  private static resolveZoneAwareColor(state: TState | null | undefined, fallbackColor: string, theme: ITheme | null, ignoreZones: boolean): string {
-    if (ignoreZones) return fallbackColor;
-    if (!state) return fallbackColor;
-    if (!theme) return fallbackColor;
+  private static resolveZoneAwareColor(state: TState | null | undefined, defaultColor: string, theme: ITheme | null, ignoreZones: boolean): string {
+    if (ignoreZones) return defaultColor;
+    if (!state) return defaultColor;
+    if (!theme) return defaultColor;
 
     switch (state) {
+      case States.Nominal:
+        return theme.zoneNominal;
       case States.Alarm:
         return theme.zoneAlarm;
       case States.Warn:
         return theme.zoneWarn;
-      case States.Normal:
-        return theme.zoneNominal;
+      case States.Alert:
+        return theme.zoneAlert;
       default:
-        return fallbackColor;
+        return defaultColor;
     }
   }
 }

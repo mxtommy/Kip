@@ -991,10 +991,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return `${value.toFixed(1)} ${this.units.getDefaults().Temperature === 'celsius' ? '°C' : '°F'}`;
   }
 
-  private static resolveZoneAwareColor(state: TState | null | undefined, fallbackColor: string, theme: ITheme | null, ignoreZones: boolean): string {
-    if (ignoreZones) return fallbackColor;
-    if (!state) return fallbackColor;
-    if (!theme) return fallbackColor;
+  private static resolveZoneAwareColor(state: TState | null | undefined, defaultColor: string, theme: ITheme | null, ignoreZones: boolean): string {
+    if (ignoreZones) return defaultColor;
+    if (!state) return defaultColor;
+    if (!theme) return defaultColor;
 
     switch (state) {
       case States.Nominal:
@@ -1006,7 +1006,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       case States.Alert:
         return theme.zoneAlert;
       default:
-        return fallbackColor;
+        return defaultColor;
     }
   }
 

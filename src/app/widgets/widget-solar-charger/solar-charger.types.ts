@@ -40,9 +40,9 @@ export interface SolarChargerDisplayModel {
   gaugeValueColor: string;
   gaugeSectionText: string;
   panelSectionColor: string;
-  batterySectionText: string;
-  batterySectionColor: string;
+  chargerSectionColor: string;
+  chargerMode: string;
+  chargerSectionCurrent: string;
+  chargerSectionMetadata: string;
   relaySectionText: string;
-  charger: string;
-  chargerMetadata: string;
 }
