@@ -268,7 +268,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       borderWidth: 2,
       tension: 0.25,
       yAxisID: dualAxisSeries?.axisId ?? 'y',
-      borderDash: this.isDualAxisSecondaryMetric(dualAxisSeries) ? [6, 4] : undefined,
+      borderDash: this.isDualAxisDashedSeries(dualAxisSeries) ? [6, 4] : undefined,
       fill: false
     };
   }
@@ -324,8 +324,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       return palette[index % palette.length];
     }
 
-    const entityIndex = this.getDualAxisEntityOrderIndex(dualAxisSeries.entityId, dualAxisSeries.widgetType);
-    return palette[entityIndex % palette.length];
+    return this.getDualAxisMetricColor(dualAxisSeries.widgetType, dualAxisSeries.metric);
   }
 
   private getSeriesPalette(): string[] {
@@ -363,9 +362,12 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     'widget-solar-charger': ['panelPower', 'current']
   };
 
-  private isDualAxisSecondaryMetric(descriptor: IDualAxisSeriesDescriptor | null): boolean {
+  private isDualAxisDashedSeries(descriptor: IDualAxisSeriesDescriptor | null): boolean {
     if (!descriptor) return false;
-    return this.dualAxisMetricOrder[descriptor.widgetType].indexOf(descriptor.metric) === 1;
+
+    // Stroke style is series-based: entity #1 solid, entity #2 dashed, etc.
+    const entityIndex = this.getDualAxisEntityOrderIndex(descriptor.entityId, descriptor.widgetType);
+    return entityIndex % 2 === 1;
   }
 
   private getDualAxisEntityOrderIndex(entityId: string, widgetType: TDualAxisWidgetType): number {
@@ -382,6 +384,13 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
     const resolvedIndex = orderedEntityIds.indexOf(entityId);
     return resolvedIndex >= 0 ? resolvedIndex : 0;
+  }
+
+  private getDualAxisMetricColor(widgetType: TDualAxisWidgetType, metric: TDualAxisMetric): string {
+    const palette = this.getSeriesPalette();
+    const metricIndex = this.dualAxisMetricOrder[widgetType].indexOf(metric);
+    const safeIndex = metricIndex >= 0 ? metricIndex : 0;
+    return palette[safeIndex % palette.length];
   }
 
   private buildHistoryRequestCandidates(rawPath: string, context: string | null | undefined): { paths: string; context: string | undefined; labelPath: string }[] {
@@ -687,6 +696,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     const dualAxisWidgetType = this.resolveDualAxisWidgetType();
 
     if (dualAxisWidgetType === 'widget-bms') {
+      const socAxisColor = this.getDualAxisMetricColor('widget-bms', 'soc');
+      const currentAxisColor = this.getDualAxisMetricColor('widget-bms', 'current');
       return {
         ySoc: {
           type: 'linear',
@@ -703,7 +714,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           title: {
             display: true,
             text: 'SoC (%)',
-            color: this.theme().contrastDim
+            color: socAxisColor
           }
         },
         yCurrent: {
@@ -720,13 +731,15 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           title: {
             display: true,
             text: 'Current (A)',
-            color: this.theme().contrastDim
+            color: currentAxisColor
           }
         }
       };
     }
 
     if (dualAxisWidgetType === 'widget-solar-charger') {
+      const powerAxisColor = this.getDualAxisMetricColor('widget-solar-charger', 'panelPower');
+      const currentAxisColor = this.getDualAxisMetricColor('widget-solar-charger', 'current');
       return {
         yPower: {
           type: 'linear',
@@ -741,7 +754,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           title: {
             display: true,
             text: 'Power (kW)',
-            color: this.theme().contrastDim
+            color: powerAxisColor
           }
         },
         yCurrent: {
@@ -758,7 +771,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           title: {
             display: true,
             text: 'Current (A)',
-            color: this.theme().contrastDim
+            color: currentAxisColor
           }
         }
       };

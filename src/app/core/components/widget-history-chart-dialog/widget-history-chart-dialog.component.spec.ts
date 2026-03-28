@@ -118,7 +118,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('pairs BMS SoC and current series by color, converts SoC to percent, SoC solid and current dashed', async () => {
+    it('uses axis-metric colors for BMS series and keeps first-entity lines solid', async () => {
         const socDataset = await (component as unknown as {
             buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
                 data: {
@@ -148,11 +148,99 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(socDataset?.yAxisID).toBe('ySoc');
         expect(currentDataset?.yAxisID).toBe('yCurrent');
         expect(socDataset?.borderDash).toBeUndefined();
-        expect(currentDataset?.borderDash).toEqual([6, 4]);
-        expect(currentDataset?.borderColor).toBe(socDataset?.borderColor);
+        expect(currentDataset?.borderDash).toBeUndefined();
+        expect(socDataset?.borderColor).toBe(theme.blue);
+        expect(currentDataset?.borderColor).toBe(theme.green);
     });
 
-    it('builds dual y-axes for BMS charts', () => {
+    it('uses series-order dash with metric-order colors across multiple BMS entities', async () => {
+        const bmsSeries: IKipSeriesDefinition[] = [
+            {
+                seriesId: 'widget-bms-1:bms:battery-1:capacity.stateOfCharge:default',
+                datasetUuid: 'widget-bms-1:bms:battery-1:capacity.stateOfCharge:default',
+                ownerWidgetUuid: 'widget-bms-1',
+                ownerWidgetSelector: 'widget-bms',
+                path: 'self.electrical.batteries.battery-1.capacity.stateOfCharge',
+                enabled: true
+            },
+            {
+                seriesId: 'widget-bms-1:bms:battery-1:current:default',
+                datasetUuid: 'widget-bms-1:bms:battery-1:current:default',
+                ownerWidgetUuid: 'widget-bms-1',
+                ownerWidgetSelector: 'widget-bms',
+                path: 'self.electrical.batteries.battery-1.current',
+                enabled: true
+            },
+            {
+                seriesId: 'widget-bms-1:bms:battery-2:capacity.stateOfCharge:default',
+                datasetUuid: 'widget-bms-1:bms:battery-2:capacity.stateOfCharge:default',
+                ownerWidgetUuid: 'widget-bms-1',
+                ownerWidgetSelector: 'widget-bms',
+                path: 'self.electrical.batteries.battery-2.capacity.stateOfCharge',
+                enabled: true
+            },
+            {
+                seriesId: 'widget-bms-1:bms:battery-2:current:default',
+                datasetUuid: 'widget-bms-1:bms:battery-2:current:default',
+                ownerWidgetUuid: 'widget-bms-1',
+                ownerWidgetSelector: 'widget-bms',
+                path: 'self.electrical.batteries.battery-2.current',
+                enabled: true
+            }
+        ];
+
+        (component as unknown as {
+            data: {
+                title: string;
+                widget: IWidget;
+                seriesDefinitions: IKipSeriesDefinition[];
+            };
+        }).data = {
+            title: 'Battery History',
+            widget,
+            seriesDefinitions: bmsSeries
+        };
+
+        const soc1 = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                borderColor: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(bmsSeries[0], 0);
+
+        const current1 = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                borderColor: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(bmsSeries[1], 1);
+
+        const soc2 = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                borderColor: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(bmsSeries[2], 2);
+
+        const current2 = await (component as unknown as {
+            buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+                borderColor: string;
+                borderDash?: number[];
+            } | null>;
+        }).buildDatasetForSeries(bmsSeries[3], 3);
+
+        expect(soc1?.borderColor).toBe(theme.blue);
+        expect(soc2?.borderColor).toBe(theme.blue);
+        expect(current1?.borderColor).toBe(theme.green);
+        expect(current2?.borderColor).toBe(theme.green);
+
+        expect(soc1?.borderDash).toBeUndefined();
+        expect(current1?.borderDash).toBeUndefined();
+        expect(soc2?.borderDash).toEqual([6, 4]);
+        expect(current2?.borderDash).toEqual([6, 4]);
+    });
+
+    it('builds dual y-axes for BMS charts and colors axis titles by metric', () => {
         (component as unknown as {
             pendingDatasets: {
                 yAxisID?: string;
@@ -166,6 +254,16 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(scales['ySoc']).toBeDefined();
         expect(scales['yCurrent']).toBeDefined();
         expect(scales['y']).toBeUndefined();
+        expect((scales['ySoc'] as {
+            title?: {
+                color?: string;
+            };
+        }).title?.color).toBe(theme.blue);
+        expect((scales['yCurrent'] as {
+            title?: {
+                color?: string;
+            };
+        }).title?.color).toBe(theme.green);
     });
 
     it('darkens legend/tooltip fill colors consistently', () => {
@@ -176,7 +274,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(darkerColor).toBe('rgb(26, 77, 166)');
     });
 
-    it('classifies solar panelPower/current on dual axes and converts power W to kW', async () => {
+    it('classifies solar panelPower/current on dual axes, converts power W to kW, and keeps first-entity lines solid', async () => {
         historyApiClientMock.getValues.mockImplementation(({ paths }: {
             paths: string;
         }) => Promise.resolve({
@@ -241,11 +339,12 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(panelPowerDataset?.yAxisID).toBe('yPower');
         expect(currentDataset?.yAxisID).toBe('yCurrent');
         expect(panelPowerDataset?.borderDash).toBeUndefined();
-        expect(currentDataset?.borderDash).toEqual([6, 4]);
-        expect(currentDataset?.borderColor).toBe(panelPowerDataset?.borderColor);
+        expect(currentDataset?.borderDash).toBeUndefined();
+        expect(panelPowerDataset?.borderColor).toBe(theme.blue);
+        expect(currentDataset?.borderColor).toBe(theme.green);
     });
 
-    it('builds dual y-axes for solar charts', () => {
+    it('builds dual y-axes for solar charts and colors axis titles by metric', () => {
         (component as unknown as {
             data: {
                 widget: IWidget;
@@ -276,6 +375,16 @@ describe('WidgetHistoryChartDialogComponent', () => {
         expect(scales['yPower']).toBeDefined();
         expect(scales['yCurrent']).toBeDefined();
         expect(scales['y']).toBeUndefined();
+        expect((scales['yPower'] as {
+            title?: {
+                color?: string;
+            };
+        }).title?.color).toBe(theme.blue);
+        expect((scales['yCurrent'] as {
+            title?: {
+                color?: string;
+            };
+        }).title?.color).toBe(theme.green);
     });
 
     it('expands solar wildcard template paths into concrete history requests', async () => {
