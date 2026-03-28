@@ -844,7 +844,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.select('rect.bms-battery')
       .attr('width', WidgetBmsComponent.BATTERY_CARD_WIDTH)
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT)
-      .attr('fill', 'var(--mat-sys-background)')
+      .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', 'var(--kip-contrast-dimmer-color)')
       .attr('stroke-width', 0);
     selection.select('rect.bms-battery-tip')
@@ -852,7 +852,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('y', WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 10)
       .attr('width', 4)
       .attr('height', 20)
-      .attr('fill', 'var(--mat-sys-background)')
+      .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', widgetColors.color)
       .attr('stroke-width', 0);
     selection.select('rect.bms-charge-fill')

@@ -522,10 +522,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('opacity', item => item.model.relaySectionText !== 'Off' ? 0.8 : 0)
       .text(item => item.model.relaySectionText);
 
-
-
-
-
     merged.select('g.solar-panel-icon')
       .attr('transform', 'translate(-3, 25) scale(0.63)');
 
@@ -541,8 +537,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     merged.select('use.solar-panel-colored')
       .attr('color', item => item.model.panelPowerColor);
-
-
 
     merged.select('text.solar-panel-power')
       .attr('x', 235)
