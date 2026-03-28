@@ -444,7 +444,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     const progressGroup = solarPanelIconEnter.append('g').attr('class', 'solar-panel-progress');
     progressGroup.append('defs')
       .append('clipPath')
-      .attr('id', item => `solar-panel-clip-${item.id}`)
+      .attr('id', item => `solar-panel-clip-${this.id()}-${item.id}`)
       .append('rect')
       .attr('x', 0)
       .attr('y', 0)
@@ -455,7 +455,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
       .attr('x', 135)
       .attr('y', 0)
-      .attr('clip-path', item => `url(#solar-panel-clip-${item.id})`);
+      .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`); 
     progressGroup.append('text').attr('class', 'solar-panel-power');
     progressGroup.append('text').attr('class', 'solar-panel-values');
 
