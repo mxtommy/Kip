@@ -44,3 +44,17 @@ Before merging updates to this file:
 - Run `ng lint` before submitting changes.
 - Run `npm run test:all` before submitting changes.
 - Keep Host2 widget patterns and architecture guardrails aligned with `.github/instructions/project.instructions.md` and routed skills from `.github/copilot-instructions.md`.
+
+## Architecture Notes (2026 Q2)
+
+### Widget Creation Evolution
+- Widget creation now follows a schematic-first workflow for standard Host2 scaffolding, with manual creation reserved for documented non-standard cases.
+- Runtime and stream contract behavior remains governed by Host2 architecture constraints.
+- Contributor and help documentation now point to a single schematic reference and a dedicated widget creation implementation companion skill.
+
+Policy owner for enforceable widget creation behavior:
+- `.github/instructions/project.instructions.md` (`Widget Creation Domain Rules`)
+
+Implementation companions:
+- `.agents/skills/kip-widget-creation/SKILL.md`
+- `.agents/skills/kip-host2-widget/SKILL.md`

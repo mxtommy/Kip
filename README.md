@@ -265,17 +265,26 @@ Once done with your work, from your fork's working branch, make a GitHub pull re
 For comprehensive development guidance, please refer to these instruction files:
 
 ### Primary Instructions
-- **[COPILOT.md](./COPILOT.md)**: Complete KIP project guidelines including architecture, services, widget development patterns, theming, and Signal K integration.
+- **[Project Instructions](./.github/instructions/project.instructions.md)**: KIP policy owner for architecture/domain rules, including widget creation and Host2 contracts.
+- **[COPILOT.md](./COPILOT.md)**: Architecture context, rationale, and evolution notes (non-policy).
 - **[Angular Instructions](./.github/instructions/angular.instructions.md)**: Modern Angular v21+ coding standards, component patterns, and framework best practices.
 - **[Copilot Agent Instructions](./.github/copilot-instructions.md)**: Architecture details and coding-agent guardrails for this repository.
 
 ### Development Workflow
-1. **Start Here**: Read `COPILOT.md` for KIP-specific architecture and patterns.
+1. **Start Here**: Read `.github/instructions/project.instructions.md` for KIP policy contracts.
 2. **Angular Standards**: Follow `.github/instructions/angular.instructions.md` for modern Angular development.
-3. **Setup & Build**: Use this README for project setup and build commands.
+3. **Architecture Context**: Use `COPILOT.md` for rationale and dated architecture notes.
+4. **Setup & Build**: Use this README for project setup and build commands.
+
+### Widget Creation Workflow
+1. Scaffold with `npm run generate:widget` (Host2 schematic-first path).
+2. Use `docs/widget-schematic.md` for CLI flags, prompting behavior, and troubleshooting.
+3. Follow Host2 runtime/stream patterns in `.agents/skills/kip-host2-widget/SKILL.md`.
+4. Apply widget creation implementation checklist from `.agents/skills/kip-widget-creation/SKILL.md`.
+5. Keep enforceable behavior aligned with `.github/instructions/project.instructions.md` (`Widget Creation Domain Rules`).
 
 ### Key Priorities
-- **Widget Development**: Use the Host2 widget pattern (signals + directives) and scaffold new widgets with the `create-host2-widget` schematic (see `COPILOT.md`).
+- **Widget Development**: Use Host2 patterns and scaffold with the `create-host2-widget` schematic (see `docs/widget-schematic.md`).
 - **Angular Patterns**: Use signals, standalone components, and modern control flow.
 - **Theming**: Follow KIP's theme system for consistent UI.
 - **Code Quality**: Run `npm run lint` before commits.

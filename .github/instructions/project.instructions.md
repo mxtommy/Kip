@@ -46,6 +46,16 @@ Do not place generic Angular framework style rules here.
 
 Detailed Host2 implementation patterns are owned by `.agents/skills/kip-host2-widget/SKILL.md`.
 
+## Widget Creation Domain Rules
+
+- Prefer the Host2 widget schematic (`npm run generate:widget`) for new widget scaffolding unless a documented manual exception applies.
+- Manual widget creation is allowed for non-standard runtime/stream wiring, but it must still conform to Host2 contract constraints.
+- New widgets must keep `DEFAULT_CONFIG` complete and explicit, including path keys, sampling, and units expectations.
+- If widget registration is performed manually, registration map and definition entries must remain consistent with category conventions.
+- Widget creation changes must include test updates appropriate to the widget behavior, not only instantiation checks.
+
+Detailed implementation patterns are owned by `.agents/skills/kip-widget-creation/SKILL.md`.
+
 ## Widget Config Domain Rules
 
 - Widget configuration UI belongs under `src/app/widget-config/`.

@@ -2,6 +2,10 @@
 
 Use the custom schematic to scaffold a new Host2 architecture widget.
 
+See also:
+- Policy owner: `.github/instructions/project.instructions.md` (`Widget Creation Domain Rules`)
+- Implementation companions: `.agents/skills/kip-widget-creation/SKILL.md`, `.agents/skills/kip-host2-widget/SKILL.md`
+
 ### Command
 
 ```
@@ -81,6 +85,20 @@ If `registerWidget` is not set to `no`, the schematic also updates `WidgetServic
 - Adjust `DEFAULT_CONFIG.paths` if you need multiple paths (add entries & observers in one `untracked` block).
 - Implement formatting / unit display logic using existing helper services if needed.
 - Flesh out the spec with domain assertions (current spec only verifies instantiation).
+
+### Use Schematic vs Manual
+
+Use the schematic when:
+1. You are creating a new standard Host2 widget.
+2. You want baseline scaffold files, optional WidgetService registration, and starter test/readme output.
+3. You are iterating on a known widget pattern (numeric/gauge/component style variants).
+
+Use manual creation when:
+1. You need non-standard runtime/stream wiring that does not fit the scaffold.
+2. You are building a shared utility component instead of a widget entry.
+3. You are performing a targeted refactor of an existing widget where regeneration adds churn.
+
+Manual creation must still follow Host2 contract and project policy guidance.
 
 ### Removing a Generated Widget
 
