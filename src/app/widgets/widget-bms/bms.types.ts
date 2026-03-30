@@ -38,11 +38,11 @@ export interface BmsBatteryDisplayModel {
   chargeBarColorRegular: string;
   currentTextColorCompact: string;
   currentTextColorRegular: string;
-  currentStrokeWidth: number;
   currentText: string;
   detailLineCompact: string;
   detailLineRegular: string;
   socText: string;
+  socGlowEnabled: boolean;
   actualCapacityText: string;
   remainingText: string;
   iconKey: 'power_available' | 'power_renewal';
