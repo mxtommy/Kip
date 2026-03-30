@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, NgZone, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getColors } from '../../core/utils/themeColors.utils';
+import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
@@ -52,6 +52,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('solarSvg');
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private layer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private glowFilterId = '';
 
   private renderFrameId: number | null = null;
   private pendingRenderSnapshot: SolarRenderSnapshot | null = null;
@@ -103,14 +104,51 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
       const panelPowerState = solar.panelPowerState ?? solar.panelCurrentState ?? null;
       const chargerCurrentState = solar.currentState ?? null;
-      const panelPowerColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
+      const panelPowerColor = resolveZoneAwareColor(
         panelPowerState,
         widgetColors?.dim ?? 'var(--kip-contrast-dim-color)',
         theme,
         ignoreZones
       );
-      const chargerCurrentTextColor = WidgetSolarChargerComponent.resolveZoneAwareColor(
+      const panelPowerGlowEnabled = !ignoreZones && (
+        panelPowerState === States.Warn
+        || panelPowerState === States.Alarm
+        || panelPowerState === States.Alert
+      );
+      const chargerCurrentTextColor = resolveZoneAwareColor(
         chargerCurrentState,
+        'var(--kip-contrast-color)',
+        theme,
+        ignoreZones
+      );
+      const chargerMetaState = this.resolveMostSevereState(
+        solar.voltageState ?? null,
+        solar.temperatureState ?? null
+      );
+      const chargerMetaTextColor = resolveZoneAwareColor(
+        chargerMetaState,
+        'var(--kip-contrast-color)',
+        theme,
+        ignoreZones
+      );
+      const panelValuesState = this.resolveMostSevereState(
+        solar.panelCurrentState ?? null,
+        solar.panelVoltageState ?? null,
+        solar.panelTemperatureState ?? null
+      );
+      const panelValuesTextColor = resolveZoneAwareColor(
+        panelValuesState,
+        'var(--kip-contrast-color)',
+        theme,
+        ignoreZones
+      );
+      const panelValuesGlowEnabled = !ignoreZones && (
+        panelValuesState === States.Warn
+        || panelValuesState === States.Alarm
+        || panelValuesState === States.Alert
+      );
+      const relayValuesTextColor = resolveZoneAwareColor(
+        solar.loadCurrentState ?? null,
         'var(--kip-contrast-color)',
         theme,
         ignoreZones
@@ -127,14 +165,19 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         panelPowerText: panelPowerDisplay.value,
         panelPowerUnitText: panelPowerDisplay.unit,
         panelPowerColor,
+        panelPowerGlowEnabled,
         chargerCurrentTextColor,
+        chargerMetaTextColor,
+        panelValuesTextColor,
+        panelValuesGlowEnabled,
         gaugeProgress: progress,
         gaugeSectionText: `${this.formatVoltage(solar.panelVoltage)}` + (solar.panelCurrent != null ? `, ${this.formatCurrent(solar.panelCurrent)}` : '') + (solar.panelTemperature != null ? `, ${this.formatTemperature(solar.panelTemperature)}` : ''),
         chargerSectionCurrent: `${this.formatCurrent(solar.current)}`,
         chargerMode: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
         chargerSectionMetadata: `${solar.voltage != null ? this.formatVoltage(solar.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${solar.temperature != null ? this.formatTemperature(solar.temperature) : ''}`.trim(),
         relaySectionVisible,
-        relaySectionText
+        relaySectionText,
+        relayValuesTextColor
       };
     }
 
@@ -201,6 +244,32 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('role', 'img')
       .attr('aria-label', 'Solar Charger View');
+
+    this.glowFilterId = `solar-panel-glow-${this.id()}`;
+
+    const defs = this.svg.append('defs');
+    const glowFilter = defs.append('filter')
+      .attr('id', this.glowFilterId)
+      .attr('x', '-30%').attr('y', '-30%')
+      .attr('width', '160%').attr('height', '160%');
+    glowFilter.append('feFlood')
+      .attr('class', 'solar-panel-glow-flood')
+      .attr('flood-color', 'var(--kip-widget-card-background-color)')
+      .attr('flood-opacity', 0.9)
+      .attr('result', 'color');
+    glowFilter.append('feComposite')
+      .attr('in', 'color')
+      .attr('in2', 'SourceGraphic')
+      .attr('operator', 'in')
+      .attr('result', 'coloredGlow');
+    glowFilter.append('feGaussianBlur')
+      .attr('in', 'coloredGlow')
+      .attr('stdDeviation', 2)
+      .attr('result', 'blur');
+    const merge = glowFilter.append('feMerge');
+    merge.append('feMergeNode').attr('in', 'blur');
+    merge.append('feMergeNode').attr('in', 'blur');
+    merge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     this.layer = this.svg.append('g').attr('class', 'solar-layer');
   }
@@ -307,7 +376,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       case 'name': return this.setValue(charger, 'name', this.toStringValue(value));
       case 'location': return this.setValue(charger, 'location', this.toStringValue(value));
       case 'associatedBus': return this.setValue(charger, 'associatedBus', this.toStringValue(value));
-      case 'voltage': return this.setValue(charger, 'voltage', this.toNumber(value, 'V'));
+      case 'voltage': {
+        const nextValue = this.toNumber(value, 'V');
+        const stateChanged = !Object.is(charger.voltageState ?? null, state ?? null);
+        if (Object.is(charger.voltage, nextValue) && !stateChanged) return false;
+        charger.voltage = nextValue;
+        charger.voltageState = state;
+        return true;
+      }
       case 'current': {
         const nextValue = this.toNumber(value, 'A');
         const stateChanged = !Object.is(charger.currentState ?? null, state ?? null);
@@ -317,14 +393,28 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         return true;
       }
       case 'power': return this.setPowerPathValue(charger, 'rawBatteryPower', value);
-      case 'temperature': return this.setValue(charger, 'temperature', this.toNumber(value, this.units.getDefaults().Temperature));
+      case 'temperature': {
+        const nextValue = this.toNumber(value, this.units.getDefaults().Temperature);
+        const stateChanged = !Object.is(charger.temperatureState ?? null, state ?? null);
+        if (Object.is(charger.temperature, nextValue) && !stateChanged) return false;
+        charger.temperature = nextValue;
+        charger.temperatureState = state;
+        return true;
+      }
       case 'chargingAlgorithm': return this.setValue(charger, 'chargingAlgorithm', this.toStringValue(value));
       case 'chargerRole': return this.setValue(charger, 'chargerRole', this.toStringValue(value));
       case 'chargingMode': return this.setValue(charger, 'chargingMode', this.toStringValue(value));
       case 'setpointVoltage': return this.setValue(charger, 'setpointVoltage', this.toNumber(value, 'V'));
       case 'setpointCurrent': return this.setValue(charger, 'setpointCurrent', this.toNumber(value, 'A'));
       case 'controllerMode': return this.setValue(charger, 'controllerMode', this.toStringValue(value));
-      case 'panelVoltage': return this.setValue(charger, 'panelVoltage', this.toNumber(value, 'V'));
+      case 'panelVoltage': {
+        const nextValue = this.toNumber(value, 'V');
+        const stateChanged = !Object.is(charger.panelVoltageState ?? null, state ?? null);
+        if (Object.is(charger.panelVoltage, nextValue) && !stateChanged) return false;
+        charger.panelVoltage = nextValue;
+        charger.panelVoltageState = state;
+        return true;
+      }
       case 'panelCurrent': {
         const nextValue = this.toNumber(value, 'A');
         const stateChanged = !Object.is(charger.panelCurrentState ?? null, state ?? null);
@@ -341,12 +431,26 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         charger.panelPowerState = state;
         return true;
       }
-      case 'panelTemperature': return this.setValue(charger, 'panelTemperature', this.toNumber(value, this.units.getDefaults().Temperature));
+      case 'panelTemperature': {
+        const nextValue = this.toNumber(value, this.units.getDefaults().Temperature);
+        const stateChanged = !Object.is(charger.panelTemperatureState ?? null, state ?? null);
+        if (Object.is(charger.panelTemperature, nextValue) && !stateChanged) return false;
+        charger.panelTemperature = nextValue;
+        charger.panelTemperatureState = state;
+        return true;
+      }
       case 'load':
       case 'loadState':
       case 'load.state':
         return this.setValue(charger, 'load', value as string | number | boolean | null);
-      case 'loadCurrent': return this.setValue(charger, 'loadCurrent', this.toNumber(value, 'A'));
+      case 'loadCurrent': {
+        const nextValue = this.toNumber(value, 'A');
+        const stateChanged = !Object.is(charger.loadCurrentState ?? null, state ?? null);
+        if (Object.is(charger.loadCurrent, nextValue) && !stateChanged) return false;
+        charger.loadCurrent = nextValue;
+        charger.loadCurrentState = state;
+        return true;
+      }
       default:
         return false;
     }
@@ -504,21 +608,20 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('y', 53)
       .attr('font-size', 6)
       .attr('opacity', 0.8)
-      .attr('fill', 'var(--kip-contrast-color)')
+      .attr('fill', item => item.model.chargerMetaTextColor)
       .text(item => item.model.chargerSectionMetadata);
 
     merged.select('text.solar-relay-label')
       .attr('x', 10)
       .attr('y', 74)
       .attr('font-size', 8)
-      .attr('fill', item => item.model.panelPowerColor)
       .text(item => item.model.relaySectionVisible ? 'Load Output' : '');
 
     merged.select('text.solar-relay-values')
       .attr('x', 15)
       .attr('y', 83)
       .attr('font-size', 6)
-      .attr('fill', 'var(--kip-contrast-color)')
+      .attr('fill', item => item.model.relayValuesTextColor)
       .attr('opacity', item => item.model.relaySectionVisible ? 0.8 : 0)
       .text(item => item.model.relaySectionText);
 
@@ -544,6 +647,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 40)
       .attr('font-weight', 700)
+      .attr('filter', item => item.model.panelPowerGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .attr('fill', 'var(--kip-contrast-color)');
 
     merged.select('tspan.solar-panel-power-value')
@@ -564,7 +668,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('font-size', 12)
       .attr('font-weight', 500)
       .attr('opacity', 0.8)
-      .attr('fill', 'var(--kip-contrast-color)')
+      .attr('filter', item => item.model.panelValuesGlowEnabled ? `url(#${this.glowFilterId})` : null)
+      .attr('fill', item => item.model.panelValuesTextColor)
       .text(item => item.model.gaugeSectionText);
 
     selection.exit().remove();
@@ -634,22 +739,25 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return { value: value.toFixed(0), unit: 'W' };
   }
 
-  private static resolveZoneAwareColor(state: TState | null | undefined, defaultColor: string, theme: ITheme | null, ignoreZones: boolean): string {
-    if (ignoreZones) return defaultColor;
-    if (!state) return defaultColor;
-    if (!theme) return defaultColor;
+  private resolveMostSevereState(...states: (TState | null | undefined)[]): TState | null {
+    let current: TState | null = null;
+    const rank: Record<TState, number> = {
+      [States.Normal]: 0,
+      [States.Nominal]: 1,
+      [States.Alert]: 2,
+      [States.Warn]: 3,
+      [States.Alarm]: 4,
+      [States.Emergency]: 5
+    };
 
-    switch (state) {
-      case States.Nominal:
-        return theme.zoneNominal;
-      case States.Alarm:
-        return theme.zoneAlarm;
-      case States.Warn:
-        return theme.zoneWarn;
-      case States.Alert:
-        return theme.zoneAlert;
-      default:
-        return defaultColor;
+    for (const state of states) {
+      if (!state) continue;
+      if (!current || rank[state] > rank[current]) {
+        current = state;
+      }
     }
+
+    return current;
   }
+
 }

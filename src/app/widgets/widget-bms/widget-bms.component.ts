@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementR
 import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
-import { getColors } from '../../core/utils/themeColors.utils';
+import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
@@ -100,6 +100,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private batteryLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
   private readonly bankGaugeBackgroundPath = this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, 1);
 
+  private glowFilterId = '';
   private renderFrameId: number | null = null;
   private pendingRenderSnapshot: BmsRenderSnapshot | null = null;
   private pathBatchTimerId: number | null = null;
@@ -148,25 +149,25 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
     const models: Record<string, BmsBatteryDisplayModel> = {};
     for (const battery of batteries) {
-      const chargeBarColorCompact = WidgetBmsComponent.resolveZoneAwareColor(
+      const chargeBarColorCompact = resolveZoneAwareColor(
         battery.stateOfChargeState,
         widgetColors?.dimmer ?? 'var(--kip-contrast-dimmer-color)',
         theme,
         ignoreZones
       );
-      const chargeBarColorRegular = WidgetBmsComponent.resolveZoneAwareColor(
+      const chargeBarColorRegular = resolveZoneAwareColor(
         battery.stateOfChargeState,
         widgetColors?.dim ?? 'var(--kip-contrast-dim-color)',
         theme,
         ignoreZones
       );
-      const currentTextColorCompact = WidgetBmsComponent.resolveZoneAwareColor(
+      const currentTextColorCompact = resolveZoneAwareColor(
         battery.currentState,
         'var(--kip-contrast-dim-color)',
         theme,
         ignoreZones
       );
-      const currentTextColorRegular = WidgetBmsComponent.resolveZoneAwareColor(
+      const currentTextColorRegular = resolveZoneAwareColor(
         battery.currentState,
         'var(--kip-contrast-color)',
         theme,
@@ -181,11 +182,15 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         chargeBarColorRegular,
         currentTextColorCompact,
         currentTextColorRegular,
-        currentStrokeWidth: battery.currentState !== States.Normal ? 0.5 : 0,
         currentText: `${this.formatCurrent(battery.current)}`.trim(),
         detailLineCompact: `${this.formatVoltage(battery.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(battery.temperature)}`,
         detailLineRegular: `${this.formatVoltage(battery.voltage)}\u00A0\u00A0\u00A0\u00A0${this.formatPower(battery.power)}\u00A0\u00A0\u00A0\u00A0${this.formatTemperature(battery.temperature)}`.trim(),
         socText: this.formatSoc(battery.stateOfCharge),
+        socGlowEnabled: !ignoreZones && (
+          battery.stateOfChargeState === States.Warn
+          || battery.stateOfChargeState === States.Alarm
+          || battery.stateOfChargeState === States.Alert
+        ),
         actualCapacityText: battery.capacityActual ? `${battery.capacityActual} kWh` : '',
         remainingText: `${this.formatDuration(battery.timeRemaining)}`.trim(),
         iconKey: battery.current != null && battery.current > 0 ? 'power_renewal' : 'power_available'
@@ -289,6 +294,32 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('role', 'img')
       .attr('aria-label', 'Battery Management System View');
+
+    this.glowFilterId = `bms-soc-glow-${this.id()}`;
+
+    const defs = this.svg.append('defs');
+    const glowFilter = defs.append('filter')
+      .attr('id', this.glowFilterId)
+      .attr('x', '-30%').attr('y', '-30%')
+      .attr('width', '160%').attr('height', '160%');
+    glowFilter.append('feFlood')
+      .attr('class', 'bms-soc-glow-flood')
+      .attr('flood-color', 'var(--kip-widget-card-background-color)')
+      .attr('flood-opacity', 0.9)
+      .attr('result', 'color');
+    glowFilter.append('feComposite')
+      .attr('in', 'color')
+      .attr('in2', 'SourceGraphic')
+      .attr('operator', 'in')
+      .attr('result', 'coloredGlow');
+    glowFilter.append('feGaussianBlur')
+      .attr('in', 'coloredGlow')
+      .attr('stdDeviation', 2)
+      .attr('result', 'blur');
+    const merge = glowFilter.append('feMerge');
+    merge.append('feMergeNode').attr('in', 'blur');
+    merge.append('feMergeNode').attr('in', 'blur');
+    merge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     this.root = this.svg.append('g').attr('class', 'bms-root');
     this.bankLayer = this.root.append('g').attr('class', 'bms-banks');
@@ -721,9 +752,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   ): BmsRenderLayout {
     const batteryById = new Map<string, BmsBatterySnapshot>(batteries.map(battery => [battery.id, battery]));
     const assignedBatteryIds = new Set<string>();
-    const inBankScale = this.computeInBankBatteryScale();
-    const inBankRenderedHeight = WidgetBmsComponent.BATTERY_CARD_HEIGHT * inBankScale;
     const inBankSlotWidth = this.computeInBankBatterySlotWidth();
+    const inBankScale = Math.max(0.35, Math.min(1, inBankSlotWidth / WidgetBmsComponent.BATTERY_CARD_WIDTH));
+    const inBankRenderedHeight = WidgetBmsComponent.BATTERY_CARD_HEIGHT * inBankScale;
     let nextBankY = 0;
 
     const renderBanks = banks.map(bank => {
@@ -818,11 +849,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return totalInnerWidth / WidgetBmsComponent.IN_BANK_COLUMNS;
   }
 
-  private computeInBankBatteryScale(): number {
-    const slotWidth = this.computeInBankBatterySlotWidth();
-    return Math.max(0.35, Math.min(1, slotWidth / WidgetBmsComponent.BATTERY_CARD_WIDTH));
-  }
-
   private appendBatteryCardSkeleton(selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>): void {
     selection.append('rect').attr('class', 'bms-battery').attr('rx', 4).attr('ry', 4);
     selection.append('rect').attr('class', 'bms-battery-tip').attr('rx', 1).attr('ry', 1);
@@ -866,14 +892,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('y', item => item.compact ? 11 : 14)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', item => item.compact ? 8 : 12)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.displayModel.titleText);
     selection.select('text.bms-ampere')
       .attr('x', 10)
       .attr('y', 33)
       .attr('fill', item => item.compact ? item.displayModel.currentTextColorCompact : item.displayModel.currentTextColorRegular)
-      .attr('stroke', 'var(--kip-widget-card-background-color)')
-      .attr('stroke-width', item => item.displayModel.currentStrokeWidth)
       .attr('font-size', 16)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.displayModel.currentText);
     selection.select('text.bms-volt-power')
       .attr('x', 10)
@@ -881,6 +907,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('font-size', 8)
       .attr('opacity', 0.8)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.compact ? item.displayModel.detailLineCompact : item.displayModel.detailLineRegular);
     selection.select('text.bms-soc')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
@@ -889,6 +916,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 25)
       .attr('font-weight', 700)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.displayModel.socText);
     selection.select('text.bms-actualCapacity')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
@@ -896,6 +924,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.compact ? '' : item.displayModel.actualCapacityText);
     selection.select('text.bms-remaining')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
@@ -903,11 +932,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .text(item => item.compact ? '' : item.displayModel.remainingText);
     selection.select('g.bms-state-icon')
       .attr('transform', `translate(${WidgetBmsComponent.BATTERY_CARD_WIDTH / 2 - 18}, ${WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 18})`)
       .attr('display', item => item.compact && item.scale < 0.45 ? 'none' : null)
       .attr('color', item => item.compact ? widgetColors.dim : widgetColors.color)
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .each((item, index, nodes) => {
         const iconGroup = d3.select(nodes[index]);
         const iconKey = item.displayModel.iconKey;
@@ -989,25 +1020,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     if (value == null) return '';
     if (typeof value !== 'number') return '';
     return `${value.toFixed(1)} ${this.units.getDefaults().Temperature === 'celsius' ? '°C' : '°F'}`;
-  }
-
-  private static resolveZoneAwareColor(state: TState | null | undefined, defaultColor: string, theme: ITheme | null, ignoreZones: boolean): string {
-    if (ignoreZones) return defaultColor;
-    if (!state) return defaultColor;
-    if (!theme) return defaultColor;
-
-    switch (state) {
-      case States.Nominal:
-        return theme.zoneNominal;
-      case States.Alarm:
-        return theme.zoneAlarm;
-      case States.Warn:
-        return theme.zoneWarn;
-      case States.Alert:
-        return theme.zoneAlert;
-      default:
-        return defaultColor;
-    }
   }
 
   private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {
