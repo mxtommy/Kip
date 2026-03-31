@@ -7,6 +7,13 @@ import 'chartjs-adapter-date-fns';
 import { IWidget } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
 import { isKipTemplateSeriesDefinition, type IKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
+import {
+  describeElectricalDualAxisSeries,
+  ELECTRICAL_DUAL_AXIS_WIDGET_META,
+  IDualAxisSeriesDescriptor,
+  TDualAxisMetric,
+  TDualAxisWidgetType
+} from '../../contracts/electrical-history-chart.contract';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
 import { UnitsService } from '../../services/units.service';
@@ -22,16 +29,6 @@ interface ChartPoint {
   y: number;
 }
 type HistoryChartDataset = ChartDataset<'line', ChartPoint[]>;
-type TDualAxisWidgetType = 'widget-bms' | 'widget-solar-charger';
-type TDualAxisMetric = 'soc' | 'current' | 'panelPower';
-type TDualAxisAxisId = 'ySoc' | 'yCurrent' | 'yPower';
-
-interface IDualAxisSeriesDescriptor {
-  widgetType: TDualAxisWidgetType;
-  entityId: string;
-  metric: TDualAxisMetric;
-  axisId: TDualAxisAxisId;
-}
 
 /****
  * Dialog payload used by WidgetHistoryChartDialogComponent.
@@ -254,47 +251,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private describeDualAxisSeries(path: string | null | undefined): IDualAxisSeriesDescriptor | null {
     const normalizedPath = this.normalizeHistoryPath(path ?? '');
-    const socMatch = /^electrical\.batteries\.([^.]+)\.(?:capacity\.)?stateOfCharge$/i.exec(normalizedPath);
-    if (socMatch) {
-      return {
-        widgetType: 'widget-bms',
-        entityId: socMatch[1],
-        metric: 'soc',
-        axisId: 'ySoc'
-      };
-    }
-
-    const bmsCurrentMatch = /^electrical\.batteries\.([^.]+)\.current$/i.exec(normalizedPath);
-    if (bmsCurrentMatch) {
-      return {
-        widgetType: 'widget-bms',
-        entityId: bmsCurrentMatch[1],
-        metric: 'current',
-        axisId: 'yCurrent'
-      };
-    }
-
-    const solarCurrentMatch = /^electrical\.solar\.([^.]+)\.current$/i.exec(normalizedPath);
-    if (solarCurrentMatch) {
-      return {
-        widgetType: 'widget-solar-charger',
-        entityId: solarCurrentMatch[1],
-        metric: 'current',
-        axisId: 'yCurrent'
-      };
-    }
-
-    const solarPowerMatch = /^electrical\.solar\.([^.]+)\.panelPower$/i.exec(normalizedPath);
-    if (solarPowerMatch) {
-      return {
-        widgetType: 'widget-solar-charger',
-        entityId: solarPowerMatch[1],
-        metric: 'panelPower',
-        axisId: 'yPower'
-      };
-    }
-
-    return null;
+    return describeElectricalDualAxisSeries(normalizedPath);
   }
 
   private resolveSeriesColor(index: number, dualAxisSeries: IDualAxisSeriesDescriptor | null): string {
@@ -335,12 +292,6 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     return typeof themeColor === 'string' && themeColor.length > 0 ? themeColor : colorKey;
   }
 
-  /** Defines which metric is primary (solid, index 0) and secondary (dashed, index 1) per widget type. */
-  private readonly dualAxisMetricOrder: Record<TDualAxisWidgetType, TDualAxisMetric[]> = {
-    'widget-bms': ['soc', 'current'],
-    'widget-solar-charger': ['panelPower', 'current']
-  };
-
   private isDualAxisDashedSeries(descriptor: IDualAxisSeriesDescriptor | null): boolean {
     if (!descriptor) return false;
 
@@ -367,7 +318,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private getDualAxisMetricColor(widgetType: TDualAxisWidgetType, metric: TDualAxisMetric): string {
     const palette = this.getSeriesPalette();
-    const metricIndex = this.dualAxisMetricOrder[widgetType].indexOf(metric);
+    const metricOrder = ELECTRICAL_DUAL_AXIS_WIDGET_META[widgetType]?.metricOrder ?? [];
+    const metricIndex = metricOrder.indexOf(metric);
     const safeIndex = metricIndex >= 0 ? metricIndex : 0;
     return palette[safeIndex % palette.length];
   }
@@ -419,8 +371,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
         return descA.entityId.localeCompare(descB.entityId);
       }
 
-      const orderA = this.dualAxisMetricOrder[descA.widgetType]?.indexOf(descA.metric) ?? 0;
-      const orderB = this.dualAxisMetricOrder[descB.widgetType]?.indexOf(descB.metric) ?? 0;
+      const orderA = ELECTRICAL_DUAL_AXIS_WIDGET_META[descA.widgetType]?.metricOrder.indexOf(descA.metric) ?? 0;
+      const orderB = ELECTRICAL_DUAL_AXIS_WIDGET_META[descB.widgetType]?.metricOrder.indexOf(descB.metric) ?? 0;
       return orderA - orderB;
     });
   }
@@ -455,8 +407,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       datasetUuid: `${series.datasetUuid}:resolved:${index}`,
       path,
       expansionMode: null,
-      allowedBatteryIds: null,
-      allowedSolarIds: null
+      familyKey: null,
+      allowedIds: null
     }));
   }
 
@@ -488,48 +440,62 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private matchesTemplateAllowedIds(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
-    if (series.expansionMode === 'solar-tree') {
-      const allowed = Array.isArray(series.allowedSolarIds)
-        ? series.allowedSolarIds.map(id => String(id).trim()).filter(id => id.length > 0)
-        : [];
-
-      if (allowed.length === 0) {
-        return true;
-      }
-
-      const entityId = this.extractEntityId(path, prefix);
-      return !!entityId && allowed.includes(entityId);
-    }
-
-    const allowed = Array.isArray(series.allowedBatteryIds)
-      ? series.allowedBatteryIds.map(id => String(id).trim()).filter(id => id.length > 0)
+    const allowedGeneric = Array.isArray(series.allowedIds)
+      ? series.allowedIds.map(id => String(id).trim()).filter(id => id.length > 0)
       : [];
 
-    if (allowed.length === 0) {
+    if (allowedGeneric.length === 0) {
       return true;
     }
 
-    const entityId = this.extractEntityId(path, prefix);
-    return !!entityId && allowed.includes(entityId);
+    const entityId = this.extractEntityId(path, prefix, series);
+    return !!entityId && allowedGeneric.includes(entityId);
   }
 
-  private extractEntityId(path: string, prefix: string): string | null {
+  private extractEntityId(path: string, prefix: string, series: IKipTemplateSeriesDefinition): string | null {
     const suffix = path.slice(prefix.length + 1);
     if (!suffix.length) {
       return null;
     }
 
-    const parts = suffix.split('.');
-    if (parts.length < 2) {
+    const metricSuffixes = this.getTemplateMetricSuffixes(series);
+    const metricSuffix = metricSuffixes.find(candidate => suffix.endsWith(candidate));
+    if (!metricSuffix) {
       return null;
     }
 
-    const [firstSegment] = parts;
-    if (firstSegment === 'current' || firstSegment === 'panelCurrent' || firstSegment === 'panelPower' || firstSegment === 'capacity' || firstSegment === 'stateOfCharge') {
+    const entityId = suffix.slice(0, -metricSuffix.length).replace(/\.$/, '').trim();
+    if (!entityId.length) {
       return null;
     }
 
-    return firstSegment;
+    return entityId;
+  }
+
+  private getTemplateMetricSuffixes(series: IKipTemplateSeriesDefinition): string[] {
+    switch (series.expansionMode) {
+      case 'solar-tree':
+        return ['.panelPower', '.current'];
+      case 'charger-tree':
+      case 'inverter-tree':
+      case 'alternator-tree':
+        return ['.voltage', '.current'];
+      case 'ac-tree':
+        return [
+          '.line1.voltage',
+          '.line1.current',
+          '.line1.frequency',
+          '.line2.voltage',
+          '.line2.current',
+          '.line2.frequency',
+          '.line3.voltage',
+          '.line3.current',
+          '.line3.frequency',
+        ];
+      case 'bms-battery-tree':
+      default:
+        return ['.capacity.stateOfCharge', '.stateOfCharge', '.current'];
+    }
   }
 
   private normalizeHistoryPath(path: string): string {

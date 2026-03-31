@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
-import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, ElectricalCardModeConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
@@ -65,7 +65,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     bms: {
-      trackedBatteryIds: [],
+      trackedIds: [],
+      groups: [],
       banks: []
     }
   };
@@ -350,19 +351,107 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const bmsCfg = this.resolveBmsConfig(cfg);
-    this.trackedBatteryIds.set(bmsCfg.trackedBatteryIds);
+    this.trackedBatteryIds.set(bmsCfg.trackedIds ?? []);
     this.banks.set(bmsCfg.banks);
   }
 
   private resolveBmsConfig(cfg: IWidgetSvcConfig): BmsWidgetConfig {
     const bms = cfg.bms;
+    const trackedIds = this.normalizeStringList(bms?.trackedIds);
+    const groupBanks = this.normalizeBanksFromGroups(bms?.groups);
+    const legacyBanks = this.normalizeBanksFromLegacy(bms?.banks);
+
     return {
-      trackedBatteryIds: Array.isArray(bms?.trackedBatteryIds) ? bms.trackedBatteryIds : [],
-      banks: (Array.isArray(bms?.banks) ? bms.banks : []).map(bank => ({
-        ...bank,
-        connectionMode: this.normalizeConnectionMode(bank.connectionMode)
-      }))
+      trackedIds,
+      groups: groupBanks,
+      banks: groupBanks.length > 0 ? groupBanks : legacyBanks,
+      cardMode: this.normalizeCardMode(bms?.cardMode)
     };
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig | undefined {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    const cardMode = value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown };
+    const metrics = this.normalizeStringList(cardMode.metrics);
+    const displayMode = cardMode.displayMode === 'card' ? 'card' : 'full';
+
+    return {
+      enabled: cardMode.enabled !== false,
+      displayMode,
+      metrics
+    };
+  }
+
+  private normalizeStringList(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const ids = new Set<string>();
+    value.forEach(item => {
+      if (typeof item !== 'string') {
+        return;
+      }
+
+      const normalized = item.trim();
+      if (normalized.length > 0) {
+        ids.add(normalized);
+      }
+    });
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }
+
+  private normalizeBanksFromGroups(groups: unknown): BmsBankConfig[] {
+    if (!Array.isArray(groups)) {
+      return [];
+    }
+
+    return groups
+      .map(group => {
+        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? `bank-${Date.now()}`;
+        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
+        const memberIds = this.normalizeStringList((group as { memberIds?: unknown })?.memberIds);
+        return {
+          id,
+          name,
+          batteryIds: memberIds,
+          connectionMode: this.normalizeConnectionMode((group as { connectionMode?: unknown })?.connectionMode)
+        };
+      })
+      .filter(bank => bank.id.length > 0);
+  }
+
+  private normalizeBanksFromLegacy(banks: unknown): BmsBankConfig[] {
+    if (!Array.isArray(banks)) {
+      return [];
+    }
+
+    return banks
+      .map(bank => {
+        const id = this.normalizeOptionalString((bank as { id?: unknown })?.id) ?? `bank-${Date.now()}`;
+        const name = this.normalizeOptionalString((bank as { name?: unknown })?.name) ?? id;
+        const batteryIds = this.normalizeStringList((bank as { batteryIds?: unknown })?.batteryIds);
+        return {
+          id,
+          name,
+          batteryIds,
+          connectionMode: this.normalizeConnectionMode((bank as { connectionMode?: unknown })?.connectionMode)
+        };
+      })
+      .filter(bank => bank.id.length > 0);
+  }
+
+  private normalizeOptionalString(value: unknown): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
   }
 
   private normalizeConnectionMode(mode: unknown): BmsBankConnectionMode {
@@ -462,6 +551,12 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const nextValue = value as string;
         if (battery.location === nextValue) return false;
         battery.location = nextValue;
+        return true;
+      }
+      case 'associatedBus': {
+        const nextValue = value as string;
+        if (battery.associatedBus === nextValue) return false;
+        battery.associatedBus = nextValue;
         return true;
       }
       case 'chemistry': {

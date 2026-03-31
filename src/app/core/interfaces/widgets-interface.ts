@@ -1,6 +1,16 @@
 import { ITheme } from '../services/app-service';
 import { TValidSkUnits } from '../services/units.service';
 import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
+import type { IElectricalCardModeConfig } from '../contracts/electrical-topology-card.contract';
+
+/**
+ * Ownership: Normalized widget app config interfaces.
+ *
+ * Keep widget-configuration form and runtime-normalized config object types centralized here
+ * to simplify widget creation and maintenance.
+ *
+ * Do not move shared app/plugin boundary contracts here; keep those in `core/contracts`.
+ */
 
 
 export enum ControlType {
@@ -70,9 +80,33 @@ export interface BmsBankConfig {
   connectionMode: BmsBankConnectionMode;
 }
 
+export interface ElectricalGroupConfig {
+  id: string;
+  name: string;
+  memberIds?: string[];
+  batteryIds?: string[];
+  chargerIds?: string[];
+  connectionMode: BmsBankConnectionMode;
+}
+
+export interface ElectricalCardModeConfig {
+  enabled: IElectricalCardModeConfig['enabled'];
+  displayMode?: IElectricalCardModeConfig['displayMode'];
+  metrics: IElectricalCardModeConfig['metrics'];
+}
+
+export interface ElectricalFamilyConfig<TOptions = Record<string, never>> {
+  trackedIds: string[];
+  groups: ElectricalGroupConfig[];
+  optionsById: Record<string, TOptions>;
+  cardMode?: ElectricalCardModeConfig;
+}
+
 export interface BmsWidgetConfig {
-  trackedBatteryIds: string[];
+  trackedIds?: string[];
+  groups?: ElectricalGroupConfig[];
   banks: BmsBankConfig[];
+  cardMode?: ElectricalCardModeConfig;
 }
 
 export interface SolarOptionConfig {
@@ -80,8 +114,12 @@ export interface SolarOptionConfig {
 }
 
 export interface SolarWidgetConfig {
-  trackedSolarIds: string[];
+  trackedIds?: string[];
+  groups?: ElectricalGroupConfig[];
+  optionsById?: Record<string, SolarOptionConfig>;
+  banks?: ElectricalGroupConfig[];
   solarOptionsById: Record<string, SolarOptionConfig>;
+  cardMode?: ElectricalCardModeConfig;
 }
 
 

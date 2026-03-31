@@ -3,7 +3,7 @@
     <h3>Tracked Batteries</h3>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Battery Instances</mat-label>
-      <mat-select formControlName="trackedBatteryIds" multiple>
+      <mat-select formControlName="trackedIds" multiple>
         @for (id of discoveredBatteryIds(); track $index) {
           <mat-option [value]="id">{{ id }}</mat-option>
         }
@@ -24,11 +24,11 @@
       </button>
     </div>
 
-    <div formArrayName="banks" class="bank-list">
-      @if (!hasBanks()) {
+    <div formArrayName="groups" class="bank-list">
+      @if (!hasGroups()) {
         <div class="hint">No banks configured yet.</div>
       }
-      @for (bankGroup of banksFormArray.controls; track $index) {
+      @for (bankGroup of groupsFormArray.controls; track $index) {
         <div class="bank-card" [formGroupName]="$index">
           <div class="bank-row">
             <mat-form-field appearance="outline" class="bank-name">
@@ -41,7 +41,7 @@
           </div>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Battery Members</mat-label>
-            <mat-select formControlName="batteryIds" multiple>
+            <mat-select formControlName="memberIds" multiple>
               @for (id of discoveredBatteryIds(); track $index) {
                 <mat-option [value]="id">{{ id }}</mat-option>
               }

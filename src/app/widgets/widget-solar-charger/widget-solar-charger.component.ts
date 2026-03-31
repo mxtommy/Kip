@@ -7,7 +7,7 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalCardModeConfig, ElectricalGroupConfig, IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
 import type { SolarChargerDisplayModel, SolarChargerSnapshot } from './solar-charger.types';
 
 interface SolarRenderSnapshot {
@@ -31,7 +31,10 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     solarCharger: {
-      trackedSolarIds: [],
+      trackedIds: [],
+      groups: [],
+      optionsById: {},
+      banks: [],
       solarOptionsById: {}
     }
   };
@@ -62,6 +65,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   protected readonly discoveredSolarIds = signal<string[]>([]);
   protected readonly trackedSolarIds = signal<string[]>([]);
+  protected readonly banks = signal<ElectricalGroupConfig[]>([]);
   protected readonly solarOptionsById = signal<Record<string, SolarOptionConfig>>({});
   protected readonly chargers = signal<Record<string, SolarChargerSnapshot>>({});
 
@@ -278,17 +282,124 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const solarCfg = this.resolveSolarConfig(cfg);
-    this.trackedSolarIds.set(solarCfg.trackedSolarIds);
+    this.trackedSolarIds.set(solarCfg.trackedIds ?? []);
+    this.banks.set(solarCfg.banks ?? []);
     this.solarOptionsById.set(solarCfg.solarOptionsById);
   }
 
   private resolveSolarConfig(cfg: IWidgetSvcConfig): SolarWidgetConfig {
     const solar = cfg.solarCharger;
-    const solarOptionsById = solar?.solarOptionsById ?? {};
+    const trackedIds = this.normalizeStringList(solar?.trackedIds);
+    const groups = this.normalizeGroups(solar?.groups ?? solar?.banks);
+    const optionsById = this.normalizeOptionsById(solar?.optionsById ?? solar?.solarOptionsById);
+
     return {
-      trackedSolarIds: Array.isArray(solar?.trackedSolarIds) ? solar.trackedSolarIds : [],
-      solarOptionsById
+      trackedIds,
+      groups,
+      optionsById,
+      banks: groups,
+      solarOptionsById: optionsById,
+      cardMode: this.normalizeCardMode(solar?.cardMode)
     };
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig | undefined {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    const cardMode = value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown };
+    const metrics = this.normalizeStringList(cardMode.metrics);
+    const displayMode = cardMode.displayMode === 'card' ? 'card' : 'full';
+
+    return {
+      enabled: cardMode.enabled !== false,
+      displayMode,
+      metrics
+    };
+  }
+
+  private normalizeStringList(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const ids = new Set<string>();
+    value.forEach(item => {
+      if (typeof item !== 'string') {
+        return;
+      }
+
+      const normalized = item.trim();
+      if (normalized.length > 0) {
+        ids.add(normalized);
+      }
+    });
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }
+
+  private normalizeGroups(value: unknown): ElectricalGroupConfig[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map(group => {
+        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? `solar-group-${Date.now()}`;
+        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
+        const memberIds = this.normalizeStringList(
+          (group as { memberIds?: unknown; chargerIds?: unknown; batteryIds?: unknown })?.memberIds
+          ?? (group as { chargerIds?: unknown })?.chargerIds
+          ?? (group as { batteryIds?: unknown })?.batteryIds
+        );
+
+        return {
+          id,
+          name,
+          memberIds,
+          connectionMode: this.normalizeConnectionMode((group as { connectionMode?: unknown })?.connectionMode)
+        };
+      })
+      .filter(group => group.id.length > 0);
+  }
+
+  private normalizeOptionsById(value: unknown): Record<string, SolarOptionConfig> {
+    if (!value || typeof value !== 'object') {
+      return {};
+    }
+
+    const entries = Object.entries(value as Record<string, unknown>);
+    const next: Record<string, SolarOptionConfig> = {};
+
+    entries.forEach(([id, rawOption]) => {
+      const normalizedId = this.normalizeOptionalString(id);
+      if (!normalizedId) {
+        return;
+      }
+
+      const arrayRatedPowerW = (rawOption as { arrayRatedPowerW?: unknown })?.arrayRatedPowerW;
+      next[normalizedId] = {
+        arrayRatedPowerW: typeof arrayRatedPowerW === 'number' && Number.isFinite(arrayRatedPowerW)
+          ? arrayRatedPowerW
+          : null
+      };
+    });
+
+    return next;
+  }
+
+  private normalizeOptionalString(value: unknown): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private normalizeConnectionMode(mode: unknown): 'parallel' | 'series' {
+    return mode === 'series' ? 'series' : 'parallel';
   }
 
   private enqueuePathUpdate(update: IPathUpdateWithPath, fromInitial = false): void {

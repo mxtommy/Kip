@@ -1,16 +1,15 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
-export type { SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { IElectricalTopologySnapshotCore } from '../../core/contracts/electrical-topology-card.contract';
+export type {
+  SolarOptionConfig,
+  SolarWidgetConfig,
+  ElectricalGroupConfig,
+  ElectricalCardModeConfig
+} from '../../core/interfaces/widgets-interface';
 
-export interface SolarChargerSnapshot {
-  id: string;
-  name?: string | null;
-  location?: string | null;
-  associatedBus?: string | null;
-  voltage?: number | null;
+export interface SolarChargerSnapshot extends IElectricalTopologySnapshotCore {
   voltageState?: TState | null;
-  current?: number | null;
   currentState?: TState | null;
-  power?: number | null;
   rawBatteryPower?: number | null;
   temperature?: number | null;
   temperatureState?: TState | null;

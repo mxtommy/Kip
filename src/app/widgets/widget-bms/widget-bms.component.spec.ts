@@ -23,7 +23,7 @@ describe('WidgetBmsComponent', () => {
             color: 'contrast',
             ignoreZones: false,
             bms: {
-                trackedBatteryIds: [],
+                trackedIds: [],
                 banks: []
             }
         })

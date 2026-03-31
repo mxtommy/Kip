@@ -9,7 +9,7 @@ describe('kip-series-contract guards', () => {
         ownerWidgetSelector: 'widget-data-chart',
         path: 'navigation.speedThroughWater',
         expansionMode: null,
-        allowedBatteryIds: null,
+        allowedIds: null,
         context: 'vessels.self',
         source: 'default',
         timeScale: 'minute',
@@ -26,7 +26,8 @@ describe('kip-series-contract guards', () => {
         ownerWidgetSelector: 'widget-bms',
         path: 'self.electrical.batteries.*',
         expansionMode: 'bms-battery-tree',
-        allowedBatteryIds: ['house', 'start'],
+        familyKey: 'batteries',
+        allowedIds: ['house', 'start'],
         context: 'vessels.self',
         source: 'default',
         timeScale: 'hour',
@@ -43,7 +44,8 @@ describe('kip-series-contract guards', () => {
         ownerWidgetSelector: 'widget-solar-charger',
         path: 'self.electrical.solar.*',
         expansionMode: 'solar-tree',
-        allowedSolarIds: ['port', 'starboard'],
+        familyKey: 'solar',
+        allowedIds: ['port', 'starboard'],
         context: 'vessels.self',
         source: 'default',
         timeScale: 'hour',
@@ -72,7 +74,7 @@ describe('kip-series-contract guards', () => {
         expect(isKipSeriesEnabled({ ...concreteSeries, enabled: false })).toBe(false);
     });
 
-    it('preserves template-only battery filters', () => {
+    it('preserves template allowedIds filters for battery templates', () => {
         const value: IKipSeriesDefinition = templateSeries;
 
         if (!isKipTemplateSeriesDefinition(value)) {
@@ -80,10 +82,10 @@ describe('kip-series-contract guards', () => {
             return;
         }
 
-        expect(value.allowedBatteryIds).toEqual(['house', 'start']);
+        expect(value.allowedIds).toEqual(['house', 'start']);
     });
 
-    it('preserves template-only charger filters for solar templates', () => {
+    it('preserves template allowedIds filters for solar templates', () => {
         const value: IKipSeriesDefinition = solarTemplateSeries;
 
         if (!isKipTemplateSeriesDefinition(value)) {
@@ -91,7 +93,7 @@ describe('kip-series-contract guards', () => {
             return;
         }
 
-        expect(value.allowedSolarIds).toEqual(['port', 'starboard']);
+        expect(value.allowedIds).toEqual(['port', 'starboard']);
     });
 
     it('keeps concrete series free of template expansion state', () => {
@@ -103,7 +105,6 @@ describe('kip-series-contract guards', () => {
         }
 
         expect(value.expansionMode ?? null).toBeNull();
-        expect(value.allowedBatteryIds ?? null).toBeNull();
-        expect(value.allowedSolarIds ?? null).toBeNull();
+        expect(value.allowedIds ?? null).toBeNull();
     });
 });

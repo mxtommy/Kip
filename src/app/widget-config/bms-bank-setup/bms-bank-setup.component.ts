@@ -8,7 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { BmsBankConfig, BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
+import type { BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
+import type { ElectricalGroupConfig } from '../../core/interfaces/widgets-interface';
 import { TitleCasePipe } from '@angular/common';
 
 @Component({
@@ -33,10 +34,10 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   protected bmsFormGroup!: UntypedFormGroup;
-  protected banksFormArray!: UntypedFormArray;
-  protected trackedBatteryIdsControl!: UntypedFormControl;
+  protected groupsFormArray!: UntypedFormArray;
+  protected trackedIdsControl!: UntypedFormControl;
   protected readonly discoveredBatteryIds = signal<string[]>([]);
-  protected readonly hasBanks = computed(() => this.banksFormArray?.length > 0);
+  protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
 
   private discoveryToken?: PathDiscoveryToken;
 
@@ -58,19 +59,19 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   }
 
   protected addBank(): void {
-    const bank: BmsBankConfig = {
+    const group: ElectricalGroupConfig = {
       id: `bank-${Date.now()}`,
       name: 'New Bank',
-      batteryIds: [],
+      memberIds: [],
       connectionMode: 'parallel'
     };
-    this.banksFormArray.push(this.createBankGroup(bank));
-    this.banksFormArray.markAsDirty();
+    this.groupsFormArray.push(this.createGroup(group));
+    this.groupsFormArray.markAsDirty();
   }
 
   protected removeBank(index: number): void {
-    this.banksFormArray.removeAt(index);
-    this.banksFormArray.markAsDirty();
+    this.groupsFormArray.removeAt(index);
+    this.groupsFormArray.markAsDirty();
   }
 
   /**
@@ -88,33 +89,41 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   }
 
   private ensureTrackedControl(): void {
-    const trackedControl = this.bmsFormGroup.get('trackedBatteryIds');
+    const trackedControl = this.bmsFormGroup.get('trackedIds');
     if (trackedControl instanceof UntypedFormControl) {
-      this.trackedBatteryIdsControl = trackedControl;
+      this.trackedIdsControl = trackedControl;
       return;
     }
-    this.trackedBatteryIdsControl = new UntypedFormControl([]);
-    this.bmsFormGroup.addControl('trackedBatteryIds', this.trackedBatteryIdsControl);
+
+    this.trackedIdsControl = new UntypedFormControl([]);
+    this.bmsFormGroup.addControl('trackedIds', this.trackedIdsControl);
   }
 
   private ensureBanksArray(): void {
-    const banksControl = this.bmsFormGroup.get('banks');
-    if (banksControl instanceof FormArray || banksControl instanceof UntypedFormArray) {
-      this.banksFormArray = banksControl as UntypedFormArray;
+    const groupsControl = this.bmsFormGroup.get('groups') ?? this.bmsFormGroup.get('banks');
+    if (groupsControl instanceof FormArray || groupsControl instanceof UntypedFormArray) {
+      this.groupsFormArray = groupsControl as UntypedFormArray;
+      if (!this.bmsFormGroup.get('groups')) {
+        this.bmsFormGroup.setControl('groups', this.groupsFormArray);
+      }
       return;
     }
 
-    const initialBanks = Array.isArray(banksControl?.value) ? banksControl.value as BmsBankConfig[] : [];
-    this.banksFormArray = new UntypedFormArray(initialBanks.map(bank => this.createBankGroup(bank)));
-    this.bmsFormGroup.setControl('banks', this.banksFormArray);
+    const initialGroups = Array.isArray(groupsControl?.value) ? groupsControl.value as ElectricalGroupConfig[] : [];
+    this.groupsFormArray = new UntypedFormArray(initialGroups.map(group => this.createGroup(group)));
+    this.bmsFormGroup.setControl('groups', this.groupsFormArray);
   }
 
-  private createBankGroup(bank: BmsBankConfig): UntypedFormGroup {
+  private createGroup(group: ElectricalGroupConfig): UntypedFormGroup {
+    const memberIds = Array.isArray(group.memberIds)
+      ? group.memberIds
+      : (Array.isArray(group.batteryIds) ? group.batteryIds : []);
+
     return new UntypedFormGroup({
-      id: new UntypedFormControl(bank.id, Validators.required),
-      name: new UntypedFormControl(bank.name, Validators.required),
-      batteryIds: new UntypedFormControl(bank.batteryIds ?? []),
-      connectionMode: new UntypedFormControl(bank.connectionMode ?? 'parallel', Validators.required)
+      id: new UntypedFormControl(group.id, Validators.required),
+      name: new UntypedFormControl(group.name, Validators.required),
+      memberIds: new UntypedFormControl(memberIds),
+      connectionMode: new UntypedFormControl(group.connectionMode ?? 'parallel', Validators.required)
     });
   }
 

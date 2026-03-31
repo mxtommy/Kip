@@ -17,7 +17,7 @@ describe('WidgetSolarChargerComponent', () => {
     color?: string;
     ignoreZones?: boolean;
     solarCharger?: {
-      trackedSolarIds?: string[];
+      trackedIds?: string[];
       solarOptionsById?: Record<string, { arrayRatedPowerW?: number | null }>;
     };
   };
@@ -62,7 +62,7 @@ describe('WidgetSolarChargerComponent', () => {
     liveSubject = new Subject<IPathUpdateWithPath>();
     runtimeOptions = {
       solarCharger: {
-        trackedSolarIds: [],
+        trackedIds: [],
         solarOptionsById: {}
       }
     };

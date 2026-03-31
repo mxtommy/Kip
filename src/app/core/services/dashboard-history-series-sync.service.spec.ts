@@ -592,7 +592,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(seriesIds(series)).toEqual([
-            'widget-bms-1:bms-template'
+          'widget-bms-1:batteries-template'
         ]);
         expect(series.every(item => item.expansionMode === 'bms-battery-tree')).toBe(true);
     });
@@ -604,7 +604,7 @@ describe('DashboardHistorySeriesSyncService', () => {
             type: 'widget-bms',
             config: {
                 bms: {
-                    trackedBatteryIds: ['house', 'starter'],
+                trackedIds: ['house', 'starter'],
                     banks: [
                         { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house', 'aux'] }
                     ]
@@ -614,17 +614,37 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedBatteryIds).toEqual(['aux', 'house', 'starter']);
+      expect(series[0].allowedIds).toEqual(['house', 'starter']);
     });
 
-    it('uses all discovered batteries when trackedBatteryIds is empty, even if banks exist', () => {
+  it('excludes stale bank members not present in trackedIds', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-bms-stale-1',
+      type: 'widget-bms',
+      config: {
+        bms: {
+          trackedIds: ['house'],
+          groups: [
+            { id: 'bank-1', name: 'House', connectionMode: 'parallel', memberIds: ['house', 'starter'] }
+          ]
+        }
+      } as IWidget['config']
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedIds).toEqual(['house']);
+    });
+
+  it('uses all discovered batteries when trackedIds is empty, even if banks exist', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {
             uuid: 'widget-bms-3',
             type: 'widget-bms',
             config: {
                 bms: {
-                    trackedBatteryIds: [],
+                trackedIds: [],
                     banks: [
                         { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house'] }
                     ]
@@ -634,7 +654,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedBatteryIds).toBeNull();
+    expect(series[0].allowedIds).toBeNull();
     });
 
     it('resolves widget-solar-charger template mappings for plugin-side charger expansion', () => {
@@ -662,7 +682,7 @@ describe('DashboardHistorySeriesSyncService', () => {
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedSolarIds: ['port-array', 'starboard-array'],
+                trackedIds: ['port-array', 'starboard-array'],
                     solarOptionsById: {}
                 }
             } as IWidget['config']
@@ -670,17 +690,17 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedSolarIds).toEqual(['port-array', 'starboard-array']);
+      expect(series[0].allowedIds).toEqual(['port-array', 'starboard-array']);
     });
 
-    it('uses all discovered solar units when trackedSolarIds is empty', () => {
+  it('uses all discovered solar units when trackedIds is empty', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {
             uuid: 'widget-solar-3',
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedSolarIds: [],
+                trackedIds: [],
                     solarOptionsById: {}
                 }
             } as IWidget['config']
@@ -688,7 +708,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedSolarIds).toBeNull();
+    expect(series[0].allowedIds).toBeNull();
     });
 
     it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {

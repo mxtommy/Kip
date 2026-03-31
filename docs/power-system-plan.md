@@ -2,6 +2,26 @@
 
 This document captures the agreed plan for implementing the BMS widget, Solar widget, and Power System Map widget. It preserves all decisions and technical details so each step can be executed later without losing context.
 
+## Implementation Tracking
+
+### Slice 1: Family Contract Prep (completed)
+
+- [x] Step 1: Shared electrical family descriptor and root path matrix scaffolded.
+- [x] Step 2: BMS and Solar runtime config resolution normalized to shared tracked/group/options fields with legacy fallback support.
+- [x] Step 3: Host2 and dashboard history sync now consume shared family descriptor metadata for title/eligibility/template routing.
+- [x] Step 4: Future family metadata entries added (chargers, inverters, alternators, AC) as typed descriptor placeholders.
+- [x] Step 5: Topology parity started by adding `associatedBus` support to BMS snapshots.
+- [x] Step 6: Shared history/chart metadata registry extraction for the history dialog.
+- [x] Step 7: Full config UI normalization and card/embed contract consolidation for all electrical families.
+- [x] Step 8: Slice 1 acceptance pass (full targeted tests + validation checklist sign-off).
+
+### Slice 2: New Widgets (not started)
+
+- [ ] Chargers widget implementation.
+- [ ] Inverters widget implementation.
+- [ ] Alternators widget implementation.
+- [ ] AC widget implementation (bus + branch/leg v1 detail).
+
 ## Step 1: BMS Widget
 
 ### Goal

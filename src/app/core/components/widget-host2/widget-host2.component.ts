@@ -18,6 +18,7 @@ import { AppService } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
 import { isKipSeriesEnabled, isKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
+import { getElectricalWidgetFamilyDescriptor } from '../../contracts/electrical-widget-family.contract';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { SettingsService } from '../../services/settings.service';
 import { uiEventService } from '../../services/uiEvent.service';
@@ -401,12 +402,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
         return;
       }
 
+      const familyDescriptor = getElectricalWidgetFamilyDescriptor(this.widgetProperties?.type);
       const title = this.widgetProperties?.config?.displayName
-        || (this.widgetProperties?.type === 'widget-bms'
-          ? 'Battery Monitor'
-          : this.widgetProperties?.type === 'widget-solar-charger'
-            ? 'Solar Charger'
-            : 'Widget History');
+        || familyDescriptor?.displayTitle
+        || 'Widget Data History';
 
       this.dialog.openWidgetHistoryDialog({
         title,
@@ -481,8 +480,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
       return false;
     }
 
+    const familyDescriptor = getElectricalWidgetFamilyDescriptor(widget.type);
     if (seriesDefinitions.some(series => typeof series.expansionMode === 'string' || series.enabled === true) &&
-      (widget.type === 'widget-bms' || widget.type === 'widget-solar-charger')) {
+      !!familyDescriptor?.templateExpansionMode) {
       return seriesDefinitions.some(series => series.enabled === true);
     }
 

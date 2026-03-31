@@ -8,6 +8,10 @@ import { IKipConcreteSeriesDefinition, IKipTemplateSeriesDefinition } from '../c
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
 import { WidgetService } from './widget.service';
+import {
+  ElectricalFamilyKey,
+  getElectricalWidgetFamilyDescriptor,
+} from '../contracts/electrical-widget-family.contract';
 
 interface IGridWidgetNode extends NgGridStackWidget {
   input?: {
@@ -18,18 +22,27 @@ interface IGridWidgetNode extends NgGridStackWidget {
   };
 }
 
-interface IBmsConfigLike {
-  trackedBatteryIds?: unknown;
-  banks?: unknown;
-}
-
 interface IBmsBankLike {
+  memberIds?: unknown;
   batteryIds?: unknown;
 }
 
-interface ISolarConfigLike {
-  trackedSolarIds?: unknown;
+interface IFamilyConfigLike {
+  trackedIds?: unknown;
+  groups?: unknown;
+  banks?: unknown;
 }
+
+type TFamilyConfigProperty = 'bms' | 'solarCharger' | 'charger' | 'inverter' | 'alternator' | 'ac';
+
+const FAMILY_CONFIG_PROPERTY: Record<ElectricalFamilyKey, TFamilyConfigProperty> = {
+  batteries: 'bms',
+  solar: 'solarCharger',
+  chargers: 'charger',
+  inverters: 'inverter',
+  alternators: 'alternator',
+  ac: 'ac',
+};
 
 @Injectable({
   providedIn: 'root'
@@ -162,12 +175,12 @@ export class DashboardHistorySeriesSyncService {
       return this.mapWindTrendsWidget(widgetUuid, widgetType, cfg);
     }
 
-    if (widgetType === 'widget-bms') {
-      return this.mapBmsWidget(widgetUuid, widgetType, cfg);
-    }
-
-    if (widgetType === 'widget-solar-charger') {
-      return this.mapSolarWidget(widgetUuid, widgetType, cfg);
+    const electricalDescriptor = getElectricalWidgetFamilyDescriptor(widgetType);
+    if (electricalDescriptor?.templateExpansionMode) {
+      const mappedSeries = this.mapElectricalTemplateWidget(widgetUuid, cfg, electricalDescriptor);
+      if (mappedSeries) {
+        return [mappedSeries];
+      }
     }
 
     return this.mapAutomaticHistorySeries(widgetUuid, widgetType, cfg);
@@ -266,18 +279,27 @@ export class DashboardHistorySeriesSyncService {
     ];
   }
 
-  private mapBmsWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipTemplateSeriesDefinition[] {
-    const allowedBatteryIds = this.resolveBmsAllowedBatteryIds(cfg);
-    void widgetType;
+  private mapElectricalTemplateWidget(
+    widgetUuid: string,
+    cfg: IWidgetSvcConfig | undefined,
+    descriptor: NonNullable<ReturnType<typeof getElectricalWidgetFamilyDescriptor>>
+  ): IKipTemplateSeriesDefinition | null {
+    const expansionMode = descriptor.templateExpansionMode;
+    if (!expansionMode) {
+      return null;
+    }
 
-    const templateSeries: IKipTemplateSeriesDefinition = {
-      seriesId: `${widgetUuid}:bms-template`,
-      datasetUuid: `${widgetUuid}:bms-template`,
+    const allowedIds = this.resolveElectricalAllowedIds(cfg, descriptor.familyKey);
+    const suffix = descriptor.familyKey;
+    return {
+      seriesId: `${widgetUuid}:${suffix}-template`,
+      datasetUuid: `${widgetUuid}:${suffix}-template`,
       ownerWidgetUuid: widgetUuid,
-      ownerWidgetSelector: 'widget-bms' as const,
-      path: 'self.electrical.batteries.*',
-      expansionMode: 'bms-battery-tree' as const,
-      allowedBatteryIds: allowedBatteryIds.length > 0 ? [...allowedBatteryIds] : null,
+      ownerWidgetSelector: descriptor.selector,
+      path: `${descriptor.selfRootPath}.*`,
+      expansionMode,
+      familyKey: descriptor.familyKey,
+      allowedIds: allowedIds.length > 0 ? [...allowedIds] : null,
       context: null,
       source: 'default',
       timeScale: this.normalizeString(cfg?.timeScale),
@@ -286,101 +308,77 @@ export class DashboardHistorySeriesSyncService {
       sampleTime: null,
       enabled: true,
     };
-
-    return [templateSeries];
   }
 
-  private mapSolarWidget(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipTemplateSeriesDefinition[] {
-    const allowedSolarIds = this.resolveSolarAllowedIds(cfg);
-    void widgetType;
-
-    const templateSeries: IKipTemplateSeriesDefinition = {
-      seriesId: `${widgetUuid}:solar-template`,
-      datasetUuid: `${widgetUuid}:solar-template`,
-      ownerWidgetUuid: widgetUuid,
-      ownerWidgetSelector: 'widget-solar-charger' as const,
-      path: 'self.electrical.solar.*',
-      expansionMode: 'solar-tree' as const,
-      allowedSolarIds: allowedSolarIds.length > 0 ? [...allowedSolarIds] : null,
-      context: null,
-      source: 'default',
-      timeScale: this.normalizeString(cfg?.timeScale),
-      period: this.normalizeNumber(cfg?.period),
-      retentionDurationMs: this.AUTO_RETENTION_MS,
-      sampleTime: null,
-      enabled: true,
-    };
-
-    return [templateSeries];
-  }
-
-  private resolveBmsAllowedBatteryIds(cfg: IWidgetSvcConfig | undefined): string[] {
-    const bmsCfg = cfg?.bms as IBmsConfigLike | undefined;
-    if (!bmsCfg) {
+  private resolveElectricalAllowedIds(cfg: IWidgetSvcConfig | undefined, familyKey: ElectricalFamilyKey): string[] {
+    const familyCfg = this.resolveFamilyConfig(cfg, familyKey);
+    if (!familyCfg) {
       return [];
     }
 
-    const tracked = Array.isArray(bmsCfg.trackedBatteryIds) ? bmsCfg.trackedBatteryIds : [];
-    // Rule: when tracked list is empty, plugin should track all discovered batteries.
+    const tracked = this.resolveTrackedIds(familyCfg.trackedIds);
+
     if (tracked.length === 0) {
       return [];
     }
 
+    const trackedSet = new Set<string>();
     const ids = new Set<string>();
+    this.collectStringIdsIntoSet(trackedSet, tracked);
+    this.collectStringIdsIntoSet(ids, tracked);
 
-    tracked.forEach(id => {
-      if (typeof id !== 'string') {
+    const groups = Array.isArray(familyCfg.groups) ? familyCfg.groups as IBmsBankLike[] : [];
+    groups.forEach(group => {
+      this.collectStringIdsIntoSet(ids, group.memberIds, trackedSet);
+      this.collectStringIdsIntoSet(ids, group.batteryIds, trackedSet);
+    });
+
+    const banks = Array.isArray(familyCfg.banks) ? familyCfg.banks as IBmsBankLike[] : [];
+    banks.forEach(bank => {
+      this.collectStringIdsIntoSet(ids, bank.memberIds, trackedSet);
+      this.collectStringIdsIntoSet(ids, bank.batteryIds, trackedSet);
+    });
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }
+
+  private resolveFamilyConfig(cfg: IWidgetSvcConfig | undefined, familyKey: ElectricalFamilyKey): IFamilyConfigLike | null {
+    if (!cfg) {
+      return null;
+    }
+
+    const record = cfg as Record<string, unknown>;
+    const familyProperty = record[FAMILY_CONFIG_PROPERTY[familyKey]];
+
+    if (familyProperty && typeof familyProperty === 'object') {
+      return familyProperty as IFamilyConfigLike;
+    }
+
+    return null;
+  }
+
+  private resolveTrackedIds(preferred: unknown): unknown[] {
+    return Array.isArray(preferred) ? preferred : [];
+  }
+
+  private collectStringIdsIntoSet(target: Set<string>, input: unknown, allowedIds?: ReadonlySet<string>): void {
+    if (!Array.isArray(input)) {
+      return;
+    }
+
+    input.forEach(value => {
+      if (typeof value !== 'string') {
         return;
       }
 
-      const normalized = id.trim();
+      const normalized = value.trim();
       if (normalized.length > 0) {
-        ids.add(normalized);
-      }
-    });
-
-    const banks = Array.isArray(bmsCfg.banks) ? bmsCfg.banks as IBmsBankLike[] : [];
-    banks.forEach(bank => {
-      const batteryIds = Array.isArray(bank?.batteryIds) ? bank.batteryIds : [];
-      batteryIds.forEach(id => {
-        if (typeof id !== 'string') {
+        if (allowedIds && !allowedIds.has(normalized)) {
           return;
         }
-
-        const normalized = id.trim();
-        if (normalized.length > 0) {
-          ids.add(normalized);
-        }
-      });
-    });
-
-    return [...ids].sort((left, right) => left.localeCompare(right));
-  }
-
-  private resolveSolarAllowedIds(cfg: IWidgetSvcConfig | undefined): string[] {
-    const solarCfg = cfg?.solarCharger as ISolarConfigLike | undefined;
-    if (!solarCfg) {
-      return [];
-    }
-
-    const tracked = Array.isArray(solarCfg.trackedSolarIds) ? solarCfg.trackedSolarIds : [];
-    if (tracked.length === 0) {
-      return [];
-    }
-
-    const ids = new Set<string>();
-    tracked.forEach(id => {
-      if (typeof id !== 'string') {
-        return;
-      }
-
-      const normalized = id.trim();
-      if (normalized.length > 0) {
-        ids.add(normalized);
+        target.add(normalized);
       }
     });
-
-    return [...ids].sort((left, right) => left.localeCompare(right));
   }
 
   private mapAutomaticHistorySeries(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipConcreteSeriesDefinition[] {
@@ -484,8 +482,8 @@ export class DashboardHistorySeriesSyncService {
       ownerWidgetSelector: s.ownerWidgetSelector,
       path: s.path,
       expansionMode: s.expansionMode ?? null,
-      allowedBatteryIds: Array.isArray(s.allowedBatteryIds) ? [...s.allowedBatteryIds].sort() : null,
-      allowedSolarIds: Array.isArray(s.allowedSolarIds) ? [...s.allowedSolarIds].sort() : null,
+      familyKey: s.familyKey ?? null,
+      allowedIds: Array.isArray(s.allowedIds) ? [...s.allowedIds].sort() : null,
       context: s.context ?? null,
       source: s.source ?? null,
       timeScale: s.timeScale ?? null,

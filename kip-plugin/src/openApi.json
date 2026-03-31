@@ -217,21 +217,18 @@
                 "nullable": true,
                 "description": "Null for concrete series definitions."
               },
-              "allowedBatteryIds": {
-                "type": "array",
+              "familyKey": {
+                "type": "string",
                 "nullable": true,
-                "items": {
-                  "type": "string"
-                },
-                "description": "Concrete series do not use battery filters and should leave this null."
+                "description": "Concrete series do not use family key and should leave this null."
               },
-              "allowedSolarIds": {
+              "allowedIds": {
                 "type": "array",
                 "nullable": true,
                 "items": {
                   "type": "string"
                 },
-                "description": "Concrete series do not use solar charger filters and should leave this null."
+                "description": "Concrete series do not use template filters and should leave this null."
               }
             }
           }
@@ -249,34 +246,48 @@
                 "type": "string",
                 "enum": [
                   "widget-bms",
-                  "widget-solar-charger"
+                  "widget-solar-charger",
+                  "widget-charger",
+                  "widget-inverter",
+                  "widget-alternator",
+                  "widget-ac"
                 ]
               },
               "expansionMode": {
                 "type": "string",
                 "enum": [
                   "bms-battery-tree",
-                  "solar-tree"
+                  "solar-tree",
+                  "charger-tree",
+                  "inverter-tree",
+                  "alternator-tree",
+                  "ac-tree"
                 ]
               },
-              "allowedBatteryIds": {
-                "type": "array",
-                "nullable": true,
-                "items": {
-                  "type": "string"
-                }
+              "familyKey": {
+                "type": "string",
+                "enum": [
+                  "batteries",
+                  "solar",
+                  "chargers",
+                  "inverters",
+                  "alternators",
+                  "ac"
+                ]
               },
-              "allowedSolarIds": {
+              "allowedIds": {
                 "type": "array",
                 "nullable": true,
                 "items": {
                   "type": "string"
-                }
+                },
+                "description": "Template device IDs to include. Null or empty includes all discovered devices."
               }
             },
             "required": [
               "ownerWidgetSelector",
-              "expansionMode"
+              "expansionMode",
+              "familyKey"
             ]
           }
         ]

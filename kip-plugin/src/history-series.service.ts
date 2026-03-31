@@ -1,6 +1,10 @@
 import {
+  IElectricalTemplateSeriesDefinition,
+  isKipElectricalTemplateSeriesDefinition,
   isKipBmsTemplateSeriesDefinition,
   IKipSeriesDefinition,
+  TElectricalExpansionMode,
+  TElectricalFamilyKey,
   isKipConcreteSeriesDefinition,
   isKipSeriesEnabled,
   isKipSolarTemplateSeriesDefinition,
@@ -10,7 +14,14 @@ import {
 
 export type ISeriesDefinition = IKipSeriesDefinition;
 export type { THistoryMethod };
-export { isKipBmsTemplateSeriesDefinition, isKipConcreteSeriesDefinition, isKipSeriesEnabled, isKipSolarTemplateSeriesDefinition, isKipTemplateSeriesDefinition };
+export {
+  isKipBmsTemplateSeriesDefinition,
+  isKipConcreteSeriesDefinition,
+  isKipElectricalTemplateSeriesDefinition,
+  isKipSeriesEnabled,
+  isKipSolarTemplateSeriesDefinition,
+  isKipTemplateSeriesDefinition
+};
 
 export interface IRecordedSeriesSample {
   seriesId: string;
@@ -410,8 +421,8 @@ export class HistorySeriesService {
       && leftComparable.ownerWidgetSelector === rightComparable.ownerWidgetSelector
       && leftComparable.path === rightComparable.path
       && leftComparable.expansionMode === rightComparable.expansionMode
-      && this.areStringArraysEquivalent(leftComparable.allowedBatteryIds, rightComparable.allowedBatteryIds)
-      && this.areStringArraysEquivalent(leftComparable.allowedSolarIds, rightComparable.allowedSolarIds)
+      && leftComparable.familyKey === rightComparable.familyKey
+      && this.areStringArraysEquivalent(leftComparable.allowedIds, rightComparable.allowedIds)
       && leftComparable.source === rightComparable.source
       && leftComparable.context === rightComparable.context
       && leftComparable.timeScale === rightComparable.timeScale
@@ -427,8 +438,7 @@ export class HistorySeriesService {
     void reconcileTs;
     return {
       ...comparable,
-      allowedBatteryIds: this.normalizeComparableStringArray(comparable.allowedBatteryIds),
-      allowedSolarIds: this.normalizeComparableStringArray(comparable.allowedSolarIds),
+      allowedIds: this.normalizeComparableStringArray(comparable.allowedIds),
       methods: this.normalizeComparableStringArray(comparable.methods)
     };
   }
@@ -486,19 +496,31 @@ export class HistorySeriesService {
 
     const ownerWidgetSelector = typeof input.ownerWidgetSelector === 'string' ? input.ownerWidgetSelector.trim() : null;
     const expansionMode = input.expansionMode ?? null;
-    if (expansionMode === 'bms-battery-tree' && ownerWidgetSelector !== 'widget-bms') {
-      throw new Error('BMS template series must use ownerWidgetSelector "widget-bms"');
-    }
-    if (expansionMode === 'solar-tree' && ownerWidgetSelector !== 'widget-solar-charger') {
-      throw new Error('Solar template series must use ownerWidgetSelector "widget-solar-charger"');
+    const familyKey = expansionMode ? this.expansionModeToFamilyKey(expansionMode) : null;
+    let normalizedTemplateSelector: IElectricalTemplateSeriesDefinition['ownerWidgetSelector'] | null = null;
+
+    if (expansionMode) {
+      const selectorByMode: Record<TElectricalExpansionMode, IElectricalTemplateSeriesDefinition['ownerWidgetSelector']> = {
+        'bms-battery-tree': 'widget-bms',
+        'solar-tree': 'widget-solar-charger',
+        'charger-tree': 'widget-charger',
+        'inverter-tree': 'widget-inverter',
+        'alternator-tree': 'widget-alternator',
+        'ac-tree': 'widget-ac'
+      };
+
+      const requiredSelector = selectorByMode[expansionMode];
+      if (ownerWidgetSelector !== requiredSelector) {
+        throw new Error(`Template series mode "${expansionMode}" must use ownerWidgetSelector "${requiredSelector}"`);
+      }
+
+      normalizedTemplateSelector = requiredSelector;
     }
 
     const normalizedMethods = this.normalizeComparableStringArray(input.methods);
-    const normalizedAllowedBatteryIds = expansionMode === 'bms-battery-tree'
-      ? this.normalizeComparableStringArray(input.allowedBatteryIds)
-      : undefined;
-    const normalizedAllowedSolarIds = expansionMode === 'solar-tree'
-      ? this.normalizeComparableStringArray(input.allowedSolarIds)
+
+    const normalizedAllowedIds = expansionMode
+      ? this.normalizeComparableStringArray(input.allowedIds)
       : undefined;
 
     const isDataWidget = this.isChartWidget(ownerWidgetSelector, ownerWidgetUuid);
@@ -521,6 +543,7 @@ export class HistorySeriesService {
       ownerWidgetUuid,
       ownerWidgetSelector,
       path,
+      familyKey,
       source: input.source ?? 'default',
       context: input.context ?? 'vessels.self',
       timeScale: input.timeScale ?? null,
@@ -532,25 +555,13 @@ export class HistorySeriesService {
       reconcileTs: input.reconcileTs
     };
 
-    if (expansionMode === 'bms-battery-tree') {
+    if (expansionMode) {
       const templateSeries: ISeriesDefinition = {
         ...normalizedBase,
-        ownerWidgetSelector: 'widget-bms',
+        ownerWidgetSelector: normalizedTemplateSelector,
         expansionMode,
-        allowedBatteryIds: normalizedAllowedBatteryIds ?? null,
-        allowedSolarIds: null
-      };
-
-      return templateSeries;
-    }
-
-    if (expansionMode === 'solar-tree') {
-      const templateSeries: ISeriesDefinition = {
-        ...normalizedBase,
-        ownerWidgetSelector: 'widget-solar-charger',
-        expansionMode,
-        allowedBatteryIds: null,
-        allowedSolarIds: normalizedAllowedSolarIds ?? null
+        familyKey,
+        allowedIds: normalizedAllowedIds ?? null
       };
 
       return templateSeries;
@@ -559,11 +570,30 @@ export class HistorySeriesService {
     const concreteSeries: ISeriesDefinition = {
       ...normalizedBase,
       expansionMode: null,
-      allowedBatteryIds: null,
-      allowedSolarIds: null
+      familyKey: null,
+      allowedIds: null
     };
 
     return concreteSeries;
+  }
+
+  private expansionModeToFamilyKey(mode: TElectricalExpansionMode): TElectricalFamilyKey {
+    switch (mode) {
+      case 'bms-battery-tree':
+        return 'batteries';
+      case 'solar-tree':
+        return 'solar';
+      case 'charger-tree':
+        return 'chargers';
+      case 'inverter-tree':
+        return 'inverters';
+      case 'alternator-tree':
+        return 'alternators';
+      case 'ac-tree':
+        return 'ac';
+      default:
+        throw new Error(`Unsupported expansion mode: ${String(mode)}`);
+    }
   }
 
   private resolveRetentionMs(series: ISeriesDefinition): number {
