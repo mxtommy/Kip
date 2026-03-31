@@ -37,7 +37,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   };
 
   private static readonly VIEWBOX_WIDTH = 200;
-  private static readonly CARD_HEIGHT = 92;
+  private static readonly CARD_HEIGHT = 110;
   private static readonly CARD_GAP = 8;
   private static readonly SOLAR_PANEL_X = 135;
   private static readonly SOLAR_PANEL_Y = 0;
@@ -158,6 +158,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       const relaySectionText = relaySectionVisible
         ? `${this.formatRelayState(solar.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(solar.loadCurrent)}`.trim()
         : '';
+      const yieldText = `Yield Today ${this.formatEnergy(solar.yieldToday)}, Yesterday ${this.formatEnergy(solar.yieldYesterday)}`;
 
       models[solar.id] = {
         id: solar.id,
@@ -172,6 +173,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         panelValuesGlowEnabled,
         gaugeProgress: progress,
         gaugeSectionText: `${this.formatVoltage(solar.panelVoltage)}` + (solar.panelCurrent != null ? `, ${this.formatCurrent(solar.panelCurrent)}` : '') + (solar.panelTemperature != null ? `, ${this.formatTemperature(solar.panelTemperature)}` : ''),
+        yieldText,
         chargerSectionCurrent: `${this.formatCurrent(solar.current)}`,
         chargerMode: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
         chargerSectionMetadata: `${solar.voltage != null ? this.formatVoltage(solar.voltage) : ''}\u00A0\u00A0\u00A0\u00A0${solar.temperature != null ? this.formatTemperature(solar.temperature) : ''}`.trim(),
@@ -431,6 +433,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         charger.panelPowerState = state;
         return true;
       }
+      case 'yieldToday': return this.setValue(charger, 'yieldToday', this.toNumber(value, 'kWh'));
+      case 'yieldYesterday': return this.setValue(charger, 'yieldYesterday', this.toNumber(value, 'kWh'));
       case 'panelTemperature': {
         const nextValue = this.toNumber(value, this.units.getDefaults().Temperature);
         const stateChanged = !Object.is(charger.panelTemperatureState ?? null, state ?? null);
@@ -534,6 +538,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'solar-charger-meta');
     enter.append('text').attr('class', 'solar-relay-label');
     enter.append('text').attr('class', 'solar-relay-values');
+    enter.append('text').attr('class', 'solar-yield');
 
     const solarPanelIconEnter = enter.append('g').attr('class', 'solar-panel-icon');
 
@@ -626,7 +631,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .text(item => item.model.relaySectionText);
 
     merged.select('g.solar-panel-icon')
-      .attr('transform', 'translate(-3, 25) scale(0.63)');
+      .attr('transform', 'translate(-13, 21) scale(0.63)');
 
     merged.select('use.solar-panel-bg')
       .attr('color', 'var(--kip-contrast-dimmer-color)');
@@ -671,6 +676,15 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('filter', item => item.model.panelValuesGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .attr('fill', item => item.model.panelValuesTextColor)
       .text(item => item.model.gaugeSectionText);
+
+    merged.select('text.solar-yield')
+      .attr('x', 134)
+      .attr('y', 101)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 6)
+      .attr('opacity', 0.85)
+      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .text(item => item.model.yieldText);
 
     selection.exit().remove();
   }
@@ -737,6 +751,12 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       return { value: (value / 1000).toFixed(2), unit: 'kW' };
     }
     return { value: value.toFixed(0), unit: 'W' };
+  }
+
+  private formatEnergy(value: number | null | undefined): string {
+    if (value === null) return '--';
+    if (value === undefined) return '';
+    return `${value.toFixed(2)} kWh`;
   }
 
   private resolveMostSevereState(...states: (TState | null | undefined)[]): TState | null {
