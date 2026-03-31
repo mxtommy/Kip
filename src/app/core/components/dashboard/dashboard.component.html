@@ -11,7 +11,16 @@
 >
 </gridstack>
 @if (gridIsEmpty()) {
-  <div class="dashboard-empty-state-container">
+  <div
+    class="dashboard-empty-state-container"
+    kipGestures
+    [mode]="dashboardStatic === true ? 'dashboard' : 'editor'"
+    [enablePress]="dashboardStatic === false"
+    [enableDoubleTap]="false"
+    (swipeup)="previousDashboard()"
+    (swipedown)="nextDashboard()"
+    (press)="addNewWidget($event)"
+  >
     <div class="dashboard-empty-state-action">
       <mat-icon class="empty-state-icon">dashboard</mat-icon>
       @if (!dashboardStatic) {

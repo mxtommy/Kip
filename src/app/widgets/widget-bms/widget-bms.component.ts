@@ -70,12 +70,12 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  private static readonly VIEWBOX_WIDTH = 200;
+  private static readonly VIEWBOX_WIDTH = 180;
   private static readonly MIN_VIEWBOX_HEIGHT = 1;
-  private static readonly BANK_CARD_WIDTH = 200;
+  private static readonly BANK_CARD_WIDTH = 180;
   private static readonly BATTERY_CARD_HEIGHT = 50;
-  private static readonly BATTERY_CARD_WIDTH = 195;
-  private static readonly CARD_GAP = 8;
+  private static readonly BATTERY_CARD_WIDTH = 175;
+  private static readonly CARD_GAP = 0;
   private static readonly BANK_HEADER_HEIGHT = 60;
   private static readonly BANK_MIN_HEIGHT = 75;
   private static readonly IN_BANK_COLUMNS = 2;
