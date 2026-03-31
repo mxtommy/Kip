@@ -70,20 +70,20 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  private static readonly VIEWBOX_WIDTH = 180;
+  private static readonly VIEWBOX_WIDTH = 200;
   private static readonly MIN_VIEWBOX_HEIGHT = 1;
-  private static readonly BANK_CARD_WIDTH = 180;
+  private static readonly BANK_CARD_WIDTH = 200;
   private static readonly BATTERY_CARD_HEIGHT = 50;
-  private static readonly BATTERY_CARD_WIDTH = 175;
-  private static readonly CARD_GAP = 0;
-  private static readonly BANK_HEADER_HEIGHT = 60;
+  private static readonly BATTERY_CARD_WIDTH = 195;
+  private static readonly CARD_GAP = 8;
+  private static readonly BANK_HEADER_HEIGHT = 80;
   private static readonly BANK_MIN_HEIGHT = 75;
   private static readonly IN_BANK_COLUMNS = 2;
   private static readonly IN_BANK_COLUMN_GAP = 5;
   private static readonly IN_BANK_PADDING_X = 5;
-  private static readonly BANK_GAUGE_RADIUS = 38;
-  private static readonly BANK_GAUGE_BG_STROKE = 8;
-  private static readonly BANK_GAUGE_VALUE_STROKE = 8;
+  private static readonly BANK_GAUGE_RADIUS = 45;
+  private static readonly BANK_GAUGE_BG_STROKE = 10;
+  private static readonly BANK_GAUGE_VALUE_STROKE = 10;
   private static readonly PATH_BATCH_WINDOW_MS = 500;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -664,7 +664,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .text(item => item.displayModel.powerText);
 
     bankMerged.select('g.bank-gauge')
-      .attr('transform', 'translate(150, 46)');
+      .attr('transform', 'translate(143, 60)');
     bankMerged.select('path.bank-gauge-bg')
       .attr('d', this.bankGaugeBackgroundPath)
       .attr('fill', 'none')
@@ -686,15 +686,15 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('font-weight', 700)
       .text(item => item.displayModel.socText);
     bankMerged.select('text.bank-remaining')
-      .attr('x', 150)
-      .attr('y', 22)
+      .attr('x', 143)
+      .attr('y', 37)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
       .text(item => item.displayModel.remainingText);
     bankMerged.select('text.bank-actualCapacity')
-      .attr('x', 150)
-      .attr('y', 53)
+      .attr('x', 143)
+      .attr('y', 68)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
@@ -868,7 +868,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   ): void {
     selection.attr('transform', item => `translate(${item.x},${item.y}) scale(${item.scale})`);
     selection.select('rect.bms-battery')
-      .attr('width', WidgetBmsComponent.BATTERY_CARD_WIDTH)
+      .attr('width', item => item.compact ? WidgetBmsComponent.BATTERY_CARD_WIDTH - WidgetBmsComponent.CARD_GAP : WidgetBmsComponent.BATTERY_CARD_WIDTH)
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT)
       .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', 'var(--kip-contrast-dimmer-color)')

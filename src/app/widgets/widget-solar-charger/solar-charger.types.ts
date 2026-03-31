@@ -27,6 +27,8 @@ export interface SolarChargerSnapshot {
   panelPower?: number | null;
   panelPowerState?: TState | null;
   rawPanelPower?: number | null;
+  yieldToday?: number | null;
+  yieldYesterday?: number | null;
   panelTemperature?: number | null;
   panelTemperatureState?: TState | null;
   load?: string | number | boolean | null;
@@ -47,6 +49,7 @@ export interface SolarChargerDisplayModel {
   panelValuesGlowEnabled: boolean;
   gaugeProgress: number;
   gaugeSectionText: string;
+  yieldText: string;
   chargerMode: string;
   chargerSectionCurrent: string;
   chargerSectionMetadata: string;
