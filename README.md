@@ -141,7 +141,7 @@ Grafana integration with other widgets
 ![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
 
 ## Historical Data
-Experience effortless insight into your vessel’s past with KIP’s Widget Historical Charts—automatically track, store, and visualize key data, unlocking instant access charts showing up to the last full day of performance. Whether you’re sailing or docked, simply tap or right-click widgets to reveal a seamless history dialog—no setup, no clutter, just the trends you need. With full support for Data Driven widgets, live-to-history transitions, KIP puts your boat’s story at your fingertips—so you can make smarter decisions, spot patterns, and sail with confidence.
+Experience effortless insight into your vessel’s past with KIP’s Widget Historical Charts—automatically track, store, and visualize key data, unlocking instant access charts showing up to the last full day of performance. Whether you’re sailing or docked, simply two-finger tap or right-click widgets to reveal a seamless history dialog—no setup, no clutter, just the trends you need. When combining data visualisation using Data Driven widgets, live-to-history transitions, KIP puts your boat’s story at your fingertips—so you can make smarter decisions, spot patterns, and sail with confidence.
 
 ## Night Modes
 Keep your night vision with automatic or manual day and night switching to a color preserving dim mode or an all Red theme. The images below look very dark, but at night... they are perfect!
