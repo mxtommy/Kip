@@ -693,6 +693,65 @@ describe('DashboardHistorySeriesSyncService', () => {
       expect(series[0].allowedIds).toEqual(['port-array', 'starboard-array']);
     });
 
+  it('resolves template mappings for all new electrical families', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widgets: IWidget[] = [
+      {
+        uuid: 'widget-charger-1',
+        type: 'widget-charger',
+        config: { charger: { trackedIds: ['dc-a', 'dc-b'], groups: [], optionsById: {} } }
+      },
+      {
+        uuid: 'widget-inverter-1',
+        type: 'widget-inverter',
+        config: { inverter: { trackedIds: ['inv-a'], groups: [], optionsById: {} } }
+      },
+      {
+        uuid: 'widget-alternator-1',
+        type: 'widget-alternator',
+        config: { alternator: { trackedIds: ['alt-a'], groups: [], optionsById: {} } }
+      },
+      {
+        uuid: 'widget-ac-1',
+        type: 'widget-ac',
+        config: { ac: { trackedIds: ['ac-main'], groups: [], optionsById: {} } }
+      }
+    ];
+
+    const resolved = widgets.flatMap(widget => service.resolveSeriesForWidget(widget));
+
+    expect(seriesIds(resolved)).toEqual([
+      'widget-ac-1:ac-template',
+      'widget-alternator-1:alternators-template',
+      'widget-charger-1:chargers-template',
+      'widget-inverter-1:inverters-template'
+    ]);
+
+    expect(resolved.find(item => item.seriesId === 'widget-charger-1:chargers-template')).toMatchObject({
+      expansionMode: 'charger-tree',
+      familyKey: 'chargers',
+      allowedIds: ['dc-a', 'dc-b']
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-inverter-1:inverters-template')).toMatchObject({
+      expansionMode: 'inverter-tree',
+      familyKey: 'inverters',
+      allowedIds: ['inv-a']
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-alternator-1:alternators-template')).toMatchObject({
+      expansionMode: 'alternator-tree',
+      familyKey: 'alternators',
+      allowedIds: ['alt-a']
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-ac-1:ac-template')).toMatchObject({
+      expansionMode: 'ac-tree',
+      familyKey: 'ac',
+      allowedIds: ['ac-main']
+    });
+  });
+
   it('uses all discovered solar units when trackedIds is empty', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {

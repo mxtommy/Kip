@@ -15,12 +15,12 @@ This document captures the agreed plan for implementing the BMS widget, Solar wi
 - [x] Step 7: Full config UI normalization and card/embed contract consolidation for all electrical families.
 - [x] Step 8: Slice 1 acceptance pass (full targeted tests + validation checklist sign-off).
 
-### Slice 2: New Widgets (not started)
+### Slice 2: New Widgets (in progress)
 
-- [ ] Chargers widget implementation.
-- [ ] Inverters widget implementation.
-- [ ] Alternators widget implementation.
-- [ ] AC widget implementation (bus + branch/leg v1 detail).
+- [x] Chargers widget implementation.
+- [x] Inverters widget implementation.
+- [x] Alternators widget implementation.
+- [x] AC widget implementation (bus + branch/leg v1 detail).
 
 ## Step 1: BMS Widget
 

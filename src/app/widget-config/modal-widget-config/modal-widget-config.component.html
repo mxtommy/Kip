@@ -887,6 +887,34 @@
           <solar-charger-setup formGroupName="solarCharger" class="tab-content" />
         </mat-tab>
       }
+      @if (widgetConfig?.charger) {
+      <mat-tab label="Chargers">
+        <electrical-family-setup formGroupName="charger" class="tab-content" setupLabel="Charger"
+          discoveryId="electrical-chargers" discoveryPattern="self.electrical.chargers.*"
+          familyRegex="self\\.electrical\\.chargers\\.([^.]+)\\." pathPrefix="electrical.chargers." />
+      </mat-tab>
+      }
+      @if (widgetConfig?.inverter) {
+      <mat-tab label="Inverters">
+        <electrical-family-setup formGroupName="inverter" class="tab-content" setupLabel="Inverter"
+          discoveryId="electrical-inverters" discoveryPattern="self.electrical.inverters.*"
+          familyRegex="self\\.electrical\\.inverters\\.([^.]+)\\." pathPrefix="electrical.inverters." />
+      </mat-tab>
+      }
+      @if (widgetConfig?.alternator) {
+      <mat-tab label="Alternators">
+        <electrical-family-setup formGroupName="alternator" class="tab-content" setupLabel="Alternator"
+          discoveryId="electrical-alternators" discoveryPattern="self.electrical.alternators.*"
+          familyRegex="self\\.electrical\\.alternators\\.([^.]+)\\." pathPrefix="electrical.alternators." />
+      </mat-tab>
+      }
+      @if (widgetConfig?.ac) {
+      <mat-tab label="AC">
+        <electrical-family-setup formGroupName="ac" class="tab-content" setupLabel="AC" discoveryId="electrical-ac"
+          discoveryPattern="self.electrical.ac.*" familyRegex="self\\.electrical\\.ac\\.([^.]+)\\."
+          pathPrefix="electrical.ac." />
+      </mat-tab>
+      }
     </mat-tab-group>
   </mat-dialog-content>
   <mat-divider></mat-divider>

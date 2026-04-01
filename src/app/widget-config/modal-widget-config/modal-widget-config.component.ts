@@ -24,13 +24,14 @@ import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.c
 import { BmsBankSetupComponent } from '../bms-bank-setup/bms-bank-setup.component';
 import { AisTargetOptionsComponent } from '../ais-target-options/ais-target-options.component';
 import { SolarChargerSetupComponent } from '../solar-charger-setup/solar-charger-setup.component';
+import { ElectricalFamilySetupComponent } from '../electrical-family-setup/electrical-family-setup.component';
 import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'modal-widget-config',
   templateUrl: './modal-widget-config.component.html',
   styleUrls: ['./modal-widget-config.component.scss'],
-  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent, SolarChargerSetupComponent]
+  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent, SolarChargerSetupComponent, ElectricalFamilySetupComponent]
 })
 export class ModalWidgetConfigComponent implements OnInit {
   // Property name constants to avoid magic strings

@@ -32,6 +32,10 @@ import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
 import { WidgetSolarChargerComponent } from '../../widgets/widget-solar-charger/widget-solar-charger.component';
+import { WidgetChargerComponent } from '../../widgets/widget-charger/widget-charger.component';
+import { WidgetInverterComponent } from '../../widgets/widget-inverter/widget-inverter.component';
+import { WidgetAlternatorComponent } from '../../widgets/widget-alternator/widget-alternator.component';
+import { WidgetAcComponent } from '../../widgets/widget-ac/widget-ac.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -168,7 +172,11 @@ export class WidgetService {
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent,
     WidgetBmsComponent: WidgetBmsComponent,
-    WidgetSolarChargerComponent: WidgetSolarChargerComponent
+    WidgetSolarChargerComponent: WidgetSolarChargerComponent,
+    WidgetChargerComponent: WidgetChargerComponent,
+    WidgetInverterComponent: WidgetInverterComponent,
+    WidgetAlternatorComponent: WidgetAlternatorComponent,
+    WidgetAcComponent: WidgetAcComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -391,6 +399,58 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-solar-charger',
       componentClassName: 'WidgetSolarChargerComponent'
+    },
+    {
+      name: 'Charger',
+      description: 'Monitor DC chargers with per-device voltage, current, power, and temperature values plus grouped device selection.',
+      icon: 'battery_charging',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-charger',
+      componentClassName: 'WidgetChargerComponent'
+    },
+    {
+      name: 'Inverter',
+      description: 'View inverter telemetry and grouped unit status with live electrical metrics from the vessel inverters branch.',
+      icon: 'power',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-inverter',
+      componentClassName: 'WidgetInverterComponent'
+    },
+    {
+      name: 'Alternator',
+      description: 'Track alternator output and bus assignment with grouped selection and quick per-device operating values.',
+      icon: 'sync',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-alternator',
+      componentClassName: 'WidgetAlternatorComponent'
+    },
+    {
+      name: 'AC Monitor',
+      description: 'Display AC bus and line-level voltage, current, and frequency metrics with optional grouped filtering.',
+      icon: 'bolt',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-ac',
+      componentClassName: 'WidgetAcComponent'
     },
     {
       name: 'Classic Steel',

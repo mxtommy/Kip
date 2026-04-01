@@ -1,0 +1,58 @@
+<div class="electrical-family-widget">
+  <header class="header-row">
+    <h3>{{ title() }}</h3>
+    <span class="count-pill">{{ visibleUnits().length }}</span>
+  </header>
+
+  @if (!hasUnits()) {
+    <div class="empty-state">No {{ title().toLowerCase() }} discovered yet.</div>
+  }
+
+  @for (unit of visibleUnits(); track unit.id) {
+    <article class="unit-card" [style.border-left-color]="resolveStateColor(unit.state)">
+      <div class="card-header">
+        <div>
+          <h4>{{ unit.name || unit.id }}</h4>
+          <p>{{ unit.associatedBus || unit.location || 'No associated bus' }}</p>
+        </div>
+        <span class="unit-id">{{ unit.id }}</span>
+      </div>
+
+      <div class="metrics-grid">
+        <div>
+          <span class="metric-label">Voltage</span>
+          <strong>{{ asVoltage(unit.voltage) }}</strong>
+        </div>
+        <div>
+          <span class="metric-label">Current</span>
+          <strong>{{ asCurrent(unit.current) }}</strong>
+        </div>
+        <div>
+          <span class="metric-label">Power</span>
+          <strong>{{ asPower(unit.power) }}</strong>
+        </div>
+        <div>
+          <span class="metric-label">Temp</span>
+          <strong>{{ asTemperature(unit.temperature) }}</strong>
+        </div>
+      </div>
+
+      @if (familyKey() === 'ac') {
+        <div class="ac-lines-grid">
+          <div>
+            <span class="metric-label">L1</span>
+            <span>{{ asVoltage(unit.line1Voltage) }} / {{ asCurrent(unit.line1Current) }} / {{ asFrequency(unit.line1Frequency) }}</span>
+          </div>
+          <div>
+            <span class="metric-label">L2</span>
+            <span>{{ asVoltage(unit.line2Voltage) }} / {{ asCurrent(unit.line2Current) }} / {{ asFrequency(unit.line2Frequency) }}</span>
+          </div>
+          <div>
+            <span class="metric-label">L3</span>
+            <span>{{ asVoltage(unit.line3Voltage) }} / {{ asCurrent(unit.line3Current) }} / {{ asFrequency(unit.line3Frequency) }}</span>
+          </div>
+        </div>
+      }
+    </article>
+  }
+</div>

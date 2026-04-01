@@ -162,6 +162,18 @@ export interface IWidgetSvcConfig {
   /** Solar charger widget configuration */
   solarCharger?: SolarWidgetConfig;
 
+  /** Charger widget configuration */
+  charger?: ElectricalFamilyConfig;
+
+  /** Inverter widget configuration */
+  inverter?: ElectricalFamilyConfig;
+
+  /** Alternator widget configuration */
+  alternator?: ElectricalFamilyConfig;
+
+  /** AC widget configuration */
+  ac?: ElectricalFamilyConfig;
+
   /** Color from KIP selection tool to use as main display color */
   color?: string;
   /** Color from KIP selection tool to use as background color */
