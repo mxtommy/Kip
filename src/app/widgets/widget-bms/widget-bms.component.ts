@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, NgZone, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
@@ -16,6 +16,8 @@ import type {
   BmsBatterySnapshot
 } from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import { ELECTRICAL_DIRECT_CARD_HEIGHT } from '../shared/electrical-card-layout.constants';
 
 interface BmsRenderBank extends BmsBankSummary {
   displayModel: BmsBankDisplayModel;
@@ -57,6 +59,9 @@ interface BmsRenderSnapshot {
   imports: [MatIconModule]
 })
 export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
+  private static readonly BMS_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-bms');
+  private static readonly ROOT_PATTERN = `${WidgetBmsComponent.BMS_DESCRIPTOR?.selfRootPath ?? 'self.electrical.batteries'}.*`;
+
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -79,6 +84,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private static readonly CARD_GAP = 8;
   private static readonly BANK_HEADER_HEIGHT = 80;
   private static readonly BANK_MIN_HEIGHT = 75;
+  private static readonly SINGLE_ROW_BANK_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly IN_BANK_COLUMNS = 2;
   private static readonly IN_BANK_COLUMN_GAP = 5;
   private static readonly IN_BANK_PADDING_X = 5;
@@ -92,7 +98,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private readonly units = inject(UnitsService);
   private readonly iconRegistry = inject(MatIconRegistry);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly ngZone = inject(NgZone);
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('bmsSvg');
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -251,7 +256,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    const batteryTree = this.data.subscribePathTreeWithInitial('self.electrical.batteries.*');
+    const batteryTree = this.data.subscribePathTreeWithInitial(WidgetBmsComponent.ROOT_PATTERN);
 
     if (batteryTree.initial.length) {
       for (const update of batteryTree.initial) {
@@ -687,7 +692,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       this.pendingRenderSnapshot = null;
       if (!nextSnapshot) return;
 
-      this.ngZone.runOutsideAngular(() => this.render(nextSnapshot));
+      this.render(nextSnapshot);
     });
   }
 
@@ -870,10 +875,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         ? rows * inBankRenderedHeight + (rows - 1) * WidgetBmsComponent.CARD_GAP
         : 0;
 
-      const bankHeight = Math.max(
+      const naturalBankHeight = Math.max(
         WidgetBmsComponent.BANK_MIN_HEIGHT,
         WidgetBmsComponent.BANK_HEADER_HEIGHT + batterySectionHeight + WidgetBmsComponent.CARD_GAP
       );
+      const bankHeight = rows === 1
+        ? Math.max(WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT, naturalBankHeight)
+        : naturalBankHeight;
 
       const batteryCards: BmsRenderBattery[] = assigned.map((battery, index) => {
         const column = index % WidgetBmsComponent.IN_BANK_COLUMNS;

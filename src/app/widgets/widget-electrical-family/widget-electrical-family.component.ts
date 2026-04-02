@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, NgZone, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
@@ -36,7 +36,8 @@ interface IElectricalUnitSnapshot {
   styleUrl: './widget-electrical-family.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetElectricalFamilyComponent {
+export class WidgetElectricalFamilyComponent implements OnInit, OnDestroy {
+  private static readonly PATH_BATCH_WINDOW_MS = 500;
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -48,6 +49,12 @@ export class WidgetElectricalFamilyComponent {
   private readonly data = inject(DataService);
   private readonly units = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ngZone = inject(NgZone);
+
+  // Batching: accumulate path updates and flush on a timer to avoid per-path signal churn
+  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
+  private pathBatchTimerId: ReturnType<typeof setTimeout> | null = null;
+  private initialPathPaintDone = false;
 
   protected readonly discoveredIds = signal<string[]>([]);
   protected readonly trackedIds = signal<string[]>([]);
@@ -71,17 +78,12 @@ export class WidgetElectricalFamilyComponent {
 
   protected readonly hasUnits = computed(() => this.visibleUnits().length > 0);
 
+  // Name with id fallback per family contract
+  public displayName(unit: IElectricalUnitSnapshot): string {
+    return unit.name?.trim() || unit.id;
+  }
+
   constructor() {
-    const treeSubscription = this.data.subscribePathTreeWithInitial(this.buildRootPattern());
-
-    if (treeSubscription.initial.length) {
-      treeSubscription.initial.forEach(update => this.handlePathUpdate(update));
-    }
-
-    treeSubscription.live$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(update => this.handlePathUpdate(update));
-
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg) {
@@ -90,6 +92,29 @@ export class WidgetElectricalFamilyComponent {
 
       untracked(() => this.applyConfig(cfg));
     });
+  }
+
+  ngOnInit(): void {
+    const treeSubscription = this.data.subscribePathTreeWithInitial(this.buildRootPattern());
+
+    if (treeSubscription.initial.length) {
+      for (const update of treeSubscription.initial) {
+        this.enqueuePathUpdate(update, true);
+      }
+      this.flushPendingPathUpdates();
+      this.initialPathPaintDone = true;
+    }
+
+    treeSubscription.live$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(update => this.enqueuePathUpdate(update));
+  }
+
+  ngOnDestroy(): void {
+    if (this.pathBatchTimerId !== null) {
+      clearTimeout(this.pathBatchTimerId);
+      this.pathBatchTimerId = null;
+    }
   }
 
   protected asVoltage(value: number | null | undefined): string {
@@ -206,29 +231,61 @@ export class WidgetElectricalFamilyComponent {
     return normalized.length > 0 ? normalized : null;
   }
 
-  private handlePathUpdate(update: IPathUpdateWithPath): void {
+  private enqueuePathUpdate(update: IPathUpdateWithPath, fromInitial = false): void {
     const parsed = this.parsePath(update.path);
-    if (!parsed) {
+    if (!parsed) return;
+
+    const value = update.update?.data?.value ?? null;
+    const state = update.update?.state ?? null;
+    const updateKey = `${parsed.id}::${parsed.key}`;
+    this.pendingPathUpdates.set(updateKey, { id: parsed.id, key: parsed.key, value, state });
+
+    if (fromInitial) return;
+
+    if (!this.initialPathPaintDone) {
+      this.initialPathPaintDone = true;
+      this.flushPendingPathUpdates();
       return;
     }
 
-    const value = update.update?.data?.value;
-    const state = update.update?.state ?? null;
+    if (this.pathBatchTimerId !== null) return;
+    this.pathBatchTimerId = setTimeout(() => {
+      this.pathBatchTimerId = null;
+      this.ngZone.run(() => this.flushPendingPathUpdates());
+    }, WidgetElectricalFamilyComponent.PATH_BATCH_WINDOW_MS);
+  }
 
-    this.trackDiscoveredId(parsed.id);
+  private flushPendingPathUpdates(): void {
+    if (!this.pendingPathUpdates.size) return;
+
+    const updates = Array.from(this.pendingPathUpdates.values());
+    this.pendingPathUpdates.clear();
+
+    const uniqueIds = new Set(updates.map(u => u.id));
+    uniqueIds.forEach(id => this.trackDiscoveredId(id));
+
     this.unitsById.update(current => {
-      const existing = current[parsed.id] ?? { id: parsed.id };
-      const next = { ...existing };
-      const changed = this.applyValue(next, parsed.key, value, state);
+      let next = current;
+      let changed = false;
 
-      if (!changed) {
-        return current;
+      for (const u of updates) {
+        const existing = next[u.id] ?? { id: u.id };
+        const snapshot = { ...existing };
+        const fieldChanged = this.applyValue(snapshot, u.key, u.value, u.state);
+
+        // Derive power from voltage × current when both are present (non-AC)
+        if (fieldChanged && snapshot.voltage != null && snapshot.current != null) {
+          const derived = snapshot.voltage * snapshot.current;
+          snapshot.power = Number.isFinite(derived) ? derived : null;
+        }
+
+        if (fieldChanged) {
+          next = { ...next, [u.id]: snapshot };
+          changed = true;
+        }
       }
 
-      return {
-        ...current,
-        [parsed.id]: next
-      };
+      return changed ? next : current;
     });
   }
 
@@ -256,9 +313,9 @@ export class WidgetElectricalFamilyComponent {
 
   private applyValue(snapshot: IElectricalUnitSnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
-      case 'name': return this.setValue(snapshot, 'name', this.toString(value), state);
-      case 'location': return this.setValue(snapshot, 'location', this.toString(value), state);
-      case 'associatedBus': return this.setValue(snapshot, 'associatedBus', this.toString(value), state);
+      case 'name': return this.setValue(snapshot, 'name', this.toStringValue(value), state);
+      case 'location': return this.setValue(snapshot, 'location', this.toStringValue(value), state);
+      case 'associatedBus': return this.setValue(snapshot, 'associatedBus', this.toStringValue(value), state);
       case 'voltage': return this.setValue(snapshot, 'voltage', this.toNumber(value, 'V'), state);
       case 'current': return this.setValue(snapshot, 'current', this.toNumber(value, 'A'), state);
       case 'power': return this.setValue(snapshot, 'power', this.toNumber(value, 'W'), state);
@@ -294,7 +351,7 @@ export class WidgetElectricalFamilyComponent {
     return true;
   }
 
-  private toString(value: unknown): string | null {
+  private toStringValue(value: unknown): string | null {
     return typeof value === 'string' ? value : null;
   }
 

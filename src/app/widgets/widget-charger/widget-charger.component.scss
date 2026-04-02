@@ -1,5 +1,37 @@
 :host {
   display: block;
-  width: 100%;
   height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.charger-svg {
+  height: 100%;
+  width: 100%;
+  padding: 12px;
+}
+
+.charger-empty {
+  position: absolute;
+  inset: 0;
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--mat-sys-on-surface);
+  background: color-mix(in srgb, var(--kip-widget-card-background-color) 92%, transparent);
+}
+
+.charger-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.charger-empty-sub {
+  font-size: 14px;
+  opacity: 0.8;
 }

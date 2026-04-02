@@ -1,7 +1,7 @@
-<electrical-family-widget
-  [id]="id()"
-  [type]="type()"
-  [theme]="theme()"
-  familyKey="ac"
-  configKey="ac"
-  title="AC" />
+<svg #acSvg class="ac-svg"></svg>
+
+@if (!hasBuses()) {
+  <div class="ac-empty-state">
+    <span>No AC buses found.</span>
+  </div>
+}

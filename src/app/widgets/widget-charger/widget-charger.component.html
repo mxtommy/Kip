@@ -1,7 +1,7 @@
-<electrical-family-widget
-  [id]="id()"
-  [type]="type()"
-  [theme]="theme()"
-  familyKey="chargers"
-  configKey="charger"
-  title="Chargers" />
+<svg #chargerSvg class="charger-svg" aria-hidden="false"></svg>
+@if (!hasChargers()) {
+<div class="charger-empty">
+  <div class="charger-empty-title">No chargers detected</div>
+  <div class="charger-empty-sub">Check Signal K charger paths or select chargers in widget settings.</div>
+</div>
+}

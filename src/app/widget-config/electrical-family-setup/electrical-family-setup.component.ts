@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
+import { DataService } from '../../core/services/data.service';
 import type { BmsBankConnectionMode, ElectricalGroupConfig } from '../../core/interfaces/widgets-interface';
 
 @Component({
@@ -36,6 +37,7 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
 
   private readonly rootFormGroup = inject(FormGroupDirective);
   private readonly discovery = inject(PathDiscoveryService);
+  private readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected familyFormGroup!: UntypedFormGroup;
@@ -45,6 +47,29 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
   protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
 
   private discoveryToken?: PathDiscoveryToken;
+
+  private static readonly FAMILY_CRITERIA: Record<string, { patterns: string[]; pathPrefixes: string[]; idRegex: RegExp }> = {
+    charger: {
+      patterns: ['self.electrical.charger*'],
+      pathPrefixes: ['electrical.charger'],
+      idRegex: /self\.electrical\.chargers?\.([^.]+)(?:\.|$)/
+    },
+    inverter: {
+      patterns: ['self.electrical.inverter*'],
+      pathPrefixes: ['electrical.inverter'],
+      idRegex: /self\.electrical\.inverters?\.([^.]+)(?:\.|$)/
+    },
+    alternator: {
+      patterns: ['self.electrical.alternator*'],
+      pathPrefixes: ['electrical.alternator'],
+      idRegex: /self\.electrical\.alternators?\.([^.]+)(?:\.|$)/
+    },
+    ac: {
+      patterns: ['self.electrical.ac*'],
+      pathPrefixes: ['electrical.ac.'],
+      idRegex: /self\.electrical\.ac\.([^.]+)(?:\.|$)/
+    }
+  };
 
   ngOnInit(): void {
     this.familyFormGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormGroup;
@@ -117,11 +142,13 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
   }
 
   private initializeDiscovery(): void {
+    const criteria = this.resolveCriteria();
+
     this.discoveryToken = this.discovery.register({
       id: this.discoveryId(),
-      patterns: [this.discoveryPattern()],
+      patterns: criteria.patterns,
       contextTypes: ['self'],
-      pathPrefixes: [this.pathPrefix()]
+      pathPrefixes: criteria.pathPrefixes
     });
 
     this.updateDiscoveredIds();
@@ -136,8 +163,13 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const idRegex = new RegExp(this.familyRegex());
-    const ids = Array.from(this.discovery.activePaths(this.discoveryToken))
+    const idRegex = this.resolveCriteria().idRegex;
+    const paths = new Set<string>([
+      ...Array.from(this.discovery.activePaths(this.discoveryToken)),
+      ...this.data.getCachedPaths(true)
+    ]);
+
+    const ids = Array.from(paths)
       .map(path => {
         const match = idRegex.exec(path);
         return match ? match[1] : null;
@@ -145,5 +177,20 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
       .filter((id): id is string => !!id);
 
     this.discoveredIds.set([...new Set(ids)].sort((left, right) => left.localeCompare(right)));
+  }
+
+  private resolveCriteria(): { patterns: string[]; pathPrefixes: string[]; idRegex: RegExp } {
+    const key = this.formGroupName().trim();
+    const known = ElectricalFamilySetupComponent.FAMILY_CRITERIA[key];
+    if (known) {
+      return known;
+    }
+
+    // Fallback keeps backward compatibility for custom electrical family setups.
+    return {
+      patterns: [this.discoveryPattern()],
+      pathPrefixes: [this.pathPrefix()],
+      idRegex: new RegExp(this.familyRegex())
+    };
   }
 }

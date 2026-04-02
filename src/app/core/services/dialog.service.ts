@@ -5,7 +5,7 @@ import { DialogComponentData, DialogConfirmationData, DialogNameData, DialogDash
 import { DialogFrameComponent } from '../components/dialog-frame/dialog-frame.component';
 import { DialogConfirmationComponent } from '../components/dialog-confirmation/dialog-confirmation.component';
 import { DialogNameComponent } from '../components/dialog-name/dialog-name.component';
-import { ModalWidgetConfigComponent } from '../../widget-config/modal-widget-config/modal-widget-config.component';
+import { RootModalWidgetConfigComponent } from '../../widget-config/root-modal-widget-config/root-modal-widget-config.component';
 import { WidgetsListComponent } from '../components/widgets-list/widgets-list.component';
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
@@ -89,8 +89,8 @@ export class DialogService {
     );
   }
 
-  public openWidgetOptions(data: DialogWidgetOptionsData): MatDialogRef<ModalWidgetConfigComponent> {
-    return this.dialog.open(ModalWidgetConfigComponent,
+  public openWidgetOptions(data: DialogWidgetOptionsData): MatDialogRef<RootModalWidgetConfigComponent> {
+    return this.dialog.open(RootModalWidgetConfigComponent,
       {
         data: data.config,
         minWidth: "50vw",

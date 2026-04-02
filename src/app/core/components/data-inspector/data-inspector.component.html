@@ -24,7 +24,7 @@
     <ng-container matColumnDef="supportsPut">
       <mat-header-cell class="putHeader" *matHeaderCellDef mat-sort-header> PUT Support </mat-header-cell>
       <mat-cell class="putCell row-cell" *matCellDef="let element">
-        @if (element.meta?.supportsPut) {
+        @if (element.supportsPut) {
           <mat-icon class="put-icon" matTooltip="Supports PUT operation">check_circle</mat-icon>
         }
       </mat-cell>
@@ -34,8 +34,8 @@
       <mat-header-cell class="dataHeader" *matHeaderCellDef mat-sort-header> Source </mat-header-cell>
       <mat-cell class="dataCell row-cell" *matCellDef="let element">
         <div class="flex-container">
-          @for (item of element.sources | keyvalue; track item.key) {
-            <data-inspector-row class="source-sub-row" [path]="element.path" [source]="getSourceKey(item )" [pathValue]="getSourceValue(item)" [type]="element.type"></data-inspector-row>
+          @for (item of element.sourceRows; track item.key) {
+            <data-inspector-row class="source-sub-row" [path]="element.path" [source]="item.key" [pathValue]="item.value" [type]="element.type"></data-inspector-row>
           }
         </div>
       </mat-cell>

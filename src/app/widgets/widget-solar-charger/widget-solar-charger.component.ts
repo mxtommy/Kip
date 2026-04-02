@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, NgZone, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
@@ -9,6 +9,13 @@ import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import type { ElectricalCardModeConfig, ElectricalGroupConfig, IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
 import type { SolarChargerDisplayModel, SolarChargerSnapshot } from './solar-charger.types';
+import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import {
+  ELECTRICAL_DIRECT_CARD_GAP,
+  ELECTRICAL_DIRECT_CARD_HEIGHT,
+  ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
+  ELECTRICAL_DIRECT_CARD_FULL_LAYOUT
+} from '../shared/electrical-card-layout.constants';
 
 interface SolarRenderSnapshot {
   solarUnits: SolarChargerSnapshot[];
@@ -23,6 +30,9 @@ interface SolarRenderSnapshot {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
+  private static readonly SOLAR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-solar-charger');
+  private static readonly ROOT_PATTERN = `${WidgetSolarChargerComponent.SOLAR_DESCRIPTOR?.selfRootPath ?? 'self.electrical.solar'}.*`;
+
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
@@ -39,18 +49,24 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  private static readonly VIEWBOX_WIDTH = 200;
-  private static readonly CARD_HEIGHT = 110;
-  private static readonly CARD_GAP = 8;
-  private static readonly SOLAR_PANEL_X = 135;
-  private static readonly SOLAR_PANEL_Y = 0;
+  private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
+  private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
+  private static readonly CARD_GAP = ELECTRICAL_DIRECT_CARD_GAP;
+  private static readonly SOLAR_PANEL_SYMBOL_WIDTH = 158.90796;
+  private static readonly SOLAR_PANEL_SYMBOL_HEIGHT = 94.949027;
+  private static readonly SOLAR_PANEL_SCALE = 0.75;
+  private static readonly SOLAR_PANEL_TRANSLATE_X = -36;
+  private static readonly SOLAR_PANEL_TRANSLATE_Y = 26;
+  private static readonly SOLAR_PANEL_X = (135 + WidgetSolarChargerComponent.SOLAR_PANEL_TRANSLATE_X) * WidgetSolarChargerComponent.SOLAR_PANEL_SCALE;
+  private static readonly SOLAR_PANEL_Y = (0 + WidgetSolarChargerComponent.SOLAR_PANEL_TRANSLATE_Y) * WidgetSolarChargerComponent.SOLAR_PANEL_SCALE;
+  private static readonly SOLAR_PANEL_WIDTH = WidgetSolarChargerComponent.SOLAR_PANEL_SYMBOL_WIDTH * WidgetSolarChargerComponent.SOLAR_PANEL_SCALE;
+  private static readonly SOLAR_PANEL_HEIGHT = WidgetSolarChargerComponent.SOLAR_PANEL_SYMBOL_HEIGHT * WidgetSolarChargerComponent.SOLAR_PANEL_SCALE;
   private static readonly PATH_BATCH_WINDOW_MS = 500;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
   private readonly units = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly ngZone = inject(NgZone);
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('solarSvg');
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -207,7 +223,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       this.requestRender({ solarUnits, displayModels: models, widgetColors });
     });
 
-    const solarTree = this.data.subscribePathTreeWithInitial('self.electrical.solar.*');
+    const solarTree = this.data.subscribePathTreeWithInitial(WidgetSolarChargerComponent.ROOT_PATTERN);
 
     if (solarTree.initial.length) {
       for (const update of solarTree.initial) {
@@ -607,7 +623,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       this.pendingRenderSnapshot = null;
       if (!nextSnapshot) return;
 
-      this.ngZone.runOutsideAngular(() => this.render(nextSnapshot));
+      this.render(nextSnapshot);
     });
   }
 
@@ -625,6 +641,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private render(snapshot: SolarRenderSnapshot): void {
     if (!this.layer || !this.svg) return;
 
+    const layout = ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
     const cards = snapshot.solarUnits.map((solar, index) => ({
       id: solar.id,
       model: snapshot.displayModels[solar.id],
@@ -651,14 +668,18 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'solar-relay-values');
     enter.append('text').attr('class', 'solar-yield');
 
-    const solarPanelIconEnter = enter.append('g').attr('class', 'solar-panel-icon');
+    const solarPanelIconEnter = enter.append('g')
+      .attr('class', 'solar-panel-icon')
+      .attr('transform', `translate(${WidgetSolarChargerComponent.SOLAR_PANEL_X}, ${WidgetSolarChargerComponent.SOLAR_PANEL_Y})`);
 
     // Background layer
     solarPanelIconEnter.append('use')
       .attr('class', 'solar-panel-bg')
       .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
-      .attr('x', WidgetSolarChargerComponent.SOLAR_PANEL_X)
-      .attr('y', WidgetSolarChargerComponent.SOLAR_PANEL_Y);
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', WidgetSolarChargerComponent.SOLAR_PANEL_WIDTH)
+      .attr('height', WidgetSolarChargerComponent.SOLAR_PANEL_HEIGHT);
 
     // Progress layer with clip path
     const progressGroup = solarPanelIconEnter.append('g').attr('class', 'solar-panel-progress');
@@ -675,13 +696,15 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     progressGroup.append('use')
       .attr('class', 'solar-panel-colored')
       .attr('href', 'assets/svg/symbols.svg#solar-panel-cells')
-      .attr('x', WidgetSolarChargerComponent.SOLAR_PANEL_X)
-      .attr('y', WidgetSolarChargerComponent.SOLAR_PANEL_Y)
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', WidgetSolarChargerComponent.SOLAR_PANEL_WIDTH)
+      .attr('height', WidgetSolarChargerComponent.SOLAR_PANEL_HEIGHT)
       .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`);
-    const panelPowerText = progressGroup.append('text').attr('class', 'solar-panel-power');
+    const panelPowerText = enter.append('text').attr('class', 'solar-panel-power');
     panelPowerText.append('tspan').attr('class', 'solar-panel-power-value');
     panelPowerText.append('tspan').attr('class', 'solar-panel-power-unit');
-    progressGroup.append('text').attr('class', 'solar-panel-values');
+    enter.append('text').attr('class', 'solar-panel-values');
 
     const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; model: SolarChargerDisplayModel; y: number }, SVGGElement, unknown>);
 
@@ -689,8 +712,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     merged.select('rect.solar-card-bg')
       .attr('x', 0.5)
       .attr('y', 0.5)
-      .attr('rx', 4)
-      .attr('ry', 4)
+      .attr('rx', layout.cardCornerRadius)
+      .attr('ry', layout.cardCornerRadius)
       .attr('width', WidgetSolarChargerComponent.VIEWBOX_WIDTH - 1)
       .attr('height', WidgetSolarChargerComponent.CARD_HEIGHT - 1)
       .attr('stroke', 'var(--mat-sys-outline-variant)')
@@ -698,16 +721,16 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'none');
 
     merged.select('text.solar-title')
-      .attr('x', 5)
-      .attr('y', 16)
-      .attr('font-size', 15.5)
+      .attr('x', layout.titleX)
+      .attr('y', layout.titleY)
+      .attr('font-size', layout.titleFontSize)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .text(item => item.model.titleText);
 
     merged.select('text.solar-charger-current')
-      .attr('x', 10)
-      .attr('y', 37)
-      .attr('font-size', 16)
+      .attr('x', layout.lineOneX)
+      .attr('y', layout.lineOneY)
+      .attr('font-size', layout.lineOneFontSize)
       .attr('fill', item => item.model.chargerCurrentTextColor)
       .text(item => item.model.chargerSectionCurrent);
 
@@ -720,9 +743,9 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .text(item => item.model.chargerMode);
 
     merged.select('text.solar-charger-meta')
-      .attr('x', 10)
-      .attr('y', 53)
-      .attr('font-size', 6)
+      .attr('x', layout.metaLeftX)
+      .attr('y', layout.metaY)
+      .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
       .attr('fill', item => item.model.chargerMetaTextColor)
       .text(item => item.model.chargerSectionMetadata);
@@ -735,14 +758,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     merged.select('text.solar-relay-values')
       .attr('x', 15)
-      .attr('y', 83)
-      .attr('font-size', 6)
+      .attr('y', layout.lineTwoY)
+      .attr('font-size', layout.lineTwoFontSize)
       .attr('fill', item => item.model.relayValuesTextColor)
       .attr('opacity', item => item.model.relaySectionVisible ? 0.8 : 0)
       .text(item => item.model.relaySectionText);
 
     merged.select('g.solar-panel-icon')
-      .attr('transform', 'translate(-13, 21) scale(0.63)');
+      .attr('transform', `translate(${WidgetSolarChargerComponent.SOLAR_PANEL_X}, ${WidgetSolarChargerComponent.SOLAR_PANEL_Y})`);
 
     merged.select('use.solar-panel-bg')
       .attr('color', 'var(--kip-contrast-dimmer-color)');
@@ -751,17 +774,22 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .each((item, index, nodes) => {
         const progressGroup = d3.select(nodes[index]);
         progressGroup.select('rect')
-          .attr('width', item.model.gaugeProgress);
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('height', 1)
+          .attr('width', Math.max(0, Math.min(1, item.model.gaugeProgress)));
+
+        this.debugSolarLayout(item.id, item.model.gaugeProgress);
       });
 
     merged.select('use.solar-panel-colored')
       .attr('color', item => item.model.panelPowerColor);
 
     merged.select('text.solar-panel-power')
-      .attr('x', 235)
+      .attr('x', 135)
       .attr('y', 58)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 40)
+      .attr('font-size', 25)
       .attr('font-weight', 700)
       .attr('filter', item => item.model.panelPowerGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .attr('fill', 'var(--kip-contrast-color)');
@@ -771,17 +799,17 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     merged.select('tspan.solar-panel-power-unit')
       .attr('dx', item => item.model.panelPowerUnitText ? 1 : 0)
-      .attr('font-size', 22)
+      .attr('font-size', 16)
       .attr('font-weight', 500)
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('opacity', item => item.model.panelPowerUnitText ? 1 : 0)
       .text(item => item.model.panelPowerUnitText);
 
     merged.select('text.solar-panel-values')
-      .attr('x', 235)
-      .attr('y', 76)
+      .attr('x', 135)
+      .attr('y', 69)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 12)
+      .attr('font-size', 10)
       .attr('font-weight', 500)
       .attr('opacity', 0.8)
       .attr('filter', item => item.model.panelValuesGlowEnabled ? `url(#${this.glowFilterId})` : null)
@@ -889,6 +917,22 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     }
 
     return current;
+  }
+
+  private debugSolarLayout(id: string, gaugeProgress: number): void {
+    const debugEnabled = typeof window !== 'undefined' && (window as unknown as { __KIP_DEBUG_SOLAR_LAYOUT?: boolean }).__KIP_DEBUG_SOLAR_LAYOUT === true;
+    if (!debugEnabled) return;
+
+    // Optional troubleshooting hook: enable in devtools with window.__KIP_DEBUG_SOLAR_LAYOUT = true
+    console.debug('[solar-layout]', {
+      id,
+      gaugeProgress,
+      panelX: WidgetSolarChargerComponent.SOLAR_PANEL_X,
+      panelY: WidgetSolarChargerComponent.SOLAR_PANEL_Y,
+      panelWidth: WidgetSolarChargerComponent.SOLAR_PANEL_WIDTH,
+      panelHeight: WidgetSolarChargerComponent.SOLAR_PANEL_HEIGHT,
+      clippedWidth: WidgetSolarChargerComponent.SOLAR_PANEL_WIDTH * gaugeProgress
+    });
   }
 
 }

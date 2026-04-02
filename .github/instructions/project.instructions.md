@@ -53,6 +53,7 @@ Detailed Host2 implementation patterns are owned by `.agents/skills/kip-host2-wi
 - New widgets must keep `DEFAULT_CONFIG` complete and explicit, including path keys, sampling, and units expectations.
 - If widget registration is performed manually, registration map and definition entries must remain consistent with category conventions.
 - Widget creation changes must include test updates appropriate to the widget behavior, not only instantiation checks.
+- Specialized electrical widgets must also follow `.github/instructions/electrical-widgets.instructions.md`.
 
 Detailed implementation patterns are owned by `.agents/skills/kip-widget-creation/SKILL.md`.
 

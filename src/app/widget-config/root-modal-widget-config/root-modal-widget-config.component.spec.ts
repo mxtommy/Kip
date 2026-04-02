@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ModalWidgetConfigComponent } from './modal-widget-config.component';
+import { RootModalWidgetConfigComponent } from './root-modal-widget-config.component';
 import { IConversionPathList, UnitsService } from '../../core/services/units.service';
 import { ensureTestIconsReady } from '../../../test-helpers/icon-test-utils';
 
 describe('ModalWidgetComponent', () => {
-  let component: ModalWidgetConfigComponent;
-  let fixture: ComponentFixture<ModalWidgetConfigComponent>;
+  let component: RootModalWidgetConfigComponent;
+  let fixture: ComponentFixture<RootModalWidgetConfigComponent>;
   const unitsServiceStub: Pick<UnitsService, 'getConversionsForPath'> = {
     getConversionsForPath: (): IConversionPathList => ({ base: 'unitless', conversions: [] }),
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ModalWidgetConfigComponent],
+      imports: [RootModalWidgetConfigComponent],
       providers: [
         { provide: UnitsService, useValue: unitsServiceStub },
       ],
@@ -23,7 +23,7 @@ describe('ModalWidgetComponent', () => {
 
   beforeEach(() => {
     ensureTestIconsReady();
-    fixture = TestBed.createComponent(ModalWidgetConfigComponent);
+    fixture = TestBed.createComponent(RootModalWidgetConfigComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

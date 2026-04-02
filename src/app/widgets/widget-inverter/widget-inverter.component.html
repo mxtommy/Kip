@@ -1,7 +1,7 @@
-<electrical-family-widget
-  [id]="id()"
-  [type]="type()"
-  [theme]="theme()"
-  familyKey="inverters"
-  configKey="inverter"
-  title="Inverters" />
+<svg #inverterSvg class="inverter-svg" aria-hidden="false"></svg>
+@if (!hasInverters()) {
+<div class="inverter-empty">
+  <div class="inverter-empty-title">No inverters detected</div>
+  <div class="inverter-empty-sub">Check Signal K inverter paths or select inverters in widget settings.</div>
+</div>
+}
