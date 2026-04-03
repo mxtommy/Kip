@@ -34,7 +34,11 @@ interface AcRenderSnapshot {
 })
 export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   private static readonly AC_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-ac');
-  private static readonly SELF_ROOT_PATH = WidgetAcComponent.AC_DESCRIPTOR?.selfRootPath ?? 'self.electrical.ac';
+  private static readonly SELF_ROOT_PATH = (() => {
+    const root = WidgetAcComponent.AC_DESCRIPTOR?.selfRootPath;
+    if (!root) throw new Error('[WidgetAcComponent] Descriptor missing or selfRootPath not set; check widget registration.');
+    return root;
+  })();
   private static readonly ROOT_PATTERN = `${WidgetAcComponent.SELF_ROOT_PATH}.*`;
   private static readonly ROOT_PREFIX = `${WidgetAcComponent.SELF_ROOT_PATH}.`;
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
@@ -104,8 +108,8 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   protected readonly hasBuses = computed(() => this.visibleBuses().length > 0);
   protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
-  protected readonly colorRole = computed(() => this.runtime.options()?.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -240,8 +244,8 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const acCfg = this.resolveAcConfig(cfg);
-    this.trackedDevices.set(acCfg.trackedDevices);
-    this.reprojectSnapshotsToDeviceKeys(acCfg.trackedDevices);
+    this.trackedDevices.set(acCfg.trackedDevices ?? []);
+    this.reprojectSnapshotsToDeviceKeys(acCfg.trackedDevices ?? []);
     this.optionsById.set(acCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(acCfg.cardMode));
   }
@@ -418,15 +422,6 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
           };
           const snapshot = { ...existing } as AcSnapshot;
           const fieldChanged = this.applyValue(snapshot, update.key, update.value, update.state);
-
-          if (!fieldChanged && update.key === '__root__' && !next[deviceKey]) {
-            if (!changed) {
-              next = { ...next };
-              changed = true;
-            }
-            next[deviceKey] = snapshot;
-            continue;
-          }
 
           if (!fieldChanged) continue;
 

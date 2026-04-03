@@ -20,6 +20,10 @@ import {
 } from '../shared/electrical-card-layout.constants';
 import type { InverterDisplayModel, InverterSnapshot, InverterWidgetConfig, ElectricalCardModeConfig } from './widget-inverter.types';
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 interface InverterRenderSnapshot {
   inverters: InverterSnapshot[];
   displayModels: Record<string, InverterDisplayModel>;
@@ -34,7 +38,13 @@ interface InverterRenderSnapshot {
 })
 export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   private static readonly INVERTER_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-inverter');
-  private static readonly ROOT_PATTERN = `${WidgetInverterComponent.INVERTER_DESCRIPTOR?.selfRootPath ?? 'self.electrical.inverters'}.*`;
+  private static readonly SELF_ROOT_PATH = (() => {
+    const root = WidgetInverterComponent.INVERTER_DESCRIPTOR?.selfRootPath;
+    if (!root) throw new Error('[WidgetInverterComponent] Descriptor missing or selfRootPath not set; check widget registration.');
+    return root;
+  })();
+  private static readonly ROOT_PATTERN = `${WidgetInverterComponent.SELF_ROOT_PATH}.*`;
+  private static readonly PATH_REGEX = new RegExp(`^${escapeRegex(WidgetInverterComponent.SELF_ROOT_PATH)}\\.([^.]+)\\.(.+)$`);
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -100,8 +110,8 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   protected readonly hasInverters = computed(() => this.visibleInverters().length > 0);
   protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
-  protected readonly colorRole = computed(() => this.runtime.options()?.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -233,8 +243,8 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const inverterCfg = this.resolveInverterConfig(cfg);
-    this.trackedDevices.set(inverterCfg.trackedDevices);
-    this.reprojectSnapshotsToDeviceKeys(inverterCfg.trackedDevices);
+    this.trackedDevices.set(inverterCfg.trackedDevices ?? []);
+    this.reprojectSnapshotsToDeviceKeys(inverterCfg.trackedDevices ?? []);
     this.optionsById.set(inverterCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(inverterCfg.cardMode));
   }
@@ -384,12 +394,9 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   }
 
   private parsePath(path: string): { id: string; key: string } | null {
-    const strictMatch = path.match(/^self\.electrical\.inverters\.([^.]+)\.(.+)$/);
-    if (strictMatch) return { id: strictMatch[1], key: strictMatch[2] };
-
-    const legacyMatch = path.match(/^self\.electrical\.inverter\.([^.]+)(?:\.(.+))?$/);
-    if (!legacyMatch) return null;
-    return { id: legacyMatch[1], key: legacyMatch[2] ?? '__root__' };
+    const match = path.match(WidgetInverterComponent.PATH_REGEX);
+    if (!match) return null;
+    return { id: match[1], key: match[2] };
   }
 
   private flushPendingPathUpdates(): void {
@@ -422,12 +429,6 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
           const next = { ...existing } as InverterSnapshot;
           const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
 
-          if (!fieldChanged && update.key === '__root__' && !nextState[deviceKey]) {
-            if (!changed) { nextState = { ...nextState }; changed = true; }
-            nextState[deviceKey] = next;
-            continue;
-          }
-
           if (!fieldChanged) continue;
 
           // Derive DC power when not explicit
@@ -457,7 +458,6 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
 
   private applyValue(snapshot: InverterSnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
-      case '__root__': return false;
       case 'name': return this.setValue(snapshot, 'name', this.toStringValue(value));
       case 'location': return this.setValue(snapshot, 'location', this.toStringValue(value));
       case 'associatedBus': return this.setValue(snapshot, 'associatedBus', this.toStringValue(value));

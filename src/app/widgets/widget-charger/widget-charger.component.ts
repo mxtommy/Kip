@@ -3,27 +3,24 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as d3 from 'd3';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
-import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { UnitsService } from '../../core/services/units.service';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
-import {
-  ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT,
-  ELECTRICAL_DIRECT_CARD_FULL_LAYOUT,
-  ELECTRICAL_DIRECT_CARD_GAP,
-  ELECTRICAL_DIRECT_CARD_HEIGHT,
-  ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
-  ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
-} from '../shared/electrical-card-layout.constants';
+import type { ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ITheme } from '../../core/services/app-service';
 import type { ChargerDisplayModel, ChargerSnapshot, ChargerWidgetConfig, ElectricalCardModeConfig } from './widget-charger.types';
+import { ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT, ELECTRICAL_DIRECT_CARD_GAP, ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH, ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT } from '../shared/electrical-card-layout.constants';
 
 interface ChargerRenderSnapshot {
   chargers: ChargerSnapshot[];
   displayModels: Record<string, ChargerDisplayModel>;
   widgetColors: ReturnType<typeof getColors>;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 @Component({
@@ -34,7 +31,13 @@ interface ChargerRenderSnapshot {
 })
 export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly CHARGER_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-charger');
-  private static readonly ROOT_PATTERN = `${WidgetChargerComponent.CHARGER_DESCRIPTOR?.selfRootPath ?? 'self.electrical.chargers'}.*`;
+  private static readonly SELF_ROOT_PATH = (() => {
+    const root = WidgetChargerComponent.CHARGER_DESCRIPTOR?.selfRootPath;
+    if (!root) throw new Error('[WidgetChargerComponent] Descriptor missing or selfRootPath not set; check widget registration.');
+    return root;
+  })();
+  private static readonly ROOT_PATTERN = `${WidgetChargerComponent.SELF_ROOT_PATH}.*`;
+  private static readonly PATH_REGEX = new RegExp(`^${escapeRegex(WidgetChargerComponent.SELF_ROOT_PATH)}\\.([^.]+)\\.(.+)$`);
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -64,7 +67,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private layer?: d3.Selection<SVGGElement, unknown, null, undefined>;
 
-  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
+  private readonly pendingPathUpdates = new Map<string, { id: string; key: string; source: string | null; value: unknown; state: TState | null }>();
   private pathBatchTimerId: number | null = null;
   private initialPathPaintDone = false;
   private renderFrameId: number | null = null;
@@ -282,8 +285,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const chargerCfg = this.resolveChargerConfig(cfg);
-    this.trackedDevices.set(chargerCfg.trackedDevices);
-    this.reprojectSnapshotsToDeviceKeys(chargerCfg.trackedDevices);
+    this.trackedDevices.set(chargerCfg.trackedDevices ?? []);
+    this.reprojectSnapshotsToDeviceKeys(chargerCfg.trackedDevices ?? []);
     this.optionsById.set(chargerCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(chargerCfg.cardMode));
   }
@@ -437,8 +440,9 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
     const value = update.update?.data?.value ?? null;
     const state = update.update?.state ?? null;
-    const updateKey = `${parsed.id}::${parsed.key}`;
-    this.pendingPathUpdates.set(updateKey, { id: parsed.id, key: parsed.key, value, state });
+    const source = this.extractUpdateSource(update);
+    const updateKey = `${parsed.id}::${source ?? '*'}::${parsed.key}`;
+    this.pendingPathUpdates.set(updateKey, { id: parsed.id, key: parsed.key, source, value, state });
 
     if (fromInitial) {
       return;
@@ -461,17 +465,12 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   }
 
   private parsePath(path: string): { id: string; key: string } | null {
-    const strictMatch = path.match(/^self\.electrical\.chargers\.([^.]+)\.(.+)$/);
-    if (strictMatch) {
-      return { id: strictMatch[1], key: strictMatch[2] };
-    }
-
-    const legacyMatch = path.match(/^self\.electrical\.charger\.([^.]+)(?:\.(.+))?$/);
-    if (!legacyMatch) {
+    const match = path.match(WidgetChargerComponent.PATH_REGEX);
+    if (!match) {
       return null;
     }
 
-    return { id: legacyMatch[1], key: legacyMatch[2] ?? '__root__' };
+    return { id: match[1], key: match[2] };
   }
 
   private flushPendingPathUpdates(): void {
@@ -495,28 +494,29 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
       for (const update of updates) {
         const affectedKeys = idToKeys.get(update.id);
-        const keysToUpdate = affectedKeys?.length ? affectedKeys : [update.id];
         const isTracked = !!affectedKeys?.length;
+        let keysToUpdate: string[] = [];
+
+        if (isTracked) {
+          if (update.source) {
+            const exactDeviceKey = `${update.id}||${update.source}`;
+            keysToUpdate = affectedKeys?.includes(exactDeviceKey) ? [exactDeviceKey] : [];
+          } else {
+            keysToUpdate = affectedKeys ?? [];
+          }
+        } else {
+          keysToUpdate = [update.source ? `${update.id}||${update.source}` : update.id];
+        }
 
         for (const key of keysToUpdate) {
           const trackedDevice = isTracked ? trackedDevicesByKey.get(key) : null;
           const existing = nextState[key] ?? {
             id: update.id,
-            source: trackedDevice?.source ?? null,
-            deviceKey: isTracked ? key : undefined
+            source: trackedDevice?.source ?? update.source ?? null,
+            deviceKey: isTracked || update.source ? key : undefined
           };
           const next = { ...existing } as ChargerSnapshot;
           const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
-
-          if (!fieldChanged && update.key === '__root__' && !nextState[key]) {
-            if (!changed) {
-              nextState = { ...nextState };
-              changed = true;
-            }
-
-            nextState[key] = next;
-            continue;
-          }
 
           if (!fieldChanged) {
             continue;
@@ -548,6 +548,16 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private extractUpdateSource(update: IPathUpdateWithPath): string | null {
+    const sourceFromUpdate = this.normalizeOptionalString((update as { source?: unknown }).source);
+    if (sourceFromUpdate) {
+      return sourceFromUpdate;
+    }
+
+    const sourceFromData = this.normalizeOptionalString((update.update?.data as { source?: unknown } | undefined)?.source);
+    return sourceFromData ?? null;
+  }
+
   private trackDiscoveredCharger(id: string): void {
     const ids = this.discoveredChargerIds();
     if (ids.includes(id)) {
@@ -559,8 +569,6 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyValue(snapshot: ChargerSnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
-      case '__root__':
-        return false;
       case 'name':
         return this.setValue(snapshot, 'name', this.toStringValue(value));
       case 'location':

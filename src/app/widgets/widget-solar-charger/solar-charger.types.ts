@@ -1,11 +1,14 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
 import type { IElectricalTopologySnapshotCore } from '../../core/contracts/electrical-topology-card.contract';
+import type { ElectricalFamilyConfig, SolarOptionConfig as SolarOptionConfigBase } from '../../core/interfaces/widgets-interface';
 export type {
   SolarOptionConfig,
-  SolarWidgetConfig,
+  ElectricalTrackedDevice,
   ElectricalGroupConfig,
   ElectricalCardModeConfig
 } from '../../core/interfaces/widgets-interface';
+
+export type SolarWidgetConfig = ElectricalFamilyConfig<SolarOptionConfigBase>;
 
 export interface SolarChargerSnapshot extends IElectricalTopologySnapshotCore {
   voltageState?: TState | null;

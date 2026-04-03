@@ -101,7 +101,7 @@ export interface ElectricalTrackedDevice {
 }
 
 export interface ElectricalFamilyConfig<TOptions = Record<string, never>> {
-  trackedDevices: ElectricalTrackedDevice[];
+  trackedDevices?: ElectricalTrackedDevice[];
   groups?: ElectricalGroupConfig[];
   optionsById: Record<string, TOptions>;
   cardMode?: ElectricalCardModeConfig;
@@ -164,7 +164,7 @@ export interface IWidgetSvcConfig {
   bms?: BmsWidgetConfig;
 
   /** Solar charger widget configuration */
-  solarCharger?: SolarWidgetConfig;
+  solarCharger?: ElectricalFamilyConfig<SolarOptionConfig>;
 
   /** Charger widget configuration */
   charger?: ElectricalFamilyConfig;

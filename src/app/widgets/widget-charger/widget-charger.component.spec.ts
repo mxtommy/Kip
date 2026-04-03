@@ -23,14 +23,16 @@ const themeMock = {
 const makeUpdate = (
   path: string,
   value: unknown,
-  state = States.Normal
+  state = States.Normal,
+  source?: string
 ): IPathUpdateWithPath => ({
   path,
   update: {
     data: { value, timestamp: new Date('2026-01-01T00:00:00.000Z') },
     state
-  }
-});
+  },
+  ...(source ? { source } : {})
+} as IPathUpdateWithPath);
 
 describe('WidgetChargerComponent', () => {
   let fixture: ComponentFixture<WidgetChargerComponent>;
@@ -205,6 +207,53 @@ describe('WidgetChargerComponent', () => {
     expect(models['c1||sourceB']?.busText).toBe('sourceB');
   });
 
+  it('applies source-qualified updates only to the matching tracked device key', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.chargers.c1.voltage', 28, States.Normal, 'sourceA'),
+        makeUpdate('self.electrical.chargers.c1.voltage', 31, States.Normal, 'sourceB')
+      ],
+      {
+        charger: {
+          trackedDevices: [
+            { id: 'c1', source: 'sourceA', key: 'c1||sourceA' },
+            { id: 'c1', source: 'sourceB', key: 'c1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const map = (component as unknown as {
+      chargersByKey: () => Record<string, { voltage?: number | null }>;
+    }).chargersByKey();
+
+    expect(map['c1||sourceA']?.voltage).toBe(28);
+    expect(map['c1||sourceB']?.voltage).toBe(31);
+  });
+
+  it('falls back to fanout when source is missing on updates', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.chargers.c1.voltage', 28)
+      ],
+      {
+        charger: {
+          trackedDevices: [
+            { id: 'c1', source: 'sourceA', key: 'c1||sourceA' },
+            { id: 'c1', source: 'sourceB', key: 'c1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const map = (component as unknown as {
+      chargersByKey: () => Record<string, { voltage?: number | null }>;
+    }).chargersByKey();
+
+    expect(map['c1||sourceA']?.voltage).toBe(28);
+    expect(map['c1||sourceB']?.voltage).toBe(28);
+  });
+
   it('derives power from voltage and current', async () => {
     vi.useFakeTimers();
     await setup();
@@ -370,28 +419,6 @@ describe('WidgetChargerComponent', () => {
     // Parser requires id + key; root-node paths with no dot after id are dropped
     const visible = (component as unknown as { visibleChargers: () => { id: string }[] }).visibleChargers();
     expect(visible.length).toBe(0);
-  });
-
-  it('supports legacy singular charger metric paths', async () => {
-    await setup([
-      makeUpdate('self.electrical.charger.c7.voltage', 27.2),
-      makeUpdate('self.electrical.charger.c7.current', 4)
-    ]);
-
-    const map = (component as unknown as { chargersByKey: () => Record<string, { voltage?: number | null; current?: number | null; power?: number | null }> }).chargersByKey();
-    expect(map['c7']?.voltage).toBe(27.2);
-    expect(map['c7']?.current).toBe(4);
-    expect(map['c7']?.power).toBeCloseTo(108.8);
-  });
-
-  it('supports legacy singular charger root-node instance updates', async () => {
-    await setup([
-      makeUpdate('self.electrical.charger.c8', { name: 'Legacy Charger' })
-    ]);
-
-    const visible = (component as unknown as { visibleChargers: () => { id: string }[] }).visibleChargers();
-    expect(visible).toHaveLength(1);
-    expect(visible[0]?.id).toBe('c8');
   });
 
   it('does not create a snapshot when first key is unrecognized', async () => {

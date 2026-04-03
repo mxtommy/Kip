@@ -7,8 +7,8 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { ElectricalCardModeConfig, ElectricalTrackedDevice, IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
-import type { SolarChargerDisplayModel, SolarChargerSnapshot } from './solar-charger.types';
+import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalCardModeConfig, ElectricalTrackedDevice, SolarChargerDisplayModel, SolarChargerSnapshot, SolarOptionConfig, SolarWidgetConfig } from './solar-charger.types';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import { ELECTRICAL_DIRECT_CARD_GAP, ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT } from '../shared/electrical-card-layout.constants';
@@ -27,7 +27,12 @@ interface SolarRenderSnapshot {
 })
 export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly SOLAR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-solar-charger');
-  private static readonly ROOT_PATTERN = `${WidgetSolarChargerComponent.SOLAR_DESCRIPTOR?.selfRootPath ?? 'self.electrical.solar'}.*`;
+  private static readonly SELF_ROOT_PATH = (() => {
+    const root = WidgetSolarChargerComponent.SOLAR_DESCRIPTOR?.selfRootPath;
+    if (!root) throw new Error('[WidgetSolarChargerComponent] Descriptor missing or selfRootPath not set; check widget registration.');
+    return root;
+  })();
+  private static readonly ROOT_PATTERN = `${WidgetSolarChargerComponent.SELF_ROOT_PATH}.*`;
 
   public id = input.required<string>();
   public type = input.required<string>();
@@ -104,8 +109,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
 
-  protected readonly colorRole = computed(() => this.runtime.options()?.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -118,7 +123,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     const options = this.optionsById();
     const theme = this.theme();
     const widgetColors = this.widgetColors();
-    const ignoreZones = this.ignoreZones();
+    const ignoreZones = this.ignoreZones() ?? false;
 
     const models: Record<string, SolarChargerDisplayModel> = {};
     for (const solar of solarUnits) {

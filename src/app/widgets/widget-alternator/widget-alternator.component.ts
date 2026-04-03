@@ -20,6 +20,10 @@ import {
 } from '../shared/electrical-card-layout.constants';
 import type { AlternatorDisplayModel, AlternatorSnapshot, AlternatorWidgetConfig, ElectricalCardModeConfig } from './widget-alternator.types';
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 interface AlternatorRenderSnapshot {
   alternators: AlternatorSnapshot[];
   displayModels: Record<string, AlternatorDisplayModel>;
@@ -34,7 +38,13 @@ interface AlternatorRenderSnapshot {
 })
 export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   private static readonly ALTERNATOR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-alternator');
-  private static readonly ROOT_PATTERN = `${WidgetAlternatorComponent.ALTERNATOR_DESCRIPTOR?.selfRootPath ?? 'self.electrical.alternators'}.*`;
+  private static readonly SELF_ROOT_PATH = (() => {
+    const root = WidgetAlternatorComponent.ALTERNATOR_DESCRIPTOR?.selfRootPath;
+    if (!root) throw new Error('[WidgetAlternatorComponent] Descriptor missing or selfRootPath not set; check widget registration.');
+    return root;
+  })();
+  private static readonly ROOT_PATTERN = `${WidgetAlternatorComponent.SELF_ROOT_PATH}.*`;
+  private static readonly PATH_REGEX = new RegExp(`^${escapeRegex(WidgetAlternatorComponent.SELF_ROOT_PATH)}\\.([^.]+)\\.(.+)$`);
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -101,8 +111,8 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   protected readonly hasAlternators = computed(() => this.visibleAlternators().length > 0);
   protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
-  protected readonly colorRole = computed(() => this.runtime.options()?.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -249,8 +259,8 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const alternatorCfg = this.resolveAlternatorConfig(cfg);
-    this.trackedDevices.set(alternatorCfg.trackedDevices);
-    this.reprojectSnapshotsToDeviceKeys(alternatorCfg.trackedDevices);
+    this.trackedDevices.set(alternatorCfg.trackedDevices ?? []);
+    this.reprojectSnapshotsToDeviceKeys(alternatorCfg.trackedDevices ?? []);
     this.optionsById.set(alternatorCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(alternatorCfg.cardMode));
   }
@@ -436,12 +446,9 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   }
 
   private parsePath(path: string): { id: string; key: string } | null {
-    const match = path.match(/self\.electrical\.alternators?\.([^.]+)(?:\.(.+))?$/);
-    if (!match) {
-      return null;
-    }
-
-    return { id: match[1], key: match[2] ?? '__root__' };
+    const match = path.match(WidgetAlternatorComponent.PATH_REGEX);
+    if (!match) return null;
+    return { id: match[1], key: match[2] };
   }
 
   private flushPendingPathUpdates(): void {
@@ -475,15 +482,6 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
           };
           const next = { ...existing } as AlternatorSnapshot;
           const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
-
-          if (!fieldChanged && update.key === '__root__' && !nextState[deviceKey]) {
-            if (!changed) {
-              nextState = { ...nextState };
-              changed = true;
-            }
-            nextState[deviceKey] = next;
-            continue;
-          }
 
           if (!fieldChanged) {
             continue;
@@ -526,8 +524,6 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   private applyValue(snapshot: AlternatorSnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
-      case '__root__':
-        return false;
       case 'name':
         return this.setValue(snapshot, 'name', this.toStringValue(value));
       case 'location':
