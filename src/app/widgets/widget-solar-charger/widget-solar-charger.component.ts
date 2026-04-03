@@ -567,13 +567,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   }
 
   private normalizeSolarMetricKey(rawKey: string): string {
+    // Transform Renogy to specs/Victron paths
     // Strip controller prefix if present
     if (rawKey.startsWith('controller.')) {
       return rawKey.slice('controller.'.length);
     }
 
-    // Transform nested solar, battery, load, and charge paths
     switch (rawKey) {
+      // Transform Renogy to specs/Victron paths
       case 'solar.power':
         return 'panelPower';
       case 'solar.voltage':
@@ -582,6 +583,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         return 'panelCurrent';
       case 'solar.temperature':
         return 'panelTemperature';
+      case 'charge.status':
+        return 'controllerMode';
       default:
         return rawKey;
     }

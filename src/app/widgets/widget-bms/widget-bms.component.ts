@@ -7,17 +7,12 @@ import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, ElectricalCardMo
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
-import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type {
-  BmsBankDisplayModel,
-  BmsBankSummary,
-  BmsBatteryDisplayModel,
-  BmsBatterySnapshot
-} from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import type { BmsBankDisplayModel, BmsBankSummary, BmsBatteryDisplayModel, BmsBatterySnapshot } from './bms.types';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
+import type { ITheme } from '../../core/services/app-service';
 import { ELECTRICAL_DIRECT_CARD_HEIGHT } from '../shared/electrical-card-layout.constants';
 
 interface BmsRenderBank extends BmsBankSummary {
@@ -207,8 +202,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
           || battery.stateOfChargeState === States.Alarm
           || battery.stateOfChargeState === States.Alert
         ),
-        actualCapacityText: battery.capacityActual ? `${battery.capacityActual} kWh` : '',
-        remainingText: `${this.formatDuration(battery.timeRemaining)}`.trim(),
+        remainingCapacityText: battery.capacityActual ? `${this.formatEnergy(battery.capacityRemaining)}` : '',
+        remainingTimeText: `${this.formatDuration(battery.timeRemaining)}`.trim(),
         iconKey: battery.current != null && battery.current > 0 ? 'power_renewal' : 'power_available'
       };
     }
@@ -228,8 +223,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         currentText: this.formatCurrent(bank.totalCurrent),
         powerText: this.formatPower(bank.totalPower),
         socText: this.formatSoc(bank.avgSoc),
-        remainingText: `${this.formatDuration(bank.timeRemaining)}`.trim(),
-        remainingCapacityText: bank.remainingCapacity ? `${bank.remainingCapacity} kWh` : '',
+        remainingTimeText: `${this.formatDuration(bank.timeRemaining)}`.trim(),
+        remainingCapacityText: bank.remainingCapacity ? `${this.formatEnergy(bank.remainingCapacity)}` : '',
         gaugeValuePath: this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, bank.avgSoc),
         gaugeValueColor: widgetColors?.color ?? 'var(--kip-contrast-color)',
         zoneState: null,
@@ -605,13 +600,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         return true;
       }
       case 'voltage': {
-        const nextValue = this.toNumber(value, 'V');
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.voltage, nextValue)) return false;
         battery.voltage = nextValue;
         return true;
       }
       case 'current': {
-        const nextValue = this.toNumber(value, 'A');
+        const nextValue = this.toNumber(value);
         const stateChanged = !Object.is(battery.currentState ?? null, state ?? null);
         if (Object.is(battery.current, nextValue) && !stateChanged) return false;
         battery.current = nextValue;
@@ -619,31 +614,31 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         return true;
       }
       case 'temperature': {
-        const nextValue = this.toNumber(value, this.units.getDefaults().Temperature);
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.temperature, nextValue)) return false;
         battery.temperature = nextValue;
         return true;
       }
       case 'capacity.nominal': {
-        const nextValue = this.toNumber(value, 'kWh');
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.capacityNominal, nextValue)) return false;
         battery.capacityNominal = nextValue;
         return true;
       }
       case 'capacity.actual': {
-        const nextValue = this.toNumber(value, 'kWh');
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.capacityActual, nextValue)) return false;
         battery.capacityActual = nextValue;
         return true;
       }
       case 'capacity.remaining': {
-        const nextValue = this.toNumber(value, 'kWh');
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.capacityRemaining, nextValue)) return false;
         battery.capacityRemaining = nextValue;
         return true;
       }
       case 'capacity.stateOfCharge': {
-        const nextValue = this.toNumber(value, 'ratio');
+        const nextValue = this.toNumber(value);
         const stateChanged = !Object.is(battery.stateOfChargeState ?? null, state ?? null);
         if (Object.is(battery.stateOfCharge, nextValue) && !stateChanged) return false;
         battery.stateOfCharge = nextValue;
@@ -651,7 +646,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         return true;
       }
       case 'capacity.timeRemaining': {
-        const nextValue = this.toNumber(value, 's');
+        const nextValue = this.toNumber(value);
         if (Object.is(battery.timeRemaining, nextValue)) return false;
         battery.timeRemaining = nextValue;
         return true;
@@ -831,7 +826,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
-      .text(item => item.displayModel.remainingText);
+      .text(item => item.displayModel.remainingTimeText);
     bankMerged.select('text.bank-actualCapacity')
       .attr('x', 143)
       .attr('y', 68)
@@ -1076,7 +1071,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
       .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
-      .text(item => item.compact ? '' : item.displayModel.actualCapacityText);
+      .text(item => item.compact ? '' : item.displayModel.remainingCapacityText);
     selection.select('text.bms-remaining')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 12)
@@ -1084,7 +1079,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 6)
       .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
-      .text(item => item.compact ? '' : item.displayModel.remainingText);
+      .text(item => item.compact ? '' : item.displayModel.remainingTimeText);
     selection.select('g.bms-state-icon')
       .attr('transform', `translate(${WidgetBmsComponent.BATTERY_CARD_WIDTH / 2 - 18}, ${WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 18})`)
       .attr('display', item => item.compact && item.scale < 0.45 ? 'none' : null)
@@ -1133,6 +1128,12 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return `${value.toFixed(0)}W`;
   }
 
+  private formatEnergy(value: number | null | undefined): string {
+    if (value == null) return '';
+    value = this.units.convertToUnit('kWh', value);
+    return `${value}kWh`;
+  }
+
   private formatSoc(value: number | null | undefined): string {
     if (value == null) return '--%';
     return `${Math.round(value * 100)}%`;
@@ -1141,6 +1142,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private formatDuration(seconds: number | null | undefined): string {
     if (seconds == null) return '';
     return this.units.convertToUnit('D HH:MM:SS', seconds).toString();
+  }
+
+  private formatTemperature(value: unknown): string {
+    if (value == null) return '';
+    if (typeof value !== 'number') return '';
+    const displayUnit = this.units.getDefaults().Temperature;
+    value = this.units.convertToUnit(displayUnit, value).toFixed(1);
+    return `${value} ${displayUnit === 'celsius' ? '°C' : '°F'}`;
   }
 
   private sumNumbers(values: (number | null | undefined)[]): number | null {
@@ -1161,16 +1170,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return Math.min(...filtered);
   }
 
-  private toNumber(value: unknown, unit: string): number | null {
+  private toNumber(value: unknown): number | null {
     if (value == null) return null;
     if (typeof value !== 'number') return null;
-    return this.units.convertToUnit(unit, value) ?? value;
-  }
-
-  private formatTemperature(value: unknown): string {
-    if (value == null) return '';
-    if (typeof value !== 'number') return '';
-    return `${value.toFixed(1)} ${this.units.getDefaults().Temperature === 'celsius' ? '°C' : '°F'}`;
+    return value;
   }
 
   private buildSemiGaugeArcPath(radius: number, ratio: number | null | undefined): string {

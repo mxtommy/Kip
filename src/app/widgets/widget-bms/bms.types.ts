@@ -44,8 +44,8 @@ export interface BmsBatteryDisplayModel {
   detailLineRegular: string;
   socText: string;
   socGlowEnabled: boolean;
-  actualCapacityText: string;
-  remainingText: string;
+  remainingCapacityText: string;
+  remainingTimeText: string;
   iconKey: 'power_available' | 'power_renewal';
 }
 
@@ -55,7 +55,7 @@ export interface BmsBankDisplayModel {
   currentText: string;
   powerText: string;
   socText: string;
-  remainingText: string;
+  remainingTimeText: string;
   remainingCapacityText: string;
   gaugeValuePath: string;
   gaugeValueColor: string;
