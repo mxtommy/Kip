@@ -297,3 +297,6 @@ KIP has its own Discord Signal K channel for getting in touch. Join us at https:
 # Features, Ideas, Bugs
 See KIP's GitHub project for the latest feature requests:
 https://github.com/mxtommy/Kip/issues
+
+This repository may not be used to train machine learning or AI models
+without explicit permission from the author.
