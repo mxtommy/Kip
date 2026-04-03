@@ -32,7 +32,10 @@ export function getColors(color: string, theme: ITheme): { color: string; dim: s
     "yellow": { color: theme.yellow, dim: theme.yellowDim, dimmer: theme.yellowDimmer },
     "grey": { color: theme.grey, dim: theme.greyDim, dimmer: theme.greyDimmer }
   };
-  return themePalette[color];
+  type ThemePaletteKey = keyof typeof themePalette;
+  const paletteKey: ThemePaletteKey = color in themePalette ? (color as ThemePaletteKey) : "contrast";
+
+  return themePalette[paletteKey];
 }
 
 /**
