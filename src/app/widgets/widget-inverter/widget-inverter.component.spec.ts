@@ -81,20 +81,53 @@ describe('WidgetInverterComponent', () => {
     await setup();
     const descriptor = getElectricalWidgetFamilyDescriptor('widget-inverter');
     expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenNthCalledWith(1, `${descriptor?.selfRootPath}.*`);
-    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenNthCalledWith(2, 'self.electrical.inverter.*');
+    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledTimes(1);
   });
 
-  it('filters visible inverters by trackedIds', async () => {
+  it('filters visible inverters by trackedDevices', async () => {
     await setup(
       [
         makeUpdate('self.electrical.inverters.i1.dc.voltage', 48),
         makeUpdate('self.electrical.inverters.i2.dc.voltage', 50)
       ],
-      { inverter: { trackedIds: ['i1'] } }
+      { inverter: { trackedDevices: [{ id: 'i1', source: 'default', key: 'i1||default' }] } }
     );
 
-    const visible = (component as unknown as { visibleInverterIds: () => string[] }).visibleInverterIds();
-    expect(visible).toEqual(['i1']);
+    const visible = (component as unknown as { visibleInverterKeys: () => string[] }).visibleInverterKeys();
+    expect(visible).toEqual(['i1||default']);
+  });
+
+  it('shows all discovered inverters when no trackedDevices are configured', async () => {
+    await setup([
+      makeUpdate('self.electrical.inverters.i1.dc.voltage', 48),
+      makeUpdate('self.electrical.inverters.i2.dc.voltage', 50)
+    ]);
+
+    const visible = (component as unknown as { visibleInverters: () => { id: string }[] }).visibleInverters();
+    expect(visible.map(v => v.id).sort()).toEqual(['i1', 'i2']);
+  });
+
+  it('falls back to showing all inverters when trackedDevices is cleared after being set', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.inverters.i1.dc.voltage', 48),
+        makeUpdate('self.electrical.inverters.i2.dc.voltage', 50)
+      ],
+      { inverter: { trackedDevices: [{ id: 'i1', source: 'default', key: 'i1||default' }] } }
+    );
+
+    // Verify only i1 is visible with tracking active
+    let visible = (component as unknown as { visibleInverters: () => { id: string }[] }).visibleInverters();
+    expect(visible.map(v => v.id)).toEqual(['i1']);
+
+    // Clear tracking — all inverters should now be visible
+    runtimeMock.options.mockReturnValue({ inverter: { trackedDevices: [] } });
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig(
+      { inverter: { trackedDevices: [] } }
+    );
+
+    visible = (component as unknown as { visibleInverters: () => { id: string }[] }).visibleInverters();
+    expect(visible.map(v => v.id).sort()).toEqual(['i1', 'i2']);
   });
 
   it('parses dc.voltage and dc.current path keys', async () => {
@@ -103,7 +136,7 @@ describe('WidgetInverterComponent', () => {
       makeUpdate('self.electrical.inverters.i1.dc.current', 10)
     ]);
 
-    const map = (component as unknown as { invertersById: () => Record<string, { dcVoltage?: number | null; dcCurrent?: number | null }> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, { dcVoltage?: number | null; dcCurrent?: number | null }> }).invertersByKey();
     expect(map['i1']?.dcVoltage).toBe(48);
     expect(map['i1']?.dcCurrent).toBe(10);
   });
@@ -115,7 +148,7 @@ describe('WidgetInverterComponent', () => {
       makeUpdate('self.electrical.inverters.i1.ac.frequency', 60)
     ]);
 
-    const map = (component as unknown as { invertersById: () => Record<string, { acVoltage?: number | null; acCurrent?: number | null; acFrequency?: number | null }> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, { acVoltage?: number | null; acCurrent?: number | null; acFrequency?: number | null }> }).invertersByKey();
     expect(map['i1']?.acVoltage).toBe(120);
     expect(map['i1']?.acCurrent).toBe(8);
     expect(map['i1']?.acFrequency).toBe(60);
@@ -129,7 +162,7 @@ describe('WidgetInverterComponent', () => {
     liveSubject.next(makeUpdate('self.electrical.inverters.i1.dc.current', 10));
     await vi.advanceTimersByTimeAsync(500);
 
-    const map = (component as unknown as { invertersById: () => Record<string, { dcPower?: number | null }> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, { dcPower?: number | null }> }).invertersByKey();
     expect(map['i1']?.dcPower).toBe(480);
   });
 
@@ -191,7 +224,7 @@ describe('WidgetInverterComponent', () => {
     expect(models['i1']?.secondaryMetricsTextColor).toBeTruthy();
   });
 
-  it('uses card mode metrics when display mode is card', async () => {
+  it('uses compact mode metrics when display mode is compact', async () => {
     await setup(
       [
         makeUpdate('self.electrical.inverters.i1.dc.voltage', 48),
@@ -201,10 +234,9 @@ describe('WidgetInverterComponent', () => {
       ],
       {
         inverter: {
-          trackedIds: ['i1'],
+          trackedDevices: [{ id: 'i1', source: 'default', key: 'i1||default' }],
           cardMode: {
-            enabled: true,
-            displayMode: 'card',
+            displayMode: 'compact',
             metrics: ['dcVoltage', 'acVoltage']
           }
         }
@@ -212,8 +244,8 @@ describe('WidgetInverterComponent', () => {
     );
 
     const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
-    expect(models['i1']?.metricsLineOne).toContain('DC V ');
-    expect(models['i1']?.metricsLineOne).toContain('AC V ');
+    expect(models['i1||default']?.metricsLineOne).toContain('DC V ');
+    expect(models['i1||default']?.metricsLineOne).toContain('AC V ');
   });
 
   it('does not create a snapshot for unrecognized path keys', async () => {
@@ -221,8 +253,34 @@ describe('WidgetInverterComponent', () => {
       makeUpdate('self.electrical.inverters.i9.customMetric', 12)
     ]);
 
-    const map = (component as unknown as { invertersById: () => Record<string, unknown> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, unknown> }).invertersByKey();
     expect(map['i9']).toBeUndefined();
+  });
+
+  it('materializes separate cards for same id across different sources', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.inverters.i1.dc.voltage', 48),
+        makeUpdate('self.electrical.inverters.i1.dc.current', 10)
+      ],
+      {
+        inverter: {
+          trackedDevices: [
+            { id: 'i1', source: 'sourceA', key: 'i1||sourceA' },
+            { id: 'i1', source: 'sourceB', key: 'i1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const visible = (component as unknown as { visibleInverters: () => { id: string; source?: string | null; deviceKey?: string }[] }).visibleInverters();
+    expect(visible).toHaveLength(2);
+    expect(visible.find(v => v.deviceKey === 'i1||sourceA')).toBeDefined();
+    expect(visible.find(v => v.deviceKey === 'i1||sourceB')).toBeDefined();
+
+    const models = (component as unknown as { displayModels: () => Record<string, { busText: string }> }).displayModels();
+    expect(models['i1||sourceA']?.busText).toBe('sourceA');
+    expect(models['i1||sourceB']?.busText).toBe('sourceB');
   });
 
   it('does not create a snapshot from root-node paths (no key segment after id)', async () => {
@@ -240,7 +298,7 @@ describe('WidgetInverterComponent', () => {
       makeUpdate('self.electrical.inverter.i7.dc.current', 8)
     ]);
 
-    const map = (component as unknown as { invertersById: () => Record<string, { dcVoltage?: number | null; dcCurrent?: number | null; dcPower?: number | null }> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, { dcVoltage?: number | null; dcCurrent?: number | null; dcPower?: number | null }> }).invertersByKey();
     expect(map['i7']?.dcVoltage).toBe(49);
     expect(map['i7']?.dcCurrent).toBe(8);
     expect(map['i7']?.dcPower).toBe(392);
@@ -261,7 +319,7 @@ describe('WidgetInverterComponent', () => {
       makeUpdate('self.electrical.chargers.c1.dc.voltage', 48)
     ]);
 
-    const map = (component as unknown as { invertersById: () => Record<string, unknown> }).invertersById();
+    const map = (component as unknown as { invertersByKey: () => Record<string, unknown> }).invertersByKey();
     expect(map['c1']).toBeUndefined();
   });
 });

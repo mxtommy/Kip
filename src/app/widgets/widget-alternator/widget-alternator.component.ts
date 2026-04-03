@@ -5,10 +5,11 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { UnitsService } from '../../core/services/units.service';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import {
   ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT,
   ELECTRICAL_DIRECT_CARD_FULL_LAYOUT,
@@ -17,7 +18,7 @@ import {
   ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
-import type { AlternatorDisplayModel, AlternatorSnapshot, AlternatorWidgetConfig, ElectricalGroupConfig } from './widget-alternator.types';
+import type { AlternatorDisplayModel, AlternatorSnapshot, AlternatorWidgetConfig, ElectricalCardModeConfig } from './widget-alternator.types';
 
 interface AlternatorRenderSnapshot {
   alternators: AlternatorSnapshot[];
@@ -34,7 +35,6 @@ interface AlternatorRenderSnapshot {
 export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   private static readonly ALTERNATOR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-alternator');
   private static readonly ROOT_PATTERN = `${WidgetAlternatorComponent.ALTERNATOR_DESCRIPTOR?.selfRootPath ?? 'self.electrical.alternators'}.*`;
-  private static readonly ROOT_PATTERN_LEGACY = 'self.electrical.alternator.*';
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -45,8 +45,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     alternator: {
-      trackedIds: [],
-      groups: [],
+      trackedDevices: [],
       optionsById: {}
     }
   };
@@ -54,6 +53,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
+  public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
@@ -71,29 +71,36 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   private pendingRenderSnapshot: AlternatorRenderSnapshot | null = null;
 
   protected readonly discoveredAlternatorIds = signal<string[]>([]);
-  protected readonly trackedAlternatorIds = signal<string[]>([]);
-  protected readonly groups = signal<AlternatorWidgetConfig['groups']>([]);
+  protected readonly trackedDevices = signal<ElectricalTrackedDevice[]>([]);
   protected readonly optionsById = signal<AlternatorWidgetConfig['optionsById']>({});
-  protected readonly cardMode = signal<{ enabled: boolean; displayMode: 'full' | 'card'; metrics: string[] }>({
-    enabled: false,
+  protected readonly cardMode = signal<ElectricalCardModeConfig>({
     displayMode: 'full',
     metrics: ['voltage', 'current', 'power', 'revolutions']
   });
-  protected readonly alternatorsById = signal<Record<string, AlternatorSnapshot>>({});
+  protected readonly alternatorsByKey = signal<Record<string, AlternatorSnapshot>>({});
 
-  protected readonly visibleAlternatorIds = computed(() => {
-    const tracked = this.trackedAlternatorIds();
-    return tracked.length ? tracked : this.discoveredAlternatorIds();
+  protected readonly visibleAlternatorKeys = computed(() => {
+    const tracked = this.trackedDevices();
+    if (tracked.length) return tracked.map(device => device.key);
+    const map = this.alternatorsByKey();
+    const ids = new Set(this.discoveredAlternatorIds());
+    return Object.keys(map)
+      .filter(key => {
+        const snapshot = map[key];
+        return !!snapshot && ids.has(snapshot.id);
+      })
+      .sort((left, right) => left.localeCompare(right));
   });
 
   protected readonly visibleAlternators = computed<AlternatorSnapshot[]>(() => {
-    const ids = this.visibleAlternatorIds();
-    const map = this.alternatorsById();
-    return ids.map(id => map[id]).filter((item): item is AlternatorSnapshot => !!item);
+    const keys = this.visibleAlternatorKeys();
+    const map = this.alternatorsByKey();
+    return keys.map(key => map[key]).filter((item): item is AlternatorSnapshot => !!item);
   });
 
   protected readonly hasAlternators = computed(() => this.visibleAlternators().length > 0);
-  protected readonly isCompactCardMode = computed(() => this.cardMode().enabled && this.cardMode().displayMode === 'card');
+  protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
+  protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color);
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
@@ -109,8 +116,16 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     const widgetColors = this.widgetColors();
     const ignoreZones = this.ignoreZones();
 
+    const idCount = new Map<string, number>();
+    alternators.forEach(alternator => idCount.set(alternator.id, (idCount.get(alternator.id) ?? 0) + 1));
+    const duplicateIds = new Set<string>(
+      [...idCount.entries()].filter(([, count]) => count > 1).map(([id]) => id)
+    );
+
     const models: Record<string, AlternatorDisplayModel> = {};
     for (const alternator of alternators) {
+      const modelKey = alternator.deviceKey ?? alternator.id;
+      const showSource = !!alternator.source && duplicateIds.has(alternator.id);
       const aggregateState = this.resolveMostSevereState(
         alternator.powerState ?? null,
         alternator.currentState ?? null,
@@ -130,11 +145,13 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
       );
       const [metricsLineOne, metricsLineTwo] = this.buildMetricRows(alternator);
 
-      models[alternator.id] = {
+      models[modelKey] = {
         id: alternator.id,
         titleText: this.displayName(alternator),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(alternator),
-        busText: this.isCompactCardMode() ? '' : (alternator.associatedBus || alternator.location || '-'),
+        busText: this.isCompactCardMode() ? '' : (
+          showSource ? (alternator.source ?? '-') : (alternator.associatedBus || alternator.location || '-')
+        ),
         metricsLineOne,
         metricsLineTwo,
         stateBarColor: resolveZoneAwareColor(aggregateState, widgetColors?.dim ?? 'var(--kip-contrast-color)', theme, ignoreZones),
@@ -172,8 +189,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     });
 
     const alternatorTrees = [
-      this.data.subscribePathTreeWithInitial(WidgetAlternatorComponent.ROOT_PATTERN),
-      this.data.subscribePathTreeWithInitial(WidgetAlternatorComponent.ROOT_PATTERN_LEGACY)
+      this.data.subscribePathTreeWithInitial(WidgetAlternatorComponent.ROOT_PATTERN)
     ];
 
     let hasInitialUpdates = false;
@@ -233,34 +249,102 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const alternatorCfg = this.resolveAlternatorConfig(cfg);
-    this.trackedAlternatorIds.set(alternatorCfg.trackedIds);
-    this.groups.set(alternatorCfg.groups);
+    this.trackedDevices.set(alternatorCfg.trackedDevices);
+    this.reprojectSnapshotsToDeviceKeys(alternatorCfg.trackedDevices);
     this.optionsById.set(alternatorCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(alternatorCfg.cardMode));
   }
 
+  private reprojectSnapshotsToDeviceKeys(devices: ElectricalTrackedDevice[]): void {
+    if (!devices.length) return;
+
+    const idToKeys = new Map<string, string[]>();
+    devices.forEach(device => {
+      const existing = idToKeys.get(device.id) ?? [];
+      existing.push(device.key);
+      idToKeys.set(device.id, existing);
+    });
+
+    this.alternatorsByKey.update(current => {
+      let next = current;
+      let changed = false;
+
+      idToKeys.forEach((keys, id) => {
+        const sourceSnapshot = current[id];
+        if (!sourceSnapshot) return;
+
+        for (const deviceKey of keys) {
+          if (current[deviceKey]) continue;
+          const trackedDevice = devices.find(device => device.key === deviceKey);
+          if (!changed) {
+            next = { ...current };
+            changed = true;
+          }
+          next[deviceKey] = { ...sourceSnapshot, source: trackedDevice?.source ?? null, deviceKey };
+        }
+
+        if (changed && next[id]?.deviceKey === undefined) {
+          delete next[id];
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }
+
   private resolveAlternatorConfig(cfg: IWidgetSvcConfig): AlternatorWidgetConfig {
     const alternator = cfg.alternator;
-    const groups = this.normalizeGroups((alternator as { groups?: unknown; banks?: unknown } | undefined)?.groups
-      ?? (alternator as { banks?: unknown } | undefined)?.banks);
     const optionsById = this.normalizeOptionsById(
       (alternator as { optionsById?: unknown; alternatorOptionsById?: unknown } | undefined)?.optionsById
       ?? (alternator as { alternatorOptionsById?: unknown } | undefined)?.alternatorOptionsById
     );
 
     return {
-      trackedIds: this.normalizeStringList(alternator?.trackedIds),
-      groups,
+      trackedDevices: this.normalizeTrackedDevices(alternator?.trackedDevices),
       optionsById,
       cardMode: this.normalizeCardMode(alternator?.cardMode)
     };
   }
 
-  private normalizeCardMode(value: unknown): { enabled: boolean; displayMode: 'full' | 'card'; metrics: string[] } {
-    const candidate = (value && typeof value === 'object') ? value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown } : null;
+  private normalizeTrackedDevices(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = this.normalizeOptionalString(candidate.id);
+      const source = this.normalizeOptionalString(candidate.source);
+      if (!id || !source) {
+        return;
+      }
+
+      const key = this.normalizeOptionalString(candidate.key) ?? `${id}||${source}`;
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
+  }
+
+  private buildIdToDeviceKeysMap(): Map<string, string[]> {
+    const map = new Map<string, string[]>();
+    this.trackedDevices().forEach(device => {
+      const existing = map.get(device.id) ?? [];
+      existing.push(device.key);
+      map.set(device.id, existing);
+    });
+    return map;
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig {
+    const candidate = (value && typeof value === 'object') ? value as { displayMode?: unknown; metrics?: unknown } : null;
     if (!candidate) {
       return {
-        enabled: false,
         displayMode: 'full',
         metrics: ['voltage', 'current', 'power', 'revolutions']
       };
@@ -268,8 +352,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
     const metrics = this.normalizeStringList(candidate?.metrics);
     return {
-      enabled: candidate.enabled !== false,
-      displayMode: candidate?.displayMode === 'card' ? 'card' : 'full',
+      displayMode: candidate?.displayMode === 'compact' ? 'compact' : 'full',
       metrics: metrics.length ? metrics : ['voltage', 'current', 'power', 'revolutions']
     };
   }
@@ -292,31 +375,6 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     });
 
     return [...ids].sort((left, right) => left.localeCompare(right));
-  }
-
-  private normalizeGroups(value: unknown): ElectricalGroupConfig[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .map(group => {
-        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? '';
-        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
-        const memberIds = this.normalizeStringList((group as { memberIds?: unknown })?.memberIds);
-
-        if (!id) {
-          return null;
-        }
-
-        return {
-          id,
-          name,
-          memberIds,
-          connectionMode: (group as { connectionMode?: unknown })?.connectionMode === 'series' ? 'series' : 'parallel'
-        } as ElectricalGroupConfig;
-      })
-      .filter((item): item is ElectricalGroupConfig => !!item);
   }
 
   private normalizeOptionsById(value: unknown): AlternatorWidgetConfig['optionsById'] {
@@ -397,47 +455,60 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     const uniqueIds = new Set(updates.map(update => update.id));
     uniqueIds.forEach(id => this.trackDiscoveredAlternator(id));
 
-    this.alternatorsById.update(current => {
+    const idToKeys = this.buildIdToDeviceKeysMap();
+
+    this.alternatorsByKey.update(current => {
       let nextState = current;
       let changed = false;
 
       for (const update of updates) {
-        const existing = nextState[update.id] ?? { id: update.id };
-        const next = { ...existing } as AlternatorSnapshot;
-        const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
+        const keysForId = idToKeys.get(update.id);
+        const targetKeys: string[] = keysForId?.length ? keysForId : [update.id];
 
-        if (!fieldChanged && update.key === '__root__' && !nextState[update.id]) {
+        for (const deviceKey of targetKeys) {
+          const isTracked = !!(keysForId?.length);
+          const trackedDevice = isTracked ? this.trackedDevices().find(device => device.key === deviceKey) : null;
+          const existing = nextState[deviceKey] ?? {
+            id: update.id,
+            source: trackedDevice?.source ?? null,
+            deviceKey: isTracked ? deviceKey : undefined
+          };
+          const next = { ...existing } as AlternatorSnapshot;
+          const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
+
+          if (!fieldChanged && update.key === '__root__' && !nextState[deviceKey]) {
+            if (!changed) {
+              nextState = { ...nextState };
+              changed = true;
+            }
+            nextState[deviceKey] = next;
+            continue;
+          }
+
+          if (!fieldChanged) {
+            continue;
+          }
+
+          const derivedPower = next.rawPower != null
+            ? next.rawPower
+            : (next.voltage != null && next.current != null ? next.voltage * next.current : null);
+          if (derivedPower != null) {
+            next.power = Number.isFinite(derivedPower) ? derivedPower : null;
+          } else {
+            next.power = null;
+          }
+
+          if (next.rawPower == null) {
+            next.powerState = this.resolveMostSevereState(next.voltageState ?? null, next.currentState ?? null);
+          }
+
           if (!changed) {
             nextState = { ...nextState };
             changed = true;
           }
-          nextState[update.id] = next;
-          continue;
-        }
 
-        if (!fieldChanged) {
-          continue;
+          nextState[deviceKey] = next;
         }
-
-        const derivedPower = next.rawPower != null
-          ? next.rawPower
-          : (next.voltage != null && next.current != null ? next.voltage * next.current : null);
-        if (derivedPower != null) {
-          next.power = Number.isFinite(derivedPower) ? derivedPower : null;
-        } else {
-          next.power = null;
-        }
-
-        if (next.rawPower == null) {
-          next.powerState = this.resolveMostSevereState(next.voltageState ?? null, next.currentState ?? null);
-        }
-
-        if (!changed) {
-          nextState = { ...nextState };
-          changed = true;
-        }
-
-        nextState[update.id] = next;
       }
 
       return changed ? nextState : current;
@@ -552,7 +623,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     const layout = compact ? ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT : ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
     const cardHeight = compact ? WidgetAlternatorComponent.COMPACT_CARD_HEIGHT : WidgetAlternatorComponent.CARD_HEIGHT;
     const cards = snapshot.alternators.map((alternator, index) => ({
-      id: alternator.id,
+      key: alternator.deviceKey ?? alternator.id,
       alternator,
       y: index * (cardHeight + WidgetAlternatorComponent.CARD_GAP)
     }));
@@ -564,8 +635,8 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     this.svg.attr('viewBox', `0 0 ${WidgetAlternatorComponent.VIEWBOX_WIDTH} ${contentHeight}`);
 
     const selection = this.layer
-      .selectAll<SVGGElement, { id: string; alternator: AlternatorSnapshot; y: number }>('g.alternator-card')
-      .data(cards, item => item.id);
+      .selectAll<SVGGElement, { key: string; alternator: AlternatorSnapshot; y: number }>('g.alternator-card')
+      .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'alternator-card');
     enter.append('rect').attr('class', 'alternator-card-bg');
@@ -577,7 +648,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'alternator-metrics-1');
     enter.append('text').attr('class', 'alternator-metrics-2');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; alternator: AlternatorSnapshot; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; alternator: AlternatorSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('rect.alternator-card-bg')
@@ -598,14 +669,14 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
       .attr('ry', layout.stateBarCornerRadius)
       .attr('width', 3)
       .attr('height', cardHeight - 3)
-      .attr('fill', item => snapshot.displayModels[item.id]?.stateBarColor ?? snapshot.widgetColors.dim);
+      .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
     merged.select('text.alternator-title')
       .attr('x', layout.titleX)
       .attr('y', layout.titleY)
       .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.titleText ?? this.displayName(item.alternator));
+      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.alternator));
 
     merged.select('text.alternator-id')
       .attr('x', layout.idX)
@@ -620,8 +691,8 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
       .attr('y', layout.metaY)
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.modeText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.modeText ?? '');
 
     merged.select('text.alternator-bus')
       .attr('x', layout.metaRightX)
@@ -629,23 +700,23 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'end')
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.busText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.busText ?? '');
 
     merged.select('text.alternator-metrics-1')
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
       .attr('font-size', layout.lineOneFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineOne ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineOne ?? '');
 
     merged.select('text.alternator-metrics-2')
       .attr('x', layout.lineTwoX)
       .attr('y', layout.lineTwoY)
       .attr('font-size', layout.lineTwoFontSize)
       .attr('opacity', 0.85)
-      .attr('fill', item => snapshot.displayModels[item.id]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineTwo ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineTwo ?? '');
 
     selection.exit().remove();
   }
@@ -668,7 +739,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   private buildMetricRows(alternator: AlternatorSnapshot): [string, string] {
     const mode = this.cardMode();
-    if (!mode.enabled || mode.displayMode === 'full') {
+    if (this.activeDisplayMode() === 'full') {
       return [
         `V ${this.formatValue(alternator.voltage, 'V')}   A ${this.formatValue(alternator.current, 'A')}`,
         `P ${this.formatValue(alternator.power, 'W')}   RPM ${this.formatRevolutions(alternator.revolutions)}`

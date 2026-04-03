@@ -3,9 +3,9 @@
     <h3>Tracked Batteries</h3>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Battery Instances</mat-label>
-      <mat-select formControlName="trackedIds" multiple>
-        @for (id of discoveredBatteryIds(); track $index) {
-          <mat-option [value]="id">{{ id }}</mat-option>
+      <mat-select formControlName="trackedDevices" [compareWith]="compareTrackedDevice" multiple>
+        @for (device of discoveredTrackedDevices(); track device.key) {
+        <mat-option [value]="device">{{ device.id }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

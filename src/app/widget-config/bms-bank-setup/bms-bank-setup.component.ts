@@ -9,7 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
 import type { BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
-import type { ElectricalGroupConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalGroupConfig, ElectricalTrackedDevice } from '../../core/interfaces/widgets-interface';
 import { TitleCasePipe } from '@angular/common';
 
 @Component({
@@ -35,8 +35,9 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
 
   protected bmsFormGroup!: UntypedFormGroup;
   protected groupsFormArray!: UntypedFormArray;
-  protected trackedIdsControl!: UntypedFormControl;
+  protected trackedDevicesControl!: UntypedFormControl;
   protected readonly discoveredBatteryIds = signal<string[]>([]);
+  protected readonly discoveredTrackedDevices = computed(() => this.discoveredBatteryIds().map(id => ({ id, source: 'default', key: `${id}||default` })));
   protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
 
   private discoveryToken?: PathDiscoveryToken;
@@ -89,14 +90,51 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   }
 
   private ensureTrackedControl(): void {
-    const trackedControl = this.bmsFormGroup.get('trackedIds');
+    const trackedControl = this.bmsFormGroup.get('trackedDevices');
     if (trackedControl instanceof UntypedFormControl) {
-      this.trackedIdsControl = trackedControl;
+      this.trackedDevicesControl = trackedControl;
+      this.trackedDevicesControl.setValue(this.normalizeTrackedDeviceArray(this.trackedDevicesControl.value), { emitEvent: false });
       return;
     }
 
-    this.trackedIdsControl = new UntypedFormControl([]);
-    this.bmsFormGroup.addControl('trackedIds', this.trackedIdsControl);
+    this.trackedDevicesControl = new UntypedFormControl([]);
+    this.bmsFormGroup.addControl('trackedDevices', this.trackedDevicesControl);
+  }
+
+  protected compareTrackedDevice(
+    left: ElectricalTrackedDevice | null,
+    right: ElectricalTrackedDevice | null
+  ): boolean {
+    if (!left || !right) return left === right;
+    return left.key === right.key;
+  }
+
+  private normalizeTrackedDeviceArray(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+      const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+      if (!id || !source) {
+        return;
+      }
+
+      const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+        ? candidate.key.trim()
+        : `${id}||${source}`;
+
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
   }
 
   private ensureBanksArray(): void {

@@ -3,6 +3,11 @@ export type THistoryMethod = 'min' | 'max' | 'avg' | 'sma' | 'ema';
 export type TElectricalFamilyKey = 'batteries' | 'solar' | 'chargers' | 'inverters' | 'alternators' | 'ac';
 export type TElectricalExpansionMode = 'bms-battery-tree' | 'solar-tree' | 'charger-tree' | 'inverter-tree' | 'alternator-tree' | 'ac-tree';
 
+export interface IElectricalTrackedDeviceRef {
+  id: string;
+  source: string;
+}
+
 interface IKipSeriesDefinitionBase {
   seriesId: string;
   datasetUuid: string;
@@ -24,6 +29,7 @@ export interface IKipConcreteSeriesDefinition extends IKipSeriesDefinitionBase {
   expansionMode?: null;
   familyKey?: null;
   allowedIds?: null;
+  trackedDevices?: null;
 }
 
 export interface IElectricalTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
@@ -37,6 +43,7 @@ export interface IElectricalTemplateSeriesDefinition extends IKipSeriesDefinitio
   expansionMode: TElectricalExpansionMode;
   familyKey?: TElectricalFamilyKey | null;
   allowedIds?: readonly string[] | null;
+  trackedDevices?: readonly IElectricalTrackedDeviceRef[] | null;
 }
 
 export type IKipTemplateSeriesDefinition = IElectricalTemplateSeriesDefinition;

@@ -17,8 +17,8 @@ describe('WidgetSolarChargerComponent', () => {
     color?: string;
     ignoreZones?: boolean;
     solarCharger?: {
-      trackedIds?: string[];
-      solarOptionsById?: Record<string, { arrayRatedPowerW?: number | null }>;
+      trackedDevices?: { id: string; source: string; key: string }[];
+      optionsById?: Record<string, { arrayRatedPowerW?: number | null }>;
     };
   };
 
@@ -62,8 +62,8 @@ describe('WidgetSolarChargerComponent', () => {
     liveSubject = new Subject<IPathUpdateWithPath>();
     runtimeOptions = {
       solarCharger: {
-        trackedIds: [],
-        solarOptionsById: {}
+        trackedDevices: [],
+        optionsById: {}
       }
     };
 
@@ -114,6 +114,71 @@ describe('WidgetSolarChargerComponent', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('shows all discovered chargers when no trackedDevices are configured', () => {
+    fixture.detectChanges();
+
+    const visible = (component as unknown as {
+      visibleSolarUnits: () => { id: string }[];
+    }).visibleSolarUnits();
+
+    expect(visible.map(item => item.id).sort()).toEqual(['sc1', 'sc2']);
+  });
+
+  it('materializes separate cards for same id across different sources when trackedDevices are configured', () => {
+    runtimeOptions.solarCharger = {
+      trackedDevices: [
+        { id: 'sc1', source: 'sourceA', key: 'sc1||sourceA' },
+        { id: 'sc1', source: 'sourceB', key: 'sc1||sourceB' }
+      ],
+      optionsById: {}
+    };
+
+    fixture.detectChanges();
+
+    const visible = (component as unknown as {
+      visibleSolarUnits: () => { id: string; source?: string | null; deviceKey?: string }[];
+    }).visibleSolarUnits();
+
+    expect(visible).toHaveLength(2);
+    expect(visible.find(item => item.deviceKey === 'sc1||sourceA')).toBeDefined();
+    expect(visible.find(item => item.deviceKey === 'sc1||sourceB')).toBeDefined();
+
+    const models = (component as unknown as {
+      displayModels: () => Record<string, { source?: string | null; deviceKey?: string }>;
+    }).displayModels();
+
+    expect(models['sc1||sourceA']?.deviceKey).toBe('sc1||sourceA');
+    expect(models['sc1||sourceB']?.deviceKey).toBe('sc1||sourceB');
+  });
+
+  it('falls back to showing all discovered chargers when trackedDevices is cleared after being set', () => {
+    runtimeOptions.solarCharger = {
+      trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+      optionsById: {}
+    };
+
+    fixture.detectChanges();
+
+    let visible = (component as unknown as {
+      visibleSolarUnits: () => { id: string }[];
+    }).visibleSolarUnits();
+    expect(visible.map(item => item.id)).toEqual(['sc1']);
+
+    runtimeOptions.solarCharger = {
+      trackedDevices: [],
+      optionsById: {}
+    };
+
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig({
+      solarCharger: runtimeOptions.solarCharger
+    });
+
+    visible = (component as unknown as {
+      visibleSolarUnits: () => { id: string }[];
+    }).visibleSolarUnits();
+    expect(visible.map(item => item.id).sort()).toEqual(['sc1', 'sc2']);
   });
 
   it('uses runtime-provided colorRole and ignoreZones values', () => {
@@ -203,6 +268,46 @@ describe('WidgetSolarChargerComponent', () => {
     expect(model.chargerCurrentTextColor).toBe(themeMock.zoneNominal);
   });
 
+  it('rejects root-only solar id paths in runtime parsing', () => {
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+      initial: [
+        makeUpdate('self.electrical.solar.power', 1)
+      ],
+      live$: liveSubject.asObservable()
+    });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-root-only');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+
+    fixture.detectChanges();
+
+    expect((component as unknown as { discoveredSolarIds: () => string[] }).discoveredSolarIds()).toEqual([]);
+    expect((component as unknown as { visibleSolarUnits: () => unknown[] }).visibleSolarUnits()).toEqual([]);
+  });
+
+  it('accepts positional ids with metric suffix and safely ignores unsupported metric keys', () => {
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+      initial: [
+        makeUpdate('self.electrical.solar.power.generated.today', 42)
+      ],
+      live$: liveSubject.asObservable()
+    });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-positional');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+
+    fixture.detectChanges();
+
+    expect((component as unknown as { discoveredSolarIds: () => string[] }).discoveredSolarIds()).toEqual(['power']);
+    expect((component as unknown as { visibleSolarUnits: () => unknown[] }).visibleSolarUnits()).toEqual([]);
+  });
+
   it('keeps solar panel power tspans stable across renders', () => {
     runtimeOptions.color = 'contrast';
     runtimeOptions.ignoreZones = false;
@@ -237,5 +342,107 @@ describe('WidgetSolarChargerComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     const tspans = element.querySelectorAll('text.solar-panel-power tspan');
     expect(tspans.length).toBe(2);
+  });
+
+  it('normalizes compact card mode from widget config', () => {
+    runtimeOptions.solarCharger = {
+      trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+      optionsById: {},
+      cardMode: {
+        displayMode: 'compact',
+        metrics: ['panelVoltage']
+      }
+    } as unknown as typeof runtimeOptions.solarCharger;
+
+    fixture.detectChanges();
+
+    const compact = (component as unknown as { isCompactCardMode: () => boolean }).isCompactCardMode();
+    expect(compact).toBe(true);
+  });
+
+  it('prefers host renderMode input over widget config displayMode', () => {
+    runtimeOptions.solarCharger = {
+      trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+      optionsById: {},
+      cardMode: {
+        displayMode: 'full',
+        metrics: ['panelVoltage']
+      }
+    } as unknown as typeof runtimeOptions.solarCharger;
+
+    fixture.detectChanges();
+    fixture.componentRef.setInput('renderMode', 'compact');
+    fixture.detectChanges();
+
+    const compact = (component as unknown as { isCompactCardMode: () => boolean }).isCompactCardMode();
+    expect(compact).toBe(true);
+  });
+
+  it('normalizes controller.* sub-path prefix so nested Signal K paths apply metric values correctly', () => {
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+      initial: [
+        makeUpdate('self.electrical.solar.bimini.controller.temperature', 38.5),
+        makeUpdate('self.electrical.solar.bimini.controller.panelVoltage', 24.1),
+        makeUpdate('self.electrical.solar.bimini.controller.panelCurrent', 8.3),
+        makeUpdate('self.electrical.solar.bimini.controller.voltage', 13.8),
+        makeUpdate('self.electrical.solar.bimini.controller.current', 12.0)
+      ],
+      live$: liveSubject.asObservable()
+    });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-bimini');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+
+    fixture.detectChanges();
+
+    expect((component as unknown as { discoveredSolarIds: () => string[] }).discoveredSolarIds()).toEqual(['bimini']);
+
+    const model = (component as unknown as {
+      displayModels: () => Record<string, {
+        gaugeSectionText: string;
+        chargerSectionCurrent: string;
+        chargerSectionMetadata: string;
+      }>;
+    }).displayModels()['bimini'];
+
+    expect(model).toBeDefined();
+    expect(model.gaugeSectionText).toContain('24.1V');
+    expect(model.gaugeSectionText).toContain('8.3A');
+    expect(model.chargerSectionCurrent).toContain('12.0A');
+    expect(model.chargerSectionMetadata).toContain('13.8V');
+    expect(model.chargerSectionMetadata).toContain('38.5 °C');
+  });
+
+  it('maps solar.power nested paths to panel power when available', () => {
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+      initial: [
+        makeUpdate('self.electrical.solar.bimini.solar.power', 512, States.Warn)
+      ],
+      live$: liveSubject.asObservable()
+    });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-power');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+
+    fixture.detectChanges();
+
+    const model = (component as unknown as {
+      displayModels: () => Record<string, {
+        panelPowerText: string;
+        panelPowerUnitText: string;
+        panelPowerColor: string;
+      }>;
+    }).displayModels()['bimini'];
+
+    expect(model).toBeDefined();
+    expect(model.panelPowerText).toBe('512');
+    expect(model.panelPowerUnitText).toBe('W');
+    expect(model.panelPowerColor).toBe(themeMock.zoneWarn);
   });
 });

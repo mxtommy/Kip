@@ -9,10 +9,14 @@ import { IKipSeriesDefinition } from '../../services/kip-series-api-client.servi
 import { isKipTemplateSeriesDefinition, type IKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
 import {
   describeElectricalDualAxisSeries,
-  ELECTRICAL_DUAL_AXIS_WIDGET_META,
+  getAxisConfigsForWidget,
+  getElectricalWidgetChartMeta,
+  getTemplateMetricSuffixesForExpansionMode,
   IDualAxisSeriesDescriptor,
+  resolveDualAxisWidgetTypeFromDatasets,
   TDualAxisMetric,
-  TDualAxisWidgetType
+  TDualAxisWidgetType,
+  transformDualAxisMetricValue
 } from '../../contracts/electrical-history-chart.contract';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
 import { AppService } from '../../services/app-service';
@@ -66,6 +70,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   private chart: Chart<'line'> | null = null;
   private viewReady = false;
   private pendingDatasets: HistoryChartDataset[] = [];
+  private dualAxisDescriptorCache = new Map<string, IDualAxisSeriesDescriptor | null>();
 
   constructor() {
     effect(() => {
@@ -94,6 +99,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   public async loadHistoryDatasets(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.dualAxisDescriptorCache.clear();
 
     try {
       const querySeriesDefinitions = await this.resolveQueryableSeriesDefinitions();
@@ -205,15 +211,13 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
         domain: 'scalar'
       });
 
-      // Apply unit conversion if needed
+      // Apply conversion based on dual-axis metric metadata first, then optional widget-level override.
       chartPoints = datapoints.map(point => {
         let y = point.data.value as number;
         if (typeof y === 'number' && Number.isFinite(y)) {
-          if (dualAxisSeries?.metric === 'soc') {
-            y *= 100;
-          } else if (dualAxisSeries?.metric === 'panelPower') {
-            y /= 1000;
-          } else if (!dualAxisSeries && convertUnitTo) {
+          if (dualAxisSeries) {
+            y = transformDualAxisMetricValue(dualAxisSeries, y);
+          } else if (convertUnitTo) {
             y = this.units.convertToUnit(convertUnitTo, y);
           }
         }
@@ -251,7 +255,17 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private describeDualAxisSeries(path: string | null | undefined): IDualAxisSeriesDescriptor | null {
     const normalizedPath = this.normalizeHistoryPath(path ?? '');
-    return describeElectricalDualAxisSeries(normalizedPath);
+    if (!normalizedPath.length) {
+      return null;
+    }
+
+    if (this.dualAxisDescriptorCache.has(normalizedPath)) {
+      return this.dualAxisDescriptorCache.get(normalizedPath) ?? null;
+    }
+
+    const descriptor = describeElectricalDualAxisSeries(normalizedPath);
+    this.dualAxisDescriptorCache.set(normalizedPath, descriptor);
+    return descriptor;
   }
 
   private resolveSeriesColor(index: number, dualAxisSeries: IDualAxisSeriesDescriptor | null): string {
@@ -318,7 +332,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private getDualAxisMetricColor(widgetType: TDualAxisWidgetType, metric: TDualAxisMetric): string {
     const palette = this.getSeriesPalette();
-    const metricOrder = ELECTRICAL_DUAL_AXIS_WIDGET_META[widgetType]?.metricOrder ?? [];
+    const metricOrder = getElectricalWidgetChartMeta(widgetType).metricOrder;
     const metricIndex = metricOrder.indexOf(metric);
     const safeIndex = metricIndex >= 0 ? metricIndex : 0;
     return palette[safeIndex % palette.length];
@@ -371,8 +385,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
         return descA.entityId.localeCompare(descB.entityId);
       }
 
-      const orderA = ELECTRICAL_DUAL_AXIS_WIDGET_META[descA.widgetType]?.metricOrder.indexOf(descA.metric) ?? 0;
-      const orderB = ELECTRICAL_DUAL_AXIS_WIDGET_META[descB.widgetType]?.metricOrder.indexOf(descB.metric) ?? 0;
+      const orderA = getElectricalWidgetChartMeta(descA.widgetType).metricOrder.indexOf(descA.metric);
+      const orderB = getElectricalWidgetChartMeta(descB.widgetType).metricOrder.indexOf(descB.metric);
       return orderA - orderB;
     });
   }
@@ -431,12 +445,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private matchesTemplateMetric(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
     const suffix = path.slice(prefix.length + 1);
-
-    if (series.expansionMode === 'solar-tree') {
-      return suffix.endsWith('.current') || suffix.endsWith('.panelPower');
-    }
-
-    return suffix.endsWith('.current') || suffix.endsWith('.capacity.stateOfCharge') || suffix.endsWith('.stateOfCharge');
+    const metricSuffixes = getTemplateMetricSuffixesForExpansionMode(series.expansionMode);
+    return metricSuffixes.some(candidate => suffix.endsWith(candidate));
   }
 
   private matchesTemplateAllowedIds(path: string, prefix: string, series: IKipTemplateSeriesDefinition): boolean {
@@ -458,7 +468,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       return null;
     }
 
-    const metricSuffixes = this.getTemplateMetricSuffixes(series);
+    const metricSuffixes = getTemplateMetricSuffixesForExpansionMode(series.expansionMode);
     const metricSuffix = metricSuffixes.find(candidate => suffix.endsWith(candidate));
     if (!metricSuffix) {
       return null;
@@ -470,32 +480,6 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     }
 
     return entityId;
-  }
-
-  private getTemplateMetricSuffixes(series: IKipTemplateSeriesDefinition): string[] {
-    switch (series.expansionMode) {
-      case 'solar-tree':
-        return ['.panelPower', '.current'];
-      case 'charger-tree':
-      case 'inverter-tree':
-      case 'alternator-tree':
-        return ['.voltage', '.current'];
-      case 'ac-tree':
-        return [
-          '.line1.voltage',
-          '.line1.current',
-          '.line1.frequency',
-          '.line2.voltage',
-          '.line2.current',
-          '.line2.frequency',
-          '.line3.voltage',
-          '.line3.current',
-          '.line3.frequency',
-        ];
-      case 'bms-battery-tree':
-      default:
-        return ['.capacity.stateOfCharge', '.stateOfCharge', '.current'];
-    }
   }
 
   private normalizeHistoryPath(path: string): string {
@@ -652,104 +636,69 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   private buildYScales(unitLabel: string): NonNullable<NonNullable<ChartConfiguration<'line'>['options']>['scales']> {
     const dualAxisWidgetType = this.resolveDualAxisWidgetType();
-
-    if (dualAxisWidgetType === 'widget-bms') {
-      const socAxisColor = this.getDualAxisMetricColor('widget-bms', 'soc');
-      const currentAxisColor = this.getDualAxisMetricColor('widget-bms', 'current');
+    if (!dualAxisWidgetType) {
       return {
-        ySoc: {
-          type: 'linear',
-          position: 'left',
-          min: 0,
-          max: 100,
+        y: {
           ticks: {
-            color: this.theme().contrastDim,
-            callback: value => `${value}%`
+            color: this.theme().contrastDim
           },
           grid: {
             color: this.theme().contrastDimmer
           },
           title: {
-            display: true,
-            text: 'SoC (%)',
-            color: socAxisColor
-          }
-        },
-        yCurrent: {
-          type: 'linear',
-          position: 'right',
-          ticks: {
-            color: this.theme().contrastDim,
-            callback: value => `${value} A`
-          },
-          grid: {
-            drawOnChartArea: false,
-            color: this.theme().contrastDimmer
-          },
-          title: {
-            display: true,
-            text: 'Current (A)',
-            color: currentAxisColor
+            display: !!unitLabel,
+            text: unitLabel ? `${unitLabel}` : '',
+            color: this.theme().contrastDim
           }
         }
       };
     }
 
-    if (dualAxisWidgetType === 'widget-solar-charger') {
-      const powerAxisColor = this.getDualAxisMetricColor('widget-solar-charger', 'panelPower');
-      const currentAxisColor = this.getDualAxisMetricColor('widget-solar-charger', 'current');
-      return {
-        yPower: {
-          type: 'linear',
-          position: 'left',
-          ticks: {
-            color: this.theme().contrastDim,
-            callback: value => `${value} kW`
-          },
-          grid: {
-            color: this.theme().contrastDimmer
-          },
-          title: {
-            display: true,
-            text: 'Power (kW)',
-            color: powerAxisColor
-          }
-        },
-        yCurrent: {
-          type: 'linear',
-          position: 'right',
-          ticks: {
-            color: this.theme().contrastDim,
-            callback: value => `${value} A`
-          },
-          grid: {
-            drawOnChartArea: false,
-            color: this.theme().contrastDimmer
-          },
-          title: {
-            display: true,
-            text: 'Current (A)',
-            color: currentAxisColor
-          }
-        }
-      };
-    }
+    const axisConfigs = getAxisConfigsForWidget(dualAxisWidgetType);
+    const scales: Record<string, unknown> = {};
 
-    return {
-      y: {
+    axisConfigs.forEach(axisConfig => {
+      const axisMetric = this.resolvePrimaryMetricForAxis(dualAxisWidgetType, axisConfig.axisId);
+      const axisColor = axisMetric
+        ? this.getDualAxisMetricColor(dualAxisWidgetType, axisMetric)
+        : this.theme().contrastDim;
+
+      scales[axisConfig.axisId] = {
+        type: 'linear',
+        position: axisConfig.position,
+        ...(axisConfig.min != null ? { min: axisConfig.min } : {}),
+        ...(axisConfig.max != null ? { max: axisConfig.max } : {}),
         ticks: {
-          color: this.theme().contrastDim
+          color: this.theme().contrastDim,
+          callback: (value: unknown) => this.formatAxisTick(value, axisConfig.tickSuffix)
         },
         grid: {
-          color: this.theme().contrastDimmer
+          color: this.theme().contrastDimmer,
+          ...(axisConfig.drawOnChartArea === false ? { drawOnChartArea: false } : {})
         },
         title: {
-          display: !!unitLabel,
-          text: unitLabel ? `${unitLabel}` : '',
-          color: this.theme().contrastDim
+          display: true,
+          text: axisConfig.title,
+          color: axisColor
         }
-      }
-    };
+      };
+    });
+
+    return scales as NonNullable<NonNullable<ChartConfiguration<'line'>['options']>['scales']>;
+  }
+
+  private resolvePrimaryMetricForAxis(widgetType: TDualAxisWidgetType, axisId: string): TDualAxisMetric | null {
+    const widgetMeta = getElectricalWidgetChartMeta(widgetType);
+    const metric = widgetMeta.metricOrder.find(metricName => widgetMeta.metrics[metricName]?.axisId === axisId);
+    return metric ?? null;
+  }
+
+  private formatAxisTick(value: unknown, unit: string): string {
+    if (unit === '%') {
+      return `${value}%`;
+    }
+
+    return `${value} ${unit}`;
   }
 
   private buildLegendLabels(chart: Chart): LegendItem[] {
@@ -771,24 +720,15 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
   }
 
   private resolveDualAxisWidgetType(): TDualAxisWidgetType | null {
-    const widgetType = this.data.widget?.type;
-
-    if (widgetType === 'widget-bms'
-      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'ySoc' || dataset.yAxisID === 'yCurrent')) {
-      return 'widget-bms';
-    }
-
-    if (widgetType === 'widget-solar-charger'
-      && this.pendingDatasets.some(dataset => dataset.yAxisID === 'yPower' || dataset.yAxisID === 'yCurrent')) {
-      return 'widget-solar-charger';
-    }
-
-    return null;
+    return resolveDualAxisWidgetTypeFromDatasets(
+      this.data.widget?.type,
+      this.pendingDatasets.map(dataset => typeof dataset.yAxisID === 'string' ? dataset.yAxisID : null)
+    );
   }
 
-  protected setPeriod(period: string) {
+  protected setPeriod(period: string): void {
     this.selectedPeriod.set(period);
-    this.loadHistoryDatasets();
+    void this.loadHistoryDatasets();
   }
 
   private resolveDuration(series: IKipSeriesDefinition): string {

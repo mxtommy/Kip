@@ -81,7 +81,7 @@ describe('WidgetAlternatorComponent', () => {
     await setup();
     const descriptor = getElectricalWidgetFamilyDescriptor('widget-alternator');
     expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith(`${descriptor?.selfRootPath}.*`);
-    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith('self.electrical.alternator.*');
+    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledTimes(1);
   });
 
   it('does not process non-self electrical alternator prefix', async () => {
@@ -89,10 +89,10 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('electrical.alternators.a1.voltage', 14.2)
     ]);
 
-    const visible = (component as unknown as { visibleAlternatorIds: () => string[] }).visibleAlternatorIds();
+    const visible = (component as unknown as { visibleAlternatorKeys: () => string[] }).visibleAlternatorKeys();
     expect(visible).toEqual([]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { voltage?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { voltage?: number | null }> }).alternatorsByKey();
     expect(map.a1).toBeUndefined();
   });
 
@@ -101,10 +101,10 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.alternator.0', { state: 'present' })
     ]);
 
-    const visible = (component as unknown as { visibleAlternatorIds: () => string[] }).visibleAlternatorIds();
+    const visible = (component as unknown as { visibleAlternatorKeys: () => string[] }).visibleAlternatorKeys();
     expect(visible).toEqual(['0']);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { id: string; voltage?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { id: string; voltage?: number | null }> }).alternatorsByKey();
     expect(map['0']?.id).toBe('0');
   });
 
@@ -114,23 +114,79 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.alternator.0.current', 45)
     ]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { voltage?: number | null; current?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { voltage?: number | null; current?: number | null }> }).alternatorsByKey();
     expect(map['0']?.voltage).toBe(14.2);
     expect(map['0']?.current).toBe(45);
   });
 
-
-  it('filters visible alternators by trackedIds', async () => {
+  it('filters visible alternators by trackedDevices', async () => {
     await setup(
       [
         makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
-        makeUpdate('self.electrical.alternators.a2.voltage', 14.4)
+        makeUpdate('self.electrical.alternators.a2.voltage', 14.1)
       ],
-      { alternator: { trackedIds: ['a1'] } }
+      { alternator: { trackedDevices: [{ id: 'a1', source: 'default', key: 'a1||default' }] } }
     );
 
-    const visible = (component as unknown as { visibleAlternatorIds: () => string[] }).visibleAlternatorIds();
-    expect(visible).toEqual(['a1']);
+    const visible = (component as unknown as { visibleAlternatorKeys: () => string[] }).visibleAlternatorKeys();
+    expect(visible).toEqual(['a1||default']);
+  });
+
+  it('shows all discovered alternators when no trackedDevices are configured', async () => {
+    await setup([
+      makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
+      makeUpdate('self.electrical.alternators.a2.voltage', 14.1)
+    ]);
+
+    const visible = (component as unknown as { visibleAlternators: () => { id: string }[] }).visibleAlternators();
+    expect(visible.map(v => v.id).sort()).toEqual(['a1', 'a2']);
+  });
+
+  it('falls back to showing all alternators when trackedDevices is cleared after being set', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
+        makeUpdate('self.electrical.alternators.a2.voltage', 14.1)
+      ],
+      { alternator: { trackedDevices: [{ id: 'a1', source: 'default', key: 'a1||default' }] } }
+    );
+
+    let visible = (component as unknown as { visibleAlternators: () => { id: string }[] }).visibleAlternators();
+    expect(visible.map(v => v.id)).toEqual(['a1']);
+
+    runtimeMock.options.mockReturnValue({ alternator: { trackedDevices: [] } });
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig(
+      { alternator: { trackedDevices: [] } }
+    );
+
+    visible = (component as unknown as { visibleAlternators: () => { id: string }[] }).visibleAlternators();
+    expect(visible.map(v => v.id).sort()).toEqual(['a1', 'a2']);
+  });
+
+  it('materializes separate cards for same id across different sources', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
+        makeUpdate('self.electrical.alternators.a1.current', 45)
+      ],
+      {
+        alternator: {
+          trackedDevices: [
+            { id: 'a1', source: 'sourceA', key: 'a1||sourceA' },
+            { id: 'a1', source: 'sourceB', key: 'a1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const visible = (component as unknown as { visibleAlternators: () => { id: string; source?: string | null; deviceKey?: string }[] }).visibleAlternators();
+    expect(visible).toHaveLength(2);
+    expect(visible.find(v => v.deviceKey === 'a1||sourceA')).toBeDefined();
+    expect(visible.find(v => v.deviceKey === 'a1||sourceB')).toBeDefined();
+
+    const models = (component as unknown as { displayModels: () => Record<string, { busText: string }> }).displayModels();
+    expect(models['a1||sourceA']?.busText).toBe('sourceA');
+    expect(models['a1||sourceB']?.busText).toBe('sourceB');
   });
 
   it('parses alternator voltage and current keys', async () => {
@@ -139,7 +195,7 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.alternators.a1.current', 45)
     ]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { voltage?: number | null; current?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { voltage?: number | null; current?: number | null }> }).alternatorsByKey();
     expect(map.a1?.voltage).toBe(14.2);
     expect(map.a1?.current).toBe(45);
   });
@@ -152,7 +208,7 @@ describe('WidgetAlternatorComponent', () => {
     liveSubject.next(makeUpdate('self.electrical.alternators.a1.current', 45));
     await vi.advanceTimersByTimeAsync(500);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { power?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { power?: number | null }> }).alternatorsByKey();
     expect(map.a1?.power).toBeCloseTo(639);
   });
 
@@ -162,7 +218,7 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.alternators.a1.fieldDrive', 63)
     ]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, { revolutions?: number | null; fieldDrive?: number | null }> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, { revolutions?: number | null; fieldDrive?: number | null }> }).alternatorsByKey();
     expect(map.a1?.revolutions).toBe(50);
     expect(map.a1?.fieldDrive).toBe(63);
   });
@@ -202,7 +258,7 @@ describe('WidgetAlternatorComponent', () => {
     expect(visible[0]).toMatchObject({ id: 'a1', name: 'Main Alternator' });
   });
 
-  it('uses card mode metrics when display mode is card', async () => {
+  it('uses compact mode metrics when display mode is compact', async () => {
     await setup(
       [
         makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
@@ -212,10 +268,9 @@ describe('WidgetAlternatorComponent', () => {
       ],
       {
         alternator: {
-          trackedIds: ['a1'],
+          trackedDevices: [{ id: 'a1', source: 'default', key: 'a1||default' }],
           cardMode: {
-            enabled: true,
-            displayMode: 'card',
+            displayMode: 'compact',
             metrics: ['voltage', 'revolutions', 'fieldDrive']
           }
         }
@@ -223,13 +278,13 @@ describe('WidgetAlternatorComponent', () => {
     );
 
     const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
-    const metricText = `${models.a1?.metricsLineOne ?? ''} ${models.a1?.metricsLineTwo ?? ''}`;
+    const metricText = `${models['a1||default']?.metricsLineOne ?? ''} ${models['a1||default']?.metricsLineTwo ?? ''}`;
     expect(metricText).toContain('V ');
     expect(metricText).toContain('RPM ');
     expect(metricText).toContain('FD ');
   });
 
-  it('enables card mode by default when cardMode omits enabled', async () => {
+  it('uses compact mode when displayMode is compact', async () => {
     await setup(
       [
         makeUpdate('self.electrical.alternators.a1.voltage', 14.2),
@@ -237,9 +292,9 @@ describe('WidgetAlternatorComponent', () => {
       ],
       {
         alternator: {
-          trackedIds: ['a1'],
+          trackedDevices: [{ id: 'a1', source: 'default', key: 'a1||default' }],
           cardMode: {
-            displayMode: 'card',
+            displayMode: 'compact',
             metrics: ['voltage', 'revolutions']
           }
         }
@@ -255,7 +310,7 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.alternators.a1.customMetric', 12)
     ]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, unknown> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, unknown> }).alternatorsByKey();
     expect(map.a1).toBeUndefined();
   });
 
@@ -264,7 +319,7 @@ describe('WidgetAlternatorComponent', () => {
       makeUpdate('self.electrical.chargers.c1.voltage', 14.2)
     ]);
 
-    const map = (component as unknown as { alternatorsById: () => Record<string, unknown> }).alternatorsById();
+    const map = (component as unknown as { alternatorsByKey: () => Record<string, unknown> }).alternatorsByKey();
     expect(map.c1).toBeUndefined();
   });
 });

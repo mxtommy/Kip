@@ -7,15 +7,11 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { ElectricalCardModeConfig, ElectricalGroupConfig, IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalCardModeConfig, ElectricalTrackedDevice, IWidgetSvcConfig, SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
 import type { SolarChargerDisplayModel, SolarChargerSnapshot } from './solar-charger.types';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
-import {
-  ELECTRICAL_DIRECT_CARD_GAP,
-  ELECTRICAL_DIRECT_CARD_HEIGHT,
-  ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
-  ELECTRICAL_DIRECT_CARD_FULL_LAYOUT
-} from '../shared/electrical-card-layout.constants';
+import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
+import { ELECTRICAL_DIRECT_CARD_GAP, ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT } from '../shared/electrical-card-layout.constants';
 
 interface SolarRenderSnapshot {
   solarUnits: SolarChargerSnapshot[];
@@ -36,16 +32,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
+  public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     color: 'contrast',
     ignoreZones: false,
     solarCharger: {
-      trackedIds: [],
-      groups: [],
+      trackedDevices: [],
       optionsById: {},
-      banks: [],
-      solarOptionsById: {}
     }
   };
 
@@ -80,22 +74,35 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
 
   protected readonly discoveredSolarIds = signal<string[]>([]);
-  protected readonly trackedSolarIds = signal<string[]>([]);
-  protected readonly banks = signal<ElectricalGroupConfig[]>([]);
-  protected readonly solarOptionsById = signal<Record<string, SolarOptionConfig>>({});
-  protected readonly chargers = signal<Record<string, SolarChargerSnapshot>>({});
+  protected readonly trackedDevices = signal<ElectricalTrackedDevice[]>([]);
+  protected readonly optionsById = signal<Record<string, SolarOptionConfig>>({});
+  protected readonly cardMode = signal<ElectricalCardModeConfig>({
+    displayMode: 'full',
+    metrics: ['panelVoltage', 'panelCurrent', 'voltage', 'current']
+  });
+  protected readonly chargersByKey = signal<Record<string, SolarChargerSnapshot>>({});
 
-  protected readonly visibleSolarIds = computed(() => {
-    const tracked = this.trackedSolarIds();
-    if (tracked.length) return tracked;
-    return this.discoveredSolarIds();
+  protected readonly visibleSolarKeys = computed(() => {
+    const tracked = this.trackedDevices();
+    if (tracked.length) return tracked.map(device => device.key);
+    const map = this.chargersByKey();
+    const ids = new Set(this.discoveredSolarIds());
+    return Object.keys(map)
+      .filter(key => {
+        const snapshot = map[key];
+        return !!snapshot && ids.has(snapshot.id);
+      })
+      .sort((left, right) => left.localeCompare(right));
   });
 
   protected readonly visibleSolarUnits = computed<SolarChargerSnapshot[]>(() => {
-    const ids = this.visibleSolarIds();
-    const map = this.chargers();
-    return ids.map(id => map[id]).filter((item): item is SolarChargerSnapshot => !!item);
+    const keys = this.visibleSolarKeys();
+    const map = this.chargersByKey();
+    return keys.map(key => map[key]).filter((item): item is SolarChargerSnapshot => !!item);
   });
+
+  protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
+  protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
 
   protected readonly colorRole = computed(() => this.runtime.options()?.color);
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
@@ -108,7 +115,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   protected readonly displayModels = computed<Record<string, SolarChargerDisplayModel>>(() => {
     const solarUnits = this.visibleSolarUnits();
-    const options = this.solarOptionsById();
+    const options = this.optionsById();
     const theme = this.theme();
     const widgetColors = this.widgetColors();
     const ignoreZones = this.ignoreZones();
@@ -178,11 +185,17 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       const relaySectionText = relaySectionVisible
         ? `${this.formatRelayState(solar.load)}\u00A0\u00A0\u00A0\u00A0${this.formatCurrent(solar.loadCurrent)}`.trim()
         : '';
-      const yieldText = `Yield Today ${this.formatEnergy(solar.yieldToday)}, Yesterday ${this.formatEnergy(solar.yieldYesterday)}`;
 
-      models[solar.id] = {
+      const yieldTodayText = solar.yieldToday != null ? `Yield Today ${this.formatEnergyYield(solar.yieldToday)}` : '';
+      const yieldYesterdayText = solar.yieldYesterday != null ? `, Yesterday ${this.formatEnergyYield(solar.yieldYesterday)}` : '';
+      const yieldText = `${yieldTodayText}${yieldYesterdayText}`.trim();
+
+      const modelKey = solar.deviceKey ?? solar.id;
+      models[modelKey] = {
         id: solar.id,
-        titleText: solar.name || `Controller ${solar.id}`,
+        source: solar.source ?? null,
+        deviceKey: solar.deviceKey,
+        titleText: solar.name || `Solar ${solar.id}`,
         panelPowerText: panelPowerDisplay.value,
         panelPowerUnitText: panelPowerDisplay.unit,
         panelPowerColor,
@@ -298,40 +311,103 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const solarCfg = this.resolveSolarConfig(cfg);
-    this.trackedSolarIds.set(solarCfg.trackedIds ?? []);
-    this.banks.set(solarCfg.banks ?? []);
-    this.solarOptionsById.set(solarCfg.solarOptionsById);
+    this.trackedDevices.set(solarCfg.trackedDevices ?? []);
+    this.reprojectSnapshotsToDeviceKeys(solarCfg.trackedDevices ?? []);
+    this.optionsById.set(solarCfg.optionsById ?? {});
+    this.cardMode.set(this.normalizeCardMode(solarCfg.cardMode));
   }
 
   private resolveSolarConfig(cfg: IWidgetSvcConfig): SolarWidgetConfig {
     const solar = cfg.solarCharger;
-    const trackedIds = this.normalizeStringList(solar?.trackedIds);
-    const groups = this.normalizeGroups(solar?.groups ?? solar?.banks);
-    const optionsById = this.normalizeOptionsById(solar?.optionsById ?? solar?.solarOptionsById);
+    const trackedDevices = this.normalizeTrackedDevices(solar?.trackedDevices);
+    const optionsById = this.normalizeOptionsById(solar?.optionsById);
 
     return {
-      trackedIds,
-      groups,
+      trackedDevices,
       optionsById,
-      banks: groups,
-      solarOptionsById: optionsById,
       cardMode: this.normalizeCardMode(solar?.cardMode)
     };
   }
 
-  private normalizeCardMode(value: unknown): ElectricalCardModeConfig | undefined {
-    if (!value || typeof value !== 'object') {
-      return undefined;
+  private normalizeTrackedDevices(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
     }
 
-    const cardMode = value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown };
-    const metrics = this.normalizeStringList(cardMode.metrics);
-    const displayMode = cardMode.displayMode === 'card' ? 'card' : 'full';
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (typeof item === 'string') {
+        const id = item.trim();
+        if (!id) return;
+        const key = `${id}||default`;
+        devices.set(key, { id, source: 'default', key });
+        return;
+      }
 
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+      const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+      if (!id || !source) {
+        return;
+      }
+
+      const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+        ? candidate.key.trim()
+        : `${id}||${source}`;
+
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
+  }
+
+  private reprojectSnapshotsToDeviceKeys(devices: ElectricalTrackedDevice[]): void {
+    if (!devices.length) return;
+
+    const idToKeys = new Map<string, string[]>();
+    devices.forEach(device => {
+      const existing = idToKeys.get(device.id) ?? [];
+      existing.push(device.key);
+      idToKeys.set(device.id, existing);
+    });
+
+    this.chargersByKey.update(current => {
+      let next = current;
+      let changed = false;
+
+      idToKeys.forEach((keys, id) => {
+        const sourceSnapshot = current[id];
+        if (!sourceSnapshot) return;
+
+        for (const deviceKey of keys) {
+          if (current[deviceKey]) continue;
+          const trackedDevice = devices.find(device => device.key === deviceKey);
+          if (!changed) { next = { ...current }; changed = true; }
+          next[deviceKey] = { ...sourceSnapshot, source: trackedDevice?.source ?? null, deviceKey };
+        }
+
+        if (changed && next[id]?.deviceKey === undefined) {
+          delete next[id];
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig {
+    const cardMode = (value && typeof value === 'object')
+      ? value as { displayMode?: unknown; metrics?: unknown }
+      : null;
+
+    const metrics = this.normalizeStringList(cardMode?.metrics);
     return {
-      enabled: cardMode.enabled !== false,
-      displayMode,
-      metrics
+      displayMode: cardMode?.displayMode === 'compact' ? 'compact' : 'full',
+      metrics: metrics.length ? metrics : ['panelVoltage', 'panelCurrent', 'voltage', 'current']
     };
   }
 
@@ -353,31 +429,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     });
 
     return [...ids].sort((left, right) => left.localeCompare(right));
-  }
-
-  private normalizeGroups(value: unknown): ElectricalGroupConfig[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .map(group => {
-        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? `solar-group-${Date.now()}`;
-        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
-        const memberIds = this.normalizeStringList(
-          (group as { memberIds?: unknown; chargerIds?: unknown; batteryIds?: unknown })?.memberIds
-          ?? (group as { chargerIds?: unknown })?.chargerIds
-          ?? (group as { batteryIds?: unknown })?.batteryIds
-        );
-
-        return {
-          id,
-          name,
-          memberIds,
-          connectionMode: this.normalizeConnectionMode((group as { connectionMode?: unknown })?.connectionMode)
-        };
-      })
-      .filter(group => group.id.length > 0);
   }
 
   private normalizeOptionsById(value: unknown): Record<string, SolarOptionConfig> {
@@ -414,10 +465,6 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return normalized.length > 0 ? normalized : null;
   }
 
-  private normalizeConnectionMode(mode: unknown): 'parallel' | 'series' {
-    return mode === 'series' ? 'series' : 'parallel';
-  }
-
   private enqueuePathUpdate(update: IPathUpdateWithPath, fromInitial = false): void {
     const match = this.parseSolarPath(update.path);
     if (!match) return;
@@ -452,36 +499,58 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     const uniqueIds = new Set(updates.map(update => update.id));
     uniqueIds.forEach(id => this.trackDiscoveredSolar(id));
 
-    this.chargers.update(current => {
+    this.chargersByKey.update(current => {
       let nextState = current;
       let hasChanges = false;
 
+      const tracked = this.trackedDevices();
+      const hasTracked = tracked.length > 0;
+      const idToTracked = new Map<string, string[]>();
+      if (hasTracked) {
+        tracked.forEach(device => {
+          const existing = idToTracked.get(device.id) ?? [];
+          existing.push(device.key);
+          idToTracked.set(device.id, existing);
+        });
+      }
+
       for (const update of updates) {
-        const existing = nextState[update.id] ?? { id: update.id } as SolarChargerSnapshot;
-        const next = { ...existing } as SolarChargerSnapshot;
-        const changed = this.applyChargerValue(next, update.key, update.value, update.state);
+        const targetKeys = hasTracked
+          ? (idToTracked.get(update.id) ?? [])
+          : [update.id];
 
-        let derivedChanged = false;
-        const batteryPower = this.resolvePowerValue(next.rawBatteryPower, next.voltage, next.current);
-        if (!Object.is(next.power, batteryPower)) {
-          next.power = batteryPower;
-          derivedChanged = true;
+        for (const targetKey of targetKeys) {
+          const trackedDevice = tracked.find(device => device.key === targetKey);
+          const existing = nextState[targetKey] ?? {
+            id: update.id,
+            source: trackedDevice?.source ?? null,
+            deviceKey: hasTracked ? targetKey : undefined
+          } as SolarChargerSnapshot;
+          const next = { ...existing } as SolarChargerSnapshot;
+          const changed = this.applyChargerValue(next, update.key, update.value, update.state);
+
+          let derivedChanged = false;
+          const batteryPower = this.resolvePowerValue(next.rawBatteryPower, next.voltage, next.current);
+          if (!Object.is(next.power, batteryPower)) {
+            next.power = batteryPower;
+            derivedChanged = true;
+          }
+
+          const panelPower = this.resolvePowerValue(next.rawPanelPower, next.panelVoltage, next.panelCurrent);
+          if (!Object.is(next.panelPower, panelPower)) {
+            next.panelPower = panelPower;
+            derivedChanged = true;
+          }
+
+          if (!changed && !derivedChanged) continue;
+
+          if (!hasChanges) {
+            nextState = { ...nextState };
+            hasChanges = true;
+          }
+
+          nextState[targetKey] = next;
         }
-
-        const panelPower = this.resolvePowerValue(next.rawPanelPower, next.panelVoltage, next.panelCurrent);
-        if (!Object.is(next.panelPower, panelPower)) {
-          next.panelPower = panelPower;
-          derivedChanged = true;
-        }
-
-        if (!changed && !derivedChanged) continue;
-
-        if (!hasChanges) {
-          nextState = { ...nextState };
-          hasChanges = true;
-        }
-
-        nextState[update.id] = next;
       }
 
       return hasChanges ? nextState : current;
@@ -491,7 +560,31 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private parseSolarPath(path: string): { id: string; key: string } | null {
     const match = path.match(/self\.electrical\.solar\.([^.]+)\.(.+)$/);
     if (!match) return null;
-    return { id: match[1], key: match[2] };
+    const id = match[1];
+    const rawKey = match[2];
+    const key = this.normalizeSolarMetricKey(rawKey);
+    return { id, key };
+  }
+
+  private normalizeSolarMetricKey(rawKey: string): string {
+    // Strip controller prefix if present
+    if (rawKey.startsWith('controller.')) {
+      return rawKey.slice('controller.'.length);
+    }
+
+    // Transform nested solar, battery, load, and charge paths
+    switch (rawKey) {
+      case 'solar.power':
+        return 'panelPower';
+      case 'solar.voltage':
+        return 'panelVoltage';
+      case 'solar.current':
+        return 'panelCurrent';
+      case 'solar.temperature':
+        return 'panelTemperature';
+      default:
+        return rawKey;
+    }
   }
 
   private trackDiscoveredSolar(id: string): void {
@@ -641,10 +734,12 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private render(snapshot: SolarRenderSnapshot): void {
     if (!this.layer || !this.svg) return;
 
-    const layout = ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
+    const compact = this.isCompactCardMode();
+    // Compact mode is wired, but solar intentionally reuses the full-card geometry until a dedicated layout exists.
+    const layout = compact ? ELECTRICAL_DIRECT_CARD_FULL_LAYOUT : ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
     const cards = snapshot.solarUnits.map((solar, index) => ({
-      id: solar.id,
-      model: snapshot.displayModels[solar.id],
+      key: solar.deviceKey ?? solar.id,
+      model: snapshot.displayModels[solar.deviceKey ?? solar.id],
       y: index * (WidgetSolarChargerComponent.CARD_HEIGHT + WidgetSolarChargerComponent.CARD_GAP)
     }));
 
@@ -655,8 +750,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     this.svg.attr('viewBox', `0 0 ${WidgetSolarChargerComponent.VIEWBOX_WIDTH} ${contentHeight}`);
 
     const selection = this.layer
-      .selectAll<SVGGElement, { id: string; model: SolarChargerDisplayModel; y: number }>('g.solar-card')
-      .data(cards, item => item.id);
+      .selectAll<SVGGElement, { key: string; model: SolarChargerDisplayModel; y: number }>('g.solar-card')
+      .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'solar-card');
     enter.append('rect').attr('class', 'solar-card-bg');
@@ -686,7 +781,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     progressGroup.append('defs')
       .append('clipPath')
       .attr('clipPathUnits', 'objectBoundingBox')
-      .attr('id', item => `solar-panel-clip-${this.id()}-${item.id}`)
+      .attr('id', item => `solar-panel-clip-${this.id()}-${item.key}`)
       .append('rect')
       .attr('x', 0)
       .attr('y', 0)
@@ -700,13 +795,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('y', 0)
       .attr('width', WidgetSolarChargerComponent.SOLAR_PANEL_WIDTH)
       .attr('height', WidgetSolarChargerComponent.SOLAR_PANEL_HEIGHT)
-      .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.id})`);
+      .attr('clip-path', item => `url(#solar-panel-clip-${this.id()}-${item.key})`);
+
     const panelPowerText = enter.append('text').attr('class', 'solar-panel-power');
     panelPowerText.append('tspan').attr('class', 'solar-panel-power-value');
     panelPowerText.append('tspan').attr('class', 'solar-panel-power-unit');
     enter.append('text').attr('class', 'solar-panel-values');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; model: SolarChargerDisplayModel; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; model: SolarChargerDisplayModel; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('rect.solar-card-bg')
@@ -779,7 +875,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
           .attr('height', 1)
           .attr('width', Math.max(0, Math.min(1, item.model.gaugeProgress)));
 
-        this.debugSolarLayout(item.id, item.model.gaugeProgress);
+        this.debugSolarLayout(item.key, item.model.gaugeProgress);
       });
 
     merged.select('use.solar-panel-colored')
@@ -892,7 +988,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
     return { value: value.toFixed(0), unit: 'W' };
   }
 
-  private formatEnergy(value: number | null | undefined): string {
+  private formatEnergyYield(value: number | null | undefined): string {
     if (value === null) return '--';
     if (value === undefined) return '';
     return `${value.toFixed(2)} kWh`;

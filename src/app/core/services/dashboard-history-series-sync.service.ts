@@ -4,7 +4,7 @@ import { NgGridStackWidget } from 'gridstack/dist/angular';
 import { Dashboard, DashboardService } from './dashboard.service';
 import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from './kip-series-api-client.service';
-import { IKipConcreteSeriesDefinition, IKipTemplateSeriesDefinition } from '../contracts/kip-series-contract';
+import { IElectricalTrackedDeviceRef, IKipConcreteSeriesDefinition, IKipTemplateSeriesDefinition } from '../contracts/kip-series-contract';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { PluginConfigClientService } from './plugin-config-client.service';
 import { WidgetService } from './widget.service';
@@ -28,7 +28,7 @@ interface IBmsBankLike {
 }
 
 interface IFamilyConfigLike {
-  trackedIds?: unknown;
+  trackedDevices?: unknown;
   groups?: unknown;
   banks?: unknown;
 }
@@ -290,6 +290,7 @@ export class DashboardHistorySeriesSyncService {
     }
 
     const allowedIds = this.resolveElectricalAllowedIds(cfg, descriptor.familyKey);
+    const trackedDevices = this.resolveTrackedDevicePairs(cfg, descriptor.familyKey);
     const suffix = descriptor.familyKey;
     return {
       seriesId: `${widgetUuid}:${suffix}-template`,
@@ -300,6 +301,7 @@ export class DashboardHistorySeriesSyncService {
       expansionMode,
       familyKey: descriptor.familyKey,
       allowedIds: allowedIds.length > 0 ? [...allowedIds] : null,
+      trackedDevices: trackedDevices.length > 0 ? [...trackedDevices] : null,
       context: null,
       source: 'default',
       timeScale: this.normalizeString(cfg?.timeScale),
@@ -316,7 +318,7 @@ export class DashboardHistorySeriesSyncService {
       return [];
     }
 
-    const tracked = this.resolveTrackedIds(familyCfg.trackedIds);
+    const tracked = this.resolveTrackedDevicePairs(cfg, familyKey);
 
     if (tracked.length === 0) {
       return [];
@@ -324,8 +326,9 @@ export class DashboardHistorySeriesSyncService {
 
     const trackedSet = new Set<string>();
     const ids = new Set<string>();
-    this.collectStringIdsIntoSet(trackedSet, tracked);
-    this.collectStringIdsIntoSet(ids, tracked);
+    const trackedIds = tracked.map(device => device.id);
+    this.collectStringIdsIntoSet(trackedSet, trackedIds);
+    this.collectStringIdsIntoSet(ids, trackedIds);
 
     const groups = Array.isArray(familyCfg.groups) ? familyCfg.groups as IBmsBankLike[] : [];
     groups.forEach(group => {
@@ -357,8 +360,32 @@ export class DashboardHistorySeriesSyncService {
     return null;
   }
 
-  private resolveTrackedIds(preferred: unknown): unknown[] {
-    return Array.isArray(preferred) ? preferred : [];
+  private resolveTrackedDevicePairs(cfg: IWidgetSvcConfig | undefined, familyKey: ElectricalFamilyKey): IElectricalTrackedDeviceRef[] {
+    const familyCfg = this.resolveFamilyConfig(cfg, familyKey);
+    if (!familyCfg || !Array.isArray(familyCfg.trackedDevices)) {
+      return [];
+    }
+
+    const trackedByKey = new Map<string, IElectricalTrackedDeviceRef>();
+    familyCfg.trackedDevices.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown };
+      const id = this.normalizeString(candidate.id);
+      if (!id) {
+        return;
+      }
+
+      const source = this.normalizeString(candidate.source) ?? 'default';
+      trackedByKey.set(`${id}||${source}`, { id, source });
+    });
+
+    return [...trackedByKey.values()].sort((left, right) => {
+      const idCompare = left.id.localeCompare(right.id);
+      return idCompare !== 0 ? idCompare : left.source.localeCompare(right.source);
+    });
   }
 
   private collectStringIdsIntoSet(target: Set<string>, input: unknown, allowedIds?: ReadonlySet<string>): void {
@@ -371,7 +398,7 @@ export class DashboardHistorySeriesSyncService {
         return;
       }
 
-      const normalized = value.trim();
+      const normalized = this.normalizeTrackedIdentifierToId(value);
       if (normalized.length > 0) {
         if (allowedIds && !allowedIds.has(normalized)) {
           return;
@@ -379,6 +406,20 @@ export class DashboardHistorySeriesSyncService {
         target.add(normalized);
       }
     });
+  }
+
+  private normalizeTrackedIdentifierToId(value: string): string {
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+      return '';
+    }
+
+    const separatorIndex = normalized.indexOf('||');
+    if (separatorIndex < 0) {
+      return normalized;
+    }
+
+    return normalized.slice(0, separatorIndex).trim();
   }
 
   private mapAutomaticHistorySeries(widgetUuid: string, widgetType: string, cfg: IWidgetSvcConfig | undefined): IKipConcreteSeriesDefinition[] {
@@ -484,6 +525,14 @@ export class DashboardHistorySeriesSyncService {
       expansionMode: s.expansionMode ?? null,
       familyKey: s.familyKey ?? null,
       allowedIds: Array.isArray(s.allowedIds) ? [...s.allowedIds].sort() : null,
+      trackedDevices: Array.isArray(s.trackedDevices)
+        ? [...s.trackedDevices]
+          .map(device => ({ id: device.id, source: device.source }))
+          .sort((left, right) => {
+            const idCompare = left.id.localeCompare(right.id);
+            return idCompare !== 0 ? idCompare : left.source.localeCompare(right.source);
+          })
+        : null,
       context: s.context ?? null,
       source: s.source ?? null,
       timeScale: s.timeScale ?? null,

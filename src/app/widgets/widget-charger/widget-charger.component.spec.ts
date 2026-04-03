@@ -81,10 +81,10 @@ describe('WidgetChargerComponent', () => {
     await setup();
     const descriptor = getElectricalWidgetFamilyDescriptor('widget-charger');
     expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenNthCalledWith(1, `${descriptor?.selfRootPath}.*`);
-    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenNthCalledWith(2, 'self.electrical.charger.*');
+    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledTimes(1);
   });
 
-  it('uses card mode metrics when display mode is card', async () => {
+  it('uses compact mode metrics when display mode is compact', async () => {
     await setup(
       [
         makeUpdate('self.electrical.chargers.c1.voltage', 27.5),
@@ -93,10 +93,9 @@ describe('WidgetChargerComponent', () => {
       ],
       {
         charger: {
-          trackedIds: ['c1'],
+          trackedDevices: [{ id: 'c1', source: 'default', key: 'c1||default' }],
           cardMode: {
-            enabled: true,
-            displayMode: 'card',
+            displayMode: 'compact',
             metrics: ['voltage', 'power']
           }
         }
@@ -104,22 +103,106 @@ describe('WidgetChargerComponent', () => {
     );
 
     const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
-    expect(models['c1']?.metricsLineOne).toContain('V ');
-    expect(models['c1']?.metricsLineOne).toContain('P ');
-    expect(`${models['c1']?.metricsLineOne} ${models['c1']?.metricsLineTwo}`).not.toContain('A ');
+    expect(models['c1||default']?.metricsLineOne).toContain('V ');
+    expect(models['c1||default']?.metricsLineOne).toContain('P ');
+    expect(`${models['c1||default']?.metricsLineOne} ${models['c1||default']?.metricsLineTwo}`).not.toContain('A ');
   });
 
-  it('filters visible chargers by trackedIds', async () => {
+  it('prefers host renderMode input over config displayMode', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.chargers.c1.voltage', 27.5),
+        makeUpdate('self.electrical.chargers.c1.current', 10),
+        makeUpdate('self.electrical.chargers.c1.power', 275)
+      ],
+      {
+        charger: {
+          trackedDevices: [{ id: 'c1', source: 'default', key: 'c1||default' }],
+          cardMode: {
+            displayMode: 'full',
+            metrics: ['current']
+          }
+        }
+      }
+    );
+
+    fixture.componentRef.setInput('renderMode', 'compact');
+    fixture.detectChanges();
+
+    const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
+    const metricText = `${models['c1||default']?.metricsLineOne ?? ''} ${models['c1||default']?.metricsLineTwo ?? ''}`;
+    expect(metricText).toContain('A ');
+    expect(metricText).not.toContain('V ');
+  });
+
+  it('filters visible chargers by trackedDevices', async () => {
     await setup(
       [
         makeUpdate('self.electrical.chargers.c1.voltage', 28),
         makeUpdate('self.electrical.chargers.c2.voltage', 29)
       ],
-      { charger: { trackedIds: ['c1'] } }
+      { charger: { trackedDevices: [{ id: 'c1', source: 'default', key: 'c1||default' }] } }
     );
 
-    const visible = (component as unknown as { visibleChargerIds: () => string[] }).visibleChargerIds();
-    expect(visible).toEqual(['c1']);
+    const visible = (component as unknown as { visibleChargerKeys: () => string[] }).visibleChargerKeys();
+    expect(visible).toEqual(['c1||default']);
+  });
+
+  it('shows all discovered chargers when no trackedDevices are configured', async () => {
+    await setup([
+      makeUpdate('self.electrical.chargers.c1.voltage', 28),
+      makeUpdate('self.electrical.chargers.c2.voltage', 29)
+    ]);
+
+    const visible = (component as unknown as { visibleChargers: () => { id: string }[] }).visibleChargers();
+    expect(visible.map(v => v.id).sort()).toEqual(['c1', 'c2']);
+  });
+
+  it('falls back to showing all chargers when trackedDevices is cleared after being set', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.chargers.c1.voltage', 28),
+        makeUpdate('self.electrical.chargers.c2.voltage', 29)
+      ],
+      { charger: { trackedDevices: [{ id: 'c1', source: 'default', key: 'c1||default' }] } }
+    );
+
+    let visible = (component as unknown as { visibleChargers: () => { id: string }[] }).visibleChargers();
+    expect(visible.map(v => v.id)).toEqual(['c1']);
+
+    runtimeMock.options.mockReturnValue({ charger: { trackedDevices: [] } });
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig(
+      { charger: { trackedDevices: [] } }
+    );
+
+    visible = (component as unknown as { visibleChargers: () => { id: string }[] }).visibleChargers();
+    expect(visible.map(v => v.id).sort()).toEqual(['c1', 'c2']);
+  });
+
+  it('materializes separate cards for same id across different sources', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.chargers.c1.voltage', 28),
+        makeUpdate('self.electrical.chargers.c1.current', 10)
+      ],
+      {
+        charger: {
+          trackedDevices: [
+            { id: 'c1', source: 'sourceA', key: 'c1||sourceA' },
+            { id: 'c1', source: 'sourceB', key: 'c1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const visible = (component as unknown as { visibleChargers: () => { id: string; source?: string | null; deviceKey?: string }[] }).visibleChargers();
+    expect(visible).toHaveLength(2);
+    expect(visible.find(v => v.deviceKey === 'c1||sourceA')).toBeDefined();
+    expect(visible.find(v => v.deviceKey === 'c1||sourceB')).toBeDefined();
+
+    const models = (component as unknown as { displayModels: () => Record<string, { busText: string }> }).displayModels();
+    expect(models['c1||sourceA']?.busText).toBe('sourceA');
+    expect(models['c1||sourceB']?.busText).toBe('sourceB');
   });
 
   it('derives power from voltage and current', async () => {
@@ -130,7 +213,7 @@ describe('WidgetChargerComponent', () => {
     liveSubject.next(makeUpdate('self.electrical.chargers.c1.current', 5));
     await vi.advanceTimersByTimeAsync(500);
 
-    const map = (component as unknown as { chargersById: () => Record<string, { power?: number }> }).chargersById();
+    const map = (component as unknown as { chargersByKey: () => Record<string, { power?: number }> }).chargersByKey();
     expect(map['c1']?.power).toBe(140);
   });
 
@@ -192,18 +275,91 @@ describe('WidgetChargerComponent', () => {
     expect(models['c1']?.secondaryMetricsTextColor).toBeTruthy();
   });
 
-  it('does not create a snapshot for nested sub-paths like c1.output.voltage', async () => {
+  it('maps extended charger key paths including nested output/input and mode/error/state fields', async () => {
     await setup(
       [
-        makeUpdate('self.electrical.chargers.c1.output.voltage', 28)
+        makeUpdate('self.electrical.chargers.orion.state', 'on'),
+        makeUpdate('self.electrical.chargers.orion.output.voltage', 27.8),
+        makeUpdate('self.electrical.chargers.orion.offReason', 'none'),
+        makeUpdate('self.electrical.chargers.orion.modeState', 'bulk'),
+        makeUpdate('self.electrical.chargers.orion.input.voltage', 12.4),
+        makeUpdate('self.electrical.chargers.orion.error', '0'),
+        makeUpdate('self.electrical.chargers.house.voltage', 27.5),
+        makeUpdate('self.electrical.chargers.house.temperature', 31.2),
+        makeUpdate('self.electrical.chargers.house.power', 300),
+        makeUpdate('self.electrical.chargers.house.name', 'House Charger'),
+        makeUpdate('self.electrical.chargers.house.modeNumber', 2),
+        makeUpdate('self.electrical.chargers.house.mode', 'absorption'),
+        makeUpdate('self.electrical.chargers.house.leds.temperature', true),
+        makeUpdate('self.electrical.chargers.house.leds.overload', false),
+        makeUpdate('self.electrical.chargers.house.leds.mains', true),
+        makeUpdate('self.electrical.chargers.house.leds.lowBattery', false),
+        makeUpdate('self.electrical.chargers.house.leds.inverter', false),
+        makeUpdate('self.electrical.chargers.house.leds.float', true),
+        makeUpdate('self.electrical.chargers.house.leds.bulk', false),
+        makeUpdate('self.electrical.chargers.house.leds.absorption', true),
+        makeUpdate('self.electrical.chargers.house.current', 10),
+        makeUpdate('self.electrical.chargers.house.chargingModeNumber', 3),
+        makeUpdate('self.electrical.chargers.house.chargingMode', 'float')
       ],
-      { charger: { trackedIds: ['c1'] } }
+      {
+        charger: {
+          trackedDevices: [
+            { id: 'orion', source: 'default', key: 'orion||default' },
+            { id: 'house', source: 'default', key: 'house||default' }
+          ]
+        }
+      }
     );
 
-    // Parser uses first-segment ID and key=output.voltage; applyValue returns false
-    // for unknown key, so no snapshot is materialized — matches BMS/Solar behavior
-    const map = (component as unknown as { chargersById: () => Record<string, unknown> }).chargersById();
-    expect(map['c1']).toBeUndefined();
+    const map = (component as unknown as {
+      chargersByKey: () => Record<string, {
+        state?: string | null;
+        outputVoltage?: number | null;
+        voltage?: number | null;
+        offReason?: string | null;
+        mode?: string | null;
+        inputVoltage?: number | null;
+        error?: string | null;
+        temperature?: number | null;
+        rawPower?: number | null;
+        modeNumber?: number | null;
+        chargingModeNumber?: number | null;
+        chargingMode?: string | null;
+        ledsTemperature?: boolean | null;
+        ledsOverload?: boolean | null;
+        ledsMains?: boolean | null;
+        ledsLowBattery?: boolean | null;
+        ledsInverter?: boolean | null;
+        ledsFloat?: boolean | null;
+        ledsBulk?: boolean | null;
+        ledsAbsorption?: boolean | null;
+      }>;
+    }).chargersByKey();
+
+    expect(map['orion||default']?.state).toBe('on');
+    expect(map['orion||default']?.outputVoltage).toBe(27.8);
+    expect(map['orion||default']?.voltage).toBe(27.8);
+    expect(map['orion||default']?.offReason).toBe('none');
+    expect(map['orion||default']?.mode).toBe('bulk');
+    expect(map['orion||default']?.inputVoltage).toBe(12.4);
+    expect(map['orion||default']?.error).toBe('0');
+
+    expect(map['house||default']?.voltage).toBe(27.5);
+    expect(map['house||default']?.temperature).toBe(31.2);
+    expect(map['house||default']?.rawPower).toBe(300);
+    expect(map['house||default']?.modeNumber).toBe(2);
+    expect(map['house||default']?.mode).toBe('absorption');
+    expect(map['house||default']?.ledsTemperature).toBe(true);
+    expect(map['house||default']?.ledsOverload).toBe(false);
+    expect(map['house||default']?.ledsMains).toBe(true);
+    expect(map['house||default']?.ledsLowBattery).toBe(false);
+    expect(map['house||default']?.ledsInverter).toBe(false);
+    expect(map['house||default']?.ledsFloat).toBe(true);
+    expect(map['house||default']?.ledsBulk).toBe(false);
+    expect(map['house||default']?.ledsAbsorption).toBe(true);
+    expect(map['house||default']?.chargingModeNumber).toBe(3);
+    expect(map['house||default']?.chargingMode).toBe('float');
   });
 
   it('does not create a snapshot from root-node updates (no leaf key)', async () => {
@@ -222,7 +378,7 @@ describe('WidgetChargerComponent', () => {
       makeUpdate('self.electrical.charger.c7.current', 4)
     ]);
 
-    const map = (component as unknown as { chargersById: () => Record<string, { voltage?: number | null; current?: number | null; power?: number | null }> }).chargersById();
+    const map = (component as unknown as { chargersByKey: () => Record<string, { voltage?: number | null; current?: number | null; power?: number | null }> }).chargersByKey();
     expect(map['c7']?.voltage).toBe(27.2);
     expect(map['c7']?.current).toBe(4);
     expect(map['c7']?.power).toBeCloseTo(108.8);
@@ -244,7 +400,7 @@ describe('WidgetChargerComponent', () => {
     ]);
 
     // applyValue returns false for unrecognized keys — no snapshot materialized
-    const map = (component as unknown as { chargersById: () => Record<string, unknown> }).chargersById();
+    const map = (component as unknown as { chargersByKey: () => Record<string, unknown> }).chargersByKey();
     expect(map['c9']).toBeUndefined();
   });
 });

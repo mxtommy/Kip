@@ -5,10 +5,11 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { UnitsService } from '../../core/services/units.service';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import {
   ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT,
   ELECTRICAL_DIRECT_CARD_FULL_LAYOUT,
@@ -17,7 +18,7 @@ import {
   ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
-import type { AcDisplayModel, AcSnapshot, AcWidgetConfig, ElectricalGroupConfig } from './widget-ac.types';
+import type { AcDisplayModel, AcSnapshot, AcWidgetConfig, ElectricalCardModeConfig } from './widget-ac.types';
 
 interface AcRenderSnapshot {
   buses: AcSnapshot[];
@@ -34,10 +35,8 @@ interface AcRenderSnapshot {
 export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   private static readonly AC_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-ac');
   private static readonly SELF_ROOT_PATH = WidgetAcComponent.AC_DESCRIPTOR?.selfRootPath ?? 'self.electrical.ac';
-  private static readonly ROOT_PATH = WidgetAcComponent.SELF_ROOT_PATH.replace(/^self\./, '');
-  private static readonly ROOT_PATTERN_SELF = `${WidgetAcComponent.SELF_ROOT_PATH}.*`;
-  private static readonly ROOT_PATTERN = `${WidgetAcComponent.ROOT_PATH}.*`;
-  private static readonly ROOT_PREFIXES = [`${WidgetAcComponent.SELF_ROOT_PATH}.`, `${WidgetAcComponent.ROOT_PATH}.`] as const;
+  private static readonly ROOT_PATTERN = `${WidgetAcComponent.SELF_ROOT_PATH}.*`;
+  private static readonly ROOT_PREFIX = `${WidgetAcComponent.SELF_ROOT_PATH}.`;
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -49,8 +48,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     ac: {
-      trackedIds: [],
-      groups: [],
+      trackedDevices: [],
       optionsById: {}
     }
   };
@@ -58,6 +56,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
+  public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
@@ -75,29 +74,36 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   private pendingRenderSnapshot: AcRenderSnapshot | null = null;
 
   protected readonly discoveredBusIds = signal<string[]>([]);
-  protected readonly trackedBusIds = signal<string[]>([]);
-  protected readonly groups = signal<AcWidgetConfig['groups']>([]);
+  protected readonly trackedDevices = signal<ElectricalTrackedDevice[]>([]);
   protected readonly optionsById = signal<AcWidgetConfig['optionsById']>({});
-  protected readonly cardMode = signal<{ enabled: boolean; displayMode: 'full' | 'card'; metrics: string[] }>({
-    enabled: false,
+  protected readonly cardMode = signal<ElectricalCardModeConfig>({
     displayMode: 'full',
     metrics: ['line1Voltage', 'line1Current', 'line1Frequency', 'line2Voltage']
   });
-  protected readonly busesById = signal<Record<string, AcSnapshot>>({});
+  protected readonly busesByKey = signal<Record<string, AcSnapshot>>({});
 
-  protected readonly visibleBusIds = computed(() => {
-    const tracked = this.trackedBusIds();
-    return tracked.length ? tracked : this.discoveredBusIds();
+  protected readonly visibleBusKeys = computed(() => {
+    const tracked = this.trackedDevices();
+    if (tracked.length) return tracked.map(device => device.key);
+    const map = this.busesByKey();
+    const ids = new Set(this.discoveredBusIds());
+    return Object.keys(map)
+      .filter(key => {
+        const snapshot = map[key];
+        return !!snapshot && ids.has(snapshot.id);
+      })
+      .sort((left, right) => left.localeCompare(right));
   });
 
   protected readonly visibleBuses = computed<AcSnapshot[]>(() => {
-    const ids = this.visibleBusIds();
-    const map = this.busesById();
-    return ids.map(id => map[id]).filter((item): item is AcSnapshot => !!item);
+    const keys = this.visibleBusKeys();
+    const map = this.busesByKey();
+    return keys.map(key => map[key]).filter((item): item is AcSnapshot => !!item);
   });
 
   protected readonly hasBuses = computed(() => this.visibleBuses().length > 0);
-  protected readonly isCompactCardMode = computed(() => this.cardMode().enabled && this.cardMode().displayMode === 'card');
+  protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
+  protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color);
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
@@ -113,8 +119,16 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     const widgetColors = this.widgetColors();
     const ignoreZones = this.ignoreZones();
 
+    const idCount = new Map<string, number>();
+    buses.forEach(bus => idCount.set(bus.id, (idCount.get(bus.id) ?? 0) + 1));
+    const duplicateIds = new Set<string>(
+      [...idCount.entries()].filter(([, count]) => count > 1).map(([id]) => id)
+    );
+
     const models: Record<string, AcDisplayModel> = {};
     for (const bus of buses) {
+      const modelKey = bus.deviceKey ?? bus.id;
+      const showSource = !!bus.source && duplicateIds.has(bus.id);
       const aggregateState = this.resolveMostSevereState(
         bus.line1VoltageState ?? null,
         bus.line1CurrentState ?? null,
@@ -137,11 +151,13 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       );
       const [metricsLineOne, metricsLineTwo] = this.buildMetricRows(bus);
 
-      models[bus.id] = {
+      models[modelKey] = {
         id: bus.id,
         titleText: this.displayName(bus),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(bus),
-        busText: this.isCompactCardMode() ? '' : (bus.associatedBus || bus.location || '-'),
+        busText: this.isCompactCardMode() ? '' : (
+          showSource ? (bus.source ?? '-') : (bus.associatedBus || bus.location || '-')
+        ),
         metricsLineOne,
         metricsLineTwo,
         stateBarColor: resolveZoneAwareColor(aggregateState, widgetColors?.dim ?? 'var(--kip-contrast-color)', theme, ignoreZones),
@@ -171,7 +187,6 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     });
 
     const acTrees = [
-      this.data.subscribePathTreeWithInitial(WidgetAcComponent.ROOT_PATTERN_SELF),
       this.data.subscribePathTreeWithInitial(WidgetAcComponent.ROOT_PATTERN)
     ];
 
@@ -225,33 +240,102 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const acCfg = this.resolveAcConfig(cfg);
-    this.trackedBusIds.set(acCfg.trackedIds);
-    this.groups.set(acCfg.groups);
+    this.trackedDevices.set(acCfg.trackedDevices);
+    this.reprojectSnapshotsToDeviceKeys(acCfg.trackedDevices);
     this.optionsById.set(acCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(acCfg.cardMode));
+  }
+
+  private reprojectSnapshotsToDeviceKeys(devices: ElectricalTrackedDevice[]): void {
+    if (!devices.length) return;
+
+    const idToKeys = new Map<string, string[]>();
+    devices.forEach(device => {
+      const existing = idToKeys.get(device.id) ?? [];
+      existing.push(device.key);
+      idToKeys.set(device.id, existing);
+    });
+
+    this.busesByKey.update(current => {
+      let next = current;
+      let changed = false;
+
+      idToKeys.forEach((keys, id) => {
+        const sourceSnapshot = current[id];
+        if (!sourceSnapshot) return;
+
+        for (const deviceKey of keys) {
+          if (current[deviceKey]) continue;
+          const trackedDevice = devices.find(device => device.key === deviceKey);
+          if (!changed) {
+            next = { ...current };
+            changed = true;
+          }
+          next[deviceKey] = { ...sourceSnapshot, source: trackedDevice?.source ?? null, deviceKey };
+        }
+
+        if (changed && next[id]?.deviceKey === undefined) {
+          delete next[id];
+        }
+      });
+
+      return changed ? next : current;
+    });
   }
 
   private resolveAcConfig(cfg: IWidgetSvcConfig): AcWidgetConfig {
     const ac = cfg.ac;
     return {
-      trackedIds: this.normalizeAcTrackedIds(ac?.trackedIds),
-      groups: this.normalizeGroups(ac?.groups),
+      trackedDevices: this.normalizeAcTrackedDevices(ac?.trackedDevices),
       optionsById: this.normalizeOptionsById(ac?.optionsById),
       cardMode: this.normalizeCardMode(ac?.cardMode)
     };
   }
 
-  private normalizeAcTrackedIds(value: unknown): string[] {
-    const ids = this.normalizeStringList(value);
-    return ids.filter(id => !WidgetAcComponent.RESERVED_AC_AGGREGATE_IDS.has(id));
+  private normalizeAcTrackedDevices(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = this.normalizeOptionalString(candidate.id);
+      const source = this.normalizeOptionalString(candidate.source);
+      if (!id || !source) {
+        return;
+      }
+
+      if (WidgetAcComponent.RESERVED_AC_AGGREGATE_IDS.has(id)) {
+        return;
+      }
+
+      const key = this.normalizeOptionalString(candidate.key) ?? `${id}||${source}`;
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
   }
 
-  private normalizeCardMode(value: unknown): { enabled: boolean; displayMode: 'full' | 'card'; metrics: string[] } {
-    const candidate = (value && typeof value === 'object') ? value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown } : null;
+  private buildIdToDeviceKeysMap(): Map<string, string[]> {
+    const map = new Map<string, string[]>();
+    this.trackedDevices().forEach(device => {
+      const existing = map.get(device.id) ?? [];
+      existing.push(device.key);
+      map.set(device.id, existing);
+    });
+    return map;
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig {
+    const candidate = (value && typeof value === 'object') ? value as { displayMode?: unknown; metrics?: unknown } : null;
     const metrics = this.normalizeStringList(candidate?.metrics);
     return {
-      enabled: candidate?.enabled === true,
-      displayMode: candidate?.displayMode === 'card' ? 'card' : 'full',
+      displayMode: candidate?.displayMode === 'compact' ? 'compact' : 'full',
       metrics: metrics.length ? metrics : ['line1Voltage', 'line1Current', 'line1Frequency', 'line2Voltage']
     };
   }
@@ -265,24 +349,6 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       if (normalized.length > 0) ids.add(normalized);
     });
     return [...ids].sort((a, b) => a.localeCompare(b));
-  }
-
-  private normalizeGroups(value: unknown): ElectricalGroupConfig[] {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map(group => {
-        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? '';
-        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
-        const memberIds = this.normalizeStringList((group as { memberIds?: unknown })?.memberIds);
-        if (!id) return null;
-        return {
-          id,
-          name,
-          memberIds,
-          connectionMode: (group as { connectionMode?: unknown })?.connectionMode === 'series' ? 'series' : 'parallel'
-        } as ElectricalGroupConfig;
-      })
-      .filter((item): item is ElectricalGroupConfig => !!item);
   }
 
   private normalizeOptionsById(value: unknown): AcWidgetConfig['optionsById'] {
@@ -332,27 +398,44 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     const uniqueIds = new Set(updates.map(item => item.id));
     uniqueIds.forEach(id => this.trackDiscoveredBus(id));
 
-    this.busesById.update(current => {
+    const idToKeys = this.buildIdToDeviceKeysMap();
+
+    this.busesByKey.update(current => {
       let next = current;
       let changed = false;
 
-      for (const id of uniqueIds) {
-        if (next[id]) continue;
-        if (!changed) {
-          next = { ...next };
-          changed = true;
-        }
-        next[id] = { id };
-      }
-
       for (const update of updates) {
-        const existing = next[update.id] ?? { id: update.id };
-        const snapshot = { ...existing } as AcSnapshot;
-        const fieldChanged = this.applyValue(snapshot, update.key, update.value, update.state);
-        if (!fieldChanged) continue;
+        const keysForId = idToKeys.get(update.id);
+        const targetKeys: string[] = keysForId?.length ? keysForId : [update.id];
 
-        next = { ...next, [update.id]: snapshot };
-        changed = true;
+        for (const deviceKey of targetKeys) {
+          const isTracked = !!(keysForId?.length);
+          const trackedDevice = isTracked ? this.trackedDevices().find(device => device.key === deviceKey) : null;
+          const existing = next[deviceKey] ?? {
+            id: update.id,
+            source: trackedDevice?.source ?? null,
+            deviceKey: isTracked ? deviceKey : undefined
+          };
+          const snapshot = { ...existing } as AcSnapshot;
+          const fieldChanged = this.applyValue(snapshot, update.key, update.value, update.state);
+
+          if (!fieldChanged && update.key === '__root__' && !next[deviceKey]) {
+            if (!changed) {
+              next = { ...next };
+              changed = true;
+            }
+            next[deviceKey] = snapshot;
+            continue;
+          }
+
+          if (!fieldChanged) continue;
+
+          if (!changed) {
+            next = { ...next };
+            changed = true;
+          }
+          next[deviceKey] = snapshot;
+        }
       }
 
       return changed ? next : current;
@@ -360,10 +443,9 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   }
 
   private parsePath(path: string): { id: string; key: string } | null {
-    const prefix = WidgetAcComponent.ROOT_PREFIXES.find(candidate => path.startsWith(candidate));
-    if (!prefix) return null;
+    if (!path.startsWith(WidgetAcComponent.ROOT_PREFIX)) return null;
 
-    const relative = path.slice(prefix.length);
+    const relative = path.slice(WidgetAcComponent.ROOT_PREFIX.length);
 
     const firstDot = relative.indexOf('.');
     if (firstDot <= 0 || firstDot === relative.length - 1) return null;
@@ -493,7 +575,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     const layout = compact ? ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT : ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
     const cardHeight = compact ? WidgetAcComponent.COMPACT_CARD_HEIGHT : WidgetAcComponent.CARD_HEIGHT;
     const cards = snapshot.buses.map((bus, index) => ({
-      id: bus.id,
+      key: bus.deviceKey ?? bus.id,
       bus,
       y: index * (cardHeight + WidgetAcComponent.CARD_GAP)
     }));
@@ -502,8 +584,8 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     this.svg.attr('viewBox', `0 0 ${WidgetAcComponent.VIEWBOX_WIDTH} ${contentHeight}`);
 
     const selection = this.layer
-      .selectAll<SVGGElement, { id: string; bus: AcSnapshot; y: number }>('g.ac-card')
-      .data(cards, item => item.id);
+      .selectAll<SVGGElement, { key: string; bus: AcSnapshot; y: number }>('g.ac-card')
+      .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'ac-card');
     enter.append('rect').attr('class', 'ac-card-bg');
@@ -515,7 +597,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'ac-metrics-1');
     enter.append('text').attr('class', 'ac-metrics-2');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; bus: AcSnapshot; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; bus: AcSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('rect.ac-card-bg')
@@ -536,14 +618,14 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       .attr('ry', layout.stateBarCornerRadius)
       .attr('width', 3)
       .attr('height', cardHeight - 3)
-      .attr('fill', item => snapshot.displayModels[item.id]?.stateBarColor ?? snapshot.widgetColors.dim);
+      .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
     merged.select('text.ac-title')
       .attr('x', layout.titleX)
       .attr('y', layout.titleY)
       .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.titleText ?? this.displayName(item.bus));
+      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.bus));
 
     merged.select('text.ac-id')
       .attr('x', layout.idX)
@@ -558,8 +640,8 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       .attr('y', layout.metaY)
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.modeText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.modeText ?? '');
 
     merged.select('text.ac-bus')
       .attr('x', layout.metaRightX)
@@ -567,23 +649,23 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'end')
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.busText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.busText ?? '');
 
     merged.select('text.ac-metrics-1')
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
       .attr('font-size', layout.lineOneFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineOne ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineOne ?? '');
 
     merged.select('text.ac-metrics-2')
       .attr('x', layout.lineTwoX)
       .attr('y', layout.lineTwoY)
       .attr('font-size', layout.lineTwoFontSize)
       .attr('opacity', 0.85)
-      .attr('fill', item => snapshot.displayModels[item.id]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineTwo ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineTwo ?? '');
 
     selection.exit().remove();
   }
@@ -599,14 +681,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
 
   private buildMetricRows(bus: AcSnapshot): [string, string] {
     const mode = this.cardMode();
-    if (!mode.enabled || mode.displayMode === 'full') {
-      return [
-        `L1 ${this.formatValue(bus.line1Voltage, 'V')} ${this.formatValue(bus.line1Current, 'A')} ${this.formatValue(bus.line1Frequency, 'Hz')}`,
-        `L2 ${this.formatValue(bus.line2Voltage, 'V')} ${this.formatValue(bus.line2Current, 'A')}  L3 ${this.formatValue(bus.line3Voltage, 'V')} ${this.formatValue(bus.line3Current, 'A')}`
-      ];
-    }
-
-    const metricLabels = mode.metrics
+    const metricLabels = (mode.metrics.length ? mode.metrics : WidgetAcComponent.DEFAULT_CONFIG.ac?.cardMode?.metrics ?? [])
       .map(metric => this.toMetricLabel(metric, bus))
       .filter((label): label is string => !!label);
 

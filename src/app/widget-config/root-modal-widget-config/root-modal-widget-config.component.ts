@@ -16,7 +16,7 @@ import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-c
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { AppService } from '../../core/services/app-service';
 import { DatasetStreamService, IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
-import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalTrackedDevice, IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
@@ -390,6 +390,41 @@ export class RootModalWidgetConfigComponent implements OnInit {
   }
 
   submitConfig() {
-    this.dialogRef.close(this.formMaster.getRawValue());
+    const nextConfig = this.formMaster.getRawValue() as IWidgetSvcConfig;
+    this.normalizeElectricalTrackedDevices(nextConfig);
+    this.dialogRef.close(nextConfig);
+  }
+
+  private normalizeElectricalTrackedDevices(cfg: IWidgetSvcConfig): void {
+    const families = [cfg.charger, cfg.inverter, cfg.alternator, cfg.ac, cfg.solarCharger, cfg.bms];
+
+    families.forEach(family => {
+      if (!family) {
+        return;
+      }
+
+      const trackedDevices = Array.isArray(family.trackedDevices) ? family.trackedDevices : [];
+      const normalized = new Map<string, ElectricalTrackedDevice>();
+
+      trackedDevices.forEach(item => {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+        const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+        const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+        if (!id || !source) {
+          return;
+        }
+
+        const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+          ? candidate.key.trim()
+          : `${id}||${source}`;
+        normalized.set(key, { id, source, key });
+      });
+
+      family.trackedDevices = [...normalized.values()].sort((left, right) => left.key.localeCompare(right.key));
+    });
   }
 }

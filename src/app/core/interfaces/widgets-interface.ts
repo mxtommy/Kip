@@ -90,20 +90,25 @@ export interface ElectricalGroupConfig {
 }
 
 export interface ElectricalCardModeConfig {
-  enabled: IElectricalCardModeConfig['enabled'];
   displayMode?: IElectricalCardModeConfig['displayMode'];
   metrics: IElectricalCardModeConfig['metrics'];
 }
 
+export interface ElectricalTrackedDevice {
+  id: string;
+  source: string;
+  key: string;
+}
+
 export interface ElectricalFamilyConfig<TOptions = Record<string, never>> {
-  trackedIds: string[];
-  groups: ElectricalGroupConfig[];
+  trackedDevices: ElectricalTrackedDevice[];
+  groups?: ElectricalGroupConfig[];
   optionsById: Record<string, TOptions>;
   cardMode?: ElectricalCardModeConfig;
 }
 
 export interface BmsWidgetConfig {
-  trackedIds?: string[];
+  trackedDevices?: ElectricalTrackedDevice[];
   groups?: ElectricalGroupConfig[];
   banks: BmsBankConfig[];
   cardMode?: ElectricalCardModeConfig;
@@ -114,11 +119,10 @@ export interface SolarOptionConfig {
 }
 
 export interface SolarWidgetConfig {
-  trackedIds?: string[];
+  trackedDevices?: ElectricalTrackedDevice[];
   groups?: ElectricalGroupConfig[];
   optionsById?: Record<string, SolarOptionConfig>;
   banks?: ElectricalGroupConfig[];
-  solarOptionsById: Record<string, SolarOptionConfig>;
   cardMode?: ElectricalCardModeConfig;
 }
 

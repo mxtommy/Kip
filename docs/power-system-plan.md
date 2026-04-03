@@ -84,6 +84,11 @@ Build a Solar Charge Controller widget that mirrors the BMS structure and suppor
 
 ### Signal K path coverage
 - Roots: `self.electrical.solar`, `self.electrical.solar.<id>`
+- Positional id rule:
+  - The first segment after `self.electrical.solar.` is always the device id.
+  - Any token in that position is valid as an id (for example `power`, `charge`, `controller`, `load`).
+  - Setup discovery may discover ids from both `self.electrical.solar.<id>` and `self.electrical.solar.<id>.<metric...>` paths.
+  - Runtime value parsing accepts only `self.electrical.solar.<id>.<metric...>`; root-only `self.electrical.solar.<id>` paths are rejected for value application.
 - Identity and metadata:
   - `self.electrical.solar.<id>.name`
   - `self.electrical.solar.<id>.location`

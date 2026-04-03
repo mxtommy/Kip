@@ -1,4 +1,5 @@
 import {
+  IElectricalTrackedDeviceRef,
   IElectricalTemplateSeriesDefinition,
   isKipElectricalTemplateSeriesDefinition,
   isKipBmsTemplateSeriesDefinition,
@@ -301,6 +302,21 @@ export class HistorySeriesService {
         return;
       }
 
+      const hasSpecificSourceMatch = seriesKeys.some(seriesKey => {
+        const series = this.seriesById.get(seriesKey);
+        if (!series) {
+          return false;
+        }
+
+        const seriesContext = series.context ?? 'vessels.self';
+        if (!this.isContextMatch(seriesContext, context)) {
+          return false;
+        }
+
+        const seriesSource = series.source ?? 'default';
+        return seriesSource !== 'default' && seriesSource === source;
+      });
+
       seriesKeys.forEach(seriesKey => {
         const series = this.seriesById.get(seriesKey);
         if (!series) {
@@ -314,6 +330,10 @@ export class HistorySeriesService {
 
         const seriesSource = series.source ?? 'default';
         if (!this.isSourceMatch(seriesSource, source)) {
+          return;
+        }
+
+        if (seriesSource === 'default' && source !== 'default' && hasSpecificSourceMatch) {
           return;
         }
 
@@ -423,6 +443,7 @@ export class HistorySeriesService {
       && leftComparable.expansionMode === rightComparable.expansionMode
       && leftComparable.familyKey === rightComparable.familyKey
       && this.areStringArraysEquivalent(leftComparable.allowedIds, rightComparable.allowedIds)
+      && this.areTrackedDevicesEquivalent(leftComparable.trackedDevices, rightComparable.trackedDevices)
       && leftComparable.source === rightComparable.source
       && leftComparable.context === rightComparable.context
       && leftComparable.timeScale === rightComparable.timeScale
@@ -439,8 +460,23 @@ export class HistorySeriesService {
     return {
       ...comparable,
       allowedIds: this.normalizeComparableStringArray(comparable.allowedIds),
+      trackedDevices: this.normalizeComparableTrackedDevices(comparable.trackedDevices),
       methods: this.normalizeComparableStringArray(comparable.methods)
     };
+  }
+
+  private areTrackedDevicesEquivalent(left?: readonly IElectricalTrackedDeviceRef[] | null, right?: readonly IElectricalTrackedDeviceRef[] | null): boolean {
+    const normalizedLeft = this.normalizeComparableTrackedDevices(left) ?? [];
+    const normalizedRight = this.normalizeComparableTrackedDevices(right) ?? [];
+
+    if (normalizedLeft.length !== normalizedRight.length) {
+      return false;
+    }
+
+    return normalizedLeft.every((value, index) => {
+      const candidate = normalizedRight[index];
+      return value.id === candidate?.id && value.source === candidate?.source;
+    });
   }
 
   private areStringArraysEquivalent<T extends string>(left?: readonly T[] | null, right?: readonly T[] | null): boolean {
@@ -462,6 +498,37 @@ export class HistorySeriesService {
     return [...values]
       .filter((value): value is T => typeof value === 'string')
       .sort((left, right) => left.localeCompare(right));
+  }
+
+  private normalizeComparableTrackedDevices(values?: readonly IElectricalTrackedDeviceRef[] | null): IElectricalTrackedDeviceRef[] | undefined {
+    if (!Array.isArray(values) || values.length === 0) {
+      return undefined;
+    }
+
+    const normalizedByKey = new Map<string, IElectricalTrackedDeviceRef>();
+    values.forEach(value => {
+      if (!value || typeof value !== 'object') {
+        return;
+      }
+
+      const id = typeof value.id === 'string' ? value.id.trim() : '';
+      const sourceText = typeof value.source === 'string' ? value.source.trim() : '';
+      const source = sourceText.length > 0 ? sourceText : 'default';
+      if (!id) {
+        return;
+      }
+
+      normalizedByKey.set(`${id}||${source}`, { id, source });
+    });
+
+    if (normalizedByKey.size === 0) {
+      return undefined;
+    }
+
+    return Array.from(normalizedByKey.values()).sort((left, right) => {
+      const idCompare = left.id.localeCompare(right.id);
+      return idCompare !== 0 ? idCompare : left.source.localeCompare(right.source);
+    });
   }
 
   private isChartWidget(ownerWidgetSelector: string | null, ownerWidgetUuid?: string): boolean {
@@ -522,6 +589,9 @@ export class HistorySeriesService {
     const normalizedAllowedIds = expansionMode
       ? this.normalizeComparableStringArray(input.allowedIds)
       : undefined;
+    const normalizedTrackedDevices = expansionMode
+      ? this.normalizeComparableTrackedDevices(input.trackedDevices)
+      : undefined;
 
     const isDataWidget = this.isChartWidget(ownerWidgetSelector, ownerWidgetUuid);
     const retentionMs = this.resolveRetentionMs(input);
@@ -561,7 +631,8 @@ export class HistorySeriesService {
         ownerWidgetSelector: normalizedTemplateSelector,
         expansionMode,
         familyKey,
-        allowedIds: normalizedAllowedIds ?? null
+        allowedIds: normalizedAllowedIds ?? null,
+        trackedDevices: normalizedTrackedDevices ?? null
       };
 
       return templateSeries;
@@ -571,7 +642,8 @@ export class HistorySeriesService {
       ...normalizedBase,
       expansionMode: null,
       familyKey: null,
-      allowedIds: null
+      allowedIds: null,
+      trackedDevices: null
     };
 
     return concreteSeries;

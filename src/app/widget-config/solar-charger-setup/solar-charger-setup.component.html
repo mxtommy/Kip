@@ -3,9 +3,9 @@
     <h3>Tracked Solar Chargers</h3>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Charger Instances</mat-label>
-      <mat-select formControlName="trackedIds" multiple>
-        @for (id of discoveredSolarIds(); track id) {
-          <mat-option [value]="id">{{ id }}</mat-option>
+      <mat-select formControlName="trackedDevices" multiple [compareWith]="compareTrackedDevice">
+        @for (device of discoveredTrackedDevices(); track device.key) {
+        <mat-option [value]="device">{{ device.id }} ({{ device.source }})</mat-option>
         }
       </mat-select>
     </mat-form-field>
@@ -14,71 +14,73 @@
 
   <mat-divider></mat-divider>
 
-  <div class="solar-config-section">
-    <div class="section-header">
-      <h3>Charger Groups</h3>
-      <button mat-stroked-button type="button" (click)="addGroup()">
-        Add Group
-      </button>
-    </div>
-
-    <div formArrayName="groups" class="bank-list">
-      @if (!hasGroups()) {
-      <div class="hint">No groups configured yet.</div>
+  <div class="solar-config-section" formGroupName="optionsById">
+    <h3>Solar Array Rated Power</h3>
+    <div class="hint">Set each charger's panel/array rated capacity in watts (W).</div>
+  
+    <div class="option-list">
+      @if (!optionIds().length) {
+      <div class="hint">No chargers discovered yet.</div>
       }
-
-      @for (groupForm of groupsFormArray.controls; track $index) {
-      <div class="bank-card" [formGroupName]="$index">
-        <div class="bank-row">
-          <mat-form-field appearance="outline" class="bank-name">
-            <mat-label>Group Name</mat-label>
-            <input matInput formControlName="name" />
-          </mat-form-field>
-          <button mat-icon-button type="button" (click)="removeGroup($index)" aria-label="Remove group">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
+  
+      @for (id of optionIds(); track id) {
+      <div class="option-card" [formGroupName]="id">
+        <div class="option-title">{{ id }}</div>
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Group Members</mat-label>
-          <mat-select formControlName="memberIds" multiple>
-            @for (id of discoveredSolarIds(); track id) {
-            <mat-option [value]="id">{{ id }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Connection Mode</mat-label>
-          <mat-select formControlName="connectionMode">
-            @for (mode of connectionModes; track mode) {
-            <mat-option [value]="mode">{{ mode | titlecase }}</mat-option>
-            }
-          </mat-select>
+          <mat-label>Array Rated Power (W)</mat-label>
+          <input matInput type="number" required min="0" formControlName="arrayRatedPowerW" placeholder="e.g. 800" />
         </mat-form-field>
       </div>
       }
     </div>
   </div>
-
+  
+  @if (supportsGroups()) {
   <mat-divider></mat-divider>
 
-  <div class="solar-config-section" formGroupName="optionsById">
-    <h3>Solar Array Rated Power</h3>
-    <div class="hint">Set each charger's panel/array rated capacity in watts (W).</div>
+    <div class="solar-config-section">
+      <div class="section-header">
+        <h3>Charger Groups</h3>
+        <button mat-stroked-button type="button" (click)="addGroup()">
+          Add Group
+        </button>
+      </div>
 
-    <div class="option-list">
-      @if (!optionIds().length) {
-        <div class="hint">No chargers discovered yet.</div>
-      }
+      <div formArrayName="groups" class="bank-list">
+        @if (!hasGroups()) {
+        <div class="hint">No groups configured yet.</div>
+        }
 
-      @for (id of optionIds(); track id) {
-        <div class="option-card" [formGroupName]="id">
-          <div class="option-title">{{ id }}</div>
+        @for (groupForm of groupsFormArray!.controls; track $index) {
+        <div class="bank-card" [formGroupName]="$index">
+          <div class="bank-row">
+            <mat-form-field appearance="outline" class="bank-name">
+              <mat-label>Group Name</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+            <button mat-icon-button type="button" (click)="removeGroup($index)" aria-label="Remove group">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Array Rated Power (W)</mat-label>
-            <input matInput type="number" required min="0" formControlName="arrayRatedPowerW" placeholder="e.g. 800" />
+            <mat-label>Group Members</mat-label>
+            <mat-select formControlName="memberIds" multiple>
+              @for (id of discoveredSolarIds(); track id) {
+              <mat-option [value]="id">{{ id }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Connection Mode</mat-label>
+            <mat-select formControlName="connectionMode">
+              @for (mode of connectionModes; track mode) {
+              <mat-option [value]="mode">{{ mode | titlecase }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
         </div>
-      }
-    </div>
-  </div>
+        }
+        </div>
+        </div>
+  }
 </div>

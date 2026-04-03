@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
-import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, ElectricalCardModeConfig, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { BmsBankConfig, BmsBankConnectionMode, BmsWidgetConfig, ElectricalCardModeConfig, ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { UnitsService } from '../../core/services/units.service';
@@ -17,6 +17,7 @@ import type {
 } from './bms.types';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import { ELECTRICAL_DIRECT_CARD_HEIGHT } from '../shared/electrical-card-layout.constants';
 
 interface BmsRenderBank extends BmsBankSummary {
@@ -65,12 +66,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
+  public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     color: 'contrast',
     ignoreZones: false,
     bms: {
-      trackedIds: [],
+      trackedDevices: [],
       groups: [],
       banks: []
     }
@@ -91,6 +93,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private static readonly BANK_GAUGE_RADIUS = 45;
   private static readonly BANK_GAUGE_BG_STROKE = 10;
   private static readonly BANK_GAUGE_VALUE_STROKE = 10;
+  private static readonly COMPACT_UNASSIGNED_BATTERY_SCALE = 0.82;
   private static readonly PATH_BATCH_WINDOW_MS = 500;
 
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -116,12 +119,16 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private powerRenewalIconTemplate: SVGElement | null = null;
 
   protected readonly discoveredBatteryIds = signal<string[]>([]);
-  protected readonly trackedBatteryIds = signal<string[]>([]);
+  protected readonly trackedBatteryDeviceIds = signal<string[]>([]);
   protected readonly banks = signal<BmsBankConfig[]>([]);
+  protected readonly cardMode = signal<ElectricalCardModeConfig>({
+    displayMode: 'full',
+    metrics: []
+  });
   protected readonly batteries = signal<Record<string, BmsBatterySnapshot>>({});
 
   protected readonly visibleBatteryIds = computed(() => {
-    const tracked = this.trackedBatteryIds();
+    const tracked = this.trackedBatteryDeviceIds();
     if (tracked.length) return tracked;
     return this.discoveredBatteryIds();
   });
@@ -137,6 +144,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const map = this.batteries();
     return banks.map(bank => this.buildBankSummary(bank, map));
   });
+
+  protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
+  protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
 
   protected readonly colorRole = computed(() => this.runtime.options()?.color);
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
@@ -356,36 +366,60 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const bmsCfg = this.resolveBmsConfig(cfg);
-    this.trackedBatteryIds.set(bmsCfg.trackedIds ?? []);
+    this.trackedBatteryDeviceIds.set([...new Set((bmsCfg.trackedDevices ?? []).map(device => device.id))]);
     this.banks.set(bmsCfg.banks);
+    this.cardMode.set(this.normalizeCardMode(bmsCfg.cardMode));
   }
 
   private resolveBmsConfig(cfg: IWidgetSvcConfig): BmsWidgetConfig {
     const bms = cfg.bms;
-    const trackedIds = this.normalizeStringList(bms?.trackedIds);
+    const trackedDevices = this.normalizeTrackedDevices(bms?.trackedDevices);
     const groupBanks = this.normalizeBanksFromGroups(bms?.groups);
     const legacyBanks = this.normalizeBanksFromLegacy(bms?.banks);
 
     return {
-      trackedIds,
+      trackedDevices,
       groups: groupBanks,
       banks: groupBanks.length > 0 ? groupBanks : legacyBanks,
       cardMode: this.normalizeCardMode(bms?.cardMode)
     };
   }
 
-  private normalizeCardMode(value: unknown): ElectricalCardModeConfig | undefined {
-    if (!value || typeof value !== 'object') {
-      return undefined;
+  private normalizeTrackedDevices(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
     }
 
-    const cardMode = value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown };
-    const metrics = this.normalizeStringList(cardMode.metrics);
-    const displayMode = cardMode.displayMode === 'card' ? 'card' : 'full';
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
 
+      const candidate = item as Partial<ElectricalTrackedDevice>;
+      const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+      const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+      if (!id || !source) {
+        return;
+      }
+
+      const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+        ? candidate.key.trim()
+        : `${id}||${source}`;
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig {
+    const cardMode = (value && typeof value === 'object')
+      ? value as { displayMode?: unknown; metrics?: unknown }
+      : null;
+
+    const metrics = this.normalizeStringList(cardMode?.metrics);
     return {
-      enabled: cardMode.enabled !== false,
-      displayMode,
+      displayMode: cardMode?.displayMode === 'compact' ? 'compact' : 'full',
       metrics
     };
   }
@@ -713,7 +747,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     if (!this.bankLayer || !this.batteryLayer) return;
     const { banks, batteries, bankDisplayModels, batteryDisplayModels, widgetColors } = snapshot;
 
-    const renderLayout = this.buildRenderLayout(banks, batteries, bankDisplayModels, batteryDisplayModels);
+    const renderLayout = this.buildRenderLayout(
+      banks,
+      batteries,
+      bankDisplayModels,
+      batteryDisplayModels,
+      this.isCompactCardMode()
+    );
     const viewBoxHeight = Math.max(WidgetBmsComponent.MIN_VIEWBOX_HEIGHT, renderLayout.contentHeight);
     this.svg?.attr('viewBox', `0 0 ${WidgetBmsComponent.VIEWBOX_WIDTH} ${viewBoxHeight}`);
     this.root?.attr('transform', null);
@@ -848,7 +888,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     banks: BmsBankSummary[],
     batteries: BmsBatterySnapshot[],
     bankDisplayModels: Record<string, BmsBankDisplayModel>,
-    batteryDisplayModels: Record<string, BmsBatteryDisplayModel>
+    batteryDisplayModels: Record<string, BmsBatteryDisplayModel>,
+    compactMode: boolean
   ): BmsRenderLayout {
     const batteryById = new Map<string, BmsBatterySnapshot>(batteries.map(battery => [battery.id, battery]));
     const assignedBatteryIds = new Set<string>();
@@ -879,8 +920,13 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         WidgetBmsComponent.BANK_MIN_HEIGHT,
         WidgetBmsComponent.BANK_HEADER_HEIGHT + batterySectionHeight + WidgetBmsComponent.CARD_GAP
       );
-      const bankHeight = rows === 1
-        ? Math.max(WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT, naturalBankHeight)
+      const singleRowTargetHeight = Number.isFinite(WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT)
+        ? WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT
+        : WidgetBmsComponent.BANK_MIN_HEIGHT;
+      const bankHeight = compactMode
+        ? naturalBankHeight
+        : rows === 1
+          ? Math.max(singleRowTargetHeight, naturalBankHeight)
         : naturalBankHeight;
 
       const batteryCards: BmsRenderBattery[] = assigned.map((battery, index) => {
@@ -920,6 +966,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     });
 
     const unassignedStartY = renderBanks.length > 0 ? nextBankY : 0;
+    const unassignedScale = compactMode ? WidgetBmsComponent.COMPACT_UNASSIGNED_BATTERY_SCALE : 1;
+    const unassignedRenderedHeight = WidgetBmsComponent.BATTERY_CARD_HEIGHT * unassignedScale;
     const unassignedBatteries = batteries
       .filter(battery => !assignedBatteryIds.has(battery.id))
       .sort((a, b) => a.id.localeCompare(b.id))
@@ -928,15 +976,15 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         displayModel: batteryDisplayModels[battery.id],
         key: battery.id,
         x: 0,
-        y: unassignedStartY + index * (WidgetBmsComponent.BATTERY_CARD_HEIGHT + WidgetBmsComponent.CARD_GAP),
-        scale: 1,
-        compact: false
+        y: unassignedStartY + index * (unassignedRenderedHeight + WidgetBmsComponent.CARD_GAP),
+        scale: unassignedScale,
+        compact: compactMode
       }));
 
     const lastBank = renderBanks[renderBanks.length - 1];
     const bankBottom = lastBank ? lastBank.y + lastBank.height : 0;
     const lastUnassigned = unassignedBatteries[unassignedBatteries.length - 1];
-    const unassignedBottom = lastUnassigned ? lastUnassigned.y + WidgetBmsComponent.BATTERY_CARD_HEIGHT : 0;
+    const unassignedBottom = lastUnassigned ? lastUnassigned.y + unassignedRenderedHeight : 0;
 
     return {
       banks: renderBanks,

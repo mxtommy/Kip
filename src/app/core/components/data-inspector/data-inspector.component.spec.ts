@@ -40,7 +40,7 @@ describe('DataBrowserComponent', () => {
       }
     };
 
-    const viewRow = (component as unknown as { toViewRow(path: ISkPathData): { sourceRows: Array<{ value: unknown }> } }).toViewRow(livePath);
+    const viewRow = (component as unknown as { toViewRow(path: ISkPathData): { sourceRows: { value: unknown }[] } }).toViewRow(livePath);
     livePath.sources.sensorA.sourceValue = 60.086;
 
     expect(viewRow.sourceRows[0]?.value).toBe(59.906);

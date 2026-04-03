@@ -81,45 +81,109 @@ describe('WidgetAcComponent', () => {
     await setup();
     const descriptor = getElectricalWidgetFamilyDescriptor('widget-ac');
     expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith(`${descriptor?.selfRootPath}.*`);
-    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledWith('electrical.ac.*');
+    expect(dataServiceMock.subscribePathTreeWithInitial).toHaveBeenCalledTimes(1);
   });
 
-  it('filters visible buses by trackedIds', async () => {
+  it('filters visible buses by trackedDevices', async () => {
     await setup(
       [
         makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
         makeUpdate('self.electrical.ac.bus2.line1.voltage', 121)
       ],
-      { ac: { trackedIds: ['bus1'] } }
+      { ac: { trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }] } }
     );
 
-    const visible = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
-    expect(visible).toEqual(['bus1']);
+    const visible = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
+    expect(visible).toEqual(['bus1||default']);
   });
 
-  it('uses configured trackedIds even when they are missing from discovered ids', async () => {
-    await setup(
-      [
-        makeUpdate('self.electrical.ac.0.voltage', 230),
-        makeUpdate('self.electrical.ac.1.current', 4.5)
-      ],
-      { ac: { trackedIds: ['bus9'] } }
-    );
+  it('shows all discovered buses when no trackedDevices are configured', async () => {
+    await setup([
+      makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
+      makeUpdate('self.electrical.ac.bus2.line1.voltage', 121)
+    ]);
 
-    const visible = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
-    expect(visible).toEqual(['bus9']);
+    const visible = (component as unknown as { visibleBuses: () => { id: string }[] }).visibleBuses();
+    expect(visible.map(v => v.id).sort()).toEqual(['bus1', 'bus2']);
   });
 
-  it('ignores reserved aggregate ids in trackedIds', async () => {
+  it('falls back to showing all buses when trackedDevices is cleared after being set', async () => {
     await setup(
       [
-        makeUpdate('electrical.ac.outletA.phase.A.current', 3.4)
+        makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
+        makeUpdate('self.electrical.ac.bus2.line1.voltage', 121)
       ],
-      { ac: { trackedIds: ['totalCurrent', 'totalPower', 'outletA'] } }
+      { ac: { trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }] } }
     );
 
-    const visible = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
-    expect(visible).toEqual(['outletA']);
+    let visible = (component as unknown as { visibleBuses: () => { id: string }[] }).visibleBuses();
+    expect(visible.map(v => v.id)).toEqual(['bus1']);
+
+    runtimeMock.options.mockReturnValue({ ac: { trackedDevices: [] } });
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig(
+      { ac: { trackedDevices: [] } }
+    );
+
+    visible = (component as unknown as { visibleBuses: () => { id: string }[] }).visibleBuses();
+    expect(visible.map(v => v.id).sort()).toEqual(['bus1', 'bus2']);
+  });
+
+  it('materializes separate cards for same id across different sources', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
+        makeUpdate('self.electrical.ac.bus1.line1.current', 10)
+      ],
+      {
+        ac: {
+          trackedDevices: [
+            { id: 'bus1', source: 'sourceA', key: 'bus1||sourceA' },
+            { id: 'bus1', source: 'sourceB', key: 'bus1||sourceB' }
+          ]
+        }
+      }
+    );
+
+    const visible = (component as unknown as { visibleBuses: () => { id: string; source?: string | null; deviceKey?: string }[] }).visibleBuses();
+    expect(visible).toHaveLength(2);
+    expect(visible.find(v => v.deviceKey === 'bus1||sourceA')).toBeDefined();
+    expect(visible.find(v => v.deviceKey === 'bus1||sourceB')).toBeDefined();
+
+    const models = (component as unknown as { displayModels: () => Record<string, { busText: string }> }).displayModels();
+    expect(models['bus1||sourceA']?.busText).toBe('sourceA');
+    expect(models['bus1||sourceB']?.busText).toBe('sourceB');
+  });
+
+  it('uses configured trackedDevices even when they are missing from discovered ids', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.ac.bus1.line1.voltage', 120)
+      ],
+      { ac: { trackedDevices: [{ id: '0', source: 'default', key: '0||default' }] } }
+    );
+
+    const visible = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
+    expect(visible).toEqual(['0||default']);
+  });
+
+  it('ignores reserved aggregate ids in trackedDevices', async () => {
+    await setup(
+      [
+        makeUpdate('self.electrical.ac.outletA.phase.A.current', 3.4)
+      ],
+      {
+        ac: {
+          trackedDevices: [
+            { id: 'totalCurrent', source: 'default', key: 'totalCurrent||default' },
+            { id: 'totalPower', source: 'default', key: 'totalPower||default' },
+            { id: 'outletA', source: 'default', key: 'outletA||default' }
+          ]
+        }
+      }
+    );
+
+    const visible = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
+    expect(visible).toEqual(['outletA||default']);
   });
 
   it('parses line voltage/current/frequency keys', async () => {
@@ -130,8 +194,8 @@ describe('WidgetAcComponent', () => {
     ]);
 
     const map = (component as unknown as {
-      busesById: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null }>;
-    }).busesById();
+      busesByKey: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null }>;
+    }).busesByKey();
 
     expect(map.bus1?.line1Voltage).toBe(120);
     expect(map.bus1?.line1Current).toBe(10);
@@ -147,47 +211,47 @@ describe('WidgetAcComponent', () => {
     ]);
 
     const map = (component as unknown as {
-      busesById: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null }>;
-    }).busesById();
+      busesByKey: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null }>;
+    }).busesByKey();
 
     expect(map['0']?.line1Voltage).toBe(230);
     expect(map['0']?.line1Current).toBe(4.2);
     expect(map['1']?.line1Voltage).toBe(231);
     expect(map['1']?.line1Frequency).toBe(50);
 
-    const visibleIds = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
+    const visibleIds = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
     expect(visibleIds).toEqual(['0', '1']);
   });
 
-  it('processes non-self electrical ac prefix', async () => {
+  it('ignores non-self electrical ac prefix', async () => {
     await setup([
       makeUpdate('electrical.ac.0.voltage', 230),
       makeUpdate('electrical.ac.1.current', 4.5)
     ]);
 
     const map = (component as unknown as {
-      busesById: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null }>;
-    }).busesById();
+      busesByKey: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null }>;
+    }).busesByKey();
 
-    expect(map['0']?.line1Voltage).toBe(230);
-    expect(map['1']?.line1Current).toBe(4.5);
+    expect(map['0']?.line1Voltage).toBeUndefined();
+    expect(map['1']?.line1Current).toBeUndefined();
 
-    const visibleIds = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
-    expect(visibleIds).toEqual(['0', '1']);
+    const visibleIds = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
+    expect(visibleIds).toEqual([]);
   });
 
   it('maps phase schema metrics into line metrics', async () => {
     await setup([
-      makeUpdate('electrical.ac.outletA.phase.A.lineNeutralVoltage', 229.8),
-      makeUpdate('electrical.ac.outletA.phase.A.current', 3.2),
-      makeUpdate('electrical.ac.outletA.phase.A.frequency', 50.1),
-      makeUpdate('electrical.ac.outletA.phase.B.current', 1.5),
-      makeUpdate('electrical.ac.outletA.phase.C.current', 2.5)
+      makeUpdate('self.electrical.ac.outletA.phase.A.lineNeutralVoltage', 229.8),
+      makeUpdate('self.electrical.ac.outletA.phase.A.current', 3.2),
+      makeUpdate('self.electrical.ac.outletA.phase.A.frequency', 50.1),
+      makeUpdate('self.electrical.ac.outletA.phase.B.current', 1.5),
+      makeUpdate('self.electrical.ac.outletA.phase.C.current', 2.5)
     ]);
 
     const map = (component as unknown as {
-      busesById: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null; line2Current?: number | null; line3Current?: number | null }>;
-    }).busesById();
+      busesByKey: () => Record<string, { line1Voltage?: number | null; line1Current?: number | null; line1Frequency?: number | null; line2Current?: number | null; line3Current?: number | null }>;
+    }).busesByKey();
 
     expect(map.outletA?.line1Voltage).toBe(229.8);
     expect(map.outletA?.line1Current).toBe(3.2);
@@ -196,34 +260,29 @@ describe('WidgetAcComponent', () => {
     expect(map.outletA?.line3Current).toBe(2.5);
   });
 
-  it('keeps a bus visible when unsupported AC child paths are present', async () => {
+  it('does not materialize a bus for unsupported AC child paths', async () => {
     await setup([
-      makeUpdate('electrical.ac.outletA.phase.neutral.current', 3.2),
-      makeUpdate('electrical.ac.outletA.metadata.vendorName', 'Victron')
+      makeUpdate('self.electrical.ac.outletA.phase.neutral.current', 3.2),
+      makeUpdate('self.electrical.ac.outletA.metadata.vendorName', 'Victron')
     ]);
 
-    const visibleIds = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
-    expect(visibleIds).toEqual(['outletA']);
-
     const visibleBuses = (component as unknown as {
-      visibleBuses: () => Array<{ id: string; line1Current?: number | null }>;
+      visibleBuses: () => { id: string; line1Current?: number | null }[];
     }).visibleBuses();
 
-    expect(visibleBuses).toHaveLength(1);
-    expect(visibleBuses[0]?.id).toBe('outletA');
-    expect(visibleBuses[0]?.line1Current).toBeUndefined();
+    expect(visibleBuses).toHaveLength(0);
   });
 
   it('discovers a bus from per-plug total paths even without phase metrics', async () => {
     await setup([
-      makeUpdate('electrical.ac.outletA.total.realPower', 720)
+      makeUpdate('self.electrical.ac.outletA.total.realPower', 720)
     ]);
 
-    const visibleIds = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
+    const visibleIds = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
     expect(visibleIds).toEqual(['outletA']);
 
     const visibleBuses = (component as unknown as {
-      visibleBuses: () => Array<{ id: string; power?: number | null }>;
+      visibleBuses: () => { id: string; power?: number | null }[];
     }).visibleBuses();
 
     expect(visibleBuses).toHaveLength(1);
@@ -233,15 +292,15 @@ describe('WidgetAcComponent', () => {
 
   it('tracks per-plug totals and ignores global totals paths', async () => {
     await setup([
-      makeUpdate('electrical.ac.outletA.total.realPower', 720),
-      makeUpdate('electrical.ac.totalCurrent', 15.3),
-      makeUpdate('electrical.ac.totalPower', 2200)
+      makeUpdate('self.electrical.ac.outletA.total.realPower', 720),
+      makeUpdate('self.electrical.ac.totalCurrent', 15.3),
+      makeUpdate('self.electrical.ac.totalPower', 2200)
     ]);
 
-    const map = (component as unknown as { busesById: () => Record<string, { power?: number | null }> }).busesById();
+    const map = (component as unknown as { busesByKey: () => Record<string, { power?: number | null }> }).busesByKey();
     expect(map.outletA?.power).toBe(720);
 
-    const visibleIds = (component as unknown as { visibleBusIds: () => string[] }).visibleBusIds();
+    const visibleIds = (component as unknown as { visibleBusKeys: () => string[] }).visibleBusKeys();
     expect(visibleIds).toEqual(['outletA']);
   });
 
@@ -269,7 +328,7 @@ describe('WidgetAcComponent', () => {
     expect(visibleAfterBatch[0]?.line1Current).toBe(10);
   });
 
-  it('uses card mode metrics when display mode is card', async () => {
+  it('uses compact mode metrics when display mode is compact', async () => {
     await setup(
       [
         makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
@@ -279,10 +338,9 @@ describe('WidgetAcComponent', () => {
       ],
       {
         ac: {
-          trackedIds: ['bus1'],
+          trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }],
           cardMode: {
-            enabled: true,
-            displayMode: 'card',
+            displayMode: 'compact',
             metrics: ['line1Voltage', 'line2Voltage', 'line3Current']
           }
         }
@@ -293,10 +351,72 @@ describe('WidgetAcComponent', () => {
       displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }>;
     }).displayModels();
 
-    const metricText = `${models.bus1?.metricsLineOne ?? ''} ${models.bus1?.metricsLineTwo ?? ''}`;
+    const metricText = `${models['bus1||default']?.metricsLineOne ?? ''} ${models['bus1||default']?.metricsLineTwo ?? ''}`;
     expect(metricText).toContain('L1V');
     expect(metricText).toContain('L2V');
     expect(metricText).toContain('L3A');
+  });
+
+  it('uses the same metric rows in full mode and card mode for the same configured metrics', async () => {
+    const updates = [
+      makeUpdate('self.electrical.ac.bus1.line1.voltage', 120),
+      makeUpdate('self.electrical.ac.bus1.line1.current', 10),
+      makeUpdate('self.electrical.ac.bus1.line2.voltage', 121),
+      makeUpdate('self.electrical.ac.bus1.line3.current', 9)
+    ];
+    const metrics = ['line1Voltage', 'line2Voltage', 'line3Current'];
+
+    await setup(
+      updates,
+      {
+        ac: {
+          trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }],
+          cardMode: {
+            displayMode: 'full',
+            metrics
+          }
+        }
+      }
+    );
+
+    const fullModeModels = (component as unknown as {
+      displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }>;
+    }).displayModels();
+
+    const fullModeLines = [
+      fullModeModels['bus1||default']?.metricsLineOne,
+      fullModeModels['bus1||default']?.metricsLineTwo
+    ];
+
+    runtimeMock.options.mockReturnValue({
+      ac: {
+        trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }],
+        cardMode: {
+          displayMode: 'compact',
+          metrics
+        }
+      }
+    });
+    (component as unknown as { applyConfig: (cfg: unknown) => void }).applyConfig(
+      {
+        ac: {
+          trackedDevices: [{ id: 'bus1', source: 'default', key: 'bus1||default' }],
+          cardMode: {
+            displayMode: 'compact',
+            metrics
+          }
+        }
+      }
+    );
+
+    const cardModeModels = (component as unknown as {
+      displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }>;
+    }).displayModels();
+
+    expect([
+      cardModeModels['bus1||default']?.metricsLineOne,
+      cardModeModels['bus1||default']?.metricsLineTwo
+    ]).toEqual(fullModeLines);
   });
 
   it('does not process paths with wrong family prefix', async () => {
@@ -304,7 +424,7 @@ describe('WidgetAcComponent', () => {
       makeUpdate('self.electrical.chargers.c1.voltage', 28)
     ]);
 
-    const map = (component as unknown as { busesById: () => Record<string, unknown> }).busesById();
+    const map = (component as unknown as { busesByKey: () => Record<string, unknown> }).busesByKey();
     expect(map.c1).toBeUndefined();
   });
 });

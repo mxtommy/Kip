@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
 import { DataService } from '../../core/services/data.service';
-import type { BmsBankConnectionMode, ElectricalGroupConfig } from '../../core/interfaces/widgets-interface';
+import type { BmsBankConnectionMode, ElectricalGroupConfig, ElectricalTrackedDevice } from '../../core/interfaces/widgets-interface';
 
 @Component({
   selector: 'electrical-family-setup',
@@ -40,11 +40,26 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
   private readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
 
+  private static readonly SOURCE_AWARE_FAMILIES = new Set(['charger', 'inverter', 'alternator', 'ac']);
+
   protected familyFormGroup!: UntypedFormGroup;
-  protected trackedIdsControl!: UntypedFormControl;
-  protected groupsFormArray!: UntypedFormArray;
+  protected trackedDevicesControl!: UntypedFormControl;
+  protected groupsFormArray?: UntypedFormArray;
   protected readonly discoveredIds = signal<string[]>([]);
+  protected readonly discoveredTrackedDevices = signal<ElectricalTrackedDevice[]>([]);
+  protected readonly isSourceAwareFamily = computed(() => ElectricalFamilySetupComponent.SOURCE_AWARE_FAMILIES.has(this.formGroupName().trim()));
+  protected readonly memberOptions = computed(() => {
+    if (this.isSourceAwareFamily()) {
+      return this.discoveredTrackedDevices().map(device => ({
+        value: device.key,
+        label: `${device.id} (${device.source})`
+      }));
+    }
+
+    return this.discoveredIds().map(id => ({ value: id, label: id }));
+  });
   protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
+  protected readonly supportsGroups = computed(() => !!this.groupsFormArray);
 
   private discoveryToken?: PathDiscoveryToken;
 
@@ -106,19 +121,39 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
     this.groupsFormArray.markAsDirty();
   }
 
+  protected compareTrackedDevice(
+    left: ElectricalTrackedDevice | null,
+    right: ElectricalTrackedDevice | null
+  ): boolean {
+    if (!left && !right) {
+      return true;
+    }
+
+    if (!left || !right) {
+      return false;
+    }
+
+    return left.key === right.key;
+  }
+
   private ensureTrackedControl(): void {
-    const trackedControl = this.familyFormGroup.get('trackedIds');
+    const trackedControl = this.familyFormGroup.get('trackedDevices');
     if (trackedControl instanceof UntypedFormControl) {
-      this.trackedIdsControl = trackedControl;
+      this.trackedDevicesControl = trackedControl;
+      this.trackedDevicesControl.setValue(this.normalizeTrackedDeviceArray(this.trackedDevicesControl.value), { emitEvent: false });
       return;
     }
 
-    this.trackedIdsControl = new UntypedFormControl([]);
-    this.familyFormGroup.addControl('trackedIds', this.trackedIdsControl);
+    this.trackedDevicesControl = new UntypedFormControl([]);
+    this.familyFormGroup.addControl('trackedDevices', this.trackedDevicesControl);
+    this.trackedDevicesControl.setValue(this.normalizeTrackedDeviceArray(this.trackedDevicesControl.value), { emitEvent: false });
   }
 
   private ensureGroupsArray(): void {
     const groupsControl = this.familyFormGroup.get('groups') ?? this.familyFormGroup.get('banks');
+    if (!groupsControl) {
+      return;
+    }
     if (groupsControl instanceof FormArray || groupsControl instanceof UntypedFormArray) {
       this.groupsFormArray = groupsControl as UntypedFormArray;
       if (!this.familyFormGroup.get('groups')) {
@@ -156,6 +191,26 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
     this.discovery.changes(this.discoveryToken)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateDiscoveredIds());
+
+    if (this.isSourceAwareFamily()) {
+      this.data.observePathUpdates()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(event => {
+          if (event.kind !== 'data' || !this.matchesDiscoveryPath(event.fullPath)) {
+            return;
+          }
+
+          this.updateDiscoveredIds();
+        });
+    }
+  }
+
+  private matchesDiscoveryPath(path: string | null | undefined): boolean {
+    if (!path) {
+      return false;
+    }
+
+    return this.resolveCriteria().idRegex.test(path);
   }
 
   private updateDiscoveredIds(): void {
@@ -169,14 +224,101 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
       ...this.data.getCachedPaths(true)
     ]);
 
-    const ids = Array.from(paths)
-      .map(path => {
-        const match = idRegex.exec(path);
-        return match ? match[1] : null;
-      })
-      .filter((id): id is string => !!id);
+    const discoveredIds = new Set<string>();
+    const sourcesById = new Map<string, Set<string>>();
 
-    this.discoveredIds.set([...new Set(ids)].sort((left, right) => left.localeCompare(right)));
+    Array.from(paths).forEach(path => {
+      const match = idRegex.exec(path);
+      const id = match ? match[1] : null;
+      if (!id) {
+        return;
+      }
+
+      discoveredIds.add(id);
+
+      if (!sourcesById.has(id)) {
+        sourcesById.set(id, new Set<string>());
+      }
+
+      const pathObject = this.data.getPathObject(path);
+      const sourceKeys = Object.keys(pathObject?.sources ?? {});
+      const discoveredSources = sourcesById.get(id);
+      if (!discoveredSources) {
+        return;
+      }
+
+      sourceKeys.forEach(source => {
+        const trimmedSource = source.trim();
+        if (!trimmedSource) {
+          return;
+        }
+
+        discoveredSources.add(trimmedSource);
+      });
+    });
+
+    const sortedIds = [...discoveredIds].sort((left, right) => left.localeCompare(right));
+    this.discoveredIds.set(sortedIds);
+
+    if (this.isSourceAwareFamily()) {
+      const discoveredDevices = new Map<string, ElectricalTrackedDevice>();
+      sortedIds.forEach(id => {
+        const sources = sourcesById.get(id);
+        const normalizedSources = sources && sources.size > 0
+          ? [...sources].sort((left, right) => left.localeCompare(right))
+          : ['default'];
+
+        normalizedSources.forEach(source => {
+          const key = `${id}||${source}`;
+          discoveredDevices.set(key, { id, source, key });
+        });
+      });
+
+      this.discoveredTrackedDevices.set([...discoveredDevices.values()].sort((left, right) => left.key.localeCompare(right.key)));
+      return;
+    }
+
+    this.discoveredTrackedDevices.set(sortedIds
+      .map(id => ({ id, source: 'default', key: `${id}||default` }))
+      .sort((left, right) => left.key.localeCompare(right.key)));
+  }
+
+  private normalizeTrackedDeviceArray(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (typeof item === 'string') {
+        const id = item.trim();
+        if (!id) {
+          return;
+        }
+        const key = `${id}||default`;
+        devices.set(key, { id, source: 'default', key });
+        return;
+      }
+
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+      const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+      if (!id || !source) {
+        return;
+      }
+
+      const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+        ? candidate.key.trim()
+        : `${id}||${source}`;
+
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
   }
 
   private resolveCriteria(): { patterns: string[]; pathPrefixes: string[]; idRegex: RegExp } {

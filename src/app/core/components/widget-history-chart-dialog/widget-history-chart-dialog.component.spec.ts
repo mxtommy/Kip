@@ -21,6 +21,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
   let historyMapperMock: {
     mapValuesToChartDatapoints: Mock;
   };
+  let convertToUnitMock: Mock;
 
   const theme = {
     green: '#11aa44',
@@ -86,6 +87,8 @@ describe('WidgetHistoryChartDialogComponent', () => {
       })
     };
 
+    convertToUnitMock = vi.fn().mockImplementation((_unit: string, value: number) => value);
+
     await TestBed.configureTestingModule({
       imports: [WidgetHistoryChartDialogComponent],
       providers: [
@@ -108,7 +111,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
         {
           provide: UnitsService,
           useValue: {
-            convertToUnit: (_unit: string, value: number) => value
+            convertToUnit: convertToUnitMock
           }
         }
       ]
@@ -336,6 +339,50 @@ describe('WidgetHistoryChartDialogComponent', () => {
     expect(currentDataset?.borderColor).toBe(theme.green);
   });
 
+  it('does not apply convertUnitTo override for dual-axis series when path config is provided', async () => {
+    const panelPowerSeries: IKipSeriesDefinition = {
+      seriesId: 'widget-solar-1:solar:charger-1:panelPower:default',
+      datasetUuid: 'widget-solar-1:solar:charger-1:panelPower:default',
+      ownerWidgetUuid: 'widget-solar-1',
+      ownerWidgetSelector: 'widget-solar-charger',
+      path: 'self.electrical.solar.charger-1.panelPower',
+      enabled: true
+    };
+
+    (component as unknown as {
+      data: {
+        title: string;
+        widget: IWidget;
+        seriesDefinitions: IKipSeriesDefinition[];
+      };
+    }).data = {
+      title: 'Solar History',
+      widget: {
+        uuid: 'widget-solar-1',
+        type: 'widget-solar-charger',
+        config: {
+          displayName: 'Solar Charger',
+          convertUnitTo: 'kW'
+        }
+      } as IWidget,
+      seriesDefinitions: [panelPowerSeries]
+    };
+
+    const dataset = await (component as unknown as {
+      buildDatasetForSeries: (series: IKipSeriesDefinition, index: number) => Promise<{
+        data: {
+          x: number;
+          y: number;
+        }[];
+        yAxisID: string;
+      } | null>;
+    }).buildDatasetForSeries(panelPowerSeries, 0);
+
+    expect(convertToUnitMock).not.toHaveBeenCalled();
+    expect(dataset?.yAxisID).toBe('yPower');
+    expect(dataset?.data[0]?.y).toBeCloseTo(0.0145);
+  });
+
   it('builds dual y-axes for solar charts and colors axis titles by metric', () => {
     (component as unknown as {
       data: {
@@ -496,5 +543,226 @@ describe('WidgetHistoryChartDialogComponent', () => {
     expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
       paths: 'electrical.batteries.bank.3.current:avg'
     }));
+  });
+
+  it('expands charger wildcard template paths using contract metric suffixes', async () => {
+    (component as unknown as {
+      data: {
+        title: string;
+        widget: IWidget;
+        seriesDefinitions: IKipSeriesDefinition[];
+      };
+    }).data = {
+      title: 'Charger History',
+      widget: {
+        uuid: 'widget-charger-1',
+        type: 'widget-charger',
+        config: {
+          displayName: 'Charger'
+        }
+      } as IWidget,
+      seriesDefinitions: [
+        {
+          seriesId: 'widget-charger-1:charger-template',
+          datasetUuid: 'widget-charger-1:charger-template',
+          ownerWidgetUuid: 'widget-charger-1',
+          ownerWidgetSelector: 'widget-charger',
+          path: 'self.electrical.chargers.*',
+          expansionMode: 'charger-tree',
+          familyKey: 'chargers',
+          allowedIds: ['main'],
+          enabled: true
+        }
+      ]
+    };
+
+    historyApiClientMock.getPaths.mockResolvedValue([
+      'electrical.chargers.main.voltage',
+      'electrical.chargers.main.current',
+      'electrical.chargers.main.temperature',
+      'electrical.chargers.aux.voltage',
+    ]);
+
+    await component.loadHistoryDatasets();
+
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.chargers.main.voltage:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.chargers.main.current:avg'
+    }));
+    expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.chargers.main.temperature:avg'
+    }));
+    expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.chargers.aux.voltage:avg'
+    }));
+  });
+
+  it('expands inverter and alternator wildcard template paths using voltage/current metric suffixes', async () => {
+    (component as unknown as {
+      data: {
+        title: string;
+        widget: IWidget;
+        seriesDefinitions: IKipSeriesDefinition[];
+      };
+    }).data = {
+      title: 'Source-Aware History',
+      widget: {
+        uuid: 'widget-inverter-1',
+        type: 'widget-inverter',
+        config: {
+          displayName: 'Inverter'
+        }
+      } as IWidget,
+      seriesDefinitions: [
+        {
+          seriesId: 'widget-inverter-1:inverter-template',
+          datasetUuid: 'widget-inverter-1:inverter-template',
+          ownerWidgetUuid: 'widget-inverter-1',
+          ownerWidgetSelector: 'widget-inverter',
+          path: 'self.electrical.inverters.*',
+          expansionMode: 'inverter-tree',
+          familyKey: 'inverters',
+          allowedIds: ['inv-1'],
+          enabled: true
+        },
+        {
+          seriesId: 'widget-alternator-1:alternator-template',
+          datasetUuid: 'widget-alternator-1:alternator-template',
+          ownerWidgetUuid: 'widget-alternator-1',
+          ownerWidgetSelector: 'widget-alternator',
+          path: 'self.electrical.alternators.*',
+          expansionMode: 'alternator-tree',
+          familyKey: 'alternators',
+          allowedIds: ['alt-1'],
+          enabled: true
+        }
+      ]
+    };
+
+    historyApiClientMock.getPaths.mockResolvedValue([
+      'electrical.inverters.inv-1.voltage',
+      'electrical.inverters.inv-1.current',
+      'electrical.inverters.inv-1.frequency',
+      'electrical.alternators.alt-1.voltage',
+      'electrical.alternators.alt-1.current',
+      'electrical.alternators.alt-1.frequency'
+    ]);
+
+    await component.loadHistoryDatasets();
+
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.inverters.inv-1.voltage:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.inverters.inv-1.current:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.alternators.alt-1.voltage:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.alternators.alt-1.current:avg'
+    }));
+    expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.inverters.inv-1.frequency:avg'
+    }));
+    expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.alternators.alt-1.frequency:avg'
+    }));
+  });
+
+  it('expands AC wildcard template paths including line voltage/current/frequency metrics', async () => {
+    (component as unknown as {
+      data: {
+        title: string;
+        widget: IWidget;
+        seriesDefinitions: IKipSeriesDefinition[];
+      };
+    }).data = {
+      title: 'AC History',
+      widget: {
+        uuid: 'widget-ac-1',
+        type: 'widget-ac',
+        config: {
+          displayName: 'AC'
+        }
+      } as IWidget,
+      seriesDefinitions: [
+        {
+          seriesId: 'widget-ac-1:ac-template',
+          datasetUuid: 'widget-ac-1:ac-template',
+          ownerWidgetUuid: 'widget-ac-1',
+          ownerWidgetSelector: 'widget-ac',
+          path: 'self.electrical.ac.*',
+          expansionMode: 'ac-tree',
+          familyKey: 'ac',
+          allowedIds: ['shore'],
+          enabled: true
+        }
+      ]
+    };
+
+    historyApiClientMock.getPaths.mockResolvedValue([
+      'electrical.ac.shore.line1.voltage',
+      'electrical.ac.shore.line1.current',
+      'electrical.ac.shore.line1.frequency',
+      'electrical.ac.shore.line2.voltage',
+      'electrical.ac.shore.line2.current',
+      'electrical.ac.shore.line2.frequency',
+      'electrical.ac.generator.line1.voltage'
+    ]);
+
+    await component.loadHistoryDatasets();
+
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.ac.shore.line1.voltage:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.ac.shore.line1.current:avg'
+    }));
+    expect(historyApiClientMock.getValues).toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.ac.shore.line1.frequency:avg'
+    }));
+    expect(historyApiClientMock.getValues).not.toHaveBeenCalledWith(expect.objectContaining({
+      paths: 'electrical.ac.generator.line1.voltage:avg'
+    }));
+  });
+
+  it('builds AC scales with frequency on the left axis', () => {
+    (component as unknown as {
+      data: {
+        widget: IWidget;
+      };
+      pendingDatasets: {
+        yAxisID?: string;
+      }[];
+      buildYScales: (unitLabel: string) => Record<string, unknown>;
+    }).data = {
+      widget: {
+        uuid: 'widget-ac-1',
+        type: 'widget-ac',
+        config: {
+          displayName: 'AC'
+        }
+      } as IWidget
+    };
+
+    (component as unknown as {
+      pendingDatasets: {
+        yAxisID?: string;
+      }[];
+    }).pendingDatasets = [{ yAxisID: 'yVoltage' }, { yAxisID: 'yCurrent' }, { yAxisID: 'yFrequency' }];
+
+    const scales = (component as unknown as {
+      buildYScales: (unitLabel: string) => Record<string, unknown>;
+    }).buildYScales('');
+
+    expect(scales['yVoltage']).toBeDefined();
+    expect(scales['yCurrent']).toBeDefined();
+    expect(scales['yFrequency']).toBeDefined();
+    expect((scales['yVoltage'] as { position?: string }).position).toBe('left');
+    expect((scales['yCurrent'] as { position?: string }).position).toBe('right');
+    expect((scales['yFrequency'] as { position?: string }).position).toBe('left');
   });
 });

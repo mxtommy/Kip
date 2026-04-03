@@ -2,9 +2,10 @@
   <h3>Tracked {{ setupLabel() }}</h3>
   <mat-form-field class="span-2">
     <mat-label>{{ setupLabel() }} Instances</mat-label>
-    <mat-select [formControl]="trackedIdsControl" multiple>
-      @for (id of discoveredIds(); track id) {
-        <mat-option [value]="id">{{ id }}</mat-option>
+    <mat-select [formControl]="trackedDevicesControl" [compareWith]="compareTrackedDevice" multiple>
+      @for (device of discoveredTrackedDevices(); track device.key) {
+      <mat-option [value]="device">{{ isSourceAwareFamily() ? device.id + ' (' + device.source + ')' : device.id
+        }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -12,21 +13,22 @@
     Leave empty to display all discovered {{ setupLabel().toLowerCase() }}.
   </div>
 
-  <mat-divider  class="span-2" />
+  @if (supportsGroups()) {
+  <mat-divider class="span-2" />
 
-  <div class="groups-header span-2">
-    <h3>{{ setupLabel() }} Groups</h3>
-    <button mat-stroked-button type="button" (click)="addGroup()">
-      <mat-icon>add</mat-icon>
-      Add group
-    </button>
-  </div>
+    <div class="groups-header span-2">
+      <h3>{{ setupLabel() }} Groups</h3>
+      <button mat-stroked-button type="button" (click)="addGroup()">
+        <mat-icon>add</mat-icon>
+        Add group
+      </button>
+    </div>
 
-  @if (!hasGroups()) {
+    @if (!hasGroups()) {
     <div class="hint span-2">No groups configured.</div>
-  }
+    }
 
-  @for (group of groupsFormArray.controls; track $index) {
+    @for (group of groupsFormArray!.controls; track $index) {
     <div class="group-card span-2" [formGroup]="$any(group)">
       <div class="group-grid">
         <mat-form-field>
@@ -34,33 +36,34 @@
           <input matInput formControlName="id" />
         </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" />
-        </mat-form-field>
+          <mat-form-field>
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>Connection</mat-label>
-          <mat-select formControlName="connectionMode">
-            @for (mode of connectionModes; track mode) {
+          <mat-form-field>
+            <mat-label>Connection</mat-label>
+            <mat-select formControlName="connectionMode">
+              @for (mode of connectionModes; track mode) {
               <mat-option [value]="mode">{{ mode }}</mat-option>
+              }
+              </mat-select>
+              </mat-form-field>
+
+          <button mat-icon-button type="button" color="warn" aria-label="Remove group" (click)="removeGroup($index)">
+            <mat-icon>delete</mat-icon>
+          </button>
+          </div>
+
+        <mat-form-field class="span-2">
+          <mat-label>Members</mat-label>
+          <mat-select formControlName="memberIds" multiple>
+            @for (option of memberOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
             }
-          </mat-select>
-        </mat-form-field>
-
-        <button mat-icon-button type="button" color="warn" aria-label="Remove group" (click)="removeGroup($index)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-
-      <mat-form-field class="span-2">
-        <mat-label>Members</mat-label>
-        <mat-select formControlName="memberIds" multiple>
-          @for (id of discoveredIds(); track id) {
-            <mat-option [value]="id">{{ id }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
+            </mat-select>
+            </mat-form-field>
+            </div>
+    }
   }
 </div>

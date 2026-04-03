@@ -37,6 +37,8 @@ export interface SolarChargerSnapshot extends IElectricalTopologySnapshotCore {
 
 export interface SolarChargerDisplayModel {
   id: string;
+  source?: string | null;
+  deviceKey?: string;
   titleText: string;
   panelPowerText: string;
   panelPowerUnitText: string;

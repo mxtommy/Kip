@@ -229,6 +229,26 @@
                   "type": "string"
                 },
                 "description": "Concrete series do not use template filters and should leave this null."
+              },
+              "trackedDevices": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "source"
+                  ]
+                },
+                "description": "Concrete series do not use tracked device template filters and should leave this null."
               }
             }
           }
@@ -282,6 +302,26 @@
                   "type": "string"
                 },
                 "description": "Template device IDs to include. Null or empty includes all discovered devices."
+              },
+              "trackedDevices": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "source"
+                  ]
+                },
+                "description": "Explicit tracked device id/source pairs to expand. When provided, template expansion skips self-tree discovery and emits one concrete series per pair and metric."
               }
             },
             "required": [

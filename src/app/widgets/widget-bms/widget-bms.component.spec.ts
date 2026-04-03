@@ -14,19 +14,25 @@ describe('WidgetBmsComponent', () => {
     let component: WidgetBmsComponent;
     let liveSubject: Subject<IPathUpdateWithPath>;
 
+    const runtimeOptions = {
+        color: 'contrast',
+        ignoreZones: false,
+        bms: {
+            trackedDevices: [] as { id: string; source: string; key: string }[],
+            banks: [] as unknown[],
+            cardMode: {
+                displayMode: 'full' as 'full' | 'compact',
+                metrics: [] as string[]
+            }
+        }
+    };
+
     const dataServiceMock = {
         subscribePathTreeWithInitial: vi.fn()
     };
 
     const runtimeMock = {
-        options: () => ({
-            color: 'contrast',
-            ignoreZones: false,
-            bms: {
-                trackedIds: [],
-                banks: []
-            }
-        })
+        options: () => runtimeOptions
     };
 
     const unitsMock = {
@@ -61,6 +67,12 @@ describe('WidgetBmsComponent', () => {
 
     beforeEach(async () => {
         liveSubject = new Subject<IPathUpdateWithPath>();
+        runtimeOptions.color = 'contrast';
+        runtimeOptions.ignoreZones = false;
+        runtimeOptions.bms.trackedDevices = [];
+        runtimeOptions.bms.banks = [];
+        runtimeOptions.bms.cardMode.displayMode = 'full';
+        runtimeOptions.bms.cardMode.metrics = [];
 
         dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
             initial: [
@@ -117,5 +129,98 @@ describe('WidgetBmsComponent', () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    it('uses host renderMode input over widget card mode', () => {
+        runtimeOptions.bms.cardMode.displayMode = 'full';
+        runtimeOptions.bms.cardMode.metrics = ['voltage'];
+
+        fixture.detectChanges();
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compact = (component as unknown as { isCompactCardMode: () => boolean }).isCompactCardMode();
+        expect(compact).toBe(true);
+    });
+
+    it('uses compact layout for unassigned batteries when compact mode is active', () => {
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            bankSummaries: () => unknown[];
+            visibleBatteries: () => unknown[];
+            bankDisplayModels: () => Record<string, unknown>;
+            batteryDisplayModels: () => Record<string, unknown>;
+            buildRenderLayout: (banks: unknown[], batteries: unknown[], bankDisplayModels: Record<string, unknown>, batteryDisplayModels: Record<string, unknown>, compactMode: boolean) => {
+                unassignedBatteries: { compact: boolean; scale: number }[];
+                contentHeight: number;
+            };
+        };
+
+        const fullLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            false
+        );
+
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compactLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            true
+        );
+
+        expect(compactLayout.unassignedBatteries).toHaveLength(2);
+        expect(compactLayout.unassignedBatteries.every(item => item.compact)).toBe(true);
+        expect(compactLayout.unassignedBatteries.every(item => item.scale < 1)).toBe(true);
+        expect(compactLayout.contentHeight).toBeLessThan(fullLayout.contentHeight);
+    });
+
+    it('reduces single-row bank height in compact mode', () => {
+        runtimeOptions.bms.banks = [{
+            id: 'bank-1',
+            name: 'House Bank',
+            batteryIds: ['bat1'],
+            connectionMode: 'parallel'
+        }];
+
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            bankSummaries: () => unknown[];
+            visibleBatteries: () => unknown[];
+            bankDisplayModels: () => Record<string, unknown>;
+            batteryDisplayModels: () => Record<string, unknown>;
+            buildRenderLayout: (banks: unknown[], batteries: unknown[], bankDisplayModels: Record<string, unknown>, batteryDisplayModels: Record<string, unknown>, compactMode: boolean) => {
+                banks: { height: number }[];
+            };
+        };
+
+        const fullLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            false
+        );
+
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compactLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            true
+        );
+
+        expect(compactLayout.banks[0]?.height ?? 0).toBeLessThanOrEqual(fullLayout.banks[0]?.height ?? 0);
     });
 });

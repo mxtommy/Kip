@@ -5,10 +5,11 @@ import { DataService, IPathUpdateWithPath } from '../../core/services/data.servi
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
-import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalTrackedDevice, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { UnitsService } from '../../core/services/units.service';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
+import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import {
   ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT,
   ELECTRICAL_DIRECT_CARD_FULL_LAYOUT,
@@ -17,7 +18,7 @@ import {
   ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH,
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
-import type { ChargerDisplayModel, ChargerSnapshot, ChargerWidgetConfig, ElectricalGroupConfig } from './widget-charger.types';
+import type { ChargerDisplayModel, ChargerSnapshot, ChargerWidgetConfig, ElectricalCardModeConfig } from './widget-charger.types';
 
 interface ChargerRenderSnapshot {
   chargers: ChargerSnapshot[];
@@ -34,7 +35,6 @@ interface ChargerRenderSnapshot {
 export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly CHARGER_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-charger');
   private static readonly ROOT_PATTERN = `${WidgetChargerComponent.CHARGER_DESCRIPTOR?.selfRootPath ?? 'self.electrical.chargers'}.*`;
-  private static readonly ROOT_PATTERN_LEGACY = 'self.electrical.charger.*';
   private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly CARD_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly COMPACT_CARD_HEIGHT = ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT;
@@ -45,8 +45,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     color: 'contrast',
     ignoreZones: false,
     charger: {
-      trackedIds: [],
-      groups: [],
+      trackedDevices: [],
       optionsById: {}
     }
   };
@@ -54,6 +53,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
   public theme = input.required<ITheme | null>();
+  public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
@@ -71,29 +71,50 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private pendingRenderSnapshot: ChargerRenderSnapshot | null = null;
 
   protected readonly discoveredChargerIds = signal<string[]>([]);
-  protected readonly trackedChargerIds = signal<string[]>([]);
-  protected readonly groups = signal<ChargerWidgetConfig['groups']>([]);
+  protected readonly trackedDevices = signal<ElectricalTrackedDevice[]>([]);
   protected readonly optionsById = signal<ChargerWidgetConfig['optionsById']>({});
-  protected readonly cardMode = signal<{
-    enabled: boolean;
-    displayMode: 'full' | 'card';
-    metrics: string[];
-  }>({ enabled: false, displayMode: 'full', metrics: ['voltage', 'current', 'power', 'temperature'] });
-  protected readonly chargersById = signal<Record<string, ChargerSnapshot>>({});
+  protected readonly cardMode = signal<ElectricalCardModeConfig>({ displayMode: 'full', metrics: ['voltage', 'current', 'power', 'temperature'] });
+  protected readonly chargersByKey = signal<Record<string, ChargerSnapshot>>({});
 
-  protected readonly visibleChargerIds = computed(() => {
-    const tracked = this.trackedChargerIds();
-    return tracked.length ? tracked : this.discoveredChargerIds();
+  protected readonly visibleChargerKeys = computed(() => {
+    const tracked = this.trackedDevices();
+    if (tracked.length) return tracked.map(d => d.key);
+    const map = this.chargersByKey();
+    const ids = new Set(this.discoveredChargerIds());
+    const keys = Object.keys(map)
+      .filter(key => {
+        const snapshot = map[key];
+        return !!snapshot && ids.has(snapshot.id);
+      })
+      .sort((a, b) => a.localeCompare(b));
+
+    // If a source-qualified key exists for an id, suppress the legacy plain-id key.
+    const hasQualifiedKeyById = new Map<string, boolean>();
+    keys.forEach(key => {
+      const snapshot = map[key];
+      if (!snapshot) return;
+      if (key !== snapshot.id) {
+        hasQualifiedKeyById.set(snapshot.id, true);
+      }
+    });
+
+    return keys.filter(key => {
+      const snapshot = map[key];
+      if (!snapshot) return false;
+      if (key !== snapshot.id) return true;
+      return !hasQualifiedKeyById.get(snapshot.id);
+    });
   });
 
   protected readonly visibleChargers = computed<ChargerSnapshot[]>(() => {
-    const ids = this.visibleChargerIds();
-    const map = this.chargersById();
-    return ids.map(id => map[id]).filter((item): item is ChargerSnapshot => !!item);
+    const keys = this.visibleChargerKeys();
+    const map = this.chargersByKey();
+    return keys.map(key => map[key]).filter((item): item is ChargerSnapshot => !!item);
   });
 
   protected readonly hasChargers = computed(() => this.visibleChargers().length > 0);
-  protected readonly isCompactCardMode = computed(() => this.cardMode().enabled && this.cardMode().displayMode === 'card');
+  protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
+  protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color);
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
 
@@ -109,24 +130,40 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     const widgetColors = this.widgetColors();
     const ignoreZones = this.ignoreZones();
 
+    const idCount = new Map<string, number>();
+    chargers.forEach(charger => idCount.set(charger.id, (idCount.get(charger.id) ?? 0) + 1));
+    const duplicateIds = new Set<string>(
+      [...idCount.entries()].filter(([, count]) => count > 1).map(([id]) => id)
+    );
+
     const models: Record<string, ChargerDisplayModel> = {};
     for (const charger of chargers) {
+      const modelKey = charger.deviceKey ?? charger.id;
+      const showSource = !!charger.source && duplicateIds.has(charger.id);
       const aggregateState = this.resolveMostSevereState(
         charger.powerState ?? null,
         charger.currentState ?? null,
         charger.voltageState ?? null,
         charger.temperatureState ?? null,
-        charger.chargingModeState ?? null
+        charger.chargingModeState ?? null,
+        charger.modeState ?? null,
+        charger.stateState ?? null,
+        charger.errorState ?? null,
+        charger.offReasonState ?? null
       );
       const primaryState = this.resolveMostSevereState(charger.voltageState ?? null, charger.currentState ?? null);
       const secondaryState = this.resolveMostSevereState(charger.powerState ?? null, charger.temperatureState ?? null);
       const [metricsLineOne, metricsLineTwo] = this.buildMetricRows(charger);
 
-      models[charger.id] = {
+      models[modelKey] = {
         id: charger.id,
+        source: charger.source ?? null,
+        deviceKey: charger.deviceKey,
         titleText: this.displayName(charger),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(charger),
-        busText: this.isCompactCardMode() ? '' : (charger.associatedBus || charger.location || '-'),
+        busText: this.isCompactCardMode() ? '' : (
+          showSource ? (charger.source ?? '-') : (charger.associatedBus || charger.location || '-')
+        ),
         metricsLineOne,
         metricsLineTwo,
         stateBarColor: resolveZoneAwareColor(
@@ -142,7 +179,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
           ignoreZones
         ),
         metaTextColor: resolveZoneAwareColor(
-          charger.chargingModeState ?? null,
+          this.resolveMostSevereState(charger.chargingModeState ?? null, charger.modeState ?? null),
           'var(--kip-contrast-dim-color)',
           theme,
           ignoreZones
@@ -184,8 +221,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     });
 
     const chargerTrees = [
-      this.data.subscribePathTreeWithInitial(WidgetChargerComponent.ROOT_PATTERN),
-      this.data.subscribePathTreeWithInitial(WidgetChargerComponent.ROOT_PATTERN_LEGACY)
+      this.data.subscribePathTreeWithInitial(WidgetChargerComponent.ROOT_PATTERN)
     ];
 
     let hasInitialUpdates = false;
@@ -246,8 +282,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyConfig(cfg: IWidgetSvcConfig): void {
     const chargerCfg = this.resolveChargerConfig(cfg);
-    this.trackedChargerIds.set(chargerCfg.trackedIds);
-    this.groups.set(chargerCfg.groups);
+    this.trackedDevices.set(chargerCfg.trackedDevices);
+    this.reprojectSnapshotsToDeviceKeys(chargerCfg.trackedDevices);
     this.optionsById.set(chargerCfg.optionsById);
     this.cardMode.set(this.normalizeCardMode(chargerCfg.cardMode));
   }
@@ -255,19 +291,92 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private resolveChargerConfig(cfg: IWidgetSvcConfig): ChargerWidgetConfig {
     const charger = cfg.charger;
     return {
-      trackedIds: this.normalizeStringList(charger?.trackedIds),
-      groups: this.normalizeGroups(charger?.groups),
+      trackedDevices: this.normalizeTrackedDevices(charger?.trackedDevices),
       optionsById: this.normalizeOptionsById(charger?.optionsById),
       cardMode: this.normalizeCardMode(charger?.cardMode)
     };
   }
 
-  private normalizeCardMode(value: unknown): { enabled: boolean; displayMode: 'full' | 'card'; metrics: string[] } {
-    const candidate = (value && typeof value === 'object') ? value as { enabled?: unknown; displayMode?: unknown; metrics?: unknown } : null;
+  private normalizeTrackedDevices(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = this.normalizeOptionalString(candidate.id);
+      const source = this.normalizeOptionalString(candidate.source);
+      if (!id || !source) {
+        return;
+      }
+
+      const key = this.normalizeOptionalString(candidate.key) ?? `${id}||${source}`;
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
+  }
+
+  private buildIdToDeviceKeysMap(): Map<string, string[]> {
+    const map = new Map<string, string[]>();
+    this.trackedDevices().forEach(device => {
+      const existing = map.get(device.id) ?? [];
+      existing.push(device.key);
+      map.set(device.id, existing);
+    });
+    return map;
+  }
+
+  private reprojectSnapshotsToDeviceKeys(devices: ElectricalTrackedDevice[]): void {
+    if (!devices.length) return;
+
+    const idToKeys = new Map<string, string[]>();
+    const devicesByKey = new Map<string, ElectricalTrackedDevice>();
+    devices.forEach(d => {
+      const existing = idToKeys.get(d.id) ?? [];
+      existing.push(d.key);
+      idToKeys.set(d.id, existing);
+      devicesByKey.set(d.key, d);
+    });
+
+    this.chargersByKey.update(current => {
+      let next = current;
+      let changed = false;
+
+      idToKeys.forEach((keys, id) => {
+        const sourceSnapshot = current[id];
+        if (!sourceSnapshot) return;
+
+        for (const deviceKey of keys) {
+          if (current[deviceKey]) continue;
+          const trackedDevice = devicesByKey.get(deviceKey);
+          if (!changed) { next = { ...current }; changed = true; }
+          next[deviceKey] = { ...sourceSnapshot, source: trackedDevice?.source ?? null, deviceKey };
+        }
+
+        if (next[id] && (next[id].deviceKey === undefined || next[id].deviceKey === id)) {
+          if (!changed) {
+            next = { ...current };
+            changed = true;
+          }
+          delete next[id];
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }
+
+  private normalizeCardMode(value: unknown): ElectricalCardModeConfig {
+    const candidate = (value && typeof value === 'object') ? value as { displayMode?: unknown; metrics?: unknown } : null;
     const metrics = this.normalizeStringList(candidate?.metrics);
     return {
-      enabled: candidate?.enabled === true,
-      displayMode: candidate?.displayMode === 'card' ? 'card' : 'full',
+      displayMode: candidate?.displayMode === 'compact' ? 'compact' : 'full',
       metrics: metrics.length ? metrics : ['voltage', 'current', 'power', 'temperature']
     };
   }
@@ -290,31 +399,6 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     });
 
     return [...ids].sort((left, right) => left.localeCompare(right));
-  }
-
-  private normalizeGroups(value: unknown): ElectricalGroupConfig[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .map(group => {
-        const id = this.normalizeOptionalString((group as { id?: unknown })?.id) ?? '';
-        const name = this.normalizeOptionalString((group as { name?: unknown })?.name) ?? id;
-        const memberIds = this.normalizeStringList((group as { memberIds?: unknown })?.memberIds);
-
-        if (!id) {
-          return null;
-        }
-
-        return {
-          id,
-          name,
-          memberIds,
-          connectionMode: (group as { connectionMode?: unknown })?.connectionMode === 'series' ? 'series' : 'parallel'
-        } as ElectricalGroupConfig;
-      })
-      .filter((item): item is ElectricalGroupConfig => !!item);
   }
 
   private normalizeOptionsById(value: unknown): ChargerWidgetConfig['optionsById'] {
@@ -401,48 +485,63 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     const uniqueIds = new Set(updates.map(update => update.id));
     uniqueIds.forEach(id => this.trackDiscoveredCharger(id));
 
-    this.chargersById.update(current => {
+    const idToKeys = this.buildIdToDeviceKeysMap();
+    const trackedDevicesByKey = new Map<string, ElectricalTrackedDevice>();
+    this.trackedDevices().forEach(device => trackedDevicesByKey.set(device.key, device));
+
+    this.chargersByKey.update(current => {
       let nextState = current;
       let changed = false;
 
       for (const update of updates) {
-        const existing = nextState[update.id] ?? { id: update.id };
-        const next = { ...existing } as ChargerSnapshot;
-        const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
+        const affectedKeys = idToKeys.get(update.id);
+        const keysToUpdate = affectedKeys?.length ? affectedKeys : [update.id];
+        const isTracked = !!affectedKeys?.length;
 
-        if (!fieldChanged && update.key === '__root__' && !nextState[update.id]) {
+        for (const key of keysToUpdate) {
+          const trackedDevice = isTracked ? trackedDevicesByKey.get(key) : null;
+          const existing = nextState[key] ?? {
+            id: update.id,
+            source: trackedDevice?.source ?? null,
+            deviceKey: isTracked ? key : undefined
+          };
+          const next = { ...existing } as ChargerSnapshot;
+          const fieldChanged = this.applyValue(next, update.key, update.value, update.state);
+
+          if (!fieldChanged && update.key === '__root__' && !nextState[key]) {
+            if (!changed) {
+              nextState = { ...nextState };
+              changed = true;
+            }
+
+            nextState[key] = next;
+            continue;
+          }
+
+          if (!fieldChanged) {
+            continue;
+          }
+
+          const derivedPower = next.rawPower != null
+            ? next.rawPower
+            : (next.voltage != null && next.current != null ? next.voltage * next.current : null);
+          if (derivedPower != null) {
+            next.power = Number.isFinite(derivedPower) ? derivedPower : null;
+          } else {
+            next.power = null;
+          }
+
+          if (next.rawPower == null) {
+            next.powerState = this.resolveMostSevereState(next.voltageState ?? null, next.currentState ?? null);
+          }
+
           if (!changed) {
             nextState = { ...nextState };
             changed = true;
           }
 
-          nextState[update.id] = next;
-          continue;
+          nextState[key] = next;
         }
-
-        if (!fieldChanged) {
-          continue;
-        }
-
-        const derivedPower = next.rawPower != null
-          ? next.rawPower
-          : (next.voltage != null && next.current != null ? next.voltage * next.current : null);
-        if (derivedPower != null) {
-          next.power = Number.isFinite(derivedPower) ? derivedPower : null;
-        } else {
-          next.power = null;
-        }
-
-        if (next.rawPower == null) {
-          next.powerState = this.resolveMostSevereState(next.voltageState ?? null, next.currentState ?? null);
-        }
-
-        if (!changed) {
-          nextState = { ...nextState };
-          changed = true;
-        }
-
-        nextState[update.id] = next;
       }
 
       return changed ? nextState : current;
@@ -468,8 +567,30 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
         return this.setValue(snapshot, 'location', this.toStringValue(value));
       case 'associatedBus':
         return this.setValue(snapshot, 'associatedBus', this.toStringValue(value));
+      case 'state':
+        return this.setMetricValue(snapshot, 'state', 'stateState', this.toStringValue(value), state);
+      case 'offReason':
+        return this.setMetricValue(snapshot, 'offReason', 'offReasonState', this.toStringValue(value), state);
+      case 'error':
+        return this.setMetricValue(snapshot, 'error', 'errorState', this.toStringValue(value), state);
+      case 'mode':
+        return this.setMetricValue(snapshot, 'mode', 'modeState', this.toStringValue(value), state);
+      case 'modeState':
+        return this.setMetricValue(snapshot, 'mode', 'modeState', this.toStringValue(value), state);
+      case 'modeNumber':
+        return this.setMetricValue(snapshot, 'modeNumber', 'modeNumberState', this.toNumber(value, ''), state);
       case 'chargingMode':
         return this.setMetricValue(snapshot, 'chargingMode', 'chargingModeState', this.toStringValue(value), state);
+      case 'chargingModeNumber':
+        return this.setMetricValue(snapshot, 'chargingModeNumber', 'chargingModeNumberState', this.toNumber(value, ''), state);
+      case 'output.voltage': {
+        const nextVoltage = this.toNumber(value, 'V');
+        const outputChanged = this.setMetricValue(snapshot, 'outputVoltage', 'outputVoltageState', nextVoltage, state);
+        const voltageChanged = this.setMetricValue(snapshot, 'voltage', 'voltageState', nextVoltage, state);
+        return outputChanged || voltageChanged;
+      }
+      case 'input.voltage':
+        return this.setMetricValue(snapshot, 'inputVoltage', 'inputVoltageState', this.toNumber(value, 'V'), state);
       case 'voltage':
         return this.setMetricValue(snapshot, 'voltage', 'voltageState', this.toNumber(value, 'V'), state);
       case 'current':
@@ -566,6 +687,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     const layout = compact ? ELECTRICAL_DIRECT_CARD_COMPACT_LAYOUT : ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
     const cardHeight = compact ? WidgetChargerComponent.COMPACT_CARD_HEIGHT : WidgetChargerComponent.CARD_HEIGHT;
     const cards = snapshot.chargers.map((charger, index) => ({
+      key: charger.deviceKey ?? charger.id,
       id: charger.id,
       charger,
       y: index * (cardHeight + WidgetChargerComponent.CARD_GAP)
@@ -577,8 +699,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     this.svg.attr('viewBox', `0 0 ${WidgetChargerComponent.VIEWBOX_WIDTH} ${contentHeight}`);
 
     const selection = this.layer
-      .selectAll<SVGGElement, { id: string; charger: ChargerSnapshot; y: number }>('g.charger-card')
-      .data(cards, item => item.id);
+      .selectAll<SVGGElement, { key: string; id: string; charger: ChargerSnapshot; y: number }>('g.charger-card')
+      .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'charger-card');
     enter.append('rect').attr('class', 'charger-card-bg');
@@ -590,7 +712,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'charger-metrics-1');
     enter.append('text').attr('class', 'charger-metrics-2');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { id: string; charger: ChargerSnapshot; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; id: string; charger: ChargerSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('rect.charger-card-bg')
@@ -611,14 +733,14 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
       .attr('ry', layout.stateBarCornerRadius)
       .attr('width', 3)
       .attr('height', cardHeight - 3)
-      .attr('fill', item => snapshot.displayModels[item.id]?.stateBarColor ?? snapshot.widgetColors.dim);
+      .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
     merged.select('text.charger-title')
       .attr('x', layout.titleX)
       .attr('y', layout.titleY)
       .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.titleText ?? this.displayName(item.charger));
+      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.charger));
 
     merged.select('text.charger-id')
       .attr('x', layout.idX)
@@ -633,8 +755,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
       .attr('y', layout.metaY)
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.modeText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.modeText ?? '');
 
     merged.select('text.charger-bus')
       .attr('x', layout.metaRightX)
@@ -642,23 +764,23 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'end')
       .attr('font-size', layout.metaFontSize)
       .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.id]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.id]?.busText ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
+      .text(item => snapshot.displayModels[item.key]?.busText ?? '');
 
     merged.select('text.charger-metrics-1')
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
       .attr('font-size', layout.lineOneFontSize)
-      .attr('fill', item => snapshot.displayModels[item.id]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineOne ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.primaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineOne ?? '');
 
     merged.select('text.charger-metrics-2')
       .attr('x', layout.lineTwoX)
       .attr('y', layout.lineTwoY)
       .attr('font-size', layout.lineTwoFontSize)
       .attr('opacity', 0.85)
-      .attr('fill', item => snapshot.displayModels[item.id]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.id]?.metricsLineTwo ?? '');
+      .attr('fill', item => snapshot.displayModels[item.key]?.secondaryMetricsTextColor ?? 'var(--kip-contrast-color)')
+      .text(item => snapshot.displayModels[item.key]?.metricsLineTwo ?? '');
 
     selection.exit().remove();
   }
@@ -670,6 +792,10 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private resolveModeText(charger: ChargerSnapshot): string {
     if (charger.chargingMode) {
       return `Mode ${charger.chargingMode}`;
+    }
+
+    if (charger.mode) {
+      return `Mode ${charger.mode}`;
     }
 
     const ledModes: { active: boolean | null | undefined; label: string }[] = [
@@ -696,7 +822,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
   private buildMetricRows(charger: ChargerSnapshot): [string, string] {
     const mode = this.cardMode();
-    if (!mode.enabled || mode.displayMode === 'full') {
+    if (this.activeDisplayMode() === 'full') {
       return [
         `V ${this.formatValue(charger.voltage, 'V')}   A ${this.formatValue(charger.current, 'A')}`,
         `P ${this.formatValue(charger.power, 'W')}   T ${this.formatTemperature(charger.temperature)}`

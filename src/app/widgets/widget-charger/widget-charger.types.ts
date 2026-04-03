@@ -7,6 +7,22 @@ export type {
 } from '../../core/interfaces/widgets-interface';
 
 export interface ChargerSnapshot extends IElectricalTopologySnapshotCore {
+  state?: string | null;
+  stateState?: TState | null;
+  offReason?: string | null;
+  offReasonState?: TState | null;
+  error?: string | null;
+  errorState?: TState | null;
+  mode?: string | null;
+  modeState?: TState | null;
+  modeNumber?: number | null;
+  modeNumberState?: TState | null;
+  chargingModeNumber?: number | null;
+  chargingModeNumberState?: TState | null;
+  inputVoltage?: number | null;
+  inputVoltageState?: TState | null;
+  outputVoltage?: number | null;
+  outputVoltageState?: TState | null;
   voltageState?: TState | null;
   currentState?: TState | null;
   rawPower?: number | null;
@@ -35,6 +51,8 @@ export interface ChargerSnapshot extends IElectricalTopologySnapshotCore {
 
 export interface ChargerDisplayModel {
   id: string;
+  source?: string | null;
+  deviceKey?: string;
   titleText: string;
   modeText: string;
   busText: string;

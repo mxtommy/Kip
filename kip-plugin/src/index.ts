@@ -4,7 +4,7 @@ import * as openapi from './openApi.json';
 import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISeriesDefinition, THistoryMethod, isKipConcreteSeriesDefinition, isKipElectricalTemplateSeriesDefinition, isKipSeriesEnabled, isKipTemplateSeriesDefinition } from './history-series.service';
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
-import { TElectricalFamilyKey } from './kip-series-contract';
+import { IElectricalTrackedDeviceRef, TElectricalFamilyKey } from './kip-series-contract';
 
 type TSqliteModule = { DatabaseSync?: unknown; Database?: unknown } | null;
 type TGetSqliteModule = () => Promise<TSqliteModule>;
@@ -262,6 +262,33 @@ const start = (server: ServerAPI): Plugin => {
       .filter(id => id.length > 0);
   }
 
+  function normalizeTrackedDevices(series: ISeriesDefinition): IElectricalTrackedDeviceRef[] {
+    if (!Array.isArray(series.trackedDevices)) {
+      return [];
+    }
+
+    const trackedByKey = new Map<string, IElectricalTrackedDeviceRef>();
+    series.trackedDevices.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const id = typeof item.id === 'string' ? item.id.trim() : '';
+      const normalizedSource = typeof item.source === 'string' ? item.source.trim() : '';
+      const source = normalizedSource.length > 0 ? normalizedSource : 'default';
+      if (!id) {
+        return;
+      }
+
+      trackedByKey.set(`${id}||${source}`, { id, source });
+    });
+
+    return Array.from(trackedByKey.values()).sort((left, right) => {
+      const idCompare = left.id.localeCompare(right.id);
+      return idCompare !== 0 ? idCompare : left.source.localeCompare(right.source);
+    });
+  }
+
   function resolveElectricalIdsFromSelfPath(rootPath: string): string[] {
     const node = server.getSelfPath(rootPath) as unknown;
 
@@ -337,41 +364,52 @@ const start = (server: ServerAPI): Plugin => {
         return;
       }
 
-      const discoveredIds = ensureDiscoveredIds(familyKey);
-      if (discoveredIds.length === 0) {
-        getExistingConcreteElectricalSeries(series, familyKey, existingSeries).forEach(existing => {
-          expandedById.set(existing.seriesId, existing);
-        });
-        return;
-      }
-
-      const allowedIds = normalizeAllowedIds(series);
-      const allowedSet = allowedIds.length > 0 ? new Set(allowedIds) : null;
-      const filteredIds = discoveredIds.filter(id => !allowedSet || allowedSet.has(id));
-      if (filteredIds.length === 0) {
-        return;
-      }
-
-      const source = series.source ?? 'default';
-      const sourceKey = slugify(source || 'default') || 'default';
       const seriesPrefix = ELECTRICAL_SERIES_PREFIX_BY_FAMILY[familyKey];
       const metricList = ELECTRICAL_METRICS_BY_FAMILY[familyKey];
       const selfRoot = `self.${ELECTRICAL_SELF_ROOT_BY_FAMILY[familyKey]}`;
+      const trackedDevices = normalizeTrackedDevices(series);
 
-      filteredIds.forEach(deviceId => {
+      let concreteDevices: IElectricalTrackedDeviceRef[] = trackedDevices;
+      if (concreteDevices.length === 0) {
+        const discoveredIds = ensureDiscoveredIds(familyKey);
+        if (discoveredIds.length === 0) {
+          getExistingConcreteElectricalSeries(series, familyKey, existingSeries).forEach(existing => {
+            expandedById.set(existing.seriesId, existing);
+          });
+          return;
+        }
+
+        const allowedIds = normalizeAllowedIds(series);
+        const allowedSet = allowedIds.length > 0 ? new Set(allowedIds) : null;
+        const filteredIds = discoveredIds.filter(id => !allowedSet || allowedSet.has(id));
+        if (filteredIds.length === 0) {
+          return;
+        }
+
+        const fallbackSource = series.source ?? 'default';
+        concreteDevices = filteredIds.map(deviceId => ({
+          id: deviceId,
+          source: fallbackSource
+        }));
+      }
+
+      concreteDevices.forEach(device => {
+        const sourceKey = slugify(device.source || 'default') || 'default';
         metricList.forEach(metric => {
-          const path = `${selfRoot}.${deviceId}.${metric}`;
-          const seriesId = `${series.ownerWidgetUuid}:${seriesPrefix}:${deviceId}:${metric}:${sourceKey}`;
+          const path = `${selfRoot}.${device.id}.${metric}`;
+          const seriesId = `${series.ownerWidgetUuid}:${seriesPrefix}:${device.id}:${metric}:${sourceKey}`;
 
           expandedById.set(seriesId, {
             ...series,
             seriesId,
-            datasetUuid: `${series.ownerWidgetUuid}:${seriesPrefix}:${deviceId}:${metric}:${sourceKey}`,
+            datasetUuid: `${series.ownerWidgetUuid}:${seriesPrefix}:${device.id}:${metric}:${sourceKey}`,
             path,
+            source: device.source,
             retentionDurationMs: Number.isFinite(series.retentionDurationMs as number) ? series.retentionDurationMs : 24 * 60 * 60 * 1000,
             expansionMode: null,
             familyKey: null,
-            allowedIds: null
+            allowedIds: null,
+            trackedDevices: null
           });
         });
       });
@@ -431,21 +469,20 @@ const start = (server: ServerAPI): Plugin => {
   }
 
   function getRouteError(error: unknown, fallbackMessage: string): { statusCode: number; message: string } {
-    const message = String((error as Error)?.message || fallbackMessage);
+    const message = (error as Error)?.message?.trim() || fallbackMessage;
     const normalized = message.toLowerCase();
 
     if (
       normalized.includes('invalid ')
       || normalized.includes('missing ')
-      || normalized.includes('body must')
       || normalized.includes('required')
-      || normalized.includes('expected an iso')
     ) {
       return { statusCode: 400, message };
     }
 
     if (
       normalized.includes('sqlite')
+      || normalized.includes('database')
       || normalized.includes('storage unavailable')
       || normalized.includes('not initialized')
       || isSqliteUnavailable()
@@ -1436,6 +1473,10 @@ const start = (server: ServerAPI): Plugin => {
             .flatMap(series => {
               const familyKey = resolveFamilyKeyFromTemplateSeries(series);
               if (!familyKey) {
+                return [];
+              }
+
+              if (normalizeTrackedDevices(series).length > 0) {
                 return [];
               }
 
