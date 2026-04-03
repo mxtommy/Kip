@@ -55,7 +55,6 @@ export interface ChargerDisplayModel {
   deviceKey?: string;
   titleText: string;
   modeText: string;
-  busText: string;
   metricsLineOne: string;
   metricsLineTwo: string;
   stateBarColor: string;

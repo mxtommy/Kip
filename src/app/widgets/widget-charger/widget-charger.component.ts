@@ -162,11 +162,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
         id: charger.id,
         source: charger.source ?? null,
         deviceKey: charger.deviceKey,
-        titleText: this.displayName(charger),
+        titleText: showSource ? `${this.displayName(charger)} [${charger.source}]` : this.displayName(charger),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(charger),
-        busText: this.isCompactCardMode() ? '' : (
-          showSource ? (charger.source ?? '-') : (charger.associatedBus || charger.location || '-')
-        ),
         metricsLineOne,
         metricsLineTwo,
         stateBarColor: resolveZoneAwareColor(
@@ -716,7 +713,6 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'charger-title');
     enter.append('text').attr('class', 'charger-id');
     enter.append('text').attr('class', 'charger-mode');
-    enter.append('text').attr('class', 'charger-bus');
     enter.append('text').attr('class', 'charger-metrics-1');
     enter.append('text').attr('class', 'charger-metrics-2');
 
@@ -765,15 +761,6 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
       .attr('opacity', 0.8)
       .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
       .text(item => snapshot.displayModels[item.key]?.modeText ?? '');
-
-    merged.select('text.charger-bus')
-      .attr('x', layout.metaRightX)
-      .attr('y', layout.metaY)
-      .attr('text-anchor', 'end')
-      .attr('font-size', layout.metaFontSize)
-      .attr('opacity', 0.8)
-      .attr('fill', item => snapshot.displayModels[item.key]?.metaTextColor ?? 'var(--kip-contrast-dim-color)')
-      .text(item => snapshot.displayModels[item.key]?.busText ?? '');
 
     merged.select('text.charger-metrics-1')
       .attr('x', layout.lineOneX)
