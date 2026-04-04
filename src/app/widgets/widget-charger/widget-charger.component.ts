@@ -743,7 +743,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
       .attr('x', layout.titleX)
       .attr('y', layout.titleY)
       .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+      .attr('fill', 'var(--kip-contrast-dim-color)')
       .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.charger));
 
     merged.select('text.charger-id')

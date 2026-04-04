@@ -53,7 +53,8 @@ export interface SolarChargerDisplayModel {
   panelValuesGlowEnabled: boolean;
   gaugeProgress: number;
   gaugeSectionText: string;
-  yieldText: string;
+  yieldTodayText: string;
+  yieldYesterdayText: string;
   chargerMode: string;
   chargerSectionCurrent: string;
   chargerSectionMetadata: string;

@@ -13,7 +13,7 @@ import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electr
 import type { BmsBankDisplayModel, BmsBankSummary, BmsBatteryDisplayModel, BmsBatterySnapshot } from './bms.types';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import type { ITheme } from '../../core/services/app-service';
-import { ELECTRICAL_DIRECT_CARD_HEIGHT } from '../shared/electrical-card-layout.constants';
+import { ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT } from '../shared/electrical-card-layout.constants';
 
 interface BmsRenderBank extends BmsBankSummary {
   displayModel: BmsBankDisplayModel;
@@ -143,8 +143,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   protected readonly activeDisplayMode = computed<ElectricalCardDisplayMode>(() => this.renderMode() ?? this.cardMode().displayMode ?? 'full');
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
 
-  protected readonly colorRole = computed(() => this.runtime.options()?.color);
-  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones);
+  protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
+  protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -749,6 +749,11 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       batteryDisplayModels,
       this.isCompactCardMode()
     );
+
+    const compact = this.isCompactCardMode();
+    // Compact mode is wired, but solar intentionally reuses the full-card geometry until a dedicated layout exists.
+    const layout = compact ? ELECTRICAL_DIRECT_CARD_FULL_LAYOUT : ELECTRICAL_DIRECT_CARD_FULL_LAYOUT;
+
     const viewBoxHeight = Math.max(WidgetBmsComponent.MIN_VIEWBOX_HEIGHT, renderLayout.contentHeight);
     this.svg?.attr('viewBox', `0 0 ${WidgetBmsComponent.VIEWBOX_WIDTH} ${viewBoxHeight}`);
     this.root?.attr('transform', null);
@@ -778,20 +783,19 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('stroke', 'var(--mat-sys-outline-variant)')
       .attr('stroke-width', 0.5);
     bankMerged.select('text.bank-title')
-      .attr('x', 5)
-      .attr('y', 16)
+      .attr('x', layout.titleX)
+      .attr('y', layout.titleY)
       .attr('fill', 'var(--kip-contrast-dim-color)')
-      .attr('font-size', 15.5)
-      .attr('opacity', 0.8)
+      .attr('font-size', layout.titleFontSize)
       .text(item => item.displayModel.titleText);
     bankMerged.select('text.bank-card-current')
-      .attr('x', 10)
-      .attr('y', 37)
+      .attr('x', layout.lineOneX)
+      .attr('y', layout.lineOneY)
       .attr('fill', 'var(--kip-contrast-color)')
-      .attr('font-size', 16)
+      .attr('font-size', layout.lineOneFontSize)
       .text(item => item.displayModel.currentText);
     bankMerged.select('text.bank-card-power')
-      .attr('x', 10)
+      .attr('x', 5)
       .attr('y', 49)
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 10)
@@ -817,8 +821,8 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('y', -2)
       .attr('text-anchor', 'middle')
       .attr('fill', 'var(--kip-contrast-color)')
-      .attr('font-size', 25)
-      .attr('font-weight', 700)
+      .attr('font-size', layout.primaryFontSize)
+      .attr('font-weight', layout.primaryFontWeight)
       .text(item => item.displayModel.socText);
     bankMerged.select('text.bank-remaining')
       .attr('x', 143)
