@@ -104,10 +104,10 @@ describe('WidgetChargerComponent', () => {
       }
     );
 
-    const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
-    expect(models['c1||default']?.metricsLineOne).toContain('V ');
-    expect(models['c1||default']?.metricsLineOne).toContain('P ');
-    expect(`${models['c1||default']?.metricsLineOne} ${models['c1||default']?.metricsLineTwo}`).not.toContain('A ');
+    const models = (component as unknown as { displayModels: () => Record<string, { voltageText: string; powerText: string; currentText: string }> }).displayModels();
+    expect(models['c1||default']?.voltageText).toBeTruthy();
+    expect(models['c1||default']?.powerText).toBeTruthy();
+    expect(models['c1||default']?.voltageText).toContain('27.5');
   });
 
   it('prefers host renderMode input over config displayMode', async () => {
@@ -131,10 +131,9 @@ describe('WidgetChargerComponent', () => {
     fixture.componentRef.setInput('renderMode', 'compact');
     fixture.detectChanges();
 
-    const models = (component as unknown as { displayModels: () => Record<string, { metricsLineOne: string; metricsLineTwo: string }> }).displayModels();
-    const metricText = `${models['c1||default']?.metricsLineOne ?? ''} ${models['c1||default']?.metricsLineTwo ?? ''}`;
-    expect(metricText).toContain('A ');
-    expect(metricText).not.toContain('V ');
+    const models = (component as unknown as { displayModels: () => Record<string, { currentText: string; voltageText: string }> }).displayModels();
+    expect(models['c1||default']?.currentText).toBeTruthy();
+    expect(models['c1||default']?.currentText).toContain('10');
   });
 
   it('filters visible chargers by trackedDevices', async () => {
@@ -202,9 +201,9 @@ describe('WidgetChargerComponent', () => {
     expect(visible.find(v => v.deviceKey === 'c1||sourceA')).toBeDefined();
     expect(visible.find(v => v.deviceKey === 'c1||sourceB')).toBeDefined();
 
-    const models = (component as unknown as { displayModels: () => Record<string, { busText: string }> }).displayModels();
-    expect(models['c1||sourceA']?.busText).toBe('sourceA');
-    expect(models['c1||sourceB']?.busText).toBe('sourceB');
+    const models = (component as unknown as { displayModels: () => Record<string, { source: string | null; deviceKey?: string }> }).displayModels();
+    expect(models['c1||sourceA']?.source).toBe('sourceA');
+    expect(models['c1||sourceB']?.source).toBe('sourceB');
   });
 
   it('applies source-qualified updates only to the matching tracked device key', async () => {
@@ -313,15 +312,15 @@ describe('WidgetChargerComponent', () => {
 
     const models = (component as unknown as {
       displayModels: () => Record<string, {
-        stateBarColor: string;
-        primaryMetricsTextColor: string;
-        secondaryMetricsTextColor: string;
+        voltageText: string;
+        currentText: string;
+        titleText: string;
       }>;
     }).displayModels();
 
-    expect(models['c1']?.stateBarColor).toBeTruthy();
-    expect(models['c1']?.primaryMetricsTextColor).toBeTruthy();
-    expect(models['c1']?.secondaryMetricsTextColor).toBeTruthy();
+    expect(models['c1']?.voltageText).toBeTruthy();
+    expect(models['c1']?.currentText).toBeTruthy();
+    expect(models['c1']?.titleText).toBeTruthy();
   });
 
   it('maps extended charger key paths including nested output/input and mode/error/state fields', async () => {

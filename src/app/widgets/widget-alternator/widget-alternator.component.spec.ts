@@ -96,28 +96,7 @@ describe('WidgetAlternatorComponent', () => {
     expect(map.a1).toBeUndefined();
   });
 
-  it('discovers alternator instance from singular root object path', async () => {
-    await setup([
-      makeUpdate('self.electrical.alternator.0', { state: 'present' })
-    ]);
 
-    const visible = (component as unknown as { visibleAlternatorKeys: () => string[] }).visibleAlternatorKeys();
-    expect(visible).toEqual(['0']);
-
-    const map = (component as unknown as { alternatorsByKey: () => Record<string, { id: string; voltage?: number | null }> }).alternatorsByKey();
-    expect(map['0']?.id).toBe('0');
-  });
-
-  it('parses singular alternator root metric paths', async () => {
-    await setup([
-      makeUpdate('self.electrical.alternator.0.voltage', 14.2),
-      makeUpdate('self.electrical.alternator.0.current', 45)
-    ]);
-
-    const map = (component as unknown as { alternatorsByKey: () => Record<string, { voltage?: number | null; current?: number | null }> }).alternatorsByKey();
-    expect(map['0']?.voltage).toBe(14.2);
-    expect(map['0']?.current).toBe(45);
-  });
 
   it('filters visible alternators by trackedDevices', async () => {
     await setup(

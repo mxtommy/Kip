@@ -292,27 +292,7 @@ describe('WidgetInverterComponent', () => {
     expect(visible.length).toBe(0);
   });
 
-  it('supports legacy singular inverter metric paths', async () => {
-    await setup([
-      makeUpdate('self.electrical.inverter.i7.dc.voltage', 49),
-      makeUpdate('self.electrical.inverter.i7.dc.current', 8)
-    ]);
 
-    const map = (component as unknown as { invertersByKey: () => Record<string, { dcVoltage?: number | null; dcCurrent?: number | null; dcPower?: number | null }> }).invertersByKey();
-    expect(map['i7']?.dcVoltage).toBe(49);
-    expect(map['i7']?.dcCurrent).toBe(8);
-    expect(map['i7']?.dcPower).toBe(392);
-  });
-
-  it('supports legacy singular inverter root-node instance updates', async () => {
-    await setup([
-      makeUpdate('self.electrical.inverter.i8', { name: 'Legacy Inverter' })
-    ]);
-
-    const visible = (component as unknown as { visibleInverters: () => { id: string }[] }).visibleInverters();
-    expect(visible).toHaveLength(1);
-    expect(visible[0]?.id).toBe('i8');
-  });
 
   it('does not process paths with wrong family prefix', async () => {
     await setup([

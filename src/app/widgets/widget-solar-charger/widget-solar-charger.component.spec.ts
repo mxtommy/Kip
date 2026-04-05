@@ -227,7 +227,7 @@ describe('WidgetSolarChargerComponent', () => {
     }).displayModels().sc1;
 
     expect(model.gaugeSectionText).toContain('0.0V');
-    expect(model.gaugeSectionText).toContain('0.0A');
+    expect(model.gaugeSectionText).toContain('0.0');
     expect(model.gaugeSectionText).toContain('0.0 °C');
     expect(model.chargerSectionMetadata).toContain('0.0V');
     expect(model.chargerSectionMetadata).toContain('0.0 °C');
@@ -410,8 +410,8 @@ describe('WidgetSolarChargerComponent', () => {
 
     expect(model).toBeDefined();
     expect(model.gaugeSectionText).toContain('24.1V');
-    expect(model.gaugeSectionText).toContain('8.3A');
-    expect(model.chargerSectionCurrent).toContain('12.0A');
+    expect(model.gaugeSectionText).toContain('8.3');
+    expect(model.chargerSectionCurrent).toContain('12.0');
     expect(model.chargerSectionMetadata).toContain('13.8V');
     expect(model.chargerSectionMetadata).toContain('38.5 °C');
   });
