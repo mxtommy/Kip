@@ -19,6 +19,7 @@ import {
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
 import type { InverterDisplayModel, InverterSnapshot, InverterWidgetConfig, ElectricalCardModeConfig } from './widget-inverter.types';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -34,6 +35,7 @@ interface InverterRenderSnapshot {
   selector: 'widget-inverter',
   templateUrl: './widget-inverter.component.html',
   styleUrl: './widget-inverter.component.scss',
+  imports: [WidgetTitleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
@@ -112,6 +114,18 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly displayLabel = computed(() => {
+    const inverters = this.visibleInverters();
+    if (inverters.length !== 1) {
+      return 'Inverters';
+    }
+
+    return this.resolveTitleText(inverters[0]);
+  });
+  protected readonly labelColor = computed(() => {
+    const theme = this.theme();
+    return theme ? getColors(this.colorRole(), theme).dim : 'var(--kip-contrast-dim-color)';
+  });
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -153,7 +167,7 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
         id: inverter.id,
         source: inverter.source ?? null,
         deviceKey: inverter.deviceKey,
-        titleText: this.displayName(inverter),
+        titleText: this.resolveTitleText(inverter),
         modeText: this.isCompactCardMode() ? '' : (inverter.inverterMode ? `Mode ${inverter.inverterMode}` : 'Mode -'),
         busText: this.isCompactCardMode() ? '' : (
           showSource ? (inverter.source ?? '-') : (inverter.associatedBus || inverter.location || '-')
@@ -567,10 +581,14 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
       .attr('width', 3).attr('height', cardHeight - 3)
       .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
-    merged.select('text.inverter-title')
-      .attr('x', layout.titleX).attr('y', layout.titleY).attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.inverter));
+    if (snapshot.inverters.length > 1) {
+      merged.select('text.inverter-title')
+        .attr('x', layout.titleX).attr('y', layout.titleY).attr('font-size', layout.titleFontSize)
+        .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+        .text(item => snapshot.displayModels[item.key]?.titleText ?? this.resolveTitleText(item.inverter));
+    } else {
+      merged.select('text.inverter-title').text('');
+    }
 
     merged.select('text.inverter-id')
       .attr('x', layout.idX).attr('y', layout.idY).attr('text-anchor', 'end').attr('font-size', layout.idFontSize)
@@ -605,6 +623,10 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
 
   private displayName(inverter: InverterSnapshot): string {
     return inverter.name?.trim() || inverter.id;
+  }
+
+  private resolveTitleText(inverter: InverterSnapshot): string {
+    return inverter.name || `Inverter ${inverter.id}`;
   }
 
   private buildMetricRows(inverter: InverterSnapshot): [string, string] {

@@ -32,9 +32,9 @@ export interface IElectricalDirectCardLayout {
 export const ELECTRICAL_DIRECT_CARD_FULL_LAYOUT: IElectricalDirectCardLayout = {
   cardCornerRadius: 4,
   stateBarCornerRadius: 2.5,
-  titleX: 0, //TODO: remove once title is removed from the design
-  titleY: 10, //TODO: remove once title is removed from the design
-  titleFontSize: 12.5, //TODO: remove once title is removed from the design
+  titleX: 0,
+  titleY: 10,
+  titleFontSize: 12.5,
   primaryX: 135,
   primaryY: 48,
   primaryFontSize: 34,

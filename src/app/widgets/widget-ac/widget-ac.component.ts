@@ -19,6 +19,7 @@ import {
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
 import type { AcDisplayModel, AcSnapshot, AcWidgetConfig, ElectricalCardModeConfig } from './widget-ac.types';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 interface AcRenderSnapshot {
   buses: AcSnapshot[];
@@ -30,6 +31,7 @@ interface AcRenderSnapshot {
   selector: 'widget-ac',
   templateUrl: './widget-ac.component.html',
   styleUrl: './widget-ac.component.scss',
+  imports: [WidgetTitleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAcComponent implements AfterViewInit, OnDestroy {
@@ -110,6 +112,18 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly displayLabel = computed(() => {
+    const buses = this.visibleBuses();
+    if (buses.length !== 1) {
+      return 'AC Buses';
+    }
+
+    return this.resolveTitleText(buses[0]);
+  });
+  protected readonly labelColor = computed(() => {
+    const theme = this.theme();
+    return theme ? getColors(this.colorRole(), theme).dim : 'var(--kip-contrast-dim-color)';
+  });
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -157,7 +171,7 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
 
       models[modelKey] = {
         id: bus.id,
-        titleText: this.displayName(bus),
+        titleText: this.resolveTitleText(bus),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(bus),
         busText: this.isCompactCardMode() ? '' : (
           showSource ? (bus.source ?? '-') : (bus.associatedBus || bus.location || '-')
@@ -583,7 +597,6 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'ac-card');
-    enter.append('rect').attr('class', 'ac-card-bg');
     enter.append('rect').attr('class', 'ac-state-bar');
     enter.append('text').attr('class', 'ac-title');
     enter.append('text').attr('class', 'ac-id');
@@ -595,16 +608,6 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
     const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; bus: AcSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
-    merged.select('rect.ac-card-bg')
-      .attr('x', 0.5)
-      .attr('y', 0.5)
-      .attr('rx', layout.cardCornerRadius)
-      .attr('ry', layout.cardCornerRadius)
-      .attr('width', WidgetAcComponent.VIEWBOX_WIDTH - 1)
-      .attr('height', cardHeight - 1)
-      .attr('stroke', 'var(--mat-sys-outline-variant)')
-      .attr('stroke-width', 0.5)
-      .attr('fill', 'none');
 
     merged.select('rect.ac-state-bar')
       .attr('x', 1.5)
@@ -615,12 +618,16 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
       .attr('height', cardHeight - 3)
       .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
-    merged.select('text.ac-title')
-      .attr('x', layout.titleX)
-      .attr('y', layout.titleY)
-      .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.bus));
+    if (snapshot.buses.length > 1) {
+      merged.select('text.ac-title')
+        .attr('x', layout.titleX)
+        .attr('y', layout.titleY)
+        .attr('font-size', layout.titleFontSize)
+        .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+        .text(item => snapshot.displayModels[item.key]?.titleText ?? this.resolveTitleText(item.bus));
+    } else {
+      merged.select('text.ac-title').text('');
+    }
 
     merged.select('text.ac-id')
       .attr('x', layout.idX)
@@ -667,6 +674,10 @@ export class WidgetAcComponent implements AfterViewInit, OnDestroy {
 
   private displayName(bus: AcSnapshot): string {
     return bus.name?.trim() || bus.id;
+  }
+
+  private resolveTitleText(bus: AcSnapshot): string {
+    return bus.name || `AC ${bus.id}`;
   }
 
   private resolveModeText(bus: AcSnapshot): string {

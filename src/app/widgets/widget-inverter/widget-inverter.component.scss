@@ -7,9 +7,16 @@
 }
 
 .inverter-svg {
-  height: 100%;
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15%;
+  height: 85%;
   width: 100%;
-  padding: 10px;
+  overflow: hidden;
+  z-index: 20;
+  padding: 0 10px 10px 10px;
 }
 
 .inverter-empty {

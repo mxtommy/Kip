@@ -69,8 +69,18 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private readonly units = inject(UnitsService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected displayLabel = signal<string>('');
-  protected labelColor = signal<string | undefined>(undefined);
+  protected readonly displayLabel = computed(() => {
+    const solarUnits = this.visibleSolarUnits();
+    if (solarUnits.length !== 1) {
+      return 'Solar Chargers';
+    }
+
+    return this.resolveTitleText(solarUnits[0]);
+  });
+  protected readonly labelColor = computed(() => {
+    const theme = this.theme();
+    return theme ? getColors(this.colorRole(), theme).dim : 'var(--kip-contrast-dim-color)';
+  });
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('solarSvg');
   private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -203,7 +213,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
         id: solar.id,
         source: solar.source ?? null,
         deviceKey: solar.deviceKey,
-        titleText: solar.name || `Solar ${solar.id}`,
+        titleText: this.resolveTitleText(solar),
         panelPowerText: panelPowerDisplay.value,
         panelPowerUnitText: panelPowerDisplay.unit,
         panelPowerColor,
@@ -233,11 +243,9 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const cfg = this.runtime.options();
-      const theme = this.theme();
       if (!cfg) return;
       untracked(() => {
         this.applyConfig(cfg);
-        this.labelColor.set(theme ? getColors('contrast', theme).dim : undefined);
       });
     });
 
@@ -611,11 +619,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
   private applyChargerValue(charger: SolarChargerSnapshot, key: string, value: unknown, state: TState | null): boolean {
     switch (key) {
-      case 'name': {
-        const titleText = this.toStringValue(value) || `Solar ${charger.id}`;
-        this.displayLabel.set(titleText);
-        return this.setValue(charger, 'name', this.toStringValue(value));
-      }
+      case 'name': return this.setValue(charger, 'name', this.toStringValue(value));
       case 'location': return this.setValue(charger, 'location', this.toStringValue(value));
       case 'associatedBus': return this.setValue(charger, 'associatedBus', this.toStringValue(value));
       case 'voltage': {
@@ -774,8 +778,12 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .data(cards, item => item.key);
 
     const enter = selection.enter().append('g').attr('class', 'solar-card');
+    enter.append('text').attr('class', 'solar-charger-title');
+    const chargerCurrent = enter.append('text').attr('class', 'solar-charger-current');
+    chargerCurrent.append('tspan').attr('class', 'current-metric-value');
+    chargerCurrent.append('tspan').attr('class', 'current-metric-unit');
+
     enter.append('text').attr('class', 'solar-charger');
-    enter.append('text').attr('class', 'solar-charger-current');
     enter.append('text').attr('class', 'solar-charger-meta');
     enter.append('text').attr('class', 'solar-relay-label');
     enter.append('text').attr('class', 'solar-relay-values');
@@ -826,12 +834,31 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
 
+    if (snapshot.solarUnits.length > 1) {
+      merged.select('text.solar-charger-title')
+        .attr('x', layout.titleX)
+        .attr('y', layout.titleY)
+        .attr('font-size', layout.titleFontSize)
+        .attr('fill', 'var(--kip-contrast-dim-color)')
+        .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.model));
+    } else {
+      merged.select('text.solar-charger-title').text('');
+    }
+
     merged.select('text.solar-charger-current')
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
       .attr('font-size', layout.lineOneFontSize)
-      .attr('fill', item => item.model.chargerCurrentTextColor)
+      .attr('fill', item => item.model.chargerCurrentTextColor);
+
+    merged.select('tspan.current-metric-value')
       .text(item => item.model.chargerSectionCurrent);
+
+    merged.select('tspan.current-metric-unit')
+      .attr('dx', 1)
+      .attr('font-size', 12)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text('A');
 
     merged.select('text.solar-charger')
       .attr('x', 5)
@@ -914,7 +941,8 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .attr('opacity', 0.8)
       .attr('filter', item => item.model.panelValuesGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .attr('fill', item => item.model.panelValuesTextColor)
-      .text(item => item.model.gaugeSectionText);
+      .text(item => item.model.gaugeSectionText)
+      .raise();
 
     merged.select('text.solar-yield-label')
       .attr('x', 104)
@@ -944,6 +972,14 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
       .text(item => item.model.yieldYesterdayText);
 
     selection.exit().remove();
+  }
+
+  private displayName(solar: SolarChargerSnapshot): string {
+    return solar.name?.trim() || solar.id;
+  }
+
+  private resolveTitleText(solar: SolarChargerSnapshot): string {
+    return solar.name || `Solar ${solar.id}`;
   }
 
   private toNumber(value: unknown, unit: string): number | null {
@@ -983,7 +1019,7 @@ export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private formatCurrent(value: number | null | undefined): string {
     if (value === null) return '--';
     if (value === undefined) return '';
-    return `${value.toFixed(1)}A`;
+    return `${value.toFixed(1)}`;
   }
 
   private formatTemperature(value: number | null | undefined): string {

@@ -19,6 +19,7 @@ import {
   ELECTRICAL_DIRECT_COMPACT_CARD_HEIGHT
 } from '../shared/electrical-card-layout.constants';
 import type { AlternatorDisplayModel, AlternatorSnapshot, AlternatorWidgetConfig, ElectricalCardModeConfig } from './widget-alternator.types';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -34,6 +35,7 @@ interface AlternatorRenderSnapshot {
   selector: 'widget-alternator',
   templateUrl: './widget-alternator.component.html',
   styleUrl: './widget-alternator.component.scss',
+  imports: [WidgetTitleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
@@ -113,6 +115,18 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   protected readonly isCompactCardMode = computed(() => this.activeDisplayMode() === 'compact');
   protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly displayLabel = computed(() => {
+    const alternators = this.visibleAlternators();
+    if (alternators.length !== 1) {
+      return 'Alternators';
+    }
+
+    return this.resolveTitleText(alternators[0]);
+  });
+  protected readonly labelColor = computed(() => {
+    const theme = this.theme();
+    return theme ? getColors(this.colorRole(), theme).dim : 'var(--kip-contrast-dim-color)';
+  });
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -157,7 +171,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
       models[modelKey] = {
         id: alternator.id,
-        titleText: this.displayName(alternator),
+        titleText: this.resolveTitleText(alternator),
         modeText: this.isCompactCardMode() ? '' : this.resolveModeText(alternator),
         busText: this.isCompactCardMode() ? '' : (
           showSource ? (alternator.source ?? '-') : (alternator.associatedBus || alternator.location || '-')
@@ -667,12 +681,16 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
       .attr('height', cardHeight - 3)
       .attr('fill', item => snapshot.displayModels[item.key]?.stateBarColor ?? snapshot.widgetColors.dim);
 
-    merged.select('text.alternator-title')
-      .attr('x', layout.titleX)
-      .attr('y', layout.titleY)
-      .attr('font-size', layout.titleFontSize)
-      .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
-      .text(item => snapshot.displayModels[item.key]?.titleText ?? this.displayName(item.alternator));
+    if (snapshot.alternators.length > 1) {
+      merged.select('text.alternator-title')
+        .attr('x', layout.titleX)
+        .attr('y', layout.titleY)
+        .attr('font-size', layout.titleFontSize)
+        .attr('fill', item => snapshot.displayModels[item.key]?.titleTextColor ?? 'var(--kip-contrast-color)')
+        .text(item => snapshot.displayModels[item.key]?.titleText ?? this.resolveTitleText(item.alternator));
+    } else {
+      merged.select('text.alternator-title').text('');
+    }
 
     merged.select('text.alternator-id')
       .attr('x', layout.idX)
@@ -719,6 +737,10 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   private displayName(alternator: AlternatorSnapshot): string {
     return alternator.name?.trim() || alternator.id;
+  }
+
+  private resolveTitleText(alternator: AlternatorSnapshot): string {
+    return alternator.name || `Alternator ${alternator.id}`;
   }
 
   private resolveModeText(alternator: AlternatorSnapshot): string {

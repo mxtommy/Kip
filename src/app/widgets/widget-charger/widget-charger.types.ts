@@ -55,11 +55,8 @@ export interface ChargerDisplayModel {
   deviceKey?: string;
   titleText: string;
   modeText: string;
-  metricsLineOne: string;
-  metricsLineTwo: string;
-  stateBarColor: string;
-  titleTextColor: string;
-  metaTextColor: string;
-  primaryMetricsTextColor: string;
-  secondaryMetricsTextColor: string;
+  voltageText: string;
+  currentText: string;
+  powerText: string;
+  temperatureText: string;
 }
