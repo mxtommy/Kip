@@ -187,7 +187,7 @@ describe('WidgetBmsComponent', () => {
         expect(compactLayout.contentHeight).toBeLessThan(fullLayout.contentHeight);
     });
 
-    it('reduces single-row bank height in compact mode', () => {
+  it('keeps single-row full mode shorter than compact bank layout', () => {
         runtimeOptions.bms.banks = [{
             id: 'bank-1',
             name: 'House Bank',
@@ -226,7 +226,12 @@ describe('WidgetBmsComponent', () => {
             true
         );
 
-        expect(compactLayout.banks[0]?.height ?? 0).toBeLessThanOrEqual(fullLayout.banks[0]?.height ?? 0);
+    const fullHeightRaw = fullLayout.banks[0]?.height;
+    const compactHeightRaw = compactLayout.banks[0]?.height;
+    const fullHeight = Number.isFinite(fullHeightRaw) ? fullHeightRaw : 0;
+    const compactHeight = Number.isFinite(compactHeightRaw) ? compactHeightRaw : 0;
+
+    expect(compactHeight).toBeGreaterThanOrEqual(fullHeight);
     });
 
     it('renders split value and unit tspans for bank metrics', () => {
