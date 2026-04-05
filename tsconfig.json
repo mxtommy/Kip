@@ -15,13 +15,11 @@
     "experimentalDecorators": true,
     "target": "ES2022",
     "module": "es2020",
-    "baseUrl": "./",
     "isolatedModules": false,
     "resolveJsonModule": true
   },
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
-    "fullTemplateTypeCheck": true,
     "strictInjectionParameters": true,
     "strictTemplates": true
   }
