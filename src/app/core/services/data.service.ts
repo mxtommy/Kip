@@ -50,6 +50,9 @@ const typeFromUnits = (units: string): string => {
   if (units === "RFC 3339 (UTC)") {
     return "Date";
   }
+  if (units === "bool") {
+    return "boolean";
+  }
   return "number";
 };
 
@@ -696,9 +699,15 @@ export class DataService implements OnDestroy {
       .filter(item => {
         const isRuntimeType = ['string', 'number', 'boolean', 'object', 'undefined', 'function', 'symbol', 'bigint', 'Date']
           .includes(valueType);
+        const runtimeType = item.pathValue !== undefined && item.pathValue !== null
+          ? typeof item.pathValue
+          : item.type;
+        const metaType = item.meta?.type === 'bool'
+          ? 'boolean'
+          : item.meta?.type;
         const typeMatches = isRuntimeType
-          ? item.type === valueType
-          : item.meta?.type === valueType;
+          ? runtimeType === valueType || (valueType === 'boolean' && metaType === 'boolean')
+          : metaType === valueType;
         const selfMatches = !selfOnly || item.path.startsWith("self");
         const supportsPutMatches = supportsPutOnly === true ? item.meta?.supportsPut === true : true;
         const hasZonesMatches = hasZones === true

@@ -241,4 +241,36 @@ describe('DataService', () => {
     subA.unsubscribe();
     subB.unsubscribe();
   });
+
+  it('treats bool metadata as boolean for writable path discovery when metadata arrives first', () => {
+    metadataUpdates$.next({
+      context: 'self',
+      path: 'electrical.switches.sanitation.vacuum.master.enabled',
+      meta: {
+        units: 'bool',
+        supportsPut: true,
+        description: 'Master vacuum pump enable state',
+        properties: {},
+      },
+    });
+
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'electrical.switches.sanitation.vacuum.master.enabled',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: true,
+    });
+
+    expect(service.getPathObject('self.electrical.switches.sanitation.vacuum.master.enabled')?.type).toBe('boolean');
+    expect(service.getPathsAndMetaByType('boolean', true, false, true)).toEqual([
+      {
+        path: 'self.electrical.switches.sanitation.vacuum.master.enabled',
+        meta: expect.objectContaining({
+          units: 'bool',
+          supportsPut: true,
+        }),
+      },
+    ]);
+  });
 });
