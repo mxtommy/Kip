@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
+import type { BmsBankConnectionMode } from '../../widgets/widget-bms/widget.bms.types';
 import type { ElectricalGroupConfig, ElectricalTrackedDevice } from '../../core/interfaces/widgets-interface';
 import { TitleCasePipe } from '@angular/common';
 

@@ -228,4 +228,52 @@ describe('WidgetBmsComponent', () => {
 
         expect(compactLayout.banks[0]?.height ?? 0).toBeLessThanOrEqual(fullLayout.banks[0]?.height ?? 0);
     });
+
+    it('renders split value and unit tspans for bank metrics', () => {
+        runtimeOptions.bms.banks = [{
+            id: 'bank-1',
+            name: 'House Bank',
+            batteryIds: ['bat1'],
+            connectionMode: 'parallel'
+        }];
+
+        dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+            initial: [
+                makeUpdate('self.electrical.batteries.bat1.current', 10),
+                makeUpdate('self.electrical.batteries.bat1.voltage', 12.5),
+                makeUpdate('self.electrical.batteries.bat1.capacity.stateOfCharge', 0.55),
+                makeUpdate('self.electrical.batteries.bat1.capacity.remaining', 100),
+                makeUpdate('self.electrical.batteries.bat1.capacity.actual', 200)
+            ],
+            live$: liveSubject.asObservable()
+        });
+
+        fixture = TestBed.createComponent(WidgetBmsComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('id', 'w-bms-1');
+        fixture.componentRef.setInput('type', 'widget-bms');
+        fixture.componentRef.setInput('theme', themeMock);
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            buildRenderSnapshot: () => unknown;
+            render: (snapshot: unknown) => void;
+        };
+        const snapshot = internals.buildRenderSnapshot();
+        if (snapshot) {
+            internals.render(snapshot);
+        }
+
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.querySelector('tspan.bank-card-current-value')?.textContent).toBe('10.0');
+        expect(host.querySelector('tspan.bank-card-current-unit')?.textContent).toBe('A');
+        expect(host.querySelector('tspan.bank-card-power-value')?.textContent).toBe('125');
+        expect(host.querySelector('tspan.bank-card-power-unit')?.textContent).toBe('W');
+        expect(host.querySelector('tspan.bank-gauge-soc-value')?.textContent).toBe('50');
+        expect(host.querySelector('tspan.bank-gauge-soc-unit')?.textContent).toBe('%');
+        expect(host.querySelector('tspan.bank-actualCapacity-value')?.textContent).toBe('100');
+        expect(host.querySelector('tspan.bank-actualCapacity-unit')?.textContent).toBe('kWh');
+        expect(host.querySelector('tspan.bms-soc-value')?.textContent).toBe('55');
+        expect(host.querySelector('tspan.bms-soc-unit')?.textContent).toBe('%');
+    });
 });

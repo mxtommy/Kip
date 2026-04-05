@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { ElectricalGroupConfig, SolarOptionConfig } from '../../widgets/widget-solar-charger/solar-charger.types';
+import type { ElectricalGroupConfig, SolarOptionConfig } from '../../widgets/widget-solar-charger/widget.solar-charger.types';
 import type { BmsBankConnectionMode, ElectricalTrackedDevice } from '../../core/interfaces/widgets-interface';
 import { TitleCasePipe } from '@angular/common';
 import { DataService } from '../../core/services/data.service';

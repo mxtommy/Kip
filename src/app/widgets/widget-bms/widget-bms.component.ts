@@ -10,7 +10,7 @@ import { UnitsService } from '../../core/services/units.service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
-import type { BmsBankDisplayModel, BmsBankSummary, BmsBatteryDisplayModel, BmsBatterySnapshot } from './bms.types';
+import type { BmsBankDisplayModel, BmsBankSummary, BmsBatteryDisplayModel, BmsBatterySnapshot } from './widget.bms.types';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import type { ITheme } from '../../core/services/app-service';
 import { ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH } from '../shared/electrical-card-layout.constants';
@@ -778,13 +778,21 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .data(renderLayout.banks, item => item.id);
 
     const bankEnter = bankSelection.enter().append('g').attr('class', 'bank-card');
-    bankEnter.append('text').attr('class', 'bank-card-power');
-    bankEnter.append('text').attr('class', 'bank-card-current');
+    const bankPower = bankEnter.append('text').attr('class', 'bank-card-power');
+    bankPower.append('tspan').attr('class', 'bank-card-power-value');
+    bankPower.append('tspan').attr('class', 'bank-card-power-unit');
+    const bankCurrent = bankEnter.append('text').attr('class', 'bank-card-current');
+    bankCurrent.append('tspan').attr('class', 'bank-card-current-value');
+    bankCurrent.append('tspan').attr('class', 'bank-card-current-unit');
     const gaugeEnter = bankEnter.append('g').attr('class', 'bank-gauge');
     gaugeEnter.append('path').attr('class', 'bank-gauge-bg');
     gaugeEnter.append('path').attr('class', 'bank-gauge-value');
-    gaugeEnter.append('text').attr('class', 'bank-gauge-soc');
-    bankEnter.append('text').attr('class', 'bank-actualCapacity');
+    const bankSoc = gaugeEnter.append('text').attr('class', 'bank-gauge-soc');
+    bankSoc.append('tspan').attr('class', 'bank-gauge-soc-value');
+    bankSoc.append('tspan').attr('class', 'bank-gauge-soc-unit');
+    const bankActualCapacity = bankEnter.append('text').attr('class', 'bank-actualCapacity');
+    bankActualCapacity.append('tspan').attr('class', 'bank-actualCapacity-value');
+    bankActualCapacity.append('tspan').attr('class', 'bank-actualCapacity-unit');
     bankEnter.append('text').attr('class', 'bank-remaining');
     bankEnter.append('g').attr('class', 'bank-bms-batteries');
     bankEnter.append('text').attr('class', 'bank-title');
@@ -805,15 +813,28 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
       .attr('fill', 'var(--kip-contrast-color)')
-      .attr('font-size', layout.lineOneFontSize)
-      .text(item => item.displayModel.currentText);
+      .attr('font-size', layout.lineOneFontSize);
+    bankMerged.select('tspan.bank-card-current-value')
+      .text(item => this.splitMetricText(item.displayModel.currentText, 'A').valueText);
+    bankMerged.select('tspan.bank-card-current-unit')
+      .attr('dx', 1)
+      .attr('font-size', 12)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text(item => this.splitMetricText(item.displayModel.currentText, 'A').unitText);
+
     bankMerged.select('text.bank-card-power')
       .attr('x', 5)
-      .attr('y', 49)
+      .attr('y', 42)
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', 10)
-      .attr('opacity', 0.8)
-      .text(item => item.displayModel.powerText);
+      .attr('opacity', 0.8);
+    bankMerged.select('tspan.bank-card-power-value')
+      .text(item => this.splitMetricText(item.displayModel.powerText, 'W').valueText);
+    bankMerged.select('tspan.bank-card-power-unit')
+      .attr('dx', 1)
+      .attr('font-size', 6)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text(item => this.splitMetricText(item.displayModel.powerText, 'W').unitText);
 
     bankMerged.select('g.bank-gauge')
       .attr('transform', 'translate(143, 60)');
@@ -835,22 +856,35 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', layout.primaryFontSize)
-      .attr('font-weight', layout.primaryFontWeight)
-      .text(item => item.displayModel.socText);
+      .attr('font-weight', layout.primaryFontWeight);
+    bankMerged.select('tspan.bank-gauge-soc-value')
+      .text(item => this.splitMetricText(item.displayModel.socText, '%').valueText);
+    bankMerged.select('tspan.bank-gauge-soc-unit')
+      .attr('dx', 1)
+      .attr('font-size', 22)
+      .attr('font-weight', 500)
+      .attr('fill', 'var(--kip-contrast-color)')
+      .text(item => this.splitMetricText(item.displayModel.socText, '%').unitText);
     bankMerged.select('text.bank-remaining')
       .attr('x', 143)
       .attr('y', 26)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .text('1d 12:14:54'); //item => item.displayModel.remainingTimeText);
+      .text(item => item.displayModel.remainingTimeText);
     bankMerged.select('text.bank-actualCapacity')
       .attr('x', 143)
       .attr('y', 66)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
-      .attr('font-size', 8)
-      .text('0.231kWh'); //item => item.displayModel.remainingCapacityText);
+      .attr('font-size', 8);
+    bankMerged.select('tspan.bank-actualCapacity-value')
+      .text(item => this.splitMetricText(item.displayModel.remainingCapacityText, 'kWh').valueText);
+    bankMerged.select('tspan.bank-actualCapacity-unit')
+      .attr('dx', 1)
+      .attr('font-size', 6)
+      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .text(item => this.splitMetricText(item.displayModel.remainingCapacityText, 'kWh').unitText);
     bankMerged
       .select<SVGGElement>('g.bank-bms-batteries')
       .each((bankItem, index, nodes) => {
@@ -1019,7 +1053,9 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     selection.append('g').attr('class', 'bms-state-icon');
     selection.append('text').attr('class', 'bms-ampere');
     selection.append('text').attr('class', 'bms-volt-power');
-    selection.append('text').attr('class', 'bms-soc');
+    const batterySoc = selection.append('text').attr('class', 'bms-soc');
+    batterySoc.append('tspan').attr('class', 'bms-soc-value');
+    batterySoc.append('tspan').attr('class', 'bms-soc-unit');
     selection.append('text').attr('class', 'bms-actualCapacity');
     selection.append('text').attr('class', 'bms-remaining');
     selection.append('text').attr('class', 'bms-title');
@@ -1086,8 +1122,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'middle')
       .attr('font-size', 25)
       .attr('font-weight', 700)
-      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
-      .text(item => item.displayModel.socText);
+      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null);
+    selection.select('tspan.bms-soc-value')
+      .text(item => this.splitMetricText(item.displayModel.socText, '%').valueText);
+    selection.select('tspan.bms-soc-unit')
+      .attr('dx', 1)
+      .attr('font-size', 16)
+      .attr('font-weight', 500)
+      .text(item => this.splitMetricText(item.displayModel.socText, '%').unitText);
     selection.select('text.bms-actualCapacity')
       .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH - 33)
       .attr('y', 45)
@@ -1181,6 +1223,24 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const converted = this.units.convertToUnit(displayUnit, value);
     if (converted === null) return '';
     return `${converted.toFixed(1)} ${displayUnit === 'celsius' ? '°C' : '°F'}`;
+  }
+
+  private splitMetricText(rawText: string, unitSuffix: string): { valueText: string; unitText: string } {
+    if (!rawText) {
+      return { valueText: '', unitText: '' };
+    }
+
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+      return { valueText: '', unitText: '' };
+    }
+
+    if (trimmed.endsWith(unitSuffix)) {
+      const valueText = trimmed.slice(0, Math.max(0, trimmed.length - unitSuffix.length)).trim();
+      return { valueText, unitText: unitSuffix };
+    }
+
+    return { valueText: trimmed, unitText: '' };
   }
 
   private sumNumbers(values: (number | null | undefined)[]): number | null {

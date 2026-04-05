@@ -8,7 +8,7 @@ import { UnitsService } from '../../core/services/units.service';
 import type { ITheme } from '../../core/services/app-service';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
 import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
-import type { ElectricalCardModeConfig, ElectricalTrackedDevice, SolarChargerDisplayModel, SolarChargerSnapshot, SolarOptionConfig, SolarWidgetConfig } from './solar-charger.types';
+import type { ElectricalCardModeConfig, ElectricalTrackedDevice, SolarChargerDisplayModel, SolarChargerSnapshot, SolarOptionConfig, SolarWidgetConfig } from './widget.solar-charger.types';
 import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electrical-widget-family.contract';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import { ELECTRICAL_DIRECT_CARD_GAP, ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT } from '../shared/electrical-card-layout.constants';
