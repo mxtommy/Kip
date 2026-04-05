@@ -148,6 +148,14 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
   protected readonly displayLabel = computed(() => {
+    const banks = this.bankSummaries();
+    if (banks.length === 1) {
+      return banks[0].name || 'Bank';
+    }
+    if (banks.length > 1) {
+      return 'Batteries';
+    }
+
     const batteries = this.visibleBatteries();
     if (batteries.length !== 1) {
       return 'Batteries';
