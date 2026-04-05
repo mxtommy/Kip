@@ -1,3 +1,13 @@
+# v4.8.0
+## New Features
+* Solar Charger Widget: Get instant clarity on your solar system with a compact, purpose-built Solar Charger Widget. Track individual panels or full arrays in real time, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Device discovery is automatic, and Zones support keeps warnings and alarms state highly visible.
+* AC/DC Charger Widget: Monitor charging performance at a glance with a compact AC/DC Charger Widget. View single or multiple chargers with charge mode, voltage, current, power and temperature. Chargers are discovered automatically.
+## Improvements
+* Battery Monitor Widget visual cleanup for better readability and tighter consistency with the electrical widget family.
+* Framework upgrades and core refactoring to improve long-term maintainability and runtime performance.
+## Fixes
+* Improved Battery Monitor text contrast when color state is Alert (yellow), making critical values easier to read. Fixes #1027
+* Restored Countdown Timer visibility in Add Widgets.
 # v4.7.0
 ## New Features
 * Battery Monitor Widget: Stay on top of your vessel’s power system with a dedicated compact Battery Monitor Widget. Instantly view individual batteries or whole banks, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Batteries are detected automatically, with Signal K Zones support for clear warning and alarm visibility at a glance.

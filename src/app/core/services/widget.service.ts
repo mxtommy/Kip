@@ -414,8 +414,8 @@ export class WidgetService {
       componentClassName: 'WidgetSolarChargerComponent'
     },
     {
-      name: 'DC Charger',
-      description: 'Track DC charger output and charging state with voltage, current, power, and temperature monitoring, including real-time charging stage indicators. Manage multiple linked charger units with grouped device configuration.',
+      name: 'AC/DC Charger',
+      description: 'Track charger output and charging state with voltage, current, power, and temperature monitoring, including real-time charging stage indicators.',
       icon: 'charger',
       minWidth: 2,
       minHeight: 2,
@@ -426,7 +426,7 @@ export class WidgetService {
       selector: 'widget-charger',
       componentClassName: 'WidgetChargerComponent'
     },
-    {
+/*     {
       name: 'Alternator',
       description: 'Monitor alternator output and charging performance with voltage, current, power, revolutions and temperature metrics.',
       icon: 'alternator',
@@ -464,7 +464,7 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-ac',
       componentClassName: 'WidgetAcComponent'
-    },
+    }, */
     {
       name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',
