@@ -1,0 +1,45 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.family-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px 4px;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.hint {
+  color: var(--kip-contrast-dim-color);
+  font-size: 0.8rem;
+}
+
+.groups-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h4 {
+    margin: 0;
+    color: var(--kip-contrast-color);
+    font-size: 0.95rem;
+  }
+}
+
+.group-card {
+  border: 1px solid var(--kip-widget-card-border-color);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--kip-widget-card-background-color);
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 8px;
+}

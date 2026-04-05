@@ -1,16 +1,18 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
-export type { SolarOptionConfig, SolarWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { IElectricalTopologySnapshotCore } from '../../core/contracts/electrical-topology-card.contract';
+import type { ElectricalFamilyConfig, SolarOptionConfig as SolarOptionConfigBase } from '../../core/interfaces/widgets-interface';
+export type {
+  SolarOptionConfig,
+  ElectricalTrackedDevice,
+  ElectricalGroupConfig,
+  ElectricalCardModeConfig
+} from '../../core/interfaces/widgets-interface';
 
-export interface SolarChargerSnapshot {
-  id: string;
-  name?: string | null;
-  location?: string | null;
-  associatedBus?: string | null;
-  voltage?: number | null;
+export type SolarWidgetConfig = ElectricalFamilyConfig<SolarOptionConfigBase>;
+
+export interface SolarChargerSnapshot extends IElectricalTopologySnapshotCore {
   voltageState?: TState | null;
-  current?: number | null;
   currentState?: TState | null;
-  power?: number | null;
   rawBatteryPower?: number | null;
   temperature?: number | null;
   temperatureState?: TState | null;
@@ -38,6 +40,8 @@ export interface SolarChargerSnapshot {
 
 export interface SolarChargerDisplayModel {
   id: string;
+  source?: string | null;
+  deviceKey?: string;
   titleText: string;
   panelPowerText: string;
   panelPowerUnitText: string;
@@ -49,7 +53,8 @@ export interface SolarChargerDisplayModel {
   panelValuesGlowEnabled: boolean;
   gaugeProgress: number;
   gaugeSectionText: string;
-  yieldText: string;
+  yieldTodayText: string;
+  yieldYesterdayText: string;
   chargerMode: string;
   chargerSectionCurrent: string;
   chargerSectionMetadata: string;

@@ -737,8 +737,10 @@
                       ? 'display: none'
                       : 'display: block'
                   "
-                  class="warning fa fa-exclamation-circle"
-                ></span
+                    class="warning material-icons"
+                >
+                  error
+                </span
                 >&nbsp;Controls
               </ng-template>
             </div>
@@ -884,8 +886,46 @@
       }
       @if (widgetConfig?.solarCharger) {
         <mat-tab label="Solar Chargers">
-          <solar-charger-setup formGroupName="solarCharger" class="tab-content" />
+          <div class="tab-content">
+            <div>
+              <ng-template mat-tab-label>
+                <span [style]="formMaster.controls.solarCharger.valid ? 'display: none' : 'display: block'"
+                  class="warning material-icons">
+                  error
+                </span>&nbsp;Solar Chargers
+              </ng-template>
+            </div>
+            <solar-charger-setup formGroupName="solarCharger" class="tab-content" />
+          </div>
         </mat-tab>
+      }
+      @if (widgetConfig?.charger) {
+      <mat-tab label="Chargers">
+        <electrical-family-setup formGroupName="charger" class="tab-content" setupLabel="Charger"
+          discoveryId="electrical-chargers" discoveryPattern="self.electrical.charger*"
+          familyRegex="self\\.electrical\\.chargers?\\.([^.]+)(?:\\.|$)" pathPrefix="electrical.charger" />
+      </mat-tab>
+      }
+      @if (widgetConfig?.inverter) {
+      <mat-tab label="Inverters">
+        <electrical-family-setup formGroupName="inverter" class="tab-content" setupLabel="Inverter"
+          discoveryId="electrical-inverters" discoveryPattern="self.electrical.inverter*"
+          familyRegex="self\\.electrical\\.inverters?\\.([^.]+)(?:\\.|$)" pathPrefix="electrical.inverter" />
+      </mat-tab>
+      }
+      @if (widgetConfig?.alternator) {
+      <mat-tab label="Alternators">
+        <electrical-family-setup formGroupName="alternator" class="tab-content" setupLabel="Alternator"
+          discoveryId="electrical-alternators" discoveryPattern="self.electrical.alternator*"
+          familyRegex="self\\.electrical\\.alternators?\\.([^.]+)(?:\\.|$)" pathPrefix="electrical.alternator" />
+      </mat-tab>
+      }
+      @if (widgetConfig?.ac) {
+      <mat-tab label="AC">
+        <electrical-family-setup formGroupName="ac" class="tab-content" setupLabel="AC" discoveryId="electrical-ac"
+          discoveryPattern="self.electrical.ac*" familyRegex="self\\.electrical\\.ac\\.([^.]+)(?:\\.|$)"
+          pathPrefix="electrical.ac." />
+      </mat-tab>
       }
     </mat-tab-group>
   </mat-dialog-content>

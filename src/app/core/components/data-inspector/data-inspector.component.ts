@@ -1,5 +1,4 @@
 import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { KeyValuePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -20,12 +19,24 @@ import { ISkPathData } from "../../interfaces/app-interfaces";
 import { ToastService } from '../../services/toast.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+interface DataInspectorSourceRow {
+  key: string;
+  value: unknown;
+}
+
+interface DataInspectorViewRow {
+  path: string;
+  type: string;
+  supportsPut: boolean;
+  sourceRows: DataInspectorSourceRow[];
+}
+
 @Component({
   selector: 'data-inspector',
   templateUrl: './data-inspector.component.html',
   styleUrls: ['./data-inspector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, KeyValuePipe, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
+  imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private readonly dataService = inject(DataService);
@@ -45,7 +56,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   protected hidePageSize = false;
   protected showFirstLastButtons = true;
   protected showPageSizeOptions = [5, 10, 25, 100];
-  public tableData = new MatTableDataSource<ISkPathData>([]);
+  public tableData = new MatTableDataSource<DataInspectorViewRow>([]);
   public displayedColumns: string[] = ['path', 'supportsPut', 'defaultSource'];
 
   constructor() {
@@ -77,11 +88,13 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     this.dataService.startSkDataFullTree()
       .pipe(
         map((paths: ISkPathData[]) =>
-          paths.filter(path => Object.keys(path.sources || {}).length > 0)
+          paths
+            .filter(path => Object.keys(path.sources || {}).length > 0)
+            .map(path => this.toViewRow(path))
         ),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((filteredPaths: ISkPathData[]) => {
+      .subscribe((filteredPaths: DataInspectorViewRow[]) => {
         this.tableData.data = filteredPaths;
         this.cdr.markForCheck();
       });
@@ -94,9 +107,13 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     this.tableData.sortingDataAccessor = (item, property) => {
       switch (property) {
         case 'supportsPut':
-          return item.meta?.supportsPut ? 1 : 0; // Sort by boolean value (1 for true, 0 for false)
+          return item.supportsPut ? 1 : 0;
+        case 'defaultSource':
+          return item.sourceRows[0]?.key ?? '';
+        case 'path':
+          return item.path;
         default:
-          return item[property]; // Default sorting for other columns
+          return '';
       }
     };
   }
@@ -106,22 +123,8 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
     this.filterSubject.next(filterValue);
   }
 
-  protected trackByPath(index: number, item: ISkPathData): string {
+  protected trackByPath(index: number, item: DataInspectorViewRow): string {
     return `${item.path}`;
-  }
-
-  protected trackBySource(index: number, item: { key: string }): string {
-    return `${item.key}`;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected getSourceKey(source: { key: any, value: any }): string {
-    return String(source.key);
-  }
-
-  protected getSourceValue(item: { key: unknown, value: { sourceValue: unknown } } ): unknown {
-    const value = item.value?.sourceValue;
-    return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
   }
 
   protected copyPath(path: string | null | undefined, ev?: MouseEvent): void {
@@ -133,6 +136,30 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
       this.toast.show('Path copied to clipboard', 100, true, 'success');
     } else {
       this.toast.show('Copy to clipboard failed', 1500, false, 'error');
+    }
+  }
+
+  private toViewRow(path: ISkPathData): DataInspectorViewRow {
+    return {
+      path: path.path,
+      type: path.type,
+      supportsPut: path.meta?.supportsPut === true,
+      sourceRows: Object.entries(path.sources ?? {}).map(([key, source]) => ({
+        key,
+        value: this.snapshotSourceValue(source?.sourceValue)
+      }))
+    };
+  }
+
+  private snapshotSourceValue(value: unknown): unknown {
+    if (typeof value !== 'object' || value === null) {
+      return value;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[unserializable object]';
     }
   }
 

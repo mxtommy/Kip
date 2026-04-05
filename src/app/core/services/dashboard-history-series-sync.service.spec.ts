@@ -592,7 +592,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(seriesIds(series)).toEqual([
-            'widget-bms-1:bms-template'
+          'widget-bms-1:batteries-template'
         ]);
         expect(series.every(item => item.expansionMode === 'bms-battery-tree')).toBe(true);
     });
@@ -604,7 +604,10 @@ describe('DashboardHistorySeriesSyncService', () => {
             type: 'widget-bms',
             config: {
                 bms: {
-                    trackedBatteryIds: ['house', 'starter'],
+                trackedDevices: [
+                  { id: 'house', source: 'default', key: 'house||default' },
+                  { id: 'starter', source: 'default', key: 'starter||default' }
+                ],
                     banks: [
                         { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house', 'aux'] }
                     ]
@@ -614,17 +617,37 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedBatteryIds).toEqual(['aux', 'house', 'starter']);
+      expect(series[0].allowedIds).toEqual(['house', 'starter']);
     });
 
-    it('uses all discovered batteries when trackedBatteryIds is empty, even if banks exist', () => {
+  it('excludes stale bank members not present in trackedDevices', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-bms-stale-1',
+      type: 'widget-bms',
+      config: {
+        bms: {
+          trackedDevices: [{ id: 'house', source: 'default', key: 'house||default' }],
+          groups: [
+            { id: 'bank-1', name: 'House', connectionMode: 'parallel', memberIds: ['house', 'starter'] }
+          ]
+        }
+      } as IWidget['config']
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedIds).toEqual(['house']);
+    });
+
+  it('uses all discovered batteries when trackedDevices is empty, even if banks exist', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {
             uuid: 'widget-bms-3',
             type: 'widget-bms',
             config: {
                 bms: {
-                    trackedBatteryIds: [],
+                trackedDevices: [],
                     banks: [
                         { id: 'bank-1', name: 'House', connectionMode: 'parallel', batteryIds: ['house'] }
                     ]
@@ -634,7 +657,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedBatteryIds).toBeNull();
+    expect(series[0].allowedIds).toBeNull();
     });
 
     it('resolves widget-solar-charger template mappings for plugin-side charger expansion', () => {
@@ -662,33 +685,188 @@ describe('DashboardHistorySeriesSyncService', () => {
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedSolarIds: ['port-array', 'starboard-array'],
-                    solarOptionsById: {}
+                trackedDevices: [
+                  { id: 'port-array', source: 'default', key: 'port-array||default' },
+                  { id: 'starboard-array', source: 'default', key: 'starboard-array||default' }
+                ],
+                optionsById: {}
                 }
             } as IWidget['config']
         };
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedSolarIds).toEqual(['port-array', 'starboard-array']);
+      expect(series[0].allowedIds).toEqual(['port-array', 'starboard-array']);
+      expect(series[0].trackedDevices).toEqual([
+        { id: 'port-array', source: 'default' },
+        { id: 'starboard-array', source: 'default' }
+      ]);
     });
 
-    it('uses all discovered solar units when trackedSolarIds is empty', () => {
+  it('emits source-qualified trackedDevices for same device id across multiple sources', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-charger-source-1',
+      type: 'widget-charger',
+      config: {
+        charger: {
+          trackedDevices: [
+            { id: 'mppt1', source: 'Renogy Rover', key: 'mppt1||Renogy Rover' },
+            { id: 'mppt1', source: 'default', key: 'mppt1||default' }
+          ],
+          groups: [],
+          optionsById: {}
+        }
+      }
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedIds).toEqual(['mppt1']);
+    expect(series[0].trackedDevices).toEqual([
+      { id: 'mppt1', source: 'default' },
+      { id: 'mppt1', source: 'Renogy Rover' }
+    ]);
+  });
+
+  it('normalizes source-qualified group memberIds when building allowedIds', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widget: IWidget = {
+      uuid: 'widget-charger-group-source-1',
+      type: 'widget-charger',
+      config: {
+        charger: {
+          trackedDevices: [
+            { id: 'mppt1', source: 'Renogy Rover', key: 'mppt1||Renogy Rover' },
+            { id: 'mppt2', source: 'default', key: 'mppt2||default' }
+          ],
+          groups: [
+            {
+              id: 'grp-1',
+              name: 'House Chargers',
+              memberIds: ['mppt1||Renogy Rover', 'stale||default']
+            }
+          ],
+          optionsById: {}
+        }
+      } as IWidget['config']
+    };
+
+    const series = service.resolveSeriesForWidget(widget);
+    expect(series.length).toBe(1);
+    expect(series[0].allowedIds).toEqual(['mppt1', 'mppt2']);
+    });
+
+  it('resolves template mappings for all new electrical families', () => {
+    const service = TestBed.inject(DashboardHistorySeriesSyncService);
+    const widgets: IWidget[] = [
+      {
+        uuid: 'widget-charger-1',
+        type: 'widget-charger',
+        config: {
+          charger: {
+            trackedDevices: [
+              { id: 'dc-a', source: 'default', key: 'dc-a||default' },
+              { id: 'dc-b', source: 'default', key: 'dc-b||default' }
+            ],
+            groups: [],
+            optionsById: {}
+          }
+        }
+      },
+      {
+        uuid: 'widget-inverter-1',
+        type: 'widget-inverter',
+        config: {
+          inverter: {
+            trackedDevices: [{ id: 'inv-a', source: 'default', key: 'inv-a||default' }],
+            groups: [],
+            optionsById: {}
+          }
+        }
+      },
+      {
+        uuid: 'widget-alternator-1',
+        type: 'widget-alternator',
+        config: {
+          alternator: {
+            trackedDevices: [{ id: 'alt-a', source: 'default', key: 'alt-a||default' }],
+            groups: [],
+            optionsById: {}
+          }
+        }
+      },
+      {
+        uuid: 'widget-ac-1',
+        type: 'widget-ac',
+        config: {
+          ac: {
+            trackedDevices: [{ id: 'ac-main', source: 'default', key: 'ac-main||default' }],
+            groups: [],
+            optionsById: {}
+          }
+        }
+      }
+    ];
+
+    const resolved = widgets.flatMap(widget => service.resolveSeriesForWidget(widget));
+
+    expect(seriesIds(resolved)).toEqual([
+      'widget-ac-1:ac-template',
+      'widget-alternator-1:alternators-template',
+      'widget-charger-1:chargers-template',
+      'widget-inverter-1:inverters-template'
+    ]);
+
+    expect(resolved.find(item => item.seriesId === 'widget-charger-1:chargers-template')).toMatchObject({
+      expansionMode: 'charger-tree',
+      familyKey: 'chargers',
+      allowedIds: ['dc-a', 'dc-b'],
+      trackedDevices: [
+        { id: 'dc-a', source: 'default' },
+        { id: 'dc-b', source: 'default' }
+      ]
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-inverter-1:inverters-template')).toMatchObject({
+      expansionMode: 'inverter-tree',
+      familyKey: 'inverters',
+      allowedIds: ['inv-a'],
+      trackedDevices: [{ id: 'inv-a', source: 'default' }]
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-alternator-1:alternators-template')).toMatchObject({
+      expansionMode: 'alternator-tree',
+      familyKey: 'alternators',
+      allowedIds: ['alt-a'],
+      trackedDevices: [{ id: 'alt-a', source: 'default' }]
+    });
+
+    expect(resolved.find(item => item.seriesId === 'widget-ac-1:ac-template')).toMatchObject({
+      expansionMode: 'ac-tree',
+      familyKey: 'ac',
+      allowedIds: ['ac-main'],
+      trackedDevices: [{ id: 'ac-main', source: 'default' }]
+    });
+  });
+
+  it('uses all discovered solar units when trackedDevices is empty', () => {
         const service = TestBed.inject(DashboardHistorySeriesSyncService);
         const widget: IWidget = {
             uuid: 'widget-solar-3',
             type: 'widget-solar-charger',
             config: {
                 solarCharger: {
-                    trackedSolarIds: [],
-                    solarOptionsById: {}
+                trackedDevices: [],
+                optionsById: {}
                 }
             } as IWidget['config']
         };
 
         const series = service.resolveSeriesForWidget(widget);
         expect(series.length).toBe(1);
-        expect(series[0].allowedSolarIds).toBeNull();
+    expect(series[0].allowedIds).toBeNull();
+      expect(series[0].trackedDevices).toBeNull();
     });
 
     it('returns no widget series when supportAutomaticHistoricalSeries is explicitly false', () => {

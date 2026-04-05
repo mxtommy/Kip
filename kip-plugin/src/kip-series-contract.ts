@@ -1,5 +1,13 @@
 export type THistoryMethod = 'min' | 'max' | 'avg' | 'sma' | 'ema';
 
+export type TElectricalFamilyKey = 'batteries' | 'solar' | 'chargers' | 'inverters' | 'alternators' | 'ac';
+export type TElectricalExpansionMode = 'bms-battery-tree' | 'solar-tree' | 'charger-tree' | 'inverter-tree' | 'alternator-tree' | 'ac-tree';
+
+export interface IElectricalTrackedDeviceRef {
+  id: string;
+  source: string;
+}
+
 interface IKipSeriesDefinitionBase {
   seriesId: string;
   datasetUuid: string;
@@ -19,38 +27,53 @@ interface IKipSeriesDefinitionBase {
 
 export interface IKipConcreteSeriesDefinition extends IKipSeriesDefinitionBase {
   expansionMode?: null;
-  allowedBatteryIds?: null;
-  allowedSolarIds?: null;
+  familyKey?: null;
+  allowedIds?: null;
+  trackedDevices?: null;
 }
 
-export interface IBmsTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
-  ownerWidgetSelector: 'widget-bms';
-  expansionMode: 'bms-battery-tree';
-  allowedBatteryIds?: readonly string[] | null;
-  allowedSolarIds?: null;
+export interface IElectricalTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
+  ownerWidgetSelector:
+  | 'widget-bms'
+  | 'widget-solar-charger'
+  | 'widget-charger'
+  | 'widget-inverter'
+  | 'widget-alternator'
+  | 'widget-ac';
+  expansionMode: TElectricalExpansionMode;
+  familyKey?: TElectricalFamilyKey | null;
+  allowedIds?: readonly string[] | null;
+  trackedDevices?: readonly IElectricalTrackedDeviceRef[] | null;
 }
 
-export interface ISolarTemplateSeriesDefinition extends IKipSeriesDefinitionBase {
-  ownerWidgetSelector: 'widget-solar-charger';
-  expansionMode: 'solar-tree';
-  allowedBatteryIds?: null;
-  allowedSolarIds?: readonly string[] | null;
-}
+export type IKipTemplateSeriesDefinition = IElectricalTemplateSeriesDefinition;
 
-export type IKipTemplateSeriesDefinition = IBmsTemplateSeriesDefinition | ISolarTemplateSeriesDefinition;
+/** @deprecated Use IElectricalTemplateSeriesDefinition */
+export type IBmsTemplateSeriesDefinition = IElectricalTemplateSeriesDefinition;
+/** @deprecated Use IElectricalTemplateSeriesDefinition */
+export type ISolarTemplateSeriesDefinition = IElectricalTemplateSeriesDefinition;
 
 export type IKipSeriesDefinition = IKipConcreteSeriesDefinition | IKipTemplateSeriesDefinition;
 
 export function isKipTemplateSeriesDefinition(series: IKipSeriesDefinition): series is IKipTemplateSeriesDefinition {
-  return series.expansionMode === 'bms-battery-tree' || series.expansionMode === 'solar-tree';
+  return series.expansionMode === 'bms-battery-tree'
+    || series.expansionMode === 'solar-tree'
+    || series.expansionMode === 'charger-tree'
+    || series.expansionMode === 'inverter-tree'
+    || series.expansionMode === 'alternator-tree'
+    || series.expansionMode === 'ac-tree';
+}
+
+export function isKipElectricalTemplateSeriesDefinition(series: IKipSeriesDefinition): series is IElectricalTemplateSeriesDefinition {
+  return isKipTemplateSeriesDefinition(series);
 }
 
 export function isKipBmsTemplateSeriesDefinition(series: IKipSeriesDefinition): series is IBmsTemplateSeriesDefinition {
-  return series.expansionMode === 'bms-battery-tree';
+  return series.expansionMode === 'bms-battery-tree' && (series.familyKey == null || series.familyKey === 'batteries');
 }
 
 export function isKipSolarTemplateSeriesDefinition(series: IKipSeriesDefinition): series is ISolarTemplateSeriesDefinition {
-  return series.expansionMode === 'solar-tree';
+  return series.expansionMode === 'solar-tree' && (series.familyKey == null || series.familyKey === 'solar');
 }
 
 export function isKipConcreteSeriesDefinition(series: IKipSeriesDefinition): series is IKipConcreteSeriesDefinition {

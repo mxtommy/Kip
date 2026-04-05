@@ -53,6 +53,7 @@ Detailed Host2 implementation patterns are owned by `.agents/skills/kip-host2-wi
 - New widgets must keep `DEFAULT_CONFIG` complete and explicit, including path keys, sampling, and units expectations.
 - If widget registration is performed manually, registration map and definition entries must remain consistent with category conventions.
 - Widget creation changes must include test updates appropriate to the widget behavior, not only instantiation checks.
+- Specialized electrical widgets must also follow `.github/instructions/electrical-widgets.instructions.md`.
 
 Detailed implementation patterns are owned by `.agents/skills/kip-widget-creation/SKILL.md`.
 
@@ -75,6 +76,11 @@ Detailed implementation patterns are owned by `.agents/skills/kip-widget-creatio
 - Avoid adding install/uninstall plugin behavior unless explicitly required.
 - Preserve current API contracts with Signal K and plugin endpoints.
 
+## When adding new types, choose the owner by usage:
+
+- If the type is primarily used to build or consume KIP widget config forms/runtime internals, place it in `interfaces`.
+- If the type is shared across package/runtime boundaries (app/plugin) or is a stable external contract, place it in `contracts`.
+
 ## Build And Runtime Constraints
 
 - Preserve base path behavior for dev and build output.
@@ -92,6 +98,18 @@ When making architecture decisions, prioritize these services and their responsi
 - `DashboardHistorySeriesSyncService`
 - `KipSeriesApiClientService`
 - `PluginConfigClientService`
+
+
+### Type Ownership Rules (Do Not Drift)
+
+KIP intentionally keeps both `interfaces` and `contracts` folders. Do not merge them.
+
+- **`src/app/core/interfaces` is the normalized app/widget typing hub**
+   - Keep widget-config form model types centralized in `widgets-interface.ts`.
+   - This is where widget setup/runtime normalized config objects are defined for fast widget creation.
+- **`src/app/core/contracts` is for cross-boundary contracts**
+   - Keep stable schemas used across features or packages here.
+   - `kip-series-contract.ts` is shared with the plugin and must remain a boundary contract.
 
 ## Cross-Reference
 

@@ -2,6 +2,26 @@
 
 This document captures the agreed plan for implementing the BMS widget, Solar widget, and Power System Map widget. It preserves all decisions and technical details so each step can be executed later without losing context.
 
+## Implementation Tracking
+
+### Slice 1: Family Contract Prep (completed)
+
+- [x] Step 1: Shared electrical family descriptor and root path matrix scaffolded.
+- [x] Step 2: BMS and Solar runtime config resolution normalized to shared tracked/group/options fields with legacy fallback support.
+- [x] Step 3: Host2 and dashboard history sync now consume shared family descriptor metadata for title/eligibility/template routing.
+- [x] Step 4: Future family metadata entries added (chargers, inverters, alternators, AC) as typed descriptor placeholders.
+- [x] Step 5: Topology parity started by adding `associatedBus` support to BMS snapshots.
+- [x] Step 6: Shared history/chart metadata registry extraction for the history dialog.
+- [x] Step 7: Full config UI normalization and card/embed contract consolidation for all electrical families.
+- [x] Step 8: Slice 1 acceptance pass (full targeted tests + validation checklist sign-off).
+
+### Slice 2: New Widgets (in progress)
+
+- [x] Chargers widget implementation.
+- [x] Inverters widget implementation.
+- [x] Alternators widget implementation.
+- [x] AC widget implementation (bus + branch/leg v1 detail).
+
 ## Step 1: BMS Widget
 
 ### Goal
@@ -64,6 +84,11 @@ Build a Solar Charge Controller widget that mirrors the BMS structure and suppor
 
 ### Signal K path coverage
 - Roots: `self.electrical.solar`, `self.electrical.solar.<id>`
+- Positional id rule:
+  - The first segment after `self.electrical.solar.` is always the device id.
+  - Any token in that position is valid as an id (for example `power`, `charge`, `controller`, `load`).
+  - Setup discovery may discover ids from both `self.electrical.solar.<id>` and `self.electrical.solar.<id>.<metric...>` paths.
+  - Runtime value parsing accepts only `self.electrical.solar.<id>.<metric...>`; root-only `self.electrical.solar.<id>` paths are rejected for value application.
 - Identity and metadata:
   - `self.electrical.solar.<id>.name`
   - `self.electrical.solar.<id>.location`

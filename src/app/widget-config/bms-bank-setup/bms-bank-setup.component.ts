@@ -8,7 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PathDiscoveryService, PathDiscoveryToken } from '../../core/services/path-discovery.service';
-import type { BmsBankConfig, BmsBankConnectionMode } from '../../widgets/widget-bms/bms.types';
+import type { BmsBankConnectionMode } from '../../widgets/widget-bms/widget.bms.types';
+import type { ElectricalGroupConfig, ElectricalTrackedDevice } from '../../core/interfaces/widgets-interface';
 import { TitleCasePipe } from '@angular/common';
 
 @Component({
@@ -33,10 +34,11 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   protected bmsFormGroup!: UntypedFormGroup;
-  protected banksFormArray!: UntypedFormArray;
-  protected trackedBatteryIdsControl!: UntypedFormControl;
+  protected groupsFormArray!: UntypedFormArray;
+  protected trackedDevicesControl!: UntypedFormControl;
   protected readonly discoveredBatteryIds = signal<string[]>([]);
-  protected readonly hasBanks = computed(() => this.banksFormArray?.length > 0);
+  protected readonly discoveredTrackedDevices = computed(() => this.discoveredBatteryIds().map(id => ({ id, source: 'default', key: `${id}||default` })));
+  protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
 
   private discoveryToken?: PathDiscoveryToken;
 
@@ -58,19 +60,19 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   }
 
   protected addBank(): void {
-    const bank: BmsBankConfig = {
+    const group: ElectricalGroupConfig = {
       id: `bank-${Date.now()}`,
       name: 'New Bank',
-      batteryIds: [],
+      memberIds: [],
       connectionMode: 'parallel'
     };
-    this.banksFormArray.push(this.createBankGroup(bank));
-    this.banksFormArray.markAsDirty();
+    this.groupsFormArray.push(this.createGroup(group));
+    this.groupsFormArray.markAsDirty();
   }
 
   protected removeBank(index: number): void {
-    this.banksFormArray.removeAt(index);
-    this.banksFormArray.markAsDirty();
+    this.groupsFormArray.removeAt(index);
+    this.groupsFormArray.markAsDirty();
   }
 
   /**
@@ -88,33 +90,78 @@ export class BmsBankSetupComponent implements OnInit, OnDestroy {
   }
 
   private ensureTrackedControl(): void {
-    const trackedControl = this.bmsFormGroup.get('trackedBatteryIds');
+    const trackedControl = this.bmsFormGroup.get('trackedDevices');
     if (trackedControl instanceof UntypedFormControl) {
-      this.trackedBatteryIdsControl = trackedControl;
+      this.trackedDevicesControl = trackedControl;
+      this.trackedDevicesControl.setValue(this.normalizeTrackedDeviceArray(this.trackedDevicesControl.value), { emitEvent: false });
       return;
     }
-    this.trackedBatteryIdsControl = new UntypedFormControl([]);
-    this.bmsFormGroup.addControl('trackedBatteryIds', this.trackedBatteryIdsControl);
+
+    this.trackedDevicesControl = new UntypedFormControl([]);
+    this.bmsFormGroup.addControl('trackedDevices', this.trackedDevicesControl);
+  }
+
+  protected compareTrackedDevice(
+    left: ElectricalTrackedDevice | null,
+    right: ElectricalTrackedDevice | null
+  ): boolean {
+    if (!left || !right) return left === right;
+    return left.key === right.key;
+  }
+
+  private normalizeTrackedDeviceArray(value: unknown): ElectricalTrackedDevice[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const devices = new Map<string, ElectricalTrackedDevice>();
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+      const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+      const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+      if (!id || !source) {
+        return;
+      }
+
+      const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+        ? candidate.key.trim()
+        : `${id}||${source}`;
+
+      devices.set(key, { id, source, key });
+    });
+
+    return [...devices.values()].sort((left, right) => left.key.localeCompare(right.key));
   }
 
   private ensureBanksArray(): void {
-    const banksControl = this.bmsFormGroup.get('banks');
-    if (banksControl instanceof FormArray || banksControl instanceof UntypedFormArray) {
-      this.banksFormArray = banksControl as UntypedFormArray;
+    const groupsControl = this.bmsFormGroup.get('groups') ?? this.bmsFormGroup.get('banks');
+    if (groupsControl instanceof FormArray || groupsControl instanceof UntypedFormArray) {
+      this.groupsFormArray = groupsControl as UntypedFormArray;
+      if (!this.bmsFormGroup.get('groups')) {
+        this.bmsFormGroup.setControl('groups', this.groupsFormArray);
+      }
       return;
     }
 
-    const initialBanks = Array.isArray(banksControl?.value) ? banksControl.value as BmsBankConfig[] : [];
-    this.banksFormArray = new UntypedFormArray(initialBanks.map(bank => this.createBankGroup(bank)));
-    this.bmsFormGroup.setControl('banks', this.banksFormArray);
+    const initialGroups = Array.isArray(groupsControl?.value) ? groupsControl.value as ElectricalGroupConfig[] : [];
+    this.groupsFormArray = new UntypedFormArray(initialGroups.map(group => this.createGroup(group)));
+    this.bmsFormGroup.setControl('groups', this.groupsFormArray);
   }
 
-  private createBankGroup(bank: BmsBankConfig): UntypedFormGroup {
+  private createGroup(group: ElectricalGroupConfig): UntypedFormGroup {
+    const memberIds = Array.isArray(group.memberIds)
+      ? group.memberIds
+      : (Array.isArray(group.batteryIds) ? group.batteryIds : []);
+
     return new UntypedFormGroup({
-      id: new UntypedFormControl(bank.id, Validators.required),
-      name: new UntypedFormControl(bank.name, Validators.required),
-      batteryIds: new UntypedFormControl(bank.batteryIds ?? []),
-      connectionMode: new UntypedFormControl(bank.connectionMode ?? 'parallel', Validators.required)
+      id: new UntypedFormControl(group.id, Validators.required),
+      name: new UntypedFormControl(group.name, Validators.required),
+      memberIds: new UntypedFormControl(memberIds),
+      connectionMode: new UntypedFormControl(group.connectionMode ?? 'parallel', Validators.required)
     });
   }
 

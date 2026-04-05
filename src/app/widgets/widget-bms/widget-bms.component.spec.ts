@@ -14,23 +14,34 @@ describe('WidgetBmsComponent', () => {
     let component: WidgetBmsComponent;
     let liveSubject: Subject<IPathUpdateWithPath>;
 
+    const runtimeOptions = {
+        color: 'contrast',
+        ignoreZones: false,
+        bms: {
+            trackedDevices: [] as { id: string; source: string; key: string }[],
+            banks: [] as unknown[],
+            cardMode: {
+                displayMode: 'full' as 'full' | 'compact',
+                metrics: [] as string[]
+            }
+        }
+    };
+
     const dataServiceMock = {
         subscribePathTreeWithInitial: vi.fn()
     };
 
     const runtimeMock = {
-        options: () => ({
-            color: 'contrast',
-            ignoreZones: false,
-            bms: {
-                trackedBatteryIds: [],
-                banks: []
-            }
-        })
+        options: () => runtimeOptions
     };
 
     const unitsMock = {
-        convertToUnit: (_unit: string, value: unknown) => value,
+        convertToUnit: (unit: string, value: unknown) => {
+            if (unit === 'D HH:MM:SS' && typeof value === 'number') {
+                return `${Math.floor(value / 3600)}:${Math.floor((value % 3600) / 60).toString().padStart(2, '0')}:${Math.floor(value % 60).toString().padStart(2, '0')}`;
+            }
+            return value;
+        },
         getDefaults: () => ({ Temperature: 'celsius' })
     };
 
@@ -61,6 +72,12 @@ describe('WidgetBmsComponent', () => {
 
     beforeEach(async () => {
         liveSubject = new Subject<IPathUpdateWithPath>();
+        runtimeOptions.color = 'contrast';
+        runtimeOptions.ignoreZones = false;
+        runtimeOptions.bms.trackedDevices = [];
+        runtimeOptions.bms.banks = [];
+        runtimeOptions.bms.cardMode.displayMode = 'full';
+        runtimeOptions.bms.cardMode.metrics = [];
 
         dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
             initial: [
@@ -117,5 +134,151 @@ describe('WidgetBmsComponent', () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    it('uses host renderMode input over widget card mode', () => {
+        runtimeOptions.bms.cardMode.displayMode = 'full';
+        runtimeOptions.bms.cardMode.metrics = ['voltage'];
+
+        fixture.detectChanges();
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compact = (component as unknown as { isCompactCardMode: () => boolean }).isCompactCardMode();
+        expect(compact).toBe(true);
+    });
+
+    it('uses compact layout for unassigned batteries when compact mode is active', () => {
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            bankSummaries: () => unknown[];
+            visibleBatteries: () => unknown[];
+            bankDisplayModels: () => Record<string, unknown>;
+            batteryDisplayModels: () => Record<string, unknown>;
+            buildRenderLayout: (banks: unknown[], batteries: unknown[], bankDisplayModels: Record<string, unknown>, batteryDisplayModels: Record<string, unknown>, compactMode: boolean) => {
+                unassignedBatteries: { compact: boolean; scale: number }[];
+                contentHeight: number;
+            };
+        };
+
+        const fullLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            false
+        );
+
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compactLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            true
+        );
+
+        expect(compactLayout.unassignedBatteries).toHaveLength(2);
+        expect(compactLayout.unassignedBatteries.every(item => item.compact)).toBe(true);
+        expect(compactLayout.unassignedBatteries.every(item => item.scale < 1)).toBe(true);
+        expect(compactLayout.contentHeight).toBeLessThan(fullLayout.contentHeight);
+    });
+
+  it('keeps single-row full mode shorter than compact bank layout', () => {
+        runtimeOptions.bms.banks = [{
+            id: 'bank-1',
+            name: 'House Bank',
+            batteryIds: ['bat1'],
+            connectionMode: 'parallel'
+        }];
+
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            bankSummaries: () => unknown[];
+            visibleBatteries: () => unknown[];
+            bankDisplayModels: () => Record<string, unknown>;
+            batteryDisplayModels: () => Record<string, unknown>;
+            buildRenderLayout: (banks: unknown[], batteries: unknown[], bankDisplayModels: Record<string, unknown>, batteryDisplayModels: Record<string, unknown>, compactMode: boolean) => {
+                banks: { height: number }[];
+            };
+        };
+
+        const fullLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            false
+        );
+
+        fixture.componentRef.setInput('renderMode', 'compact');
+        fixture.detectChanges();
+
+        const compactLayout = internals.buildRenderLayout(
+            internals.bankSummaries(),
+            internals.visibleBatteries(),
+            internals.bankDisplayModels(),
+            internals.batteryDisplayModels(),
+            true
+        );
+
+    const fullHeightRaw = fullLayout.banks[0]?.height;
+    const compactHeightRaw = compactLayout.banks[0]?.height;
+    const fullHeight = Number.isFinite(fullHeightRaw) ? fullHeightRaw : 0;
+    const compactHeight = Number.isFinite(compactHeightRaw) ? compactHeightRaw : 0;
+
+    expect(compactHeight).toBeGreaterThanOrEqual(fullHeight);
+    });
+
+    it('renders split value and unit tspans for bank metrics', () => {
+        runtimeOptions.bms.banks = [{
+            id: 'bank-1',
+            name: 'House Bank',
+            batteryIds: ['bat1'],
+            connectionMode: 'parallel'
+        }];
+
+        dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({
+            initial: [
+                makeUpdate('self.electrical.batteries.bat1.current', 10),
+                makeUpdate('self.electrical.batteries.bat1.voltage', 12.5),
+                makeUpdate('self.electrical.batteries.bat1.capacity.stateOfCharge', 0.55),
+                makeUpdate('self.electrical.batteries.bat1.capacity.remaining', 100),
+                makeUpdate('self.electrical.batteries.bat1.capacity.actual', 200)
+            ],
+            live$: liveSubject.asObservable()
+        });
+
+        fixture = TestBed.createComponent(WidgetBmsComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('id', 'w-bms-1');
+        fixture.componentRef.setInput('type', 'widget-bms');
+        fixture.componentRef.setInput('theme', themeMock);
+        fixture.detectChanges();
+
+        const internals = component as unknown as {
+            buildRenderSnapshot: () => unknown;
+            render: (snapshot: unknown) => void;
+        };
+        const snapshot = internals.buildRenderSnapshot();
+        if (snapshot) {
+            internals.render(snapshot);
+        }
+
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.querySelector('tspan.bank-card-current-value')?.textContent).toBe('10.0');
+        expect(host.querySelector('tspan.bank-card-current-unit')?.textContent).toBe('A');
+        expect(host.querySelector('tspan.bank-card-power-value')?.textContent).toBe('125');
+        expect(host.querySelector('tspan.bank-card-power-unit')?.textContent).toBe('W');
+        expect(host.querySelector('tspan.bank-gauge-soc-value')?.textContent).toBe('50');
+        expect(host.querySelector('tspan.bank-gauge-soc-unit')?.textContent).toBe('%');
+        expect(host.querySelector('tspan.bank-actualCapacity-value')?.textContent).toBe('100');
+        expect(host.querySelector('tspan.bank-actualCapacity-unit')?.textContent).toBe('kWh');
+        expect(host.querySelector('tspan.bms-soc-value')?.textContent).toBe('55');
+        expect(host.querySelector('tspan.bms-soc-unit')?.textContent).toBe('%');
     });
 });

@@ -301,8 +301,8 @@ describe('WidgetHost2Component', () => {
         testWidget.config = {
             displayName: 'Solar Charger',
             solarCharger: {
-                trackedSolarIds: [],
-                solarOptionsById: {}
+                trackedDevices: [],
+                optionsById: {}
             }
         } as IWidget['config'];
 

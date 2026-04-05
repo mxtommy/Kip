@@ -1,0 +1,8 @@
+<widget-title [text]="displayLabel()" [color]="labelColor()" />
+<svg #inverterSvg class="inverter-svg" aria-hidden="false"></svg>
+@if (!hasInverters()) {
+<div class="inverter-empty">
+  <div class="inverter-empty-title">No inverters detected</div>
+  <div class="inverter-empty-sub">Check Signal K inverter paths or select inverters in widget settings.</div>
+</div>
+}

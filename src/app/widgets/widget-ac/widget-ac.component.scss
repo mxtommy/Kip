@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.ac-svg {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15%;
+  height: 85%;
+  width: 100%;
+  overflow: hidden;
+  z-index: 20;
+  padding: 0 10px 10px 10px;
+}
+
+.ac-empty {
+  position: absolute;
+  inset: 0;
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--mat-sys-on-surface);
+  background: color-mix(in srgb, var(--kip-widget-card-background-color) 92%, transparent);
+}
+
+.ac-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ac-empty-sub {
+  font-size: 14px;
+  opacity: 0.8;
+}

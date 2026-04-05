@@ -16,7 +16,7 @@ import { DatasetChartOptionsComponent } from '../dataset-chart-options/dataset-c
 import { IUnitGroup, UnitsService } from '../../core/services/units.service';
 import { AppService } from '../../core/services/app-service';
 import { DatasetStreamService, IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
-import type { IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { ElectricalTrackedDevice, IDynamicControl, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { PathsOptionsComponent } from '../paths-options/paths-options.component';
 import { IDeleteEventObj } from '../boolean-control-config/boolean-control-config.component';
 import { DisplayDatetimeComponent } from '../display-datetime/display-datetime.component';
@@ -24,15 +24,16 @@ import { SelectAutopilotComponent } from '../select-autopilot/select-autopilot.c
 import { BmsBankSetupComponent } from '../bms-bank-setup/bms-bank-setup.component';
 import { AisTargetOptionsComponent } from '../ais-target-options/ais-target-options.component';
 import { SolarChargerSetupComponent } from '../solar-charger-setup/solar-charger-setup.component';
+import { ElectricalFamilySetupComponent } from '../electrical-family-setup/electrical-family-setup.component';
 import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'modal-widget-config',
-  templateUrl: './modal-widget-config.component.html',
-  styleUrls: ['./modal-widget-config.component.scss'],
-  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent, SolarChargerSetupComponent]
+  templateUrl: './root-modal-widget-config.component.html',
+  styleUrls: ['./root-modal-widget-config.component.scss'],
+  imports: [FormsModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTabsModule, MatCheckboxModule, MatSelectModule, MatDividerModule, MatButtonModule, DisplayDatetimeComponent, DisplayChartOptionsComponent, DatasetChartOptionsComponent, BooleanMultiControlOptionsComponent, PathsOptionsComponent, SelectAutopilotComponent, AisTargetOptionsComponent, BmsBankSetupComponent, SolarChargerSetupComponent, ElectricalFamilySetupComponent]
 })
-export class ModalWidgetConfigComponent implements OnInit {
+export class RootModalWidgetConfigComponent implements OnInit {
   // Property name constants to avoid magic strings
   private static readonly KEY_MULTI_CHILD_CTRLS = 'multiChildCtrls';
   private static readonly KEY_DISPLAY_SCALE = 'displayScale';
@@ -41,7 +42,7 @@ export class ModalWidgetConfigComponent implements OnInit {
   private static readonly KEY_PATHS = 'paths';
   private static readonly KEY_AIS = 'ais';
   private static readonly KEY_CONVERT_UNIT_TO = 'convertUnitTo';
-  private dialogRef = inject<MatDialogRef<ModalWidgetConfigComponent>>(MatDialogRef);
+  private dialogRef = inject<MatDialogRef<RootModalWidgetConfigComponent>>(MatDialogRef);
   private fb = inject(UntypedFormBuilder);
   private DatasetStreamService = inject(DatasetStreamService);
   private units = inject(UnitsService);
@@ -93,21 +94,21 @@ export class ModalWidgetConfigComponent implements OnInit {
       const value = (formData as Record<string, unknown>)[key];
       // handle Objects (plain objects or arrays explicitly handled below)
       if (value !== null && (Array.isArray(value) || this.isPlainObject(value))) {
-        if (key === ModalWidgetConfigComponent.KEY_MULTI_CHILD_CTRLS) {
+        if (key === RootModalWidgetConfigComponent.KEY_MULTI_CHILD_CTRLS) {
           groups.addControl(key, this.fb.array([]));
           const fa = groups.get(key) as UntypedFormArray;
           (value as IDynamicControl[]).forEach((ctrl: IDynamicControl) => {
             fa.push(this.generateCtrlArray(ctrl));
           });
-        } else if (key === ModalWidgetConfigComponent.KEY_DISPLAY_SCALE) {
+        } else if (key === RootModalWidgetConfigComponent.KEY_DISPLAY_SCALE) {
           groups.addControl(key, this.generateFormGroups(value, key));
-        } else if (key === ModalWidgetConfigComponent.KEY_GAUGE) {
+        } else if (key === RootModalWidgetConfigComponent.KEY_GAUGE) {
           groups.addControl(key, this.generateFormGroups(value, key));
-        } else if (key === ModalWidgetConfigComponent.KEY_AUTOPILOT) {
+        } else if (key === RootModalWidgetConfigComponent.KEY_AUTOPILOT) {
           groups.addControl(key, this.generateFormGroups(value, key));
-        } else if (key === ModalWidgetConfigComponent.KEY_AIS) {
+        } else if (key === RootModalWidgetConfigComponent.KEY_AIS) {
           groups.addControl(key, this.generateFormGroups(value, key));
-        } else if (key === ModalWidgetConfigComponent.KEY_PATHS) {
+        } else if (key === RootModalWidgetConfigComponent.KEY_PATHS) {
           const pathsValue = value as Record<string, unknown>;
           if (this.widgetConfig.multiChildCtrls !== undefined) {
             this.isPathArray = true;
@@ -143,13 +144,13 @@ export class ModalWidgetConfigComponent implements OnInit {
           groups.addControl(key, this.generateFormGroups(value, key));
         }
 
-        if (parent === ModalWidgetConfigComponent.KEY_PATHS) {
+        if (parent === RootModalWidgetConfigComponent.KEY_PATHS) {
           groups.addControl(key, this.generateFormGroups(value, key));
         }
 
       } else {
         // Handle Primitives - property values
-        if (parent === ModalWidgetConfigComponent.KEY_CONVERT_UNIT_TO) {
+        if (parent === RootModalWidgetConfigComponent.KEY_CONVERT_UNIT_TO) {
           // If we are building units list
           const unitConfig = (formData as Record<string, unknown>)[key] as IWidgetPath;
           if (unitConfig && (unitConfig as IWidgetPath).pathType == "number" || ('datasetUUID' in this.widgetConfig)) {
@@ -389,6 +390,41 @@ export class ModalWidgetConfigComponent implements OnInit {
   }
 
   submitConfig() {
-    this.dialogRef.close(this.formMaster.getRawValue());
+    const nextConfig = this.formMaster.getRawValue() as IWidgetSvcConfig;
+    this.normalizeElectricalTrackedDevices(nextConfig);
+    this.dialogRef.close(nextConfig);
+  }
+
+  private normalizeElectricalTrackedDevices(cfg: IWidgetSvcConfig): void {
+    const families = [cfg.charger, cfg.inverter, cfg.alternator, cfg.ac, cfg.solarCharger, cfg.bms];
+
+    families.forEach(family => {
+      if (!family) {
+        return;
+      }
+
+      const trackedDevices = Array.isArray(family.trackedDevices) ? family.trackedDevices : [];
+      const normalized = new Map<string, ElectricalTrackedDevice>();
+
+      trackedDevices.forEach(item => {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        const candidate = item as { id?: unknown; source?: unknown; key?: unknown };
+        const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+        const source = typeof candidate.source === 'string' ? candidate.source.trim() : 'default';
+        if (!id || !source) {
+          return;
+        }
+
+        const key = typeof candidate.key === 'string' && candidate.key.trim().length > 0
+          ? candidate.key.trim()
+          : `${id}||${source}`;
+        normalized.set(key, { id, source, key });
+      });
+
+      family.trackedDevices = [...normalized.values()].sort((left, right) => left.key.localeCompare(right.key));
+    });
   }
 }

@@ -94,6 +94,9 @@ export interface ISkUnitProperties {
   description: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UnitConverter = (v: any) => any;
+
 @Injectable()
 
 export class UnitsService implements OnDestroy {
@@ -446,7 +449,7 @@ export class UnitsService implements OnDestroy {
       }
     ];
 
-  private _defaultUnits: IUnitDefaults = null;
+  private _defaultUnits: IUnitDefaults = {};
 
   constructor() {
       this._defaultUnitsSub = this.SettingsService.getDefaultUnitsAsO().subscribe(
@@ -456,7 +459,8 @@ export class UnitsService implements OnDestroy {
       );
   }
 
-  private unitConversionFunctions = {
+  private unitConversionFunctions: Record<string, UnitConverter> = {
+
     'unitless': function(v) { return v; },
     ' ': function(v) { return v; },
 //  speed
@@ -622,10 +626,10 @@ export class UnitsService implements OnDestroy {
    *
    * @param {string} unit The conversion type unit
    * @param {number} value The source value
-   * @return {*}  {number} The result of the conversion
+   * @return {*}  {number | null} The result of the conversion
    * @memberof UnitsService
    */
-  public  convertToUnit(unit: string, value: number): number {
+  public convertToUnit(unit: string, value: number): number | null {
     if (!(unit in this.unitConversionFunctions)) { return null; }
     if (value === null) { return null; }
     const num: number = +value; // sometime we get strings here. Weird! Lazy patch.

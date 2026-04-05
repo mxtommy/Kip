@@ -32,6 +32,10 @@ import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state
 import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
 import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
 import { WidgetSolarChargerComponent } from '../../widgets/widget-solar-charger/widget-solar-charger.component';
+import { WidgetChargerComponent } from '../../widgets/widget-charger/widget-charger.component';
+import { WidgetInverterComponent } from '../../widgets/widget-inverter/widget-inverter.component';
+import { WidgetAlternatorComponent } from '../../widgets/widget-alternator/widget-alternator.component';
+import { WidgetAcComponent } from '../../widgets/widget-ac/widget-ac.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -168,7 +172,11 @@ export class WidgetService {
     WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
     WidgetAutopilotComponent: WidgetAutopilotComponent,
     WidgetBmsComponent: WidgetBmsComponent,
-    WidgetSolarChargerComponent: WidgetSolarChargerComponent
+    WidgetSolarChargerComponent: WidgetSolarChargerComponent,
+    WidgetChargerComponent: WidgetChargerComponent,
+    WidgetInverterComponent: WidgetInverterComponent,
+    WidgetAlternatorComponent: WidgetAlternatorComponent,
+    WidgetAcComponent: WidgetAcComponent
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -366,32 +374,6 @@ export class WidgetService {
       selector: 'widget-horizon',
       componentClassName: 'WidgetHorizonComponent'
     },
-  {
-      name: 'Battery Monitor',
-      description: 'Displays battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. See key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
-      icon: 'battery_charging',
-      minWidth: 2,
-      minHeight: 2,
-      defaultWidth: 8,
-      defaultHeight: 6,
-      category: 'Gauge',
-      requiredPlugins: [],
-      selector: 'widget-bms',
-      componentClassName: 'WidgetBmsComponent'
-    },
-    {
-      name: 'Solar Charger',
-      description: 'Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.',
-      icon: 'solar_charger',
-      minWidth: 2,
-      minHeight: 2,
-      defaultWidth: 8,
-      defaultHeight: 6,
-      category: 'Gauge',
-      requiredPlugins: [],
-      selector: 'widget-solar-charger',
-      componentClassName: 'WidgetSolarChargerComponent'
-    },
     {
       name: 'Classic Steel',
       description: 'A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.',
@@ -405,6 +387,84 @@ export class WidgetService {
       selector: 'widget-gauge-steel',
       componentClassName: 'WidgetSteelGaugeComponent'
     },
+    {
+      name: 'Battery Monitor',
+      description: 'Displays battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. See key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.',
+      icon: 'battery_charging',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-bms',
+      componentClassName: 'WidgetBmsComponent'
+    },
+    {
+      name: 'Solar Charger',
+      description: 'Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.',
+      icon: 'solar_charger',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-solar-charger',
+      componentClassName: 'WidgetSolarChargerComponent'
+    },
+    {
+      name: 'AC/DC Charger',
+      description: 'Track charger output and charging state with voltage, current, power, and temperature monitoring, including real-time charging stage indicators.',
+      icon: 'charger',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-charger',
+      componentClassName: 'WidgetChargerComponent'
+    },
+/*     {
+      name: 'Alternator',
+      description: 'Monitor alternator output and charging performance with voltage, current, power, revolutions and temperature metrics.',
+      icon: 'alternator',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-alternator',
+      componentClassName: 'WidgetAlternatorComponent'
+    },
+    {
+      name: 'Inverter',
+      description: 'Monitor inverter input and output with AC voltage, current, power, and temperature metrics. Track real-time inverter state and mode. Manage multiple linked inverter units with grouped device configuration.',
+      icon: 'inverter',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-inverter',
+      componentClassName: 'WidgetInverterComponent'
+    },
+    {
+      name: 'AC Monitor',
+      description: 'Monitor AC bus and line-level loads with real-time voltage, current, frequency, and power metrics.',
+      icon: 'acMonitor',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 6,
+      defaultHeight: 6,
+      category: 'Gauge',
+      requiredPlugins: [],
+      selector: 'widget-ac',
+      componentClassName: 'WidgetAcComponent'
+    }, */
     {
       name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',

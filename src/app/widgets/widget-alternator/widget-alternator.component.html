@@ -1,0 +1,8 @@
+<widget-title [text]="displayLabel()" [color]="labelColor()" />
+<svg #alternatorSvg class="alternator-svg" aria-hidden="false"></svg>
+@if (!hasAlternators()) {
+<div class="alternator-empty">
+  <div class="alternator-empty-title">No alternators detected</div>
+  <div class="alternator-empty-sub">Check Signal K alternator paths or select alternators in widget settings.</div>
+</div>
+}

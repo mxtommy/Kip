@@ -83,6 +83,7 @@ KIP widgets turn Signal K data into readable visuals and controls. Available wid
 - **Wind Trends** – Real-time True Wind trends with dual axes for direction and speed, live values, and averages.
 - **Battery Monitor** - Display batteries or whole banks state State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature.
 - **Solar Charger**- Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.
+- **AC/DC Charger**- Monitor charging performance at a glance with a compact AC/DC Charger Widget. View single or multiple chargers with charge mode, voltage, current, power and temperature. Chargers are discovered automatically.
 - **Freeboard-SK** – Adds the Freeboard-SK chart plotter as a widget with automatic sign-in.
 - **Autopilot Head** – Typical autopilot controls for compatible Signal K Autopilot devices.
 - **Realtime Data Chart** – Visualizes data on a real-time chart with actuals, averages, and min/max.

@@ -6,6 +6,7 @@ It is intentionally short. Detailed rules live in:
 - `.github/instructions/best-practices.instructions.md`
 - `.github/instructions/angular.instructions.md`
 - `.github/instructions/project.instructions.md`
+- `.github/instructions/electrical-widgets.instructions.md`
 
 ## Instruction Load Order
 
@@ -36,6 +37,7 @@ Use this map whenever creating or editing instruction content:
 - Put content in `best-practices.instructions.md` when it applies across frameworks and features (quality, testing posture, accessibility, documentation, change hygiene).
 - Put content in `angular.instructions.md` when it is Angular API/framework behavior (signals, template control flow, DI patterns, component patterns, routing/forms/http framework usage).
 - Put content in `project.instructions.md` when it is KIP-specific architecture or domain behavior (service boundaries, ownership contracts, Signal K/plugin integration constraints, Host2 policy constraints).
+- Put content in `electrical-widgets.instructions.md` when it is a strict electrical-widget specialization rule derived from KIP widget architecture.
 - Put content in `COPILOT.md` when it is long-form architecture context, rationale, and extended implementation reference material that should not be policy text.
 
 If a rule could fit in multiple files, keep it in the most specific owning file and reference it from the others.
@@ -66,7 +68,7 @@ Use this workflow whenever editing AI documentation files (`COPILOT.md`, `.githu
   - `.github/instructions/best-practices.instructions.md`
   - `.github/instructions/angular.instructions.md`
   - `.github/instructions/project.instructions.md`
-2. Declare ownership mapping before editing:
+  - `.github/instructions/electrical-widgets.instructions.md` when editing specialized electrical widget guidance2. Declare ownership mapping before editing:
   - which file is policy owner
   - which file is context/rationale only
   - which file is implementation companion only
@@ -111,6 +113,8 @@ For multi-concern edits, apply all matching skills and prioritize project constr
 Skills provide implementation patterns. Instruction files remain the policy source of truth.
 
 For all work touching this repository, always apply `project.instructions.md` in addition to the relevant Angular skill(s).
+
+For charger, inverter, alternator, AC, and future specialized electrical widgets, also apply `electrical-widgets.instructions.md`.
 
 ## Required Output Checklist For Agent Responses
 

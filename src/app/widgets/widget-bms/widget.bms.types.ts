@@ -1,14 +1,15 @@
 import type { TState } from '../../core/interfaces/signalk-interfaces';
-export type { BmsBankConnectionMode, BmsBankConfig, BmsWidgetConfig } from '../../core/interfaces/widgets-interface';
+import type { IElectricalTopologySnapshotCore } from '../../core/contracts/electrical-topology-card.contract';
+export type {
+  BmsBankConnectionMode,
+  BmsBankConfig,
+  BmsWidgetConfig,
+  ElectricalGroupConfig,
+  ElectricalCardModeConfig
+} from '../../core/interfaces/widgets-interface';
 
-export interface BmsBatterySnapshot {
-  id: string;
-  name?: string | null;
-  location?: string | null;
+export interface BmsBatterySnapshot extends IElectricalTopologySnapshotCore {
   chemistry?: string | null;
-  voltage?: number | null;
-  current?: number | null;
-  power?: number | null;
   temperature?: number | null;
   capacityRemaining?: number | null;
   capacityNominal?: number | null;
@@ -43,8 +44,8 @@ export interface BmsBatteryDisplayModel {
   detailLineRegular: string;
   socText: string;
   socGlowEnabled: boolean;
-  actualCapacityText: string;
-  remainingText: string;
+  remainingCapacityText: string;
+  remainingTimeText: string;
   iconKey: 'power_available' | 'power_renewal';
 }
 
@@ -54,7 +55,7 @@ export interface BmsBankDisplayModel {
   currentText: string;
   powerText: string;
   socText: string;
-  remainingText: string;
+  remainingTimeText: string;
   remainingCapacityText: string;
   gaugeValuePath: string;
   gaugeValueColor: string;

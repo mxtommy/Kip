@@ -1,6 +1,16 @@
 import { ITheme } from '../services/app-service';
 import { TValidSkUnits } from '../services/units.service';
 import { TFormat, TPolicy, TScaleType } from './signalk-interfaces';
+import type { IElectricalCardModeConfig } from '../contracts/electrical-topology-card.contract';
+
+/**
+ * Ownership: Normalized widget app config interfaces.
+ *
+ * Keep widget-configuration form and runtime-normalized config object types centralized here
+ * to simplify widget creation and maintenance.
+ *
+ * Do not move shared app/plugin boundary contracts here; keep those in `core/contracts`.
+ */
 
 
 export enum ControlType {
@@ -70,9 +80,38 @@ export interface BmsBankConfig {
   connectionMode: BmsBankConnectionMode;
 }
 
+export interface ElectricalGroupConfig {
+  id: string;
+  name: string;
+  memberIds?: string[];
+  batteryIds?: string[];
+  chargerIds?: string[];
+  connectionMode: BmsBankConnectionMode;
+}
+
+export interface ElectricalCardModeConfig {
+  displayMode?: IElectricalCardModeConfig['displayMode'];
+  metrics: IElectricalCardModeConfig['metrics'];
+}
+
+export interface ElectricalTrackedDevice {
+  id: string;
+  source: string;
+  key: string;
+}
+
+export interface ElectricalFamilyConfig<TOptions = Record<string, never>> {
+  trackedDevices?: ElectricalTrackedDevice[];
+  groups?: ElectricalGroupConfig[];
+  optionsById: Record<string, TOptions>;
+  cardMode?: ElectricalCardModeConfig;
+}
+
 export interface BmsWidgetConfig {
-  trackedBatteryIds: string[];
+  trackedDevices?: ElectricalTrackedDevice[];
+  groups?: ElectricalGroupConfig[];
   banks: BmsBankConfig[];
+  cardMode?: ElectricalCardModeConfig;
 }
 
 export interface SolarOptionConfig {
@@ -80,8 +119,11 @@ export interface SolarOptionConfig {
 }
 
 export interface SolarWidgetConfig {
-  trackedSolarIds: string[];
-  solarOptionsById: Record<string, SolarOptionConfig>;
+  trackedDevices?: ElectricalTrackedDevice[];
+  groups?: ElectricalGroupConfig[];
+  optionsById?: Record<string, SolarOptionConfig>;
+  banks?: ElectricalGroupConfig[];
+  cardMode?: ElectricalCardModeConfig;
 }
 
 
@@ -122,7 +164,19 @@ export interface IWidgetSvcConfig {
   bms?: BmsWidgetConfig;
 
   /** Solar charger widget configuration */
-  solarCharger?: SolarWidgetConfig;
+  solarCharger?: ElectricalFamilyConfig<SolarOptionConfig>;
+
+  /** Charger widget configuration */
+  charger?: ElectricalFamilyConfig;
+
+  /** Inverter widget configuration */
+  inverter?: ElectricalFamilyConfig;
+
+  /** Alternator widget configuration */
+  alternator?: ElectricalFamilyConfig;
+
+  /** AC widget configuration */
+  ac?: ElectricalFamilyConfig;
 
   /** Color from KIP selection tool to use as main display color */
   color?: string;
