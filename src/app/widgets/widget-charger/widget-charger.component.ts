@@ -607,7 +607,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     const displayWidth = targetDisplayWidth;
     const displayX = (WidgetChargerComponent.VIEWBOX_WIDTH - displayWidth) / 2;
     const titleY = compact ? 8 : layout.titleY;
-    const displayY = compact ? 33 : 61;
+    const displayY = compact ? 33 : 60;
 
 
     const cards = snapshot.chargers.map((charger, index) => ({

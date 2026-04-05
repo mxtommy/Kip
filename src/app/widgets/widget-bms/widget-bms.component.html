@@ -1,4 +1,7 @@
-<svg #bmsSvg class="bms-svg" aria-hidden="false"></svg>
+@if (hasBanks()) {
+<widget-title [text]="displayLabel()" [color]="labelColor()"></widget-title>
+}
+<svg #bmsSvg class="bms-svg" [class.bms-svg--full]="!hasBanks()" aria-hidden="false"></svg>
 @if (!hasBatteries()) {
   <div class="bms-empty">
     <div class="bms-empty-title">No batteries detected</div>

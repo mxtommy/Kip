@@ -36,7 +36,12 @@ describe('WidgetBmsComponent', () => {
     };
 
     const unitsMock = {
-        convertToUnit: (_unit: string, value: unknown) => value,
+        convertToUnit: (unit: string, value: unknown) => {
+            if (unit === 'D HH:MM:SS' && typeof value === 'number') {
+                return `${Math.floor(value / 3600)}:${Math.floor((value % 3600) / 60).toString().padStart(2, '0')}:${Math.floor(value % 60).toString().padStart(2, '0')}`;
+            }
+            return value;
+        },
         getDefaults: () => ({ Temperature: 'celsius' })
     };
 

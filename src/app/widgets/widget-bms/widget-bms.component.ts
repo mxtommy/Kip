@@ -13,7 +13,8 @@ import { getElectricalWidgetFamilyDescriptor } from '../../core/contracts/electr
 import type { BmsBankDisplayModel, BmsBankSummary, BmsBatteryDisplayModel, BmsBatterySnapshot } from './bms.types';
 import type { ElectricalCardDisplayMode } from '../../core/contracts/electrical-topology-card.contract';
 import type { ITheme } from '../../core/services/app-service';
-import { ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT } from '../shared/electrical-card-layout.constants';
+import { ELECTRICAL_DIRECT_CARD_HEIGHT, ELECTRICAL_DIRECT_CARD_FULL_LAYOUT, ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH } from '../shared/electrical-card-layout.constants';
+import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 
 interface BmsRenderBank extends BmsBankSummary {
   displayModel: BmsBankDisplayModel;
@@ -30,6 +31,7 @@ interface BmsRenderBattery extends BmsBatterySnapshot {
   x: number;
   y: number;
   scale: number;
+  inBank: boolean;
   compact: boolean;
 }
 
@@ -52,7 +54,7 @@ interface BmsRenderSnapshot {
   templateUrl: './widget-bms.component.html',
   styleUrl: './widget-bms.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule]
+  imports: [MatIconModule, WidgetTitleComponent]
 })
 export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private static readonly BMS_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-bms');
@@ -73,19 +75,19 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  private static readonly VIEWBOX_WIDTH = 200;
+  private static readonly VIEWBOX_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly MIN_VIEWBOX_HEIGHT = 1;
-  private static readonly BANK_CARD_WIDTH = 200;
+  private static readonly BANK_CARD_WIDTH = ELECTRICAL_DIRECT_CARD_VIEWBOX_WIDTH;
   private static readonly BATTERY_CARD_HEIGHT = 50;
-  private static readonly BATTERY_CARD_WIDTH = 195;
+  private static readonly BATTERY_CARD_WIDTH = 200;
   private static readonly CARD_GAP = 8;
   private static readonly BANK_HEADER_HEIGHT = 80;
   private static readonly BANK_MIN_HEIGHT = 75;
   private static readonly SINGLE_ROW_BANK_HEIGHT = ELECTRICAL_DIRECT_CARD_HEIGHT;
   private static readonly IN_BANK_COLUMNS = 2;
   private static readonly IN_BANK_COLUMN_GAP = 5;
-  private static readonly IN_BANK_PADDING_X = 5;
-  private static readonly BANK_GAUGE_RADIUS = 45;
+  private static readonly IN_BANK_PADDING_X = 0;
+  private static readonly BANK_GAUGE_RADIUS = 50;
   private static readonly BANK_GAUGE_BG_STROKE = 10;
   private static readonly BANK_GAUGE_VALUE_STROKE = 10;
   private static readonly COMPACT_UNASSIGNED_BATTERY_SCALE = 0.82;
@@ -145,6 +147,18 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   protected readonly colorRole = computed(() => this.runtime.options()?.color ?? 'contrast');
   protected readonly ignoreZones = computed(() => this.runtime.options()?.ignoreZones ?? false);
+  protected readonly displayLabel = computed(() => {
+    const batteries = this.visibleBatteries();
+    if (batteries.length !== 1) {
+      return 'Batteries';
+    }
+
+    return this.resolveBatteryTitleText(batteries[0]);
+  });
+  protected readonly labelColor = computed(() => {
+    const theme = this.theme();
+    return theme ? getColors(this.colorRole(), theme).dim : 'var(--kip-contrast-dim-color)';
+  });
 
   protected readonly widgetColors = computed(() => {
     const theme = this.theme();
@@ -187,7 +201,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
       models[battery.id] = {
         id: battery.id,
-        titleText: battery.name || `Battery ${battery.id}`,
+        titleText: this.resolveBatteryTitleText(battery),
         chargeWidth: (WidgetBmsComponent.BATTERY_CARD_WIDTH - 3) * (battery.stateOfCharge ?? 0),
         chargeBarColorCompact,
         chargeBarColorRegular,
@@ -236,6 +250,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   });
 
   protected readonly hasBatteries = computed(() => this.visibleBatteries().length > 0);
+  protected readonly hasBanks = computed(() => this.bankSummaries().length > 0);
 
   constructor() {
     effect(() => {
@@ -763,7 +778,6 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .data(renderLayout.banks, item => item.id);
 
     const bankEnter = bankSelection.enter().append('g').attr('class', 'bank-card');
-    bankEnter.append('rect').attr('class', 'bank-card').attr('rx', 4).attr('ry', 4);
     bankEnter.append('text').attr('class', 'bank-card-power');
     bankEnter.append('text').attr('class', 'bank-card-current');
     const gaugeEnter = bankEnter.append('g').attr('class', 'bank-gauge');
@@ -776,18 +790,17 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankEnter.append('text').attr('class', 'bank-title');
 
     const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
-    bankMerged.attr('transform', item => `translate(${item.x + 0.5},${item.y + 0.5})`);
-    bankMerged.select('rect')
-      .attr('width', item => item.width - 1)
-      .attr('height', item => item.height - 1)
-      .attr('stroke', 'var(--mat-sys-outline-variant)')
-      .attr('stroke-width', 0.5);
-    bankMerged.select('text.bank-title')
-      .attr('x', layout.titleX)
-      .attr('y', layout.titleY)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
-      .attr('font-size', layout.titleFontSize)
-      .text(item => item.displayModel.titleText);
+    bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
+    if (renderLayout.banks.length > 1) {
+      bankMerged.select('text.bank-title')
+        .attr('x', layout.titleX)
+        .attr('y', layout.titleY)
+        .attr('fill', 'var(--kip-contrast-dim-color)')
+        .attr('font-size', layout.titleFontSize)
+        .text(item => item.displayModel.titleText);
+    } else {
+      bankMerged.select('text.bank-title').text('');
+    }
     bankMerged.select('text.bank-card-current')
       .attr('x', layout.lineOneX)
       .attr('y', layout.lineOneY)
@@ -818,7 +831,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('stroke-linecap', 'round');
     bankMerged.select('text.bank-gauge-soc')
       .attr('x', 0)
-      .attr('y', -2)
+      .attr('y', -5)
       .attr('text-anchor', 'middle')
       .attr('fill', 'var(--kip-contrast-color)')
       .attr('font-size', layout.primaryFontSize)
@@ -826,18 +839,18 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .text(item => item.displayModel.socText);
     bankMerged.select('text.bank-remaining')
       .attr('x', 143)
-      .attr('y', 37)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
-      .attr('text-anchor', 'middle')
-      .attr('font-size', 6)
-      .text(item => item.displayModel.remainingTimeText);
-    bankMerged.select('text.bank-actualCapacity')
-      .attr('x', 143)
-      .attr('y', 68)
+      .attr('y', 26)
       .attr('fill', 'var(--kip-contrast-dim-color)')
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .text(item => item.displayModel.remainingCapacityText);
+      .text('1d 12:14:54'); //item => item.displayModel.remainingTimeText);
+    bankMerged.select('text.bank-actualCapacity')
+      .attr('x', 143)
+      .attr('y', 66)
+      .attr('fill', 'var(--kip-contrast-dim-color)')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 8)
+      .text('0.231kWh'); //item => item.displayModel.remainingCapacityText);
     bankMerged
       .select<SVGGElement>('g.bank-bms-batteries')
       .each((bankItem, index, nodes) => {
@@ -855,7 +868,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         const inBankMerged = inBankEnter.merge(
           inBankSelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
         );
-        this.renderBatteryCards(inBankMerged, widgetColors);
+        this.renderBatteryCards(inBankMerged, widgetColors, snapshot.batteries.length > 1);
 
         inBankSelection.exit().remove();
       });
@@ -876,7 +889,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     const batteryMerged = batteryEnter.merge(
       batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
     );
-    this.renderBatteryCards(batteryMerged, widgetColors);
+    this.renderBatteryCards(batteryMerged, widgetColors, true);
 
     batterySelection.exit().remove();
 
@@ -911,28 +924,26 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       assigned.forEach(item => assignedBatteryIds.add(item.id));
 
       const rows = Math.ceil(assigned.length / WidgetBmsComponent.IN_BANK_COLUMNS);
+      const singleRowTargetHeight = WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT;
+      const isSingleRowFullMode = !compactMode && rows === 1;
+      const bankHeaderHeight = isSingleRowFullMode
+        ? Math.max(0, singleRowTargetHeight - inBankRenderedHeight - WidgetBmsComponent.CARD_GAP)
+        : WidgetBmsComponent.BANK_HEADER_HEIGHT;
       const batterySectionHeight = rows > 0
         ? rows * inBankRenderedHeight + (rows - 1) * WidgetBmsComponent.CARD_GAP
         : 0;
 
       const naturalBankHeight = Math.max(
         WidgetBmsComponent.BANK_MIN_HEIGHT,
-        WidgetBmsComponent.BANK_HEADER_HEIGHT + batterySectionHeight + WidgetBmsComponent.CARD_GAP
+        bankHeaderHeight + batterySectionHeight + WidgetBmsComponent.CARD_GAP
       );
-      const singleRowTargetHeight = Number.isFinite(WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT)
-        ? WidgetBmsComponent.SINGLE_ROW_BANK_HEIGHT
-        : WidgetBmsComponent.BANK_MIN_HEIGHT;
-      const bankHeight = compactMode
-        ? naturalBankHeight
-        : rows === 1
-          ? Math.max(singleRowTargetHeight, naturalBankHeight)
-        : naturalBankHeight;
+      const bankHeight = isSingleRowFullMode ? singleRowTargetHeight : naturalBankHeight;
 
       const batteryCards: BmsRenderBattery[] = assigned.map((battery, index) => {
         const column = index % WidgetBmsComponent.IN_BANK_COLUMNS;
         const row = Math.floor(index / WidgetBmsComponent.IN_BANK_COLUMNS);
         const x = WidgetBmsComponent.IN_BANK_PADDING_X + column * (inBankSlotWidth + WidgetBmsComponent.IN_BANK_COLUMN_GAP);
-        const y = WidgetBmsComponent.BANK_HEADER_HEIGHT + row * (inBankRenderedHeight + WidgetBmsComponent.CARD_GAP);
+        const y = bankHeaderHeight + 7 + row * (inBankRenderedHeight + WidgetBmsComponent.CARD_GAP);
         return {
           id: battery.id,
           displayModel: batteryDisplayModels[battery.id],
@@ -940,6 +951,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
           x,
           y,
           scale: inBankScale,
+          inBank: true,
           compact: true
         };
       });
@@ -977,6 +989,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         x: 0,
         y: unassignedStartY + index * (unassignedRenderedHeight + WidgetBmsComponent.CARD_GAP),
         scale: unassignedScale,
+        inBank: false,
         compact: compactMode
       }));
 
@@ -1014,17 +1027,20 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   private renderBatteryCards(
     selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
-    widgetColors: ReturnType<typeof getColors>
+    widgetColors: ReturnType<typeof getColors>,
+    showTitle: boolean
   ): void {
     selection.attr('transform', item => `translate(${item.x},${item.y}) scale(${item.scale})`);
     selection.select('rect.bms-battery')
-      .attr('width', item => item.compact ? WidgetBmsComponent.BATTERY_CARD_WIDTH - WidgetBmsComponent.CARD_GAP : WidgetBmsComponent.BATTERY_CARD_WIDTH)
+      .attr('width', item => item.inBank
+        ? WidgetBmsComponent.BATTERY_CARD_WIDTH
+        : (item.compact ? WidgetBmsComponent.BATTERY_CARD_WIDTH - WidgetBmsComponent.CARD_GAP : WidgetBmsComponent.BATTERY_CARD_WIDTH))
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT)
       .attr('fill', item => item.compact ? 'var(--mat-sys-background)' : 'var(--kip-contrast-dimmer-color)')
       .attr('stroke', 'var(--kip-contrast-dimmer-color)')
       .attr('stroke-width', 0);
     selection.select('rect.bms-battery-tip')
-      .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH + 1)
+      .attr('x', WidgetBmsComponent.BATTERY_CARD_WIDTH)
       .attr('y', WidgetBmsComponent.BATTERY_CARD_HEIGHT / 2 - 10)
       .attr('width', 4)
       .attr('height', 20)
@@ -1037,13 +1053,17 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('width', item => item.displayModel.chargeWidth)
       .attr('height', WidgetBmsComponent.BATTERY_CARD_HEIGHT - 3)
       .attr('fill', item => item.compact ? item.displayModel.chargeBarColorCompact : item.displayModel.chargeBarColorRegular);
-    selection.select('text.bms-title')
-      .attr('x', 5)
-      .attr('y', item => item.compact ? 11 : 14)
-      .attr('fill', 'var(--kip-contrast-dim-color)')
-      .attr('font-size', item => item.compact ? 8 : 12)
-      .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
-      .text(item => item.displayModel.titleText);
+    if (showTitle) {
+      selection.select('text.bms-title')
+        .attr('x', 5)
+        .attr('y', item => item.compact ? 11 : 14)
+        .attr('fill', 'var(--kip-contrast-dim-color)')
+        .attr('font-size', item => item.compact ? 8 : 12)
+        .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
+        .text(item => item.displayModel.titleText);
+    } else {
+      selection.select('text.bms-title').text('');
+    }
     selection.select('text.bms-ampere')
       .attr('x', 10)
       .attr('y', 33)
@@ -1143,17 +1163,24 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return `${Math.round(value * 100)}%`;
   }
 
+  private resolveBatteryTitleText(battery: Pick<BmsBatterySnapshot, 'id' | 'name'>): string {
+    return battery.name || `Battery ${battery.id}`;
+  }
+
   private formatDuration(seconds: number | null | undefined): string {
     if (seconds == null) return '';
-    return this.units.convertToUnit('D HH:MM:SS', seconds).toString();
+    const converted = this.units.convertToUnit('D HH:MM:SS', seconds);
+    if (converted == null) return '';
+    return typeof converted === 'string' ? converted : `${converted}`;
   }
 
   private formatTemperature(value: unknown): string {
     if (value == null) return '';
     if (typeof value !== 'number') return '';
     const displayUnit = this.units.getDefaults().Temperature;
-    value = this.units.convertToUnit(displayUnit, value).toFixed(1);
-    return `${value} ${displayUnit === 'celsius' ? '°C' : '°F'}`;
+    const converted = this.units.convertToUnit(displayUnit, value);
+    if (converted === null) return '';
+    return `${converted.toFixed(1)} ${displayUnit === 'celsius' ? '°C' : '°F'}`;
   }
 
   private sumNumbers(values: (number | null | undefined)[]): number | null {
