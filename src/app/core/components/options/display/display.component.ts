@@ -63,11 +63,12 @@ export class SettingsDisplayComponent implements OnInit {
   protected providerMode = model<'kip' | 'other'>('other');
   protected widgetHistoryDisabled = model<boolean>(false);
   protected isKipHistoryProviderSelectable = signal<boolean>(false);
+  protected isPathValidationDisabled = model<boolean>(this.settings.getDisablePathValidation());
   // Guards concurrent plugin enable checks to avoid stale promise handlers mutating state
   private _pluginCheckSeq = 0;
 
   constructor() {
-    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait), { initialValue: { matches: false, breakpoints: {} } });
   }
 
   ngOnInit() {
@@ -126,10 +127,11 @@ export class SettingsDisplayComponent implements OnInit {
     this.settings.setSplitShellSide(this.splitShellSide());
     this.settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
     this.settings.setWidgetHistoryDisabled(this.widgetHistoryDisabled());
+    this.settings.setDisablePathValidation(this.isPathValidationDisabled());
     if (!this.setKipPluginConfig()) {
       this.toast.show('Failed to save KIP plugin configuration on server.', 0, false, 'error');
     }
-    this.displayForm().form.markAsPristine();
+    this.displayForm()?.form.markAsPristine();
     this.toast.show("Configuration saved", 1000, true, 'message');
   }
 
@@ -178,7 +180,7 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   protected isAutoNightModeSupported(e: MatSlideToggleChange): void {
-    this.displayForm().form.markAsDirty();
+    this.displayForm()?.form.markAsDirty();
     this.autoNightMode.set(e.checked);
   }
 
@@ -331,7 +333,7 @@ export class SettingsDisplayComponent implements OnInit {
   }
 
   protected setBrightness(value: number): void {
-    this.displayForm().form.markAsDirty();
+    this.displayForm()?.form.markAsDirty();
     this.nightBrightness.set(value);
     this.app.setBrightness(value, this.app.isNightMode());
   }
