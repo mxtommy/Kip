@@ -165,6 +165,29 @@
         }
       </mat-expansion-panel>
     </mat-accordion>
+    <br />
+    <mat-accordion>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Advanced and Testing
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+          <mat-panel-description>
+            Specialized options for development, troubleshooting, and test scenarios. Most users should leave these settings
+            off.
+          </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-slide-toggle class="full-width" [(ngModel)]="isPathValidationDisabled" name="isPathValidationDisabled"
+          aria-describedby="path-validation-helper">
+          Allow saving widgets with invalid paths (testing only)
+        </mat-slide-toggle>
+        <p id="path-validation-helper" class="dev-option-helper mat-body-small" role="note">
+          Use only for development and troubleshooting. This temporary setting is reset when the app restarts.
+        </p>
+      </mat-expansion-panel>
+    </mat-accordion>
   <div class="formActionFooter">
     <mat-divider class="formActionDivider"></mat-divider>
     <button mat-flat-button type="submit" class="formActionButton" [disabled]="!displayForm.form.dirty || displayForm.form.invalid">Save</button>

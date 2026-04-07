@@ -47,19 +47,21 @@ export class SettingsService {
   public proxyEnabled = false;
   public signalKSubscribeAll = false;
   private useDeviceToken = false;
-  private loginName: string;
-  private loginPassword: string;
-  public useSharedConfig: boolean;
-  private sharedConfigName: string;
-  private activeConfig: IConfig = {app: null, theme: null, dashboards: null};
+  private loginName = '';
+  private loginPassword = '';
+  public useSharedConfig = true;
+  private sharedConfigName = 'default';
+  private activeConfig: IConfig = { app: null, theme: null, dashboards: [] };
 
-  private kipUUID: string;
-  public signalkUrl: ISignalKUrl;
-  private widgets: IWidget[];
+  private kipUUID = '';
+  public signalkUrl: ISignalKUrl | undefined;
+  private widgets: IWidget[] = [];
   private _dashboards: Dashboard[] = [];
   private dataSets: IDatasetServiceDatasetConfig[] = [];
   public configUpgrade = signal<boolean>(false);
-  private configVersion = undefined; // store actual config version from config version property in config
+  private configVersion: number | undefined; // store actual config version from config version property in config
+  private disablePathValidation = false; // used to disable path validation in path control component in widget options.
+
   constructor() {
     console.log("[AppSettings Service] Service startup...");
     this.storage.activeConfigFileVersion = configFileVersion;
@@ -87,7 +89,7 @@ export class SettingsService {
       this.pushSettings();
     } else {
       console.log("[AppSettings Service] LocalStorage enabled");
-      const localStorageConfig: IConfig = { app: null, theme: null, dashboards: null };
+      const localStorageConfig: IConfig = { app: null, theme: null, dashboards: [] };
       localStorageConfig.app = this.loadConfigFromLocalStorage("appConfig");
       this.configVersion = localStorageConfig.app?.configVersion;
       this.checkConfigUpgradeRequired(true, localStorageConfig.app?.configVersion);
@@ -143,7 +145,7 @@ export class SettingsService {
    * @memberof SettingsService
    */
   public loadConfigFromLocalStorage(type: string) {
-    let config = JSON.parse(localStorage.getItem(type));
+    let config = JSON.parse(localStorage.getItem(type) ?? '');
 
     if (config === null) {
       console.log(`[AppSettings Service] Error loading ${type} config. Force loading ${type} defaults`);
@@ -186,7 +188,9 @@ export class SettingsService {
   }
 
   private pushSettings(): void {
-    this.themeName.next(this.activeConfig.theme.themeName);
+    if (this.activeConfig.theme) {
+      this.themeName.next(this.activeConfig.theme.themeName);
+    }
     this.dataSets = this.activeConfig.app.dataSets;
     this.unitDefaults.next(this.activeConfig.app.unitDefaults);
     this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
@@ -299,7 +303,9 @@ export class SettingsService {
     this.useSharedConfig = value.useSharedConfig;
     this.proxyEnabled = value.proxyEnabled;
     this.signalKSubscribeAll = value.signalKSubscribeAll;
-    this.signalkUrl.url = value.signalKUrl;
+    if (this.signalkUrl) {
+      this.signalkUrl.url = value.signalKUrl;
+    }
     if (!value.useSharedConfig) {
       this.useDeviceToken = true;
     } else this.useDeviceToken = false;
@@ -422,6 +428,14 @@ export class SettingsService {
     } else {
       this.saveAppConfigToLocalStorage();
     }
+  }
+
+  public getDisablePathValidation(): boolean {
+    return this.disablePathValidation;
+  }
+
+  public setDisablePathValidation(disable: boolean) {
+    this.disablePathValidation = disable;
   }
 
   // --- split Shell Settings API ---
@@ -575,7 +589,7 @@ export class SettingsService {
   //Config manipulation: RAW and SignalK server - used by Settings Config Component
   public resetSettings() {
 
-    const newDefaultConfig: IConfig = {app: null, theme: null, dashboards: null};
+    const newDefaultConfig: IConfig = { app: null, theme: null, dashboards: [] };
     newDefaultConfig.app = this.getDefaultAppConfig();
     newDefaultConfig.theme = this.getDefaultThemeConfig();
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
@@ -654,7 +668,7 @@ export class SettingsService {
   private buildAppStorageObject() {
 
     const storageObject: IAppConfig = {
-      configVersion: this.configVersion,
+      configVersion: this.configVersion ?? latestConfigVersion,
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
@@ -674,9 +688,9 @@ export class SettingsService {
 
   private buildConnectionStorageObject() {
     const storageObject: IConnectionConfig = {
-      configVersion: this.configVersion,
+      configVersion: this.configVersion ?? latestConfigVersion,
       kipUUID: this.kipUUID,
-      signalKUrl: this.signalkUrl.url,
+      signalKUrl: this.signalkUrl?.url ?? '',
       proxyEnabled: this.proxyEnabled,
       signalKSubscribeAll: this.signalKSubscribeAll,
       useDeviceToken: this.useDeviceToken,
@@ -739,7 +753,7 @@ export class SettingsService {
   }
 
   private getDefaultDashboardsConfig(): Dashboard[] {
-    const config = [];
+    const config: Dashboard[] = [];
     localStorage.setItem("dashboardsConfig", JSON.stringify(config));
     return config;
   }

@@ -15,8 +15,8 @@ export interface IConnectionConfig {
   sharedConfigName: string;
 }
 export interface IConfig {
-  app: IAppConfig;
-  theme: IThemeConfig;
+  app: IAppConfig | null;
+  theme: IThemeConfig | null;
   dashboards: Dashboard[];
 }
 

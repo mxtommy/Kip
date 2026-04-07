@@ -17,6 +17,7 @@ import { compare } from 'compare-versions';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
 import { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SettingsService } from '../../core/services/settings.service';
 
 function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -52,6 +53,7 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
 export class PathControlConfigComponent implements OnInit, OnChanges {
   private readonly _data = inject(DataService);
   private readonly _units = inject(UnitsService);
+  private readonly _settings = inject(SettingsService);
   private readonly _connection = inject(SignalKConnectionService);
   private readonly _destroyRef = inject(DestroyRef);
 
@@ -59,17 +61,17 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
   readonly multiCTRLArray = input.required<IDynamicControl[]>();
   readonly filterSelfPaths = input.required<boolean>();
 
-  public availablePaths: IPathMetaData[];
+  public availablePaths: IPathMetaData[] = [];
   public filteredPaths = new BehaviorSubject<IPathMetaData[] | null>(null);
 
   // Sources control
-  public availableSources: string[];
+  public availableSources: string[] = [];
 
   // Units control
   public unitList: IConversionPathList = {base: '', conversions: []};
   public showPathSkUnitsFilter = false;
   public pathSkUnitsFilterControl = new FormControl<ISkBaseUnit | null>(null);
-  public pathSkUnitsFiltersList: ISkBaseUnit[];
+  public pathSkUnitsFiltersList: ISkBaseUnit[] = [];
   public readonly unitlessUnit: ISkBaseUnit = {unit: 'unitless', properties: {display: '(null)', quantity: 'Unitless', quantityDisplay: '(null)', description: '', }};
 
   ngOnInit() {
@@ -84,17 +86,20 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
     this.pathSkUnitsFiltersList.unshift(this.unitlessUnit);
 
     if (pathFormGroup.value.pathSkUnitsFilter) {
-      this.pathSkUnitsFilterControl.setValue(this.pathSkUnitsFiltersList.find(item => item.unit === this.pathFormGroup().value.pathSkUnitsFilter), {onlySelf: true});
+      this.pathSkUnitsFilterControl.setValue(this.pathSkUnitsFiltersList.find(item => item.unit === this.pathFormGroup().value.pathSkUnitsFilter) ?? null, { onlySelf: true });
     }
 
     if (pathFormGroup.value.showPathSkUnitsFilter) {
       this.showPathSkUnitsFilter = pathFormGroup.value.showPathSkUnitsFilter;
     }
 
-    // add path validator fn and validate
-    pathFormGroup.controls['path'].setValidators([
-      pathRequiredOrValidMatch(() => this.getPaths())
-    ]);
+    // if not disabled, add path validator fn and validate
+    if (!this._settings.getDisablePathValidation()) {
+      pathFormGroup.controls['path'].setValidators([
+        pathRequiredOrValidMatch(() => this.getPaths())
+      ]);
+    }
+
     pathFormGroup.controls['path'].updateValueAndValidity({onlySelf: true, emitEvent: false});
     // Subscribe to pathRequired changes to re-validate path
     if (pathFormGroup.controls['pathRequired']) {
@@ -111,7 +116,7 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
     // If SampleTime control is not present because the path property is missing, add it.
     if (!pathFormGroup.controls['sampleTime']) {
       pathFormGroup.addControl('sampleTime', new UntypedFormControl('500', Validators.required));
-      pathFormGroup.controls['sampleTime'].updateValueAndValidity({onlySelf: true, emitEvent: false});
+      (pathFormGroup.controls['sampleTime'] as AbstractControl).updateValueAndValidity({ onlySelf: true, emitEvent: false });
     }
 
     // subscribe to path formControl changes
@@ -187,7 +192,7 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
       filteredPaths = filteredPaths.filter(item => {
         const hasUnits = !!item.meta && !!item.meta.units;
         const isUnitless = selectedUnit === 'unitless';
-        const matchesUnit = hasUnits && item.meta.units === selectedUnit;
+        const matchesUnit = hasUnits && item.meta?.units === selectedUnit;
         const isActuallyUnitless = !hasUnits && isUnitless;
         return matchesUnit || isActuallyUnitless;
       });
@@ -247,20 +252,21 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
 
   private updatePathMetaBoundDisplayName(path: string) {
     const pathFormGroup = this.pathFormGroup();
-    if (!Object.prototype.hasOwnProperty.call(pathFormGroup.parent.parent.value, 'displayName')) {return;}
+    if (!pathFormGroup.parent?.parent?.value || !Object.prototype.hasOwnProperty.call(pathFormGroup.parent.parent.value, 'displayName')) { return; }
     const meta = this._data.getPathMeta(path);
-    if (meta?.displayName) {
-      pathFormGroup.parent.parent.controls['displayName'].setValue(meta.displayName);
+    if (meta?.displayName && 'displayName' in pathFormGroup.parent.parent.controls) {
+      (pathFormGroup.parent.parent.get('displayName') as AbstractControl | null)?.setValue(meta.displayName);
     }
   }
 
   private updatePathMetaBoundDisplayScale(path: string) {
     const pathFormGroup = this.pathFormGroup();
-    if (!Object.prototype.hasOwnProperty.call(pathFormGroup.parent.parent.value, 'displayScale')) {return;}
+    if (!pathFormGroup.parent?.parent?.value || !Object.prototype.hasOwnProperty.call(pathFormGroup.parent.parent.value, 'displayScale')) { return; }
 
     const meta = this._data.getPathMeta(path);
     if (meta?.displayScale) {
-      const displayScale = pathFormGroup.parent.parent.get('displayScale') as FormGroup;
+      const displayScale = pathFormGroup.parent.parent.get('displayScale') as FormGroup | null;
+      if (!displayScale) { return; }
       const unit = pathFormGroup.controls['convertUnitTo'].value;
 
       if (meta.displayScale.lower !== null && meta.displayScale.lower !== undefined) {

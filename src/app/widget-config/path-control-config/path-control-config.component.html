@@ -42,7 +42,8 @@
             <mat-hint>Leave blank to disable this path.</mat-hint>
           }
           @if (pathFormGroup().value.path) {
-            <button mat-icon-button matIconSuffix aria-label="Clear" (click)="pathFormGroup().controls['path'].setValue('')">
+            <button mat-icon-button type="button" matIconSuffix aria-label="Clear"
+              (click)="pathFormGroup().controls['path'].setValue('')">
               <mat-icon>close</mat-icon>
             </button>
           }
