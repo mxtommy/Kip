@@ -181,7 +181,9 @@ Stay informed with notifications about the state of the data you are interested 
 For example, Signal K will notify KIP when a water depth or temperature sensor reaches certain levels. In addition to KIP's centralized notification menu, individual widgets offer tailored visual representations appropriate to their design objectives, providing an optimal user experience.
 
 # How To Contribute
-KIP is under the MIT license and is built with Node and Angular using various open-source assets. All free!
+KIP is under the MIT license and is built with Node and Angular using various open-source assets. All free! The project want's to insure your time is well invested by favouring discussion before submitting bug fixes and new features.
+
+Please ensure you submit an issue (bug/feature) before submitting a pull request.
 
 ## Project Scope
 What KIP IS about:
