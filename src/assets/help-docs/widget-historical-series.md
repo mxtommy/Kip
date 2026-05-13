@@ -10,7 +10,7 @@ With this built-in feature, KIP automatically:
 
 ## Who Is It For
 
-This is for users who want history to “just work”:
+This is for users who want simple short term history to “just work”:
 * No extra setup.
 * No plugin to install.
 * No data storage rules and retention policies to configure.
