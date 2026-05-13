@@ -6,7 +6,7 @@
   { "title": "Chartplotter Mode", "file": "chartplotter.md" },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Digital Switching and PUT", "file": "putcontrols.md" },
-  { "title": "Historical Widget Data", "file": "widget-historical-series.md" },
+  { "title": "Historical Widget Data", "file": "time-series.md" },
   {
     "title": "Integrations",
     "items": [
