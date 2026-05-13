@@ -71,7 +71,7 @@ const start = (server: ServerAPI): Plugin => {
   const CONFIG_SCHEMA = {
     type: 'object',
     title: 'Remote Control and Data Series',
-    description: 'NOTE: All plugin settings are also managed from within KIP\'s Display Options panel. Changes made here will be overridden when KIP applies settings from the Display Options.',
+    description: 'NOTE: All plugin settings are also managed from within KIP\'s Display Options panel. Changes made here will be overridden when KIP applies settings from the Display Options. See the KIP Time-Series help documentation for details.',
     properties: {
       nodeSqliteAvailable: {
         type: 'boolean',
