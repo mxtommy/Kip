@@ -8,9 +8,9 @@ The **Time-Series** feature allows KIP to automatically make widget historical d
 2. Display charts containing widgets historical data by tracking dashboard and widget configuration, and automatic prunning of old or unused data.
 
 It is meant for users whom need simple short term history and:
-* No extra setup.
-* No plugin to install.
-* No data capture or storage rules and retention policies to configure.
+* No extra configuration
+* No plugin to install
+* No data capture or storage rules and retention policies to manage
 
 It is made for quick, hassle-free chart history, not data engineering.
 
