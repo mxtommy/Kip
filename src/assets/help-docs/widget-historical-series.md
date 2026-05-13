@@ -21,7 +21,7 @@ It is made for quick, hassle-free chart history, not data engineering.
 - Stores only the data KIP needs for widget history and chart startup.
 - Keeps a small rolling history and removes older data.
 - If you change widgets or chart paths, KIP updates history storage rules automatically.
-- You cannot manually manage what or hiw data gets recorded .
+- You cannot manually manage what or how data gets recorded .
 
 ### What Time-Series Don't Do
 - KIP’s built-in Time-Series is not a full data-logging system. You cannot manually set capture paths, sampling policies, or long-term retention rules in built-in mode. Use an External History Provider for this purpose. 
