@@ -3,10 +3,9 @@
 KIP is built first for live sailing data.  
 To make charts useful right away and give you easy access to widget history, KIP includes a simple built-in history feature called Time-Series.
 
-With this built-in feature, KIP automatically:
-1. Keeps widget history available for quick viewing.
-2. Pre-seeds Data Chart and Wind Trends so they show recent trends immediately.
-3. Syncs with dashboard and widget configuration, and automatically prunes old or unused data.
+The Time-Series feature allows KIP to automatically make widget history available for quick viewing by:
+1. Pre-seeds Data Chart and Wind Trends so they show recent trends immediately.
+2. Syncs with dashboard and widget configuration, and automatically prunes old or unused data.
 
 ## Who Is It For
 
