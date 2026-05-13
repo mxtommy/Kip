@@ -5,7 +5,7 @@ To make charts useful right away and give you easy access to widget history, KIP
 
 The **Time-Series** feature allows KIP to automatically make widget historical data available for quick viewing by:
 1. Pre-seeding Data Chart and Wind Trends so they show recent trends immediately.
-2. Display charts containing widgets historical data by tracking dashboard and widget configuration, and automatic prunning of old or unused data.
+2. Automatically providing a historical data view for all widgets present in your dashborad, that use paths with numerical value.
 
 It is meant for users whom need simple short term history and:
 * No extra configuration
