@@ -28,9 +28,7 @@ It is made for quick, hassle-free chart history, not data engineering.
 - The dialog window displaying widget history offers **a fixed set** of the last 15 minutes, 1 hour, 8 hours, or 24 hours of data. If you are in need of more flexible and powerful data analytics capabilities, use Grafana and similar purpose built, comprehensive platforms.
 
 ## Accessing Time-Series
-
-### Locked Dashboard Quick View
-You can open a widget history dialog directly from a locked dashboard:
+You access Time-Series dialog directly from a locked dashboard:
 
 - **Touch devices:** Two-finger tap a widget
 - **Desktop / mouse:** Right-click a widget or two-finger click on trackpads
