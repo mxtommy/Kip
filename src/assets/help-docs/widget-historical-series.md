@@ -33,7 +33,7 @@ You access Time-Series chart directly from a locked dashboard:
 Time-Series chart displays recorded data (no live stream overlay).
 
 ## Widgets Support
-Most widgets that use numeric paths support Time-Series, including the Horizon widget.
+Most widgets that use numeric paths support Time-Series, including the Horizon widget, Battery Monitor, Solar and similar numeric based widgets.
 
 ### Chart Type Widgets Support
 Time-Series automatically captures data per the chart widget
