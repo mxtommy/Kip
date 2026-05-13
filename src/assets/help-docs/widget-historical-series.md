@@ -52,24 +52,8 @@ Most widgets that use numeric paths support Time-Series, including the Horizon w
 - **Supported:** No. Mini charts use very short time windows (12 seconds) and skip history seeding.
 - Mini charts start live-only for performance reasons.
 
-### History Seeding
-When you open a dashboard containing a Data Chart/Wind Trends widget with a large time scale (minutes or larger):
-1. KIP requests historical data points.
-2. The chart immediately displays the historical trend.
-
-### Live Updates
-After history data loads:
-- New data points arrive continuously.
-- The chart smoothly transitions from history to live updates.
-- Old data points are removed to maintain a rolling window of the configured time scale.
-
-## What are the Requirements for Historical Widget Data To Work?
-
-I use KIP's Time-Series built-in feature:
+## Time-Series Technical Requirements
 - Node.JS v20.5.0+: The built-in automatic Time-Series feature (integrated management of data) uses node:sqlite released in Node.JS v20.5.0.
-- Signal K version 2.22.1+: The history querying service uses the History-API v2, introduced in Signal K version 2.22.1.
-
-I use an External History Provider:
 - Signal K version 2.22.1+: The history querying service uses the History-API v2, introduced in Signal K version 2.22.1.
 
 ## Configuration Options
