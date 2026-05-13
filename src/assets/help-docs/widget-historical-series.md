@@ -29,21 +29,6 @@ It is made for quick, hassle-free chart history, not data engineering.
 - KIP’s built-in Time-Series is not a full data-logging system. You cannot manually set capture paths, sampling policies, or long-term retention rules in built-in mode. Use an External History Provider for this purpose. 
 - The dialog window displaying widget history offers **a fixed set** of the last 15 minutes, 1 hour, 8 hours, or 24 hours of data. If you are in need of more flexible and powerful data analytics capabilities, use Grafana and similar purpose built, comprehensive platforms.
 
-### External History Provider (advanced)
-
-KIP can disable its built-in Time-Series/provider registration and query any History-API compatible provider instead.  
-You then manage capture and retention in that provider.
-
-Choose this if you need full control, such as:
-
-- Long-term record keeping.
-- Custom retention and sampling rules.
-- Analytics or integration with other tools.
-
-When you switch to an external History-API provider, KIP still uses History API queries, but capture/retention behavior is managed by that provider so you then have to **manually manage capture and retention in that provider**.
-
-See [External History-API Provider](#/help/history-api.md) for details.
-
 ## Accessing Widget Historical Charts
 
 ### Locked Dashboard Quick View
@@ -102,6 +87,21 @@ You can:
 If you want to completely disable the history feature, under the **Settings → Options → Display** tab in the Widget Historical Data group:
 - Select "Other: Use a different History API provider and configure data logging manually" option. This stops the plugin's data capture and historical query services.
 - Toggle the "Disable widget historical charts" switch. This disables pointer events to access the charts dialogue window.
+
+### External History Provider (advanced)
+
+KIP can disable its built-in Time-Series/provider registration and query any History-API compatible provider instead.  
+You then manage capture and retention in that provider.
+
+Choose this if you need full control, such as:
+
+- Long-term record keeping.
+- Custom retention and sampling rules.
+- Analytics or integration with other tools.
+
+When you switch to an external History-API provider, KIP still uses History API queries, but capture/retention behavior is managed by that provider so you then have to **manually manage capture and retention in that provider**.
+
+See [External History-API Provider](#/help/history-api.md) for details.
 
 ## Questions or Issues?
 
