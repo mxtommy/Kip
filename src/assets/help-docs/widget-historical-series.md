@@ -12,7 +12,7 @@ It is meant for users whom need simple short term history and:
 * No plugin to install
 * No data capture or storage rules and retention policies to manage
 
-It is made for quick, hassle-free chart history, not data engineering.
+It is made for quick, hassle-free historical trends, not data engineering.
 
 ## Time-Series
 - Works automatically with your dashboards and widgets.
