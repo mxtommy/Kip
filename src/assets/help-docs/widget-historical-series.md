@@ -7,9 +7,7 @@ The **Time-Series** feature allows KIP to automatically make widget historical d
 1. Pre-seeds Data Chart and Wind Trends so they show recent trends immediately.
 2. Display charts containing widgets historical data by tracking dashboard and widget configuration, and automatic prunning of old or unused data.
 
-## Who are Time-Series For
-
-This is for users who want simple short term history to “just work”:
+it is meant for users whom need simple short term history and:
 * No extra setup.
 * No plugin to install.
 * No data capture or storage rules and retention policies to configure.
@@ -28,17 +26,19 @@ It is made for quick, hassle-free chart history, not data engineering.
 - The dialog window displaying widget history offers **a fixed set** of the last 15 minutes, 1 hour, 8 hours, or 24 hours of data. If you are in need of more flexible and powerful data analytics capabilities, use Grafana and similar purpose built, comprehensive platforms.
 
 ## Accessing Time-Series
-You access Time-Series dialog directly from a locked dashboard:
+You access Time-Series chart directly from a locked dashboard:
 
-- **Touch devices:** Two-finger tap a widget
-- **Desktop / mouse:** Right-click a widget or two-finger click on trackpads
+- **Touch devices:** Two-finger tap a numerial value widget
+- **Desktop / mouse:** Right-click a numeral value widget or two-finger click on trackpads
 
 Time-Series chart displays recorded data (no live stream overlay).
 
-## Which Widgets Support Time-Series?
+## Widgets Support
 Most widgets that use numeric paths support Time-Series, including the Horizon widget.
 
-### Which Chart Type Widgets Support Data Seeding?
+### Chart Type Widgets Support
+Time-Series automatically captures data per the chart widget
+configuration and seeds charts using this data.
 
 #### Data Chart Widget
 - **Supported:** Yes, fully seeded with history data.
