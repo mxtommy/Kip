@@ -33,7 +33,7 @@ You access Time-Series dialog directly from a locked dashboard:
 - **Touch devices:** Two-finger tap a widget
 - **Desktop / mouse:** Right-click a widget or two-finger click on trackpads
 
-This dialog displays only historical data (no live stream overlay).
+Time-Series chart displays recorded data (no live stream overlay).
 
 ## Which Widgets Support History?
 Most widgets that use numeric paths support history, including the Horizon widget.
