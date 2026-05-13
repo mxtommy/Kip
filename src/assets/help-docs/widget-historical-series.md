@@ -38,17 +38,17 @@ Time-Series chart displays recorded data (no live stream overlay).
 ## Which Widgets Support Time-Series?
 Most widgets that use numeric paths support Time-Series, including the Horizon widget.
 
-## Which Chart Widgets Support Data Seeding?
+### Which Chart Type Widgets Support Data Seeding?
 
-### Data Chart Widget
+#### Data Chart Widget
 - **Supported:** Yes, fully seeded with history data.
 - **Requirements:** Time scale must be minutes or longer.
 
-### Wind Trends Widget
+#### Wind Trends Widget
 - **Supported:** Yes, fully seeded with history data.
 - **Requirements:** Time span of `5 minutes` or `30 minutes`.
 
-### Numeric Widget's Mini Chart
+#### Numeric Widget's Mini Chart
 - **Supported:** No. Mini charts use very short time windows (12 seconds) and skip history seeding.
 - Mini charts start live-only for performance reasons.
 
