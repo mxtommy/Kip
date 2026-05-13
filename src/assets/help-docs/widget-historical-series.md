@@ -12,7 +12,7 @@ The Time-Series feature allows KIP to automatically make widget history availabl
 This is for users who want simple short term history to “just work”:
 * No extra setup.
 * No plugin to install.
-* No data storage rules and retention policies to configure.
+* No data capture or storage rules and retention policies to configure.
 
 It is made for quick, hassle-free chart history, not data engineering.
 
