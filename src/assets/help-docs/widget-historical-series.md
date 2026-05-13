@@ -16,20 +16,18 @@ This is for users who want simple short term history to “just work”:
 
 It is made for quick, hassle-free chart history, not data engineering.
 
-## Built-In Time-Series vs External History Provider
-
-### Built-In Time-Series (default)
+## Time-Series
 - Works automatically with your dashboards and widgets.
 - Stores only the data KIP needs for widget history and chart startup.
 - Keeps a small rolling history and removes older data.
 - If you change widgets or chart paths, KIP updates history storage rules automatically.
 - No screen to manually manage what gets recorded.
 
-#### What Time-Series Don't Do
+### What Time-Series Don't Do
 - KIP’s built-in Time-Series is not a full data-logging system. You cannot manually set capture paths, sampling policies, or long-term retention rules in built-in mode. Use an External History Provider for this purpose. 
 - The dialog window displaying widget history offers **a fixed set** of the last 15 minutes, 1 hour, 8 hours, or 24 hours of data. If you are in need of more flexible and powerful data analytics capabilities, use Grafana and similar purpose built, comprehensive platforms.
 
-## Accessing Widget Historical Charts
+## Accessing Time-Series
 
 ### Locked Dashboard Quick View
 You can open a widget history dialog directly from a locked dashboard:
