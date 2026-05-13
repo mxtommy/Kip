@@ -1,126 +1,124 @@
-## Using External History-API Provider to Obtain Historical Data 
+## Using an External History API Provider
 
-KIP can, using a special type of plugin called a History Provider, automatically request historical data points when opening chart widgets, seamlessly integrating past data with live updates.
+If you disable KIP's built-in Time-Series features and install a compatible History API provider plugin, you can still:
+1. Pre-seed Data Chart and Wind Trends so they show recent trends immediately.
+2. Populate historical views for widgets in your dashboards that use numeric value paths.
 
-This enables the display of minutes, hours, days, weeks, etc. of pre-populated historical data immediately—no waiting, no empty charts.
+The tradeoff is that you must configure the provider plugin to capture the paths you want to chart, and it must have enough recorded data to cover your chart time span. This is not automatic when using an external provider.
+
+The benefit is greater control, including:
+- Long-term record keeping.
+- Custom retention and sampling rules.
+- Analytics or integration with tools such as Grafana.
 
 ## Which Widgets Support History?
 
-### Data Chart Widget
-- **Supported**: Yes, fully seeded with history data when available.
-- **Requirements**: Time scale = minutes or longer.
-- See "Configure Time Scales" below for more details.
+As with KIP's built-in Time-Series, most widgets that use numeric paths support history when using an external History API provider, including Horizon, Battery Monitor, Solar, and similar numeric-based widgets. Your provider plugin must be configured to capture the paths you want to chart.
 
-### Wind Trends Widget
-- **Supported**: Yes, uses fixed paths (True Wind Direction and Speed).
-- **Requirements**: Time Span of `5 minutes` or `30 minutes`.
-- See Wind Trends Fixed Paths below for configuration details.
+## Required Plugins and Signal K Version
 
-### Mini-chart
-NOTE: This is the optional chart that can be display in the background of the Numeric Widget.
-- **Supported**: No. Mini charts use very short time windows (12 seconds) and skip history seeding.
-- Mini charts start live-only for performance reasons.
+You need:
+- Signal K support for History API v2 (introduced in Signal K v2.22.1).
+- A compatible History API provider plugin.
 
-## What Plugins and Signal K Version Are Required?
+Currently, two plugins support History API v2:
 
-You will need both support for the History-API version 2 and a compatible History provider. The History-API version 2 was introduced in Signal K version 2.22.1. Currently, two plugins support the v2 History-API:
+### 1. signalk-to-influxdb2 (v2.0.0+)
+- **Purpose:** Records Signal K data to an InfluxDB v2 time-series database (requires InfluxDB v2).
+- **Link:** [signalk-to-influxdb2](https://www.npmjs.com/package/signalk-to-influxdb2)
+- **Setup:** Follow the plugin documentation for installation and configuration.
+- **Path Configuration:** By default, records all paths. Configure filters, resolution, and related settings for the paths you want available in KIP charts.
 
-### 1. signalk-to-influxdb2, v2.0.0 or above
-- **Purpose**: Records Signal K data to an InfluxDB v2 time-series database. Requires pre-installed InfluxDB v2.
-- **Link**: [signalk-to-influxdb2](https://www.npmjs.com/package/signalk-to-influxdb2)
-- **Setup**: Consult the plugin documentation for installation and configuration.
-- **Path Configuration**: By default, records all paths. Configure filters, resolution, and other settings to match the paths you want available in KIP charts.
-
-### 2. signalk-parquet, (supporting version not release yet)
-- **Purpose**: Records Signal K data to Parquet files for efficient storage and querying. No external database installation required.
-- **Link**: [signalk-parquet](https://www.npmjs.com/package/signalk-parquet)
-- **Setup**: Consult the plugin documentation for installation and configuration.
-- **Path Configuration**: Specify which paths to record in the plugin settings. None are recorded by default.
-
+### 2. signalk-parquet
+- **Purpose:** Records Signal K data to Parquet files for efficient storage and querying (no external database required).
+- **Link:** [signalk-parquet](https://www.npmjs.com/package/signalk-parquet)
+- **Setup:** Follow the plugin documentation for installation and configuration.
+- **Path Configuration:** You must specify which paths to record; none are recorded by default.
 
 ## How History Data Works in KIP
 
 ### History Seeding
 When you open a chart widget with a larger time scale (minutes/hours):
-1. KIP checks if history data is available via the History-API.
-2. If available and the time window allows (resolution >= 1000ms), KIP requests historical data points.
-3. The chart immediately displays the historical trend.
+1. KIP checks whether history data is available through the History API.
+2. If available and the time window allows it (resolution >= 1000 ms), KIP requests historical data points.
+3. The chart displays the historical trend immediately.
 
 ### Live Updates
 After history data loads:
-- New data points arrive continuously via Signal K's live WebSocket connection.
-- The chart smoothly transitions from history to live updates.
-- Old data points are removed to maintain a rolling window of the configured time scale.
+- New data points continue to arrive through Signal K's live WebSocket connection.
+- The chart transitions smoothly from history to live updates.
+- Old points are removed to maintain a rolling window based on the configured time scale.
 
 ### When History Is Not Available
-- If a History-API plugin is not installed, or the plugin report the path is not recorded, history requests are skipped silently.
-- The chart will display only live data starting from when it was opened.
-- This is normal and does not indicate an error.
+- If no History API plugin is installed, or the provider reports that a path is not recorded, history requests are skipped silently.
+- The chart shows live data only, starting from when it was opened.
+- This is expected behavior and does not indicate an error.
 
-## Provider Configuration Information
+## Provider Plugin Configuration
 
-For performance reasons, all KIP charts display a maximum of 120 datapoints. KIP looks at the chart's configured time span 'window', and ask the provider to gather the requested data and to return results as 120 datapoints.
+For performance reasons, KIP charts display a maximum of 120 datapoints. KIP uses the chart's configured time window and asks the provider to return data for that window as up to 120 datapoints.
 
-When configuring your provider's path sampling rates, insure your sampling rules meet this requirement. Slower sampling rates will create charts with fewer datapoints/of lesser resolution. Higher sampling rates will NOT create charts with more datapoints/of higher resolution.
+When configuring provider sampling rates, ensure your rules support this behavior:
+- Slower sampling rates produce fewer datapoints (lower visual resolution).
+- Faster sampling rates do not produce more than 120 datapoints in KIP charts.
 
-### Historical Widget Charts
+### Widget Historical Charts
 
-Collect an appropriate mount of data samples for the smallest **last 15 minutes** window; every 7.5 seconds. Every 15 seconds is not too bad a resolution either.
+For the smallest fixed window (**last 15 minutes**), collect enough samples to provide useful resolution. A sampling interval around 7.5 seconds is ideal; 15 seconds is also usable.
 
 ### Wind Trends Fixed Paths
 
 The Wind Trends widget uses two fixed Signal K paths:
-- **True Wind Direction**: `environment.wind.directionTrue`
-- **True Wind Speed**: `environment.wind.speedTrue`
+- **True Wind Direction:** `environment.wind.directionTrue`
+- **True Wind Speed:** `environment.wind.speedTrue`
 
-For Wind Trends to display historical data, both of these paths **must be configured in your chosen History-API plugin**.
+To display Wind Trends history, both paths **must be captured by your selected History API plugin**.
 
-Plan an appropriate data sampling rate to support the chart duration (5 and 30 minutes are supported).
+Choose a sampling rate that supports chart durations of 5 and 30 minutes.
 
 ## Limitations
 
-For historical data to seed charts, you need to, in most cases, to manually configure your chosen provider to collect the said data. This is not an automatic process when using a External History Provider.
+To seed charts with historical data, you usually need to manually configure your provider to collect the required paths. Unlike KIP's built-in Time-Series, this is not automatic.
 
 ## Troubleshooting
 
 ### History Data Is Not Showing
 
-**Check 1: Are the Technical Requirements Meet?**
-- Confirm that Signal K server version 2.22.1 or above in installed.
+**Check 1: Are the technical requirements met?**
+- Confirm Signal K server v2.22.1 or later is installed.
 
-**Check 2: Is the History-API plugin installed?**
-- Confirm that a History-API plugin is installed and enabled on your Signal K server.
-- Verify that the plugin is running without errors (check server logs).
+**Check 2: Is a History API plugin installed?**
+- Confirm a History API plugin is installed and only one provider plugin is enabled.
+- Verify the plugin is running without errors (check server logs).
 
-**Check 3: Are the paths configured in the plugin?**
-- Open your plugin's configuration settings.
-- Confirm that the paths you're charting (e.g., `navigation.speedThroughWater`) are in the capture list.
+**Check 3: Are paths configured in the plugin?**
+- Open plugin configuration.
+- Confirm the paths you are charting (for example, `navigation.speedThroughWater`) are included in the capture list.
 
 **Check 4: Is there historical data available?**
-- If the plugin was just installed, data will start recording from that moment forward.
-- Charts will not show history for times before the plugin was enabled or the path configured for recording.
-- Allow the plugin to record data for a while (days or weeks) before expecting deep history.
+- If the plugin was installed recently, data is only available from that point onward.
+- Charts cannot display history for periods before the plugin was enabled or before the path was configured.
+- Allow time for data to accumulate before expecting deeper history.
 
 **Check 5: Is the chart time scale eligible?**
 - Very short time scales (seconds) skip history seeding for performance.
-- Use time scales of **minutes or longer** to enable history seeding.
+- Use chart time scales of **minutes or longer** for history seeding.
 
-**Check 6: Are there any network or permission issues?**
-- Confirm that KIP can reach the Signal K server's History-API endpoint. Use the OpenApi link in the Server Admin pages to the test.
-- Check browser console logs (F12) for any HTTP errors from history requests.
-
+**Check 6: Are there network or permission issues?**
+- Confirm KIP can reach the Signal K server History API endpoint.
+- Use the OpenAPI link in Signal K Server Admin pages to test endpoint availability.
+- Check browser console logs (F12) for HTTP errors from history requests.
 
 ## Next Steps
 
-1. Verify that a History-API plugin is installed on your Signal K server.
+1. Verify that a History API plugin is installed on your Signal K server.
 2. Configure the plugin to capture the paths you want to chart.
-3. Wait for plugin to capture enough data to fill your Data Chart's time span.
+3. Wait for the plugin to collect enough data to fill your chart time span.
 4. Open a Data Chart or Wind Trends widget with a time scale of minutes or longer.
-5. Allow the chart to load—history data will appear if available.
-6. For more details, consult your plugin's documentation and the Signal K community resources.
-
+5. Let the chart load; history appears when available.
+6. For more details, consult plugin documentation and Signal K community resources.
 
 ## Questions or Issues?
 
-- Refer to the plugin and History-API documentation for plugin-specific configuration and troubleshooting.
-- For general questions or issues, see `Contact-Us` help page—the Signal K community is active on Discord and GitHub.
+- Refer to plugin and History API documentation for provider-specific setup and troubleshooting.
+- For general questions or issues, see the Contact-Us help page. The Signal K community is active on Discord and GitHub.
