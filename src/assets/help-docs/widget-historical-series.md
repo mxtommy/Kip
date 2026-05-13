@@ -1,9 +1,9 @@
 ## Historical Widget Data
 
 KIP is built first for live sailing data.  
-To make charts useful right away and give you easy access to widget history, KIP includes a simple built-in history feature called *Time-Series*.
+To make charts useful right away and give you easy access to widget history, KIP includes a simple built-in history feature called **Time-Series**.
 
-The *Time-Series* feature allows KIP to automatically make widget history available for quick viewing by:
+The **Time-Series** feature allows KIP to automatically make widget history available for quick viewing by:
 1. Pre-seeds Data Chart and Wind Trends so they show recent trends immediately.
 2. Syncs with dashboard and widget configuration, and automatically prunes old or unused data.
 
@@ -24,7 +24,7 @@ It is made for quick, hassle-free chart history, not data engineering.
 - You cannot manually manage what or how data gets recorded .
 
 ### What Time-Series Don't Do
-- KIP’s built-in Time-Series is not a full data-logging system. You cannot manually set capture paths, sampling policies, or long-term retention rules in built-in mode. Use an External History Provider for this purpose. 
+- KIP’s built-in Time-Series is not meant to be a full data-logging solution. You cannot manually set capture paths, sampling policies, or long-term retention rules in built-in mode. Use other plugins and External History Provider for this purpose (see History-API documentation). 
 - The dialog window displaying widget history offers **a fixed set** of the last 15 minutes, 1 hour, 8 hours, or 24 hours of data. If you are in need of more flexible and powerful data analytics capabilities, use Grafana and similar purpose built, comprehensive platforms.
 
 ## Accessing Time-Series
