@@ -18,7 +18,7 @@ It is made for quick, hassle-free historical trends, not data engineering.
 - Works automatically with your dashboards and widgets.
 - Stores only the data KIP needs for widget history and chart startup.
 - Keeps a small rolling history and removes older data.
-- If you change widgets or chart paths, KIP updates history storage rules automatically.
+- If you change widgets configuration, KIP adds, updates or removes data capture and retention rules automatically.
 - You cannot manually manage what or how data gets recorded .
 
 ### What Time-Series Don't Do
