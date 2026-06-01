@@ -102,6 +102,16 @@ const DEFAULTS = {
   MESSAGE_DISPLAY_DURATION: 5000
 } as const;
 
+const V2_MODE_LABELS: Record<string, string> = {
+  auto: 'Auto',
+  compass: 'Compass',
+  gps: 'GPS',
+  wind: 'Wind',
+  'true wind': 'True Wind',
+  route: 'Route',
+  nav: 'Navigation'
+} as const;
+
 @Component({
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
@@ -381,22 +391,18 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   protected menuItems = computed<MenuItem[]>(() => {
     const mode = this.apMode();
     const apiVersion = this.runtime.options().autopilot.apiVersion;
-    const plugin = this.runtime.options().autopilot.pluginId;
     let menuItems: MenuItem[] = [];
 
     untracked(() => {
       if (apiVersion === 'v2') {
-        if (plugin == 'pypilot-autopilot-provider') {
-          const allAPModes: MenuItem[] = [
-            { label: 'Compass', action: 'compass' },
-            { label: 'GPS', action: 'gps' },
-            { label: 'Wind', action: 'wind' },
-            { label: 'True Wind', action: 'true wind' },
-            { label: 'Navigation', action: 'nav' },
-            { label: 'Close', action: 'cancel', isCancel: true }
-          ];
-          menuItems = this.parseMenuItems(allAPModes, mode);
-        }
+        const allAPModes: MenuItem[] = [
+          ...this.autopilotModes().map(action => ({
+            label: V2_MODE_LABELS[action] ?? action,
+            action
+          })),
+          { label: 'Close', action: 'cancel', isCancel: true }
+        ];
+        menuItems = this.parseMenuItems(allAPModes, mode);
       } else if (apiVersion === 'v1') {
         const allAPModes: MenuItem[] = [
           { label: 'Auto', action: 'auto' },
@@ -653,7 +659,21 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   protected isV2CommandSupported(command: string): boolean {
-    return this.runtime.options().autopilot.modes.includes(command);
+    return this.autopilotModes().includes(command);
+  }
+
+  private autopilotModes(): string[] {
+    const modes = this.runtime.options().autopilot.modes;
+
+    if (Array.isArray(modes)) {
+      return modes;
+    }
+
+    if (typeof modes === 'string') {
+      return modes.split(',').map(mode => mode.trim()).filter(mode => mode.length > 0);
+    }
+
+    return [];
   }
 
   private startV2Subscriptions(): void {
@@ -1186,7 +1206,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         }
       } else if (apiVersion === 'v2') {
         // For V2, check if the action is in the capabilities
-        enabled = this.runtime.options().autopilot.modes.includes(item.action);
+        enabled = this.autopilotModes().includes(item.action);
       }
       return {
         ...item,

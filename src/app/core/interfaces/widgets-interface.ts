@@ -450,7 +450,7 @@ export interface IAutopilotConfig {
   /** Set autopilot plugin ID  ('pypilot-autopilot-provider', 'autopilot', etc.). autopilot is the v1 Signal K autopilot plugin ID. */
   pluginId: string | null,
   /** Set autopilot supported operational modes. This is defined by each autopilot plugin */
-  modes: string | null,
+  modes: string[] | string | null,
 }
 
 /**
