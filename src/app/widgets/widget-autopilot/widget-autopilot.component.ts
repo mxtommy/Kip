@@ -311,6 +311,15 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
+  protected readonly standbyButtonLabel = computed(() => {
+    const apiVersion = this.runtime.options().autopilot.apiVersion;
+
+    if (apiVersion === "v2" && this.apEngaged() === false) {
+      return "Engage";
+    }
+
+    return "Disengage";
+  });
   protected readonly apEngageBtnDisabled = computed(() => {
     const state = this.apState();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
