@@ -106,3 +106,74 @@ export function findArrayLiteral(sourceFile: ts.SourceFile, propName: string): t
   }
   return found;
 }
+
+/**
+ * Returns the module specifier a named import comes from, e.g. for
+ * `import { WidgetNumericComponent } from '../../widgets/.../x.component'`
+ * returns `../../widgets/.../x.component`. Throws if the import is not found.
+ */
+export function findImportModuleSpecifier(sourceFile: ts.SourceFile, importedName: string): string {
+  let specifier: string | undefined;
+
+  const visit = (node: ts.Node): void => {
+    if (specifier) return;
+    if (
+      ts.isImportDeclaration(node) &&
+      node.importClause?.namedBindings &&
+      ts.isNamedImports(node.importClause.namedBindings) &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      for (const element of node.importClause.namedBindings.elements) {
+        if (element.name.text === importedName) {
+          specifier = (node.moduleSpecifier as ts.StringLiteral).text;
+          return;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  if (specifier === undefined) {
+    throw new Error(`Could not find an import for "${importedName}" in ${sourceFile.fileName}`);
+  }
+  return specifier;
+}
+
+/**
+ * Returns the initializer expression of a class's `static` property, e.g. a
+ * widget component's `static readonly DEFAULT_CONFIG = { ... }`. Throws if the
+ * class or the static property is not found.
+ */
+export function findStaticPropertyInitializer(
+  sourceFile: ts.SourceFile,
+  className: string,
+  propName: string,
+): ts.Expression {
+  let initializer: ts.Expression | undefined;
+
+  const visit = (node: ts.Node): void => {
+    if (initializer) return;
+    if (ts.isClassDeclaration(node) && node.name?.text === className) {
+      for (const member of node.members) {
+        if (
+          ts.isPropertyDeclaration(member) &&
+          ts.isIdentifier(member.name) &&
+          member.name.text === propName &&
+          member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
+          member.initializer
+        ) {
+          initializer = member.initializer;
+          return;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  if (!initializer) {
+    throw new Error(`Could not find static "${propName}" on class "${className}" in ${sourceFile.fileName}`);
+  }
+  return initializer;
+}
