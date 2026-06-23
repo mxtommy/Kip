@@ -58,6 +58,26 @@
       <mat-expansion-panel>
         <mat-expansion-panel-header>
           <mat-panel-title>
+            Browser Tab
+          </mat-panel-title>
+          @if (!isPhonePortrait().matches) {
+            <mat-panel-description>
+              Set the browser tab title to tell multiple KIP instances apart.
+            </mat-panel-description>
+          }
+        </mat-expansion-panel-header>
+        <mat-form-field class="optional-field">
+          <mat-label>Browser tab title</mat-label>
+          <input matInput
+            (ngModelChange)="displayForm.form.markAsDirty()"
+            name="browserTabTitle"
+            placeholder="Ex. Mast-KIP"
+            [(ngModel)]="browserTabTitle">
+        </mat-form-field>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
             Chartplotter Mode
           </mat-panel-title>
           @if (!isPhonePortrait().matches) {

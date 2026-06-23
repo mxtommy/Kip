@@ -57,6 +57,7 @@ export class SettingsDisplayComponent implements OnInit {
   protected isLightTheme = model<boolean>(false);
   protected isRemoteControl = model<boolean>(false);
   protected instanceName = model<string>('');
+  protected browserTabTitle = model<string>('KIP');
   protected splitShellEnabled = model<boolean>(false);
   protected splitShellSide = model<'left' | 'right'>('left');
   protected splitShellSwipeDisabled = model<boolean>(false);
@@ -78,6 +79,7 @@ export class SettingsDisplayComponent implements OnInit {
     this.isRedNightMode.set(this.settings.getRedNightMode());
     this.isRemoteControl.set(this.settings.getIsRemoteControl());
     this.instanceName.set(this.settings.getInstanceName());
+    this.browserTabTitle.set(this.settings.getBrowserTabTitle());
     this.splitShellEnabled.set(this.settings.getSplitShellEnabled());
     this.splitShellSide.set(this.settings.getSplitShellSide());
     this.splitShellSwipeDisabled.set(this.settings.getSplitShellSwipeDisabled());
@@ -127,6 +129,7 @@ export class SettingsDisplayComponent implements OnInit {
     this.settings.setSplitShellSide(this.splitShellSide());
     this.settings.setSplitShellSwipeDisabled(this.splitShellSwipeDisabled());
     this.settings.setWidgetHistoryDisabled(this.widgetHistoryDisabled());
+    this.settings.setBrowserTabTitle(this.browserTabTitle());
     this.settings.setDisablePathValidation(this.isPathValidationDisabled());
     if (!this.setKipPluginConfig()) {
       this.toast.show('Failed to save KIP plugin configuration on server.', 0, false, 'error');
