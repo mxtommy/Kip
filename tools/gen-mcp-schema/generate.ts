@@ -15,6 +15,7 @@ import {
 } from './ast';
 import type {
   BindingKind,
+  DesignSystem,
   GenerateOptions,
   PathSlot,
   WidgetCatalogEntry,
@@ -112,6 +113,22 @@ function extractPathSlots(config: Record<string, unknown>): PathSlot[] {
 
 function asStringOrNull(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
+}
+
+/**
+ * Extracts KIP's design system (grid, colour tokens, theme names, dashboard
+ * icons and unit groups).
+ *
+ * STUB: implemented in the GREEN step.
+ */
+export function extractDesignSystem(_opts: GenerateOptions): DesignSystem {
+  return {
+    grid: { column: 0, row: 0, margin: 0, float: false, cellHeight: '' },
+    colors: [],
+    themeNames: [],
+    icons: [],
+    unitGroups: [],
+  };
 }
 
 function toCatalogEntry(raw: Record<string, unknown>, file: string): WidgetCatalogEntry {

@@ -93,6 +93,49 @@ export interface WidgetSchemaEntry extends WidgetCatalogEntry {
   pathSlots: PathSlot[];
 }
 
+/** A named widget colour token (KIP's `configurableThemeColors`). */
+export interface ColorToken {
+  value: string;
+  label: string;
+}
+
+/** One convertible unit within a unit group. */
+export interface UnitMeasure {
+  measure: string;
+  description: string;
+}
+
+/** A group of related units (KIP's unit conversion list). */
+export interface UnitGroup {
+  group: string;
+  measures: UnitMeasure[];
+}
+
+/** The dashboard grid geometry (GridStack options). */
+export interface GridGeometry {
+  column: number;
+  row: number;
+  margin: number;
+  float: boolean;
+  /** Row height; KIP computes this at runtime, hence `'auto'`. */
+  cellHeight: string;
+}
+
+/**
+ * KIP's design system: everything a dashboard designer needs beyond the widgets
+ * themselves — the grid, colour tokens, theme names, dashboard icons and units.
+ *
+ * Colour tokens and unit groups keep their authored order (the palette and the
+ * base-unit-first convention are meaningful); icons are sorted (a plain set).
+ */
+export interface DesignSystem {
+  grid: GridGeometry;
+  colors: ColorToken[];
+  themeNames: string[];
+  icons: string[];
+  unitGroups: UnitGroup[];
+}
+
 export interface GenerateOptions {
   /** Absolute path to the KIP repository root. */
   projectRoot: string;
