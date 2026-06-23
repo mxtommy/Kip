@@ -8,7 +8,12 @@ import NoSleep from '@zakj/no-sleep';
  * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
  */
 export function isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
-  return win.self !== win.top;
+  try {
+    return win.self !== win.top;
+  } catch {
+    // Reading window.top across origins throws a SecurityError -> we are embedded.
+    return true;
+  }
 }
 
 @Injectable({
