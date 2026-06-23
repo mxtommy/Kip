@@ -13,7 +13,7 @@ KIP supports multiple input modes for seamless navigation across devices.
 > Note that the words Touch and Tap are synonymous with mouse click.
 
 ## General Layout
-<img src="../../assets/help-docs/img/general-layout.png" alt="Sidebar Menus" title="Sidebar Menus" width="100%">
+<img src="assets/help-docs/img/general-layout.png" alt="Sidebar Menus" title="Sidebar Menus" width="100%">
 
 1. Actions menu
 2. *Fullscreen toggle button
