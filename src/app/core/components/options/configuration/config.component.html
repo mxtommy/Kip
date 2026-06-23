@@ -1,237 +1,104 @@
 <div class="page-content">
   <p>
-    Recommended Reading: To understand configuration management and storage
-    options, consult the
+    A profile is a named set of dashboards, layouts and theme. Switching is remembered
+    <strong>on this device only</strong>, so each display can show a different profile from the same
+    Signal K login. See the
     <a routerLink="/help/configuration">Login and Configuration</a> help section.
   </p>
+
   <div class="flex-container">
     <div class="flex-item-rounded-card rounded-card-color">
-      <form
-        name="saveConfigForm"
-        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
-        #saveConfigForm="ngForm"
-        >
-        <h3>Backup</h3>
-        <p style="margin-bottom: 16px">
-          Create a backup of the current active configuration on the server.
-        </p>
-        @if (hasToken) {
-          <div>
-            <mat-form-field style="width: 25%">
-              <mat-label>Scope</mat-label>
-              <mat-select
-                name="serverConfiScope"
-                [(ngModel)]="saveConfigScope"
-                required
-                >
-                <mat-option value="global"> Global </mat-option>
-                <mat-option value="user"> User </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field style="width: 70%; padding-left: 3%">
-              <mat-label>Configuration Name</mat-label>
-              <input
-                matInput
-                name="serverConfigName"
-                placeholder="Enter a name for the configuration"
-                [(ngModel)]="saveConfigName"
-                [ngModelOptions]="{ standalone: false }"
-                required
-                />
-            </mat-form-field>
-            @if (!hasToken) {
-              <div>
-                Writing to the server requires "Login to Server" authentication or a
-                Device token
+      <h3>Profiles</h3>
+
+      @if (profilesAvailable()) {
+        <mat-divider></mat-divider>
+        <div class="profile-list">
+          @for (profile of profiles(); track profile.name) {
+            <div class="profile-row" [class.active]="profile.isActive">
+              <div class="profile-name">
+                @if (profile.isActive) {
+                  <mat-icon class="active-icon" svgIcon="dashboard-dashboard"></mat-icon>
+                }
+                <span>{{ profile.name }}</span>
+                @if (profile.isActive) {
+                  <span class="active-tag">Active on this device</span>
+                }
               </div>
-            }
-          </div>
-        } @else {
-          <div class="no-token-notice">
-            <p>Server authentication or Device Token required</p>
-          </div>
-        }
-        <div class="formActionFooter">
-          <mat-divider class="formActionDivider"></mat-divider>
-          <button
-            mat-flat-button
-            type="submit"
-            [disabled]="!hasToken || !saveConfigForm.valid"
-            color="accent"
-            >
-            Create
-          </button>
-        </div>
-      </form>
-    </div>
-    <div class="flex-item-rounded-card rounded-card-color">
-      <form
-        name="deleteConfigForm"
-        (ngSubmit)="deleteConfigByKey(deleteConfigKey)"
-        #deleteConfigForm="ngForm"
-        >
-        <h3>Delete</h3>
-        <p style="margin-bottom: 16px">
-          Select a backup configuration to permanently delete from the server.
-        </p>
-        @if (hasToken) {
-          <div>
-            <mat-form-field style="width: 100%">
-              <mat-label>Configuration</mat-label>
-              <mat-select
-                name="selectedDeleteItem"
-                [(ngModel)]="deleteConfigKey"
-                required
-                >
-                @for (config of serverConfigOptions(); track config.key) {
-                  <mat-option
-                    [value]="config.key"
-                    >
-                    {{ config.scope }} / {{ config.name }}
-                  </mat-option>
+              <div class="profile-actions">
+                @if (!profile.isActive) {
+                  <button mat-button color="accent" (click)="switchProfile(profile.name)">Switch</button>
                 }
-              </mat-select>
-            </mat-form-field>
-          </div>
-        } @else {
-          <div class="no-token-notice">
-            <p>Authentication or Device Token required</p>
-          </div>
-        }
+                <button mat-button (click)="renameProfile(profile.name)">Rename</button>
+                <button mat-button (click)="duplicateProfile(profile.name)">Duplicate</button>
+                <button
+                  mat-button
+                  color="warn"
+                  [disabled]="profile.isActive || profile.name === 'default' || profiles().length <= 1"
+                  (click)="deleteProfile(profile.name)"
+                  >
+                  Delete
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <p class="empty-note">No profiles found yet.</p>
+          }
+        </div>
+
         <div class="formActionFooter">
           <mat-divider class="formActionDivider"></mat-divider>
-          <button
-            mat-flat-button
-            type="submit"
-            [disabled]="!hasToken || !deleteConfigForm.valid"
-            color="accent"
-            >
-            Delete
-          </button>
+          <button mat-flat-button color="accent" (click)="createProfile('current')">New from current</button>
+          <button mat-stroked-button (click)="createProfile('blank')">New blank</button>
         </div>
-      </form>
-    </div>
-    <div class="flex-item-rounded-card rounded-card-color">
-      <form [formGroup]="copyConfigForm" (ngSubmit)="copyConfig()">
-        <h3>Restore</h3>
-        <p style="margin-bottom: 16px">
-          Replace the current configuration with a backup from the server.
-        </p>
-        @if (hasToken) {
-          <div>
-            <mat-form-field style="width: 100%">
-              <mat-label>Configuration</mat-label>
-              <mat-select formControlName="sourceTarget">
-                @for (config of serverConfigOptions(); track config.key) {
-                  <mat-option
-                    [value]="config.key"
-                    >
-                    {{ config.scope }} / {{ config.name }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-        } @else {
-          <div class="no-token-notice">
-            <p>Authentication or Device Token required</p>
-          </div>
-        }
-        <div class="formActionFooter">
-          <mat-divider class="formActionDivider"></mat-divider>
-          <button
-            mat-flat-button
-            type="submit"
-            color="accent"
-            [disabled]="!this.copyConfigForm.valid"
-            >
-            Restore
-          </button>
+      } @else {
+        <div class="no-token-notice">
+          <p>Profiles require logging in to Signal K with a user account.</p>
         </div>
-      </form>
+      }
     </div>
+
     <div class="flex-item-reset rounded-card-color">
       <h3>Advanced</h3>
       <div class="config-operation-container" style="margin-top: 20px">
         <div class="download-txt">
-          To reuse your configuration on different devices, simply login using the same credential
-            from any device (See <a routerLink="/help/configuration">Login and Configuration</a> for more information). If
-            you need to move your configuration between different Signal K servers, you can use Download
-            to obtain a copy of the active configuration to a file.
+          Download a copy of the active profile's configuration to a file, for backup or to move it
+          to another Signal K server.
         </div>
         <div class="download-btn btn-div">
-          <button
-            mat-flat-button
-            type="button"
-            class="adv-btn"
-            (click)="downloadJsonConfig()"
-            >
-            Download
-          </button>
+          <button mat-flat-button type="button" class="adv-btn" (click)="downloadJsonConfig()">Download</button>
         </div>
+
         <div class="upload-txt">
-            Select a configuration file to upload. The file must be a valid KIP
-            configuration file of JSON format.
-            <br /><strong>WARNING: This will permanently overwrite active configuration.</strong>
+          Import a KIP configuration file as a <strong>new profile</strong>. This never overwrites an
+          existing profile.
         </div>
         <div class="upload-btn btn-div">
-          <!-- Hidden file input -->
-          <input
-            type="file"
-            #fileInput
-            (change)="uploadJsonConfig($event)"
-            accept=".json"
-            hidden
-            />
-          <!-- Material button to trigger file input -->
-          <button mat-flat-button class="adv-btn" (click)="fileInput.click()">
-            Upload
-          </button>
+          <input type="file" #fileInput (change)="uploadJsonConfig($event)" accept=".json" hidden />
+          <button mat-flat-button class="adv-btn" (click)="fileInput.click()">Import</button>
         </div>
+
         <div class="demo-txt">
-            Load the demonstration configuration and connection to Signal K demo
-            server.
-            <br /><strong>WARNING: This will permanently reset your active configuration.</strong>
+          Load the demonstration configuration and connect to the Signal K demo server.
+          <br /><strong>WARNING: This replaces the active profile's configuration.</strong>
         </div>
         <div class="demo-btn btn-div">
-          <button
-            mat-flat-button
-            type="button"
-            class="adv-btn"
-            (click)="loadDemoConfig()"
-            >
-            Demo
-          </button>
+          <button mat-flat-button type="button" class="adv-btn" (click)="loadDemoConfig()">Demo</button>
         </div>
+
         <div class="reset-txt">
-            Reset all your settings to default. The default configuration has a
-            single Getting Started instruction widget. Your Signal K server
-            connection settings will remain.
-            <br /><strong>WARNING: This will permanently reset your active configuration.</strong>
+          Reset the active profile to defaults (a single Getting Started widget). Your Signal K
+          connection settings remain.
+          <br /><strong>WARNING: This replaces the active profile's configuration.</strong>
         </div>
         <div class="reset-btn btn-div">
-          <button
-            mat-flat-button
-            type="button"
-            class="adv-btn"
-            (click)="resetConfigToDefault()"
-            >
-            Default
-          </button>
+          <button mat-flat-button type="button" class="adv-btn" (click)="resetConfigToDefault()">Default</button>
         </div>
+
         <div class="config-txt">
-          Clear the current connection configuration. This only affects
-          Connectivity settings tab.
+          Clear the current connection configuration. This only affects the Connectivity settings tab.
         </div>
         <div class="config-btn btn-div">
-          <button
-            mat-flat-button
-            type="button"
-            class="adv-btn"
-            (click)="resetConnectionToDefault()"
-            >
-            Connection
-          </button>
+          <button mat-flat-button type="button" class="adv-btn" (click)="resetConnectionToDefault()">Connection</button>
         </div>
       </div>
     </div>

@@ -63,6 +63,20 @@ export class ProfileService {
     await this.refresh();
   }
 
+  /**
+   * Import an arbitrary config as a NEW profile (never overwrites an existing one, never
+   * auto-switches). The config is structurally validated before it is written.
+   */
+  public async importProfile(name: string, config: unknown): Promise<void> {
+    await this.refresh();
+    const normalized = this.validateNewName(name);
+    if (!this.isValidConfigShape(config)) {
+      throw new Error('The selected file is not a valid KIP configuration.');
+    }
+    await this.storage.setConfig(PROFILE_SCOPE, normalized, config);
+    await this.refresh();
+  }
+
   /** Copy an existing profile's config under a new name. */
   public async duplicateProfile(sourceName: string, newName: string): Promise<void> {
     await this.refresh();
@@ -115,6 +129,14 @@ export class ProfileService {
 
   private existingNames(): string[] {
     return this._profiles().map((p) => p.name);
+  }
+
+  private isValidConfigShape(c: unknown): c is IConfig {
+    if (!c || typeof c !== 'object') {
+      return false;
+    }
+    const cfg = c as Record<string, unknown>;
+    return 'app' in cfg && 'theme' in cfg && Array.isArray(cfg['dashboards']);
   }
 
   private requireSnapshot(): IConfig {

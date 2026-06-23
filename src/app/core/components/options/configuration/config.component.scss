@@ -154,3 +154,53 @@ a:link, a:visited {
 .config-btn {
   grid-area: config-btn;
 }
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.profile-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-row.active {
+  font-weight: 500;
+}
+
+.profile-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.active-icon {
+  flex: 0 0 auto;
+}
+
+.active-tag {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.empty-note {
+  font-style: italic;
+  opacity: 0.7;
+  padding: 8px 4px;
+}

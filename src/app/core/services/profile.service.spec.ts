@@ -129,6 +129,27 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('import', () => {
+    it('imports a valid config as a new profile (no auto-switch)', async () => {
+      await service.refresh();
+      await service.importProfile('imported', cfg('imp'));
+      expect(storage.setConfig).toHaveBeenCalledWith('user', 'imported', expect.objectContaining({ theme: { themeName: 'imp' } }));
+      expect(settings.setActiveProfile).not.toHaveBeenCalled();
+    });
+
+    it('rejects a structurally invalid config without writing', async () => {
+      await service.refresh();
+      await expect(service.importProfile('imported', { not: 'a config' })).rejects.toThrow(/valid/i);
+      expect(storage.setConfig).not.toHaveBeenCalled();
+    });
+
+    it('rejects an invalid name without writing', async () => {
+      await service.refresh();
+      await expect(service.importProfile('bad/name', cfg())).rejects.toThrow();
+      expect(storage.setConfig).not.toHaveBeenCalled();
+    });
+  });
+
   describe('delete (guard rails)', () => {
     it('blocks deleting the active profile', async () => {
       await service.refresh();
