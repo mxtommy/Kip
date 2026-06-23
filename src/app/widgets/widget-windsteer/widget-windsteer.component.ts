@@ -280,7 +280,7 @@ export class WidgetWindComponent implements OnDestroy {
     if (u.data.value == null) u.data.value = 0;
     const cfg = this.runtime.options();
     const path = cfg?.paths['trueWindAngle'].path || '';
-    const base = (path.includes('angleTrueWater') || path.includes('angleTrueGround')) ? this.addHeading(this.currentHeading(), u.data.value) : u.data.value;
+    const base = computeTrueWindBaseAngle(path, u.data.value, this.currentHeading(), !!cfg?.compassModeEnabled);
     const next = this.normalizeAngle(base);
     if (!this.hasTWA || this.angleDelta(this.trueWindAngle(), next) >= this.DEG_EPSILON) {
       this.trueWindAngle.set(next); this.hasTWA = true; this.scheduleMarkForCheck();
@@ -408,7 +408,6 @@ export class WidgetWindComponent implements OnDestroy {
   }
 
   private normalizeAngle(a: number): number { return ((a % 360) + 360) % 360; }
-  private addHeading(h1: number, h2: number) { let h3 = (h1 + h2) % 360; if (h3 < 0) h3 += 360; return h3; }
   private angleDelta(from: number, to: number): number { const d = ((to - from + 540) % 360) - 180; return Math.abs(d); }
 
   private scheduleMarkForCheck() {
@@ -422,4 +421,24 @@ export class WidgetWindComponent implements OnDestroy {
       });
     });
   }
+}
+
+function addHeadingDeg(h1: number, h2: number): number {
+  let h3 = (h1 + h2) % 360;
+  if (h3 < 0) h3 += 360;
+  return h3;
+}
+
+/**
+ * Resolves the base angle to display for the configured true-wind path.
+ *
+ * `angleTrueWater` / `angleTrueGround` are boat-relative (true wind ANGLE). The enhanced/compass
+ * dial rotates with heading, so for those paths the heading is added to convert the angle into a
+ * compass-frame true wind DIRECTION before rendering. Any other (direction-style) path is passed
+ * through unchanged.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- compassModeEnabled is honored by the fix for #1066/#1063
+export function computeTrueWindBaseAngle(path: string, value: number, heading: number, compassModeEnabled: boolean): number {
+  const isBoatRelativeTrueWind = path.includes('angleTrueWater') || path.includes('angleTrueGround');
+  return isBoatRelativeTrueWind ? addHeadingDeg(heading, value) : value;
 }
