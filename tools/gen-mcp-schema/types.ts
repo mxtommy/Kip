@@ -136,6 +136,28 @@ export interface DesignSystem {
   unitGroups: UnitGroup[];
 }
 
+/** Provenance and version stamps for the generated artifact. */
+export interface SchemaMeta {
+  /** Version of this artifact's own shape. */
+  schemaVersion: number;
+  /** KIP package version the artifact was generated from. */
+  kipVersion: string;
+  /** applicationData file version used in the storage URL (`.../kip/{N}/...`). */
+  configFileVersion: number;
+  /** `app.configVersion` value KIP expects in a saved config body. */
+  configVersion: number;
+}
+
+/**
+ * The complete generated artifact: everything the kip-mcp-server needs to design
+ * valid KIP dashboards, read from KIP source and written canonically.
+ */
+export interface KipDashboardSchema {
+  meta: SchemaMeta;
+  widgets: WidgetSchemaEntry[];
+  designSystem: DesignSystem;
+}
+
 export interface GenerateOptions {
   /** Absolute path to the KIP repository root. */
   projectRoot: string;

@@ -20,6 +20,7 @@ import type {
   BindingKind,
   DesignSystem,
   GenerateOptions,
+  KipDashboardSchema,
   PathSlot,
   WidgetCatalogEntry,
   WidgetCategory,
@@ -210,6 +211,26 @@ function booleanProp(props: Map<string, ts.Expression>, key: string, file: strin
   const value = literalToValue(node);
   if (typeof value !== 'boolean') throw new Error(`Expected boolean "${key}" in ${file}`);
   return value;
+}
+
+/**
+ * Assembles the full schema artifact: version-stamped meta, the widget schemas,
+ * and the design system.
+ *
+ * STUB: implemented in the GREEN step.
+ */
+export function buildSchema(_opts: GenerateOptions): KipDashboardSchema {
+  return {
+    meta: { schemaVersion: 0, kipVersion: '', configFileVersion: 0, configVersion: 0 },
+    widgets: [],
+    designSystem: {
+      grid: { column: 0, row: 0, margin: 0, float: false, cellHeight: '' },
+      colors: [],
+      themeNames: [],
+      icons: [],
+      unitGroups: [],
+    },
+  };
 }
 
 function toCatalogEntry(raw: Record<string, unknown>, file: string): WidgetCatalogEntry {
