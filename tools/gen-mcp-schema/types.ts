@@ -41,6 +41,58 @@ export interface WidgetCatalogEntry {
   anyOfPlugins?: string[];
 }
 
+/**
+ * How a widget binds Signal K data, derived structurally from its DEFAULT_CONFIG.
+ *
+ *  - `paths-record`  config.paths is a keyed object of slots (most widgets).
+ *  - `paths-array`   config.paths is an array (switch / zones panels).
+ *  - `datachart`     no paths; a single top-level datachartPath (history chart).
+ *  - `none`          no path binding (static widgets, or ones configured through a
+ *                    special config object such as bms/ais/charger).
+ *
+ * Plugin/capability gating is described separately (catalog plugin fields), not here.
+ */
+export type BindingKind = 'paths-record' | 'paths-array' | 'datachart' | 'none';
+
+/**
+ * A single data slot of a `paths-record` widget, derived from one entry of
+ * DEFAULT_CONFIG.paths. Fields mirror KIP's IWidgetPath.
+ */
+export interface PathSlot {
+  /** The key under config.paths, e.g. `numericPath` or `headingPath`. */
+  slot: string;
+  /** Slot label shown in KIP's options UI. */
+  description: string | null;
+  /** The default Signal K path baked into DEFAULT_CONFIG (often null). */
+  defaultPath: string | null;
+  /** Default source, or null for the server default. */
+  source: string | null;
+  /** `number` | `string` | `boolean` | `Date` | `multiple` | null. */
+  pathType: string | null;
+  /** Whether the user (or MCP) may set this slot's path. */
+  isPathConfigurable: boolean;
+  /** Whether the widget needs this slot bound to work. */
+  pathRequired: boolean;
+  /** Default unit conversion (convertUnitTo), or null. */
+  defaultConvertUnitTo: string | null;
+  /** Expected Signal K base unit filter (pathSkUnitsFilter), or null. */
+  expectedSkUnit: string | null;
+  /** Default subscription throttle in milliseconds, or null. */
+  sampleTime: number | null;
+}
+
+/**
+ * A catalog entry enriched with its DEFAULT_CONFIG, binding kind and path slots —
+ * everything the MCP needs to build a valid widget instance.
+ */
+export interface WidgetSchemaEntry extends WidgetCatalogEntry {
+  bindingKind: BindingKind;
+  /** The widget's DEFAULT_CONFIG, read verbatim from source. */
+  defaultConfig: Record<string, unknown>;
+  /** Data slots for `paths-record` widgets; empty for every other binding kind. */
+  pathSlots: PathSlot[];
+}
+
 export interface GenerateOptions {
   /** Absolute path to the KIP repository root. */
   projectRoot: string;

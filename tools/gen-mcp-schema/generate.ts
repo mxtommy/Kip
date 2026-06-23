@@ -7,7 +7,12 @@
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { findArrayLiteral, literalToValue, parseSourceFile } from './ast';
-import type { GenerateOptions, WidgetCatalogEntry, WidgetCategory } from './types';
+import type {
+  GenerateOptions,
+  WidgetCatalogEntry,
+  WidgetCategory,
+  WidgetSchemaEntry,
+} from './types';
 
 const WIDGET_SERVICE = 'src/app/core/services/widget.service.ts';
 const WIDGET_CATEGORIES: ReadonlySet<string> = new Set<WidgetCategory>([
@@ -37,6 +42,16 @@ export function extractWidgetCatalog(opts: GenerateOptions): WidgetCatalogEntry[
 
   entries.sort((a, b) => a.selector.localeCompare(b.selector));
   return entries;
+}
+
+/**
+ * Extracts the full widget schema for every catalog widget: the catalog entry
+ * plus its DEFAULT_CONFIG, structural binding kind, and path slots.
+ *
+ * STUB: implemented in the GREEN step.
+ */
+export function extractWidgetSchemas(_opts: GenerateOptions): WidgetSchemaEntry[] {
+  return [];
 }
 
 function toCatalogEntry(raw: Record<string, unknown>, file: string): WidgetCatalogEntry {
