@@ -2,7 +2,7 @@ import { Directive, DestroyRef, inject, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, skipWhile, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
+import { Observable, Observer, Subject, delayWhen, filter, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Directive({
@@ -131,7 +131,15 @@ export class WidgetStreamsDirective {
       );
     }
     if (suppressBootstrapNull) {
-      data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
+      // Drop only the LEADING (bootstrap) null values. Once a real value has been seen, let
+      // everything through - including a later null produced by a TTL timeout. The flag is
+      // captured here, outside the operator, so it survives the timeout/retry resubscription
+      // below; a plain skipWhile would reset on every retry and swallow the timeout null (#1069).
+      let seenNonNull = false;
+      data$ = data$.pipe(filter(x => {
+        if (x?.data?.value != null) seenNonNull = true;
+        return seenNonNull;
+      }));
     }
     const initial$ = data$.pipe(take(1));
     const sampled$ = data$.pipe(sampleTime(sample));
