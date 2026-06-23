@@ -4,6 +4,48 @@ import { SettingsService } from './settings.service';
 import { StorageService } from './storage.service';
 import { ensureLocalStorage } from '../../../test-helpers/local-storage.test-helper';
 
+interface SeedOpts {
+  sharedConfigName?: string;
+  useSharedConfig?: boolean;
+}
+
+function seedConfig(opts: SeedOpts = {}): void {
+  localStorage.setItem('authorization_token', JSON.stringify(null));
+  localStorage.setItem('connectionConfig', JSON.stringify({
+    configVersion: 12,
+    kipUUID: 'test-uuid',
+    // Cross-origin so authMode resolves to token: storage then routes purely on useSharedConfig,
+    // keeping "local mode" (useSharedConfig:false) genuinely local under the auth-era routing.
+    signalKUrl: 'https://boat.example:3443',
+    proxyEnabled: false,
+    signalKSubscribeAll: false,
+    useDeviceToken: false,
+    loginName: '',
+    loginPassword: '',
+    useSharedConfig: opts.useSharedConfig ?? false,
+    sharedConfigName: opts.sharedConfigName ?? 'profileA'
+  }));
+  localStorage.setItem('appConfig', JSON.stringify({
+    configVersion: 12,
+    autoNightMode: false,
+    redNightMode: false,
+    nightModeBrightness: 1,
+    isRemoteControl: false,
+    instanceName: '',
+    dataSets: [],
+    unitDefaults: {},
+    notificationConfig: {
+      disableNotifications: true,
+      menuGrouping: false,
+      security: { disableSecurity: true },
+      devices: { disableDevices: true, showNormalState: false, showNominalState: false },
+      sound: { disableSound: true, muteNormal: true, muteNominal: true, muteWarn: true, muteAlert: true, muteAlarm: true, muteEmergency: true }
+    }
+  }));
+  localStorage.setItem('dashboardsConfig', JSON.stringify([{ id: 'dash-1' }]));
+  localStorage.setItem('themeConfig', JSON.stringify({ themeName: 'light' }));
+}
+
 function seedConnectionConfig(extra: Record<string, unknown> = {}): void {
   localStorage.setItem('authorization_token', JSON.stringify(null));
   localStorage.setItem(
@@ -23,9 +65,14 @@ function seedConnectionConfig(extra: Record<string, unknown> = {}): void {
   );
 }
 
-function createService(): SettingsService {
-  // localStorage is installed+cleared in beforeEach; the test seeds before calling this.
-  // Provide both services so the transitive chain resolves to the global stubs
+function createService(opts?: SeedOpts): SettingsService {
+  // opts provided (profile suite): clear + seed inside. Omitted (credential/routing suites): the
+  // describe's beforeEach already cleared and the test seeds via seedConnectionConfig first.
+  if (opts) {
+    ensureLocalStorage();
+    seedConfig(opts);
+  }
+  // Provide both services in the module so transitive deps resolve to the global stubs
   // (AuthenticationService / SignalKConnectionService) rather than the real root services.
   TestBed.configureTestingModule({ providers: [SettingsService, StorageService] });
   return TestBed.inject(SettingsService);
@@ -105,5 +152,54 @@ describe('SettingsService — storage routing by mode (Unit 5)', () => {
 
     expect(patchSpy).not.toHaveBeenCalled();
     expect(JSON.parse(localStorage.getItem('themeConfig') as string)).toEqual({ themeName: 'local-theme' });
+  });
+});
+
+describe('SettingsService', () => {
+  it('should be created', () => {
+    expect(createService({})).toBeTruthy();
+  });
+
+  describe('active profile (local mode)', () => {
+    let service: SettingsService;
+
+    beforeEach(() => {
+      service = createService({ useSharedConfig: false, sharedConfigName: 'profileA' });
+    });
+
+    it('getActiveProfileName returns the booted slot name', () => {
+      expect(service.getActiveProfileName()).toBe('profileA');
+    });
+
+    it('setActiveProfile updates the name and persists it to connectionConfig', () => {
+      service.setActiveProfile('cockpit');
+      expect(service.getActiveProfileName()).toBe('cockpit');
+      const cc = JSON.parse(localStorage.getItem('connectionConfig') as string);
+      expect(cc.sharedConfigName).toBe('cockpit');
+    });
+
+    it('setActiveProfile keeps StorageService.sharedConfigName coherent', () => {
+      const storage = TestBed.inject(StorageService);
+      service.setActiveProfile('cockpit');
+      expect(storage.sharedConfigName).toBe('cockpit');
+    });
+  });
+
+  describe('config snapshot', () => {
+    it('returns an assembled IConfig when settings are loaded', () => {
+      const service = createService({ useSharedConfig: false });
+      const snap = service.getActiveConfigSnapshot();
+      expect(snap).not.toBeNull();
+      expect(snap?.app).not.toBeNull();
+      expect(snap?.theme?.themeName).toBe('light');
+      expect(snap?.dashboards).toEqual([{ id: 'dash-1' }]);
+    });
+
+    it('returns null on a degraded shared boot (config not loaded)', () => {
+      // useSharedConfig=true but storage was never bootstrapped → startup() early-returns,
+      // leaving activeConfig.app null. Clone must not seed from a hollow snapshot.
+      const service = createService({ useSharedConfig: true, sharedConfigName: 'profileA' });
+      expect(service.getActiveConfigSnapshot()).toBeNull();
+    });
   });
 });

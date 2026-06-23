@@ -346,6 +346,42 @@ export class SettingsService {
     return this.buildThemeStorageObject();
   }
 
+  // --- Active profile (named config slot) ---
+  public getActiveProfileName(): string {
+    return this.sharedConfigName;
+  }
+
+  /**
+   * Points this device at a different profile (named config slot) and reloads so the bootstrap
+   * loads it. The active profile is per-device: persisted in the always-local connectionConfig.
+   *
+   * @param {string} name Profile (config slot) name to make active on this device.
+   */
+  public setActiveProfile(name: string): void {
+    this.sharedConfigName = name;
+    this.storage.sharedConfigName = name; // keep the storage write-path slot name coherent
+    this.saveConnectionConfigToLocalStorage();
+    this.reloadApp();
+  }
+
+  /**
+   * Assembles the current in-memory config for cloning into a new profile. Returns null when the
+   * active config is not loaded (e.g. a degraded shared boot), so a clone cannot seed from a
+   * hollow snapshot.
+   *
+   * @returns {IConfig | null} The current config, or null when settings are not loaded.
+   */
+  public getActiveConfigSnapshot(): IConfig | null {
+    if (!this.activeConfig?.app) {
+      return null;
+    }
+    return {
+      app: this.getAppConfig(),
+      theme: this.getThemeConfig(),
+      dashboards: this.getDashboardConfig()
+    };
+  }
+
   public get KipUUID(): string {
     return this.kipUUID;
   }
@@ -659,6 +695,10 @@ export class SettingsService {
 
   public loadDemoConfig() {
     if (this.useServerStorage) {
+      if (!this.storage.storageServiceReady$.getValue()) {
+        console.warn("[AppSettings Service] Storage not ready; cannot load demo configuration.");
+        return;
+      }
       const demoConfig: IConfig = {
         app: DemoAppConfig,
         dashboards: DemoDashboardsConfig,
