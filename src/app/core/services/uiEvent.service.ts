@@ -2,6 +2,15 @@ import { Injectable, OnDestroy, signal } from '@angular/core';
 import screenfull from 'screenfull';
 import NoSleep from '@zakj/no-sleep';
 
+/**
+ * Detects whether the app is running inside an iframe (e.g. Signal K app-dock, Freeboard).
+ * When embedded, the host manages fullscreen, so KIP must defer to it (#1062).
+ * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
+ */
+export function isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
+  return win.self !== win.top;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,7 +42,12 @@ export class uiEventService implements OnDestroy {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isTest = (window as any).__KIP_TEST__;
     if (!isTest) {
-      if (screenfull.isEnabled) {
+      if (isEmbeddedInIframe()) {
+        // Running inside a host iframe (app-dock, Freeboard, ...). The host owns fullscreen,
+        // so hide KIP's control and defer to it (#1062).
+        this.fullscreenSupported.set(false);
+        console.log('[UI Event Service] Running inside an iframe; fullscreen control hidden, deferring to host.');
+      } else if (screenfull.isEnabled) {
         screenfull.on('change', this.fullscreenChangeHandler);
       } else {
         this.fullscreenSupported.set(false);
@@ -87,6 +101,10 @@ export class uiEventService implements OnDestroy {
   }
 
   public toggleFullScreen(): void {
+    if (isEmbeddedInIframe()) {
+      // The host iframe (e.g. app-dock) manages fullscreen; do nothing so we don't hijack it (#1062).
+      return;
+    }
     if (screenfull.isEnabled) {
       if (!this.fullscreenStatus()) {
         screenfull.request();
