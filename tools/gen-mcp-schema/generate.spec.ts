@@ -36,4 +36,10 @@ describe('extractWidgetCatalog', () => {
       expect.arrayContaining(['freeboard-sk', 'tracks', 'resources-provider', 'course-provider']),
     );
   });
+
+  it('returns widgets sorted by selector for stable, consistent diffs', () => {
+    const selectors = widgets.map((w) => w.selector);
+    const sorted = [...selectors].sort((a, b) => a.localeCompare(b));
+    expect(selectors).toEqual(sorted);
+  });
 });
