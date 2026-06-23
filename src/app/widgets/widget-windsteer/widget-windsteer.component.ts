@@ -432,13 +432,13 @@ function addHeadingDeg(h1: number, h2: number): number {
 /**
  * Resolves the base angle to display for the configured true-wind path.
  *
- * `angleTrueWater` / `angleTrueGround` are boat-relative (true wind ANGLE). The enhanced/compass
- * dial rotates with heading, so for those paths the heading is added to convert the angle into a
- * compass-frame true wind DIRECTION before rendering. Any other (direction-style) path is passed
- * through unchanged.
+ * `angleTrueWater` / `angleTrueGround` are boat-relative (true wind ANGLE). In enhanced/compass
+ * mode the dial rotates with heading, so for those paths the heading is added to convert the angle
+ * into a compass-frame true wind DIRECTION before rendering. In simple (bow-fixed) mode the dial
+ * does not rotate, so the angle must stay boat-relative - matching apparent wind - otherwise it is
+ * displaced by the heading (#1066, #1063). Direction-style paths are always passed through unchanged.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- compassModeEnabled is honored by the fix for #1066/#1063
 export function computeTrueWindBaseAngle(path: string, value: number, heading: number, compassModeEnabled: boolean): number {
   const isBoatRelativeTrueWind = path.includes('angleTrueWater') || path.includes('angleTrueGround');
-  return isBoatRelativeTrueWind ? addHeadingDeg(heading, value) : value;
+  return isBoatRelativeTrueWind && compassModeEnabled ? addHeadingDeg(heading, value) : value;
 }
