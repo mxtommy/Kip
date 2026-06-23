@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject } from 'rxjs';
+import { cloneDeep, merge } from 'lodash-es';
 import { WidgetSolarChargerComponent } from './widget-solar-charger.component';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -444,5 +445,78 @@ describe('WidgetSolarChargerComponent', () => {
     expect(model.panelPowerText).toBe('512');
     expect(model.panelPowerUnitText).toBe('W');
     expect(model.panelPowerColor).toBe(themeMock.zoneWarn);
+  });
+
+  // Synthetic reproduction of #1061: configure a max power, "reboot" with no solar data,
+  // then let data arrive. gaugeProgress is derived from the saved arrayRatedPowerW, so it is a
+  // direct probe of whether the persisted per-device option survives a no-data startup.
+  const bootThenData = (
+    solarCharger: typeof runtimeOptions.solarCharger,
+    panelPowerPath: string
+  ) => {
+    const freshLive = new Subject<IPathUpdateWithPath>();
+    runtimeOptions = { color: 'green', solarCharger };
+    // Reboot: NO solar data available at startup.
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({ initial: [], live$: freshLive.asObservable() });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-reboot');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+    fixture.detectChanges();
+
+    // No charger detected yet.
+    expect((component as unknown as { visibleSolarUnits: () => unknown[] }).visibleSolarUnits()).toEqual([]);
+
+    // Solar data starts flowing (panel power 150W for sc1).
+    freshLive.next(makeUpdate(panelPowerPath, 150));
+    fixture.detectChanges();
+
+    return (component as unknown as {
+      displayModels: () => Record<string, { gaugeProgress: number }>;
+    }).displayModels();
+  };
+
+  it('applies the saved max power when data arrives after a no-data startup, untracked (#1061)', () => {
+    const models = bootThenData(
+      { trackedDevices: [], optionsById: { sc1: { arrayRatedPowerW: 300 } } },
+      'self.electrical.solar.sc1.panelPower'
+    );
+    expect(models['sc1']).toBeDefined();
+    // 150W / 300W rated = 0.5. If the saved option were lost, ratedPower would be null and this would be 0.
+    expect(models['sc1'].gaugeProgress).toBeCloseTo(0.5, 5);
+  });
+
+  it('applies the saved max power when data arrives after a no-data startup, tracked device (#1061)', () => {
+    const models = bootThenData(
+      {
+        trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+        optionsById: { sc1: { arrayRatedPowerW: 300 } }
+      },
+      'self.electrical.solar.sc1.panelPower'
+    );
+    expect(models['sc1||default']).toBeDefined();
+    expect(models['sc1||default'].gaugeProgress).toBeCloseTo(0.5, 5);
+  });
+
+  // Replicates the per-load config resolution in WidgetRuntimeDirective.options():
+  //   merge(cloneDeep(DEFAULT_CONFIG), cloneDeep(savedConfig))
+  // This runs on every reboot, so a lodash merge gotcha here would wipe the saved solar options.
+  it('config merge preserves saved solar optionsById and trackedDevices on load (#1061)', () => {
+    const base = WidgetSolarChargerComponent.DEFAULT_CONFIG; // { solarCharger: { trackedDevices: [], optionsById: {} }, ... }
+    const saved = {
+      color: 'green',
+      solarCharger: {
+        trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+        optionsById: { sc1: { arrayRatedPowerW: 300 } }
+      }
+    };
+
+    const merged = merge(cloneDeep(base), cloneDeep(saved)) as typeof saved;
+
+    expect(merged.solarCharger.optionsById).toEqual({ sc1: { arrayRatedPowerW: 300 } });
+    expect(merged.solarCharger.trackedDevices).toEqual([{ id: 'sc1', source: 'default', key: 'sc1||default' }]);
+    expect(merged.color).toBe('green');
   });
 });
