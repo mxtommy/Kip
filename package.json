@@ -55,6 +55,7 @@
     "test:plugin": "npm run build:plugin && node --test --test-concurrency=1 kip-plugin/tests/index.test.cjs",
     "test:interactive": "ng test",
     "test:headless": "CI=1 ng test --watch=false",
+    "test:mcp-schema": "vitest run --config tools/gen-mcp-schema/vitest.config.ts",
     "lint": "ng lint",
     "dev": "ng serve --configuration=dev --serve-path=/@mxtommy/kip/",
     "build:plugin": "tsc -p ./kip-plugin/tsconfig.plugin.json",
