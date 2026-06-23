@@ -8,8 +8,6 @@ export const DemoAppConfig: IAppConfig = {
   "autoNightMode": false,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
-  "isRemoteControl": false,
-  "instanceName": "",
   "splitShellEnabled": true,
   "splitShellSide": "left",
   "splitShellSwipeDisabled": false,
@@ -771,7 +769,7 @@ export const DemoConfig: IConfig = {
 }
 
 export const DemoConnectionConfig: IConnectionConfig = {
-  "configVersion": 12,
+  "configVersion": 13,
   "kipUUID": UUID.create(),
   "signalKUrl": "https://demo.signalk.org",
   "proxyEnabled": false,
@@ -779,5 +777,7 @@ export const DemoConnectionConfig: IConnectionConfig = {
   "useDeviceToken": false,
   "loginName": null,
   "useSharedConfig": false,
-  "sharedConfigName": "default"
+  "sharedConfigName": "default",
+  "isRemoteControl": false,
+  "instanceName": ""
 }

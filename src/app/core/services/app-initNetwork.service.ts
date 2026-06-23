@@ -165,13 +165,14 @@ export class AppNetworkInitService implements OnDestroy {
         await this.login();
       }
 
+      let remoteConfig: IConfig | null = null;
       if (this.isLoggedIn && this.useServerStorage()) {
         // Wait for storage to be fully ready before accessing it
         const storageReady = await this.storage.waitUntilReady();
         if (!storageReady) {
           throw new Error('[AppInit Network Service] StorageService did not become ready in time. Cannot bootstrap remote configuration.');
         } else {
-          const remoteConfig = await this.storage.getConfig('user', this.config.sharedConfigName, configFileVersion);
+          remoteConfig = await this.storage.getConfig('user', this.config.sharedConfigName, configFileVersion);
           const bootstrapContext: IStorageRemoteBootstrapContext = {
             sharedConfigName: this.config.sharedConfigName,
             configFileVersion,
@@ -180,6 +181,10 @@ export class AppNetworkInitService implements OnDestroy {
           this.storage.bootstrapRemoteContext(bootstrapContext);
         }
       }
+
+      // Lift remote-control identity to the per-device connectionConfig (once). Runs after the
+      // profile is loaded; skipped on a degraded shared boot (remoteConfig null) so it retries later.
+      this.migrateRemoteControlToDevice(remoteConfig);
 
       this._bootstrapIssue$.next({ reason: 'none' });
 
@@ -348,6 +353,39 @@ export class AppNetworkInitService implements OnDestroy {
 
   private setLocalStorageConfig(): void {
     localStorage.setItem(CONNECTION_CONFIG_KEY, JSON.stringify(this.config));
+  }
+
+  /**
+   * One-time migration (connectionConfig version < 13 → 13): the remote-control identity
+   * (isRemoteControl, instanceName) moved from the profile (IAppConfig) to the per-device
+   * connectionConfig. Lift the existing values from the active profile (shared mode) or the local
+   * appConfig (local mode). On a degraded shared boot the profile is unavailable, so the lift is
+   * deferred (version stays < 13) and retried on a later successful boot.
+   *
+   * @param {IConfig | null} remoteConfig The profile loaded this boot, or null when unavailable.
+   */
+  private migrateRemoteControlToDevice(remoteConfig: IConfig | null): void {
+    if (!this.config || this.config.configVersion >= 13) {
+      return;
+    }
+    // The fields still exist at runtime in pre-migration stored configs, but were removed from IAppConfig.
+    let app: { isRemoteControl?: boolean; instanceName?: string } | null =
+      (remoteConfig?.app as unknown as { isRemoteControl?: boolean; instanceName?: string }) ?? null;
+    if (!app && !this.config.useSharedConfig) {
+      try {
+        app = JSON.parse(localStorage.getItem('appConfig') ?? 'null');
+      } catch {
+        app = null;
+      }
+    }
+    if (!app && this.config.useSharedConfig) {
+      return; // shared mode but the profile is not loaded (degraded) — retry on a later boot
+    }
+    this.config.isRemoteControl = app?.isRemoteControl ?? false;
+    this.config.instanceName = app?.instanceName ?? '';
+    this.config.configVersion = 13;
+    this.setLocalStorageConfig();
+    console.log('[AppInit Network Service] Migrated remote-control identity to per-device connectionConfig (v13)');
   }
 
   private loadLocalStorageConfig(): void {

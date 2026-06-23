@@ -23,6 +23,7 @@ import { compare } from 'compare-versions';
 const defaultTheme = '';
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
 const latestConfigVersion = 12; // used to set the configVersion property in the app config. This is used to manage config upgrades.
+const latestConnectionConfigVersion = 13; // per-device connectionConfig schema version; bumped for the remote-control identity hoist (Unit 5). Decoupled from the app configVersion.
 @Injectable({
   providedIn: 'root'
 })
@@ -119,8 +120,8 @@ export class SettingsService {
 
     switch (config.configVersion) {
       case 11:
-        break;
       case 12:
+      case 13:
         break;
       default:
         console.error(`[AppSettings Service] Invalid connectionConfig version ${config.configVersion}. Resetting and loading connection configuration default`);
@@ -144,6 +145,10 @@ export class SettingsService {
       delete config.loginPassword;
       localStorage.setItem("connectionConfig", JSON.stringify(config));
     }
+
+    // Remote-control identity is per-device (Unit 5): read from connectionConfig, not the profile.
+    this.isRemoteControl.next(config.isRemoteControl ?? false);
+    this.instanceName.next(config.instanceName ?? '');
   }
 
   public resetConnection() {
@@ -194,7 +199,7 @@ export class SettingsService {
     }
 
     if(type === 'connectionConfig') {
-      if (config.configVersion !== latestConfigVersion) {
+      if (config.configVersion !== latestConfigVersion && config.configVersion !== latestConnectionConfigVersion) {
         console.log(`[AppSettings Service] Invalid ${type} version. Force loading defaults`);
 
         switch (type) {
@@ -238,18 +243,6 @@ export class SettingsService {
       this._dashboards = [];
     } else {
       this._dashboards = this.activeConfig.dashboards;
-    }
-
-    if (this.activeConfig.app.isRemoteControl === undefined) {
-      this.setIsRemoteControl(false);
-    } else {
-      this.isRemoteControl.next(this.activeConfig.app.isRemoteControl);
-    }
-
-    if (this.activeConfig.app.instanceName === undefined) {
-      this.setInstanceName('');
-    } else {
-      this.instanceName.next(this.activeConfig.app.instanceName);
     }
 
     if (this.activeConfig.app.splitShellEnabled === undefined) {
@@ -458,13 +451,8 @@ export class SettingsService {
 
   public setIsRemoteControl(enabled: boolean) {
     this.isRemoteControl.next(enabled);
-    const appConf = this.buildAppStorageObject();
-
-    if (this.useServerStorage) {
-      this.storage.patchConfig('IAppConfig', appConf);
-    } else {
-      this.saveAppConfigToLocalStorage();
-    }
+    // Per-device (Unit 5): persist to connectionConfig, never the profile.
+    this.saveConnectionConfigToLocalStorage();
   }
 
   // Remote Control Instance Name
@@ -478,13 +466,8 @@ export class SettingsService {
 
   public setInstanceName(name: string) {
     this.instanceName.next(name);
-    const appConf = this.buildAppStorageObject();
-
-    if (this.useServerStorage) {
-      this.storage.patchConfig('IAppConfig', appConf);
-    } else {
-      this.saveAppConfigToLocalStorage();
-    }
+    // Per-device (Unit 5): persist to connectionConfig, never the profile.
+    this.saveConnectionConfigToLocalStorage();
   }
 
   public getDisablePathValidation(): boolean {
@@ -733,8 +716,6 @@ export class SettingsService {
       autoNightMode: this.autoNightMode.getValue(),
       redNightMode: this.redNightMode.getValue(),
       nightModeBrightness: this.nightModeBrightness.getValue(),
-      isRemoteControl: this.isRemoteControl.getValue(),
-      instanceName: this.instanceName.getValue(),
       dataSets: this.dataSets,
       unitDefaults: this.unitDefaults.getValue(),
       notificationConfig: this.kipKNotificationConfig.getValue(),
@@ -749,7 +730,7 @@ export class SettingsService {
 
   private buildConnectionStorageObject() {
     const storageObject: IConnectionConfig = {
-      configVersion: this.configVersion ?? latestConfigVersion,
+      configVersion: latestConnectionConfigVersion,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl?.url ?? '',
       proxyEnabled: this.proxyEnabled,
@@ -758,7 +739,9 @@ export class SettingsService {
       loginName: this.loginName,
       // loginPassword intentionally omitted: never persisted (transient in-memory only).
       useSharedConfig: this.useSharedConfig,
-      sharedConfigName: this.sharedConfigName
+      sharedConfigName: this.sharedConfigName,
+      isRemoteControl: this.isRemoteControl.getValue(),
+      instanceName: this.instanceName.getValue()
     }
     return storageObject;
   }

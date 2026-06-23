@@ -342,7 +342,7 @@ class SettingsServiceStub {
   public signalkUrl = { url: 'http://localhost', new: false };
   private _kipUUID = 'test-uuid';
   private _connectionConfig: import('./app/core/interfaces/app-settings.interfaces').IConnectionConfig = {
-    configVersion: 12,
+    configVersion: 13,
     signalKUrl: 'http://localhost',
     proxyEnabled: false,
     signalKSubscribeAll: false,
@@ -351,7 +351,9 @@ class SettingsServiceStub {
     loginPassword: '',
     useSharedConfig: false,
     sharedConfigName: '',
-    kipUUID: 'test-uuid'
+    kipUUID: 'test-uuid',
+    isRemoteControl: false,
+    instanceName: ''
   };
   private _notificationConfig = new BehaviorSubject<import('./app/core/interfaces/app-settings.interfaces').INotificationConfig>({
     disableNotifications: true,
@@ -430,8 +432,6 @@ class SettingsServiceStub {
       autoNightMode: this.autoNightModeSubject.value,
       redNightMode: this.redNightModeSubject.value,
       nightModeBrightness: this.nightModeBrightnessSubject.value,
-      isRemoteControl: this._isRemoteControlSubject.value,
-      instanceName: this.instanceNameSubject.value,
       dataSets: this.dataSets as IDatasetServiceDatasetConfig[],
       unitDefaults: this.unitDefaultsSubject.value as IUnitDefaults,
       notificationConfig: this._notificationConfig.value,

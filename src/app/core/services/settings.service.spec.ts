@@ -7,12 +7,14 @@ import { ensureLocalStorage } from '../../../test-helpers/local-storage.test-hel
 interface SeedOpts {
   sharedConfigName?: string;
   useSharedConfig?: boolean;
+  isRemoteControl?: boolean;
+  instanceName?: string;
 }
 
 function seedConfig(opts: SeedOpts = {}): void {
   localStorage.setItem('authorization_token', JSON.stringify(null));
   localStorage.setItem('connectionConfig', JSON.stringify({
-    configVersion: 12,
+    configVersion: 13,
     kipUUID: 'test-uuid',
     // Cross-origin so authMode resolves to token: storage then routes purely on useSharedConfig,
     // keeping "local mode" (useSharedConfig:false) genuinely local under the auth-era routing.
@@ -23,15 +25,15 @@ function seedConfig(opts: SeedOpts = {}): void {
     loginName: '',
     loginPassword: '',
     useSharedConfig: opts.useSharedConfig ?? false,
-    sharedConfigName: opts.sharedConfigName ?? 'profileA'
+    sharedConfigName: opts.sharedConfigName ?? 'profileA',
+    isRemoteControl: opts.isRemoteControl ?? false,
+    instanceName: opts.instanceName ?? ''
   }));
   localStorage.setItem('appConfig', JSON.stringify({
     configVersion: 12,
     autoNightMode: false,
     redNightMode: false,
     nightModeBrightness: 1,
-    isRemoteControl: false,
-    instanceName: '',
     dataSets: [],
     unitDefaults: {},
     notificationConfig: {
@@ -200,6 +202,49 @@ describe('SettingsService', () => {
       // leaving activeConfig.app null. Clone must not seed from a hollow snapshot.
       const service = createService({ useSharedConfig: true, sharedConfigName: 'profileA' });
       expect(service.getActiveConfigSnapshot()).toBeNull();
+    });
+  });
+
+  describe('remote-control identity (per-device, Unit 5)', () => {
+    it('reads isRemoteControl / instanceName from connectionConfig at boot', () => {
+      const service = createService({ isRemoteControl: true, instanceName: 'Helm' });
+      expect(service.getIsRemoteControl()).toBe(true);
+      expect(service.getInstanceName()).toBe('Helm');
+    });
+
+    it('setIsRemoteControl persists to connectionConfig, not the profile/appConfig', () => {
+      const service = createService({ isRemoteControl: false });
+      service.setIsRemoteControl(true);
+      const cc = JSON.parse(localStorage.getItem('connectionConfig') as string);
+      expect(cc.isRemoteControl).toBe(true);
+      const appConf = JSON.parse(localStorage.getItem('appConfig') as string);
+      expect(appConf.isRemoteControl).toBeUndefined();
+    });
+
+    it('setInstanceName persists to connectionConfig', () => {
+      const service = createService({ instanceName: '' });
+      service.setInstanceName('Mast');
+      const cc = JSON.parse(localStorage.getItem('connectionConfig') as string);
+      expect(cc.instanceName).toBe('Mast');
+    });
+
+    it('switching the active profile leaves remote-control identity unchanged', () => {
+      const service = createService({ isRemoteControl: true, instanceName: 'Helm' });
+      service.setActiveProfile('cockpit');
+      expect(service.getIsRemoteControl()).toBe(true);
+      expect(service.getInstanceName()).toBe('Helm');
+      const cc = JSON.parse(localStorage.getItem('connectionConfig') as string);
+      expect(cc.isRemoteControl).toBe(true);
+      expect(cc.instanceName).toBe('Helm');
+    });
+
+    it('getAppConfig no longer carries remote-control fields', () => {
+      const service = createService();
+      const snap = service.getActiveConfigSnapshot();
+      expect(snap?.app).not.toBeNull();
+      const app = snap?.app as unknown as Record<string, unknown>;
+      expect(app['isRemoteControl']).toBeUndefined();
+      expect(app['instanceName']).toBeUndefined();
     });
   });
 });

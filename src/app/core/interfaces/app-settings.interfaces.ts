@@ -15,6 +15,10 @@ export interface IConnectionConfig {
   loginPassword?: string;
   useSharedConfig: boolean;
   sharedConfigName: string;
+  // Remote-control identity is per-device (Unit 5 / R8): a profile switch must not change whether
+  // this display participates in remote control or the name it advertises.
+  isRemoteControl: boolean;
+  instanceName: string;
 }
 export interface IConfig {
   app: IAppConfig | null;
@@ -27,8 +31,6 @@ export interface IAppConfig {
   autoNightMode: boolean;
   redNightMode: boolean;
   nightModeBrightness: number;
-  isRemoteControl: boolean;
-  instanceName: string;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;
