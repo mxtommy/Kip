@@ -45,6 +45,12 @@ const ICONS_SVG = 'src/assets/svg/icons.svg';
 // kept in step with src/styles.scss and src/themes/_m3{dark,light,night}.scss.
 const THEME_NAMES: readonly string[] = ['', 'light-theme', 'night-theme'];
 
+const SCHEMA_VERSION = 1;
+// Two distinct KIP version numbers (see storage.service.ts / config.demo.const.ts):
+// the applicationData file version in the URL, and app.configVersion in the body.
+const CONFIG_FILE_VERSION = 11;
+const CONFIG_VERSION = 12;
+
 /**
  * Extracts KIP's widget catalog (`_widgetDefinition`) from widget.service.ts.
  *
@@ -215,22 +221,30 @@ function booleanProp(props: Map<string, ts.Expression>, key: string, file: strin
 
 /**
  * Assembles the full schema artifact: version-stamped meta, the widget schemas,
- * and the design system.
- *
- * STUB: implemented in the GREEN step.
+ * and the design system. Deterministic — no timestamps — so the committed
+ * artifact only changes when KIP source changes.
  */
-export function buildSchema(_opts: GenerateOptions): KipDashboardSchema {
+export function buildSchema(opts: GenerateOptions): KipDashboardSchema {
   return {
-    meta: { schemaVersion: 0, kipVersion: '', configFileVersion: 0, configVersion: 0 },
-    widgets: [],
-    designSystem: {
-      grid: { column: 0, row: 0, margin: 0, float: false, cellHeight: '' },
-      colors: [],
-      themeNames: [],
-      icons: [],
-      unitGroups: [],
+    meta: {
+      schemaVersion: SCHEMA_VERSION,
+      kipVersion: readKipVersion(opts.projectRoot),
+      configFileVersion: CONFIG_FILE_VERSION,
+      configVersion: CONFIG_VERSION,
     },
+    widgets: extractWidgetSchemas(opts),
+    designSystem: extractDesignSystem(opts),
   };
+}
+
+function readKipVersion(root: string): string {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+    version?: string;
+  };
+  if (!pkg.version) {
+    throw new Error('KIP package.json has no "version"');
+  }
+  return pkg.version;
 }
 
 function toCatalogEntry(raw: Record<string, unknown>, file: string): WidgetCatalogEntry {

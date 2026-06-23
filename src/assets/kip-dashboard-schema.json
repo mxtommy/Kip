@@ -1,0 +1,2955 @@
+{
+  "designSystem": {
+    "colors": [
+      {
+        "label": "Contrast",
+        "value": "contrast"
+      },
+      {
+        "label": "Blue",
+        "value": "blue"
+      },
+      {
+        "label": "Green",
+        "value": "green"
+      },
+      {
+        "label": "Orange",
+        "value": "orange"
+      },
+      {
+        "label": "Yellow",
+        "value": "yellow"
+      },
+      {
+        "label": "Pink",
+        "value": "pink"
+      },
+      {
+        "label": "Purple",
+        "value": "purple"
+      },
+      {
+        "label": "Grey",
+        "value": "grey"
+      }
+    ],
+    "grid": {
+      "cellHeight": "auto",
+      "column": 24,
+      "float": true,
+      "margin": 4,
+      "row": 24
+    },
+    "icons": [
+      "dashboard-activity-chart",
+      "dashboard-anchor",
+      "dashboard-anchored-boat",
+      "dashboard-beach",
+      "dashboard-beating-port",
+      "dashboard-beating-starboard",
+      "dashboard-bedtime",
+      "dashboard-burger",
+      "dashboard-car-battery",
+      "dashboard-chart",
+      "dashboard-chart-Area",
+      "dashboard-compass2",
+      "dashboard-dashboard",
+      "dashboard-dashboard1",
+      "dashboard-dashboard2",
+      "dashboard-diesel-pump",
+      "dashboard-digital-meter",
+      "dashboard-digital-speed",
+      "dashboard-dining",
+      "dashboard-engine",
+      "dashboard-entertainement",
+      "dashboard-fishing",
+      "dashboard-green-energy",
+      "dashboard-hurricane",
+      "dashboard-map",
+      "dashboard-motor-boat",
+      "dashboard-night",
+      "dashboard-panel",
+      "dashboard-pin",
+      "dashboard-pin2",
+      "dashboard-propeller",
+      "dashboard-reaching-port",
+      "dashboard-reaching-starboard",
+      "dashboard-refrigerator",
+      "dashboard-road",
+      "dashboard-running-port",
+      "dashboard-running-starboard",
+      "dashboard-sailing",
+      "dashboard-saturn",
+      "dashboard-snorkle",
+      "dashboard-snow",
+      "dashboard-solar-console",
+      "dashboard-Solar-Panel",
+      "dashboard-sos",
+      "dashboard-speedometer",
+      "dashboard-steering-wheel",
+      "dashboard-switchboard",
+      "dashboard-tide-current",
+      "dashboard-weather",
+      "dashboard-Wind-generator"
+    ],
+    "themeNames": [
+      "",
+      "light-theme",
+      "night-theme"
+    ],
+    "unitGroups": [
+      {
+        "group": "Unitless",
+        "measures": [
+          {
+            "description": "As-Is numeric value",
+            "measure": "unitless"
+          },
+          {
+            "description": "No unit label - As-Is numeric value",
+            "measure": " "
+          }
+        ]
+      },
+      {
+        "group": "Speed",
+        "measures": [
+          {
+            "description": "Knots - Nautical miles per hour",
+            "measure": "knots"
+          },
+          {
+            "description": "kph - Kilometers per hour",
+            "measure": "kph"
+          },
+          {
+            "description": "mph - Miles per hour",
+            "measure": "mph"
+          },
+          {
+            "description": "m/s - Meters per second (base)",
+            "measure": "m/s"
+          }
+        ]
+      },
+      {
+        "group": "Flow",
+        "measures": [
+          {
+            "description": "Cubic meters per second (base)",
+            "measure": "m3/s"
+          },
+          {
+            "description": "Liters per minute",
+            "measure": "l/min"
+          },
+          {
+            "description": "Liters per hour",
+            "measure": "l/h"
+          },
+          {
+            "description": "Gallons per minute",
+            "measure": "g/min"
+          },
+          {
+            "description": "Gallons per hour",
+            "measure": "g/h"
+          }
+        ]
+      },
+      {
+        "group": "Fuel Distance",
+        "measures": [
+          {
+            "description": "Meters per cubic meter (base)",
+            "measure": "m/m3"
+          },
+          {
+            "description": "Nautical Miles per liter",
+            "measure": "nm/l"
+          },
+          {
+            "description": "Nautical Miles per gallon",
+            "measure": "nm/g"
+          },
+          {
+            "description": "Kilometers per liter",
+            "measure": "km/l"
+          },
+          {
+            "description": "Miles per Gallon",
+            "measure": "mpg"
+          }
+        ]
+      },
+      {
+        "group": "Energy Distance",
+        "measures": [
+          {
+            "description": "Meters per Joule (base)",
+            "measure": "m/J"
+          },
+          {
+            "description": "Nautical Miles per Joule",
+            "measure": "nm/J"
+          },
+          {
+            "description": "Kilometers per Joule",
+            "measure": "km/J"
+          },
+          {
+            "description": "Nautical Miles per Kilowatt-hour",
+            "measure": "nm/kWh"
+          },
+          {
+            "description": "Kilometers per Kilowatt-hour",
+            "measure": "km/kWh"
+          }
+        ]
+      },
+      {
+        "group": "Temperature",
+        "measures": [
+          {
+            "description": "Kelvin (base)",
+            "measure": "K"
+          },
+          {
+            "description": "Celsius",
+            "measure": "celsius"
+          },
+          {
+            "description": "Fahrenheit",
+            "measure": "fahrenheit"
+          }
+        ]
+      },
+      {
+        "group": "Length",
+        "measures": [
+          {
+            "description": "Meters (base)",
+            "measure": "m"
+          },
+          {
+            "description": "Millimeters",
+            "measure": "mm"
+          },
+          {
+            "description": "Fathoms",
+            "measure": "fathom"
+          },
+          {
+            "description": "Nautical Miles",
+            "measure": "nm"
+          },
+          {
+            "description": "Kilometers",
+            "measure": "km"
+          },
+          {
+            "description": "Miles",
+            "measure": "mi"
+          },
+          {
+            "description": "Feet",
+            "measure": "feet"
+          },
+          {
+            "description": "Inches",
+            "measure": "inch"
+          }
+        ]
+      },
+      {
+        "group": "Volume",
+        "measures": [
+          {
+            "description": "Liters (base)",
+            "measure": "liter"
+          },
+          {
+            "description": "Cubic Meters",
+            "measure": "m3"
+          },
+          {
+            "description": "Gallons",
+            "measure": "gallon"
+          }
+        ]
+      },
+      {
+        "group": "Current",
+        "measures": [
+          {
+            "description": "Amperes (base)",
+            "measure": "A"
+          },
+          {
+            "description": "Milliamperes",
+            "measure": "mA"
+          }
+        ]
+      },
+      {
+        "group": "Potential",
+        "measures": [
+          {
+            "description": "Volts (base)",
+            "measure": "V"
+          },
+          {
+            "description": "Millivolts",
+            "measure": "mV"
+          }
+        ]
+      },
+      {
+        "group": "Charge",
+        "measures": [
+          {
+            "description": "Coulomb (base)",
+            "measure": "C"
+          },
+          {
+            "description": "Ampere*Hours",
+            "measure": "Ah"
+          }
+        ]
+      },
+      {
+        "group": "Power",
+        "measures": [
+          {
+            "description": "Watts (base)",
+            "measure": "W"
+          },
+          {
+            "description": "Milliwatts",
+            "measure": "mW"
+          }
+        ]
+      },
+      {
+        "group": "Energy",
+        "measures": [
+          {
+            "description": "Joules (base)",
+            "measure": "J"
+          },
+          {
+            "description": "Kilowatt*Hours",
+            "measure": "kWh"
+          }
+        ]
+      },
+      {
+        "group": "Resistance",
+        "measures": [
+          {
+            "description": "Ω (base)",
+            "measure": "ohm"
+          },
+          {
+            "description": "kΩ",
+            "measure": "kiloohm"
+          }
+        ]
+      },
+      {
+        "group": "Pressure",
+        "measures": [
+          {
+            "description": "Pa (base)",
+            "measure": "Pa"
+          },
+          {
+            "description": "kPa",
+            "measure": "kPa"
+          },
+          {
+            "description": "hPa",
+            "measure": "hPa"
+          },
+          {
+            "description": "mbar",
+            "measure": "mbar"
+          },
+          {
+            "description": "Bars",
+            "measure": "bar"
+          },
+          {
+            "description": "psi",
+            "measure": "psi"
+          },
+          {
+            "description": "mmHg",
+            "measure": "mmHg"
+          },
+          {
+            "description": "inHg",
+            "measure": "inHg"
+          }
+        ]
+      },
+      {
+        "group": "Density",
+        "measures": [
+          {
+            "description": "Air density - kg/cubic meter (base)",
+            "measure": "kg/m3"
+          }
+        ]
+      },
+      {
+        "group": "Time",
+        "measures": [
+          {
+            "description": "Seconds (base)",
+            "measure": "s"
+          },
+          {
+            "description": "Minutes",
+            "measure": "Minutes"
+          },
+          {
+            "description": "Hours",
+            "measure": "Hours"
+          },
+          {
+            "description": "Days",
+            "measure": "Days"
+          },
+          {
+            "description": "Day Hour:Minute:sec",
+            "measure": "D HH:MM:SS"
+          }
+        ]
+      },
+      {
+        "group": "Angular Velocity",
+        "measures": [
+          {
+            "description": "Radians per second (base)",
+            "measure": "rad/s"
+          },
+          {
+            "description": "Degrees per second",
+            "measure": "deg/s"
+          },
+          {
+            "description": "Degrees per minute",
+            "measure": "deg/min"
+          }
+        ]
+      },
+      {
+        "group": "Angle",
+        "measures": [
+          {
+            "description": "Radians (base)",
+            "measure": "rad"
+          },
+          {
+            "description": "Degrees",
+            "measure": "deg"
+          },
+          {
+            "description": "Gradians",
+            "measure": "grad"
+          }
+        ]
+      },
+      {
+        "group": "Frequency",
+        "measures": [
+          {
+            "description": "RPM - Rotations per minute",
+            "measure": "rpm"
+          },
+          {
+            "description": "Hz - Hertz (base)",
+            "measure": "Hz"
+          },
+          {
+            "description": "KHz - Kilohertz",
+            "measure": "KHz"
+          },
+          {
+            "description": "MHz - Megahertz",
+            "measure": "MHz"
+          },
+          {
+            "description": "GHz - Gigahertz",
+            "measure": "GHz"
+          }
+        ]
+      },
+      {
+        "group": "Ratio",
+        "measures": [
+          {
+            "description": "As percentage value",
+            "measure": "percent"
+          },
+          {
+            "description": "As ratio 0-1 with % sign",
+            "measure": "percentraw"
+          },
+          {
+            "description": "Ratio 0-1 (base)",
+            "measure": "ratio"
+          }
+        ]
+      },
+      {
+        "group": "Position",
+        "measures": [
+          {
+            "description": "Position Degrees",
+            "measure": "pdeg"
+          },
+          {
+            "description": "Latitude in minutes",
+            "measure": "latitudeMin"
+          },
+          {
+            "description": "Latitude in seconds",
+            "measure": "latitudeSec"
+          },
+          {
+            "description": "Longitude in minutes",
+            "measure": "longitudeMin"
+          },
+          {
+            "description": "Longitude in seconds",
+            "measure": "longitudeSec"
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "configFileVersion": 11,
+    "configVersion": 12,
+    "kipVersion": "4.8.0",
+    "schemaVersion": 1
+  },
+  "widgets": [
+    {
+      "bindingKind": "none",
+      "category": "Component",
+      "componentClassName": "WidgetAisRadarComponent",
+      "defaultConfig": {
+        "ais": {
+          "cogVectorsMinutes": 10,
+          "filters": {
+            "allAton": false,
+            "allButSar": false,
+            "allVessels": false,
+            "anchoredMoored": false,
+            "noCollisionRisk": false,
+            "vesselTypes": []
+          },
+          "rangeIndex": "3",
+          "rangeRings": [
+            1,
+            3,
+            6,
+            12,
+            24,
+            48
+          ],
+          "showCogVectors": true,
+          "showLostTargets": true,
+          "showSelf": true,
+          "showUnconfirmedTargets": true,
+          "viewMode": "course-up"
+        },
+        "color": "grey",
+        "dataTimeout": 5,
+        "enableTimeout": false,
+        "filterSelfPaths": false
+      },
+      "defaultHeight": 8,
+      "defaultWidth": 5,
+      "description": "Displays AIS targets with range rings, interactive target details, and quick zoom and filtering controls.",
+      "icon": "aisradar",
+      "minHeight": 4,
+      "minWidth": 4,
+      "name": "AIS Radar",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-ais-radar"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Component",
+      "componentClassName": "WidgetAnchorAlarmComponent",
+      "defaultConfig": {},
+      "defaultHeight": 14,
+      "defaultWidth": 6,
+      "description": "Monitors your anchor position and triggers an alarm if you drift outside a configured radius (anchor drag). Set the anchor point, watch radius, and alarm behavior (sound/notification) in the widget config. Requires internet connectivity to view map.",
+      "icon": "anchorWatch",
+      "minHeight": 8,
+      "minWidth": 6,
+      "name": "Anchor Watch",
+      "pathSlots": [],
+      "requiredPlugins": [
+        "anchoralarm"
+      ],
+      "selector": "widget-anchor-alarm"
+    },
+    {
+      "anyOfPlugins": [
+        "autopilot",
+        "pypilot-autopilot-provider"
+      ],
+      "bindingKind": "paths-record",
+      "category": "Component",
+      "componentClassName": "WidgetAutopilotComponent",
+      "defaultConfig": {
+        "autopilot": {
+          "apiVersion": null,
+          "courseDirectionTrue": false,
+          "headingDirectionTrue": false,
+          "instanceId": null,
+          "invertRudder": true,
+          "modes": null,
+          "pluginId": null
+        },
+        "dataTimeout": 5,
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "autopilotEngaged": {
+            "convertUnitTo": "",
+            "description": "Autopilot Engaged",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.engaged",
+            "pathType": "boolean",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "autopilotMode": {
+            "convertUnitTo": "",
+            "description": "Autopilot Mode",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.mode",
+            "pathType": "string",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "autopilotState": {
+            "convertUnitTo": "",
+            "description": "Autopilot State",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.state",
+            "pathType": "string",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "autopilotTargetHeading": {
+            "convertUnitTo": "deg",
+            "description": "Autopilot Target Magnetic Heading",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.target.headingMagnetic",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "autopilotTargetWindHeading": {
+            "convertUnitTo": "deg",
+            "description": "Autopilot Target Apparent Wind Angle",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.target.windAngleApparent",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "autopilotV2Target": {
+            "convertUnitTo": "deg",
+            "description": "Autopilot API v2 Target",
+            "isPathConfigurable": false,
+            "path": "self.steering.autopilot.target",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "courseXte": {
+            "convertUnitTo": "m",
+            "description": "Cross Track Error",
+            "isPathConfigurable": false,
+            "path": "self.navigation.course.calcValues.crossTrackError",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          },
+          "headingMag": {
+            "convertUnitTo": "deg",
+            "description": "Magnetic Heading",
+            "isPathConfigurable": true,
+            "path": "self.navigation.headingMagnetic",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "headingTrue": {
+            "convertUnitTo": "deg",
+            "description": "True Heading",
+            "isPathConfigurable": true,
+            "path": "self.navigation.headingTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "rudderAngle": {
+            "convertUnitTo": "deg",
+            "description": "Rudder Angle",
+            "isPathConfigurable": false,
+            "path": "self.steering.rudderAngle",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "windAngleApparent": {
+            "convertUnitTo": "deg",
+            "description": "Apparent Wind Angle",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleApparent",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "windAngleTrueWater": {
+            "convertUnitTo": "deg",
+            "description": "Wind Angle True Water",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleTrueWater",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          }
+        },
+        "supportAutomaticHistoricalSeries": false
+      },
+      "defaultHeight": 10,
+      "defaultWidth": 4,
+      "description": "Provides typical autopilot controls for Signal K v1 & v2 Autopilot API devices. Requires a compatible hardware-specific Autopilot plugin for full functionality.",
+      "icon": "autopilotWidget",
+      "minHeight": 9,
+      "minWidth": 3,
+      "name": "Autopilot Head",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "",
+          "defaultPath": "self.steering.autopilot.state",
+          "description": "Autopilot State",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "string",
+          "sampleTime": 500,
+          "slot": "autopilotState",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "",
+          "defaultPath": "self.steering.autopilot.mode",
+          "description": "Autopilot Mode",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "string",
+          "sampleTime": 500,
+          "slot": "autopilotMode",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "",
+          "defaultPath": "self.steering.autopilot.engaged",
+          "description": "Autopilot Engaged",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "boolean",
+          "sampleTime": 500,
+          "slot": "autopilotEngaged",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.steering.autopilot.target",
+          "description": "Autopilot API v2 Target",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "autopilotV2Target",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.steering.autopilot.target.headingMagnetic",
+          "description": "Autopilot Target Magnetic Heading",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "autopilotTargetHeading",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.steering.autopilot.target.windAngleApparent",
+          "description": "Autopilot Target Apparent Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "autopilotTargetWindHeading",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.steering.rudderAngle",
+          "description": "Rudder Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "rudderAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "m",
+          "defaultPath": "self.navigation.course.calcValues.crossTrackError",
+          "description": "Cross Track Error",
+          "expectedSkUnit": "m",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "courseXte",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.headingMagnetic",
+          "description": "Magnetic Heading",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "headingMag",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.headingTrue",
+          "description": "True Heading",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "headingTrue",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleApparent",
+          "description": "Apparent Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "windAngleApparent",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleTrueWater",
+          "description": "Wind Angle True Water",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "windAngleTrueWater",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-autopilot"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Gauge",
+      "componentClassName": "WidgetBmsComponent",
+      "defaultConfig": {
+        "bms": {
+          "banks": [],
+          "groups": [],
+          "trackedDevices": []
+        },
+        "color": "contrast",
+        "ignoreZones": false
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 6,
+      "description": "Displays battery banks and individual batteries with aggregated bank totals plus per-battery detail cards. See key BMS values such as state of charge, current, voltage, power, temperature, capacity, and time remaining for a clearer view of overall bank health and individual battery status.",
+      "icon": "battery_charging",
+      "minHeight": 2,
+      "minWidth": 2,
+      "name": "Battery Monitor",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-bms"
+    },
+    {
+      "bindingKind": "paths-array",
+      "category": "Core",
+      "componentClassName": "WidgetBooleanSwitchComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Switch Panel Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "multiChildCtrls": [],
+        "paths": [],
+        "putEnable": true,
+        "putMomentary": false,
+        "showLabel": true,
+        "zonesOnlyPaths": false
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A Digital Switching panel group with multiple controls including toggle switches, indicator lights, and press buttons to send Signal K paths values and other operations.",
+      "icon": "switchpanelWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Switch Panel",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-boolean-switch"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Gauge",
+      "componentClassName": "WidgetChargerComponent",
+      "defaultConfig": {
+        "charger": {
+          "optionsById": {},
+          "trackedDevices": []
+        },
+        "color": "contrast",
+        "ignoreZones": false
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 6,
+      "description": "Track charger output and charging state with voltage, current, power, and temperature monitoring, including real-time charging stage indicators.",
+      "icon": "charger",
+      "minHeight": 2,
+      "minWidth": 2,
+      "name": "AC/DC Charger",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-charger"
+    },
+    {
+      "bindingKind": "datachart",
+      "category": "Component",
+      "componentClassName": "WidgetDataChartComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "convertUnitTo": null,
+        "datachartPath": null,
+        "datachartSource": null,
+        "datasetAverageArray": "sma",
+        "displayName": "Chart Label",
+        "enableMinMaxScaleLimit": false,
+        "filterSelfPaths": true,
+        "inverseYAxis": false,
+        "numDecimal": 1,
+        "period": 10,
+        "showAverageData": true,
+        "showDataPoints": false,
+        "showDatasetAngleAverageValueLine": false,
+        "showDatasetAverageValueLine": true,
+        "showDatasetMaximumValueLine": false,
+        "showDatasetMinimumValueLine": false,
+        "showLabel": true,
+        "showTimeScale": false,
+        "showYScale": false,
+        "startScaleAtZero": false,
+        "timeScale": "minute",
+        "trackAgainstAverage": false,
+        "verticalChart": false,
+        "yScaleMax": null,
+        "yScaleMin": null,
+        "yScaleSuggestedMax": null,
+        "yScaleSuggestedMin": null
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 6,
+      "description": "Visualizes data on a real-time chart with multiple preconfigured series including actuals, SMA and period overall averages and Min/Max. Requires the KIP Dataset to be configured.",
+      "icon": "datachartWidget",
+      "minHeight": 3,
+      "minWidth": 2,
+      "name": "Realtime Data Chart",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-data-chart"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetDatetimeComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "dateFormat": "dd/MM/yyyy HH:mm:ss",
+        "dateTimezone": "Atlantic/Azores",
+        "displayName": "Time Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "gaugePath": {
+            "description": "Date / Time",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathType": "Date",
+            "sampleTime": 1000,
+            "source": null
+          }
+        }
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Displays date and time data with fully custom formatting options and timezone correction.",
+      "icon": "datetimeWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Date & Time",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": null,
+          "description": "Date / Time",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "Date",
+          "sampleTime": 1000,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-datetime"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Component",
+      "componentClassName": "WidgetFreeboardskComponent",
+      "defaultConfig": {},
+      "defaultHeight": 14,
+      "defaultWidth": 6,
+      "description": "Adds the Freeboard-SK chart plotter as a widget with automatic sign-in to your dashboard.",
+      "icon": "freeboardWidget",
+      "minHeight": 8,
+      "minWidth": 6,
+      "name": "Freeboard-SK",
+      "pathSlots": [],
+      "requiredPlugins": [
+        "course-provider",
+        "freeboard-sk",
+        "resources-provider",
+        "tracks"
+      ],
+      "selector": "widget-freeboardsk"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetGaugeNgCompassComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "compassUseNumbers": false,
+          "enableTicks": true,
+          "showValueBox": false,
+          "subType": "baseplateCompass",
+          "type": "ngRadial"
+        },
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": "deg",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": null,
+            "suppressBootstrapNull": true
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A faceplate or card-style rotating compass gauge with multiple cardinal point indicator options.",
+      "icon": "compassGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Compass",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-gauge-ng-compass"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetGaugeNgLinearComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "displayScale": {
+          "lower": 0,
+          "type": "linear",
+          "upper": 100
+        },
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "enableNeedle": false,
+          "enableTicks": true,
+          "highlightsWidth": 5,
+          "subType": "vertical",
+          "type": "ngLinear"
+        },
+        "ignoreZones": false,
+        "numDecimal": 0,
+        "numInt": 1,
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": "unitless",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": null,
+            "suppressBootstrapNull": true
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A horizontal or vertical linear gauge that supports zone highlighting.",
+      "icon": "linearGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Linear",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "unitless",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-gauge-ng-linear"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetGaugeNgRadialComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "displayScale": {
+          "lower": 0,
+          "type": "linear",
+          "upper": 100
+        },
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "barStartPosition": "left",
+          "enableNeedle": true,
+          "enableProgressbar": true,
+          "enableTicks": true,
+          "highlightsWidth": 5,
+          "scaleStart": 180,
+          "subType": "measuring",
+          "type": "ngRadial"
+        },
+        "ignoreZones": false,
+        "numDecimal": 0,
+        "numInt": 1,
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": "unitless",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": null,
+            "suppressBootstrapNull": true
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A radial gauge with configurable capacity and measurement dials plus zone highlighting.",
+      "icon": "radialGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Radial",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "unitless",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-gauge-ng-radial"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetSteelGaugeComponent",
+      "defaultConfig": {
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "displayScale": {
+          "lower": 0,
+          "type": "linear",
+          "upper": 100
+        },
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "backgroundColor": "carbon",
+          "digitalMeter": false,
+          "faceColor": "anthracite",
+          "radialSize": "full",
+          "rotateFace": false,
+          "subType": "radial",
+          "type": "steel"
+        },
+        "ignoreZones": false,
+        "numDecimal": 2,
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": "unitless",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": null
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A traditional steel looking linear & radial gauges replica that supports range sizes and zones highlights.",
+      "icon": "steelGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Classic Steel",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "unitless",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-gauge-steel"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetHeelGaugeComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Heel",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "invertAngle": false,
+          "sideLabel": true,
+          "type": "angle"
+        },
+        "numDecimal": 0,
+        "numInt": 2,
+        "paths": {
+          "angle": {
+            "convertUnitTo": "deg",
+            "description": "Heel / Roll / Other Angle",
+            "isPathConfigurable": true,
+            "path": "self.navigation.attitude.roll",
+            "pathRequired": true,
+            "pathType": "number",
+            "sampleTime": 1000,
+            "source": "default"
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Dual-scale heel angle indicator combining a high‑precision ±5° fine level with a wide ±40° coarse arc for fast trim tuning and broader heel / sea‑state monitoring.",
+      "icon": "level",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Level Gauge",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.attitude.roll",
+          "description": "Heel / Roll / Other Angle",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": true,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "angle",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-heel-gauge"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetHorizonComponent",
+      "defaultConfig": {
+        "dataTimeout": 5,
+        "displayName": "Horizon",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "faceColor": "anthracite",
+          "invertPitch": false,
+          "invertRoll": false,
+          "noFrameVisible": false,
+          "type": "horizon"
+        },
+        "paths": {
+          "gaugePitchPath": {
+            "convertUnitTo": "deg",
+            "description": "Attitude Pitch Data",
+            "isPathConfigurable": true,
+            "path": "self.navigation.attitude.pitch",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "gaugeRollPath": {
+            "convertUnitTo": "deg",
+            "description": "Attitude Roll Data",
+            "isPathConfigurable": true,
+            "path": "self.navigation.attitude.roll",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Horizon-style attitude indicator showing live pitch and roll degrees with smooth animation—ideal for monitoring trim, heel, and sea-state response.",
+      "icon": "pitchRollGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Pitch & Roll",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.attitude.pitch",
+          "description": "Attitude Pitch Data",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "gaugePitchPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.attitude.roll",
+          "description": "Attitude Roll Data",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "gaugeRollPath",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-horizon"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Component",
+      "componentClassName": "WidgetIframeComponent",
+      "defaultConfig": {
+        "allowInput": false,
+        "widgetUrl": null
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Embeds external web-based applications—such as Grafana graphs or other Signal K apps—into your dashboard for seamless integration. Interaction is disabled by default but can be enabled.",
+      "icon": "embedWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Embed Webpage Viewer",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-iframe"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Core",
+      "componentClassName": "WidgetLabelComponent",
+      "defaultConfig": {
+        "bgColor": "grey",
+        "color": "green",
+        "displayName": "Static Label",
+        "noBgColor": true,
+        "noColor": false
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A static text widget that allows you to add customizable labels to your dashboard, helping to organize and clarify your layout effectively.",
+      "icon": "labelWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Static Label",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-label"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetMultiStateSwitchComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Switch Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "controlPath": {
+            "convertUnitTo": null,
+            "description": "Multi-state control path",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathRequired": true,
+            "pathSkUnitsFilter": null,
+            "pathType": "multiple",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": null,
+            "supportsPut": true
+          }
+        },
+        "showLabel": true
+      },
+      "defaultHeight": 4,
+      "defaultWidth": 4,
+      "description": "Lists all available device/path operating modes/states (e.g., On, Off, Charge Only, Invert Only), highlights the current state, and lets you select a new state to send to the device and see the result.",
+      "icon": "multiStateSwitchWidget",
+      "minHeight": 2,
+      "minWidth": 2,
+      "name": "Multi-State Switch",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": null,
+          "description": "Multi-state control path",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": true,
+          "pathType": "multiple",
+          "sampleTime": 500,
+          "slot": "controlPath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-multi-state-switch"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetNumericComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "ignoreZones": false,
+        "inverseYAxis": false,
+        "numDecimal": 1,
+        "paths": {
+          "numericPath": {
+            "convertUnitTo": "unitless",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": null,
+            "suppressBootstrapNull": true
+          }
+        },
+        "showMax": false,
+        "showMin": false,
+        "showMiniChart": false,
+        "supportAutomaticHistoricalSeries": true,
+        "verticalChart": false,
+        "yScaleMax": 10,
+        "yScaleMin": 0
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Displays numeric data in a clear and concise format, with options to show minimum and/or maximum recorded values. Includes an optional background minichart for quick visual trend insights.",
+      "icon": "numericWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Numeric",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "unitless",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "numericPath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-numeric"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetPositionComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Position",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "latPath": {
+            "convertUnitTo": "latitudeMin",
+            "description": "Latitude",
+            "isPathConfigurable": true,
+            "path": "self.navigation.position.latitude",
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          },
+          "longPath": {
+            "convertUnitTo": "longitudeMin",
+            "description": "Longitude",
+            "isPathConfigurable": true,
+            "path": "self.navigation.position.longitude",
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          }
+        },
+        "supportAutomaticHistoricalSeries": false
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Displays latitude and longitude for location tracking and navigation.",
+      "icon": "positionWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Position",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "longitudeMin",
+          "defaultPath": "self.navigation.position.longitude",
+          "description": "Longitude",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "longPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "latitudeMin",
+          "defaultPath": "self.navigation.position.latitude",
+          "description": "Latitude",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "latPath",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-position"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Racing",
+      "componentClassName": "WidgetRacerLineComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "convertUnitTo": "m",
+        "convertUnitToGroup": "Length",
+        "dataTimeout": 5,
+        "displayName": "DTS",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "ignoreZones": true,
+        "numDecimal": 0,
+        "paths": {
+          "dtsPath": {
+            "convertUnitTo": "m",
+            "description": "Distance to Start Line",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.distanceStartline",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          },
+          "lineBiasPath": {
+            "convertUnitTo": "m",
+            "description": "Bias of the start line to starboard end",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.stbLineBias",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          },
+          "lineLengthPath": {
+            "convertUnitTo": "m",
+            "description": "Length of the start line",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.startLineLength",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": true,
+            "source": "default"
+          },
+          "linesPath": {
+            "convertUnitTo": null,
+            "description": "The known named lines",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.lines.lines",
+            "pathRequired": false,
+            "pathSkUnitsFilter": null,
+            "pathType": null,
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "startLineNamePath": {
+            "convertUnitTo": null,
+            "description": "The current named start line",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.lines.startLineName",
+            "pathRequired": false,
+            "pathSkUnitsFilter": null,
+            "pathType": "string",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "ttbPath": {
+            "convertUnitTo": "s",
+            "description": "Time to delay before sailing to the start line in seconds",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.timeToBurn",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "ttlPath": {
+            "convertUnitTo": "s",
+            "description": "Time to sail to the start line in seconds",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.timeToLine",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          }
+        },
+        "playBeeps": true,
+        "supportAutomaticHistoricalSeries": false
+      },
+      "defaultHeight": 4,
+      "defaultWidth": 4,
+      "description": "Gain a tactical advantage for racing starts: set and adjust the port and starboard ends of the start line, see your distance to the line, the favored end, and how much the line is favored or unfavored. Includes visual integration with Freeboard SK for interactive line adjustment and display.",
+      "icon": "racerlineWidget",
+      "minHeight": 4,
+      "minWidth": 4,
+      "name": "Racer - Start Line Insight",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "m",
+          "defaultPath": "self.navigation.racing.distanceStartline",
+          "description": "Distance to Start Line",
+          "expectedSkUnit": "m",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "dtsPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "m",
+          "defaultPath": "self.navigation.racing.startLineLength",
+          "description": "Length of the start line",
+          "expectedSkUnit": "m",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "lineLengthPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "m",
+          "defaultPath": "self.navigation.racing.stbLineBias",
+          "description": "Bias of the start line to starboard end",
+          "expectedSkUnit": "m",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "lineBiasPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": "self.navigation.racing.lines.startLineName",
+          "description": "The current named start line",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "string",
+          "sampleTime": 1000,
+          "slot": "startLineNamePath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": "self.navigation.racing.lines.lines",
+          "description": "The known named lines",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": null,
+          "sampleTime": 1000,
+          "slot": "linesPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "s",
+          "defaultPath": "self.navigation.racing.timeToLine",
+          "description": "Time to sail to the start line in seconds",
+          "expectedSkUnit": "s",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "ttlPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "s",
+          "defaultPath": "self.navigation.racing.timeToBurn",
+          "description": "Time to delay before sailing to the start line in seconds",
+          "expectedSkUnit": "s",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "ttbPath",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [
+        "signalk-racer"
+      ],
+      "selector": "widget-racer-line"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Racing",
+      "componentClassName": "WidgetRacerTimerComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "TTS",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "ignoreZones": true,
+        "nextDashboard": 0,
+        "paths": {
+          "dtsPath": {
+            "convertUnitTo": "m",
+            "description": "Distance to Start Line path, used to determine OCS",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.distanceStartline",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "startTimePath": {
+            "description": "Time of the start",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.startTime",
+            "pathRequired": false,
+            "pathType": "Date",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "ttsPath": {
+            "convertUnitTo": "s",
+            "description": "Time to the Start in seconds",
+            "isPathConfigurable": false,
+            "path": "self.navigation.racing.timeToStart",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          }
+        },
+        "playBeeps": true,
+        "supportAutomaticHistoricalSeries": false
+      },
+      "defaultHeight": 4,
+      "defaultWidth": 4,
+      "description": "An advanced racing countdown timer that indicates OCS (On Course Side) status. Set the start line, choose or adjust the duration, or specify the exact start time. Automatically switches to the target dashboard at the start unless over early.",
+      "icon": "racertimerWidget",
+      "minHeight": 4,
+      "minWidth": 4,
+      "name": "Racer - Start Timer",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "s",
+          "defaultPath": "self.navigation.racing.timeToStart",
+          "description": "Time to the Start in seconds",
+          "expectedSkUnit": "s",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "ttsPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": "self.navigation.racing.startTime",
+          "description": "Time of the start",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "Date",
+          "sampleTime": 500,
+          "slot": "startTimePath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "m",
+          "defaultPath": "self.navigation.racing.distanceStartline",
+          "description": "Distance to Start Line path, used to determine OCS",
+          "expectedSkUnit": "m",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "dtsPath",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [
+        "signalk-racer"
+      ],
+      "selector": "widget-racer-timer"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Racing",
+      "componentClassName": "WidgetRacesteerComponent",
+      "defaultConfig": {
+        "awsEnable": true,
+        "courseOverGroundEnable": true,
+        "dataTimeout": 5,
+        "driftEnable": true,
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "laylineAngle": 40,
+        "laylineEnable": true,
+        "paths": {
+          "VMG": {
+            "convertUnitTo": "knots",
+            "description": "Velocity Made Good",
+            "isPathConfigurable": false,
+            "path": "self.performance.velocityMadeGood",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "appWindAngle": {
+            "convertUnitTo": "deg",
+            "description": "Apparent Wind Angle",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleApparent",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "appWindSpeed": {
+            "convertUnitTo": "knots",
+            "description": "Apparent Wind Speed",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.speedApparent",
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "courseOverGround": {
+            "convertUnitTo": "deg",
+            "description": "True Course Over Ground",
+            "isPathConfigurable": true,
+            "path": "self.navigation.courseOverGroundTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "drift": {
+            "convertUnitTo": "knots",
+            "description": "Drift Speed Impact",
+            "isPathConfigurable": true,
+            "path": "self.environment.current.drift",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "headingPath": {
+            "convertUnitTo": "deg",
+            "description": "True Heading",
+            "isPathConfigurable": true,
+            "path": "self.navigation.headingTrue",
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "nextWaypointBearing": {
+            "convertUnitTo": "deg",
+            "description": "Next Waypoint True Bearing",
+            "isPathConfigurable": true,
+            "path": "self.navigation.course.calcValues.bearingTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "optimalWindAngle": {
+            "convertUnitTo": "deg",
+            "description": "Optimal Wind Angle",
+            "isPathConfigurable": false,
+            "path": "self.performance.optimumWindAngle",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "polarSpeedRatio": {
+            "convertUnitTo": "ratio",
+            "description": "Polar Speed Ratio",
+            "isPathConfigurable": false,
+            "path": "self.performance.polarSpeedRatio",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "set": {
+            "convertUnitTo": "deg",
+            "description": "True Drift Set",
+            "isPathConfigurable": true,
+            "path": "self.environment.current.setTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "tackTrue": {
+            "convertUnitTo": "deg",
+            "description": "True Tack",
+            "isPathConfigurable": false,
+            "path": "self.performance.tackTrue",
+            "pathRequired": true,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "targetAngle": {
+            "convertUnitTo": "deg",
+            "description": "Target Angle",
+            "isPathConfigurable": false,
+            "path": "self.performance.targetAngle",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "targetVMG": {
+            "convertUnitTo": "knots",
+            "description": "Target Velocity Made Good",
+            "isPathConfigurable": false,
+            "path": "self.performance.targetVelocityMadeGood",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "trueWindAngle": {
+            "convertUnitTo": "deg",
+            "description": "True Wind Angle",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleTrueWater",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "trueWindSpeed": {
+            "convertUnitTo": "knots",
+            "description": "True Wind Speed",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.speedTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          },
+          "vmgToWaypoint": {
+            "convertUnitTo": "knots",
+            "description": "Velocity Made Good to Waypoint",
+            "isPathConfigurable": false,
+            "path": "self.performance.velocityMadeGoodToWaypoint",
+            "pathRequired": false,
+            "pathType": "number",
+            "sampleTime": 500,
+            "source": "default"
+          }
+        },
+        "sailSetupEnable": false,
+        "supportAutomaticHistoricalSeries": false,
+        "twsEnable": true,
+        "waypointEnable": true,
+        "windSectorEnable": true,
+        "windSectorWindowSeconds": 5
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A dynamic race steering display that fuses polar performance data with live conditions to guide optimal steering, tacking, and gybing angles for maximum speed. Instantly compare performance against competition polars for smarter tactical decisions.",
+      "icon": "racesteeringWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Racesteer (BETA)",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.headingTrue",
+          "description": "True Heading",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "headingPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.performance.tackTrue",
+          "description": "True Tack",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": true,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "tackTrue",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "ratio",
+          "defaultPath": "self.performance.polarSpeedRatio",
+          "description": "Polar Speed Ratio",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "polarSpeedRatio",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.performance.targetAngle",
+          "description": "Target Angle",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "targetAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.performance.optimumWindAngle",
+          "description": "Optimal Wind Angle",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "optimalWindAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.performance.targetVelocityMadeGood",
+          "description": "Target Velocity Made Good",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "targetVMG",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.performance.velocityMadeGood",
+          "description": "Velocity Made Good",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "VMG",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleApparent",
+          "description": "Apparent Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "appWindAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.wind.speedApparent",
+          "description": "Apparent Wind Speed",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "appWindSpeed",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleTrueWater",
+          "description": "True Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "trueWindAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.wind.speedTrue",
+          "description": "True Wind Speed",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "trueWindSpeed",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.courseOverGroundTrue",
+          "description": "True Course Over Ground",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "courseOverGround",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.course.calcValues.bearingTrue",
+          "description": "Next Waypoint True Bearing",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "nextWaypointBearing",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.performance.velocityMadeGoodToWaypoint",
+          "description": "Velocity Made Good to Waypoint",
+          "expectedSkUnit": null,
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "vmgToWaypoint",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.current.setTrue",
+          "description": "True Drift Set",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "set",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.current.drift",
+          "description": "Drift Speed Impact",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "drift",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [
+        "signalk-polar-performance-plugin"
+      ],
+      "selector": "widget-racesteer"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Racing",
+      "componentClassName": "WidgetRaceTimerComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "playBeeps": true,
+        "timerLength": -300
+      },
+      "defaultHeight": 7,
+      "defaultWidth": 6,
+      "description": "A simple race start countdown timer that can be started, paused, synced, reset, and configured for duration.",
+      "icon": "racetimerWidget",
+      "minHeight": 4,
+      "minWidth": 4,
+      "name": "Countdown Timer",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-racetimer"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Gauge",
+      "componentClassName": "WidgetSimpleLinearComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "displayScale": {
+          "lower": 0,
+          "type": "linear",
+          "upper": 15
+        },
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "gauge": {
+          "type": "simpleLinear",
+          "unitLabelFormat": "full"
+        },
+        "ignoreZones": false,
+        "numDecimal": 2,
+        "numInt": 1,
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": "V",
+            "description": "Numeric Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": "V",
+            "pathType": "number",
+            "sampleTime": 500,
+            "showPathSkUnitsFilter": true,
+            "source": null
+          }
+        },
+        "supportAutomaticHistoricalSeries": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A simple horizontal linear gauge with a large value label offering a clean, compact modern look.",
+      "icon": "simpleLinearGauge",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Compact Linear",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "V",
+          "defaultPath": null,
+          "description": "Numeric Data",
+          "expectedSkUnit": "V",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-simple-linear"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetSliderComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Slider Label",
+        "displayScale": {
+          "lower": 0,
+          "type": "linear",
+          "upper": 1
+        },
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "gaugePath": {
+            "convertUnitTo": null,
+            "description": "PUT Supported Numeric Path. IMPORTANT: Format must be set to (base)",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathSkUnitsFilter": null,
+            "pathType": "number",
+            "sampleTime": 500,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": null,
+            "supportsPut": true
+          }
+        },
+        "supportAutomaticHistoricalSeries": false
+      },
+      "defaultHeight": 4,
+      "defaultWidth": 4,
+      "description": "A Digital Switching range slider that allows users to adjust values, such as controlling lighting intensity or audio volume from 0% to 100%.",
+      "icon": "sliderWidget",
+      "minHeight": 2,
+      "minWidth": 2,
+      "name": "Slider",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": null,
+          "description": "PUT Supported Numeric Path. IMPORTANT: Format must be set to (base)",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 500,
+          "slot": "gaugePath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-slider"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Gauge",
+      "componentClassName": "WidgetSolarChargerComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "ignoreZones": false,
+        "solarCharger": {
+          "optionsById": {},
+          "trackedDevices": []
+        }
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 6,
+      "description": "Track solar generation and charging performance at a glance with live panel output, battery-side metrics, and clear charger and relay status indicators.",
+      "icon": "solar_charger",
+      "minHeight": 2,
+      "minWidth": 2,
+      "name": "Solar Charger",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-solar-charger"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Core",
+      "componentClassName": "WidgetTextComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Gauge Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "paths": {
+          "stringPath": {
+            "description": "String Data",
+            "isPathConfigurable": true,
+            "path": null,
+            "pathType": "string",
+            "sampleTime": 500,
+            "source": null
+          }
+        }
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Displays text data with a customizable color formatting option.",
+      "icon": "textWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Text",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": null,
+          "defaultPath": null,
+          "description": "String Data",
+          "expectedSkUnit": null,
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "string",
+          "sampleTime": 500,
+          "slot": "stringPath",
+          "source": null
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-text"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Component",
+      "componentClassName": "WidgetTutorialComponent",
+      "defaultConfig": {
+        "filterSelfPaths": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "An instructional widget that guides new users through basic navigation, gestures, and dashboard editing steps.",
+      "icon": "helpWidget",
+      "minHeight": 4,
+      "minWidth": 4,
+      "name": "Tutorial",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-tutorial"
+    },
+    {
+      "bindingKind": "paths-record",
+      "category": "Component",
+      "componentClassName": "WidgetWindComponent",
+      "defaultConfig": {
+        "awsEnable": true,
+        "compassModeEnabled": true,
+        "courseOverGroundEnable": true,
+        "dataTimeout": 5,
+        "driftEnable": true,
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "laylineAngle": 40,
+        "laylineEnable": true,
+        "paths": {
+          "appWindAngle": {
+            "convertUnitTo": "deg",
+            "description": "Apparent Wind Angle",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleApparent",
+            "pathRequired": true,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "appWindSpeed": {
+            "convertUnitTo": "knots",
+            "description": "Apparent Wind Speed",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.speedApparent",
+            "pathRequired": true,
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "courseOverGround": {
+            "convertUnitTo": "deg",
+            "description": "True Course Over Ground",
+            "isPathConfigurable": true,
+            "path": "self.navigation.courseOverGroundTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "drift": {
+            "convertUnitTo": "knots",
+            "description": "Drift Speed Impact",
+            "isPathConfigurable": true,
+            "path": "self.environment.current.drift",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "headingPath": {
+            "convertUnitTo": "deg",
+            "description": "True Heading",
+            "isPathConfigurable": true,
+            "path": "self.navigation.headingTrue",
+            "pathRequired": true,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "nextWaypointBearing": {
+            "convertUnitTo": "deg",
+            "description": "Next Waypoint True Bearing",
+            "isPathConfigurable": false,
+            "path": "self.navigation.course.calcValues.bearingTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "set": {
+            "convertUnitTo": "deg",
+            "description": "True Drift Set",
+            "isPathConfigurable": true,
+            "path": "self.environment.current.setTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "trueWindAngle": {
+            "convertUnitTo": "deg",
+            "description": "True Wind Angle",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.angleTrueWater",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "rad",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showConvertUnitTo": false,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          },
+          "trueWindSpeed": {
+            "convertUnitTo": "knots",
+            "description": "True Wind Speed",
+            "isPathConfigurable": true,
+            "path": "self.environment.wind.speedTrue",
+            "pathRequired": false,
+            "pathSkUnitsFilter": "m/s",
+            "pathType": "number",
+            "sampleTime": 1000,
+            "showPathSkUnitsFilter": false,
+            "source": "default"
+          }
+        },
+        "sailSetupEnable": false,
+        "supportAutomaticHistoricalSeries": false,
+        "twaEnable": true,
+        "twsEnable": true,
+        "waypointEnable": true,
+        "windSectorEnable": true,
+        "windSectorWindowSeconds": 5
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.",
+      "icon": "windsteeringWidget",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Windsteer",
+      "pathSlots": [
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.headingTrue",
+          "description": "True Heading",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": true,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "headingPath",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleApparent",
+          "description": "Apparent Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": true,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "appWindAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.wind.speedApparent",
+          "description": "Apparent Wind Speed",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": true,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "appWindSpeed",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.wind.angleTrueWater",
+          "description": "True Wind Angle",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "trueWindAngle",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.wind.speedTrue",
+          "description": "True Wind Speed",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "trueWindSpeed",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.courseOverGroundTrue",
+          "description": "True Course Over Ground",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "courseOverGround",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.navigation.course.calcValues.bearingTrue",
+          "description": "Next Waypoint True Bearing",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": false,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "nextWaypointBearing",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "deg",
+          "defaultPath": "self.environment.current.setTrue",
+          "description": "True Drift Set",
+          "expectedSkUnit": "rad",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "set",
+          "source": "default"
+        },
+        {
+          "defaultConvertUnitTo": "knots",
+          "defaultPath": "self.environment.current.drift",
+          "description": "Drift Speed Impact",
+          "expectedSkUnit": "m/s",
+          "isPathConfigurable": true,
+          "pathRequired": false,
+          "pathType": "number",
+          "sampleTime": 1000,
+          "slot": "drift",
+          "source": "default"
+        }
+      ],
+      "requiredPlugins": [],
+      "selector": "widget-wind-steer"
+    },
+    {
+      "bindingKind": "none",
+      "category": "Racing",
+      "componentClassName": "WidgetWindTrendsChartComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "filterSelfPaths": true,
+        "timeScale": "Last 30 Minutes"
+      },
+      "defaultHeight": 8,
+      "defaultWidth": 10,
+      "description": "A real-time wind trends graph with dual axes for direction and speed. Displays live values and simple moving averages over the current period’s average.",
+      "icon": "windtrendsWidget",
+      "minHeight": 6,
+      "minWidth": 8,
+      "name": "Wind Trends",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-windtrends-chart"
+    },
+    {
+      "bindingKind": "paths-array",
+      "category": "Core",
+      "componentClassName": "WidgetZonesStatePanelComponent",
+      "defaultConfig": {
+        "color": "contrast",
+        "dataTimeout": 5,
+        "displayName": "Zones State Panel Label",
+        "enableTimeout": false,
+        "filterSelfPaths": true,
+        "multiChildCtrls": [],
+        "paths": [],
+        "putEnable": false,
+        "putMomentary": false,
+        "showLabel": true,
+        "zonesOnlyPaths": true
+      },
+      "defaultHeight": 6,
+      "defaultWidth": 4,
+      "description": "Displays the data state (severity and message) of the path's Zones (based on Signal K path metadata configuration).",
+      "icon": "zonesStatePanel",
+      "minHeight": 2,
+      "minWidth": 1,
+      "name": "Zones State Panel",
+      "pathSlots": [],
+      "requiredPlugins": [],
+      "selector": "widget-zones-state-panel"
+    }
+  ]
+}
