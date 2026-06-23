@@ -108,6 +108,54 @@ export function findArrayLiteral(sourceFile: ts.SourceFile, propName: string): t
 }
 
 /**
+ * Returns the initializer expression of the first property/variable named
+ * `propName`, regardless of its kind (object, call, array, ...). Throws if not found.
+ */
+export function findPropertyInitializer(sourceFile: ts.SourceFile, propName: string): ts.Expression {
+  let result: ts.Expression | undefined;
+
+  const visit = (node: ts.Node): void => {
+    if (result) return;
+    if (
+      (ts.isPropertyDeclaration(node) ||
+        ts.isPropertyAssignment(node) ||
+        ts.isVariableDeclaration(node)) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === propName &&
+      node.initializer
+    ) {
+      result = node.initializer;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  if (!result) {
+    throw new Error(`Could not find an initializer named "${propName}" in ${sourceFile.fileName}`);
+  }
+  return result;
+}
+
+/**
+ * Maps an object literal's property assignments to name -> initializer. Skips
+ * spreads, shorthand and methods. Lets callers read only the literal keys they
+ * care about, tolerating non-literal siblings.
+ */
+export function getObjectProperties(node: ts.ObjectLiteralExpression): Map<string, ts.Expression> {
+  const props = new Map<string, ts.Expression>();
+  for (const member of node.properties) {
+    if (
+      ts.isPropertyAssignment(member) &&
+      (ts.isIdentifier(member.name) || ts.isStringLiteralLike(member.name))
+    ) {
+      props.set(member.name.text, member.initializer);
+    }
+  }
+  return props;
+}
+
+/**
  * Returns the module specifier a named import comes from, e.g. for
  * `import { WidgetNumericComponent } from '../../widgets/.../x.component'`
  * returns `../../widgets/.../x.component`. Throws if the import is not found.

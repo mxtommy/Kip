@@ -4,12 +4,15 @@
  * Reads KIP source statically (never executes Angular components) and produces a
  * JSON description of the widget catalog and design system for the kip-mcp-server.
  */
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import {
   findArrayLiteral,
   findImportModuleSpecifier,
+  findPropertyInitializer,
   findStaticPropertyInitializer,
+  getObjectProperties,
   literalToValue,
   parseSourceFile,
 } from './ast';
@@ -30,6 +33,16 @@ const WIDGET_CATEGORIES: ReadonlySet<string> = new Set<WidgetCategory>([
   'Component',
   'Racing',
 ]);
+
+const APP_SERVICE = 'src/app/core/services/app-service.ts';
+const UNITS_SERVICE = 'src/app/core/services/units.service.ts';
+const DASHBOARD_COMPONENT = 'src/app/core/components/dashboard/dashboard.component.ts';
+const ICONS_SVG = 'src/assets/svg/icons.svg';
+
+// KIP applies themes as body CSS classes; the default (dark) theme is the empty
+// string. There is no single source literal to read, so these are listed here and
+// kept in step with src/styles.scss and src/themes/_m3{dark,light,night}.scss.
+const THEME_NAMES: readonly string[] = ['', 'light-theme', 'night-theme'];
 
 /**
  * Extracts KIP's widget catalog (`_widgetDefinition`) from widget.service.ts.
@@ -117,18 +130,86 @@ function asStringOrNull(value: unknown): string | null {
 
 /**
  * Extracts KIP's design system (grid, colour tokens, theme names, dashboard
- * icons and unit groups).
- *
- * STUB: implemented in the GREEN step.
+ * icons and unit groups) from KIP source.
  */
-export function extractDesignSystem(_opts: GenerateOptions): DesignSystem {
+export function extractDesignSystem(opts: GenerateOptions): DesignSystem {
   return {
-    grid: { column: 0, row: 0, margin: 0, float: false, cellHeight: '' },
-    colors: [],
-    themeNames: [],
-    icons: [],
-    unitGroups: [],
+    grid: extractGrid(opts.projectRoot),
+    colors: extractColors(opts.projectRoot),
+    themeNames: [...THEME_NAMES],
+    icons: extractIcons(opts.projectRoot),
+    unitGroups: extractUnitGroups(opts.projectRoot),
   };
+}
+
+function extractGrid(root: string): DesignSystem['grid'] {
+  const file = path.join(root, DASHBOARD_COMPONENT);
+  const initializer = findPropertyInitializer(parseSourceFile(file), 'gridOptions');
+
+  // gridOptions is `signal<NgGridStackOptions>({ ... })`; unwrap the call argument.
+  let objectLiteral: ts.ObjectLiteralExpression | undefined;
+  if (ts.isCallExpression(initializer) && ts.isObjectLiteralExpression(initializer.arguments[0])) {
+    objectLiteral = initializer.arguments[0];
+  } else if (ts.isObjectLiteralExpression(initializer)) {
+    objectLiteral = initializer;
+  }
+  if (!objectLiteral) {
+    throw new Error(`gridOptions is not signal({...}) or an object literal in ${file}`);
+  }
+
+  const props = getObjectProperties(objectLiteral);
+  return {
+    column: numberProp(props, 'column', file),
+    row: numberProp(props, 'row', file),
+    margin: numberProp(props, 'margin', file),
+    float: booleanProp(props, 'float', file),
+    // KIP computes the row height at runtime; it is not in the literal.
+    cellHeight: 'auto',
+  };
+}
+
+function extractColors(root: string): DesignSystem['colors'] {
+  const file = path.join(root, APP_SERVICE);
+  const raw = literalToValue(findArrayLiteral(parseSourceFile(file), 'configurableThemeColors'));
+  const list = raw as Array<{ value: unknown; label: unknown }>;
+  return list.map((c) => ({ value: String(c.value), label: String(c.label) }));
+}
+
+function extractUnitGroups(root: string): DesignSystem['unitGroups'] {
+  const file = path.join(root, UNITS_SERVICE);
+  const raw = literalToValue(findArrayLiteral(parseSourceFile(file), '_conversionList'));
+  const list = raw as Array<{ group: unknown; units: Array<{ measure: unknown; description: unknown }> }>;
+  return list.map((g) => ({
+    group: String(g.group),
+    measures: g.units.map((u) => ({ measure: String(u.measure), description: String(u.description) })),
+  }));
+}
+
+function extractIcons(root: string): string[] {
+  const svg = fs.readFileSync(path.join(root, ICONS_SVG), 'utf8');
+  const ids = new Set<string>();
+  const matcher = /id="(dashboard-[^"]*)"/g;
+  let match: RegExpExecArray | null;
+  while ((match = matcher.exec(svg)) !== null) {
+    ids.add(match[1]);
+  }
+  return [...ids].sort((a, b) => a.localeCompare(b));
+}
+
+function numberProp(props: Map<string, ts.Expression>, key: string, file: string): number {
+  const node = props.get(key);
+  if (!node) throw new Error(`Missing "${key}" in grid options in ${file}`);
+  const value = literalToValue(node);
+  if (typeof value !== 'number') throw new Error(`Expected number "${key}" in ${file}`);
+  return value;
+}
+
+function booleanProp(props: Map<string, ts.Expression>, key: string, file: string): boolean {
+  const node = props.get(key);
+  if (!node) throw new Error(`Missing "${key}" in grid options in ${file}`);
+  const value = literalToValue(node);
+  if (typeof value !== 'boolean') throw new Error(`Expected boolean "${key}" in ${file}`);
+  return value;
 }
 
 function toCatalogEntry(raw: Record<string, unknown>, file: string): WidgetCatalogEntry {
