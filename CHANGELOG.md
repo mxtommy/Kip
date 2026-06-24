@@ -1,3 +1,6 @@
+# v4.9.0
+## New Features
+* Image Widget: Display a picture from a shared, boat-wide library on your dashboards — a safety-equipment diagram, electrical panel layout, or boat plan. Upload JPG, PNG, WebP, GIF (including animated), HEIC/HEIF, or SVG (up to 10 MB) directly from the KIP UI; images are stored on the Signal K server and shared across all displays. Pictures scale to fit or fill their widget while preserving aspect ratio, over a solid or transparent background. Uploaded content is validated, raster images are re-encoded to WebP and SVGs are sanitized for safety, and resized copies are generated on demand and cached on disk. A new **Image Cache** card in Settings shows the on-disk cache size and lets you purge generated copies. Uploading requires logging in to the Signal K server.
 # v4.8.0
 ## New Features
 * Solar Charger Widget: Get instant clarity on your solar system with a compact, purpose-built Solar Charger Widget. Track individual panels or full arrays in real time, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Device discovery is automatic, and Zones support keeps warnings and alarms state highly visible.
