@@ -212,18 +212,33 @@ describe('AuthenticationService', () => {
       httpTesting.verify();
     });
 
-    it('logged-in read-only session: isUserSession true, canWriteUserData false', async () => {
+    it('logged-in read-only user (userLevel readonly): isUserSession true, canWriteUserData false', async () => {
       seedConn({ proxyEnabled: true });
       const service = createService();
       const httpTesting = TestBed.inject(HttpTestingController);
 
       const pending = service.refreshLoginStatus();
-      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn', readOnlyAccess: true });
+      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn', userLevel: 'readonly' });
       await pending;
 
       expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
       expect(await firstValueFrom(service.isUserSession$)).toBe(true);
       expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('admin user stays write-capable even when the server allows anonymous read (readOnlyAccess true)', async () => {
+      // readOnlyAccess is the server allow_readonly flag, NOT the user's permission. A signed-in
+      // admin (userLevel admin) must remain write-capable regardless of it.
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn', userLevel: 'admin', readOnlyAccess: true });
+      await pending;
+
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(true);
       httpTesting.verify();
     });
 
@@ -309,7 +324,7 @@ describe('AuthenticationService', () => {
       const first = service.refreshLoginStatus();
       expectLoginStatusRequest(httpTesting).flush({
         status: 'loggedIn',
-        readOnlyAccess: false,
+        userLevel: 'admin',
         oidcEnabled: true,
         oidcLoginUrl: '/signalk/v1/auth/oidc/login'
       });

@@ -237,10 +237,20 @@ export class AuthenticationService implements OnDestroy {
 
   private deriveCanWriteUserData(token: IAuthorizationToken | null, status: ILoginStatus | null): boolean {
     if (this.authMode === 'cookie') {
-      return status?.status === 'loggedIn' && !status.readOnlyAccess;
+      return status?.status === 'loggedIn' && this.isWriteUserLevel(status.userLevel);
     }
-    // Token mode has no readOnly signal; a user token has always been treated as write-capable.
+    // Token mode has no loginStatus; a user token has always been treated as write-capable.
     return !!token && !token.isDeviceAccessToken;
+  }
+
+  /**
+   * Whether a Signal K userLevel (skPrincipal.permissions) can write user-scope data. SK treats
+   * 'admin' and 'readwrite' as write-capable; 'readonly' (or an absent level) cannot. Note this is
+   * NOT loginStatus.readOnlyAccess — that field is the server's allow_readonly (anonymous read)
+   * config and is independent of the signed-in user's permission.
+   */
+  private isWriteUserLevel(userLevel?: string): boolean {
+    return userLevel === 'admin' || userLevel === 'readwrite';
   }
 
   private scheduleRenewalChunk(token: IAuthorizationToken) {
