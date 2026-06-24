@@ -7,6 +7,8 @@ import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../../services/storage.service';
+import { ImageAssetService, IImageCacheStats } from '../../../services/image-asset.service';
+import { DialogService } from '../../../services/dialog.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatInput, MatInputModule } from '@angular/material/input';
 import { MatOption } from '@angular/material/core';
@@ -37,6 +39,18 @@ export class SettingsConfigComponent {
   private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
   private fb = inject(UntypedFormBuilder);
+  private images = inject(ImageAssetService);
+  private dialog = inject(DialogService);
+
+  protected readonly imageCacheStats = signal<IImageCacheStats | null>(null);
+  protected readonly imageCachePurging = signal(false);
+  protected readonly imageCacheDisplay = computed(() => {
+    const stats = this.imageCacheStats();
+    if (!stats) {
+      return 'Unavailable';
+    }
+    return `${this.formatBytes(stats.bytes)} · ${stats.files} file${stats.files === 1 ? '' : 's'}`;
+  });
 
   private authToken = toSignal(this.auth.authToken$, { initialValue: null });
   private serverConfigListSignal = signal<IRemoteConfig[]>([]);
@@ -71,6 +85,10 @@ export class SettingsConfigComponent {
   public saveConfigScope: string = null;
   public deleteConfigKey: string = null;
   public jsonData: IConfig = null;
+
+  constructor() {
+    this.refreshImageCache();
+  }
 
   private readonly authStateEffect = effect(() => {
     if (!this.supportApplicationData) {
@@ -251,6 +269,54 @@ export class SettingsConfigComponent {
     document.body.removeChild(a);
 
     window.URL.revokeObjectURL(downloadURL); // Cleanup memory
+  }
+
+  /** Refresh the on-disk image-cache size shown in the settings card. */
+  public refreshImageCache(): void {
+    if (!this.images.ready) {
+      this.imageCacheStats.set(null);
+      return;
+    }
+    this.images.cacheStats().subscribe({
+      next: (stats) => this.imageCacheStats.set(stats),
+      error: () => this.imageCacheStats.set(null)
+    });
+  }
+
+  /** Purge generated image variants (originals are kept and regenerate on demand). */
+  public purgeImageCache(): void {
+    this.dialog.openConfirmationDialog({
+      title: 'Purge Image Cache',
+      message: 'Delete all generated image variants? Originals are kept and variants regenerate on demand.',
+      confirmBtnText: 'Purge',
+      cancelBtnText: 'Cancel'
+    }).subscribe((confirmed) => {
+      if (!confirmed) {
+        return;
+      }
+      this.imageCachePurging.set(true);
+      this.images.purgeCache().subscribe({
+        next: () => {
+          this.imageCachePurging.set(false);
+          this.toast.show('Image cache purged', 1000, true, 'success');
+          this.refreshImageCache();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.imageCachePurging.set(false);
+          this.toast.show('Could not purge image cache: ' + (error?.statusText ?? error), 0, false, 'error');
+        }
+      });
+    });
+  }
+
+  private formatBytes(bytes: number): string {
+    if (!bytes) {
+      return '0 B';
+    }
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / Math.pow(1024, exponent);
+    return `${value.toFixed(exponent === 0 ? 0 : 1)} ${units[exponent]}`;
   }
 
   public uploadJsonConfig(event: Event) {

@@ -27,6 +27,21 @@ h3 {
   margin-top: 5px;
 }
 
+.image-cache-size {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.image-cache-label {
+  opacity: 0.7;
+}
+
+.image-cache-value {
+  font-weight: 600;
+}
+
 a {
   font-size: 14px;
 }

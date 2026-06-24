@@ -150,6 +150,37 @@
         </div>
       </form>
     </div>
+    <div class="flex-item-rounded-card rounded-card-color">
+      <h3>Image Cache</h3>
+      <p style="margin-bottom: 16px">
+        Uploaded images are stored on the Signal K server and resized copies are
+        cached on disk. Purging removes the generated copies; originals are kept
+        and copies regenerate on demand.
+      </p>
+      <div class="image-cache-size">
+        <span class="image-cache-label">On-disk cache:</span>
+        <span class="image-cache-value">{{ imageCacheDisplay() }}</span>
+      </div>
+      <div class="formActionFooter">
+        <mat-divider class="formActionDivider"></mat-divider>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="refreshImageCache()"
+          >
+          Refresh
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          color="accent"
+          [disabled]="imageCachePurging()"
+          (click)="purgeImageCache()"
+          >
+          Purge
+        </button>
+      </div>
+    </div>
     <div class="flex-item-reset rounded-card-color">
       <h3>Advanced</h3>
       <div class="config-operation-container" style="margin-top: 20px">
