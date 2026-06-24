@@ -8,9 +8,9 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { DataInspectorRowComponent } from '../data-inspector-row/data-inspector-row.component';
 import { PageHeaderComponent } from '../page-header/page-header.component';
-import { Subject } from 'rxjs';
+import { Subject, asyncScheduler } from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { map, debounceTime } from 'rxjs/operators';
+import { map, debounceTime, throttleTime } from 'rxjs/operators';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { Clipboard } from '@angular/cdk/clipboard';
 
@@ -87,6 +87,10 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.dataService.startSkDataFullTree()
       .pipe(
+        // Diagnostic-only screen: the full path tree can emit up to ~5x/sec. Rate-limit the
+        // rebuild of the whole table to ~2x/sec. Leading so the first snapshot renders
+        // immediately; trailing so the final state is never missed when updates stop.
+        throttleTime(500, asyncScheduler, { leading: true, trailing: true }),
         map((paths: ISkPathData[]) =>
           paths
             .filter(path => Object.keys(path.sources || {}).length > 0)
