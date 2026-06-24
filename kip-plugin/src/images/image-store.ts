@@ -96,7 +96,7 @@ export function detectImageType(buffer: Buffer): ImageFormat | null {
 
 function looksLikeSvg(buffer: Buffer): boolean {
   // Only sniff the head; SVG is text/XML whose document element is <svg>.
-  const head = buffer.subarray(0, 1024).toString('utf8').replace(/^﻿/, '').trimStart();
+  const head = buffer.subarray(0, 1024).toString('utf8').replace(/^\uFEFF/, '').trimStart();
   if (!head.startsWith('<')) return false;
   const withoutProlog = head.replace(/^<\?xml[\s\S]*?\?>\s*/, '').replace(/^<!--[\s\S]*?-->\s*/, '').replace(/^<!DOCTYPE[^>]*>\s*/i, '').trimStart();
   return /^<svg[\s>]/i.test(withoutProlog);
@@ -107,7 +107,11 @@ export function sanitizeSvg(svg: string): string {
   const clean = DOMPurify.sanitize(svg, {
     USE_PROFILES: { svg: true, svgFilters: true },
     FORBID_TAGS: ['script', 'foreignObject'],
-    FORBID_ATTR: ['xlink:href'],
+    // Forbid BOTH the legacy xlink:href and the modern href attribute. An external href on
+    // <image>/<a>/<feImage> would otherwise survive as a phone-home beacon in the stored bytes.
+    // Internal references drawings rely on (e.g. fill="url(#gradient)", filter="url(#f)") are
+    // NOT href attributes, so they are preserved.
+    FORBID_ATTR: ['xlink:href', 'href'],
     ADD_TAGS: [],
     // Block external resource loads and javascript: URIs.
     ALLOW_UNKNOWN_PROTOCOLS: false
@@ -371,7 +375,7 @@ function isValidId(id: string): boolean {
 
 /** Reduce a client filename to a safe basename for display only (no path segments). */
 function sanitizeDisplayName(name: string): string {
-  const base = path.basename(String(name ?? '')).replace(/[ -]/g, '').trim();
+  const base = path.basename(String(name ?? '')).replace(/[\x00-\x1f]/g, '').trim();
   return base.length ? base.slice(0, 200) : 'image';
 }
 

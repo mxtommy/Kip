@@ -46,6 +46,20 @@ test('sanitizeSvg strips scripts and event handlers but keeps drawing', () => {
   assert.ok(/<rect/i.test(clean), 'drawing element preserved');
 });
 
+test('sanitizeSvg strips external resource refs (modern href + xlink:href) but keeps internal fragment refs', () => {
+  const dirty = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+    + '<image href="https://evil.example/beacon.png" x="0" y="0" width="10" height="10"/>'
+    + '<image xlink:href="https://evil.example/legacy.png" x="0" y="0" width="10" height="10"/>'
+    + '<a href="https://evil.example/link"><rect width="1" height="1"/></a>'
+    + '<radialGradient id="g"><stop offset="0" stop-color="red"/></radialGradient>'
+    + '<rect width="10" height="10" fill="url(#g)"/>'
+    + '</svg>';
+  const clean = sanitizeSvg(dirty);
+  assert.ok(!/evil\.example/i.test(clean), 'external href/xlink:href beacon removed');
+  assert.ok(/url\(#g\)/i.test(clean), 'internal fragment reference preserved');
+  assert.ok(/<rect/i.test(clean), 'drawing element preserved');
+});
+
 test('ingest stores a raster original plus sidecar metadata', async () => {
   const { store, dir } = freshStore();
   const meta = await store.ingest(await png(12, 9), 'my map.png', 'user-1');
