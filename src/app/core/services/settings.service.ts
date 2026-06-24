@@ -644,8 +644,25 @@ export class SettingsService {
         theme: DemoThemeConfig
       };
       console.log("[AppSettings Service] Loading Demo configuration settings as remote config: " + this.useSharedConfig + " and reloading app.");
-      this.storage.setConfig('user', this.sharedConfigName, demoConfig);
-      this.reloadApp();
+      // Wait for the server write to land before reloading; reloading mid-request
+      // aborts the POST and leaves the previous configuration in place.
+      if (this.storage.storageServiceReady$.getValue()) {
+        this.storage.setConfig('user', this.sharedConfigName, demoConfig)
+          .then(() => {
+            this.reloadApp();
+          })
+          .catch(error => {
+            console.error("[AppSettings Service] Error saving demo configuration to the server", error);
+            this.snackBar.open(
+              'Problem saving configuration to the server. Resolve this issue before KIP can be used reliably.',
+              'Close',
+              {
+                duration: 0,
+                verticalPosition: 'top'
+              }
+            );
+          });
+      }
     } else {
       console.log("[AppSettings Service] Loading Demo configuration settings to LocalStorage");
       this.replaceConfig("appConfig", DemoAppConfig);
