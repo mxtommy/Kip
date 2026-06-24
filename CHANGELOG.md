@@ -1,3 +1,14 @@
+# Unreleased
+## New Features
+* Same-origin Signal K sign-in (SSO): when KIP is served by a Signal K server on the same origin, it authenticates with the server's session cookie instead of its own username/password form. With an OIDC/SSO server, KIP joins the existing session and redirects to the server login when needed — no second sign-in, and OIDC-provisioned users (who have no server-local password) can use KIP. Cross-origin standalone use (a PWA pointed at a remote server) keeps the existing token sign-in.
+## Improvements
+* The Connectivity settings show your Signal K session identity in same-origin mode (including a read-only-session indicator) instead of a credential form.
+* Security: the Signal K login password is no longer stored in the browser; it is used only in memory to obtain a session token.
+## Fixes
+* OIDC/SSO users could not sign in to KIP because it required a server-local password they do not have; same-origin SSO mode resolves this.
+## Behavior changes
+* Cross-origin token sign-in: the Signal K server provides no token-refresh endpoint, so the stored password is no longer re-sent to renew a session. The session token still persists across browser reloads until it expires; when it expires you are prompted to sign in again.
+
 # v4.8.0
 ## New Features
 * Solar Charger Widget: Get instant clarity on your solar system with a compact, purpose-built Solar Charger Widget. Track individual panels or full arrays in real time, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Device discovery is automatic, and Zones support keeps warnings and alarms state highly visible.
