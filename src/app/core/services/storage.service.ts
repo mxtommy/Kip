@@ -6,8 +6,10 @@ import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject } from 'rxjs';
+import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject, EMPTY, timeout } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
+
+const REMOTE_CONFIG_TIMEOUT_MS = 5000; // bounded so a hung applicationData fetch cannot stall the bootstrap
 
 export interface Config {
   name: string,
@@ -84,7 +86,15 @@ export class StorageService {
 
     // Patch request queue to insure JSON Patch requests to SK server don't run over each other and cause collisions/conflicts. SK does not handle multiple async applicationData access calls
     this.patchQueue$
-      .pipe(concatMap((arg: IPatchAction) => this.patch(arg)), takeUntilDestroyed())
+      .pipe(
+        // Keep the queue alive when one patch fails (e.g. a read-only session's 401): without this,
+        // a thrown inner error terminates the subscription and silently drops every later save.
+        concatMap((arg: IPatchAction) => this.patch(arg).pipe(catchError((err) => {
+          console.error('[Storage Service] Config patch failed; keeping the queue alive:', err);
+          return EMPTY;
+        }))),
+        takeUntilDestroyed()
+      )
       .subscribe(() => { /* queue item processed */ });
   }
 
@@ -223,7 +233,7 @@ export class StorageService {
     }
 
     try {
-      const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url));
+      const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url).pipe(timeout(REMOTE_CONFIG_TIMEOUT_MS)));
       if (this._logIO) {
         const appVer: unknown = (remoteConfig && typeof remoteConfig === 'object') ? (remoteConfig as IConfig)?.app?.configVersion : undefined;
         console.debug('[StorageService.getConfig Response]', { scope, configName, ver, appConfigVersion: appVer });
