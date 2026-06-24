@@ -83,4 +83,87 @@ describe('AuthenticationService', () => {
       expect(localStorage.getItem('authorization_token')).toBeNull();
     });
   });
+
+  describe('auth mode detection (Unit 2)', () => {
+    function seedConn(overrides: Record<string, unknown>): void {
+      localStorage.setItem(
+        'connectionConfig',
+        JSON.stringify({
+          configVersion: 12,
+          kipUUID: 'u',
+          signalKUrl: 'http://localhost',
+          proxyEnabled: false,
+          signalKSubscribeAll: false,
+          useDeviceToken: false,
+          loginName: '',
+          useSharedConfig: true,
+          sharedConfigName: 'default',
+          ...overrides
+        })
+      );
+    }
+
+    it("returns 'cookie' when proxy mode is enabled (effective origin is the app)", () => {
+      seedConn({ proxyEnabled: true, signalKUrl: 'https://elsewhere.example:9999' });
+      expect(createService().authMode).toBe('cookie');
+    });
+
+    it("returns 'cookie' when the server URL is empty (defaults to the app origin)", () => {
+      seedConn({ signalKUrl: '' });
+      expect(createService().authMode).toBe('cookie');
+    });
+
+    it("returns 'cookie' when the server URL matches the app origin", () => {
+      seedConn({ signalKUrl: window.location.origin });
+      expect(createService().authMode).toBe('cookie');
+    });
+
+    it("returns 'token' for a cross-origin server URL", () => {
+      seedConn({ signalKUrl: 'https://boat.example:3443' });
+      expect(createService().authMode).toBe('token');
+    });
+  });
+
+  describe('startup token suppression by mode (Unit 2)', () => {
+    function seedConn(overrides: Record<string, unknown>): void {
+      localStorage.setItem(
+        'connectionConfig',
+        JSON.stringify({
+          configVersion: 12,
+          kipUUID: 'u',
+          signalKUrl: 'http://localhost',
+          proxyEnabled: false,
+          signalKSubscribeAll: false,
+          useDeviceToken: false,
+          loginName: '',
+          useSharedConfig: true,
+          sharedConfigName: 'default',
+          ...overrides
+        })
+      );
+    }
+
+    it('ignores a stored user token in cookie mode (cookie/SSO is authoritative)', async () => {
+      seedConn({ proxyEnabled: true });
+      seedToken({ expiry: nowSec() + 3600, isDeviceAccessToken: false });
+      const service = createService();
+      expect(await firstValueFrom(service.authToken$)).toBeNull();
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+    });
+
+    it('keeps a stored device token in cookie mode (unattended fallback, not stranded)', async () => {
+      seedConn({ proxyEnabled: true });
+      seedToken({ expiry: nowSec() + 3600, isDeviceAccessToken: true });
+      const service = createService();
+      expect(await firstValueFrom(service.authToken$)).not.toBeNull();
+    });
+
+    it('keeps a stored user token in token mode (cross-origin)', async () => {
+      seedConn({ signalKUrl: 'https://boat.example:3443' });
+      seedToken({ expiry: nowSec() + 3600, isDeviceAccessToken: false });
+      const service = createService();
+      expect(await firstValueFrom(service.authToken$)).not.toBeNull();
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
+    });
+  });
 });

@@ -10,6 +10,14 @@ export interface IAuthorizationToken {
   isDeviceAccessToken: boolean;
 }
 
+/**
+ * Auth carriage mode, derived synchronously from the connection config:
+ * - 'cookie': KIP is served same-origin as the Signal K server; the httpOnly session cookie
+ *   carries auth (no token header / WS token param).
+ * - 'token': cross-origin; auth is carried by the stored JWT (header + WS query param).
+ */
+export type AuthMode = 'cookie' | 'token';
+
 const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL changes. We do a Login before ConnectionService has time to send the new endpoitn url
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
@@ -55,10 +63,14 @@ export class AuthenticationService implements OnDestroy {
           console.log('[Authentication Service] Device Access Token found in Local Storage');
           this._authToken$.next(token);
         }
+      } else if (this.authMode === 'cookie') {
+        // Cookie mode (same-origin): the SSO/session cookie is authoritative, so a stored user
+        // token is ignored for carriage (authToken$ stays null). Device tokens are still kept
+        // (above) as the unattended same-origin fallback.
+        console.log('[Authentication Service] User session token ignored in cookie mode (session cookie is authoritative)');
       } else {
-        // User session token: keep it across reloads (Option A — the session JWT is the
-        // persisted credential now that the plaintext password is no longer stored). Delete
-        // only when expired; mirrors the device-token handling above.
+        // Token mode (cross-origin): keep the unexpired user JWT across reloads (Option A — the
+        // session JWT is the persisted credential now that the plaintext password is not stored).
         if (token.expiry === null) {
           console.log('[Authentication Service] User session token found with expiry: NEVER');
           this._IsLoggedIn$.next(true);
@@ -98,6 +110,44 @@ export class AuthenticationService implements OnDestroy {
         this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
       }
     });
+  }
+
+  /**
+   * Synchronous auth carriage mode (no async / no connection discovery), so the HTTP interceptor
+   * and bootstrap can branch on it from the very first request. See {@link AuthMode}.
+   */
+  public get authMode(): AuthMode {
+    return this.effectiveOriginIsSameAsApp() ? 'cookie' : 'token';
+  }
+
+  /**
+   * Whether the effective Signal K request origin equals the origin KIP is served from. True when
+   * proxy mode is enabled (endpoints are rewritten to the app origin) or the configured server URL
+   * resolves to the app origin (an empty URL defaults to the app origin). Conservative on any gap:
+   * an unreadable config or unparseable URL is treated as cross-origin (token mode), preserving
+   * existing behavior.
+   */
+  private effectiveOriginIsSameAsApp(): boolean {
+    let config: { proxyEnabled?: boolean; signalKUrl?: string } | null = null;
+    try {
+      config = JSON.parse(localStorage.getItem('connectionConfig'));
+    } catch {
+      config = null;
+    }
+    if (!config) {
+      return false;
+    }
+    if (config.proxyEnabled) {
+      return true;
+    }
+    if (!config.signalKUrl) {
+      return true;
+    }
+    try {
+      return new URL(config.signalKUrl).origin === window.location.origin;
+    } catch {
+      return false;
+    }
   }
 
   private scheduleRenewalChunk(token: IAuthorizationToken) {
