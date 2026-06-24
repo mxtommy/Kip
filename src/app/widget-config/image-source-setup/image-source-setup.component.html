@@ -1,0 +1,70 @@
+<div class="image-setup" [formGroup]="imageGroup">
+
+  <!-- Upload -->
+  <div class="image-setup__upload">
+    <input #fileInput type="file" hidden [accept]="accept" (change)="onFileSelected($event)">
+    <button mat-stroked-button type="button" [disabled]="uploading()" (click)="fileInput.click()">
+      <mat-icon>upload</mat-icon>
+      Upload image
+    </button>
+    <span class="image-setup__hint">JPG, PNG, WebP, GIF, HEIC/HEIF, SVG · max 10&nbsp;MB</span>
+  </div>
+
+  @if (uploading()) {
+    <mat-progress-bar mode="determinate" [value]="uploadProgress()" />
+  }
+  @if (error(); as message) {
+    <p class="image-setup__error">{{ message }}</p>
+  }
+
+  <!-- Shared library / picker -->
+  @if (gallery().length) {
+    <div class="image-setup__gallery">
+      @for (asset of gallery(); track asset.id) {
+        <button
+          type="button"
+          class="image-setup__thumb"
+          [class.image-setup__thumb--selected]="asset.id === selectedId"
+          [title]="asset.name"
+          (click)="selectImage(asset.id)">
+          <img [src]="thumbUrl(asset.id)" [alt]="asset.name" loading="lazy" draggable="false">
+          @if (asset.id === selectedId) {
+            <mat-icon class="image-setup__check">check_circle</mat-icon>
+          }
+          <span class="image-setup__delete" (click)="deleteImage(asset.id, $event)" title="Delete image">
+            <mat-icon>delete</mat-icon>
+          </span>
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="image-setup__hint">No images uploaded yet.</p>
+  }
+
+  <!-- Display options -->
+  <mat-form-field class="image-setup__field">
+    <mat-label>Scaling</mat-label>
+    <mat-select formControlName="imageFit">
+      <mat-option value="contain">Fit (show whole image)</mat-option>
+      <mat-option value="cover">Fill (crop to container)</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="image-setup__field">
+    <mat-label>Alt text</mat-label>
+    <input matInput formControlName="altText" maxlength="200" placeholder="Describe the image">
+  </mat-form-field>
+
+  <div class="image-setup__bg">
+    <mat-checkbox [checked]="isTransparent" (change)="toggleTransparent($event.checked)">
+      Transparent background
+    </mat-checkbox>
+    @if (!isTransparent) {
+      <label class="image-setup__color">
+        Background color
+        <input type="color" [value]="backgroundControl.value" (input)="setBackground($event)">
+      </label>
+    }
+  </div>
+
+</div>
