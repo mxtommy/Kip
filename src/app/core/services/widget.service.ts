@@ -16,6 +16,7 @@ import { WidgetPositionComponent } from '../../widgets/widget-position/widget-po
 import { WidgetAisRadarComponent } from '../../widgets/widget-ais-radar/widget-ais-radar.component';
 import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
 import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
+import { WidgetImageComponent } from '../../widgets/widget-image/widget-image.component';
 import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
 import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
 import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
@@ -157,6 +158,7 @@ export class WidgetService {
     WidgetAisRadarComponent: WidgetAisRadarComponent,
     WidgetLabelComponent: WidgetLabelComponent,
     WidgetIframeComponent: WidgetIframeComponent,
+    WidgetImageComponent: WidgetImageComponent,
     WidgetHorizonComponent: WidgetHorizonComponent,
     WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
     WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
@@ -557,6 +559,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-iframe',
       componentClassName: 'WidgetIframeComponent',
+    },
+    {
+      name: 'Image',
+      description: 'Displays an uploaded image (e.g. a diagram of where safety equipment is stowed) stored on the Signal K server, scaled to fit while preserving aspect ratio. Upload images or pick from the shared library in the widget options.',
+      icon: '',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 4,
+      defaultHeight: 6,
+      category: 'Core',
+      requiredPlugins: [],
+      selector: 'widget-image',
+      componentClassName: 'WidgetImageComponent',
     },
     {
       name: 'Tutorial',
