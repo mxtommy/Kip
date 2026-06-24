@@ -5,6 +5,10 @@ import { HistorySeriesService, IHistoryQueryParams, IHistoryValuesResponse, ISer
 import { SqliteHistoryStorageService } from './sqlite-history-storage.service';
 import { HistoryApi, ValuesRequest, ValuesResponse, PathsRequest, PathsResponse, ContextsRequest, ContextsResponse } from '@signalk/server-api/history';
 import { IElectricalTrackedDeviceRef, TElectricalFamilyKey } from './kip-series-contract';
+import * as nodePath from 'node:path';
+import { ImageStore } from './images/image-store';
+import { WorkerPoolImageProcessor } from './images/worker-pool';
+import { registerImageRoutes } from './images/image-router';
 
 type TSqliteModule = { DatabaseSync?: unknown; Database?: unknown } | null;
 type TGetSqliteModule = () => Promise<TSqliteModule>;
@@ -100,6 +104,24 @@ const start = (server: ServerAPI): Plugin => {
 
   // Constructed in plugin.start — server.getDataDirPath() is only available after SK fully initializes
   let storageService!: SqliteHistoryStorageService;
+
+  // Image-asset store + worker pool, created lazily on first route use (data dir known by then).
+  let imagePool: WorkerPoolImageProcessor | null = null;
+  let imageStore: ImageStore | null = null;
+  const resolveImageStore = (): ImageStore | null => {
+    if (!imageStore) {
+      try {
+        const dir = nodePath.join(server.getDataDirPath(), 'images');
+        imagePool = new WorkerPoolImageProcessor();
+        imageStore = new ImageStore(dir, imagePool);
+        server.debug(`[KIP][images] store ready at ${dir} (workers=${imagePool.size})`);
+      } catch (e) {
+        server.error(`[KIP][images] failed to initialize image store: ${(e as Error).message}`);
+        return null;
+      }
+    }
+    return imageStore;
+  };
 
   let retentionSweepTimer: NodeJS.Timeout | null = null;
   let storageFlushTimer: NodeJS.Timeout | null = null;
@@ -1097,6 +1119,11 @@ const start = (server: ServerAPI): Plugin => {
     stop: () => {
       server.debug('[KIP][LIFECYCLE] stop');
       stopSeriesCapture();
+      if (imagePool) {
+        void imagePool.destroy().catch(() => undefined);
+        imagePool = null;
+        imageStore = null;
+      }
       if (retentionSweepTimer) {
         clearInterval(retentionSweepTimer);
         retentionSweepTimer = null;
@@ -1153,6 +1180,7 @@ const start = (server: ServerAPI): Plugin => {
 
     registerWithRouter(router) {
       server.debug(`[KIP][ROUTES] register displays=${API_PATHS.DISPLAYS} instance=${API_PATHS.INSTANCE} screenIndex=${API_PATHS.SCREEN_INDEX} activeScreen=${API_PATHS.ACTIVATE_SCREEN}`);
+      registerImageRoutes(router, { resolveStore: resolveImageStore, log: (m) => server.debug(m) });
 
       // Validate/normalize :displayId where present
       router.param('displayId', (req: Request & { displayId?: string }, res: Response, next: NextFunction, displayId: string) => {
