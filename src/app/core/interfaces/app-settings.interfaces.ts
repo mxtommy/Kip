@@ -10,7 +10,9 @@ export interface IConnectionConfig {
   signalKSubscribeAll: boolean;
   useDeviceToken: boolean;
   loginName: string;
-  loginPassword: string;
+  // Transient only: collected by the login dialog and passed to login() in memory.
+  // Never persisted to localStorage (the session JWT is the cross-reload credential).
+  loginPassword?: string;
   useSharedConfig: boolean;
   sharedConfigName: string;
 }

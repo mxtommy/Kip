@@ -37,7 +37,6 @@ export const DefaultConnectionConfig: IConnectionConfig = {
   "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
-  "loginPassword": null,
   "useSharedConfig": false,
   "sharedConfigName": "default"
 }

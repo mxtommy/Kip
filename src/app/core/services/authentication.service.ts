@@ -56,9 +56,21 @@ export class AuthenticationService implements OnDestroy {
           this._authToken$.next(token);
         }
       } else {
-        console.log('[Authentication Service] User session token found in Local Storage');
-        console.log('[Authentication Service] Deleting user session token');
-        localStorage.removeItem('authorization_token');
+        // User session token: keep it across reloads (Option A — the session JWT is the
+        // persisted credential now that the plaintext password is no longer stored). Delete
+        // only when expired; mirrors the device-token handling above.
+        if (token.expiry === null) {
+          console.log('[Authentication Service] User session token found with expiry: NEVER');
+          this._IsLoggedIn$.next(true);
+          this._authToken$.next(token);
+        } else if (this.isTokenExpired(token.expiry)) {
+          console.log('[Authentication Service] User session token expired. Deleting token');
+          localStorage.removeItem('authorization_token');
+        } else {
+          console.log('[Authentication Service] User session token found in Local Storage');
+          this._IsLoggedIn$.next(true);
+          this._authToken$.next(token);
+        }
       }
     }
 
@@ -148,18 +160,12 @@ export class AuthenticationService implements OnDestroy {
         this.isRenewingToken = false;
         this.scheduleRenewalChunk(token);
       } else {
-        console.log(`[Authentication Service] User session Token within renewal window (${remainingSec}s remaining). Renewing token...`);
-        const connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
-        this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
-          .then(() => {
-            console.log('[Authentication Service] Token successfully renewed.');
-          })
-          .catch((error: HttpErrorResponse) => {
-            console.error('[Authentication Service] Token renewal failed. Server returned:', error.error);
-          })
-          .finally(() => {
-            this.isRenewingToken = false;
-          });
+        // No silent refresh available: auth/validate is unimplemented on the server and the
+        // plaintext password is no longer stored. Surface re-login by dropping the token rather
+        // than re-POSTing stored credentials.
+        console.log(`[Authentication Service] User session token within renewal window (${remainingSec}s remaining); no refresh available. Signing out to surface re-login.`);
+        this.deleteToken();
+        this.isRenewingToken = false;
       }
     }
   }

@@ -188,15 +188,25 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       // Step 2: Save the new configuration to localStorage
       this.settings.setConnectionConfig(this.connectionConfig);
 
-      // Step 3: Properly close WebSocket and HTTP connections
+      // Step 3: Establish the session in-memory so the session JWT (not the plaintext password,
+      // which is no longer persisted) survives the reload that bootstraps the new config.
+      if (this.connectionConfig.useSharedConfig) {
+        await this.auth.login({
+          usr: this.connectionConfig.loginName,
+          pwd: this.connectionConfig.loginPassword ?? '',
+          newUrl: this.connectionConfig.signalKUrl
+        });
+      }
+
+      // Step 4: Properly close WebSocket and HTTP connections
       this.connectionStateMachine.shutdown('Configuration changed - restarting app');
 
-      // Step 4: Clean up authentication token if switching from shared to individual config
+      // Step 5: Clean up authentication token if switching from shared to individual config
       if (this.authToken && !this.connectionConfig.useSharedConfig && !this.authToken.isDeviceAccessToken) {
         this.auth.deleteToken();
       }
 
-      // Step 5: Reload immediately - APP_INITIALIZER will handle connection and authentication with new URL
+      // Step 6: Reload immediately - APP_INITIALIZER will handle connection and authentication with new URL
       // Skip during unit tests to avoid breaking Karma connection
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (!(window as any).__KIP_TEST__) {

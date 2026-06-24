@@ -778,7 +778,6 @@ export const DemoConnectionConfig: IConnectionConfig = {
   "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
-  "loginPassword": null,
   "useSharedConfig": false,
   "sharedConfigName": "default"
 }

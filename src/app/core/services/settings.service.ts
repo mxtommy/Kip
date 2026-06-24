@@ -119,10 +119,17 @@ export class SettingsService {
     this.signalKSubscribeAll = config.signalKSubscribeAll;
     this.useDeviceToken = config.useDeviceToken;
     this.loginName = config.loginName;
-    this.loginPassword = config.loginPassword;
+    this.loginPassword = ''; // transient only; never loaded from storage
     this.useSharedConfig = config.useSharedConfig;
     this.sharedConfigName = config.sharedConfigName;
     this.kipUUID = config.kipUUID;
+
+    // Idempotent purge: strip any plaintext password persisted by an older version.
+    // Targeted rewrite preserves all other fields (incl. configVersion) exactly.
+    if (Object.prototype.hasOwnProperty.call(config, 'loginPassword')) {
+      delete config.loginPassword;
+      localStorage.setItem("connectionConfig", JSON.stringify(config));
+    }
   }
 
   public resetConnection() {
@@ -299,7 +306,7 @@ export class SettingsService {
 
   public setConnectionConfig(value: IConnectionConfig) {
     this.loginName = value.loginName;
-    this.loginPassword = value.loginPassword;
+    this.loginPassword = value.loginPassword ?? ''; // transient; not persisted
     this.useSharedConfig = value.useSharedConfig;
     this.proxyEnabled = value.proxyEnabled;
     this.signalKSubscribeAll = value.signalKSubscribeAll;
@@ -695,7 +702,7 @@ export class SettingsService {
       signalKSubscribeAll: this.signalKSubscribeAll,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
-      loginPassword: this.loginPassword,
+      // loginPassword intentionally omitted: never persisted (transient in-memory only).
       useSharedConfig: this.useSharedConfig,
       sharedConfigName: this.sharedConfigName
     }
