@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthenticationService } from "../../core/services/authentication.service";
+import { SsoRedirectService } from '../../core/services/sso-redirect.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { ModalUserCredentialComponent } from '../../core/components/modal-user-credential/modal-user-credential.component';
 import { IConnectionConfig } from "../../core/interfaces/app-settings.interfaces";
@@ -18,12 +19,21 @@ import { ToastService } from '../../core/services/toast.service';
 export class WidgetLoginComponent implements OnInit {
   dialog = inject(MatDialog);
   private auth = inject(AuthenticationService);
+  private ssoRedirect = inject(SsoRedirectService);
   private toast = inject(ToastService);
   private settings = inject(SettingsService);
 
   public connectionConfig: IConnectionConfig = null;
+  public redirecting = false;
 
   ngOnInit(): void {
+    if (this.auth.authMode === 'cookie') {
+      // Same-origin: no KIP-managed credential form. Redirect to the SK/SSO login instead (explicit
+      // sign-in: resets the redirect budget and disables auto-login so this is not auto-bounced).
+      this.redirecting = true;
+      this.ssoRedirect.manualSignIn();
+      return;
+    }
     this.connectionConfig = this.settings.getConnectionConfig();
     this.openUserCredentialModal("Sign in failed: Incorrect user/password. Enter valide credentials or access the Confifuration/Settings menu, validate the server URL or/and disable the user Sign in option");
   }

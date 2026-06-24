@@ -1,5 +1,5 @@
 import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -8,6 +8,7 @@ import { SignalKConnectionService, IEndpointStatus } from '../../../services/sig
 import { IDeltaUpdate, DataService } from '../../../services/data.service';
 import { SignalKDeltaService, IStreamStatus } from '../../../services/signalk-delta.service';
 import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
+import { SsoRedirectService } from '../../../services/sso-redirect.service';
 import { ConnectionStateMachine } from '../../../services/connection-state-machine.service';
 import { ModalUserCredentialComponent } from '../../../components/modal-user-credential/modal-user-credential.component';
 import { compare } from 'compare-versions';
@@ -59,6 +60,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly connectionStateMachine = inject(ConnectionStateMachine);
   private readonly internetReachability = inject(InternetReachabilityService);
   protected readonly auth = inject(AuthenticationService);
+  private readonly ssoRedirect = inject(SsoRedirectService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly canvasService = inject(CanvasService);
 
@@ -67,6 +69,17 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   public connectionConfig: IConnectionConfig;
   public isConnecting = false; // Loading state for connect button
+
+  // Cookie mode (same-origin): the Connectivity tab shows session identity instead of the credential
+  // controls. These drive that identity block.
+  protected cookieMode = false;
+  protected readonly loginStatus = toSignal(this.auth.loginStatus$, { initialValue: null });
+  protected readonly isUserSession = toSignal(this.auth.isUserSession$, { initialValue: false });
+  protected readonly canWriteUserData = toSignal(this.auth.canWriteUserData$, { initialValue: false });
+
+  protected signIn(): void {
+    this.ssoRedirect.manualSignIn();
+  }
 
   public authToken: IAuthorizationToken;
 
@@ -96,6 +109,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   ngOnInit() {
     // get Signal K connection configuration
     this.connectionConfig = this.settings.getConnectionConfig();
+    this.cookieMode = this.auth.authMode === 'cookie';
 
     // get authentication token status
     this.auth.authToken$.pipe(
@@ -169,7 +183,11 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * configuration saving, connection cleanup, and app reload.
    */
   public async connectToServer() {
-    if (this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
+    // Cookie mode (same-origin): the session cookie authenticates after reload — no KIP credential
+    // dialog, no in-app login.
+    const newConfigIsCookieMode = this.auth.authModeForConfig(this.connectionConfig) === 'cookie';
+
+    if (!newConfigIsCookieMode && this.connectionConfig.useSharedConfig && (!this.connectionConfig.loginName || !this.connectionConfig.loginPassword)) {
       this.openUserCredentialModal("Credentials required");
       return;
     }
@@ -188,9 +206,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       // Step 2: Save the new configuration to localStorage
       this.settings.setConnectionConfig(this.connectionConfig);
 
-      // Step 3: Establish the session in-memory so the session JWT (not the plaintext password,
-      // which is no longer persisted) survives the reload that bootstraps the new config.
-      if (this.connectionConfig.useSharedConfig) {
+      // Step 3: Token mode only — establish the session in-memory so the session JWT (the plaintext
+      // password is no longer persisted) survives the reload that bootstraps the new config.
+      if (!newConfigIsCookieMode && this.connectionConfig.useSharedConfig) {
         await this.auth.login({
           usr: this.connectionConfig.loginName,
           pwd: this.connectionConfig.loginPassword ?? '',
@@ -201,8 +219,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       // Step 4: Properly close WebSocket and HTTP connections
       this.connectionStateMachine.shutdown('Configuration changed - restarting app');
 
-      // Step 5: Clean up authentication token if switching from shared to individual config
-      if (this.authToken && !this.connectionConfig.useSharedConfig && !this.authToken.isDeviceAccessToken) {
+      // Step 5: Clear a stored user token when the new config resolves to cookie mode (the session
+      // cookie is authoritative) or when switching from shared to individual config.
+      if (this.authToken && !this.authToken.isDeviceAccessToken && (newConfigIsCookieMode || !this.connectionConfig.useSharedConfig)) {
         this.auth.deleteToken();
       }
 

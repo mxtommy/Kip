@@ -19,18 +19,38 @@
     </tr>
     <tr class="connect-table">
       <td colspan="2">
-        <mat-slide-toggle #useSharedConfigToggle
-          name="useSharedConfigToggle"
-          matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
-          [(ngModel)]="connectionConfig.useSharedConfig"
-          [ngModelOptions]="{standalone: true}"
-          [disabled]="!connectionConfig.signalKUrl"
-          (change)="useSharedConfigToggleClick($event)">
-            Login to server
-        </mat-slide-toggle>
-        <button mat-flat-button type="button" class="credentials-btn" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
-          Set Credential
-        </button>
+        @if (cookieMode) {
+          <div class="sso-identity" aria-live="polite">
+            @if (isUserSession()) {
+              <span>Signed in@if (loginStatus()?.oidcProviderName) { via {{ loginStatus()?.oidcProviderName }}}@if (loginStatus()?.username) { as {{ loginStatus()?.username }}}.</span>
+              @if (!canWriteUserData()) {
+                <span class="sso-readonly"> Read-only access — configuration changes are disabled on the server.</span>
+              }
+            } @else if (loginStatus(); as status) {
+              @if (status.authenticationRequired === false) {
+                <span>Connected (no sign-in required).</span>
+              } @else {
+                <span>Not signed in. </span>
+                <button mat-flat-button type="button" (click)="signIn()">Sign in</button>
+              }
+            } @else {
+              <span>Checking sign-in status…</span>
+            }
+          </div>
+        } @else {
+          <mat-slide-toggle #useSharedConfigToggle
+            name="useSharedConfigToggle"
+            matTooltip="Activating authentication enables Signal K's user storage feature to save KIP configuration on the server. When authentication is not activated, KIP stores it's configuration locally in the Browser."
+            [(ngModel)]="connectionConfig.useSharedConfig"
+            [ngModelOptions]="{standalone: true}"
+            [disabled]="!connectionConfig.signalKUrl"
+            (change)="useSharedConfigToggleClick($event)">
+              Login to server
+          </mat-slide-toggle>
+          <button mat-flat-button type="button" class="credentials-btn" matTooltip="Configure Signal K user authentication credentials. The user must be a valid pre existing Signal K server user. It is strongly recommended not to use the default Signal K Admin user." [disabled]="!connectionConfig.useSharedConfig" (click)="openUserCredentialModal(null)">
+            Set Credential
+          </button>
+        }
         <br />
         <mat-checkbox [(ngModel)]="connectionConfig.signalKSubscribeAll" [ngModelOptions]="{standalone: false}" name="signalKSubscribeAll">Subscribe to remote sources messages such as AIS and DSC targets. <i>Warning: this maybe generate heavy traffic.</i></mat-checkbox>
       </td>
@@ -51,7 +71,7 @@
       <pre>KIP: {{ app.appVersion() }}
 {{ app.browserVersion() }}, {{ app.osVersion() }}<br />
 {{ endpointServiceStatus.serverDescription }}
-{{ streamStatus.message }}, {{ streamStatus.hasToken ? 'Logged In' : 'Readonly'}}
+{{ streamStatus.message }}, {{ cookieMode ? (isUserSession() ? 'Signed in' : 'Not signed in') : (streamStatus.hasToken ? 'Logged In' : 'Readonly') }}
 Internet: {{ internetAvailabilityLabel() }}</pre>
     </div>
   </div>

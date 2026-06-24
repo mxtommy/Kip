@@ -165,36 +165,37 @@ export class AuthenticationService implements OnDestroy {
    * and bootstrap can branch on it from the very first request. See {@link AuthMode}.
    */
   public get authMode(): AuthMode {
-    return this.effectiveOriginIsSameAsApp() ? 'cookie' : 'token';
+    return this.authModeForConfig(this.readConnectionConfig());
   }
 
   /**
-   * Whether the effective Signal K request origin equals the origin KIP is served from. True when
-   * proxy mode is enabled (endpoints are rewritten to the app origin) or the configured server URL
-   * resolves to the app origin (an empty URL defaults to the app origin). Conservative on any gap:
-   * an unreadable config or unparseable URL is treated as cross-origin (token mode), preserving
-   * existing behavior.
+   * Resolves the carriage mode for a given connection config (not necessarily the stored one — the
+   * Connectivity tab uses this to pre-check a config being edited). Cookie mode when proxy is enabled
+   * (endpoints rewrite to the app origin) or the server URL resolves to the app origin (an empty URL
+   * defaults to it). Conservative on any gap: an unreadable config or unparseable URL is token mode.
    */
-  private effectiveOriginIsSameAsApp(): boolean {
-    let config: { proxyEnabled?: boolean; signalKUrl?: string } | null = null;
-    try {
-      config = JSON.parse(localStorage.getItem('connectionConfig'));
-    } catch {
-      config = null;
-    }
+  public authModeForConfig(config: { proxyEnabled?: boolean; signalKUrl?: string } | null): AuthMode {
     if (!config) {
-      return false;
+      return 'token';
     }
     if (config.proxyEnabled) {
-      return true;
+      return 'cookie';
     }
     if (!config.signalKUrl) {
-      return true;
+      return 'cookie';
     }
     try {
-      return new URL(config.signalKUrl).origin === window.location.origin;
+      return new URL(config.signalKUrl).origin === window.location.origin ? 'cookie' : 'token';
     } catch {
-      return false;
+      return 'token';
+    }
+  }
+
+  private readConnectionConfig(): { proxyEnabled?: boolean; signalKUrl?: string } | null {
+    try {
+      return JSON.parse(localStorage.getItem('connectionConfig'));
+    } catch {
+      return null;
     }
   }
 
