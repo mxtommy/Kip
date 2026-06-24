@@ -33,6 +33,11 @@ export function isSafeReturnTo(target: string | null | undefined): boolean {
   if (resolved.origin !== window.location.origin) {
     return false;
   }
+  // Reject a normalized protocol-relative path (e.g. raw '/a/..//evil' resolves to '//evil'), so the
+  // check holds on the resolved path, not just the raw string.
+  if (resolved.pathname.startsWith('//')) {
+    return false;
+  }
   return !SELF_ROUTE_PATHS.includes(resolved.pathname);
 }
 

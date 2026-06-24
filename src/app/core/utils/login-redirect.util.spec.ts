@@ -24,6 +24,11 @@ describe('isSafeReturnTo', () => {
     expect(isSafeReturnTo('/\\/evil.example')).toBe(false);
   });
 
+  it('rejects a dot-segment path that normalizes to a protocol-relative path', () => {
+    expect(isSafeReturnTo('/a/..//evil.example')).toBe(false);
+    expect(isSafeReturnTo('/foo/../..//evil.example')).toBe(false);
+  });
+
   it('rejects control characters', () => {
     expect(isSafeReturnTo('/path\x00')).toBe(false);
     expect(isSafeReturnTo('/path\nmore')).toBe(false);
