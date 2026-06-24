@@ -339,6 +339,49 @@ describe('DashboardHistorySeriesSyncService', () => {
         expect(windSpeed?.path).toBe('self.environment.wind.speedTrue');
     });
 
+    it('retries on the next cycle when a reconcile fails (resolves null instead of throwing)', async () => {
+        vi.useFakeTimers();
+        TestBed.inject(DashboardHistorySeriesSyncService);
+        connectionStub.serverServiceEndpoint$.next({
+            operation: 2,
+            message: 'Connected',
+            serverDescription: 'Signal K',
+            httpServiceUrl: 'http://localhost:3000/signalk/v1/api/',
+            WsServiceUrl: 'ws://localhost:3000/signalk/v1/stream'
+        });
+
+        // First reconcile attempt "fails": reconcileSeries returns null (it does not throw).
+        reconcileSpy.mockResolvedValueOnce(null);
+
+        dashboardStub.dashboards.set([
+            {
+                id: 'dash-1',
+                name: 'Dashboard 1',
+                icon: 'dashboard-dashboard',
+                configuration: [
+                    createAutomaticNode('widget-numeric-1', 'widget-numeric', { source: 'default', period: 10 })
+                ]
+            }
+        ]);
+        await vi.advanceTimersByTimeAsync(800);
+        expect(reconcileSpy).toHaveBeenCalledTimes(1);
+
+        // Re-emit the SAME series content (new array reference). Because the prior attempt
+        // failed, the signature must NOT have been marked submitted, so this retries.
+        dashboardStub.dashboards.set([
+            {
+                id: 'dash-1',
+                name: 'Dashboard 1',
+                icon: 'dashboard-dashboard',
+                configuration: [
+                    createAutomaticNode('widget-numeric-1', 'widget-numeric', { source: 'default', period: 10 })
+                ]
+            }
+        ]);
+        await vi.advanceTimersByTimeAsync(800);
+        expect(reconcileSpy).toHaveBeenCalledTimes(2);
+    });
+
     it('should skip reconcile when history series service mode is disabled', async () => {
         vi.useFakeTimers();
         TestBed.inject(DashboardHistorySeriesSyncService);
