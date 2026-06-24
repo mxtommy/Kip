@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import sharp from 'sharp';
 import DOMPurify from 'isomorphic-dompurify';
-import { snapWidth, inProcessProcessor, type ImageProcessor } from './image-processing';
+import { snapWidth, CANONICAL_WIDTH, inProcessProcessor, type ImageProcessor } from './image-processing';
 
 /**
  * ImageStore — secure, testable core for the KIP image-asset feature.
@@ -21,6 +21,14 @@ import { snapWidth, inProcessProcessor, type ImageProcessor } from './image-proc
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_INPUT_PIXELS = 50_000_000; // ~50 MP decompression-bomb guard
+// HEIC is decoded by the pure-JS heic-convert (no streaming, full RGBA in memory), so it gets a
+// much stricter budget than the sharp-decoded formats. A 24 MP cap bounds the one-time ingest
+// transcode to a few hundred MB and still covers typical phone HEICs (<=12 MP). (security review)
+const MAX_HEIC_PIXELS = 24_000_000;
+// Bound the shared library so an authenticated-but-malicious uploader can't fill the data volume
+// (which is shared with the SK server's own storage). (security review)
+const MAX_IMAGE_COUNT = 500;
+const MAX_TOTAL_ORIGINAL_BYTES = 500 * 1024 * 1024; // 500 MB of stored originals
 
 export type ImageFormat = 'svg' | 'jpeg' | 'png' | 'webp' | 'gif' | 'heic';
 
@@ -73,7 +81,10 @@ export function detectImageType(buffer: Buffer): ImageFormat | null {
   }
   if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
     const brand = buffer.toString('ascii', 8, 12);
-    if (['heic', 'heix', 'heim', 'heis', 'hevc', 'hevm', 'hevs', 'mif1', 'msf1', 'heif'].includes(brand)) {
+    // HEVC-coded HEIC brands only. The generic 'heif'/'msf1' brands (also used by AVIF and other
+    // non-HEVC HEIF codecs heic-convert can't decode) are excluded; decodability is additionally
+    // proven by the ingest transcode below. (security review)
+    if (['heic', 'heix', 'heim', 'heis', 'hevc', 'hevm', 'hevs', 'mif1'].includes(brand)) {
       return 'heic';
     }
   }
@@ -126,12 +137,18 @@ export class ImageStore {
   private readonly originalsDir: string;
   private readonly cacheDir: string;
 
+  private readonly maxImageCount: number;
+  private readonly maxTotalBytes: number;
+
   constructor(
     private readonly baseDir: string,
-    private readonly processor: ImageProcessor = inProcessProcessor
+    private readonly processor: ImageProcessor = inProcessProcessor,
+    limits: { maxImageCount?: number; maxTotalBytes?: number } = {}
   ) {
     this.originalsDir = path.join(baseDir, 'originals');
     this.cacheDir = path.join(baseDir, 'cache');
+    this.maxImageCount = limits.maxImageCount ?? MAX_IMAGE_COUNT;
+    this.maxTotalBytes = limits.maxTotalBytes ?? MAX_TOTAL_ORIGINAL_BYTES;
   }
 
   /** Create the storage directories if they don't exist. Safe to call repeatedly. */
@@ -160,9 +177,20 @@ export class ImageStore {
     }
 
     await this.init();
+
+    // Enforce the library quota before doing any expensive decode/transcode work.
+    const existing = await this.list();
+    if (existing.length >= this.maxImageCount) {
+      throw new ImageValidationError(`Image library is full (max ${this.maxImageCount} images)`);
+    }
+    const totalBytes = existing.reduce((sum, m) => sum + (m.bytes || 0), 0);
+    if (totalBytes + buffer.length > this.maxTotalBytes) {
+      throw new ImageValidationError('Image library storage limit reached');
+    }
+
     const id = randomUUID();
     const name = sanitizeDisplayName(originalName);
-    const ext = EXT_BY_FORMAT[detected];
+    const now = new Date().toISOString();
 
     let meta: ImageMeta;
     let bytesToStore: Buffer;
@@ -176,17 +204,39 @@ export class ImageStore {
       const dims = readSvgDimensions(sanitized);
       meta = {
         id, name, format: 'svg', width: dims.width, height: dims.height,
-        bytes: bytesToStore.length, animated: false, createdAt: new Date().toISOString(), uploadedBy: uploadedBy ?? null
+        bytes: bytesToStore.length, animated: false, createdAt: now, uploadedBy: uploadedBy ?? null
+      };
+    } else if (detected === 'heic') {
+      const probed = await probeRaster(buffer);
+      const pixels = (probed.width ?? 0) * (probed.height ?? 0);
+      if (!pixels || pixels > MAX_HEIC_PIXELS) {
+        throw new ImageValidationError('HEIC image is too large or has unreadable dimensions');
+      }
+      // Transcode HEIC to a canonical WebP once, at upload. HEIC can't be served to browsers and a
+      // per-request heic-convert decode is a memory-DoS vector; doing it once (bounded by the strict
+      // pixel cap above) also proves decodability, so a non-HEVC/AVIF file detected as HEIC is
+      // rejected here instead of stored as an un-serveable "poison" asset. (security review)
+      let webp: { buffer: Buffer; width: number; height: number };
+      try {
+        webp = await this.processor.process({ buffer, format: 'heic', width: CANONICAL_WIDTH, animated: probed.animated });
+      } catch (e) {
+        throw new ImageValidationError(`HEIC could not be decoded: ${(e as Error).message}`);
+      }
+      bytesToStore = webp.buffer;
+      meta = {
+        id, name, format: 'webp', width: webp.width, height: webp.height,
+        bytes: bytesToStore.length, animated: probed.animated, createdAt: now, uploadedBy: uploadedBy ?? null
       };
     } else {
       const probed = await probeRaster(buffer);
       bytesToStore = buffer;
       meta = {
         id, name, format: detected, width: probed.width, height: probed.height,
-        bytes: bytesToStore.length, animated: probed.animated, createdAt: new Date().toISOString(), uploadedBy: uploadedBy ?? null
+        bytes: bytesToStore.length, animated: probed.animated, createdAt: now, uploadedBy: uploadedBy ?? null
       };
     }
 
+    const ext = EXT_BY_FORMAT[meta.format];
     await fs.writeFile(path.join(this.originalsDir, `${id}.${ext}`), bytesToStore);
     await fs.writeFile(path.join(this.originalsDir, `${id}.json`), JSON.stringify(meta, null, 2), 'utf8');
     return meta;

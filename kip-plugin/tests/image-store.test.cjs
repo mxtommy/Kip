@@ -113,3 +113,27 @@ test('remove and getMeta reject malformed ids (no path traversal)', async () => 
   assert.equal(await store.remove('../../etc/passwd'), false);
   assert.equal(await store.getMeta('..'), null);
 });
+
+test('rejects a brand-spoofed AVIF detected as HEIC (no un-serveable poison asset) (#sec)', async () => {
+  const { store } = freshStore();
+  const avif = await sharp({ create: { width: 80, height: 60, channels: 3, background: { r: 1, g: 2, b: 3 } } })
+    .heif({ compression: 'av1', quality: 50 }).toBuffer();
+  avif.write('heic', 8, 'ascii'); // spoof the ftyp major brand to look like HEVC HEIC
+  // Transcode-at-ingest proves decodability: heic-convert can't decode AV1 -> rejected, not stored broken.
+  await assert.rejects(() => store.ingest(avif, 'evil.heic'), ImageValidationError);
+  assert.deepEqual(await store.list(), []);
+});
+
+test('enforces the library image-count quota (#sec)', async () => {
+  const store = new ImageStore(join(TMP_ROOT, randomUUID()), undefined, { maxImageCount: 2 });
+  await store.ingest(await png(), 'a.png');
+  await store.ingest(await png(), 'b.png');
+  const c = await png();
+  await assert.rejects(() => store.ingest(c, 'c.png'), /full/i);
+});
+
+test('enforces the library total-bytes quota (#sec)', async () => {
+  const store = new ImageStore(join(TMP_ROOT, randomUUID()), undefined, { maxTotalBytes: 50 });
+  const big = await png(200, 200);
+  await assert.rejects(() => store.ingest(big, 'big.png'), /storage limit/i);
+});

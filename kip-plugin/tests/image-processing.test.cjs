@@ -172,3 +172,33 @@ test('WorkerPoolImageProcessor: size clamps, processes, and coalesces duplicate 
     await pool.destroy();
   }
 });
+
+const FLAKY = resolve('kip-plugin/tests/fixtures/flaky-worker.cjs');
+
+test('worker pool recovers after a worker hard-crashes (exit, no error event)', async () => {
+  const pool = new WorkerPoolImageProcessor(1, FLAKY, 2000);
+  try {
+    const buf = await png(120, 90);
+    // width 666 makes the only worker process.exit(7) — fires 'exit', not 'error'.
+    await assert.rejects(() => pool.process({ buffer: buf, format: 'png', width: 666, animated: false }));
+    // The pool must have respawned: a normal job now succeeds and size is still 1.
+    const r = await pool.process({ buffer: buf, format: 'png', width: 320, animated: false });
+    assert.equal((await sharp(r.buffer).metadata()).format, 'webp');
+    assert.equal(pool.size, 1, 'dead worker replaced');
+  } finally {
+    await pool.destroy();
+  }
+});
+
+test('worker pool times out a hung worker and recovers', async () => {
+  const pool = new WorkerPoolImageProcessor(1, FLAKY, 300);
+  try {
+    const buf = await png(120, 90);
+    await assert.rejects(() => pool.process({ buffer: buf, format: 'png', width: 777, animated: false }), /timed out/i);
+    const r = await pool.process({ buffer: buf, format: 'png', width: 320, animated: false });
+    assert.ok(Buffer.isBuffer(r.buffer));
+    assert.equal(pool.size, 1);
+  } finally {
+    await pool.destroy();
+  }
+});
