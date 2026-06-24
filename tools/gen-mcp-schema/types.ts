@@ -97,6 +97,8 @@ export interface WidgetSchemaEntry extends WidgetCatalogEntry {
 export interface ColorToken {
   value: string;
   label: string;
+  /** Base (dark-theme) hex for the token, e.g. `#3298ff`, for previews. */
+  hex: string;
 }
 
 /** One convertible unit within a unit group. */

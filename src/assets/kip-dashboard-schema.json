@@ -2,34 +2,42 @@
   "designSystem": {
     "colors": [
       {
+        "hex": "#FFFFFF",
         "label": "Contrast",
         "value": "contrast"
       },
       {
+        "hex": "#3298ff",
         "label": "Blue",
         "value": "blue"
       },
       {
+        "hex": "#00d000",
         "label": "Green",
         "value": "green"
       },
       {
+        "hex": "#ff9100",
         "label": "Orange",
         "value": "orange"
       },
       {
+        "hex": "#ffdf00",
         "label": "Yellow",
         "value": "yellow"
       },
       {
+        "hex": "#FC0FC0",
         "label": "Pink",
         "value": "pink"
       },
       {
+        "hex": "#A020F0",
         "label": "Purple",
         "value": "purple"
       },
       {
+        "hex": "#B5B5B5",
         "label": "Grey",
         "value": "grey"
       }

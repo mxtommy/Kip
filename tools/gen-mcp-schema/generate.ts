@@ -39,6 +39,7 @@ const APP_SERVICE = 'src/app/core/services/app-service.ts';
 const UNITS_SERVICE = 'src/app/core/services/units.service.ts';
 const DASHBOARD_COMPONENT = 'src/app/core/components/dashboard/dashboard.component.ts';
 const ICONS_SVG = 'src/assets/svg/icons.svg';
+const M3_DARK = 'src/themes/_m3dark.scss';
 
 // KIP applies themes as body CSS classes; the default (dark) theme is the empty
 // string. There is no single source literal to read, so these are listed here and
@@ -175,11 +176,39 @@ function extractGrid(root: string): DesignSystem['grid'] {
   };
 }
 
+/**
+ * Reads the base (dark-theme) hex for each colour token from the
+ * `$kip-dark-color` SCSS map. Only `name: #hex` pairs are captured, so the
+ * `#{$...}` interpolations and `map.get(...)` aliases are skipped.
+ */
+function extractColorHex(root: string): Map<string, string> {
+  const scss = fs.readFileSync(path.join(root, M3_DARK), 'utf8');
+  const block = /\$kip-dark-color:\s*\(([\s\S]*?)\)\s*;/.exec(scss);
+  if (!block) {
+    throw new Error(`Could not find the $kip-dark-color map in ${M3_DARK}`);
+  }
+  const hexByToken = new Map<string, string>();
+  const pair = /([a-z][a-z0-9-]*)\s*:\s*(#[0-9a-fA-F]{3,8})\b/g;
+  let match: RegExpExecArray | null;
+  while ((match = pair.exec(block[1])) !== null) {
+    hexByToken.set(match[1], match[2]);
+  }
+  return hexByToken;
+}
+
 function extractColors(root: string): DesignSystem['colors'] {
   const file = path.join(root, APP_SERVICE);
   const raw = literalToValue(findArrayLiteral(parseSourceFile(file), 'configurableThemeColors'));
   const list = raw as Array<{ value: unknown; label: unknown }>;
-  return list.map((c) => ({ value: String(c.value), label: String(c.label) }));
+  const hexByToken = extractColorHex(root);
+  return list.map((c) => {
+    const value = String(c.value);
+    const hex = hexByToken.get(value);
+    if (!hex) {
+      throw new Error(`No dark-theme hex for colour token "${value}" in ${M3_DARK}`);
+    }
+    return { value, label: String(c.label), hex };
+  });
 }
 
 function extractUnitGroups(root: string): DesignSystem['unitGroups'] {
