@@ -215,7 +215,7 @@ class MatBottomSheetRefStub { dismiss(): void { /* noop */ } }
 class MatDialogRefStub { close(): void { /* noop */ } }
 class AppNetworkInitServiceStub {
   private _bootstrapStatusSubject = new BehaviorSubject<'starting' | 'ready' | 'degraded'>('ready');
-  private _bootstrapIssueSubject = new BehaviorSubject<{ reason: 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown'; statusCode?: number; sharedConfigName?: string; legacyUpgradeAvailable?: boolean }>({ reason: 'none' });
+  private _bootstrapIssueSubject = new BehaviorSubject<{ reason: 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown' | 'auth-blocked'; statusCode?: number; sharedConfigName?: string; legacyUpgradeAvailable?: boolean; cause?: 'budget-exhausted' | 'sign-in-required' }>({ reason: 'none' });
 
   public bootstrapStatus$ = this._bootstrapStatusSubject.asObservable();
   public bootstrapIssue$ = this._bootstrapIssueSubject.asObservable();
@@ -234,7 +234,10 @@ class AuthenticationServiceStub {
   public isUserSession$ = this._isUserSession$.asObservable();
   private _canWriteUserData$ = new BehaviorSubject<boolean>(false);
   public canWriteUserData$ = this._canWriteUserData$.asObservable();
+  public get loginStatusValue(): unknown { return this._loginStatus$.getValue(); }
   refreshLoginStatus = async (): Promise<unknown> => null;
+  authModeForConfig = (): 'cookie' | 'token' => this.authMode;
+  deleteToken = () => { this._authToken$.next(null); this._isLoggedIn$.next(false); };
   login = async () => { this._isLoggedIn$.next(true); };
   logout = async () => { this._isLoggedIn$.next(false); this._authToken$.next(null); };
 }
