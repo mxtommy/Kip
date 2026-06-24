@@ -33,23 +33,31 @@
 
 .image-setup__thumb {
   position: relative;
-  padding: 0;
   border: 2px solid transparent;
   border-radius: 6px;
   overflow: hidden;
-  cursor: pointer;
   background: var(--kip-widget-background, rgba(0, 0, 0, 0.2));
   aspect-ratio: 1 / 1;
+
+  &--selected {
+    border-color: var(--mat-sys-primary, #4f9cff);
+  }
+}
+
+.image-setup__thumb-select {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
-  }
-
-  &--selected {
-    border-color: var(--mat-sys-primary, #4f9cff);
   }
 }
 
@@ -68,9 +76,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 2px;
   color: #fff;
   background: rgba(0, 0, 0, 0.55);
+  border: none;
   border-radius: 50%;
+  cursor: pointer;
 
   mat-icon {
     font-size: 18px;
