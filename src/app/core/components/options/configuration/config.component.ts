@@ -8,7 +8,7 @@ import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../../services/storage.service';
-import { ProfileService, ProfileSeed } from '../../../services/profile.service';
+import { ProfileService } from '../../../services/profile.service';
 import { DialogService } from '../../../services/dialog.service';
 import { MatButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,10 +69,10 @@ export class SettingsConfigComponent {
     }
   }
 
-  protected createProfile(seed: ProfileSeed): void {
+  protected createProfile(): void {
     this.dialog
       .openNameDialog({
-        title: seed === 'current' ? 'New profile from current' : 'New blank profile',
+        title: 'New profile',
         name: '',
         confirmBtnText: 'Create',
         cancelBtnText: 'Cancel'
@@ -83,7 +83,7 @@ export class SettingsConfigComponent {
           return;
         }
         try {
-          await this.profileService.createProfile(result.name, seed);
+          await this.profileService.createProfile(result.name);
         } catch (err) {
           this.reportError(err);
         }

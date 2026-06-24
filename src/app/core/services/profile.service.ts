@@ -20,12 +20,10 @@ const PROFILE_NAME_PATTERN = /^[A-Za-z0-9 _-]+$/;
 const MAX_NAME_LENGTH = 64;
 const PROFILE_SCOPE = 'user';
 
-export type ProfileSeed = 'current' | 'blank';
-
 /**
  * Owns profile (named config slot) lifecycle: list / switch / create / rename / duplicate / delete.
  * Orchestrates StorageService (slot CRUD, all hardcoded to the 'user' scope) and SettingsService
- * (active-profile name + reload + clone snapshot). Mutations reject on storage failure; callers
+ * (active-profile name + reload). Mutations reject on storage failure; callers
  * surface the error. The active name is never changed on a failed mutation.
  */
 @Injectable({ providedIn: 'root' })
@@ -54,12 +52,11 @@ export class ProfileService {
     this.settings.setActiveProfile(name);
   }
 
-  /** Create a new profile seeded from the current config (clone) or a blank default. Does not switch. */
-  public async createProfile(name: string, seed: ProfileSeed): Promise<void> {
+  /** Create a new profile from a blank default config. Does not switch. */
+  public async createProfile(name: string): Promise<void> {
     await this.refresh();
     const normalized = this.validateNewName(name);
-    const config = seed === 'current' ? this.requireSnapshot() : this.buildBlankConfig();
-    await this.storage.setConfig(PROFILE_SCOPE, normalized, cloneDeep(config));
+    await this.storage.setConfig(PROFILE_SCOPE, normalized, cloneDeep(this.buildBlankConfig()));
     await this.refresh();
   }
 
@@ -137,14 +134,6 @@ export class ProfileService {
     }
     const cfg = c as Record<string, unknown>;
     return 'app' in cfg && 'theme' in cfg && Array.isArray(cfg['dashboards']);
-  }
-
-  private requireSnapshot(): IConfig {
-    const snapshot = this.settings.getActiveConfigSnapshot();
-    if (!snapshot) {
-      throw new Error('Cannot clone the current profile: its configuration is not loaded.');
-    }
-    return snapshot;
   }
 
   private buildBlankConfig(): IConfig {

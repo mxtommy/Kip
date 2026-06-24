@@ -187,24 +187,6 @@ describe('SettingsService', () => {
     });
   });
 
-  describe('config snapshot', () => {
-    it('returns an assembled IConfig when settings are loaded', () => {
-      const service = createService({ useSharedConfig: false });
-      const snap = service.getActiveConfigSnapshot();
-      expect(snap).not.toBeNull();
-      expect(snap?.app).not.toBeNull();
-      expect(snap?.theme?.themeName).toBe('light');
-      expect(snap?.dashboards).toEqual([{ id: 'dash-1' }]);
-    });
-
-    it('returns null on a degraded shared boot (config not loaded)', () => {
-      // useSharedConfig=true but storage was never bootstrapped → startup() early-returns,
-      // leaving activeConfig.app null. Clone must not seed from a hollow snapshot.
-      const service = createService({ useSharedConfig: true, sharedConfigName: 'profileA' });
-      expect(service.getActiveConfigSnapshot()).toBeNull();
-    });
-  });
-
   describe('remote-control identity (per-device, Unit 5)', () => {
     it('reads isRemoteControl / instanceName from connectionConfig at boot', () => {
       const service = createService({ isRemoteControl: true, instanceName: 'Helm' });
@@ -240,9 +222,7 @@ describe('SettingsService', () => {
 
     it('getAppConfig no longer carries remote-control fields', () => {
       const service = createService();
-      const snap = service.getActiveConfigSnapshot();
-      expect(snap?.app).not.toBeNull();
-      const app = snap?.app as unknown as Record<string, unknown>;
+      const app = service.getAppConfig() as unknown as Record<string, unknown>;
       expect(app['isRemoteControl']).toBeUndefined();
       expect(app['instanceName']).toBeUndefined();
     });

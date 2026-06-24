@@ -30,8 +30,7 @@ function makeStorageMock(userNames: string[] = ['default', 'profileA']) {
 function makeSettingsMock(active = 'profileA') {
   return {
     getActiveProfileName: vi.fn(() => active),
-    setActiveProfile: vi.fn(),
-    getActiveConfigSnapshot: vi.fn(() => cfg('current'))
+    setActiveProfile: vi.fn()
   };
 }
 
@@ -78,9 +77,9 @@ describe('ProfileService', () => {
   });
 
   describe('create', () => {
-    it('blank seed writes a default config under the new name', async () => {
+    it('writes a default config under the new name', async () => {
       await service.refresh();
-      await service.createProfile('cockpit', 'blank');
+      await service.createProfile('cockpit');
       expect(storage.setConfig).toHaveBeenCalledTimes(1);
       const [scope, name, config] = storage.setConfig.mock.calls[0];
       expect(scope).toBe('user');
@@ -90,16 +89,9 @@ describe('ProfileService', () => {
       expect(config.dashboards.length).toBeGreaterThan(0);
     });
 
-    it('current seed clones the live snapshot', async () => {
-      await service.refresh();
-      await service.createProfile('cockpit', 'current');
-      const config = storage.setConfig.mock.calls[0][2] as IConfig;
-      expect(config.theme?.themeName).toBe('current');
-    });
-
     it('does not auto-switch into the created profile', async () => {
       await service.refresh();
-      await service.createProfile('cockpit', 'blank');
+      await service.createProfile('cockpit');
       expect(settings.setActiveProfile).not.toHaveBeenCalled();
     });
 
@@ -107,7 +99,7 @@ describe('ProfileService', () => {
       'rejects invalid/duplicate/reserved name "%s" without writing',
       async (bad) => {
         await service.refresh();
-        await expect(service.createProfile(bad, 'blank')).rejects.toThrow();
+        await expect(service.createProfile(bad)).rejects.toThrow();
         expect(storage.setConfig).not.toHaveBeenCalled();
       }
     );
@@ -115,7 +107,7 @@ describe('ProfileService', () => {
     it('surfaces a storage failure and never switches', async () => {
       await service.refresh();
       storage.setConfig.mockRejectedValueOnce(new Error('500'));
-      await expect(service.createProfile('cockpit', 'blank')).rejects.toThrow();
+      await expect(service.createProfile('cockpit')).rejects.toThrow();
       expect(settings.setActiveProfile).not.toHaveBeenCalled();
     });
   });

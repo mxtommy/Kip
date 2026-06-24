@@ -357,24 +357,6 @@ export class SettingsService {
     this.reloadApp();
   }
 
-  /**
-   * Assembles the current in-memory config for cloning into a new profile. Returns null when the
-   * active config is not loaded (e.g. a degraded shared boot), so a clone cannot seed from a
-   * hollow snapshot.
-   *
-   * @returns {IConfig | null} The current config, or null when settings are not loaded.
-   */
-  public getActiveConfigSnapshot(): IConfig | null {
-    if (!this.activeConfig?.app) {
-      return null;
-    }
-    return {
-      app: this.getAppConfig(),
-      theme: this.getThemeConfig(),
-      dashboards: this.getDashboardConfig()
-    };
-  }
-
   public get KipUUID(): string {
     return this.kipUUID;
   }

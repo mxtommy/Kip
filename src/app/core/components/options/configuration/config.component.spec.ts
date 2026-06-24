@@ -116,10 +116,10 @@ describe('SettingsConfigComponent', () => {
     expect(profileMock.switchProfile).not.toHaveBeenCalled();
   });
 
-  it('createProfile passes the chosen name and seed', async () => {
-    component['createProfile']('current');
+  it('createProfile passes the chosen name and creates a blank profile', async () => {
+    component['createProfile']();
     await Promise.resolve();
-    expect(profileMock.createProfile).toHaveBeenCalledWith('cockpit', 'current');
+    expect(profileMock.createProfile).toHaveBeenCalledWith('cockpit');
   });
 
   it('deleteProfile confirms then delegates', async () => {
