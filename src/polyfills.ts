@@ -41,8 +41,11 @@
 /** IE10 and IE11 requires the following for NgClass support on SVG elements */
 // import 'classlist.js';  // Run `npm install --save classlist.js`.
 
-/** Evergreen browsers require these. **/
-import 'core-js/es/reflect';
+/**
+ * Evergreen browsers provide `Reflect` natively. Angular's AOT compiler emits its own
+ * metadata and does not need runtime reflect-metadata, and this app is zoneless with
+ * `emitDecoratorMetadata: false`, so the core-js reflect polyfill is intentionally omitted.
+ */
 
 
 
