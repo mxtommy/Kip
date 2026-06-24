@@ -30,6 +30,7 @@ describe('ImageSourceSetupComponent', () => {
     uploading: () => boolean;
     validateFile: (file: File) => string | null;
     selectImage: (id: string | null) => void;
+    selectedId: () => string | null;
     deleteImage: (id: string, event: Event) => void;
     onFileSelected: (event: Event) => void;
     toggleTransparent: (v: boolean) => void;
@@ -114,12 +115,18 @@ describe('ImageSourceSetupComponent', () => {
     expect(api().validateFile(heic)).toBeNull();
   });
 
-  it('selecting a gallery image sets the imageId control and marks it dirty', async () => {
+  it('selecting a gallery image sets the imageId control, the highlight signal, and marks it dirty', async () => {
     await buildWith(new UntypedFormGroup({}));
     api().selectImage('img-1');
     const control = api().imageGroup.get('imageId')!;
     expect(control.value).toBe('img-1');
     expect(control.dirty).toBe(true);
+    expect(api().selectedId()).toBe('img-1');
+  });
+
+  it('initializes the highlight signal from a saved imageId', async () => {
+    await buildWith(new UntypedFormGroup({ imageId: new UntypedFormControl('img-2') }));
+    expect(api().selectedId()).toBe('img-2');
   });
 
   it('sets the selected image id from a successful upload response', async () => {

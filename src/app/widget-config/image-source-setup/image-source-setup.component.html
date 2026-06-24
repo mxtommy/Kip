@@ -21,14 +21,14 @@
   @if (gallery().length) {
     <div class="image-setup__gallery">
       @for (asset of gallery(); track asset.id) {
-        <div class="image-setup__thumb" [class.image-setup__thumb--selected]="asset.id === selectedId">
+        <div class="image-setup__thumb" [class.image-setup__thumb--selected]="asset.id === selectedId()">
           <button
             type="button"
             class="image-setup__thumb-select"
             [title]="asset.name"
             (click)="selectImage(asset.id)">
             <img [src]="thumbUrl(asset.id)" [alt]="asset.name" loading="lazy" draggable="false">
-            @if (asset.id === selectedId) {
+            @if (asset.id === selectedId()) {
               <mat-icon class="image-setup__check">check_circle</mat-icon>
             }
           </button>

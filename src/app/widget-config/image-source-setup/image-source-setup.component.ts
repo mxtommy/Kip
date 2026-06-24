@@ -41,6 +41,10 @@ export class ImageSourceSetupComponent implements OnInit {
   protected readonly uploading = signal(false);
   protected readonly uploadProgress = signal(0);
   protected readonly error = signal<string | null>(null);
+  /** Source of truth for the gallery highlight; kept in sync with the imageId control so the
+   *  highlight updates under zoneless change detection even when set from async callbacks. */
+  protected readonly selectedId = signal<string | null>(null);
+  private galleryRequestSeq = 0;
 
   ngOnInit(): void {
     const existing = this.rootFormGroup.control.get(this.formGroupName());
@@ -54,6 +58,7 @@ export class ImageSourceSetupComponent implements OnInit {
     this.ensureControl('imageFit', 'contain');
     this.ensureControl('altText', '');
     this.ensureControl('backgroundColor', null);
+    this.selectedId.set(this.imageIdControl.value ?? null);
     this.refreshGallery();
   }
 
@@ -65,7 +70,6 @@ export class ImageSourceSetupComponent implements OnInit {
 
   protected get imageIdControl(): UntypedFormControl { return this.imageGroup.get('imageId') as UntypedFormControl; }
   protected get backgroundControl(): UntypedFormControl { return this.imageGroup.get('backgroundColor') as UntypedFormControl; }
-  protected get selectedId(): string | null { return this.imageIdControl?.value ?? null; }
 
   /** Client-side pre-check (the server is authoritative). Returns an error message or null. */
   validateFile(file: File): string | null {
@@ -126,13 +130,14 @@ export class ImageSourceSetupComponent implements OnInit {
   protected selectImage(id: string | null): void {
     this.imageIdControl.setValue(id);
     this.imageIdControl.markAsDirty();
+    this.selectedId.set(id);
   }
 
   protected deleteImage(id: string, event: Event): void {
     event.stopPropagation();
     this.images.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        if (this.selectedId === id) this.selectImage(null);
+        if (this.selectedId() === id) this.selectImage(null);
         this.refreshGallery();
       },
       error: () => this.error.set('Failed to delete image')
@@ -144,8 +149,13 @@ export class ImageSourceSetupComponent implements OnInit {
   }
 
   protected refreshGallery(): void {
+    const seq = ++this.galleryRequestSeq;
     this.images.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (list) => this.gallery.set(list),
+      next: (list) => {
+        if (seq === this.galleryRequestSeq) {
+          this.gallery.set(list);
+        }
+      },
       error: () => { /* listing is best-effort */ }
     });
   }
