@@ -203,11 +203,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
       console.log('[Settings-SignalK] Validation successful - proceeding with connection');
 
-      // Step 2: Save the new configuration to localStorage
-      this.settings.setConnectionConfig(this.connectionConfig);
-
-      // Step 3: Token mode only — establish the session in-memory so the session JWT (the plaintext
-      // password is no longer persisted) survives the reload that bootstraps the new config.
+      // Step 2: Token mode only — establish the session in-memory FIRST (using the explicit newUrl) so
+      // a failed credential login does not persist a rejected config. The session JWT (the plaintext
+      // password is no longer persisted) then survives the reload that bootstraps the new config.
       if (!newConfigIsCookieMode && this.connectionConfig.useSharedConfig) {
         await this.auth.login({
           usr: this.connectionConfig.loginName,
@@ -215,6 +213,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
           newUrl: this.connectionConfig.signalKUrl
         });
       }
+
+      // Step 3: Persist the now-validated configuration to localStorage.
+      this.settings.setConnectionConfig(this.connectionConfig);
 
       // Step 4: Properly close WebSocket and HTTP connections
       this.connectionStateMachine.shutdown('Configuration changed - restarting app');
