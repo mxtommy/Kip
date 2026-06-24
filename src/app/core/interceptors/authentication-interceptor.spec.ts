@@ -53,6 +53,15 @@ describe('AuthenticationInterceptor', () => {
     req.flush({ ok: true });
   });
 
+  it('cookie mode: a cross-origin request gets neither credentials nor a token header', () => {
+    auth.authMode = 'cookie';
+    http.get('https://boat.example:3443/signalk/').subscribe();
+    const req = httpMock.expectOne('https://boat.example:3443/signalk/');
+    expect(req.request.withCredentials).toBe(false);
+    expect(req.request.headers.has('authorization')).toBe(false);
+    req.flush({ ok: true });
+  });
+
   it('token mode without a token: no header and no credentials', () => {
     auth.authMode = 'token';
     auth.setToken(null);

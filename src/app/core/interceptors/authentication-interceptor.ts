@@ -21,8 +21,11 @@ export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
   intercept(req: HttpRequest<unknown>, next: HttpHandler) {
     // Branch on mode first. In cookie mode the same-origin httpOnly session cookie carries auth, so
     // send credentials and never attach a JWT header — even if a stale token is still in storage.
+    // Scope withCredentials to same-origin requests: a cross-origin request in cookie mode (e.g. the
+    // discovery GET under proxy + cross-origin URL) gets neither — the cookie cannot flow cross-origin
+    // and a stale token stays suppressed.
     if (this.auth.authMode === 'cookie') {
-      return next.handle(req.clone({ withCredentials: true }));
+      return next.handle(this.isSameOrigin(req.url) ? req.clone({ withCredentials: true }) : req.clone());
     }
 
     // Token mode (cross-origin): the cookie cannot flow, so attach the JWT header when present.
@@ -33,6 +36,15 @@ export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
       });
     }
     return next.handle(authReq);
+  }
+
+  private isSameOrigin(url: string): boolean {
+    try {
+      // Relative URLs resolve against the app origin.
+      return new URL(url, window.location.origin).origin === window.location.origin;
+    } catch {
+      return false;
+    }
   }
 
   ngOnDestroy(): void {
