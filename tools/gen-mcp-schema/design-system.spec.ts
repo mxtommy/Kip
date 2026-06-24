@@ -28,7 +28,10 @@ describe('extractDesignSystem', () => {
       'purple',
       'grey',
     ]);
-    expect(design.colors[0]).toEqual({ value: 'contrast', label: 'Contrast' });
+    expect(design.colors[0]).toEqual({ value: 'contrast', label: 'Contrast', hex: '#FFFFFF' });
+    for (const c of design.colors) {
+      expect(c.hex).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    }
   });
 
   it('lists the supported theme names', () => {
