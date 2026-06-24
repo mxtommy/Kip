@@ -242,10 +242,12 @@ export class AppNetworkInitService implements OnDestroy {
       // Enable WebSocket functionality now that initialization is complete
       this.connectionStateMachine.enableWebSocketMode();
 
-      // Start the WebSocket only from a fresh HTTPConnected state. In cookie mode the loginStatus
-      // result may already have driven the delta service's isLoggedIn$ reconnect (state ->
-      // WebSocketConnecting); starting again here would close and reopen the in-flight socket.
-      if (this.connectionStateMachine.currentState === ConnectionState.HTTPConnected) {
+      // Start the WebSocket only on a clean bootstrap from a fresh HTTPConnected state. Skip it when
+      // degraded/redirecting (e.g. the cookie auth-blocked path, where HTTP is connected but there is
+      // no session — an anonymous WS would just churn behind the recovery toast), and when the delta
+      // service's isLoggedIn$ reconnect has already driven the state to WebSocketConnecting (starting
+      // again would close and reopen the in-flight socket).
+      if (this.connectionStateMachine.currentState === ConnectionState.HTTPConnected && !startupDegraded && !redirecting) {
         console.log("[AppInit Network Service] Starting WebSocket connection after initialization");
         this.connectionStateMachine.startWebSocketConnection();
       }
