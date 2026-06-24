@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsService } from './settings.service';
 import { StorageService } from './storage.service';
 import { ensureLocalStorage } from '../../../test-helpers/local-storage.test-helper';
@@ -53,5 +53,52 @@ describe('SettingsService — connection credential persistence', () => {
     const cfg = createService().getConnectionConfig();
     expect(cfg.loginName).toBe('captain');
     expect(Object.prototype.hasOwnProperty.call(cfg, 'loginPassword')).toBe(false);
+  });
+});
+
+describe('SettingsService — storage routing by mode (Unit 5)', () => {
+  beforeEach(() => ensureLocalStorage());
+
+  // authMode is derived by the real AuthenticationService from the seeded connectionConfig:
+  // proxyEnabled => cookie; a cross-origin signalKUrl => token.
+  const COOKIE = { proxyEnabled: true };
+  const CROSS_ORIGIN = { signalKUrl: 'https://boat.example:3443' };
+
+  function setup(connExtra: Record<string, unknown>) {
+    seedConnectionConfig(connExtra);
+    TestBed.configureTestingModule({ providers: [SettingsService, StorageService] });
+    const storage = TestBed.inject(StorageService);
+    const patchSpy = vi.spyOn(storage, 'patchConfig').mockImplementation(() => undefined);
+    const service = TestBed.inject(SettingsService);
+    return { service, patchSpy };
+  }
+
+  it('cookie mode routes a setting write to server applicationData, not localStorage', () => {
+    const { service, patchSpy } = setup({ ...COOKIE, useSharedConfig: false });
+    localStorage.removeItem('themeConfig');
+
+    service.setThemeName('cookie-theme');
+
+    expect(patchSpy).toHaveBeenCalledWith('IThemeConfig', { themeName: 'cookie-theme' });
+    expect(localStorage.getItem('themeConfig')).toBeNull();
+  });
+
+  it('cross-origin shared config still routes to server applicationData (unchanged)', () => {
+    const { service, patchSpy } = setup({ ...CROSS_ORIGIN, useSharedConfig: true });
+    localStorage.removeItem('themeConfig');
+
+    service.setThemeName('shared-theme');
+
+    expect(patchSpy).toHaveBeenCalledWith('IThemeConfig', { themeName: 'shared-theme' });
+    expect(localStorage.getItem('themeConfig')).toBeNull();
+  });
+
+  it('cross-origin local config still routes to localStorage (unchanged)', () => {
+    const { service, patchSpy } = setup({ ...CROSS_ORIGIN, useSharedConfig: false });
+
+    service.setThemeName('local-theme');
+
+    expect(patchSpy).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('themeConfig') as string)).toEqual({ themeName: 'local-theme' });
   });
 });

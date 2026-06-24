@@ -57,6 +57,15 @@ export class AppNetworkInitService implements OnDestroy {
     })
   }
 
+  /**
+   * Whether remote (server applicationData) config should be bootstrapped: cookie mode regardless of
+   * the stored useSharedConfig flag, or cross-origin shared config. Mirrors SettingsService storage
+   * routing so the two never disagree (avoids the cookie-mode localStorage split-brain).
+   */
+  private useServerStorage(): boolean {
+    return this.auth.authMode === 'cookie' || !!this.config?.useSharedConfig;
+  }
+
   public async initNetworkServices() {
     let startupDegraded = false;
     this.loadLocalStorageConfig();
@@ -77,7 +86,7 @@ export class AppNetworkInitService implements OnDestroy {
         await this.login();
       }
 
-      if (this.isLoggedIn && this.config?.useSharedConfig) {
+      if (this.isLoggedIn && this.useServerStorage()) {
         // Wait for storage to be fully ready before accessing it
         const storageReady = await this.storage.waitUntilReady();
         if (!storageReady) {
