@@ -29,28 +29,20 @@ export class SettingsConfigComponent {
   private profileService = inject(ProfileService);
   private dialog = inject(DialogService);
 
-  private authToken = toSignal(this.auth.authToken$, { initialValue: null });
-  private hasTokenSignal = computed(() => Boolean(this.authToken()?.token));
-  private isTokenTypeDeviceSignal = computed(() => Boolean(this.authToken()?.isDeviceAccessToken));
+  private isUserSession = toSignal(this.auth.isUserSession$, { initialValue: false });
 
   protected readonly pageTitle = 'Profiles';
   public supportApplicationData = this.storageSvc.isAppDataSupported;
 
-  // Profiles are user-scope: available only when logged in with a Signal K user account
-  // (a device token resolves to the shared 'global' scope, so profiles do not apply).
+  // Profiles are user-scope: available with a real Signal K user session — a cookie-mode SSO session
+  // or a non-device token. Keying off isUserSession$ (not raw token presence) is what makes profiles
+  // appear in cookie mode, where the httpOnly session cookie carries auth and there is no JWT. A device
+  // token resolves to the shared 'global' scope, and an anonymous visitor has no user scope.
   protected profilesAvailable = computed(() =>
-    this.supportApplicationData && this.hasTokenSignal() && !this.isTokenTypeDeviceSignal()
+    this.supportApplicationData && this.isUserSession()
   );
   protected profiles = this.profileService.profiles;
   protected jsonData: IConfig = null;
-
-  public get hasToken(): boolean {
-    return this.hasTokenSignal();
-  }
-
-  public get isTokenTypeDevice(): boolean {
-    return this.isTokenTypeDeviceSignal();
-  }
 
   private readonly profileLoadEffect = effect(() => {
     if (this.profilesAvailable()) {

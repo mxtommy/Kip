@@ -3,24 +3,17 @@ import { signal } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsConfigComponent } from './config.component';
-import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
+import { AuthenticationService } from '../../../services/authentication.service';
 import { StorageService } from '../../../services/storage.service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
 import { ProfileService, IProfileSummary } from '../../../services/profile.service';
 import { DialogService } from '../../../services/dialog.service';
 
-const createToken = (overrides: Partial<IAuthorizationToken> = {}): IAuthorizationToken => ({
-  token: 'token',
-  expiry: Date.now() / 1000 + 3600,
-  isDeviceAccessToken: false,
-  ...overrides
-});
-
 describe('SettingsConfigComponent', () => {
   let component: SettingsConfigComponent;
   let fixture: ComponentFixture<SettingsConfigComponent>;
-  let authTokenSubject: BehaviorSubject<IAuthorizationToken | null>;
+  let isUserSessionSubject: BehaviorSubject<boolean>;
   let profilesSignal: ReturnType<typeof signal<IProfileSummary[]>>;
   let profileMock: {
     profiles: typeof profilesSignal;
@@ -39,7 +32,7 @@ describe('SettingsConfigComponent', () => {
   let toastMock: { show: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    authTokenSubject = new BehaviorSubject<IAuthorizationToken | null>(null);
+    isUserSessionSubject = new BehaviorSubject<boolean>(false);
     profilesSignal = signal<IProfileSummary[]>([
       { name: 'default', isActive: false },
       { name: 'profileA', isActive: true }
@@ -63,7 +56,7 @@ describe('SettingsConfigComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SettingsConfigComponent],
       providers: [
-        { provide: AuthenticationService, useValue: { authToken$: authTokenSubject.asObservable() } },
+        { provide: AuthenticationService, useValue: { isUserSession$: isUserSessionSubject.asObservable() } },
         { provide: StorageService, useValue: { isAppDataSupported: true } },
         { provide: ToastService, useValue: toastMock },
         { provide: ProfileService, useValue: profileMock },
@@ -96,18 +89,18 @@ describe('SettingsConfigComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('loads profiles when logged in with a user token', () => {
-    authTokenSubject.next(createToken({ isDeviceAccessToken: false }));
+  it('makes profiles available and loads them on a user session — cookie mode, no token', () => {
+    isUserSessionSubject.next(true);
     fixture.detectChanges();
-    expect(component.hasToken).toBe(true);
-    expect(component.isTokenTypeDevice).toBe(false);
+    expect(component['profilesAvailable']()).toBe(true);
     expect(profileMock.refresh).toHaveBeenCalled();
   });
 
-  it('does not load profiles for a device token (profiles are user-scope)', () => {
+  it('does not make profiles available without a user session (device token or anonymous)', () => {
     profileMock.refresh.mockClear();
-    authTokenSubject.next(createToken({ isDeviceAccessToken: true }));
+    isUserSessionSubject.next(false);
     fixture.detectChanges();
+    expect(component['profilesAvailable']()).toBe(false);
     expect(profileMock.refresh).not.toHaveBeenCalled();
   });
 
