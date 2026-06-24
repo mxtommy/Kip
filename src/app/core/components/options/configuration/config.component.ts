@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
 
 import { AuthenticationService } from '../../../services/authentication.service';
@@ -41,6 +41,7 @@ export class SettingsConfigComponent {
   private fb = inject(UntypedFormBuilder);
   private images = inject(ImageAssetService);
   private dialog = inject(DialogService);
+  private destroyRef = inject(DestroyRef);
 
   protected readonly imageCacheStats = signal<IImageCacheStats | null>(null);
   protected readonly imageCachePurging = signal(false);
@@ -277,7 +278,7 @@ export class SettingsConfigComponent {
       this.imageCacheStats.set(null);
       return;
     }
-    this.images.cacheStats().subscribe({
+    this.images.cacheStats().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (stats) => this.imageCacheStats.set(stats),
       error: () => this.imageCacheStats.set(null)
     });
@@ -290,12 +291,12 @@ export class SettingsConfigComponent {
       message: 'Delete all generated image variants? Originals are kept and variants regenerate on demand.',
       confirmBtnText: 'Purge',
       cancelBtnText: 'Cancel'
-    }).subscribe((confirmed) => {
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
       if (!confirmed) {
         return;
       }
       this.imageCachePurging.set(true);
-      this.images.purgeCache().subscribe({
+      this.images.purgeCache().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.imageCachePurging.set(false);
           this.toast.show('Image cache purged', 1000, true, 'success');
