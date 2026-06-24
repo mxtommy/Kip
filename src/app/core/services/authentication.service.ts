@@ -1,7 +1,7 @@
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, combineLatest, lastValueFrom, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, lastValueFrom, Subscription, timeout } from 'rxjs';
 import { distinctUntilChanged, map } from "rxjs/operators";
 
 export interface IAuthorizationToken {
@@ -27,7 +27,6 @@ export type AuthMode = 'cookie' | 'token';
 export interface ILoginStatus {
   status?: string;
   authenticationRequired?: boolean;
-  readOnlyAccess?: boolean;
   userLevel?: string;
   username?: string;
   oidcEnabled?: boolean;
@@ -39,8 +38,8 @@ export interface ILoginStatus {
 const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL changes. We do a Login before ConnectionService has time to send the new endpoitn url
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
-const validateTokenEndpoint = 'auth/validate';
 const loginStatusPath = '/skServer/loginStatus'; // server-origin, not the /signalk/v1 API base
+const loginStatusTimeoutMs = 5000; // bounded so a hung endpoint cannot block the APP_INITIALIZER
 const tokenRenewalBuffer = 60; // nb of seconds before token expiration
 const MAX_TIMEOUT_MS = 2147483647; // Maximum safe delay for setTimeout (~24.8 days)
 
@@ -92,7 +91,6 @@ export class AuthenticationService implements OnDestroy {
   // Network connection
   private loginUrl = null;
   private logoutUrl = null;
-  private validateTokenUrl = null;
 
   constructor()
   {
@@ -155,7 +153,6 @@ export class AuthenticationService implements OnDestroy {
         const httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
         this.loginUrl = httpApiUrl + loginEndpoint;
         this.logoutUrl = httpApiUrl + logoutEndpoint;
-        this.validateTokenUrl = httpApiUrl + validateTokenEndpoint;
       }
     });
   }
@@ -213,7 +210,7 @@ export class AuthenticationService implements OnDestroy {
     }
     const url = window.location.origin + loginStatusPath;
     try {
-      const raw = await lastValueFrom(this.http.get<ILoginStatus>(url, { withCredentials: true }));
+      const raw = await lastValueFrom(this.http.get<ILoginStatus>(url, { withCredentials: true }).pipe(timeout(loginStatusTimeoutMs)));
       return this.applyLoginStatus(raw);
     } catch {
       // Unreachable, non-2xx, or unparseable response: treat as not logged in.
@@ -444,11 +441,6 @@ export class AuthenticationService implements OnDestroy {
       date.setUTCSeconds(dateAsSeconds);
     }
     return date;
-  }
-
-  // not yet implemented by Signal K but part of the specs. Using contained token string expiration value instead for now
-  private renewToken() {
-    return this.http.post<HttpResponse<Response>>(this.validateTokenUrl, null, {observe: 'response'});
   }
 
   /**

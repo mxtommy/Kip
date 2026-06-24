@@ -242,6 +242,53 @@ describe('AuthenticationService', () => {
       httpTesting.verify();
     });
 
+    it('logged-in readwrite user: canWriteUserData true', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn', userLevel: 'readwrite' });
+      await pending;
+
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(true);
+      httpTesting.verify();
+    });
+
+    it('logged-in with no userLevel: isUserSession true but canWriteUserData false (fail closed)', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn' });
+      await pending;
+
+      expect(await firstValueFrom(service.isUserSession$)).toBe(true);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('fails closed when loginStatus does not respond within the timeout', async () => {
+      vi.useFakeTimers();
+      try {
+        seedConn({ proxyEnabled: true });
+        const service = createService();
+        const httpTesting = TestBed.inject(HttpTestingController);
+
+        const pending = service.refreshLoginStatus();
+        expectLoginStatusRequest(httpTesting); // request opened, never flushed
+        await vi.advanceTimersByTimeAsync(5001);
+        const result = await pending;
+
+        expect(result).toBeNull();
+        expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+        httpTesting.verify();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('not-logged-in: all session flags false; OIDC descriptors captured', async () => {
       seedConn({ proxyEnabled: true });
       const service = createService();
