@@ -27,6 +27,7 @@ import { ConfigurationUpgradeService } from './core/services/configuration-upgra
 import { RemoteDashboardsService } from './core/services/remote-dashboards.service';
 import { ToastService } from './core/services/toast.service';
 import { AppNetworkInitService, IBootstrapIssue } from './core/services/app-initNetwork.service';
+import { SsoRedirectService } from './core/services/sso-redirect.service';
 import { DashboardHistorySeriesSyncService } from './core/services/dashboard-history-series-sync.service';
 
 @Component({
@@ -46,6 +47,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _deltaService = inject(SignalKDeltaService);
   private readonly _connectionStateMachine = inject(ConnectionStateMachine);
   private readonly _appNetworkInit = inject(AppNetworkInitService);
+  private readonly _ssoRedirect = inject(SsoRedirectService);
   private readonly _historySeriesReconcile = inject(DashboardHistorySeriesSyncService);
   public readonly authenticationService = inject(AuthenticationService);
   private readonly _dataSet = inject(DatasetStreamService);
@@ -82,6 +84,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private scheduledOpen: number | null = null;
   private readonly OPEN_DELAY_MS = 300; // should match/ exceed sidenav close animation time
   private missingConfigPromptShown = false;
+  private authBlockedPromptShown = false;
 
   // Stable handler refs (prevent leak from rebinding)
   private readonly _swipeLeftHandler = () => this.onSwipeLeft();
@@ -226,6 +229,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
             this.settings.resetSettings();
           }
         });
+    });
+
+    // Cookie-mode auth blocked (SSO auto-login looped out of budget, or sign-in required): offer an
+    // explicit Sign in that resets the budget and disables auto-login so it is not auto-bounced.
+    effect(() => {
+      const issue = this.bootstrapIssue();
+      if (issue.reason !== 'auth-blocked' || this.authBlockedPromptShown) {
+        return;
+      }
+      this.authBlockedPromptShown = true;
+      const message = issue.cause === 'budget-exhausted'
+        ? 'Automatic sign-in did not complete. Sign in to Signal K to continue.'
+        : 'Sign in to Signal K to access your configuration.';
+      const ref = this.toast.show(message, 0, true, 'warn', 'Sign in');
+      ref.onAction()
+        .pipe(takeUntilDestroyed(this._destroyRef))
+        .subscribe(() => this._ssoRedirect.manualSignIn());
     });
   }
 

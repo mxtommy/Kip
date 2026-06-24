@@ -10,7 +10,8 @@ import { inject, Injectable, Injector, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IConfig, IConnectionConfig } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
-import { AuthenticationService } from './authentication.service';
+import { AuthenticationService, ILoginStatus } from './authentication.service';
+import { SsoRedirectService } from './sso-redirect.service';
 import { DefaultConnectionConfig } from '../../../default-config/config.blank.const';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { DataService } from './data.service';
@@ -23,13 +24,15 @@ import { DatasetStreamService } from './dataset-stream.service';
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage.
 const CONNECTION_CONFIG_KEY = 'connectionConfig';
 export type TBootstrapStatus = 'starting' | 'ready' | 'degraded';
-export type TBootstrapIssueReason = 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown';
+export type TBootstrapIssueReason = 'none' | 'missing-shared-config' | 'network-unreachable' | 'unauthorized' | 'unknown' | 'auth-blocked';
+export type TAuthBlockedCause = 'budget-exhausted' | 'sign-in-required';
 
 export interface IBootstrapIssue {
   reason: TBootstrapIssueReason;
   statusCode?: number;
   sharedConfigName?: string;
   legacyUpgradeAvailable?: boolean;
+  cause?: TAuthBlockedCause;
 }
 
 @Injectable()
@@ -40,6 +43,7 @@ export class AppNetworkInitService implements OnDestroy {
 
   private readonly connection = inject(SignalKConnectionService);
   private readonly auth = inject(AuthenticationService);
+  private readonly ssoRedirect = inject(SsoRedirectService);
   private readonly connectionStateMachine = inject(ConnectionStateMachine);
   private readonly router = inject(Router);
   private readonly delta = inject(SignalKDeltaService); // Init to get data before app starts
@@ -66,8 +70,64 @@ export class AppNetworkInitService implements OnDestroy {
     return this.auth.authMode === 'cookie' || !!this.config?.useSharedConfig;
   }
 
+  /**
+   * Cookie-mode bootstrap decision from loginStatus. Returns 'redirecting' when the browser is being
+   * sent to the SK/SSO login (caller should stop), or 'proceed' otherwise:
+   * - loggedIn   → reset the redirect budget; the storage bootstrap then runs (isLoggedIn is true).
+   * - notLoggedIn + authRequired → auto-redirect when allowed by oidcAutoLogin and the budget; else
+   *   surface the auth-blocked recovery state (budget exhausted, or a manual sign-in is required).
+   * - auth not required → anonymous read; proceed with no redirect.
+   */
+  private handleCookieAuth(status: ILoginStatus | null): 'redirecting' | 'proceed' | 'auth-blocked' {
+    if (status?.status === 'loggedIn') {
+      // The budget reset is deferred to a genuinely completed bootstrap (see initNetworkServices'
+      // finally), so a loggedIn -> applicationData-401 -> reauth path cannot reset-then-loop.
+      return 'proceed';
+    }
+    if (!status) {
+      // loginStatus unreachable/unparseable: fail closed — do not assume anonymous-open access.
+      this._bootstrapIssue$.next({ reason: 'auth-blocked', cause: 'sign-in-required' });
+      return 'auth-blocked';
+    }
+    if (status.authenticationRequired) {
+      return this.attemptCookieRedirect(status) === 'redirecting' ? 'redirecting' : 'auth-blocked';
+    }
+    // authentication explicitly not required: anonymous read access, no redirect.
+    return 'proceed';
+  }
+
+  /**
+   * Cookie-mode redirect-or-block decision shared by the bootstrap path and the mid-bootstrap 401
+   * path. Auto-redirects when oidcAutoLogin allows and the budget permits; otherwise surfaces the
+   * auth-blocked recovery state (budget exhausted, or a manual sign-in is required).
+   */
+  private attemptCookieRedirect(status: ILoginStatus | null): 'redirecting' | 'blocked' {
+    if (status?.oidcAutoLogin !== false && this.ssoRedirect.attemptAutoRedirect(status) === 'redirected') {
+      return 'redirecting';
+    }
+    this._bootstrapIssue$.next({
+      reason: 'auth-blocked',
+      cause: this.ssoRedirect.isBudgetExhausted() ? 'budget-exhausted' : 'sign-in-required'
+    });
+    return 'blocked';
+  }
+
+  /**
+   * Mode-aware re-authentication routing for a mid-bootstrap 401. Cookie mode reuses the same
+   * oidcAutoLogin/budget-guarded decision as the bootstrap path (so a 401 cannot loop past the
+   * budget, and honors oidcAutoLogin:false); token mode routes to /login.
+   */
+  private routeToReauth(): void {
+    if (this.auth.authMode === 'cookie') {
+      this.attemptCookieRedirect(this.auth.loginStatusValue);
+      return;
+    }
+    this.router.navigate(['/login']);
+  }
+
   public async initNetworkServices() {
     let startupDegraded = false;
+    let redirecting = false;
     this.loadLocalStorageConfig();
     this.preloadFonts();
     this.internetReachability.start();
@@ -82,7 +142,26 @@ export class AppNetworkInitService implements OnDestroy {
         );
       }
 
-      if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
+      // Cookie mode (same-origin): session state comes from loginStatus, not a credential login.
+      if (this.auth.authMode === 'cookie') {
+        const status = await this.auth.refreshLoginStatus();
+        const outcome = this.handleCookieAuth(status);
+        if (outcome === 'redirecting') {
+          redirecting = true;
+          return; // browser is navigating to the SK/SSO login
+        }
+        if (outcome === 'auth-blocked') {
+          // Not authorized and not auto-redirecting: keep the auth-blocked recovery state (set by
+          // handleCookieAuth), do not reset the loop budget, and finish degraded (not 'ready') so the
+          // recovery UI shows. Returning here also avoids the 'reason: none' overwrite below.
+          startupDegraded = true;
+          this._bootstrapStatus$.next('degraded');
+          return;
+        }
+      }
+
+      // Token mode (cross-origin) credential login. Never runs in cookie mode (no stored password).
+      if (this.auth.authMode !== 'cookie' && !this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig && this.config?.loginName && this.config?.loginPassword) {
         await this.login();
       }
 
@@ -108,7 +187,8 @@ export class AppNetworkInitService implements OnDestroy {
       // This ensures all chart data is ready before any widget components are created.
       await this.getDatasetService().waitUntilReady();
 
-      if (!this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {
+      // Cookie mode handled its own redirect/auth-blocked state above; only token mode falls to /login.
+      if (this.auth.authMode !== 'cookie' && !this.isLoggedIn && this.config?.signalKUrl && this.config?.useSharedConfig) {
         this.router.navigate(['/login']); // need to set credentials
       }
 
@@ -139,8 +219,8 @@ export class AppNetworkInitService implements OnDestroy {
           await this.router.navigate(['/options']);
         }
       } else if (error.status === 401) {
-        console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Redirecting to login page.");
-        await this.router.navigate(['/login']);
+        console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Routing to re-authentication.");
+        this.routeToReauth();
       } else {
         console.warn("[AppInit Network Service] Initialization failed. Error: ", JSON.stringify(error));
         await this.router.navigate(['/options']);
@@ -149,6 +229,12 @@ export class AppNetworkInitService implements OnDestroy {
       this._bootstrapStatus$.next('degraded');
       return;
     } finally {
+      if (!startupDegraded && !redirecting) {
+        // A clean, non-redirecting bootstrap is a stable state: clear the SSO redirect loop budget so
+        // a future genuine logout gets a fresh set of attempts. Not reset on the redirect/degraded
+        // paths, so a loggedIn -> 401 -> reauth loop stays bounded.
+        this.ssoRedirect.resetBudget();
+      }
       if (!startupDegraded) {
         this._bootstrapStatus$.next('ready');
       }
@@ -156,8 +242,10 @@ export class AppNetworkInitService implements OnDestroy {
       // Enable WebSocket functionality now that initialization is complete
       this.connectionStateMachine.enableWebSocketMode();
 
-      // Start WebSocket connection if HTTP discovery was successful
-      if (this.connectionStateMachine.isHTTPConnected()) {
+      // Start the WebSocket only from a fresh HTTPConnected state. In cookie mode the loginStatus
+      // result may already have driven the delta service's isLoggedIn$ reconnect (state ->
+      // WebSocketConnecting); starting again here would close and reopen the in-flight socket.
+      if (this.connectionStateMachine.currentState === ConnectionState.HTTPConnected) {
         console.log("[AppInit Network Service] Starting WebSocket connection after initialization");
         this.connectionStateMachine.startWebSocketConnection();
       }

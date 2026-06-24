@@ -34,25 +34,25 @@ class MemoryStorage implements Storage {
   }
 }
 
-export function ensureLocalStorage(): Storage {
+function ensureStorage(prop: 'localStorage' | 'sessionStorage'): Storage {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const g = globalThis as any;
 
   let existing: Storage | undefined;
   try {
-    existing = g.localStorage;
+    existing = g[prop];
   } catch {
     existing = undefined;
   }
 
   if (!existing) {
     const mem = new MemoryStorage();
-    Object.defineProperty(g, 'localStorage', { configurable: true, value: mem });
+    Object.defineProperty(g, prop, { configurable: true, value: mem });
     if (typeof window !== 'undefined') {
       try {
-        Object.defineProperty(window, 'localStorage', { configurable: true, value: mem });
+        Object.defineProperty(window, prop, { configurable: true, value: mem });
       } catch {
-        /* ignore environments that forbid redefining window.localStorage */
+        /* ignore environments that forbid redefining the storage */
       }
     }
     existing = mem;
@@ -60,4 +60,16 @@ export function ensureLocalStorage(): Storage {
 
   existing.clear();
   return existing;
+}
+
+export function ensureLocalStorage(): Storage {
+  return ensureStorage('localStorage');
+}
+
+/**
+ * Same in-memory shim as {@link ensureLocalStorage}, for the SSO redirect budget which lives in
+ * sessionStorage (also undefined under the jsdom opaque origin).
+ */
+export function ensureSessionStorage(): Storage {
+  return ensureStorage('sessionStorage');
 }

@@ -60,6 +60,11 @@ export class AuthenticationService implements OnDestroy {
   private _loginStatus$ = new BehaviorSubject<ILoginStatus | null>(null);
   public loginStatus$ = this._loginStatus$.asObservable();
 
+  /** Latest parsed loginStatus, read synchronously (e.g. by the SSO redirect). Null until refreshed. */
+  public get loginStatusValue(): ILoginStatus | null {
+    return this._loginStatus$.getValue();
+  }
+
   /**
    * A real per-user identity is present: cookie-mode logged-in session, or a non-device token in
    * token mode. Profiles availability and user-scope applicationData key off this, not token presence.
