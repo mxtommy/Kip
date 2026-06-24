@@ -90,8 +90,10 @@ export class SettingsService {
 
   private async startup(): Promise<void> {
     if (this.useServerStorage) {
-      if (!this.storage.isRemoteContextBootstrapped() || this.storage.initConfig === null) {
-        console.warn('[AppSettings Service] Shared configuration enabled but remote bootstrap handoff is missing. Waiting for explicit recovery action.');
+      // A missing server config comes back as {} (not a 404), so guard on the presence of app config —
+      // an empty/appless object must not fall through to pushSettings() and dereference activeConfig.app.
+      if (!this.storage.isRemoteContextBootstrapped() || !this.storage.initConfig?.app) {
+        console.warn('[AppSettings Service] Shared configuration enabled but remote bootstrap handoff is missing or empty. Waiting for explicit recovery action.');
         return;
       }
 
@@ -325,9 +327,9 @@ export class SettingsService {
     if (this.signalkUrl) {
       this.signalkUrl.url = value.signalKUrl;
     }
-    if (!value.useSharedConfig) {
-      this.useDeviceToken = true;
-    } else this.useDeviceToken = false;
+    // useDeviceToken and useSharedConfig are one "cross-origin intent" axis (device token only when
+    // not using shared config).
+    this.useDeviceToken = !value.useSharedConfig;
     this.saveConnectionConfigToLocalStorage();
   }
 

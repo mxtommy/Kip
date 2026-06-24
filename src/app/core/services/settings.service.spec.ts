@@ -66,6 +66,11 @@ describe('SettingsService — storage routing by mode (Unit 5)', () => {
 
   function setup(connExtra: Record<string, unknown>) {
     seedConnectionConfig(connExtra);
+    // Seed the local config keys so the localStorage startup() branch (cross-origin/local routing)
+    // loads cleanly instead of throwing an (unhandled, suite-masking) JSON parse error.
+    localStorage.setItem('appConfig', JSON.stringify({ configVersion: 12, dataSets: [], unitDefaults: {}, notificationConfig: {} }));
+    localStorage.setItem('dashboardsConfig', JSON.stringify([]));
+    localStorage.setItem('themeConfig', JSON.stringify({ themeName: '' }));
     TestBed.configureTestingModule({ providers: [SettingsService, StorageService] });
     const storage = TestBed.inject(StorageService);
     const patchSpy = vi.spyOn(storage, 'patchConfig').mockImplementation(() => undefined);
