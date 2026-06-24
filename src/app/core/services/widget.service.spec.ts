@@ -22,4 +22,28 @@ describe('WidgetService', () => {
     expect(selectors).toContain('widget-alternator');
     expect(selectors).toContain('widget-ac');
   });
+
+  it('lazily resolves a component type as a promise and dedupes concurrent lookups', async () => {
+    const p1 = service.getComponentType('widget-text');
+    const p2 = service.getComponentType('widget-text');
+    expect(p1).toBeInstanceOf(Promise);
+    expect(p1).toBe(p2); // same in-flight promise reused (single import())
+
+    const type = await p1;
+    expect(type).toBeTruthy();
+  });
+
+  it('resolves undefined for an unknown selector without attempting an import', async () => {
+    await expect(service.getComponentType('widget-does-not-exist')).resolves.toBeUndefined();
+  });
+
+  it('exposes DEFAULT_CONFIG only after the component has been loaded', async () => {
+    // Not fetched yet: config-only consumers get undefined and fall back to saved config.
+    expect(service.getDefaultConfig('widget-text')).toBeUndefined();
+
+    await service.getComponentType('widget-text');
+
+    // Once the chunk has loaded, the static DEFAULT_CONFIG is cached for synchronous reads.
+    expect(service.getDefaultConfig('widget-text')).toBeDefined();
+  });
 });

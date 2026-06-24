@@ -80,6 +80,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
   private compType: Type<WidgetViewComponentBase>
   private _hasInitialized = false;
+  private _destroyed = false;
   private readonly openOverlays = new Set<TOverlayGate>();
   // Debug helper gated by the same localStorage flag used by gestures directive
   private isDebugEnabled(): boolean {
@@ -122,7 +123,19 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
     if (shouldAutoOpenOptions) {
       delete this.widgetProperties.autoOpenOptionsOnCreate;
     }
-    this.compType = this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    // Widget components are lazy-loaded, so resolution is async. Kick it off; the child is created
+    // once its chunk resolves (instant for an already-loaded type, a fetch on first use).
+    void this.loadAndCreateChild(type, shouldAutoOpenOptions);
+  }
+
+  /**
+   * Resolve (lazy-import) the widget component, initialize the runtime/streams from its default +
+   * saved config, and create the child view. Awaiting the import means this runs after the initial
+   * render, so it guards against the host being destroyed mid-load and explicitly renders the child.
+   */
+  private async loadAndCreateChild(type: string, shouldAutoOpenOptions: boolean): Promise<void> {
+    this.compType = await this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    if (this._destroyed) return; // host was torn down while the chunk loaded
 
     // Resolve default configuration for this component type using helper
     const defaultCfg = this.getDefaultConfig();
@@ -135,7 +148,6 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
     this.streams?.applyStreamsConfigDiff?.(merged);
     this.meta?.applyMetaConfigDiff?.(merged);
 
-    // Create the child component BEFORE first change detection completes so its
     if (this.outlet && this.compType) {
       this.childRef = this.outlet.createComponent(this.compType, {
         bindings: [
@@ -144,6 +156,8 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
           inputBinding('theme', this.theme)
         ]
       });
+      // Created outside the initial CD pass (after the import resolved), so render it now.
+      this.childRef.changeDetectorRef.detectChanges();
     }
     this._hasInitialized = true;
 
@@ -153,6 +167,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   }
 
   ngOnDestroy(): void {
+    this._destroyed = true;
     this.childRef?.destroy();
     this.childRef = null;
     this.openOverlays.clear();
@@ -407,11 +422,12 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
         || familyDescriptor?.displayTitle
         || 'Widget Data History';
 
-      this.dialog.openWidgetHistoryDialog({
+      const dialogRef = await this.dialog.openWidgetHistoryDialog({
         title,
         widget: this.widgetProperties,
         seriesDefinitions
-      }).afterClosed().subscribe(() => {
+      });
+      dialogRef.afterClosed().subscribe(() => {
         this.releaseOverlay('history');
       });
     } catch (error) {

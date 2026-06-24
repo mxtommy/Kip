@@ -172,6 +172,7 @@ describe('DashboardHistorySeriesSyncService', () => {
     };
     let widgetServiceMock: {
         getComponentType: Mock;
+        getDefaultConfig: Mock;
     };
     let reconcileSpy: Mock;
 
@@ -192,7 +193,8 @@ describe('DashboardHistorySeriesSyncService', () => {
         });
 
         widgetServiceMock = {
-            getComponentType: vi.fn().mockReturnValue(undefined)
+            getComponentType: vi.fn().mockResolvedValue(undefined),
+            getDefaultConfig: vi.fn().mockReturnValue(undefined)
         };
 
         TestBed.configureTestingModule({
@@ -893,33 +895,31 @@ describe('DashboardHistorySeriesSyncService', () => {
     });
 
     it('resolves numeric paths from widget DEFAULT_CONFIG when saved config is partial', () => {
-        widgetServiceMock.getComponentType.mockImplementation((selector: string) => {
+        widgetServiceMock.getDefaultConfig.mockImplementation((selector: string) => {
             if (selector !== 'widget-horizon') {
                 return undefined;
             }
 
             return {
-                DEFAULT_CONFIG: {
-                    supportAutomaticHistoricalSeries: true,
-                    timeScale: 'minute',
-                    period: 30,
-                    paths: {
-                        gaugePitchPath: {
-                            description: 'Pitch',
-                            path: 'self.navigation.attitude.pitch',
-                            source: 'default',
-                            pathType: 'number',
-                            isPathConfigurable: true,
-                            sampleTime: 1000
-                        },
-                        gaugeRollPath: {
-                            description: 'Roll',
-                            path: 'self.navigation.attitude.roll',
-                            source: 'default',
-                            pathType: 'number',
-                            isPathConfigurable: true,
-                            sampleTime: 1000
-                        }
+                supportAutomaticHistoricalSeries: true,
+                timeScale: 'minute',
+                period: 30,
+                paths: {
+                    gaugePitchPath: {
+                        description: 'Pitch',
+                        path: 'self.navigation.attitude.pitch',
+                        source: 'default',
+                        pathType: 'number',
+                        isPathConfigurable: true,
+                        sampleTime: 1000
+                    },
+                    gaugeRollPath: {
+                        description: 'Roll',
+                        path: 'self.navigation.attitude.roll',
+                        source: 'default',
+                        pathType: 'number',
+                        isPathConfigurable: true,
+                        sampleTime: 1000
                     }
                 }
             };

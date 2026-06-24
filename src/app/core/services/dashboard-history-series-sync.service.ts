@@ -208,12 +208,11 @@ export class DashboardHistorySeriesSyncService {
   }
 
   private getDefaultConfigForType(widgetType: string): IWidgetSvcConfig | undefined {
-    try {
-      const comp = this.widgetService.getComponentType(widgetType) as { DEFAULT_CONFIG?: IWidgetSvcConfig } | undefined;
-      return comp?.DEFAULT_CONFIG;
-    } catch {
-      return undefined;
-    }
+    // Reads the widget's static DEFAULT_CONFIG from WidgetService's cache, which is populated when
+    // the widget component is lazy-loaded (i.e. rendered). Returns undefined for widgets whose chunk
+    // has not been fetched yet; the saved config alone is then used, and a later reconcile picks up
+    // the defaults once the widget has loaded.
+    return this.widgetService.getDefaultConfig(widgetType);
   }
 
   private collectSeriesFromNodes(nodes: IGridWidgetNode[], sink: IKipSeriesDefinition[]): void {
