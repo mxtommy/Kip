@@ -1,8 +1,8 @@
 import { SignalKConnectionService, IEndpointStatus } from './signalk-connection.service';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, lastValueFrom, Subscription } from 'rxjs';
-import { distinctUntilChanged } from "rxjs/operators";
+import { BehaviorSubject, combineLatest, lastValueFrom, Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 export interface IAuthorizationToken {
   expiry: number;
@@ -18,10 +18,29 @@ export interface IAuthorizationToken {
  */
 export type AuthMode = 'cookie' | 'token';
 
+/**
+ * Parsed subset of the Signal K server's `GET /skServer/loginStatus` response. Drives cookie-mode
+ * session state and carries the login/OIDC descriptors the bootstrap redirect needs. All fields are
+ * optional because the response shape is owned by the server and is treated defensively (fail-closed:
+ * a session is only "logged in" when {@link status} is exactly `'loggedIn'`).
+ */
+export interface ILoginStatus {
+  status?: string;
+  authenticationRequired?: boolean;
+  readOnlyAccess?: boolean;
+  userLevel?: string;
+  username?: string;
+  oidcEnabled?: boolean;
+  oidcAutoLogin?: boolean;
+  oidcLoginUrl?: string;
+  oidcProviderName?: string;
+}
+
 const defaultApiPath = '/signalk/v1/'; // Use as default for new server URL changes. We do a Login before ConnectionService has time to send the new endpoitn url
 const loginEndpoint = 'auth/login';
 const logoutEndpoint = 'auth/logout';
 const validateTokenEndpoint = 'auth/validate';
+const loginStatusPath = '/skServer/loginStatus'; // server-origin, not the /signalk/v1 API base
 const tokenRenewalBuffer = 60; // nb of seconds before token expiration
 const MAX_TIMEOUT_MS = 2147483647; // Maximum safe delay for setTimeout (~24.8 days)
 
@@ -36,6 +55,30 @@ export class AuthenticationService implements OnDestroy {
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
   public authToken$ = this._authToken$.asObservable();
+
+  // Latest parsed loginStatus (cookie mode only; null until refreshed or on any failure).
+  private _loginStatus$ = new BehaviorSubject<ILoginStatus | null>(null);
+  public loginStatus$ = this._loginStatus$.asObservable();
+
+  /**
+   * A real per-user identity is present: cookie-mode logged-in session, or a non-device token in
+   * token mode. Profiles availability and user-scope applicationData key off this, not token presence.
+   */
+  public isUserSession$ = combineLatest([this._authToken$, this._loginStatus$]).pipe(
+    map(([token, status]) => this.deriveIsUserSession(token, status)),
+    distinctUntilChanged()
+  );
+
+  /**
+   * The current session can write user-scope data: a user session that is not server-side read-only.
+   * Write affordances (config save, profile create/rename/delete/switch) gate on this so a read-only
+   * session does not present controls that silently fail server-side.
+   */
+  public canWriteUserData$ = combineLatest([this._authToken$, this._loginStatus$]).pipe(
+    map(([token, status]) => this.deriveCanWriteUserData(token, status)),
+    distinctUntilChanged()
+  );
+
   private connectionEndpointSubscription: Subscription = null;
   private authTokenSubscription: Subscription = null;
   private renewalTimerId: ReturnType<typeof setTimeout> | null = null; // Node & browser compatible handle
@@ -148,6 +191,50 @@ export class AuthenticationService implements OnDestroy {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Cookie mode: query `GET /skServer/loginStatus` with credentials so the httpOnly session cookie
+   * authenticates the probe, and derive session state from it (fail-closed). Returns the parsed
+   * status (including OIDC descriptors for the bootstrap redirect), or null on any failure or in
+   * token mode (where loginStatus is not consulted). The request targets the served origin — in
+   * cookie mode the effective Signal K origin equals `window.location.origin` by definition — not the
+   * post-discovery `/signalk/v1` base.
+   */
+  public async refreshLoginStatus(): Promise<ILoginStatus | null> {
+    if (this.authMode !== 'cookie') {
+      return null;
+    }
+    const url = window.location.origin + loginStatusPath;
+    try {
+      const raw = await lastValueFrom(this.http.get<ILoginStatus>(url, { withCredentials: true }));
+      return this.applyLoginStatus(raw);
+    } catch {
+      // Unreachable, non-2xx, or unparseable response: treat as not logged in.
+      return this.applyLoginStatus(null);
+    }
+  }
+
+  private applyLoginStatus(raw: unknown): ILoginStatus | null {
+    const status: ILoginStatus | null = raw && typeof raw === 'object' ? (raw as ILoginStatus) : null;
+    this._loginStatus$.next(status);
+    this._IsLoggedIn$.next(status?.status === 'loggedIn');
+    return status;
+  }
+
+  private deriveIsUserSession(token: IAuthorizationToken | null, status: ILoginStatus | null): boolean {
+    if (this.authMode === 'cookie') {
+      return status?.status === 'loggedIn';
+    }
+    return !!token && !token.isDeviceAccessToken;
+  }
+
+  private deriveCanWriteUserData(token: IAuthorizationToken | null, status: ILoginStatus | null): boolean {
+    if (this.authMode === 'cookie') {
+      return status?.status === 'loggedIn' && !status.readOnlyAccess;
+    }
+    // Token mode has no readOnly signal; a user token has always been treated as write-capable.
+    return !!token && !token.isDeviceAccessToken;
   }
 
   private scheduleRenewalChunk(token: IAuthorizationToken) {

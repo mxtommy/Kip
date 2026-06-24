@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { firstValueFrom } from 'rxjs';
 import { AuthenticationService, IAuthorizationToken } from './authentication.service';
@@ -164,6 +165,205 @@ describe('AuthenticationService', () => {
       const service = createService();
       expect(await firstValueFrom(service.authToken$)).not.toBeNull();
       expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
+    });
+  });
+
+  describe('loginStatus session state (Unit 3)', () => {
+    function seedConn(overrides: Record<string, unknown>): void {
+      localStorage.setItem(
+        'connectionConfig',
+        JSON.stringify({
+          configVersion: 12,
+          kipUUID: 'u',
+          signalKUrl: '',
+          proxyEnabled: true,
+          signalKSubscribeAll: false,
+          useDeviceToken: false,
+          loginName: '',
+          useSharedConfig: true,
+          sharedConfigName: 'default',
+          ...overrides
+        })
+      );
+    }
+
+    function expectLoginStatusRequest(httpTesting: HttpTestingController) {
+      return httpTesting.expectOne(
+        req => req.url.endsWith('/skServer/loginStatus') && !req.url.includes('/signalk/v1')
+      );
+    }
+
+    it('logged-in writable session: isLoggedIn/isUserSession/canWriteUserData true, no token', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      const req = expectLoginStatusRequest(httpTesting);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({ status: 'loggedIn', readOnlyAccess: false, userLevel: 'admin' });
+      await pending;
+
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(true);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(true);
+      expect(await firstValueFrom(service.authToken$)).toBeNull();
+      httpTesting.verify();
+    });
+
+    it('logged-in read-only session: isUserSession true, canWriteUserData false', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ status: 'loggedIn', readOnlyAccess: true });
+      await pending;
+
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(true);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('not-logged-in: all session flags false; OIDC descriptors captured', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({
+        status: 'notLoggedIn',
+        authenticationRequired: true,
+        oidcEnabled: true,
+        oidcAutoLogin: true,
+        oidcLoginUrl: '/signalk/v1/auth/oidc/login',
+        oidcProviderName: 'HaLOS SSO'
+      });
+      await pending;
+
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      const status = await firstValueFrom(service.loginStatus$);
+      expect(status?.authenticationRequired).toBe(true);
+      expect(status?.oidcEnabled).toBe(true);
+      expect(status?.oidcAutoLogin).toBe(true);
+      expect(status?.oidcLoginUrl).toBe('/signalk/v1/auth/oidc/login');
+      httpTesting.verify();
+    });
+
+    it('unreachable server: fails closed (not logged in), returns null, no throw', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush('down', { status: 503, statusText: 'Service Unavailable' });
+      const result = await pending;
+
+      expect(result).toBeNull();
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('unexpected response shape: not logged in, no throw', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ unexpected: 'shape' });
+      await pending;
+
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('non-object 200 body (e.g. an HTML login page): not logged in, no throw', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const pending = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush('<!doctype html><html>login</html>');
+      const result = await pending;
+
+      expect(result).toBeNull();
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      httpTesting.verify();
+    });
+
+    it('mid-session transition: logged-in -> not-logged-in -> failure flips all signals false and clears descriptors', async () => {
+      seedConn({ proxyEnabled: true });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      // 1. Logged in, OIDC descriptors present.
+      const first = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({
+        status: 'loggedIn',
+        readOnlyAccess: false,
+        oidcEnabled: true,
+        oidcLoginUrl: '/signalk/v1/auth/oidc/login'
+      });
+      await first;
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(true);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(true);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(true);
+      expect((await firstValueFrom(service.loginStatus$))?.oidcLoginUrl).toBe('/signalk/v1/auth/oidc/login');
+
+      // 2. Session ends server-side: re-check returns notLoggedIn; stale OIDC descriptor cleared.
+      const second = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush({ status: 'notLoggedIn' });
+      await second;
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
+      expect((await firstValueFrom(service.loginStatus$))?.oidcLoginUrl).toBeUndefined();
+
+      // 3. A later failure re-emits null status (fail-closed) on the already-used instance.
+      const third = service.refreshLoginStatus();
+      expectLoginStatusRequest(httpTesting).flush('down', { status: 503, statusText: 'Service Unavailable' });
+      await third;
+      expect(await firstValueFrom(service.isLoggedIn$)).toBe(false);
+      expect(await firstValueFrom(service.loginStatus$)).toBeNull();
+      httpTesting.verify();
+    });
+
+    it('token mode does not query loginStatus', async () => {
+      seedConn({ proxyEnabled: false, signalKUrl: 'https://boat.example:3443' });
+      const service = createService();
+      const httpTesting = TestBed.inject(HttpTestingController);
+
+      const result = await service.refreshLoginStatus();
+
+      expect(result).toBeNull();
+      httpTesting.verify(); // asserts no loginStatus request was issued
+    });
+
+    it('token-mode user token yields a user session via the derived signals', async () => {
+      seedConn({ proxyEnabled: false, signalKUrl: 'https://boat.example:3443' });
+      seedToken({ expiry: nowSec() + 3600, isDeviceAccessToken: false });
+      const service = createService();
+
+      expect(await firstValueFrom(service.isUserSession$)).toBe(true);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(true);
+    });
+
+    it('token-mode device token is not a user session', async () => {
+      seedConn({ proxyEnabled: false, signalKUrl: 'https://boat.example:3443' });
+      seedToken({ expiry: nowSec() + 3600, isDeviceAccessToken: true });
+      const service = createService();
+
+      expect(await firstValueFrom(service.isUserSession$)).toBe(false);
+      expect(await firstValueFrom(service.canWriteUserData$)).toBe(false);
     });
   });
 });
