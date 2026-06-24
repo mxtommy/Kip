@@ -1,5 +1,6 @@
 import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 import { ISignalKDataValueUpdate, ISignalKDeltaMessage, ISignalKMeta, ISignalKUpdateMessage } from '../interfaces/signalk-interfaces';
@@ -136,6 +137,17 @@ export class SignalKDeltaService implements OnDestroy {
         }
       });
 
+    // Cookie mode has no token, so the authToken$ reconnect above never fires. Drive the WS
+    // (re)connect off the session signal instead, reusing checkAndReconnect's isFullyConnected
+    // guard so we do not double-connect with the bootstrap's startWebSocketConnection().
+    this.auth.isLoggedIn$
+      .pipe(distinctUntilChanged(), takeUntilDestroyed(this._destroyRef))
+      .subscribe((loggedIn: boolean) => {
+        if (loggedIn && this.auth.authMode === 'cookie') {
+          this.checkAndReconnect('Cookie session established');
+        }
+      });
+
     // WebSocket Open Event Handling
     this.socketWSOpenEvent$
       .pipe(takeUntilDestroyed(this._destroyRef))
@@ -168,6 +180,12 @@ export class SignalKDeltaService implements OnDestroy {
 
           // Notify ConnectionStateMachine of WebSocket error
           this.connectionStateMachine.onWebSocketError('WebSocket connection lost');
+
+          // In cookie mode a drop may mean the session cookie expired; re-check loginStatus so
+          // session state (and the UI) reflect a server-side logout rather than retrying blindly.
+          if (this.auth.authMode === 'cookie') {
+            void this.auth.refreshLoginStatus();
+          }
         }
         this.streamEndpoint$.next(this.streamEndpoint);
       });
@@ -259,18 +277,27 @@ export class SignalKDeltaService implements OnDestroy {
   }
 
   /**
-   * Handles connection arguments, token and links socket Open/Close Observers
+   * Builds the WebSocket URL including the subscription/meta args and, in token mode only, the
+   * auth token. Mode-first: in cookie mode the same-origin session cookie authenticates the WS
+   * upgrade, so &token= is never appended (even if a stale token is present).
    */
-  private getNewWebSocket(): WebSocketSubject<object> {
+  private buildWebSocketUrl(): string {
     let args = this.WS_CONNECTION_SUBSCRIBE + this.SubscriptionType + this.WS_CONNECTION_META;
-    if (this.authToken != null) {
+    if (this.auth.authMode === 'token' && this.authToken != null) {
       args += "&token=" + this.authToken.token;
       this.streamEndpoint.hasToken = true;
     } else {
       this.streamEndpoint.hasToken = false;
     }
+    return this.endpointWS + args;
+  }
+
+  /**
+   * Handles connection arguments, token and links socket Open/Close Observers
+   */
+  private getNewWebSocket(): WebSocketSubject<object> {
     return webSocket({
-      url: this.endpointWS + args,
+      url: this.buildWebSocketUrl(),
       closeObserver: this.socketWSCloseEvent$,
       openObserver: this.socketWSOpenEvent$
     })
@@ -498,7 +525,12 @@ export class SignalKDeltaService implements OnDestroy {
    */
   private checkAndReconnect(reason: string): void {
     if (!this.connectionStateMachine.isFullyConnected()) {
-      if (this.connectionStateMachine.isHTTPConnected()  && this.connectionStateMachine.currentState !== ConnectionState.WebSocketRetrying) {
+      // Do not start a second connect while one is already in flight (WebSocketConnecting) or being
+      // retried — that would close and reopen the in-flight socket. This matters for the cookie-mode
+      // isLoggedIn$ reconnect, which can race the bootstrap's own startWebSocketConnection().
+      if (this.connectionStateMachine.isHTTPConnected()
+          && this.connectionStateMachine.currentState !== ConnectionState.WebSocketRetrying
+          && this.connectionStateMachine.currentState !== ConnectionState.WebSocketConnecting) {
         console.log(`[Delta Service] ${reason}: WebSocket disconnected, requesting reconnection...`);
         this.connectionStateMachine.startWebSocketConnection();
       } else {

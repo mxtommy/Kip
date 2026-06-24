@@ -19,16 +19,19 @@ export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
   }
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler) {
-    let authReq = req.clone();
+    // Branch on mode first. In cookie mode the same-origin httpOnly session cookie carries auth, so
+    // send credentials and never attach a JWT header — even if a stale token is still in storage.
+    if (this.auth.authMode === 'cookie') {
+      return next.handle(req.clone({ withCredentials: true }));
+    }
 
+    // Token mode (cross-origin): the cookie cannot flow, so attach the JWT header when present.
+    let authReq = req.clone();
     if (this.authToken) {
-      // Clone the request and replace the original headers with
-      // with the authorization token.
       authReq = req.clone({
         headers: req.headers.set('authorization', "JWT " + this.authToken.token)
       });
     }
-    // send cloned request with header to the next handler.
     return next.handle(authReq);
   }
 

@@ -226,6 +226,15 @@ class AuthenticationServiceStub {
   public isLoggedIn$ = this._isLoggedIn$.asObservable();
   private _authToken$ = new BehaviorSubject<{ expiry: number | null; token: string | null; isDeviceAccessToken: boolean }>(null);
   public authToken$ = this._authToken$.asObservable();
+  // Cookie-mode session surface (Unit 3). Default to token mode so existing specs are unaffected.
+  public authMode: 'cookie' | 'token' = 'token';
+  private _loginStatus$ = new BehaviorSubject<unknown>(null);
+  public loginStatus$ = this._loginStatus$.asObservable();
+  private _isUserSession$ = new BehaviorSubject<boolean>(false);
+  public isUserSession$ = this._isUserSession$.asObservable();
+  private _canWriteUserData$ = new BehaviorSubject<boolean>(false);
+  public canWriteUserData$ = this._canWriteUserData$.asObservable();
+  refreshLoginStatus = async (): Promise<unknown> => null;
   login = async () => { this._isLoggedIn$.next(true); };
   logout = async () => { this._isLoggedIn$.next(false); this._authToken$.next(null); };
 }
