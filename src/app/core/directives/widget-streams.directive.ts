@@ -119,6 +119,16 @@ export class WidgetStreamsDirective {
     const toUnit = (val: number) => convert ? this.unitsService.convertToUnit(convert, val) : val;
 
     let data$: Observable<IPathUpdate> = base$;
+    if (suppressBootstrapNull) {
+      data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
+    }
+    // Sample the RAW stream first, then convert units AFTER sampling. The unit conversion is a
+    // pure function of the value (and maps null -> null), so the emitted values are identical to
+    // converting upstream — but the conversion now runs only at the sampled rate (plus the fast
+    // first emission) instead of on every incoming delta.
+    const initial$ = data$.pipe(take(1));
+    const sampled$ = data$.pipe(sampleTime(sample));
+    data$ = merge(initial$, sampled$);
     if (pathType === 'number') {
       data$ = data$.pipe(
         map(x => ({
@@ -130,12 +140,6 @@ export class WidgetStreamsDirective {
         } as IPathUpdate))
       );
     }
-    if (suppressBootstrapNull) {
-      data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
-    }
-    const initial$ = data$.pipe(take(1));
-    const sampled$ = data$.pipe(sampleTime(sample));
-    data$ = merge(initial$, sampled$);
     if (enableTimeout) {
       data$ = data$.pipe(
         timeout({
