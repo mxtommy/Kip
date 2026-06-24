@@ -52,7 +52,7 @@
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
     "test": "ng test --watch=false",
-    "test:plugin": "npm run build:plugin && node --test --test-concurrency=1 kip-plugin/tests/",
+    "test:plugin": "npm run build:plugin && node --test --test-concurrency=1 \"kip-plugin/tests/*.test.cjs\"",
     "test:interactive": "ng test",
     "test:headless": "CI=1 ng test --watch=false",
     "lint": "ng lint",

@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import sharp from 'sharp';
 import DOMPurify from 'isomorphic-dompurify';
+import { snapWidth, inProcessProcessor, type ImageProcessor } from './image-processing';
 
 /**
  * ImageStore — secure, testable core for the KIP image-asset feature.
@@ -103,11 +104,32 @@ export function sanitizeSvg(svg: string): string {
   return typeof clean === 'string' ? clean : String(clean);
 }
 
+export interface ServableImage {
+  buffer: Buffer;
+  contentType: string;
+  filename: string;
+  headers: Record<string, string>;
+}
+
+/** Headers applied to every served image: lock down sniffing + execution, allow long caching. */
+export function safeImageHeaders(contentType: string, filename: string): Record<string, string> {
+  return {
+    'Content-Type': contentType,
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    'Content-Disposition': `inline; filename="${filename}"`,
+    'Cache-Control': 'public, max-age=31536000, immutable'
+  };
+}
+
 export class ImageStore {
   private readonly originalsDir: string;
   private readonly cacheDir: string;
 
-  constructor(private readonly baseDir: string) {
+  constructor(
+    private readonly baseDir: string,
+    private readonly processor: ImageProcessor = inProcessProcessor
+  ) {
     this.originalsDir = path.join(baseDir, 'originals');
     this.cacheDir = path.join(baseDir, 'cache');
   }
@@ -216,6 +238,80 @@ export class ImageStore {
     await rmIfExists(path.join(this.originalsDir, `${id}.json`));
     await fs.rm(path.join(this.cacheDir, id), { recursive: true, force: true });
     return true;
+  }
+
+  /**
+   * Produce a servable image: sanitized SVG as-is, or an on-demand WebP variant (resized to the
+   * snapped width). Raster is ALWAYS re-encoded; the raw original raster is never returned. The
+   * variant is cached on disk; concurrent requests for the same variant are coalesced.
+   */
+  async getServable(id: string, requestedWidth?: number | null): Promise<ServableImage | null> {
+    const meta = await this.getMeta(id);
+    if (!meta) return null;
+
+    if (meta.format === 'svg') {
+      const buffer = await fs.readFile(this.originalPath(meta));
+      return { buffer, contentType: 'image/svg+xml', filename: `${id}.svg`, headers: safeImageHeaders('image/svg+xml', `${id}.svg`) };
+    }
+
+    const width = snapWidth(requestedWidth);
+    const cachePath = path.join(this.cacheDir, id, `${width}.webp`);
+    let buffer = await readIfExists(cachePath);
+    if (!buffer) {
+      const original = await fs.readFile(this.originalPath(meta));
+      const result = await this.processor.process(
+        { buffer: original, format: meta.format, width, animated: meta.animated },
+        `${id}:${width}`
+      );
+      buffer = result.buffer;
+      await fs.mkdir(path.dirname(cachePath), { recursive: true });
+      await fs.writeFile(cachePath, buffer);
+    }
+    return { buffer, contentType: 'image/webp', filename: `${id}.webp`, headers: safeImageHeaders('image/webp', `${id}.webp`) };
+  }
+
+  /** Total bytes + file count of the generated-variant cache (for the settings UI). */
+  async cacheStats(): Promise<{ bytes: number; files: number }> {
+    let bytes = 0;
+    let files = 0;
+    const walk = async (dir: string): Promise<void> => {
+      let entries: import('node:fs').Dirent[];
+      try {
+        entries = await fs.readdir(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        const p = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(p);
+        } else {
+          try {
+            const stat = await fs.stat(p);
+            bytes += stat.size;
+            files += 1;
+          } catch {
+            // skip
+          }
+        }
+      }
+    };
+    await walk(this.cacheDir);
+    return { bytes, files };
+  }
+
+  /** Delete every generated variant. Originals + metadata are untouched (they regenerate on demand). */
+  async purgeCache(): Promise<void> {
+    await fs.rm(this.cacheDir, { recursive: true, force: true });
+    await fs.mkdir(this.cacheDir, { recursive: true });
+  }
+}
+
+async function readIfExists(p: string): Promise<Buffer | null> {
+  try {
+    return await fs.readFile(p);
+  } catch {
+    return null;
   }
 }
 
