@@ -206,22 +206,16 @@ export class ConfigurationUpgradeService {
           for (const rootConfig of rootConfigs) {
             const oldConfiguration = await this._storage.getConfig(rootConfig.scope, rootConfig.name, this.legacyFileVersion) as unknown as IConfig;
             oldConfiguration.app.configVersion = 0; // retire
-            if (rootConfig.scope === 'global') {
-              try {
-                setTimeout(() => {
-                  this._storage.patchGlobal(rootConfig.name, rootConfig.scope, oldConfiguration, 'replace', this.legacyFileVersion);
-                  this.pushMsg(`[Retired] Configuration ${rootConfig.scope}/${rootConfig.name} patched to version 0.`);
-                }, 750);
-              } catch {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}.`);
-              }
-            } else {
-              try {
-                await this._storage.setConfig(rootConfig.scope, rootConfig.name, oldConfiguration, this.legacyFileVersion);
-                this.pushMsg(`[Retired] Configuration ${rootConfig.scope}/${rootConfig.name} patched to version 0.`);
-              } catch {
-                this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}.`);
-              }
+            try {
+              // Await the retire write for BOTH scopes so it completes before the
+              // finally() block runs resetSettings() and reloads the page. The old
+              // 'global' branch scheduled a deferred, un-awaited patchGlobal (via
+              // setTimeout) that the reload aborted, leaving the legacy global config
+              // un-retired. Mirror the awaited setConfig pattern used by runUpgrade().
+              await this._storage.setConfig(rootConfig.scope, rootConfig.name, oldConfiguration, this.legacyFileVersion);
+              this.pushMsg(`[Retired] Configuration ${rootConfig.scope}/${rootConfig.name} patched to version 0.`);
+            } catch {
+              this.pushError(`[Upgrade] Error saving configuration for ${rootConfig.name}.`);
             }
           }
         })
