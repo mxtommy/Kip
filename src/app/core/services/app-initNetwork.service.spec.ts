@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { AppNetworkInitService, IBootstrapIssue } from './app-initNetwork.service';
+import { IConfig, IConnectionConfig } from '../interfaces/app-settings.interfaces';
 import { SignalKConnectionService } from './signalk-connection.service';
 import { AuthenticationService, ILoginStatus } from './authentication.service';
 import { SsoRedirectService } from './sso-redirect.service';
@@ -132,6 +133,55 @@ describe('AppNetworkInitService', () => {
         service.bootstrapIssue$.subscribe(i => (issue = i)).unsubscribe();
         return issue;
     }
+
+    function setConnConfig(cfg: Partial<IConnectionConfig>): void {
+        (service as unknown as { config: Partial<IConnectionConfig> }).config = cfg;
+    }
+    function migrate(remoteConfig: IConfig | null): void {
+        (service as unknown as { migrateRemoteControlToDevice: (r: IConfig | null) => void }).migrateRemoteControlToDevice(remoteConfig);
+    }
+    function storedConn(): IConnectionConfig | null {
+        const raw = localStorage.getItem('connectionConfig');
+        return raw ? JSON.parse(raw) : null;
+    }
+
+    describe('migrateRemoteControlToDevice (connectionConfig v12 -> v13)', () => {
+        const baseV12: Partial<IConnectionConfig> = { configVersion: 12, useSharedConfig: true, isRemoteControl: false, instanceName: '' };
+
+        it('shared boot lifts the profile identity and stamps v13 once', () => {
+            localStorage.removeItem('connectionConfig');
+            setConnConfig({ ...baseV12 });
+            migrate({ app: { isRemoteControl: true, instanceName: 'Helm' } } as unknown as IConfig);
+            expect(storedConn()?.isRemoteControl).toBe(true);
+            expect(storedConn()?.instanceName).toBe('Helm');
+            expect(storedConn()?.configVersion).toBe(13);
+        });
+
+        it('local boot lifts the identity from the local appConfig', () => {
+            localStorage.removeItem('connectionConfig');
+            localStorage.setItem('appConfig', JSON.stringify({ isRemoteControl: true, instanceName: 'Mast' }));
+            setConnConfig({ ...baseV12, useSharedConfig: false });
+            migrate(null);
+            expect(storedConn()?.isRemoteControl).toBe(true);
+            expect(storedConn()?.instanceName).toBe('Mast');
+            expect(storedConn()?.configVersion).toBe(13);
+        });
+
+        it('degraded shared boot (no profile) defers: version stays 12, nothing persisted', () => {
+            localStorage.removeItem('connectionConfig');
+            setConnConfig({ ...baseV12, useSharedConfig: true });
+            migrate(null);
+            expect(storedConn()).toBeNull();
+            expect((service as unknown as { config: IConnectionConfig }).config.configVersion).toBe(12);
+        });
+
+        it('is a no-op when already migrated (version >= 13)', () => {
+            localStorage.removeItem('connectionConfig');
+            setConnConfig({ ...baseV12, configVersion: 13 });
+            migrate({ app: { isRemoteControl: true, instanceName: 'X' } } as unknown as IConfig);
+            expect(storedConn()).toBeNull();
+        });
+    });
 
     describe('cookie-mode bootstrap auth (Unit 6)', () => {
         it('logged-in: proceeds without resetting the budget here (reset deferred to a clean bootstrap)', () => {

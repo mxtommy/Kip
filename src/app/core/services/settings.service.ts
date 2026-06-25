@@ -6,7 +6,7 @@ import { IWidget } from '../interfaces/widgets-interface';
 import { IUnitDefaults } from './units.service';
 import { UUID } from '../utils/uuid.util';
 
-import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl } from "../interfaces/app-settings.interfaces";
+import { IConfig, IAppConfig, IConnectionConfig, IThemeConfig, INotificationConfig, ISignalKUrl, CONNECTION_CONFIG_VERSION, SUPPORTED_CONNECTION_CONFIG_VERSIONS } from "../interfaces/app-settings.interfaces";
 import { DefaultAppConfig, DefaultConnectionConfig as DefaultConnectionConfig, DefaultThemeConfig } from '../../../default-config/config.blank.const';
 import { DefaultUnitsConfig } from '../../../default-config/config.blank.units.const'
 import { DefaultNotificationConfig } from '../../../default-config/config.blank.notification.const';
@@ -23,7 +23,6 @@ import { compare } from 'compare-versions';
 const defaultTheme = '';
 const configFileVersion = 11; // used to change the Signal K configuration storage file name (ie. 9.0.0.json) that contains the configuration definitions. Applies only to remote storage. Local storage has no file concept.
 const latestConfigVersion = 12; // used to set the configVersion property in the app config. This is used to manage config upgrades.
-const latestConnectionConfigVersion = 13; // per-device connectionConfig schema version; bumped for the remote-control identity hoist (Unit 5). Decoupled from the app configVersion.
 @Injectable({
   providedIn: 'root'
 })
@@ -54,6 +53,10 @@ export class SettingsService {
   private loginPassword = '';
   public useSharedConfig = true;
   private sharedConfigName = 'default';
+  // True once the user explicitly changes the remote-control identity this session; until then a
+  // connection write preserves the stored (possibly migration-written) identity rather than the
+  // in-memory default loaded before the migration ran.
+  private connectionIdentityDirty = false;
   private activeConfig: IConfig = { app: null, theme: null, dashboards: [] };
 
   private kipUUID = '';
@@ -146,7 +149,7 @@ export class SettingsService {
       localStorage.setItem("connectionConfig", JSON.stringify(config));
     }
 
-    // Remote-control identity is per-device (Unit 5): read from connectionConfig, not the profile.
+    // Remote-control identity is per-device: read from connectionConfig, not the profile.
     this.isRemoteControl.next(config.isRemoteControl ?? false);
     this.instanceName.next(config.instanceName ?? '');
   }
@@ -199,7 +202,7 @@ export class SettingsService {
     }
 
     if(type === 'connectionConfig') {
-      if (config.configVersion !== latestConfigVersion && config.configVersion !== latestConnectionConfigVersion) {
+      if (!SUPPORTED_CONNECTION_CONFIG_VERSIONS.includes(config.configVersion)) {
         console.log(`[AppSettings Service] Invalid ${type} version. Force loading defaults`);
 
         switch (type) {
@@ -433,7 +436,8 @@ export class SettingsService {
 
   public setIsRemoteControl(enabled: boolean) {
     this.isRemoteControl.next(enabled);
-    // Per-device (Unit 5): persist to connectionConfig, never the profile.
+    this.connectionIdentityDirty = true;
+    // Remote-control identity is per-device: persist to connectionConfig, never the profile.
     this.saveConnectionConfigToLocalStorage();
   }
 
@@ -448,7 +452,8 @@ export class SettingsService {
 
   public setInstanceName(name: string) {
     this.instanceName.next(name);
-    // Per-device (Unit 5): persist to connectionConfig, never the profile.
+    this.connectionIdentityDirty = true;
+    // Remote-control identity is per-device: persist to connectionConfig, never the profile.
     this.saveConnectionConfigToLocalStorage();
   }
 
@@ -711,8 +716,12 @@ export class SettingsService {
   }
 
   private buildConnectionStorageObject() {
+    const stored = this.readStoredConnectionConfig();
     const storageObject: IConnectionConfig = {
-      configVersion: latestConnectionConfigVersion,
+      // Preserve the stored connectionConfig version; only the one-time migration in
+      // AppNetworkInitService advances it. Stamping the latest here would prematurely mark the
+      // migration done and lose the not-yet-lifted remote-control identity.
+      configVersion: stored?.configVersion ?? CONNECTION_CONFIG_VERSION,
       kipUUID: this.kipUUID,
       signalKUrl: this.signalkUrl?.url ?? '',
       proxyEnabled: this.proxyEnabled,
@@ -722,10 +731,20 @@ export class SettingsService {
       // loginPassword intentionally omitted: never persisted (transient in-memory only).
       useSharedConfig: this.useSharedConfig,
       sharedConfigName: this.sharedConfigName,
-      isRemoteControl: this.isRemoteControl.getValue(),
-      instanceName: this.instanceName.getValue()
+      // Preserve the stored (possibly migration-written) identity unless the user changed it this
+      // session, so a connection write around the migration cannot revert the lifted value.
+      isRemoteControl: this.connectionIdentityDirty ? this.isRemoteControl.getValue() : (stored?.isRemoteControl ?? this.isRemoteControl.getValue()),
+      instanceName: this.connectionIdentityDirty ? this.instanceName.getValue() : (stored?.instanceName ?? this.instanceName.getValue())
     }
     return storageObject;
+  }
+
+  private readStoredConnectionConfig(): Partial<IConnectionConfig> | null {
+    try {
+      return JSON.parse(localStorage.getItem('connectionConfig') ?? 'null');
+    } catch {
+      return null;
+    }
   }
 
   private buildDashboardStorageObject() {

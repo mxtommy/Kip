@@ -8,7 +8,7 @@
 **/
 import { inject, Injectable, Injector, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { IConfig, IConnectionConfig } from "../interfaces/app-settings.interfaces";
+import { IConfig, IConnectionConfig, CONNECTION_CONFIG_VERSION } from "../interfaces/app-settings.interfaces";
 import { SignalKConnectionService } from "./signalk-connection.service";
 import { AuthenticationService, ILoginStatus } from './authentication.service';
 import { SsoRedirectService } from './sso-redirect.service';
@@ -365,7 +365,7 @@ export class AppNetworkInitService implements OnDestroy {
    * @param {IConfig | null} remoteConfig The profile loaded this boot, or null when unavailable.
    */
   private migrateRemoteControlToDevice(remoteConfig: IConfig | null): void {
-    if (!this.config || this.config.configVersion >= 13) {
+    if (!this.config || this.config.configVersion >= CONNECTION_CONFIG_VERSION) {
       return;
     }
     // The fields still exist at runtime in pre-migration stored configs, but were removed from IAppConfig.
@@ -383,7 +383,7 @@ export class AppNetworkInitService implements OnDestroy {
     }
     this.config.isRemoteControl = app?.isRemoteControl ?? false;
     this.config.instanceName = app?.instanceName ?? '';
-    this.config.configVersion = 13;
+    this.config.configVersion = CONNECTION_CONFIG_VERSION;
     this.setLocalStorageConfig();
     console.log('[AppInit Network Service] Migrated remote-control identity to per-device connectionConfig (v13)');
   }
