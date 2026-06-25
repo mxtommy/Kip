@@ -227,4 +227,26 @@ describe('SettingsService', () => {
       expect(app['instanceName']).toBeUndefined();
     });
   });
+
+  describe('loadDemoConfig storage-readiness guard (server mode)', () => {
+    beforeEach(() => { (window as unknown as Record<string, unknown>)['__KIP_TEST__'] = true; });
+
+    it('does not write the demo config to the server when storage is not ready', () => {
+      const service = createService({ useSharedConfig: true, sharedConfigName: 'profileA' });
+      const storage = TestBed.inject(StorageService);
+      storage.storageServiceReady$.next(false);
+      const setSpy = vi.spyOn(storage, 'setConfig').mockImplementation(() => undefined);
+      service.loadDemoConfig();
+      expect(setSpy).not.toHaveBeenCalled();
+    });
+
+    it('writes the demo config to the server when storage is ready', () => {
+      const service = createService({ useSharedConfig: true, sharedConfigName: 'profileA' });
+      const storage = TestBed.inject(StorageService);
+      storage.storageServiceReady$.next(true);
+      const setSpy = vi.spyOn(storage, 'setConfig').mockImplementation(() => undefined);
+      service.loadDemoConfig();
+      expect(setSpy).toHaveBeenCalledWith('user', 'profileA', expect.objectContaining({ app: expect.anything() }));
+    });
+  });
 });
