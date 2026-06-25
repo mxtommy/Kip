@@ -28,12 +28,12 @@
                 @if (!profile.isActive) {
                   <button mat-button color="accent" (click)="switchProfile(profile.name)">Switch</button>
                 }
-                <button mat-button (click)="renameProfile(profile.name)">Rename</button>
-                <button mat-button (click)="duplicateProfile(profile.name)">Duplicate</button>
+                <button mat-button [disabled]="!canWriteUserData()" (click)="renameProfile(profile.name)">Rename</button>
+                <button mat-button [disabled]="!canWriteUserData()" (click)="duplicateProfile(profile.name)">Duplicate</button>
                 <button
                   mat-button
                   color="warn"
-                  [disabled]="profile.isActive || profile.name === 'default' || profiles().length <= 1"
+                  [disabled]="profile.isActive || profile.name === 'default' || profiles().length <= 1 || !canWriteUserData()"
                   (click)="deleteProfile(profile.name)"
                   >
                   Delete
@@ -47,7 +47,10 @@
 
         <div class="formActionFooter">
           <mat-divider class="formActionDivider"></mat-divider>
-          <button mat-flat-button color="accent" (click)="createProfile()">New</button>
+          <button mat-flat-button color="accent" [disabled]="!canWriteUserData()" (click)="createProfile()">New</button>
+          @if (!canWriteUserData()) {
+            <p class="empty-note">Read-only session — profile changes are disabled.</p>
+          }
         </div>
       } @else {
         <div class="no-token-notice">
@@ -73,7 +76,7 @@
         </div>
         <div class="upload-btn btn-div">
           <input type="file" #fileInput (change)="uploadJsonConfig($event)" accept=".json" hidden />
-          <button mat-flat-button class="adv-btn" (click)="fileInput.click()">Import</button>
+          <button mat-flat-button class="adv-btn" [disabled]="!canWriteUserData()" (click)="fileInput.click()">Import</button>
         </div>
 
         <div class="demo-txt">

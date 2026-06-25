@@ -14,6 +14,7 @@ describe('SettingsConfigComponent', () => {
   let component: SettingsConfigComponent;
   let fixture: ComponentFixture<SettingsConfigComponent>;
   let isUserSessionSubject: BehaviorSubject<boolean>;
+  let canWriteUserDataSubject: BehaviorSubject<boolean>;
   let profilesSignal: ReturnType<typeof signal<IProfileSummary[]>>;
   let profileMock: {
     profiles: typeof profilesSignal;
@@ -33,6 +34,7 @@ describe('SettingsConfigComponent', () => {
 
   beforeEach(async () => {
     isUserSessionSubject = new BehaviorSubject<boolean>(false);
+    canWriteUserDataSubject = new BehaviorSubject<boolean>(true);
     profilesSignal = signal<IProfileSummary[]>([
       { name: 'default', isActive: false },
       { name: 'profileA', isActive: true }
@@ -56,7 +58,7 @@ describe('SettingsConfigComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SettingsConfigComponent],
       providers: [
-        { provide: AuthenticationService, useValue: { isUserSession$: isUserSessionSubject.asObservable() } },
+        { provide: AuthenticationService, useValue: { isUserSession$: isUserSessionSubject.asObservable(), canWriteUserData$: canWriteUserDataSubject.asObservable() } },
         { provide: StorageService, useValue: { isAppDataSupported: true } },
         { provide: ToastService, useValue: toastMock },
         { provide: ProfileService, useValue: profileMock },
@@ -102,6 +104,16 @@ describe('SettingsConfigComponent', () => {
     fixture.detectChanges();
     expect(component['profilesAvailable']()).toBe(false);
     expect(profileMock.refresh).not.toHaveBeenCalled();
+  });
+
+  it('keeps profiles visible but disables the New (write) control for a read-only session', () => {
+    isUserSessionSubject.next(true);
+    canWriteUserDataSubject.next(false);
+    fixture.detectChanges();
+    expect(component['profilesAvailable']()).toBe(true);
+    expect(component['canWriteUserData']()).toBe(false);
+    const newBtn = fixture.nativeElement.querySelector('.formActionFooter button') as HTMLButtonElement | null;
+    expect(newBtn?.disabled).toBe(true);
   });
 
   it('switchProfile confirms then delegates to ProfileService', async () => {

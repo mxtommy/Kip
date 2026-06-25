@@ -41,8 +41,10 @@ export class SettingsConfigComponent {
   protected profilesAvailable = computed(() =>
     this.supportApplicationData && this.isUserSession()
   );
+  // Read is available to any user session; profile mutations (create/rename/duplicate/delete/import)
+  // need write capability — a read-only session must not get live write controls.
+  protected canWriteUserData = toSignal(this.auth.canWriteUserData$, { initialValue: false });
   protected profiles = this.profileService.profiles;
-  protected jsonData: IConfig = null;
 
   private readonly profileLoadEffect = effect(() => {
     if (this.profilesAvailable()) {
