@@ -35,6 +35,10 @@ export class ProfileService {
   public readonly profiles = this._profiles.asReadonly();
   public readonly activeProfileName = computed(() => this._profiles().find((p) => p.isActive)?.name ?? null);
 
+  // Serializes mutating operations: a second create/rename/delete/switch while one is in flight is
+  // rejected rather than racing (the plan's double-switch / re-entrancy guard).
+  private mutationInFlight = false;
+
   /** Refresh the user-scope profile list and flag the active one. */
   public async refresh(): Promise<void> {
     const all = (await this.storage.listConfigs()) ?? [];
@@ -46,41 +50,62 @@ export class ProfileService {
     );
   }
 
-  /** Make a profile active on this device. Drains pending writes, then persists + reloads. */
+  /** Make a profile active on this device. Verifies the slot still exists, drains pending writes, then persists + reloads. */
   public async switchProfile(name: string): Promise<void> {
-    await this.storage.awaitQueueDrain();
-    this.settings.setActiveProfile(name);
+    return this.exclusive(async () => {
+      await this.refresh();
+      if (!this.existingNames().includes(name)) {
+        throw new Error(`Profile "${name}" no longer exists — it may have been deleted on another device.`);
+      }
+      await this.storage.awaitQueueDrain();
+      this.settings.setActiveProfile(name);
+    });
   }
 
   /** Create a new profile from a blank default config. Does not switch. */
   public async createProfile(name: string): Promise<void> {
-    await this.refresh();
-    const normalized = this.validateNewName(name);
-    await this.storage.setConfig(PROFILE_SCOPE, normalized, cloneDeep(this.buildBlankConfig()));
-    await this.refresh();
+    return this.exclusive(async () => {
+      await this.refresh();
+      const normalized = this.validateNewName(name);
+      await this.storage.setConfig(PROFILE_SCOPE, normalized, cloneDeep(this.buildBlankConfig()));
+      await this.refresh();
+    });
   }
 
   /**
    * Import an arbitrary config as a NEW profile (never overwrites an existing one, never
-   * auto-switches). The config is structurally validated before it is written.
+   * auto-switches). The config is structurally validated AND its version checked before it is written,
+   * so a shape-valid but unsupported-version file cannot become a switchable, unbootable slot.
    */
   public async importProfile(name: string, config: unknown): Promise<void> {
-    await this.refresh();
-    const normalized = this.validateNewName(name);
-    if (!this.isValidConfigShape(config)) {
-      throw new Error('The selected file is not a valid KIP configuration.');
-    }
-    await this.storage.setConfig(PROFILE_SCOPE, normalized, config);
-    await this.refresh();
+    return this.exclusive(async () => {
+      await this.refresh();
+      const normalized = this.validateNewName(name);
+      if (!this.isValidConfigShape(config)) {
+        throw new Error('The selected file is not a valid KIP configuration.');
+      }
+      const supported = defaultConfig.app?.configVersion;
+      const version = config.app?.configVersion;
+      if (version !== supported) {
+        throw new Error(`This configuration is version ${version ?? 'unknown'}, but this version of KIP supports version ${supported}. Re-export it from a current KIP and try again.`);
+      }
+      await this.storage.setConfig(PROFILE_SCOPE, normalized, config);
+      await this.refresh();
+    });
   }
 
   /** Copy an existing profile's config under a new name. */
   public async duplicateProfile(sourceName: string, newName: string): Promise<void> {
-    await this.refresh();
-    const normalized = this.validateNewName(newName);
-    const sourceConfig = await this.storage.getConfig(PROFILE_SCOPE, sourceName);
-    await this.storage.setConfig(PROFILE_SCOPE, normalized, sourceConfig);
-    await this.refresh();
+    return this.exclusive(async () => {
+      await this.refresh();
+      const normalized = this.validateNewName(newName);
+      const sourceConfig = await this.storage.getConfig(PROFILE_SCOPE, sourceName);
+      if (!this.isValidConfigShape(sourceConfig)) {
+        throw new Error(`Profile "${sourceName}" has no usable configuration to copy.`);
+      }
+      await this.storage.setConfig(PROFILE_SCOPE, normalized, sourceConfig);
+      await this.refresh();
+    });
   }
 
   /**
@@ -89,39 +114,58 @@ export class ProfileService {
    * name so the device never reloads into a missing slot and no orphan is left behind.
    */
   public async renameProfile(oldName: string, newName: string): Promise<void> {
-    await this.refresh();
-    const normalized = this.validateNewName(newName);
-    if (oldName === RESERVED_DEFAULT) {
-      throw new Error(`The "${RESERVED_DEFAULT}" profile cannot be renamed.`);
-    }
-    const sourceConfig = await this.storage.getConfig(PROFILE_SCOPE, oldName);
-    await this.storage.setConfig(PROFILE_SCOPE, normalized, sourceConfig);
-
-    this.storage.removeItem(PROFILE_SCOPE, oldName);
-    await this.storage.awaitQueueDrain();
-
-    if (oldName === this.settings.getActiveProfileName()) {
-      this.settings.setActiveProfile(normalized); // persist + reload onto the renamed slot
-    } else {
+    return this.exclusive(async () => {
       await this.refresh();
-    }
+      const normalized = this.validateNewName(newName);
+      if (oldName === RESERVED_DEFAULT) {
+        throw new Error(`The "${RESERVED_DEFAULT}" profile cannot be renamed.`);
+      }
+      const sourceConfig = await this.storage.getConfig(PROFILE_SCOPE, oldName);
+      if (!this.isValidConfigShape(sourceConfig)) {
+        throw new Error(`Profile "${oldName}" has no usable configuration to rename.`);
+      }
+      await this.storage.setConfig(PROFILE_SCOPE, normalized, sourceConfig);
+
+      this.storage.removeItem(PROFILE_SCOPE, oldName);
+      await this.storage.awaitQueueDrain();
+
+      if (oldName === this.settings.getActiveProfileName()) {
+        this.settings.setActiveProfile(normalized); // persist + reload onto the renamed slot
+      } else {
+        await this.refresh();
+      }
+    });
   }
 
   /** Delete a profile. Refuses the active, the reserved default, and the last remaining profile. */
   public async deleteProfile(name: string): Promise<void> {
-    await this.refresh();
-    if (name === RESERVED_DEFAULT) {
-      throw new Error(`The "${RESERVED_DEFAULT}" profile cannot be deleted.`);
+    return this.exclusive(async () => {
+      await this.refresh();
+      if (name === RESERVED_DEFAULT) {
+        throw new Error(`The "${RESERVED_DEFAULT}" profile cannot be deleted.`);
+      }
+      if (name === this.settings.getActiveProfileName()) {
+        throw new Error('The active profile cannot be deleted. Switch to another profile first.');
+      }
+      if (this.existingNames().length <= 1) {
+        throw new Error('The last remaining profile cannot be deleted.');
+      }
+      this.storage.removeItem(PROFILE_SCOPE, name);
+      await this.storage.awaitQueueDrain();
+      await this.refresh();
+    });
+  }
+
+  private async exclusive<T>(op: () => Promise<T>): Promise<T> {
+    if (this.mutationInFlight) {
+      throw new Error('Another profile operation is still in progress. Please wait for it to finish.');
     }
-    if (name === this.settings.getActiveProfileName()) {
-      throw new Error('The active profile cannot be deleted. Switch to another profile first.');
+    this.mutationInFlight = true;
+    try {
+      return await op();
+    } finally {
+      this.mutationInFlight = false;
     }
-    if (this.existingNames().length <= 1) {
-      throw new Error('The last remaining profile cannot be deleted.');
-    }
-    this.storage.removeItem(PROFILE_SCOPE, name);
-    await this.storage.awaitQueueDrain();
-    await this.refresh();
   }
 
   private existingNames(): string[] {

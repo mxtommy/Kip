@@ -69,10 +69,15 @@ describe('ProfileService', () => {
   });
 
   describe('switch', () => {
-    it('drains the queue then delegates to SettingsService.setActiveProfile', async () => {
-      await service.switchProfile('cockpit');
+    it('verifies the slot exists, drains the queue, then delegates to setActiveProfile', async () => {
+      await service.switchProfile('default'); // present in the listed user slots
       expect(storage.awaitQueueDrain).toHaveBeenCalled();
-      expect(settings.setActiveProfile).toHaveBeenCalledWith('cockpit');
+      expect(settings.setActiveProfile).toHaveBeenCalledWith('default');
+    });
+
+    it('refuses to switch to a slot that no longer exists (deleted on another device)', async () => {
+      await expect(service.switchProfile('ghost')).rejects.toThrow(/no longer exists/i);
+      expect(settings.setActiveProfile).not.toHaveBeenCalled();
     });
   });
 
@@ -119,6 +124,13 @@ describe('ProfileService', () => {
       expect(storage.getConfig).toHaveBeenCalledWith('user', 'profileA');
       expect(storage.setConfig).toHaveBeenCalledWith('user', 'profileB', expect.anything());
     });
+
+    it('refuses to copy an empty/unbootable source slot (server returns {})', async () => {
+      storage.getConfig.mockResolvedValueOnce({} as IConfig);
+      await service.refresh();
+      await expect(service.duplicateProfile('profileA', 'profileB')).rejects.toThrow(/no usable configuration/i);
+      expect(storage.setConfig).not.toHaveBeenCalled();
+    });
   });
 
   describe('import', () => {
@@ -132,6 +144,13 @@ describe('ProfileService', () => {
     it('rejects a structurally invalid config without writing', async () => {
       await service.refresh();
       await expect(service.importProfile('imported', { not: 'a config' })).rejects.toThrow(/valid/i);
+      expect(storage.setConfig).not.toHaveBeenCalled();
+    });
+
+    it('rejects a shape-valid config with an unsupported version without writing', async () => {
+      await service.refresh();
+      const stale = { app: { configVersion: 9 }, theme: { themeName: 'old' }, dashboards: [] };
+      await expect(service.importProfile('imported', stale)).rejects.toThrow(/version/i);
       expect(storage.setConfig).not.toHaveBeenCalled();
     });
 
@@ -197,6 +216,27 @@ describe('ProfileService', () => {
     it('blocks renaming the reserved default profile', async () => {
       await service.refresh();
       await expect(service.renameProfile('default', 'x')).rejects.toThrow(/default/i);
+    });
+
+    it('refuses to rename when the source slot is empty/unbootable', async () => {
+      setup(makeStorageMock(['default', 'profileA', 'other']), makeSettingsMock('profileA'));
+      storage.getConfig.mockResolvedValueOnce({} as IConfig);
+      await service.refresh();
+      await expect(service.renameProfile('other', 'renamed')).rejects.toThrow(/no usable configuration/i);
+      expect(storage.setConfig).not.toHaveBeenCalled();
+      expect(storage.removeItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('re-entrancy', () => {
+    it('rejects a second mutation while one is still in flight', async () => {
+      let release: () => void = () => undefined;
+      storage.setConfig.mockReturnValueOnce(new Promise((r) => { release = () => r(null); }));
+      const first = service.createProfile('one');
+      const second = service.createProfile('two');
+      await expect(second).rejects.toThrow(/in progress/i);
+      release();
+      await first;
     });
   });
 });
