@@ -187,6 +187,13 @@ describe('ProfileService', () => {
       await service.deleteProfile('old');
       expect(storage.removeItem).toHaveBeenCalledWith('user', 'old');
     });
+
+    it('surfaces a delete that did not persist (drain reports failure)', async () => {
+      setup(makeStorageMock(['default', 'profileA', 'old']), makeSettingsMock('profileA'));
+      storage.awaitQueueDrain.mockResolvedValueOnce(false);
+      await service.refresh();
+      await expect(service.deleteProfile('old')).rejects.toThrow(/retry/i);
+    });
   });
 
   describe('rename', () => {
@@ -225,6 +232,17 @@ describe('ProfileService', () => {
       await expect(service.renameProfile('other', 'renamed')).rejects.toThrow(/no usable configuration/i);
       expect(storage.setConfig).not.toHaveBeenCalled();
       expect(storage.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('waits for the old-slot delete to drain before switching to the renamed active slot', async () => {
+      let resolveDrain: (v: boolean) => void = () => undefined;
+      storage.awaitQueueDrain.mockReturnValueOnce(new Promise<boolean>((r) => { resolveDrain = r; }));
+      const p = service.renameProfile('profileA', 'newName'); // active = profileA
+      await new Promise((r) => setTimeout(r, 0)); // flush the resolved awaits up to the hanging drain
+      expect(settings.setActiveProfile).not.toHaveBeenCalled();
+      resolveDrain(true);
+      await p;
+      expect(settings.setActiveProfile).toHaveBeenCalledWith('newName');
     });
   });
 

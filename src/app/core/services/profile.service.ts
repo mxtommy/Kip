@@ -57,7 +57,10 @@ export class ProfileService {
       if (!this.existingNames().includes(name)) {
         throw new Error(`Profile "${name}" no longer exists — it may have been deleted on another device.`);
       }
-      await this.storage.awaitQueueDrain();
+      const drained = await this.storage.awaitQueueDrain();
+      if (!drained) {
+        console.warn('[ProfileService] Pending changes to the previous profile may not have been saved before switching.');
+      }
       this.settings.setActiveProfile(name);
     });
   }
@@ -127,7 +130,10 @@ export class ProfileService {
       await this.storage.setConfig(PROFILE_SCOPE, normalized, sourceConfig);
 
       this.storage.removeItem(PROFILE_SCOPE, oldName);
-      await this.storage.awaitQueueDrain();
+      const drained = await this.storage.awaitQueueDrain();
+      if (!drained) {
+        console.warn(`[ProfileService] Old profile slot "${oldName}" may not have been removed; an orphan copy could remain until the next refresh.`);
+      }
 
       if (oldName === this.settings.getActiveProfileName()) {
         this.settings.setActiveProfile(normalized); // persist + reload onto the renamed slot
@@ -151,8 +157,11 @@ export class ProfileService {
         throw new Error('The last remaining profile cannot be deleted.');
       }
       this.storage.removeItem(PROFILE_SCOPE, name);
-      await this.storage.awaitQueueDrain();
+      const drained = await this.storage.awaitQueueDrain();
       await this.refresh();
+      if (!drained) {
+        throw new Error(`Could not confirm "${name}" was deleted on the server — it may still exist. Please retry.`);
+      }
     });
   }
 

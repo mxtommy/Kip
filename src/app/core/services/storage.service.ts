@@ -51,6 +51,7 @@ export class StorageService {
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
   private _pendingPatches$ = new BehaviorSubject<number>(0); // in-flight + queued patch count, for awaitQueueDrain
+  private _patchFailures = 0; // monotonic count of failed patches, so awaitQueueDrain can report failure (not just emptiness)
   private patch = function (arg: IPatchAction) { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
@@ -94,6 +95,7 @@ export class StorageService {
           this.patch(arg).pipe(
             catchError((err) => {
               console.error('[Storage Service] Config patch failed; keeping the queue alive:', err);
+              this._patchFailures++;
               return of(null);
             }),
             finalize(() => this._pendingPatches$.next(Math.max(0, this._pendingPatches$.value - 1)))
@@ -192,9 +194,15 @@ export class StorageService {
    * @param {number} timeoutMs Maximum time to wait before resolving false. Defaults to 5000.
    * @returns {Promise<boolean>} True if the queue drained, false on timeout.
    */
+  /**
+   * Resolves true only when the queue empties with no patch failure in the meantime; false if a
+   * patch failed while draining or the wait times out. Callers that treat a drain as a save/delete
+   * guarantee (e.g. profile switch/rename/delete) must check the result rather than assume success.
+   */
   public awaitQueueDrain(timeoutMs = 5000): Promise<boolean> {
+    const failuresAtStart = this._patchFailures;
     if (this._pendingPatches$.value === 0) {
-      return Promise.resolve(true);
+      return Promise.resolve(this._patchFailures === failuresAtStart);
     }
     return new Promise<boolean>((resolve) => {
       let settled = false;
@@ -206,7 +214,7 @@ export class StorageService {
         resolve(result);
       };
       const sub = this._pendingPatches$.subscribe((count) => {
-        if (count === 0) finish(true);
+        if (count === 0) finish(this._patchFailures === failuresAtStart);
       });
       const timer = window.setTimeout(() => finish(false), timeoutMs);
     });
