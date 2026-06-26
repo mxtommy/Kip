@@ -46,6 +46,15 @@ describe('VideoCameraSetupComponent', () => {
     expect(input.value).toBe('https://cam.example/v.mp4');
   });
 
+  it('ensures transport + quality preset defaults and renders the preset control', () => {
+    fixture.detectChanges();
+    expect(videoGroup.get('transport')?.value).toBe('auto');
+    expect(videoGroup.get('preset')?.value).toBe('balanced');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Quality');
+    expect(text).toContain('Docking');
+  });
+
   it('ensures the nested snapshot group with privacy + destination defaults', () => {
     fixture.detectChanges();
     const snapshot = videoGroup.get('snapshot') as UntypedFormGroup;

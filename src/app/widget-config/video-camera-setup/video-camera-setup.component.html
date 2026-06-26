@@ -41,7 +41,38 @@
           SK Video gateway, added in a later update.
         </mat-hint>
       </mat-form-field>
+
+      <mat-form-field class="video-setup__fit">
+        <mat-label>Stream type</mat-label>
+        <mat-select formControlName="transport">
+          <mat-option value="auto">Auto-detect</mat-option>
+          <mat-option value="file">Video file (MP4/WebM)</mat-option>
+          <mat-option value="hls">HLS (.m3u8)</mat-option>
+          <mat-option value="mjpeg">MJPEG</mat-option>
+          <mat-option value="webrtc">WebRTC (WHEP)</mat-option>
+        </mat-select>
+      </mat-form-field>
     }
+  </section>
+
+  <!-- Quality & Latency -->
+  <section class="video-setup__section">
+    <p class="video-setup__label">Quality &amp; Latency</p>
+    <mat-button-toggle-group class="video-setup__sources" formControlName="preset" aria-label="Quality and latency preset">
+      <mat-button-toggle value="docking">
+        <span class="video-setup__source-name">Docking</span>
+        <small class="video-setup__soon">Lowest delay</small>
+      </mat-button-toggle>
+      <mat-button-toggle value="balanced">
+        <span class="video-setup__source-name">Balanced</span>
+        <small class="video-setup__soon">Recommended</small>
+      </mat-button-toggle>
+      <mat-button-toggle value="best">
+        <span class="video-setup__source-name">Best quality</span>
+        <small class="video-setup__soon">Smoothest</small>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+    <small class="video-setup__hint">{{ presetHint }}</small>
   </section>
 
   <!-- Appearance -->

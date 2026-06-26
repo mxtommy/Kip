@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { mapPreset, type TVideoPreset } from '../../widgets/widget-video/playback-presets.util';
 
 /**
  * Widget config sub-component for the Video widget. Binds to the widget config's nested `video`
@@ -38,6 +39,8 @@ export class VideoCameraSetupComponent implements OnInit {
     }
     this.ensure('sourceKind', 'url');
     this.ensure('url', null);
+    this.ensure('transport', 'auto');
+    this.ensure('preset', 'balanced');
     this.ensure('muted', true);
     this.ensure('autoplay', false);
     this.ensure('loop', false);
@@ -53,6 +56,11 @@ export class VideoCameraSetupComponent implements OnInit {
   /** Currently selected source kind (defaults to 'url'). */
   protected get sourceKind(): string {
     return this.videoGroup?.get('sourceKind')?.value ?? 'url';
+  }
+
+  /** Plain-language hint for the currently selected quality/latency preset. */
+  protected get presetHint(): string {
+    return mapPreset((this.videoGroup?.get('preset')?.value as TVideoPreset) ?? 'balanced').hint;
   }
 
   private ensure(name: string, defaultValue: unknown): void {
