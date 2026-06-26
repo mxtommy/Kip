@@ -172,6 +172,19 @@ export class VideoCameraSetupComponent implements OnInit {
     return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
   }
 
+  /** Friendly label for a camera scheme, keeping the protocol name discoverable in parentheses. */
+  protected schemeLabel(scheme: string): string {
+    const labels: Record<string, string> = {
+      rtsp: 'IP camera (RTSP)',
+      rtsps: 'IP camera, secure (RTSPS)',
+      rtmp: 'RTMP stream',
+      http: 'Web camera (HTTP)',
+      https: 'Web camera, secure (HTTPS)',
+      onvif: 'ONVIF camera'
+    };
+    return labels[scheme] ?? scheme;
+  }
+
   /** Currently selected source kind (defaults to 'url'). */
   protected get sourceKind(): string {
     return this.videoGroup?.get('sourceKind')?.value ?? 'url';

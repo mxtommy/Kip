@@ -275,7 +275,7 @@ export class WidgetVideoComponent {
       const verdict = evaluateFirstFrame({ paintedFrame: painted, hasData: video.readyState >= 2, timedOut: true });
       if (verdict === 'no-decode') {
         this.codecWarning.set(
-          'No picture — this device may not be able to decode this video (e.g. HEVC/H.265). Try a different stream or quality.'
+          'No picture. This device can’t play this camera’s video format (often HEVC/H.265). Try switching Connection to “Standard”, or pick a lower quality.'
         );
       }
     }, WidgetVideoComponent.FIRST_FRAME_TIMEOUT_MS);
@@ -297,7 +297,7 @@ export class WidgetVideoComponent {
   private readonly onError = (): void => {
     const pipe = this.pipeline();
     if (pipe === 'file') {
-      this.playbackError.set('Could not load this video.');
+      this.playbackError.set('This browser can’t play this video.');
     } else if (pipe === 'hls-native') {
       this.scheduleReconnect(this.generation);
     }
@@ -564,7 +564,7 @@ export class WidgetVideoComponent {
       }
     } catch {
       if (this.generation === gen) {
-        this.playbackError.set('Could not connect to the WebRTC stream.');
+        this.playbackError.set('Couldn’t connect to the live video.');
       }
     }
   }
@@ -614,7 +614,7 @@ export class WidgetVideoComponent {
       const isSecurity = err instanceof DOMException && err.name === 'SecurityError';
       this.snapshotError.set(
         isSecurity
-          ? 'Snapshot is not available for this source (cross-origin without CORS).'
+          ? 'Can’t take a snapshot from this video source.'
           : 'Snapshot failed.'
       );
     }

@@ -28,21 +28,21 @@
           matInput
           type="url"
           formControlName="url"
-          placeholder="https://… .mp4 / .webm / .m3u8">
+          placeholder="https://example.com/deck-camera.m3u8">
         <mat-hint>
-          A browser-playable URL (MP4/WebM file, HLS stream, or MJPEG). RTSP/RTMP cameras need the
-          SK Video gateway, added in a later update.
+          Paste a link to a video or live stream that opens in a web browser. For an onboard IP camera
+          (RTSP/RTMP), add it under the Camera tab instead.
         </mat-hint>
       </mat-form-field>
 
       <mat-form-field class="video-setup__fit">
-        <mat-label>Stream type</mat-label>
+        <mat-label>Video type</mat-label>
         <mat-select formControlName="transport">
-          <mat-option value="auto">Auto-detect</mat-option>
-          <mat-option value="file">Video file (MP4/WebM)</mat-option>
-          <mat-option value="hls">HLS (.m3u8)</mat-option>
-          <mat-option value="mjpeg">MJPEG</mat-option>
-          <mat-option value="webrtc">WebRTC (WHEP)</mat-option>
+          <mat-option value="auto">Detect automatically</mat-option>
+          <mat-option value="file">Recorded video file (MP4/WebM)</mat-option>
+          <mat-option value="hls">Live stream (HLS)</mat-option>
+          <mat-option value="mjpeg">Camera image stream (MJPEG)</mat-option>
+          <mat-option value="webrtc">Live, lowest delay (WebRTC)</mat-option>
         </mat-select>
       </mat-form-field>
     }
@@ -67,12 +67,12 @@
       </div>
 
       <mat-form-field class="video-setup__fit">
-        <mat-label>Delivery</mat-label>
+        <mat-label>Connection</mat-label>
         <mat-select formControlName="transport">
           <mat-option value="hls">Standard (HLS)</mat-option>
-          <mat-option value="webrtc">Low latency (WebRTC)</mat-option>
+          <mat-option value="webrtc">Live — lowest delay (WebRTC)</mat-option>
         </mat-select>
-        <mat-hint>RTSP/RTMP cameras play through the SK Video gateway on your Signal K server.</mat-hint>
+        <mat-hint>Your Signal K server connects to the camera and sends the video to this screen.</mat-hint>
       </mat-form-field>
 
       <div class="video-setup__scan">
@@ -107,10 +107,10 @@
         </mat-form-field>
         <div class="video-setup__manual-row">
           <mat-form-field class="video-setup__manual-scheme">
-            <mat-label>Stream type</mat-label>
+            <mat-label>Camera type</mat-label>
             <mat-select formControlName="scheme">
               @for (s of schemes; track s) {
-                <mat-option [value]="s">{{ s }}</mat-option>
+                <mat-option [value]="s">{{ schemeLabel(s) }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -200,7 +200,7 @@
       </mat-button-toggle>
       <mat-button-toggle value="balanced">
         <span class="video-setup__source-name">Balanced</span>
-        <small class="video-setup__soon">Recommended</small>
+        <small class="video-setup__soon">Everyday use</small>
       </mat-button-toggle>
       <mat-button-toggle value="best">
         <span class="video-setup__source-name">Best quality</span>
@@ -220,11 +220,11 @@
     </mat-form-field>
     <div class="video-setup__appearance">
       <mat-form-field>
-        <mat-label>Scaling</mat-label>
+        <mat-label>Picture size</mat-label>
         <mat-select formControlName="objectFit">
           <mat-option value="contain">Fit (show whole picture)</mat-option>
           <mat-option value="cover">Fill (crop to frame)</mat-option>
-          <mat-option value="fill">Stretch</mat-option>
+          <mat-option value="fill">Stretch (fills the box, may distort)</mat-option>
         </mat-select>
       </mat-form-field>
       <div class="video-setup__toggles">
@@ -240,12 +240,17 @@
     <h3 class="video-setup__label">Snapshot</h3>
     <div class="video-setup__toggles video-setup__toggles--stacked">
       <mat-checkbox formControlName="embedLocation" aria-describedby="loc-privacy">
-        Embed location (GPS) in snapshot metadata
+        Save the boat’s location (GPS) in the photo
       </mat-checkbox>
-      <small class="video-setup__hint" id="loc-privacy">A shared or exported photo will reveal where the boat was.</small>
-      <mat-checkbox formControlName="embedTelemetry">
-        Embed other telemetry (time, speed, heading, depth, wind…)
+      <small class="video-setup__hint" id="loc-privacy">
+        Anyone you share or export the photo to can see where the boat was.
+      </small>
+      <mat-checkbox formControlName="embedTelemetry" aria-describedby="tel-privacy">
+        Save other boat data in the photo (time, speed, heading, depth, wind…)
       </mat-checkbox>
+      <small class="video-setup__hint" id="tel-privacy">
+        This data travels with the photo when it’s shared or exported.
+      </small>
     </div>
     <mat-form-field class="video-setup__fit">
       <mat-label>Snapshot button sends to</mat-label>
