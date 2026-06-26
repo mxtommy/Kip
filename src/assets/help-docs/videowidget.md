@@ -17,9 +17,27 @@ browser can play directly:
 otherwise treats the URL as a file). If auto-detect guesses wrong — common for MJPEG and WebRTC,
 which have no standard file ending — pick the type explicitly.
 
-> **RTSP and RTMP cameras** (what most IP cameras speak) can't be played by a web browser directly.
-> Support for them — plus camera auto-discovery and pan/tilt/zoom — arrives with the companion
-> **SK Video** Signal K plugin in a later update.
+## IP cameras (RTSP/RTMP) via the gateway
+
+Most IP cameras speak **RTSP** or **RTMP**, which a web browser can't play directly. Install the
+companion **SK Video** Signal K plugin and KIP will stream those cameras through it — the browser
+only ever talks to your Signal K server, so there are no cross-origin or "local network" warnings.
+
+Under **Source**, choose **Camera**:
+
+- **Pick a saved camera** from the list, or
+- **Scan network** to discover ONVIF cameras automatically, then tap one to fill in its details, or
+- **Add a camera** by hand: give it a name, pick the stream type (usually RTSP), and enter the
+  address, port and path. If the camera needs a login, add the **username and password** — these are
+  stored on the Signal K server only and are never synced to your devices.
+
+Pick **Delivery**: *Standard (HLS)* works everywhere; *Low latency (WebRTC)* is best for docking.
+
+### Pan, tilt & zoom
+
+If the camera supports **PTZ** (pan/tilt/zoom over ONVIF), a control pad appears over the video.
+Press and hold an arrow to move, hold the **+ / −** buttons to zoom, and use the **bookmarks** button
+to recall a saved preset. The camera stops as soon as you let go.
 
 ## Quality vs. latency
 
@@ -50,8 +68,8 @@ this under **Snapshot** in the widget options:
 
 > **Note:** for security reasons a browser can only read pixels back from a video that is served from
 > the same place as KIP (or with the right CORS headers). A snapshot of an arbitrary cross-origin
-> URL will show a "snapshot not available" message instead. Snapshots work for same-origin sources,
-> and will work for cameras served through the upcoming SK Video gateway.
+> URL will show a "snapshot not available" message instead. Snapshots work for same-origin sources
+> and for cameras served through the SK Video gateway.
 
 ## A note on Safari
 
