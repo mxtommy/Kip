@@ -153,7 +153,7 @@
       <div class="video-widget__toast video-widget__toast--error" role="alert" aria-live="assertive">
         <span>{{ err }}</span>
         @if (canRetry()) {
-          <button type="button" mat-button class="video-widget__retry" (click)="retry()">Retry</button>
+          <button type="button" mat-flat-button class="video-widget__retry" (click)="retry()">Retry</button>
         }
       </div>
     }

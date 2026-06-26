@@ -85,7 +85,7 @@
 }
 
 .video-widget__ctrl {
-  color: #fff;
+  color: var(--kip-contrast-color, #fff);
   width: 44px;
   height: 44px;
   // Flex-center the glyph on the backdrop — an explicit line-height left the
@@ -186,7 +186,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.8rem;
-  color: #fff;
+  color: var(--kip-contrast-color, #fff);
   text-align: center;
   background: color-mix(in srgb, #000 70%, transparent);
   display: inline-flex;
@@ -194,8 +194,18 @@
   align-items: center;
 }
 
+// Severity cue: a coloured left edge so an error reads differently from a confirmation.
+.video-widget__toast--error {
+  border-left: 4px solid var(--kip-zone-alarm-color, #e53935);
+}
+.video-widget__toast--success {
+  border-left: 4px solid var(--kip-zone-nominal-color, #43a047);
+}
+
 .video-widget__retry {
-  color: #9ecbff;
+  // The only way back from a terminal error — make it a prominent, themed action.
+  color: var(--kip-contrast-color, #fff);
+  background: var(--kip-blue-dim-color, #1565c0);
   min-width: auto;
   line-height: 1.6;
 }
@@ -217,8 +227,9 @@
 
 .video-widget__empty-title {
   font-size: 1rem;
+  color: var(--kip-contrast-color);
 }
 
 .video-widget__empty-hint {
-  opacity: 0.65;
+  color: var(--kip-contrast-dim-color);
 }
