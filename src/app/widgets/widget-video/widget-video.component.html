@@ -8,7 +8,7 @@
         alt="Live MJPEG stream"
         draggable="false">
       @if (showMjpegWarning()) {
-        <div class="video-widget__toast" role="status">
+        <div class="video-widget__toast" role="status" aria-live="polite">
           MJPEG may show only a single frame in Safari — choose HLS or WebRTC for this camera.
         </div>
       }
@@ -136,13 +136,14 @@
       }
     } @else {
       <div class="video-widget__empty">
-        <span class="video-widget__empty-title">Unsupported stream</span>
+        <span class="video-widget__empty-title" role="heading" aria-level="2">Unsupported stream</span>
         <small class="video-widget__empty-hint">This stream type can't play in this browser.</small>
       </div>
     }
 
     @if (playbackError(); as err) {
-      <div class="video-widget__toast" role="status" aria-live="polite">
+      <!-- A terminal/connection error: announce assertively so a screen reader interrupts. -->
+      <div class="video-widget__toast video-widget__toast--error" role="alert" aria-live="assertive">
         <span>{{ err }}</span>
         @if (canRetry()) {
           <button type="button" mat-button class="video-widget__retry" (click)="retry()">Retry</button>
@@ -153,12 +154,14 @@
       <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
     }
     @if (codecWarning(); as warn) {
-      <div class="video-widget__toast" role="status" aria-live="polite">{{ warn }}</div>
+      <div class="video-widget__toast video-widget__toast--error" role="alert" aria-live="assertive">
+        {{ warn }}
+      </div>
     }
   </div>
 } @else {
   <div class="video-widget__empty">
-    <span class="video-widget__empty-title">No video source</span>
+    <span class="video-widget__empty-title" role="heading" aria-level="2">No video source</span>
     <small class="video-widget__empty-hint">Open the widget settings to add a video URL</small>
   </div>
 }

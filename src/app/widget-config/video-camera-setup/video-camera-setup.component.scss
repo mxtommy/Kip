@@ -10,9 +10,12 @@
   gap: 12px;
 }
 
+// Used on section <h3> headings and the manual-form <legend>; neutralise their defaults.
 .video-setup__label {
   margin: 0;
+  padding: 0;
   font-size: 0.8rem;
+  font-weight: inherit;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -121,6 +124,10 @@
   flex-direction: column;
   gap: 4px;
   padding: 8px;
+  // It's a <fieldset> for grouping/labelling — strip the browser default border + inline margin.
+  border: 0;
+  margin: 0;
+  min-inline-size: auto;
   border-radius: 8px;
   background: color-mix(in srgb, currentColor 6%, transparent);
 }

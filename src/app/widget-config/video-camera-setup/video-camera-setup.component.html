@@ -2,7 +2,7 @@
 
   <!-- Source -->
   <section class="video-setup__section">
-    <p class="video-setup__label">Source</p>
+    <h3 class="video-setup__label">Source</h3>
     <mat-button-toggle-group
       class="video-setup__sources"
       formControlName="sourceKind"
@@ -84,7 +84,7 @@
           <mat-progress-spinner diameter="20" mode="indeterminate" />
         }
         @if (scanMessage(); as msg) {
-          <small class="video-setup__hint">{{ msg }}</small>
+          <small class="video-setup__hint" role="status" aria-live="polite">{{ msg }}</small>
         }
       </div>
       @if (candidates().length) {
@@ -99,8 +99,8 @@
         </div>
       }
 
-      <div class="video-setup__manual" [formGroup]="manualForm">
-        <p class="video-setup__label">Add a camera</p>
+      <fieldset class="video-setup__manual" [formGroup]="manualForm">
+        <legend class="video-setup__label">Add a camera</legend>
         <mat-form-field>
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" placeholder="Foredeck">
@@ -130,14 +130,15 @@
         <div class="video-setup__manual-row">
           <mat-form-field class="video-setup__manual-host">
             <mat-label>Username (optional)</mat-label>
-            <input matInput formControlName="username" autocomplete="off">
+            <input matInput formControlName="username" autocomplete="off" aria-describedby="cred-note">
           </mat-form-field>
           <mat-form-field class="video-setup__manual-host">
             <mat-label>Password (optional)</mat-label>
-            <input matInput type="password" formControlName="password" autocomplete="new-password">
+            <input matInput type="password" formControlName="password" autocomplete="new-password"
+              aria-describedby="cred-note">
           </mat-form-field>
         </div>
-        <small class="video-setup__hint">
+        <small class="video-setup__hint" id="cred-note">
           Credentials are stored on the Signal K server only and never synced to your devices.
         </small>
         <button mat-flat-button type="button" class="video-setup__add" (click)="addCamera()" [disabled]="saving()">
@@ -145,9 +146,9 @@
           <span>Add camera</span>
         </button>
         @if (addError(); as err) {
-          <small class="video-setup__error">{{ err }}</small>
+          <small class="video-setup__error" role="alert" aria-live="assertive">{{ err }}</small>
         }
-      </div>
+      </fieldset>
     }
 
     @if (sourceKind === 'file') {
@@ -184,14 +185,14 @@
         Videos are stored on your Signal K server and play back with seeking, on any device.
       </small>
       @if (uploadError(); as err) {
-        <small class="video-setup__error">{{ err }}</small>
+        <small class="video-setup__error" role="alert" aria-live="assertive">{{ err }}</small>
       }
     }
   </section>
 
   <!-- Quality & Latency -->
   <section class="video-setup__section">
-    <p class="video-setup__label">Quality &amp; Latency</p>
+    <h3 class="video-setup__label">Quality &amp; Latency</h3>
     <mat-button-toggle-group class="video-setup__sources" formControlName="preset" aria-label="Quality and latency preset">
       <mat-button-toggle value="docking">
         <span class="video-setup__source-name">Docking</span>
@@ -211,7 +212,7 @@
 
   <!-- Appearance -->
   <section class="video-setup__section">
-    <p class="video-setup__label">Appearance</p>
+    <h3 class="video-setup__label">Appearance</h3>
     <div class="video-setup__appearance">
       <mat-form-field>
         <mat-label>Scaling</mat-label>
@@ -231,12 +232,12 @@
 
   <!-- Snapshot -->
   <section class="video-setup__section" formGroupName="snapshot">
-    <p class="video-setup__label">Snapshot</p>
+    <h3 class="video-setup__label">Snapshot</h3>
     <div class="video-setup__toggles video-setup__toggles--stacked">
-      <mat-checkbox formControlName="embedLocation">
+      <mat-checkbox formControlName="embedLocation" aria-describedby="loc-privacy">
         Embed location (GPS) in snapshot metadata
       </mat-checkbox>
-      <small class="video-setup__hint">A shared or exported photo will reveal where the boat was.</small>
+      <small class="video-setup__hint" id="loc-privacy">A shared or exported photo will reveal where the boat was.</small>
       <mat-checkbox formControlName="embedTelemetry">
         Embed other telemetry (time, speed, heading, depth, wind…)
       </mat-checkbox>
