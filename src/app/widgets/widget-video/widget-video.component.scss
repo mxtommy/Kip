@@ -18,18 +18,32 @@
   background: #000;
 }
 
+// Transparent layer that turns a drag on the video into a pan/tilt gesture (PTZ cameras only).
+// Inset from the bottom so the native <video> control bar stays tappable; the d-pad and overlay
+// controls render after it in the DOM, so they sit on top and still receive their own taps.
+.video-widget__drag {
+  position: absolute;
+  inset: 0 0 48px 0;
+  touch-action: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 .video-widget__overlay {
   position: absolute;
   top: 6px;
   right: 6px;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
   padding: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, #000 45%, transparent);
   backdrop-filter: blur(6px);
-  opacity: 0.55;
+  opacity: 0.85;
   transition: opacity 0.2s ease;
 }
 
@@ -40,20 +54,37 @@
 
 .video-widget__ctrl {
   color: #fff;
-  width: 36px;
-  height: 36px;
-  line-height: 36px;
+  width: 44px;
+  height: 44px;
+  // Flex-center the glyph on the backdrop — an explicit line-height left the
+  // PiP / fullscreen / snapshot icons riding high, off-centre on their pill.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  .mat-icon {
+    margin: 0;
+    line-height: 1;
+  }
+}
+
+// A focus ring that stays visible over any video frame (dark halo + light outline).
+.video-widget__ctrl:focus-visible {
+  outline: 2px solid var(--kip-blue-color, #4aa3ff);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.6);
 }
 
 .video-widget__split {
   display: inline-flex;
   align-items: center;
+  gap: 2px;
 }
 
 .video-widget__ptz {
   position: absolute;
   left: 6px;
-  bottom: 6px;
+  bottom: 52px; // clear of the native <video> control bar
   display: flex;
   align-items: center;
   gap: 6px;
@@ -61,7 +92,7 @@
   border-radius: 16px;
   background: color-mix(in srgb, #000 45%, transparent);
   backdrop-filter: blur(6px);
-  opacity: 0.55;
+  opacity: 0.85;
   transition: opacity 0.2s ease;
   touch-action: none; // hold-to-move shouldn't scroll/zoom the page
   user-select: none;
@@ -72,10 +103,18 @@
   opacity: 1;
 }
 
+// Touch devices have no hover, so the controls must be legible at rest.
+@media (hover: none) {
+  .video-widget__overlay,
+  .video-widget__ptz {
+    opacity: 1;
+  }
+}
+
 .video-widget__dpad {
   display: grid;
-  grid-template-columns: repeat(3, 36px);
-  grid-template-rows: repeat(3, 36px);
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
   align-items: center;
   justify-items: center;
 }
@@ -99,11 +138,11 @@
 .video-widget__zoom {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .video-widget__caret {
-  width: 24px;
-  margin-left: -6px;
+  width: 44px;
 }
 
 .video-widget__toast {

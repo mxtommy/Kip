@@ -28,6 +28,18 @@ export function clampPtzVector(v: { pan?: number; tilt?: number; zoom?: number }
 }
 
 /**
+ * Turns a drag offset (pixels from the press point) into a PTZ velocity, like a virtual joystick:
+ * dragging right pans right and dragging up tilts up. `reference` is the drag distance, in pixels,
+ * that maps to full speed; beyond it the velocity clamps to ±1.
+ */
+export function dragToPtzVector(dx: number, dy: number, reference = 120): IPtzVector {
+  const ref = Number.isFinite(reference) && reference > 0 ? reference : 1;
+  // Normalise -0 to 0 so a purely horizontal/vertical drag has a clean zero on the other axis.
+  const z = (n: number): number => (n === 0 ? 0 : n);
+  return { pan: z(clampUnit(dx / ref)), tilt: z(clampUnit(-dy / ref)), zoom: 0 };
+}
+
+/**
  * Builds the same-origin PTZ endpoint URL for a saved camera, or `null` when the inputs are missing
  * or unsafe. `baseUrl` must be the resolved sk-video plugin base (`http(s)`, ending in `/`).
  */

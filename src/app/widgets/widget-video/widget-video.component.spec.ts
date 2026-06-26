@@ -153,4 +153,56 @@ describe('WidgetVideoComponent', () => {
     cmp.ptzGoto('t1');
     expect(ptz.gotoPreset).toHaveBeenCalledWith('http://boat.local:3000/plugins/sk-video/', 'foredeck', 't1');
   });
+
+  it('PTZ keyboard: Tab does not pan, Enter does, and blur stops (runaway guard)', async () => {
+    const ptz = {
+      listPresets: vi.fn().mockResolvedValue([]),
+      move: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn().mockResolvedValue(undefined),
+      gotoPreset: vi.fn().mockResolvedValue(undefined)
+    };
+    const options = signal<IWidgetSvcConfig | undefined>({
+      video: { sourceKind: 'camera', cameraId: 'foredeck', transport: 'webrtc' }
+    });
+    TestBed.configureTestingModule({
+      imports: [WidgetVideoComponent],
+      providers: [
+        { provide: WidgetRuntimeDirective, useValue: { options } },
+        { provide: DataService, useValue: { getPathObject: () => null } },
+        { provide: PtzClient, useValue: ptz },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({ httpServiceUrl: 'http://boat.local:3000/signalk/v1/api/' }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    });
+    const fixture = TestBed.createComponent(WidgetVideoComponent);
+    fixture.componentRef.setInput('id', 'test-id');
+    fixture.componentRef.setInput('type', 'widget-video');
+    fixture.componentRef.setInput('theme', null);
+    fixture.detectChanges();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const base = 'http://boat.local:3000/plugins/sk-video/';
+    const left = (fixture.nativeElement as HTMLElement).querySelector(
+      'button[aria-label="Pan left"]'
+    ) as HTMLButtonElement;
+    expect(left).not.toBeNull();
+
+    // The old bug: a bare (keydown) started a pan on ANY key, including Tab.
+    left.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(ptz.move).not.toHaveBeenCalled();
+
+    // Enter (or Space) starts the pan…
+    left.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(ptz.move).toHaveBeenCalledWith(base, 'foredeck', { pan: -1, tilt: 0, zoom: 0 });
+
+    // …and losing focus stops it even if keyup never arrives.
+    left.dispatchEvent(new FocusEvent('blur'));
+    expect(ptz.stop).toHaveBeenCalledWith(base, 'foredeck');
+  });
 });

@@ -25,6 +25,19 @@
         webkit-playsinline
       ></video>
 
+      @if (showPtz()) {
+        <!-- Drag anywhere on the video to pan/tilt; sits above the video but clear of the control bar. -->
+        <div
+          class="video-widget__drag"
+          (pointerdown)="ptzDragStart($event)"
+          (pointermove)="ptzDragMove($event)"
+          (pointerup)="ptzDragEnd()"
+          (pointercancel)="ptzDragEnd()"
+          (lostpointercapture)="ptzDragEnd()"
+          aria-hidden="true"
+        ></div>
+      }
+
       <div class="video-widget__overlay">
         @if (canPip) {
           <button type="button" mat-icon-button class="video-widget__ctrl" (click)="togglePip()"
@@ -68,40 +81,40 @@
           <div class="video-widget__dpad">
             <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-up"
               aria-label="Tilt up"
-              (pointerdown)="ptzStart(0, 1, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(0, 1, 0)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(0, 1, 0, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(0, 1, 0)" (keydown.space)="!$any($event).repeat && ptzStart(0, 1, 0)" (keyup)="ptzStop()">
               <mat-icon>keyboard_arrow_up</mat-icon>
             </button>
             <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-left"
               aria-label="Pan left"
-              (pointerdown)="ptzStart(-1, 0, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(-1, 0, 0)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(-1, 0, 0, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(-1, 0, 0)" (keydown.space)="!$any($event).repeat && ptzStart(-1, 0, 0)" (keyup)="ptzStop()">
               <mat-icon>keyboard_arrow_left</mat-icon>
             </button>
             <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-right"
               aria-label="Pan right"
-              (pointerdown)="ptzStart(1, 0, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(1, 0, 0)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(1, 0, 0, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(1, 0, 0)" (keydown.space)="!$any($event).repeat && ptzStart(1, 0, 0)" (keyup)="ptzStop()">
               <mat-icon>keyboard_arrow_right</mat-icon>
             </button>
             <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-down"
               aria-label="Tilt down"
-              (pointerdown)="ptzStart(0, -1, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(0, -1, 0)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(0, -1, 0, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(0, -1, 0)" (keydown.space)="!$any($event).repeat && ptzStart(0, -1, 0)" (keyup)="ptzStop()">
               <mat-icon>keyboard_arrow_down</mat-icon>
             </button>
           </div>
           <div class="video-widget__zoom">
             <button type="button" mat-icon-button class="video-widget__ctrl"
               aria-label="Zoom in"
-              (pointerdown)="ptzStart(0, 0, 1)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(0, 0, 1)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(0, 0, 1, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(0, 0, 1)" (keydown.space)="!$any($event).repeat && ptzStart(0, 0, 1)" (keyup)="ptzStop()">
               <mat-icon>add</mat-icon>
             </button>
             <button type="button" mat-icon-button class="video-widget__ctrl"
               aria-label="Zoom out"
-              (pointerdown)="ptzStart(0, 0, -1)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
-              (keydown)="!$event.repeat && ptzStart(0, 0, -1)" (keyup)="ptzStop()">
+              (pointerdown)="ptzStart(0, 0, -1, $event)" (pointerup)="ptzStop()" (pointercancel)="ptzStop()" (blur)="ptzStop()"
+              (keydown.enter)="!$any($event).repeat && ptzStart(0, 0, -1)" (keydown.space)="!$any($event).repeat && ptzStart(0, 0, -1)" (keyup)="ptzStop()">
               <mat-icon>remove</mat-icon>
             </button>
           </div>

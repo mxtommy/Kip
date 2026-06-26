@@ -16,6 +16,7 @@ import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url
 import { resolveVideoSourceUrl } from './video-source.util';
 import { resolveGatewaySourceUrl } from './gateway-source.util';
 import { PtzClient, type IPtzPreset } from './ptz-client';
+import { dragToPtzVector, type IPtzVector } from './ptz-command.util';
 import { VideoAssetsClient } from './video-assets-client';
 import {
   IPlaybackCapabilities, selectPlaybackPipeline, TPlaybackPipeline
@@ -152,6 +153,12 @@ export class WidgetVideoComponent {
   /** Re-sent while a direction is held to defeat the gateway's auto-stop safety timeout. */
   private ptzKeepAlive: ReturnType<typeof setInterval> | null = null;
   private static readonly PTZ_KEEPALIVE_MS = 1200;
+  /** The PTZ velocity currently being held (by the d-pad) or dragged (on the video). */
+  private ptzVector: IPtzVector = { pan: 0, tilt: 0, zoom: 0 };
+  /** Press point of a drag-to-pan gesture, or null when not dragging. */
+  private dragOrigin: { x: number; y: number } | null = null;
+  private lastPtzSend = 0;
+  private static readonly PTZ_SEND_THROTTLE_MS = 150;
 
   private generation = 0;
   private hls: Hls | null = null;
@@ -318,17 +325,71 @@ export class WidgetVideoComponent {
     this.reconnectNonce.update(n => n + 1);
   }
 
-  /** Press-and-hold a direction: start moving and keep re-sending until released. */
-  protected ptzStart(pan: number, tilt: number, zoom: number): void {
+  /** Press-and-hold a direction (d-pad): start moving and keep re-sending until released. */
+  protected ptzStart(pan: number, tilt: number, zoom: number, event?: Event): void {
+    this.ptzVector = { pan, tilt, zoom };
+    this.beginPtz(event);
+  }
+
+  /** Drag anywhere on the video to pan/tilt, like a virtual joystick. */
+  protected ptzDragStart(event: PointerEvent): void {
+    if (!this.showPtz()) {
+      return;
+    }
+    this.dragOrigin = { x: event.clientX, y: event.clientY };
+    this.ptzVector = { pan: 0, tilt: 0, zoom: 0 };
+    this.beginPtz(event);
+  }
+
+  protected ptzDragMove(event: PointerEvent): void {
+    if (!this.dragOrigin) {
+      return;
+    }
+    this.ptzVector = dragToPtzVector(
+      event.clientX - this.dragOrigin.x,
+      event.clientY - this.dragOrigin.y
+    );
+    // Pointer moves fire ~60×/s; throttle the gateway sends (the keep-alive still covers gaps).
+    const now = Date.now();
+    if (now - this.lastPtzSend >= WidgetVideoComponent.PTZ_SEND_THROTTLE_MS) {
+      this.lastPtzSend = now;
+      this.sendPtz();
+    }
+  }
+
+  protected ptzDragEnd(): void {
+    if (!this.dragOrigin) {
+      return;
+    }
+    this.dragOrigin = null;
+    this.ptzStop();
+  }
+
+  /** Capture the pointer (so finger drift won't cancel the hold) and start the keep-alive loop. */
+  private beginPtz(event?: Event): void {
+    if (event && 'pointerId' in event) {
+      const pe = event as PointerEvent;
+      try {
+        (pe.currentTarget as Element | null)?.setPointerCapture(pe.pointerId);
+      } catch {
+        // setPointerCapture can throw if the pointer is already gone; the hold still works.
+      }
+    }
     this.stopPtzKeepAlive();
-    const send = () => {
-      void this.ptz
-        .move(this.gatewayBaseUrl(), this.videoConfig()?.cameraId ?? null, { pan, tilt, zoom })
-        .then(() => this.ptzError.set(null))
-        .catch(() => this.ptzError.set('Camera move failed'));
-    };
-    send();
-    this.ptzKeepAlive = setInterval(send, WidgetVideoComponent.PTZ_KEEPALIVE_MS);
+    this.sendPtz();
+    this.ptzKeepAlive = setInterval(() => this.sendPtz(), WidgetVideoComponent.PTZ_KEEPALIVE_MS);
+  }
+
+  /** Send the current PTZ velocity to the gateway; skipped while idle (zero vector). */
+  private sendPtz(): void {
+    const { pan, tilt, zoom } = this.ptzVector;
+    if (pan === 0 && tilt === 0 && zoom === 0) {
+      return;
+    }
+    void this.ptz
+      .move(this.gatewayBaseUrl(), this.videoConfig()?.cameraId ?? null, { pan, tilt, zoom })
+      .then(() => this.ptzError.set(null))
+      .catch(() => this.ptzError.set('Camera move failed'));
   }
 
   /** Release: stop the keep-alive and command the camera to stop. */
