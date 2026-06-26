@@ -17,16 +17,21 @@ export interface IWhepAnswer {
  * session resource URL (resolved from the Location header) used to end the session.
  */
 export async function whepNegotiate(endpoint: string, offerSdp: string, fetchImpl: FetchLike): Promise<IWhepAnswer> {
-  void endpoint;
-  void offerSdp;
-  void fetchImpl;
-  // RED stub.
-  return { answerSdp: '', resourceUrl: '' };
+  const res = await fetchImpl(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/sdp' },
+    body: offerSdp
+  });
+  if (!res.ok) {
+    throw new Error(`WHEP negotiation failed: ${res.status}`);
+  }
+  const answerSdp = await res.text();
+  const location = res.headers.get('Location');
+  const resourceUrl = location ? new URL(location, endpoint).href : endpoint;
+  return { answerSdp, resourceUrl };
 }
 
 /** Ends a WHEP session by DELETE-ing its resource URL (best-effort). */
 export async function whepDelete(resourceUrl: string, fetchImpl: FetchLike): Promise<void> {
-  void resourceUrl;
-  void fetchImpl;
-  // RED stub.
+  await fetchImpl(resourceUrl, { method: 'DELETE' });
 }
