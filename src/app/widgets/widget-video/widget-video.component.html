@@ -1,15 +1,80 @@
 @if (sourceUrl(); as src) {
-  <video
-    class="video-widget__player"
-    [src]="src"
-    [style.object-fit]="objectFit()"
-    [muted]="muted()"
-    [autoplay]="autoplay()"
-    [loop]="loop()"
-    controls
-    playsinline
-    webkit-playsinline
-  ></video>
+  <div class="video-widget__stage">
+    <video
+      #videoEl
+      class="video-widget__player"
+      [src]="src"
+      [style.object-fit]="objectFit()"
+      [muted]="muted()"
+      [autoplay]="autoplay()"
+      [loop]="loop()"
+      controls
+      playsinline
+      webkit-playsinline
+    ></video>
+
+    <div class="video-widget__overlay">
+      @if (canPip) {
+        <button
+          type="button"
+          mat-icon-button
+          class="video-widget__ctrl"
+          (click)="togglePip()"
+          matTooltip="Picture in Picture"
+          aria-label="Picture in Picture">
+          <mat-icon>picture_in_picture_alt</mat-icon>
+        </button>
+      }
+      @if (canFullscreen) {
+        <button
+          type="button"
+          mat-icon-button
+          class="video-widget__ctrl"
+          (click)="toggleFullscreen()"
+          matTooltip="Fullscreen"
+          aria-label="Fullscreen">
+          <mat-icon>fullscreen</mat-icon>
+        </button>
+      }
+
+      <span class="video-widget__split">
+        <button
+          type="button"
+          mat-icon-button
+          class="video-widget__ctrl"
+          (click)="takeSnapshot()"
+          matTooltip="Take snapshot"
+          aria-label="Take snapshot">
+          <mat-icon>photo_camera</mat-icon>
+        </button>
+        <button
+          type="button"
+          mat-icon-button
+          class="video-widget__ctrl video-widget__caret"
+          [matMenuTriggerFor]="snapMenu"
+          aria-label="Snapshot destination">
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+        <mat-menu #snapMenu="matMenu">
+          <button mat-menu-item type="button" (click)="takeSnapshot('download')">
+            <mat-icon>download</mat-icon><span>Download</span>
+          </button>
+          @if (canShare) {
+            <button mat-menu-item type="button" (click)="takeSnapshot('share')">
+              <mat-icon>ios_share</mat-icon><span>Share…</span>
+            </button>
+          }
+          <button mat-menu-item type="button" disabled>
+            <mat-icon>cloud_upload</mat-icon><span>Save to Signal K (coming soon)</span>
+          </button>
+        </mat-menu>
+      </span>
+    </div>
+
+    @if (snapshotError(); as err) {
+      <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
+    }
+  </div>
 } @else {
   <div class="video-widget__empty">
     <span class="video-widget__empty-title">No video source</span>

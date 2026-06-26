@@ -3,13 +3,17 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { WidgetVideoComponent } from './widget-video.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
+import { DataService } from '../../core/services/data.service';
 import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 
 function setup(config: IWidgetSvcConfig) {
   const options = signal<IWidgetSvcConfig | undefined>(config);
   TestBed.configureTestingModule({
     imports: [WidgetVideoComponent],
-    providers: [{ provide: WidgetRuntimeDirective, useValue: { options } }]
+    providers: [
+      { provide: WidgetRuntimeDirective, useValue: { options } },
+      { provide: DataService, useValue: { getPathObject: () => null } }
+    ]
   });
   const fixture = TestBed.createComponent(WidgetVideoComponent);
   fixture.componentRef.setInput('id', 'test-id');
@@ -28,12 +32,13 @@ describe('WidgetVideoComponent', () => {
     expect(el.querySelector('.video-widget__empty')).not.toBeNull();
   });
 
-  it('renders a <video> bound to the configured URL', () => {
+  it('renders a <video> bound to the configured URL with a snapshot control', () => {
     const el: HTMLElement = setup({ video: { sourceKind: 'url', url: 'https://cam.example/clip.mp4' } }).nativeElement;
     const video = el.querySelector('video');
     expect(video).not.toBeNull();
     expect(video?.getAttribute('src')).toBe('https://cam.example/clip.mp4');
     expect(el.querySelector('.video-widget__empty')).toBeNull();
+    expect(el.querySelector('button[aria-label="Take snapshot"]')).not.toBeNull();
   });
 
   it('does not play unsupported source kinds yet (no <video> for a manual/RTSP source)', () => {

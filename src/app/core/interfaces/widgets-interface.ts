@@ -155,6 +155,21 @@ export interface IVideoWidgetConfig {
   loop?: boolean;
   /** object-fit applied to the `<video>` element. */
   objectFit?: TVideoObjectFit;
+  /** Still-capture (snapshot) options. */
+  snapshot?: IVideoSnapshotConfig;
+}
+
+/** Where a captured snapshot is sent. `signalk` (upload to server) is not wired up yet. */
+export type TSnapshotDestination = 'download' | 'share' | 'signalk';
+
+/** Video widget snapshot configuration. */
+export interface IVideoSnapshotConfig {
+  /** Embed telemetry (time, speed, heading, depth, wind …) in the image EXIF. Default true. */
+  embedTelemetry?: boolean;
+  /** Embed GPS location in the EXIF (location-privacy switch). Default true. */
+  embedLocation?: boolean;
+  /** Default destination for the snapshot button. Default 'download'. */
+  defaultDestination?: TSnapshotDestination;
 }
 
 /**
