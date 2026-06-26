@@ -9,6 +9,7 @@ import { SignalKConnectionService } from '../../core/services/signalk-connection
 import { CameraDiscoveryClient } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import { VideoAssetsClient } from '../../widgets/widget-video/video-assets-client';
 
 @Component({
   standalone: true,
@@ -158,5 +159,62 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     cmp.manualForm.patchValue({ name: '', scheme: 'rtsp', host: '10.0.0.9' });
     await cmp.addCamera();
     expect(resources.save).not.toHaveBeenCalled();
+  });
+});
+
+describe('VideoCameraSetupComponent — upload mode', () => {
+  const assets = {
+    list: vi.fn(),
+    upload: vi.fn(),
+    remove: vi.fn().mockResolvedValue(undefined)
+  };
+
+  let fixture: ComponentFixture<HostComponent>;
+  let videoGroup: UntypedFormGroup;
+  let cmp: { videos: () => unknown[]; uploadFile: (f: File) => Promise<void> };
+
+  beforeEach(async () => {
+    assets.list.mockResolvedValue([
+      { id: 'v1', name: 'clip.mp4', contentType: 'video/mp4', size: 5 * 1024 * 1024, createdAt: 1 }
+    ]);
+    assets.upload.mockResolvedValue({ id: 'v2', name: 'new.mp4', contentType: 'video/mp4', size: 1, createdAt: 2 });
+
+    await TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [
+        { provide: VideoAssetsClient, useValue: assets },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({
+              httpServiceUrl: 'http://h:3000/signalk/v1/api/',
+              httpServiceUrlV2: 'http://h:3000/signalk/v2/api'
+            }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(HostComponent);
+    videoGroup = fixture.componentInstance.root.get('video') as UntypedFormGroup;
+    fixture.detectChanges();
+    videoGroup.get('sourceKind')?.setValue('file');
+    await Promise.resolve();
+    fixture.detectChanges();
+    cmp = fixture.debugElement.query(By.directive(VideoCameraSetupComponent)).componentInstance as typeof cmp;
+  });
+
+  it('shows the upload UI and lists uploaded videos', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Upload a video');
+    expect(cmp.videos()).toHaveLength(1);
+    expect(videoGroup.get('fileAssetId')).toBeTruthy();
+  });
+
+  it('uploads a file and selects it', async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'movie.mp4', { type: 'video/mp4' });
+    await (cmp as unknown as { uploadFile: (f: File) => Promise<void> }).uploadFile(file);
+    expect(assets.upload).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', file);
+    expect(videoGroup.get('fileAssetId')?.value).toBe('v2');
   });
 });

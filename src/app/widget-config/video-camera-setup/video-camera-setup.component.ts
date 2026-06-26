@@ -18,6 +18,7 @@ import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url
 import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import { VideoAssetsClient, VideoUploadError, type IVideoAsset } from '../../widgets/widget-video/video-assets-client';
 import {
   CAMERA_SCHEMES, buildCameraRecord, candidateToFields, slugifyCameraId,
   type ICameraCandidate
@@ -48,6 +49,7 @@ export class VideoCameraSetupComponent implements OnInit {
   private readonly discovery = inject(CameraDiscoveryClient);
   private readonly resources = inject(CamerasResourceClient);
   private readonly credentials = inject(CameraCredentialsClient);
+  private readonly assets = inject(VideoAssetsClient);
 
   protected videoGroup!: UntypedFormGroup;
   protected manualForm!: UntypedFormGroup;
@@ -66,6 +68,10 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly addError = signal<string | null>(null);
   protected readonly saving = signal(false);
 
+  protected readonly videos = signal<IVideoAsset[]>([]);
+  protected readonly uploading = signal(false);
+  protected readonly uploadError = signal<string | null>(null);
+
   ngOnInit(): void {
     const existing = this.rootFormGroup.control.get(this.formGroupName());
     if (existing instanceof UntypedFormGroup) {
@@ -77,6 +83,7 @@ export class VideoCameraSetupComponent implements OnInit {
     this.ensure('sourceKind', 'url');
     this.ensure('url', null);
     this.ensure('cameraId', null);
+    this.ensure('fileAssetId', null);
     this.ensure('transport', 'auto');
     this.ensure('preset', 'balanced');
     this.ensure('muted', true);
@@ -101,6 +108,67 @@ export class VideoCameraSetupComponent implements OnInit {
     });
 
     void this.refreshCameras();
+    void this.refreshVideos();
+  }
+
+  /** Loads the videos uploaded to the server. */
+  protected async refreshVideos(): Promise<void> {
+    try {
+      this.videos.set(await this.assets.list(this.pluginBaseUrl()));
+    } catch {
+      // leave the existing list
+    }
+  }
+
+  /** Handles a chosen file from the upload input. */
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file later
+    if (file) {
+      void this.uploadFile(file);
+    }
+  }
+
+  private async uploadFile(file: File): Promise<void> {
+    this.uploadError.set(null);
+    this.uploading.set(true);
+    try {
+      const asset = await this.assets.upload(this.pluginBaseUrl(), file);
+      await this.refreshVideos();
+      this.videoGroup.get('fileAssetId')?.setValue(asset.id);
+    } catch (err) {
+      this.uploadError.set(
+        err instanceof VideoUploadError
+          ? err.message
+          : 'Upload failed — is the SK Video plugin installed and enabled?'
+      );
+    } finally {
+      this.uploading.set(false);
+    }
+  }
+
+  /** Removes the currently selected uploaded video. */
+  protected async removeVideo(): Promise<void> {
+    const id = this.videoGroup.get('fileAssetId')?.value as string | null;
+    if (!id) {
+      return;
+    }
+    try {
+      await this.assets.remove(this.pluginBaseUrl(), id);
+      this.videoGroup.get('fileAssetId')?.setValue(null);
+      await this.refreshVideos();
+    } catch {
+      this.uploadError.set('Could not remove the video.');
+    }
+  }
+
+  /** Human-readable file size. */
+  protected sizeLabel(bytes: number): string {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+    }
+    return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
   }
 
   /** Currently selected source kind (defaults to 'url'). */

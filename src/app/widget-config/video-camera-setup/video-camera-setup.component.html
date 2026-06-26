@@ -11,10 +11,9 @@
         <mat-icon>videocam</mat-icon>
         <span class="video-setup__source-name">Camera</span>
       </mat-button-toggle>
-      <mat-button-toggle value="file" disabled>
+      <mat-button-toggle value="file">
         <mat-icon>video_library</mat-icon>
         <span class="video-setup__source-name">Uploaded</span>
-        <small class="video-setup__soon">Coming soon</small>
       </mat-button-toggle>
       <mat-button-toggle value="url">
         <mat-icon>link</mat-icon>
@@ -149,6 +148,44 @@
           <small class="video-setup__error">{{ err }}</small>
         }
       </div>
+    }
+
+    @if (sourceKind === 'file') {
+      <div class="video-setup__camera-row">
+        <mat-form-field class="video-setup__camera-pick">
+          <mat-label>Video</mat-label>
+          <mat-select formControlName="fileAssetId">
+            @for (v of videos(); track v.id) {
+              <mat-option [value]="v.id">{{ v.name }} ({{ sizeLabel(v.size) }})</mat-option>
+            }
+            @if (!videos().length) {
+              <mat-option [value]="null" disabled>No uploaded videos yet</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="removeVideo()"
+          matTooltip="Delete selected video" aria-label="Delete selected video">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+
+      <div class="video-setup__scan">
+        <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploading()">
+          <mat-icon>upload</mat-icon>
+          <span>Upload a video</span>
+        </button>
+        <input #fileInput type="file" accept="video/mp4,video/webm,video/quicktime,video/*"
+          hidden (change)="onFileSelected($event)">
+        @if (uploading()) {
+          <mat-progress-spinner diameter="20" mode="indeterminate" />
+        }
+      </div>
+      <small class="video-setup__hint">
+        Videos are stored on your Signal K server and play back with seeking, on any device.
+      </small>
+      @if (uploadError(); as err) {
+        <small class="video-setup__error">{{ err }}</small>
+      }
     }
   </section>
 
