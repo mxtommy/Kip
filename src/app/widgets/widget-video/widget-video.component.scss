@@ -75,12 +75,14 @@
   border-radius: 999px;
   background: color-mix(in srgb, #000 45%, transparent);
   backdrop-filter: blur(6px);
-  opacity: 0.85;
+  opacity: 0.4;
   transition: opacity 0.2s ease;
 }
 
-.video-widget__stage:hover .video-widget__overlay,
-.video-widget__overlay:focus-within {
+// Subtle at rest; full strength while you interact with the cluster (hover / focus / press).
+.video-widget__overlay:hover,
+.video-widget__overlay:focus-within,
+.video-widget__overlay:active {
   opacity: 1;
 }
 
@@ -124,23 +126,16 @@
   border-radius: 16px;
   background: color-mix(in srgb, #000 45%, transparent);
   backdrop-filter: blur(6px);
-  opacity: 0.85;
+  opacity: 0.4;
   transition: opacity 0.2s ease;
   touch-action: none; // hold-to-move shouldn't scroll/zoom the page
   user-select: none;
 }
 
-.video-widget__stage:hover .video-widget__ptz,
-.video-widget__ptz:focus-within {
+.video-widget__ptz:hover,
+.video-widget__ptz:focus-within,
+.video-widget__ptz:active {
   opacity: 1;
-}
-
-// Touch devices have no hover, so the controls must be legible at rest.
-@media (hover: none) {
-  .video-widget__overlay,
-  .video-widget__ptz {
-    opacity: 1;
-  }
 }
 
 .video-widget__dpad {
