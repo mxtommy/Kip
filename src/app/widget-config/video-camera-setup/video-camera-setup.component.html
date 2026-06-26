@@ -7,15 +7,9 @@
       class="video-setup__sources"
       formControlName="sourceKind"
       aria-label="Video source">
-      <mat-button-toggle value="scan" disabled>
-        <mat-icon>travel_explore</mat-icon>
-        <span class="video-setup__source-name">Scan</span>
-        <small class="video-setup__soon">Coming soon</small>
-      </mat-button-toggle>
-      <mat-button-toggle value="manual" disabled>
+      <mat-button-toggle value="camera">
         <mat-icon>videocam</mat-icon>
         <span class="video-setup__source-name">Camera</span>
-        <small class="video-setup__soon">Coming soon</small>
       </mat-button-toggle>
       <mat-button-toggle value="file" disabled>
         <mat-icon>video_library</mat-icon>
@@ -52,6 +46,109 @@
           <mat-option value="webrtc">WebRTC (WHEP)</mat-option>
         </mat-select>
       </mat-form-field>
+    }
+
+    @if (sourceKind === 'camera') {
+      <div class="video-setup__camera-row">
+        <mat-form-field class="video-setup__camera-pick">
+          <mat-label>Camera</mat-label>
+          <mat-select formControlName="cameraId">
+            @for (cam of cameras(); track cam.id) {
+              <mat-option [value]="cam.id">{{ cam.name }}</mat-option>
+            }
+            @if (!cameras().length) {
+              <mat-option [value]="null" disabled>No saved cameras — add one below</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="removeSelected()"
+          matTooltip="Remove selected camera" aria-label="Remove selected camera">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+
+      <mat-form-field class="video-setup__fit">
+        <mat-label>Delivery</mat-label>
+        <mat-select formControlName="transport">
+          <mat-option value="hls">Standard (HLS)</mat-option>
+          <mat-option value="webrtc">Low latency (WebRTC)</mat-option>
+        </mat-select>
+        <mat-hint>RTSP/RTMP cameras play through the SK Video gateway on your Signal K server.</mat-hint>
+      </mat-form-field>
+
+      <div class="video-setup__scan">
+        <button mat-stroked-button type="button" (click)="scan()" [disabled]="scanning()">
+          <mat-icon>travel_explore</mat-icon>
+          <span>Scan network</span>
+        </button>
+        @if (scanning()) {
+          <mat-progress-spinner diameter="20" mode="indeterminate" />
+        }
+        @if (scanMessage(); as msg) {
+          <small class="video-setup__hint">{{ msg }}</small>
+        }
+      </div>
+      @if (candidates().length) {
+        <div class="video-setup__candidates">
+          @for (c of candidates(); track c.host) {
+            <button mat-button type="button" class="video-setup__candidate" (click)="useCandidate(c)">
+              <mat-icon>add</mat-icon>
+              <span class="video-setup__candidate-name">{{ c.name }}</span>
+              <small>{{ c.host }}</small>
+            </button>
+          }
+        </div>
+      }
+
+      <div class="video-setup__manual" [formGroup]="manualForm">
+        <p class="video-setup__label">Add a camera</p>
+        <mat-form-field>
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="Foredeck">
+        </mat-form-field>
+        <div class="video-setup__manual-row">
+          <mat-form-field class="video-setup__manual-scheme">
+            <mat-label>Stream type</mat-label>
+            <mat-select formControlName="scheme">
+              @for (s of schemes; track s) {
+                <mat-option [value]="s">{{ s }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="video-setup__manual-host">
+            <mat-label>Address (host or IP)</mat-label>
+            <input matInput formControlName="host" placeholder="192.168.1.50">
+          </mat-form-field>
+          <mat-form-field class="video-setup__manual-port">
+            <mat-label>Port</mat-label>
+            <input matInput type="number" formControlName="port" placeholder="554">
+          </mat-form-field>
+        </div>
+        <mat-form-field>
+          <mat-label>Path (optional)</mat-label>
+          <input matInput formControlName="path" placeholder="/stream1">
+        </mat-form-field>
+        <div class="video-setup__manual-row">
+          <mat-form-field class="video-setup__manual-host">
+            <mat-label>Username (optional)</mat-label>
+            <input matInput formControlName="username" autocomplete="off">
+          </mat-form-field>
+          <mat-form-field class="video-setup__manual-host">
+            <mat-label>Password (optional)</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="new-password">
+          </mat-form-field>
+        </div>
+        <small class="video-setup__hint">
+          Credentials are stored on the Signal K server only and never synced to your devices.
+        </small>
+        <button mat-flat-button type="button" class="video-setup__add" (click)="addCamera()" [disabled]="saving()">
+          <mat-icon>add</mat-icon>
+          <span>Add camera</span>
+        </button>
+        @if (addError(); as err) {
+          <small class="video-setup__error">{{ err }}</small>
+        }
+      </div>
     }
   </section>
 

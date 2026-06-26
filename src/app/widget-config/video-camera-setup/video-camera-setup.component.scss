@@ -81,3 +81,69 @@
   opacity: 0.6;
   margin: -2px 0 6px 0;
 }
+
+.video-setup__camera-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .video-setup__camera-pick {
+    flex: 1;
+  }
+}
+
+.video-setup__scan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.video-setup__candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.video-setup__candidate {
+  justify-content: flex-start;
+  text-align: left;
+
+  small {
+    margin-left: 8px;
+    opacity: 0.7;
+  }
+}
+
+.video-setup__manual {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.video-setup__manual-row {
+  display: flex;
+  gap: 8px;
+
+  .video-setup__manual-scheme {
+    width: 110px;
+  }
+  .video-setup__manual-host {
+    flex: 1;
+  }
+  .video-setup__manual-port {
+    width: 90px;
+  }
+}
+
+.video-setup__add {
+  align-self: flex-start;
+}
+
+.video-setup__error {
+  color: var(--mat-sys-error, #b3261e);
+}

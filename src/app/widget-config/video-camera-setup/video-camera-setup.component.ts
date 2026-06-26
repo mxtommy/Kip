@@ -1,19 +1,35 @@
-import { Component, OnInit, inject, input } from '@angular/core';
-import { FormGroupDirective, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  FormGroupDirective, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup
+} from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { mapPreset, type TVideoPreset } from '../../widgets/widget-video/playback-presets.util';
+import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
+import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/widget-video/discovery-client';
+import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
+import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import {
+  CAMERA_SCHEMES, buildCameraRecord, candidateToFields, slugifyCameraId,
+  type ICameraCandidate
+} from '../../widgets/widget-video/camera-record.util';
 
 /**
  * Widget config sub-component for the Video widget. Binds to the widget config's nested `video`
- * FormGroup and lets the user pick a source and set display options.
+ * FormGroup and lets the user pick a source (direct URL or a gateway camera) and set display options.
  *
- * Today only the direct-URL source is enabled; the Scan / Camera / Uploaded sources are shown as
- * disabled "coming soon" slots so later updates light them up without re-laying-out the dialog.
+ * Camera mode lists cameras saved on the Signal K server, scans the network to discover new ones, and
+ * adds a camera (and optional credentials) through the sk-video plugin. Credentials are write-only
+ * and live server-side; the widget config only stores the chosen camera id.
  */
 @Component({
   selector: 'video-camera-setup',
@@ -21,13 +37,34 @@ import { mapPreset, type TVideoPreset } from '../../widgets/widget-video/playbac
   styleUrls: ['./video-camera-setup.component.scss'],
   imports: [
     ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatCheckboxModule, MatButtonToggleModule, MatIconModule
+    MatCheckboxModule, MatButtonToggleModule, MatButtonModule, MatIconModule, MatTooltipModule,
+    MatProgressSpinnerModule
   ]
 })
 export class VideoCameraSetupComponent implements OnInit {
   readonly formGroupName = input.required<string>();
   private readonly rootFormGroup = inject(FormGroupDirective);
+  private readonly connection = inject(SignalKConnectionService);
+  private readonly discovery = inject(CameraDiscoveryClient);
+  private readonly resources = inject(CamerasResourceClient);
+  private readonly credentials = inject(CameraCredentialsClient);
+
   protected videoGroup!: UntypedFormGroup;
+  protected manualForm!: UntypedFormGroup;
+  protected readonly schemes = CAMERA_SCHEMES;
+
+  private readonly endpoint = toSignal(this.connection.serverServiceEndpoint$, { initialValue: null });
+  private readonly pluginBaseUrl = computed(() =>
+    resolveSignalKPluginBaseUrl('sk-video', this.endpoint()?.httpServiceUrl ?? null, this.connection.signalKURL?.url ?? null)
+  );
+  private readonly v2BaseUrl = computed(() => this.endpoint()?.httpServiceUrlV2 ?? null);
+
+  protected readonly cameras = signal<ISavedCamera[]>([]);
+  protected readonly candidates = signal<ICameraCandidate[]>([]);
+  protected readonly scanning = signal(false);
+  protected readonly scanMessage = signal<string | null>(null);
+  protected readonly addError = signal<string | null>(null);
+  protected readonly saving = signal(false);
 
   ngOnInit(): void {
     const existing = this.rootFormGroup.control.get(this.formGroupName());
@@ -39,6 +76,7 @@ export class VideoCameraSetupComponent implements OnInit {
     }
     this.ensure('sourceKind', 'url');
     this.ensure('url', null);
+    this.ensure('cameraId', null);
     this.ensure('transport', 'auto');
     this.ensure('preset', 'balanced');
     this.ensure('muted', true);
@@ -51,6 +89,18 @@ export class VideoCameraSetupComponent implements OnInit {
       embedLocation: true,
       defaultDestination: 'download'
     });
+
+    this.manualForm = new UntypedFormGroup({
+      name: new UntypedFormControl(''),
+      scheme: new UntypedFormControl('rtsp'),
+      host: new UntypedFormControl(''),
+      port: new UntypedFormControl(null),
+      path: new UntypedFormControl(''),
+      username: new UntypedFormControl(''),
+      password: new UntypedFormControl('')
+    });
+
+    void this.refreshCameras();
   }
 
   /** Currently selected source kind (defaults to 'url'). */
@@ -61,6 +111,104 @@ export class VideoCameraSetupComponent implements OnInit {
   /** Plain-language hint for the currently selected quality/latency preset. */
   protected get presetHint(): string {
     return mapPreset((this.videoGroup?.get('preset')?.value as TVideoPreset) ?? 'balanced').hint;
+  }
+
+  /** Loads the cameras saved on the server. */
+  protected async refreshCameras(): Promise<void> {
+    try {
+      this.cameras.set(await this.resources.list(this.v2BaseUrl()));
+    } catch {
+      // leave the existing list; the picker simply shows what we have
+    }
+  }
+
+  /** Scans the network for cameras through the plugin. */
+  protected async scan(): Promise<void> {
+    if (this.scanning()) {
+      return;
+    }
+    this.scanning.set(true);
+    this.scanMessage.set(null);
+    this.candidates.set([]);
+    try {
+      const found = await this.discovery.scan(this.pluginBaseUrl());
+      this.candidates.set(found);
+      if (!found.length) {
+        this.scanMessage.set('No cameras found on the network.');
+      }
+    } catch (err) {
+      if (err instanceof DiscoveryRateLimitedError) {
+        const wait = err.retryAfterSeconds ? ` Try again in ${err.retryAfterSeconds}s.` : '';
+        this.scanMessage.set(`A scan is already running.${wait}`);
+      } else {
+        this.scanMessage.set('Scan failed — is the SK Video plugin installed and enabled?');
+      }
+    } finally {
+      this.scanning.set(false);
+    }
+  }
+
+  /** Seeds the manual form from a discovered camera. */
+  protected useCandidate(candidate: ICameraCandidate): void {
+    this.manualForm.patchValue(candidateToFields(candidate));
+    this.addError.set(null);
+  }
+
+  /** Validates and saves the manual camera, then selects it. */
+  protected async addCamera(): Promise<void> {
+    this.addError.set(null);
+    const fields = this.manualForm.value as Record<string, unknown>;
+    const result = buildCameraRecord(fields);
+    if (!result.valid || !result.value) {
+      this.addError.set(result.errors.join('. '));
+      return;
+    }
+    const id = this.uniqueId(slugifyCameraId(result.value.name));
+    this.saving.set(true);
+    try {
+      await this.resources.save(this.v2BaseUrl(), id, result.value);
+      const username = `${fields['username'] ?? ''}`.trim();
+      const password = `${fields['password'] ?? ''}`;
+      if (username || password) {
+        await this.credentials.set(this.pluginBaseUrl(), id, { username, password });
+      }
+      await this.refreshCameras();
+      this.videoGroup.get('cameraId')?.setValue(id);
+      this.manualForm.reset({ scheme: 'rtsp', port: null });
+      this.candidates.set([]);
+    } catch {
+      this.addError.set('Could not save the camera. Check the SK Video plugin and your details.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Removes the currently selected camera. */
+  protected async removeSelected(): Promise<void> {
+    const id = this.videoGroup.get('cameraId')?.value as string | null;
+    if (!id) {
+      return;
+    }
+    try {
+      await this.resources.remove(this.v2BaseUrl(), id);
+      this.videoGroup.get('cameraId')?.setValue(null);
+      await this.refreshCameras();
+    } catch {
+      this.addError.set('Could not remove the camera.');
+    }
+  }
+
+  /** Ensures the generated id doesn't collide with an existing camera. */
+  private uniqueId(base: string): string {
+    const taken = new Set(this.cameras().map((c) => c.id));
+    if (!taken.has(base)) {
+      return base;
+    }
+    let n = 2;
+    while (taken.has(`${base}-${n}`)) {
+      n++;
+    }
+    return `${base}-${n}`;
   }
 
   private ensure(name: string, defaultValue: unknown): void {

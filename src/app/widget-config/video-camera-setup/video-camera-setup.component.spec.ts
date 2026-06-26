@@ -1,8 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 import { VideoCameraSetupComponent } from './video-camera-setup.component';
+import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { CameraDiscoveryClient } from '../../widgets/widget-video/discovery-client';
+import { CamerasResourceClient } from '../../widgets/widget-video/cameras-resource-client';
+import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
 
 @Component({
   standalone: true,
@@ -63,5 +69,94 @@ describe('VideoCameraSetupComponent', () => {
     expect(snapshot.get('embedTelemetry')?.value).toBe(true);
     expect(snapshot.get('defaultDestination')?.value).toBe('download');
     expect(fixture.nativeElement.querySelector('[formgroupname="snapshot"]')).not.toBeNull();
+  });
+});
+
+describe('VideoCameraSetupComponent — camera mode', () => {
+  const resources = {
+    list: vi.fn(),
+    save: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined)
+  };
+  const discovery = { scan: vi.fn() };
+  const creds = { set: vi.fn().mockResolvedValue(undefined), clear: vi.fn().mockResolvedValue(undefined) };
+
+  let fixture: ComponentFixture<HostComponent>;
+  let videoGroup: UntypedFormGroup;
+  let cmp: { cameras: () => unknown[]; candidates: () => unknown[]; manualForm: UntypedFormGroup;
+    addCamera: () => Promise<void>; scan: () => Promise<void> };
+
+  beforeEach(async () => {
+    resources.list.mockResolvedValue([
+      { id: 'foredeck', name: 'Foredeck', enabled: true, source: { scheme: 'rtsp', host: '10.0.0.5' } }
+    ]);
+    discovery.scan.mockResolvedValue([{ name: 'Aft', host: '10.0.0.7' }]);
+    resources.save.mockClear();
+    creds.set.mockClear();
+
+    await TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [
+        { provide: CamerasResourceClient, useValue: resources },
+        { provide: CameraDiscoveryClient, useValue: discovery },
+        { provide: CameraCredentialsClient, useValue: creds },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({
+              httpServiceUrl: 'http://h:3000/signalk/v1/api/',
+              httpServiceUrlV2: 'http://h:3000/signalk/v2/api'
+            }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(HostComponent);
+    videoGroup = fixture.componentInstance.root.get('video') as UntypedFormGroup;
+    fixture.detectChanges(); // ngOnInit
+    videoGroup.get('sourceKind')?.setValue('camera');
+    await Promise.resolve(); // refreshCameras
+    fixture.detectChanges();
+    cmp = fixture.debugElement.query(By.directive(VideoCameraSetupComponent))
+      .componentInstance as typeof cmp;
+  });
+
+  it('shows the camera UI and lists saved cameras', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Scan network');
+    expect(text).toContain('Add camera');
+    expect(cmp.cameras()).toHaveLength(1);
+    expect(videoGroup.get('cameraId')).toBeTruthy();
+  });
+
+  it('scans the network and lists candidates', async () => {
+    await cmp.scan();
+    expect(discovery.scan).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/');
+    expect(cmp.candidates()).toEqual([{ name: 'Aft', host: '10.0.0.7' }]);
+  });
+
+  it('saves a manual camera and selects it, with credentials', async () => {
+    cmp.manualForm.patchValue({
+      name: 'Bow Cam', scheme: 'rtsp', host: '10.0.0.9', port: 554, path: '/s1',
+      username: 'admin', password: 'pw'
+    });
+    await cmp.addCamera();
+    expect(resources.save).toHaveBeenCalledWith('http://h:3000/signalk/v2/api', 'bow-cam', {
+      name: 'Bow Cam',
+      enabled: true,
+      source: { scheme: 'rtsp', host: '10.0.0.9', port: 554, path: '/s1' }
+    });
+    expect(creds.set).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'bow-cam', {
+      username: 'admin',
+      password: 'pw'
+    });
+    expect(videoGroup.get('cameraId')?.value).toBe('bow-cam');
+  });
+
+  it('does not save an invalid manual camera', async () => {
+    cmp.manualForm.patchValue({ name: '', scheme: 'rtsp', host: '10.0.0.9' });
+    await cmp.addCamera();
+    expect(resources.save).not.toHaveBeenCalled();
   });
 });
