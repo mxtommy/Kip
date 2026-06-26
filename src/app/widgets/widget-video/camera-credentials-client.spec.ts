@@ -38,4 +38,25 @@ describe('CameraCredentialsClient', () => {
     fetchMock.mockResolvedValueOnce(res(404));
     await expect(client.clear(BASE, 'gone')).resolves.toBeUndefined();
   });
+
+  it('GETs credential presence and returns the booleans (never a secret)', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ hasUsername: true, hasPassword: false })
+    } as unknown as Response);
+    const p = await client.presence(BASE, 'foredeck');
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://boat.local:3000/plugins/sk-video/cameras/foredeck/credentials');
+    expect(init?.method).toBe('GET');
+    expect(p).toEqual({ hasUsername: true, hasPassword: false });
+  });
+
+  it('treats a missing presence endpoint (older plugin / 404) as nothing stored', async () => {
+    fetchMock.mockResolvedValueOnce(res(404));
+    expect(await client.presence(BASE, 'foredeck')).toEqual({
+      hasUsername: false,
+      hasPassword: false
+    });
+  });
 });

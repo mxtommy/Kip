@@ -18,7 +18,7 @@ import { SignalKConnectionService } from '../../core/services/signalk-connection
 import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
 import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
-import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import { CameraCredentialsClient, type ICredentialPresence } from '../../widgets/widget-video/camera-credentials-client';
 import { CameraProbeClient, type ICameraProbeResult } from '../../widgets/widget-video/camera-probe-client';
 import { VideoAssetsClient, VideoUploadError, type IVideoAsset } from '../../widgets/widget-video/video-assets-client';
 import {
@@ -74,6 +74,9 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly manualOpen = signal(false);
   /** When set, the manual form is editing this saved camera id rather than adding a new one. */
   protected readonly editingId = signal<string | null>(null);
+  /** Whether the camera being edited already has stored credentials (presence only, no secret). */
+  protected readonly credentialPresence = signal<ICredentialPresence | null>(null);
+  protected readonly clearingCredentials = signal(false);
   protected readonly testing = signal(false);
   protected readonly testResult = signal<ICameraProbeResult | null>(null);
 
@@ -317,6 +320,7 @@ export class VideoCameraSetupComponent implements OnInit {
     this.manualOpen.set(true);
     this.addError.set(null);
     this.testResult.set(null);
+    this.credentialPresence.set(null);
     // Credentials are write-only and never read back, so the password fields start blank — the user
     // re-enters them only if they want to change them (see the credentials section).
     this.manualForm.reset({
@@ -328,6 +332,34 @@ export class VideoCameraSetupComponent implements OnInit {
       username: '',
       password: ''
     });
+    void this.refreshCredentialPresence(cam.id);
+  }
+
+  /** Looks up whether the camera already has stored credentials (presence only — never the values). */
+  private async refreshCredentialPresence(id: string): Promise<void> {
+    try {
+      this.credentialPresence.set(await this.credentials.presence(this.pluginBaseUrl(), id));
+    } catch {
+      this.credentialPresence.set(null);
+    }
+  }
+
+  /** Removes the stored credentials for the camera being edited. */
+  protected async clearCredentials(): Promise<void> {
+    const id = this.editingId();
+    if (!id) {
+      return;
+    }
+    this.clearingCredentials.set(true);
+    try {
+      await this.credentials.clear(this.pluginBaseUrl(), id);
+      this.credentialPresence.set({ hasUsername: false, hasPassword: false });
+      this.manualForm.patchValue({ username: '', password: '' });
+    } catch {
+      this.addError.set('Could not clear the saved credentials.');
+    } finally {
+      this.clearingCredentials.set(false);
+    }
   }
 
   /** Leaves edit mode without saving, returning the form to a blank "add" state. */
@@ -335,6 +367,7 @@ export class VideoCameraSetupComponent implements OnInit {
     this.editingId.set(null);
     this.addError.set(null);
     this.testResult.set(null);
+    this.credentialPresence.set(null);
     this.manualForm.reset({ scheme: 'rtsp', port: null });
     this.manualOpen.set(false);
   }
@@ -386,6 +419,7 @@ export class VideoCameraSetupComponent implements OnInit {
       this.manualForm.reset({ scheme: 'rtsp', port: null });
       this.candidates.set([]);
       this.editingId.set(null);
+      this.credentialPresence.set(null);
       if (editing) {
         this.manualOpen.set(false); // collapse back to the picker after a successful edit
       }

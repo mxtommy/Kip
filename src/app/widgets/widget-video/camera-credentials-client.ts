@@ -3,6 +3,12 @@ import { Injectable } from '@angular/core';
 /** Minimal fetch signature so the client is testable without the real network. */
 export type CredentialsFetch = (url: string, init?: RequestInit) => Promise<Response>;
 
+/** Whether a username/password is stored for a camera — presence only, never the values. */
+export interface ICredentialPresence {
+  hasUsername: boolean;
+  hasPassword: boolean;
+}
+
 const CAMERA_ID = /^[A-Za-z0-9-]+$/;
 
 /**
@@ -37,6 +43,21 @@ export class CameraCredentialsClient {
     if (!res.ok && res.status !== 404) {
       throw new Error(`Could not clear camera credentials (${res.status})`);
     }
+  }
+
+  /**
+   * Reports whether a username/password is stored for the camera — booleans only, never the secret.
+   * A missing endpoint (older plugin) or any error is treated as "nothing stored" so the UI degrades
+   * gracefully rather than implying credentials when it cannot tell.
+   */
+  async presence(pluginBaseUrl: string | null, cameraId: string): Promise<ICredentialPresence> {
+    const url = this.urlFor(pluginBaseUrl, cameraId);
+    const res = await this.fetchImpl(url, { method: 'GET' });
+    if (!res.ok) {
+      return { hasUsername: false, hasPassword: false };
+    }
+    const body = (await res.json()) as Partial<ICredentialPresence> | null;
+    return { hasUsername: !!body?.hasUsername, hasPassword: !!body?.hasPassword };
   }
 
   private urlFor(pluginBaseUrl: string | null, cameraId: string): string {

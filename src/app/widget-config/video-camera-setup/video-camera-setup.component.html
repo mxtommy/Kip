@@ -166,6 +166,19 @@
         <small class="video-setup__hint" id="cred-note">
           Credentials are stored on the Signal K server only and never synced to your devices.
         </small>
+        @if (editingId() && credentialPresence(); as cred) {
+          @if (cred.hasUsername || cred.hasPassword) {
+            <div class="video-setup__cred-status" role="status" aria-live="polite">
+              <mat-icon>lock</mat-icon>
+              <span>Credentials saved. Leave the fields blank to keep them, or type new ones to replace.</span>
+              <button mat-button type="button" (click)="clearCredentials()" [disabled]="clearingCredentials()">
+                Clear
+              </button>
+            </div>
+          } @else {
+            <small class="video-setup__hint">No credentials saved for this camera.</small>
+          }
+        }
         <div class="video-setup__manual-actions">
           <button mat-stroked-button type="button" (click)="testConnection()" [disabled]="testing()">
             @if (testing()) {

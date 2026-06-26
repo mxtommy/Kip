@@ -80,7 +80,11 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     remove: vi.fn().mockResolvedValue(undefined)
   };
   const discovery = { scan: vi.fn() };
-  const creds = { set: vi.fn().mockResolvedValue(undefined), clear: vi.fn().mockResolvedValue(undefined) };
+  const creds = {
+    set: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+    presence: vi.fn().mockResolvedValue({ hasUsername: false, hasPassword: false })
+  };
 
   let fixture: ComponentFixture<HostComponent>;
   let videoGroup: UntypedFormGroup;
@@ -94,6 +98,9 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     discovery.scan.mockResolvedValue([{ name: 'Aft', host: '10.0.0.7' }]);
     resources.save.mockClear();
     creds.set.mockClear();
+    creds.clear.mockClear();
+    creds.presence.mockClear();
+    creds.presence.mockResolvedValue({ hasUsername: false, hasPassword: false });
 
     await TestBed.configureTestingModule({
       imports: [HostComponent],
@@ -209,6 +216,35 @@ describe('VideoCameraSetupComponent — camera mode', () => {
       enabled: false,
       source: { scheme: 'rtsp', host: '10.0.0.5' }
     });
+  });
+
+  it('looks up stored-credential presence when editing a camera', async () => {
+    creds.presence.mockResolvedValue({ hasUsername: true, hasPassword: true });
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    const c = cmp as unknown as {
+      editSelectedCamera: () => void;
+      credentialPresence: () => { hasUsername: boolean; hasPassword: boolean } | null;
+    };
+    c.editSelectedCamera();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(creds.presence).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'foredeck');
+    expect(c.credentialPresence()).toEqual({ hasUsername: true, hasPassword: true });
+  });
+
+  it('clears stored credentials for the camera being edited', async () => {
+    creds.presence.mockResolvedValue({ hasUsername: true, hasPassword: true });
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    const c = cmp as unknown as {
+      editSelectedCamera: () => void;
+      clearCredentials: () => Promise<void>;
+      credentialPresence: () => { hasUsername: boolean; hasPassword: boolean } | null;
+    };
+    c.editSelectedCamera();
+    await Promise.resolve();
+    await c.clearCredentials();
+    expect(creds.clear).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'foredeck');
+    expect(c.credentialPresence()).toEqual({ hasUsername: false, hasPassword: false });
   });
 });
 
