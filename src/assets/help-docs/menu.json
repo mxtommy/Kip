@@ -23,6 +23,10 @@
         "file": "videowidget.md"
       },
       {
+        "title": "Video Recipes (step by step)",
+        "file": "video-recipes.md"
+      },
+      {
         "title": "History-API Provider",
         "file": "history-api.md"
       },
