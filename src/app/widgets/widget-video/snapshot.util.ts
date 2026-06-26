@@ -22,10 +22,16 @@ export interface ISnapshotResult {
 
 /** Builds a safe snapshot filename like `foredeck-cam-2026-06-26T04-30-15Z.jpg`. */
 export function buildSnapshotFilename(now: Date, label?: string | null): string {
-  void now;
-  void label;
-  // RED stub.
-  return '';
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  const stamp =
+    `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}` +
+    `T${pad(now.getUTCHours())}-${pad(now.getUTCMinutes())}-${pad(now.getUTCSeconds())}Z`;
+  const slug = (label ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${slug || 'snapshot'}-${stamp}.jpg`;
 }
 
 /**
@@ -34,13 +40,16 @@ export function buildSnapshotFilename(now: Date, label?: string | null): string 
  * chosen destination. Pure except for Blob/atob; the actual frame capture is done by the caller.
  */
 export function composeSnapshot(jpegDataUrl: string, getPath: PathGetter, opts: IComposeSnapshotOptions): ISnapshotResult {
-  void jpegDataUrl;
-  void getPath;
-  void opts;
-  void buildSnapshotExif;
-  void gatherSnapshotTelemetry;
-  void dataUrlToBlob;
-  void embedExifInJpegDataUrl;
-  // RED stub.
-  return { blob: new Blob(), filename: '', dataUrl: '' };
+  const gathered = gatherSnapshotTelemetry(getPath, opts.now);
+  const telemetry = opts.embedTelemetry ? gathered : { timestamp: gathered.timestamp };
+  const exif = buildSnapshotExif(telemetry, {
+    includeGps: opts.embedTelemetry && opts.embedLocation,
+    cameraName: opts.cameraName
+  });
+  const dataUrl = embedExifInJpegDataUrl(jpegDataUrl, exif);
+  return {
+    blob: dataUrlToBlob(dataUrl),
+    filename: buildSnapshotFilename(opts.now, opts.cameraName),
+    dataUrl
+  };
 }
