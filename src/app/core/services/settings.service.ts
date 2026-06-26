@@ -16,6 +16,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { StorageService } from './storage.service';
 import { Dashboard } from './dashboard.service';
 import { SignalKConnectionService } from '../services/signalk-connection.service';
+import { AuthenticationService } from './authentication.service';
 import { compare } from 'compare-versions';
 
 
@@ -29,6 +30,7 @@ export class SettingsService {
   private readonly storage = inject(StorageService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly server = inject(SignalKConnectionService);
+  private readonly auth = inject(AuthenticationService);
 
   private unitDefaults: BehaviorSubject<IUnitDefaults> = new BehaviorSubject<IUnitDefaults>({});
   private themeName: BehaviorSubject<string> = new BehaviorSubject<string>(defaultTheme);
@@ -76,10 +78,22 @@ export class SettingsService {
     }
   }
 
+  /**
+   * Whether config persistence should target the server's applicationData rather than localStorage.
+   * True in cookie mode (same-origin SSO session) regardless of the stored useSharedConfig flag, and
+   * in cross-origin mode when shared config is enabled. Decouples storage routing from useSharedConfig
+   * the same way auth carriage is — avoids the cookie-mode localStorage split-brain.
+   */
+  private get useServerStorage(): boolean {
+    return this.auth.authMode === 'cookie' || this.useSharedConfig;
+  }
+
   private async startup(): Promise<void> {
-    if (this.useSharedConfig) {
-      if (!this.storage.isRemoteContextBootstrapped() || this.storage.initConfig === null) {
-        console.warn('[AppSettings Service] Shared configuration enabled but remote bootstrap handoff is missing. Waiting for explicit recovery action.');
+    if (this.useServerStorage) {
+      // A missing server config comes back as {} (not a 404), so guard on the presence of app config —
+      // an empty/appless object must not fall through to pushSettings() and dereference activeConfig.app.
+      if (!this.storage.isRemoteContextBootstrapped() || !this.storage.initConfig?.app) {
+        console.warn('[AppSettings Service] Shared configuration enabled but remote bootstrap handoff is missing or empty. Waiting for explicit recovery action.');
         return;
       }
 
@@ -119,10 +133,17 @@ export class SettingsService {
     this.signalKSubscribeAll = config.signalKSubscribeAll;
     this.useDeviceToken = config.useDeviceToken;
     this.loginName = config.loginName;
-    this.loginPassword = config.loginPassword;
+    this.loginPassword = ''; // transient only; never loaded from storage
     this.useSharedConfig = config.useSharedConfig;
     this.sharedConfigName = config.sharedConfigName;
     this.kipUUID = config.kipUUID;
+
+    // Idempotent purge: strip any plaintext password persisted by an older version.
+    // Targeted rewrite preserves all other fields (incl. configVersion) exactly.
+    if (Object.prototype.hasOwnProperty.call(config, 'loginPassword')) {
+      delete config.loginPassword;
+      localStorage.setItem("connectionConfig", JSON.stringify(config));
+    }
   }
 
   public resetConnection() {
@@ -275,7 +296,7 @@ export class SettingsService {
   }
   public setDefaultUnits(newDefaults: IUnitDefaults) {
     this.unitDefaults.next(newDefaults);
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('Array<IUnitDefaults>', newDefaults);
 
     } else {
@@ -299,16 +320,16 @@ export class SettingsService {
 
   public setConnectionConfig(value: IConnectionConfig) {
     this.loginName = value.loginName;
-    this.loginPassword = value.loginPassword;
+    this.loginPassword = value.loginPassword ?? ''; // transient; not persisted
     this.useSharedConfig = value.useSharedConfig;
     this.proxyEnabled = value.proxyEnabled;
     this.signalKSubscribeAll = value.signalKSubscribeAll;
     if (this.signalkUrl) {
       this.signalkUrl.url = value.signalKUrl;
     }
-    if (!value.useSharedConfig) {
-      this.useDeviceToken = true;
-    } else this.useDeviceToken = false;
+    // useDeviceToken and useSharedConfig are one "cross-origin intent" axis (device token only when
+    // not using shared config).
+    this.useDeviceToken = !value.useSharedConfig;
     this.saveConnectionConfigToLocalStorage();
   }
 
@@ -336,7 +357,7 @@ export class SettingsService {
 
   public setThemeName(newTheme: string) {
     this.themeName.next(newTheme);
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       const theme: IThemeConfig = {
         themeName: newTheme
       }
@@ -359,7 +380,7 @@ export class SettingsService {
     this.autoNightMode.next(enabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -383,7 +404,7 @@ export class SettingsService {
     this.redNightMode.next(enabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -403,7 +424,7 @@ export class SettingsService {
     this.isRemoteControl.next(enabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -423,7 +444,7 @@ export class SettingsService {
     this.instanceName.next(name);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -449,7 +470,7 @@ export class SettingsService {
     this.splitShellEnabled.next(enabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -466,7 +487,7 @@ export class SettingsService {
     this.splitShellSide.next(side);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -483,7 +504,7 @@ export class SettingsService {
     this.widgetHistoryDisabled.next(disabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -500,7 +521,7 @@ export class SettingsService {
     this.splitShellSwipeDisabled.next(enabled);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -519,7 +540,7 @@ export class SettingsService {
     this.splitShellWidth.next(ratio);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -534,7 +555,7 @@ export class SettingsService {
     this.nightModeBrightness.next(brightness);
     const appConf = this.buildAppStorageObject();
 
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('IAppConfig', appConf);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -547,7 +568,7 @@ export class SettingsService {
   }
 
   public saveDashboards(dashboards: Dashboard[]) {
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       if (this.storage.storageServiceReady$.getValue()) {
         this.storage.patchConfig('Dashboards', dashboards);
       }
@@ -560,7 +581,7 @@ export class SettingsService {
   // DataSets
   public saveDataSets(dataSets: IDatasetServiceDatasetConfig[]) {
     this.dataSets = dataSets;
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('Array<IDatasetDef>', dataSets);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -579,7 +600,7 @@ export class SettingsService {
   }
   public setNotificationConfig(notificationConfig: INotificationConfig) {
     this.kipKNotificationConfig.next(notificationConfig);
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       this.storage.patchConfig('INotificationConfig', notificationConfig);
     } else {
       this.saveAppConfigToLocalStorage();
@@ -594,7 +615,7 @@ export class SettingsService {
     newDefaultConfig.theme = this.getDefaultThemeConfig();
     newDefaultConfig.dashboards = this.getDefaultDashboardsConfig();
 
-      if (this.useSharedConfig) {
+      if (this.useServerStorage) {
         if (this.storage.storageServiceReady$.getValue()) {
           this.storage.setConfig('user', this.sharedConfigName, newDefaultConfig)
             .then(() => {
@@ -637,13 +658,13 @@ export class SettingsService {
   }
 
   public loadDemoConfig() {
-    if (this.useSharedConfig) {
+    if (this.useServerStorage) {
       const demoConfig: IConfig = {
         app: DemoAppConfig,
         dashboards: DemoDashboardsConfig,
         theme: DemoThemeConfig
       };
-      console.log("[AppSettings Service] Loading Demo configuration settings as remote config: " + this.useSharedConfig + " and reloading app.");
+      console.log("[AppSettings Service] Loading Demo configuration settings as remote config: " + this.useServerStorage + " and reloading app.");
       this.storage.setConfig('user', this.sharedConfigName, demoConfig);
       this.reloadApp();
     } else {
@@ -695,7 +716,7 @@ export class SettingsService {
       signalKSubscribeAll: this.signalKSubscribeAll,
       useDeviceToken: this.useDeviceToken,
       loginName: this.loginName,
-      loginPassword: this.loginPassword,
+      // loginPassword intentionally omitted: never persisted (transient in-memory only).
       useSharedConfig: this.useSharedConfig,
       sharedConfigName: this.sharedConfigName
     }
