@@ -205,4 +205,18 @@ describe('WidgetVideoComponent', () => {
     left.dispatchEvent(new FocusEvent('blur'));
     expect(ptz.stop).toHaveBeenCalledWith(base, 'foredeck');
   });
+
+  it('renders an optional title bar above the video', () => {
+    const el: HTMLElement = setup({
+      video: { sourceKind: 'url', url: 'https://cam.example/clip.mp4', label: 'Foredeck' }
+    }).nativeElement;
+    expect(el.querySelector('.video-widget__title')?.textContent?.trim()).toBe('Foredeck');
+  });
+
+  it('shows a connecting placeholder until the first frame arrives', () => {
+    const el: HTMLElement = setup({
+      video: { sourceKind: 'url', url: 'https://cam.example/clip.mp4' }
+    }).nativeElement;
+    expect(el.querySelector('.video-widget__connecting')).not.toBeNull();
+  });
 });

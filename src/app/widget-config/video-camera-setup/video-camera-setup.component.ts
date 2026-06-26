@@ -90,6 +90,7 @@ export class VideoCameraSetupComponent implements OnInit {
     this.ensure('autoplay', false);
     this.ensure('loop', false);
     this.ensure('objectFit', 'contain');
+    this.ensure('label', null);
 
     this.ensureGroup('snapshot', {
       embedTelemetry: true,

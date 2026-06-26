@@ -4,6 +4,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Hls from 'hls.js';
 import { IVideoWidgetConfig, IWidgetSvcConfig, TSnapshotDestination } from '../../core/interfaces/widgets-interface';
@@ -42,7 +43,7 @@ const fetchLike: FetchLike = (url, init) => fetch(url, init);
   templateUrl: './widget-video.component.html',
   styleUrls: ['./widget-video.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule]
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule, MatProgressSpinnerModule]
 })
 export class WidgetVideoComponent {
   public id = input.required<string>();
@@ -123,15 +124,24 @@ export class WidgetVideoComponent {
     return p === 'hls-native' || p === 'hls-hlsjs' || p === 'webrtc' || p === 'mjpeg';
   });
   protected readonly objectFit = computed(() => this.videoConfig()?.objectFit ?? 'contain');
+  /** Optional title shown on the video to tell streams apart when several are on screen. */
+  protected readonly videoLabel = computed(() => this.videoConfig()?.label?.trim() || null);
   protected readonly muted = computed(() => this.videoConfig()?.muted ?? true);
   protected readonly autoplay = computed(() => this.videoConfig()?.autoplay || this.isLive());
   protected readonly loop = computed(() => this.videoConfig()?.loop ?? false);
   protected readonly showMjpegWarning = computed(() => this.pipeline() === 'mjpeg' && this.isWebkit);
 
   protected readonly snapshotError = signal<string | null>(null);
+  /** Transient confirmation after a snapshot succeeds (e.g. "Snapshot saved"). */
+  protected readonly snapshotMessage = signal<string | null>(null);
   protected readonly playbackError = signal<string | null>(null);
   protected readonly codecWarning = signal<string | null>(null);
   protected readonly canRetry = signal(false);
+  private readonly painted = signal(false);
+  /** True while a playable pipeline is set up but hasn't shown its first frame yet (and has no error). */
+  protected readonly connecting = computed(
+    () => this.isVideoPipeline() && !!this.sourceUrl() && !this.painted() && !this.playbackError()
+  );
   /** Live pipelines are torn down while the page/dashboard is hidden to save decoders, battery and heat. */
   private readonly visible = signal(typeof document === 'undefined' || !document.hidden);
   private readonly reconnectNonce = signal(0);
@@ -236,6 +246,7 @@ export class WidgetVideoComponent {
     this.canRetry.set(false);
     this.playbackError.set(null);
     this.paintedFrame = true;
+    this.painted.set(true);
     this.codecWarning.set(null);
     this.clearReconnectTimer();
     this.clearFirstFrameWatchdog();
@@ -245,6 +256,7 @@ export class WidgetVideoComponent {
   private startFirstFrameWatchdog(video: HTMLVideoElement, gen: number): void {
     this.clearFirstFrameWatchdog();
     this.paintedFrame = false;
+    this.painted.set(false);
     const rvfc = video as HTMLVideoElement & {
       requestVideoFrameCallback?: (cb: () => void) => number;
     };
@@ -308,7 +320,9 @@ export class WidgetVideoComponent {
       DEFAULT_BACKOFF.jitterRatio,
       Math.random
     );
-    this.playbackError.set(`Reconnecting… (attempt ${this.reconnectAttempt})`);
+    this.playbackError.set(
+      `Reconnecting… (attempt ${this.reconnectAttempt} of ${DEFAULT_BACKOFF.maxAttempts})`
+    );
     this.clearReconnectTimer();
     this.reconnectTimer = setTimeout(() => {
       if (this.generation === gen) {
@@ -423,6 +437,7 @@ export class WidgetVideoComponent {
     this.clearReconnectTimer();
     this.clearFirstFrameWatchdog();
     this.codecWarning.set(null);
+    this.painted.set(false);
     if (this.boundVideo) {
       this.boundVideo.removeEventListener('playing', this.onPlaying);
       this.boundVideo.removeEventListener('error', this.onError);
@@ -594,6 +609,7 @@ export class WidgetVideoComponent {
         downloadBlob(result.blob, result.filename);
       }
       this.snapshotError.set(null);
+      this.flashSnapshotMessage(dest === 'share' && this.canShare ? 'Photo shared' : 'Snapshot saved');
     } catch (err) {
       const isSecurity = err instanceof DOMException && err.name === 'SecurityError';
       this.snapshotError.set(
@@ -602,6 +618,15 @@ export class WidgetVideoComponent {
           : 'Snapshot failed.'
       );
     }
+  }
+
+  private snapshotMessageTimer: ReturnType<typeof setTimeout> | null = null;
+  private flashSnapshotMessage(message: string): void {
+    this.snapshotMessage.set(message);
+    if (this.snapshotMessageTimer) {
+      clearTimeout(this.snapshotMessageTimer);
+    }
+    this.snapshotMessageTimer = setTimeout(() => this.snapshotMessage.set(null), 2500);
   }
 
   protected async togglePip(): Promise<void> {

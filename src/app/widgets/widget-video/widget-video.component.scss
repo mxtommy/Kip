@@ -1,14 +1,46 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
+// Optional title shown ABOVE the video (a header bar) so it never occludes the picture.
+.video-widget__title {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--kip-contrast-color, #fff);
+  background: var(--kip-widget-card-background-color, #1e1e1e);
+}
+
 .video-widget__stage {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
+}
+
+// Themed "Connecting…" placeholder while the first frame loads (instead of a dead black box).
+.video-widget__connecting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 0.85rem;
+  color: var(--kip-contrast-dim-color, #fff);
+  background: color-mix(in srgb, var(--kip-widget-card-background-color, #000) 70%, transparent);
 }
 
 .video-widget__player {

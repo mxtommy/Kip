@@ -213,6 +213,11 @@
   <!-- Appearance -->
   <section class="video-setup__section">
     <h3 class="video-setup__label">Appearance</h3>
+    <mat-form-field class="video-setup__url">
+      <mat-label>Title (optional)</mat-label>
+      <input matInput formControlName="label" placeholder="Foredeck" maxlength="40" />
+      <mat-hint>Shown above the video to tell streams apart when several are on screen.</mat-hint>
+    </mat-form-field>
     <div class="video-setup__appearance">
       <mat-form-field>
         <mat-label>Scaling</mat-label>

@@ -1,5 +1,8 @@
-@if (pipeline(); as pipe) {
-  <div class="video-widget__stage">
+@if (videoLabel(); as label) {
+  <div class="video-widget__title">{{ label }}</div>
+}
+<div class="video-widget__stage">
+  @if (pipeline(); as pipe) {
     @if (pipe === 'mjpeg') {
       <img
         class="video-widget__player"
@@ -38,6 +41,13 @@
         ></div>
       }
 
+      @if (connecting()) {
+        <div class="video-widget__connecting" role="status" aria-live="polite">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+          <span>Connecting…</span>
+        </div>
+      }
+
       <div class="video-widget__overlay">
         @if (canPip) {
           <button type="button" mat-icon-button class="video-widget__ctrl" (click)="togglePip()"
@@ -69,9 +79,6 @@
                 <mat-icon>ios_share</mat-icon><span>Share…</span>
               </button>
             }
-            <button mat-menu-item type="button" disabled>
-              <mat-icon>cloud_upload</mat-icon><span>Save to Signal K (coming soon)</span>
-            </button>
           </mat-menu>
         </span>
       </div>
@@ -153,15 +160,20 @@
     @if (snapshotError(); as err) {
       <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
     }
+    @if (snapshotMessage(); as msg) {
+      <div class="video-widget__toast video-widget__toast--success" role="status" aria-live="polite">
+        {{ msg }}
+      </div>
+    }
     @if (codecWarning(); as warn) {
       <div class="video-widget__toast video-widget__toast--error" role="alert" aria-live="assertive">
         {{ warn }}
       </div>
     }
-  </div>
-} @else {
-  <div class="video-widget__empty">
-    <span class="video-widget__empty-title" role="heading" aria-level="2">No video source</span>
-    <small class="video-widget__empty-hint">Open the widget settings to add a video URL</small>
-  </div>
-}
+  } @else {
+    <div class="video-widget__empty">
+      <span class="video-widget__empty-title" role="heading" aria-level="2">No video source</span>
+      <small class="video-widget__empty-hint">Open the widget settings to add a video URL</small>
+    </div>
+  }
+</div>

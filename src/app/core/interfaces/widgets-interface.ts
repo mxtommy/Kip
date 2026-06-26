@@ -167,6 +167,8 @@ export interface IVideoWidgetConfig {
   loop?: boolean;
   /** object-fit applied to the `<video>` element. */
   objectFit?: TVideoObjectFit;
+  /** Optional title shown on the video, to tell streams apart when several are on screen. */
+  label?: string | null;
   /** Still-capture (snapshot) options. */
   snapshot?: IVideoSnapshotConfig;
 }
