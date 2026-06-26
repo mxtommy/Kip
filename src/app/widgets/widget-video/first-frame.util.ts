@@ -17,7 +17,11 @@ export type TFirstFrameVerdict = 'ok' | 'no-decode' | 'pending';
  * frame. Otherwise we're still loading.
  */
 export function evaluateFirstFrame(state: IFirstFrameState): TFirstFrameVerdict {
-  void state;
-  // RED stub.
+  if (state.paintedFrame) {
+    return 'ok';
+  }
+  if (state.timedOut && state.hasData) {
+    return 'no-decode';
+  }
   return 'pending';
 }
