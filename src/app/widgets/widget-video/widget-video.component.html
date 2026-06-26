@@ -70,7 +70,12 @@
     }
 
     @if (playbackError(); as err) {
-      <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
+      <div class="video-widget__toast" role="status" aria-live="polite">
+        <span>{{ err }}</span>
+        @if (canRetry()) {
+          <button type="button" mat-button class="video-widget__retry" (click)="retry()">Retry</button>
+        }
+      </div>
     }
     @if (snapshotError(); as err) {
       <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>

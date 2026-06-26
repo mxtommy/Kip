@@ -16,6 +16,7 @@ import {
 } from './playback-pipeline.util';
 import { mapPreset } from './playback-presets.util';
 import { whepDelete, whepNegotiate, type FetchLike } from './whep.util';
+import { applyJitter, backoffDelayMs, DEFAULT_BACKOFF, shouldReconnect } from './reconnect.util';
 import {
   canShareSnapshot, captureVideoFrameJpegDataUrl, downloadBlob, shareSnapshot
 } from './snapshot-image.util';
@@ -100,6 +101,10 @@ export class WidgetVideoComponent {
 
   protected readonly snapshotError = signal<string | null>(null);
   protected readonly playbackError = signal<string | null>(null);
+  protected readonly canRetry = signal(false);
+  /** Live pipelines are torn down while the page/dashboard is hidden to save decoders, battery and heat. */
+  private readonly visible = signal(typeof document === 'undefined' || !document.hidden);
+  private readonly reconnectNonce = signal(0);
   protected readonly canPip = typeof document !== 'undefined' && !!document.pictureInPictureEnabled;
   protected readonly canFullscreen =
     typeof document !== 'undefined' && (!!document.fullscreenEnabled ||
@@ -110,22 +115,110 @@ export class WidgetVideoComponent {
   private hls: Hls | null = null;
   private pc: RTCPeerConnection | null = null;
   private whepResource: string | null = null;
+  private reconnectAttempt = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private boundVideo: HTMLVideoElement | null = null;
 
   constructor() {
-    // (Re)attach the right pipeline whenever the source, transport or preset changes — or once the
-    // <video> element is rendered. A generation token prevents stale async callbacks resurrecting it.
+    // (Re)attach the right pipeline whenever the source, transport, preset or visibility changes — or
+    // once the <video> element is rendered, or a reconnect is requested. A generation token prevents
+    // stale async callbacks from resurrecting a torn-down pipeline.
     effect(() => {
       const url = this.sourceUrl();
       const pipe = this.pipeline();
       const tuning = this.presetTuning();
       const video = this.videoRef()?.nativeElement ?? null;
-      untracked(() => void this.attach(url, pipe, tuning, video));
+      const visible = this.visible();
+      this.reconnectNonce();
+      untracked(() => {
+        // Tear down live pipelines while hidden; keep file playback (native <video> pauses itself).
+        if (!visible && this.isLive()) {
+          this.dispose();
+          return;
+        }
+        void this.attach(url, pipe, tuning, video);
+      });
     });
-    inject(DestroyRef).onDestroy(() => this.dispose());
+
+    const onVisibility = () => this.visible.set(!document.hidden);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibility);
+    }
+    inject(DestroyRef).onDestroy(() => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibility);
+      }
+      this.dispose();
+    });
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  /** Successful playback resets the reconnect state. */
+  private readonly onPlaying = (): void => {
+    this.reconnectAttempt = 0;
+    this.canRetry.set(false);
+    this.playbackError.set(null);
+    this.clearReconnectTimer();
+  };
+
+  /** `<video>` error handling: terminal for files, reconnect for native HLS. */
+  private readonly onError = (): void => {
+    const pipe = this.pipeline();
+    if (pipe === 'file') {
+      this.playbackError.set('Could not load this video.');
+    } else if (pipe === 'hls-native') {
+      this.scheduleReconnect(this.generation);
+    }
+    // hls.js and WebRTC report errors through their own handlers.
+  };
+
+  /** Schedules a backed-off reconnect for a recoverable error, or surfaces a manual Retry. */
+  private scheduleReconnect(gen: number): void {
+    if (this.generation !== gen) {
+      return;
+    }
+    this.reconnectAttempt++;
+    if (!shouldReconnect(this.reconnectAttempt, DEFAULT_BACKOFF)) {
+      this.canRetry.set(true);
+      this.playbackError.set('Stream lost. Check the camera, then tap Retry.');
+      return;
+    }
+    const delay = applyJitter(
+      backoffDelayMs(this.reconnectAttempt, DEFAULT_BACKOFF),
+      DEFAULT_BACKOFF.jitterRatio,
+      Math.random
+    );
+    this.playbackError.set(`Reconnecting… (attempt ${this.reconnectAttempt})`);
+    this.clearReconnectTimer();
+    this.reconnectTimer = setTimeout(() => {
+      if (this.generation === gen) {
+        this.reconnectNonce.update(n => n + 1);
+      }
+    }, delay);
+  }
+
+  /** Manual retry after the automatic attempts are exhausted. */
+  protected retry(): void {
+    this.reconnectAttempt = 0;
+    this.canRetry.set(false);
+    this.playbackError.set(null);
+    this.reconnectNonce.update(n => n + 1);
   }
 
   private dispose(): void {
     this.generation++;
+    this.clearReconnectTimer();
+    if (this.boundVideo) {
+      this.boundVideo.removeEventListener('playing', this.onPlaying);
+      this.boundVideo.removeEventListener('error', this.onError);
+      this.boundVideo = null;
+    }
     if (this.hls) {
       try { this.hls.destroy(); } catch { /* ignore */ }
       this.hls = null;
@@ -172,6 +265,10 @@ export class WidgetVideoComponent {
       return; // MJPEG renders via <img>; other pipelines need the <video> element.
     }
 
+    video.addEventListener('playing', this.onPlaying);
+    video.addEventListener('error', this.onError);
+    this.boundVideo = video;
+
     switch (pipe) {
       case 'file':
       case 'hls-native':
@@ -188,7 +285,7 @@ export class WidgetVideoComponent {
         this.hls = hls;
         hls.on(Hls.Events.ERROR, (_e, errData) => {
           if (errData.fatal && this.generation === gen) {
-            this.playbackError.set('Stream error — check the camera/stream URL.');
+            this.scheduleReconnect(gen);
           }
         });
         hls.loadSource(url);
@@ -211,6 +308,11 @@ export class WidgetVideoComponent {
         video.srcObject = e.streams[0] ?? new MediaStream([e.track]);
       }
     };
+    pc.addEventListener('iceconnectionstatechange', () => {
+      if (pc.iceConnectionState === 'failed' && this.generation === gen) {
+        this.scheduleReconnect(gen);
+      }
+    });
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);

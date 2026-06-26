@@ -67,6 +67,15 @@
   color: #fff;
   text-align: center;
   background: color-mix(in srgb, #000 70%, transparent);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.video-widget__retry {
+  color: #9ecbff;
+  min-width: auto;
+  line-height: 1.6;
 }
 
 .video-widget__empty {
