@@ -140,11 +140,21 @@ export type TVideoObjectFit = 'contain' | 'cover' | 'fill';
  * Only the `url` source is wired up today; `file` (uploaded to the Signal K server), `manual`
  * (IP camera via the SK Video gateway) and `scan` (auto-discovery) are added in later updates.
  */
+/** How the configured source is delivered. 'auto' detects HLS vs file from the URL. */
+export type TVideoTransport = 'auto' | 'file' | 'hls' | 'mjpeg' | 'webrtc';
+
+/** Quality-vs-latency preset. */
+export type TVideoPreset = 'docking' | 'balanced' | 'best';
+
 export interface IVideoWidgetConfig {
   /** Which kind of source feeds the player. */
   sourceKind?: TVideoSourceKind;
-  /** Direct URL to a browser-playable video (sourceKind 'url'). */
+  /** Direct URL to a browser-playable video (sourceKind 'url'). For 'webrtc' this is the WHEP endpoint. */
   url?: string | null;
+  /** How the source is delivered (default 'auto'). */
+  transport?: TVideoTransport;
+  /** Quality-vs-latency preset for live streams (default 'balanced'). */
+  preset?: TVideoPreset;
   /** Id of a video uploaded to the Signal K server (sourceKind 'file'; not yet wired). */
   fileAssetId?: string | null;
   /** Mute audio. Required for the browser to allow autoplay. */

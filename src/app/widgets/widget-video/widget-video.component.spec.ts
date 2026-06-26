@@ -20,6 +20,8 @@ function setup(config: IWidgetSvcConfig) {
   fixture.componentRef.setInput('type', 'widget-video');
   fixture.componentRef.setInput('theme', null);
   fixture.detectChanges();
+  // The <video> source is attached by an effect once the element is rendered; flush it.
+  fixture.detectChanges();
   return fixture;
 }
 
