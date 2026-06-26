@@ -50,3 +50,6 @@ yarn-error.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Playwright MCP / e2e scratch output
+.playwright-mcp/
