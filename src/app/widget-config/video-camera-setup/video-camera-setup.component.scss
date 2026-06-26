@@ -164,6 +164,16 @@
   }
 }
 
+// Protocol badge (ONVIF / RTSP) on a discovered camera.
+.video-setup__chip {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
 .video-setup__manual {
   display: flex;
   flex-direction: column;

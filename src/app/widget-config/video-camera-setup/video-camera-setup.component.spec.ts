@@ -151,6 +151,14 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     expect(cmp.candidates()).toEqual([{ name: 'Aft', host: '10.0.0.7' }]);
   });
 
+  it('labels a discovered candidate ONVIF when it advertises an ONVIF endpoint, else RTSP', () => {
+    const c = cmp as unknown as { candidateProtocol: (cand: unknown) => string };
+    expect(
+      c.candidateProtocol({ name: 'A', host: '1.2.3.4', onvifUrl: 'http://1.2.3.4/onvif/device' })
+    ).toBe('ONVIF');
+    expect(c.candidateProtocol({ name: 'B', host: '1.2.3.5' })).toBe('RTSP');
+  });
+
   it('splits a pasted host:port across the Address and Port fields', () => {
     cmp.manualForm.patchValue({ host: '192.168.1.50:8554', port: null });
     (cmp as unknown as { normalizeHost: () => void }).normalizeHost();

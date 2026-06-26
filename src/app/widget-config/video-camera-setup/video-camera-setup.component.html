@@ -140,6 +140,7 @@
             <button mat-button type="button" class="video-setup__candidate" (click)="useCandidate(c)">
               <mat-icon>add</mat-icon>
               <span class="video-setup__candidate-name">{{ c.name }}</span>
+              <span class="video-setup__chip">{{ candidateProtocol(c) }}</span>
               <small>{{ c.host }}</small>
             </button>
           }

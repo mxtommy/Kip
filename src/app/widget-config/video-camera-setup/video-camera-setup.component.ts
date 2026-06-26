@@ -307,6 +307,11 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Protocol badge for a discovered camera: ONVIF if it advertised an ONVIF endpoint, else RTSP. */
+  protected candidateProtocol(candidate: ICameraCandidate): string {
+    return candidate.onvifUrl ? 'ONVIF' : 'RTSP';
+  }
+
   /** Seeds the manual form from a discovered camera. */
   protected useCandidate(candidate: ICameraCandidate): void {
     this.manualOpen.set(true); // reveal the prefilled form
