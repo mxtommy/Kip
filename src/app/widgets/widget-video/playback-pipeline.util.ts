@@ -16,9 +16,8 @@ export interface IPlaybackCapabilities {
 
 /** Detects the transport from a URL when the configured transport is 'auto'. */
 export function detectTransportFromUrl(url: string): 'hls' | 'file' {
-  void url;
-  // RED stub.
-  return 'file';
+  const path = url.split('?')[0].toLowerCase();
+  return /\.m3u8$/.test(path) ? 'hls' : 'file';
 }
 
 /**
@@ -30,9 +29,20 @@ export function selectPlaybackPipeline(
   url: string,
   caps: IPlaybackCapabilities
 ): TPlaybackPipeline {
-  void transport;
-  void url;
-  void caps;
-  // RED stub.
-  return 'unsupported';
+  const effective = transport === 'auto' ? detectTransportFromUrl(url) : transport;
+  switch (effective) {
+    case 'file':
+      return 'file';
+    case 'mjpeg':
+      return 'mjpeg';
+    case 'webrtc':
+      return 'webrtc';
+    case 'hls':
+      if (caps.nativeHls) {
+        return 'hls-native';
+      }
+      return caps.hlsJsSupported ? 'hls-hlsjs' : 'unsupported';
+    default:
+      return 'unsupported';
+  }
 }
