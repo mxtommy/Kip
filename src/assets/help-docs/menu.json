@@ -19,6 +19,10 @@
         "file": "embedwidget.md"
       },
       {
+        "title": "The Video Widget",
+        "file": "videowidget.md"
+      },
+      {
         "title": "History-API Provider",
         "file": "history-api.md"
       },
