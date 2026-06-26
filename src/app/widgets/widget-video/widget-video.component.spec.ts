@@ -1,9 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { of } from 'rxjs';
 import { WidgetVideoComponent } from './widget-video.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService } from '../../core/services/data.service';
+import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
 import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 
 function setup(config: IWidgetSvcConfig) {
@@ -47,5 +49,34 @@ describe('WidgetVideoComponent', () => {
     const el: HTMLElement = setup({ video: { sourceKind: 'manual', url: 'rtsp://cam/stream' } }).nativeElement;
     expect(el.querySelector('video')).toBeNull();
     expect(el.querySelector('.video-widget__empty')).not.toBeNull();
+  });
+
+  it('resolves a camera source to the same-origin sk-video gateway URL', () => {
+    const options = signal<IWidgetSvcConfig | undefined>({
+      video: { sourceKind: 'camera', cameraId: 'foredeck', transport: 'auto' }
+    });
+    TestBed.configureTestingModule({
+      imports: [WidgetVideoComponent],
+      providers: [
+        { provide: WidgetRuntimeDirective, useValue: { options } },
+        { provide: DataService, useValue: { getPathObject: () => null } },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({ httpServiceUrl: 'http://boat.local:3000/signalk/v1/api/' }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    });
+    const fixture = TestBed.createComponent(WidgetVideoComponent);
+    fixture.componentRef.setInput('id', 'test-id');
+    fixture.componentRef.setInput('type', 'widget-video');
+    fixture.componentRef.setInput('theme', null);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance as unknown as { sourceUrl: () => string | null };
+    expect(cmp.sourceUrl()).toBe(
+      'http://boat.local:3000/plugins/sk-video/cameras/foredeck/stream.m3u8'
+    );
   });
 });

@@ -7,10 +7,14 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Hls from 'hls.js';
 import { IVideoWidgetConfig, IWidgetSvcConfig, TSnapshotDestination } from '../../core/interfaces/widgets-interface';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { ITheme } from '../../core/services/app-service';
 import { DataService } from '../../core/services/data.service';
+import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
 import { resolveVideoSourceUrl } from './video-source.util';
+import { resolveGatewaySourceUrl } from './gateway-source.util';
 import {
   IPlaybackCapabilities, selectPlaybackPipeline, TPlaybackPipeline
 } from './playback-pipeline.util';
@@ -58,6 +62,17 @@ export class WidgetVideoComponent {
 
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
+  private readonly connection = inject(SignalKConnectionService);
+
+  /** sk-video plugin base URL, tracked from the active server endpoint. */
+  private readonly endpoint = toSignal(this.connection.serverServiceEndpoint$, { initialValue: null });
+  protected readonly gatewayBaseUrl = computed<string | null>(() =>
+    resolveSignalKPluginBaseUrl(
+      'sk-video',
+      this.endpoint()?.httpServiceUrl ?? null,
+      this.connection.signalKURL?.url ?? null
+    )
+  );
 
   protected readonly videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
 
@@ -73,9 +88,13 @@ export class WidgetVideoComponent {
     typeof navigator !== 'undefined' && /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
   protected readonly videoConfig = computed<IVideoWidgetConfig | null>(() => this.runtime.options()?.video ?? null);
-  protected readonly sourceUrl = computed<string | null>(
-    () => resolveVideoSourceUrl(this.videoConfig(), window.location.origin)
-  );
+  protected readonly sourceUrl = computed<string | null>(() => {
+    const cfg = this.videoConfig();
+    if ((cfg?.sourceKind ?? 'url') === 'camera') {
+      return resolveGatewaySourceUrl(cfg, this.gatewayBaseUrl());
+    }
+    return resolveVideoSourceUrl(cfg, window.location.origin);
+  });
   protected readonly pipeline = computed<TPlaybackPipeline | null>(() => {
     const cfg = this.videoConfig();
     const url = this.sourceUrl();
