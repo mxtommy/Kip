@@ -32,6 +32,8 @@
             [color]="colorToControl" />
         } @else if (widgetConfig?.autopilot) {
           <select-autopilot formGroupName="autopilot" class="tab-content" />
+        } @else if (widgetConfig?.video) {
+          <video-camera-setup formGroupName="video" class="tab-content" />
         } @else {
           <div class="display-content tab-content">
             <div class="widget-options-grid">

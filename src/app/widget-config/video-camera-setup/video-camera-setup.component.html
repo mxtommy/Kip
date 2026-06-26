@@ -1,0 +1,67 @@
+<div class="tab-content video-setup" [formGroup]="videoGroup">
+
+  <!-- Source -->
+  <section class="video-setup__section">
+    <p class="video-setup__label">Source</p>
+    <mat-button-toggle-group
+      class="video-setup__sources"
+      formControlName="sourceKind"
+      aria-label="Video source">
+      <mat-button-toggle value="scan" disabled>
+        <mat-icon>travel_explore</mat-icon>
+        <span class="video-setup__source-name">Scan</span>
+        <small class="video-setup__soon">Coming soon</small>
+      </mat-button-toggle>
+      <mat-button-toggle value="manual" disabled>
+        <mat-icon>videocam</mat-icon>
+        <span class="video-setup__source-name">Camera</span>
+        <small class="video-setup__soon">Coming soon</small>
+      </mat-button-toggle>
+      <mat-button-toggle value="file" disabled>
+        <mat-icon>video_library</mat-icon>
+        <span class="video-setup__source-name">Uploaded</span>
+        <small class="video-setup__soon">Coming soon</small>
+      </mat-button-toggle>
+      <mat-button-toggle value="url">
+        <mat-icon>link</mat-icon>
+        <span class="video-setup__source-name">URL</span>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    @if (sourceKind === 'url') {
+      <mat-form-field class="video-setup__url">
+        <mat-label>Video URL</mat-label>
+        <input
+          matInput
+          type="url"
+          formControlName="url"
+          placeholder="https://… .mp4 / .webm / .m3u8">
+        <mat-hint>
+          A browser-playable URL (MP4/WebM file, HLS stream, or MJPEG). RTSP/RTMP cameras need the
+          SK Video gateway, added in a later update.
+        </mat-hint>
+      </mat-form-field>
+    }
+  </section>
+
+  <!-- Appearance -->
+  <section class="video-setup__section">
+    <p class="video-setup__label">Appearance</p>
+    <div class="video-setup__appearance">
+      <mat-form-field>
+        <mat-label>Scaling</mat-label>
+        <mat-select formControlName="objectFit">
+          <mat-option value="contain">Fit (show whole picture)</mat-option>
+          <mat-option value="cover">Fill (crop to frame)</mat-option>
+          <mat-option value="fill">Stretch</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="video-setup__toggles">
+        <mat-checkbox formControlName="muted">Muted</mat-checkbox>
+        <mat-checkbox formControlName="autoplay">Autoplay</mat-checkbox>
+        <mat-checkbox formControlName="loop">Loop</mat-checkbox>
+      </div>
+    </div>
+  </section>
+
+</div>
