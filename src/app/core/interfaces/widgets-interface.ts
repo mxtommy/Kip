@@ -129,7 +129,7 @@ export interface SolarWidgetConfig {
 
 
 /** How the Video widget obtains its picture. */
-export type TVideoSourceKind = 'url' | 'file' | 'manual' | 'scan';
+export type TVideoSourceKind = 'url' | 'file' | 'manual' | 'scan' | 'camera';
 
 /** How the `<video>` element fits its frame. */
 export type TVideoObjectFit = 'contain' | 'cover' | 'fill';
@@ -157,6 +157,8 @@ export interface IVideoWidgetConfig {
   preset?: TVideoPreset;
   /** Id of a video uploaded to the Signal K server (sourceKind 'file'; not yet wired). */
   fileAssetId?: string | null;
+  /** Id of a saved camera served through the sk-video plugin gateway (sourceKind 'camera'). */
+  cameraId?: string | null;
   /** Mute audio. Required for the browser to allow autoplay. */
   muted?: boolean;
   /** Start playing as soon as the source is available. */
