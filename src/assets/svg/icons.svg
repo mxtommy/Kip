@@ -138,6 +138,26 @@
         y="3.7470884"
         ry="2.2514625" />
     </svg>
+    <svg id="videoWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32">
+      <path
+        fill="var(--mat-sys-primary)"
+        stroke="var(--mat-sys-primary)"
+        stroke-width="1.4"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        d="M 13.2 11.4 L 21.7 16.3 L 13.2 21.2 Z" />
+      <rect
+        stroke="currentColor"
+        stroke-opacity="1"
+        style="mix-blend-mode:normal;fill-rule:nonzero;stroke-width:3;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none"
+        fill="currentColor"
+        fill-opacity="0.3"
+        width="29.839151"
+        height="24.505823"
+        x="1.0804241"
+        y="4.0804214"
+        ry="2.2514625" />
+    </svg>
     <svg id="datetimeWidget" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16">
       <path fill="currentColor" d="M9.5 14h-8C.67 14 0 13.33 0 12.5V2.38C0 1.55.67.88 1.5.88h11c.83 0 1.5.67 1.5 1.5v7.25c0 .28-.22.5-.5.5s-.5-.22-.5-.5V2.38c0-.28-.22-.5-.5-.5h-11c-.28 0-.5.22-.5.5V12.5c0 .28.22.5.5.5h8c.28 0 .5.22.5.5s-.22.5-.5.5" />
       <path fill="currentColor" d="M4 3.62c-.28 0-.5-.22-.5-.5V.5c0-.28.22-.5.5-.5s.5.22.5.5v2.62c0 .28-.22.5-.5.5m6.12 0c-.28 0-.5-.22-.5-.5V.5c0-.28.22-.5.5-.5s.5.22.5.5v2.62c0 .28-.22.5-.5.5M13.5 6H.5C.22 6 0 5.78 0 5.5S.22 5 .5 5h13c.28 0 .5.22.5.5s-.22.5-.5.5m-1 10C10.57 16 9 14.43 9 12.5S10.57 9 12.5 9s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5m0-6a2.5 2.5 0 0 0 0 5a2.5 2.5 0 0 0 0-5" />
