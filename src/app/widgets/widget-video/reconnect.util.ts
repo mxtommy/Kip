@@ -21,25 +21,17 @@ export const DEFAULT_BACKOFF: IBackoffOptions = {
 
 /** Whether another reconnect should be attempted for the given 1-based attempt number. */
 export function shouldReconnect(attempt: number, opts: IBackoffOptions): boolean {
-  void attempt;
-  void opts;
-  // RED stub.
-  return false;
+  return attempt <= opts.maxAttempts;
 }
 
 /** Exponential backoff delay (no jitter) for a 1-based attempt, capped at maxMs. */
 export function backoffDelayMs(attempt: number, opts: IBackoffOptions): number {
-  void attempt;
-  void opts;
-  // RED stub.
-  return 0;
+  const raw = opts.baseMs * opts.factor ** Math.max(0, attempt - 1);
+  return Math.min(raw, opts.maxMs);
 }
 
 /** Applies ±jitterRatio jitter to a delay using an injected random (0..1) for testability. */
 export function applyJitter(delayMs: number, jitterRatio: number, random: () => number): number {
-  void delayMs;
-  void jitterRatio;
-  void random;
-  // RED stub.
-  return 0;
+  const offset = delayMs * jitterRatio * (random() * 2 - 1);
+  return Math.max(0, Math.round(delayMs + offset));
 }
