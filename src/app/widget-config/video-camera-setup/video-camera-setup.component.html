@@ -78,6 +78,39 @@
           (change)="toggleEnabled($event.checked)">
           {{ cam.enabled ? 'Enabled — streaming' : 'Disabled — not streaming' }}
         </mat-slide-toggle>
+
+        <div class="video-setup__ptz-test">
+          <span class="video-setup__hint">Test pan / tilt — hold a direction (PTZ cameras only)</span>
+          <div class="video-setup__ptz-pad" role="group" aria-label="PTZ test controls">
+            <button mat-icon-button type="button" class="video-setup__ptz-up"
+              (pointerdown)="startNudge(0, 0.5, $event)" (pointerup)="stopNudge()"
+              (pointercancel)="stopNudge()" (lostpointercapture)="stopNudge()" (blur)="stopNudge()"
+              (keydown.enter)="!$any($event).repeat && startNudge(0, 0.5)"
+              (keydown.space)="!$any($event).repeat && startNudge(0, 0.5)" (keyup)="stopNudge()"
+              aria-label="Tilt up"><mat-icon>keyboard_arrow_up</mat-icon></button>
+            <button mat-icon-button type="button" class="video-setup__ptz-left"
+              (pointerdown)="startNudge(-0.5, 0, $event)" (pointerup)="stopNudge()"
+              (pointercancel)="stopNudge()" (lostpointercapture)="stopNudge()" (blur)="stopNudge()"
+              (keydown.enter)="!$any($event).repeat && startNudge(-0.5, 0)"
+              (keydown.space)="!$any($event).repeat && startNudge(-0.5, 0)" (keyup)="stopNudge()"
+              aria-label="Pan left"><mat-icon>keyboard_arrow_left</mat-icon></button>
+            <button mat-icon-button type="button" class="video-setup__ptz-right"
+              (pointerdown)="startNudge(0.5, 0, $event)" (pointerup)="stopNudge()"
+              (pointercancel)="stopNudge()" (lostpointercapture)="stopNudge()" (blur)="stopNudge()"
+              (keydown.enter)="!$any($event).repeat && startNudge(0.5, 0)"
+              (keydown.space)="!$any($event).repeat && startNudge(0.5, 0)" (keyup)="stopNudge()"
+              aria-label="Pan right"><mat-icon>keyboard_arrow_right</mat-icon></button>
+            <button mat-icon-button type="button" class="video-setup__ptz-down"
+              (pointerdown)="startNudge(0, -0.5, $event)" (pointerup)="stopNudge()"
+              (pointercancel)="stopNudge()" (lostpointercapture)="stopNudge()" (blur)="stopNudge()"
+              (keydown.enter)="!$any($event).repeat && startNudge(0, -0.5)"
+              (keydown.space)="!$any($event).repeat && startNudge(0, -0.5)" (keyup)="stopNudge()"
+              aria-label="Tilt down"><mat-icon>keyboard_arrow_down</mat-icon></button>
+          </div>
+          @if (ptzTestError(); as err) {
+            <small class="video-setup__error" role="alert" aria-live="assertive">{{ err }}</small>
+          }
+        </div>
       }
 
       <mat-form-field class="video-setup__fit">

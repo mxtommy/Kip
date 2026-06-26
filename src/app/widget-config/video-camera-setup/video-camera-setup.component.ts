@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import {
   FormGroupDirective, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, Validators
 } from '@angular/forms';
@@ -20,6 +20,7 @@ import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/
 import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient, type ICredentialPresence } from '../../widgets/widget-video/camera-credentials-client';
 import { CameraProbeClient, type ICameraProbeResult } from '../../widgets/widget-video/camera-probe-client';
+import { PtzClient } from '../../widgets/widget-video/ptz-client';
 import { VideoAssetsClient, VideoUploadError, type IVideoAsset } from '../../widgets/widget-video/video-assets-client';
 import {
   CAMERA_SCHEMES, buildCameraRecord, candidateToFields, slugifyCameraId,
@@ -44,7 +45,7 @@ import {
     MatProgressSpinnerModule, MatSlideToggleModule
   ]
 })
-export class VideoCameraSetupComponent implements OnInit {
+export class VideoCameraSetupComponent implements OnInit, OnDestroy {
   readonly formGroupName = input.required<string>();
   private readonly rootFormGroup = inject(FormGroupDirective);
   private readonly connection = inject(SignalKConnectionService);
@@ -52,6 +53,7 @@ export class VideoCameraSetupComponent implements OnInit {
   private readonly resources = inject(CamerasResourceClient);
   private readonly credentials = inject(CameraCredentialsClient);
   private readonly probe = inject(CameraProbeClient);
+  private readonly ptz = inject(PtzClient);
   private readonly assets = inject(VideoAssetsClient);
 
   protected videoGroup!: UntypedFormGroup;
@@ -79,6 +81,10 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly clearingCredentials = signal(false);
   protected readonly testing = signal(false);
   protected readonly testResult = signal<ICameraProbeResult | null>(null);
+  /** A short message when a PTZ test nudge is rejected (e.g. the camera has no PTZ). */
+  protected readonly ptzTestError = signal<string | null>(null);
+  /** True while a PTZ test direction is held down. */
+  private ptzHeld = false;
 
   protected readonly videos = signal<IVideoAsset[]>([]);
   protected readonly uploading = signal(false);
@@ -388,6 +394,63 @@ export class VideoCameraSetupComponent implements OnInit {
     } catch {
       this.addError.set('Could not update the camera.');
     }
+  }
+
+  /** True once a camera is selected — PTZ test controls are offered (the camera may still lack PTZ). */
+  protected get canTestPtz(): boolean {
+    return !!this.selectedCamera;
+  }
+
+  /**
+   * Starts a PTZ test move on the selected camera while a direction is held. The server auto-stops
+   * after a safety timeout; releasing sends an explicit stop. A rejection means the camera has no PTZ.
+   */
+  protected async startNudge(pan: number, tilt: number, event?: Event): Promise<void> {
+    const cam = this.selectedCamera;
+    if (!cam) {
+      return;
+    }
+    this.ptzHeld = true;
+    this.ptzTestError.set(null);
+    this.capturePointer(event);
+    try {
+      await this.ptz.move(this.pluginBaseUrl(), cam.id, { pan, tilt, zoom: 0 });
+    } catch {
+      this.ptzHeld = false;
+      this.ptzTestError.set('This camera didn’t accept pan/tilt — it may not support PTZ.');
+    }
+  }
+
+  /** Stops a held PTZ test move. */
+  protected async stopNudge(): Promise<void> {
+    if (!this.ptzHeld) {
+      return;
+    }
+    this.ptzHeld = false;
+    const cam = this.selectedCamera;
+    if (!cam) {
+      return;
+    }
+    try {
+      await this.ptz.stop(this.pluginBaseUrl(), cam.id);
+    } catch {
+      // Best effort — the server's safety timeout stops the camera regardless.
+    }
+  }
+
+  /** Keeps pointer events flowing to a held d-pad button even if the finger slides off it. */
+  private capturePointer(event?: Event): void {
+    if (event && 'pointerId' in event) {
+      try {
+        (event.target as Element).setPointerCapture((event as PointerEvent).pointerId);
+      } catch {
+        // setPointerCapture is unsupported or the element is gone — harmless.
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    void this.stopNudge(); // never leave the camera moving when the dialog closes
   }
 
   /** Validates and saves the manual camera (adding a new one, or updating the one being edited). */

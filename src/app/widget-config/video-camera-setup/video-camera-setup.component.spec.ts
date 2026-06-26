@@ -9,6 +9,7 @@ import { SignalKConnectionService } from '../../core/services/signalk-connection
 import { CameraDiscoveryClient } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import { PtzClient } from '../../widgets/widget-video/ptz-client';
 import { VideoAssetsClient } from '../../widgets/widget-video/video-assets-client';
 
 @Component({
@@ -85,6 +86,7 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     clear: vi.fn().mockResolvedValue(undefined),
     presence: vi.fn().mockResolvedValue({ hasUsername: false, hasPassword: false })
   };
+  const ptz = { move: vi.fn().mockResolvedValue(undefined), stop: vi.fn().mockResolvedValue(undefined) };
 
   let fixture: ComponentFixture<HostComponent>;
   let videoGroup: UntypedFormGroup;
@@ -101,6 +103,9 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     creds.clear.mockClear();
     creds.presence.mockClear();
     creds.presence.mockResolvedValue({ hasUsername: false, hasPassword: false });
+    ptz.move.mockClear();
+    ptz.move.mockResolvedValue(undefined);
+    ptz.stop.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [HostComponent],
@@ -108,6 +113,7 @@ describe('VideoCameraSetupComponent — camera mode', () => {
         { provide: CamerasResourceClient, useValue: resources },
         { provide: CameraDiscoveryClient, useValue: discovery },
         { provide: CameraCredentialsClient, useValue: creds },
+        { provide: PtzClient, useValue: ptz },
         {
           provide: SignalKConnectionService,
           useValue: {
@@ -245,6 +251,41 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     await c.clearCredentials();
     expect(creds.clear).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'foredeck');
     expect(c.credentialPresence()).toEqual({ hasUsername: false, hasPassword: false });
+  });
+
+  it('nudges the selected camera through the PTZ proxy on press and stops on release', async () => {
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    const c = cmp as unknown as {
+      startNudge: (pan: number, tilt: number, event?: Event) => Promise<void>;
+      stopNudge: () => Promise<void>;
+    };
+    await c.startNudge(0.5, 0);
+    expect(ptz.move).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'foredeck', {
+      pan: 0.5,
+      tilt: 0,
+      zoom: 0
+    });
+    await c.stopNudge();
+    expect(ptz.stop).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', 'foredeck');
+  });
+
+  it('does not send a PTZ command when no camera is selected', async () => {
+    videoGroup.get('cameraId')?.setValue(null);
+    await (
+      cmp as unknown as { startNudge: (p: number, t: number) => Promise<void> }
+    ).startNudge(0.5, 0);
+    expect(ptz.move).not.toHaveBeenCalled();
+  });
+
+  it('shows a message when the camera rejects a PTZ command (no PTZ support)', async () => {
+    ptz.move.mockRejectedValueOnce(new Error('PTZ command failed (502)'));
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    const c = cmp as unknown as {
+      startNudge: (p: number, t: number) => Promise<void>;
+      ptzTestError: () => string | null;
+    };
+    await c.startNudge(0.5, 0);
+    expect(c.ptzTestError()).toMatch(/PTZ/i);
   });
 });
 
