@@ -122,6 +122,7 @@
   },
   "dependencies": {
     "@signalk/server-api": "^2.22.0",
+    "hls.js": "^1.6.16",
     "piexifjs": "^1.0.6"
   }
 }
