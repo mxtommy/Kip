@@ -126,7 +126,8 @@ describe('VideoCameraSetupComponent — camera mode', () => {
   it('shows the camera UI and lists saved cameras', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Scan network');
-    expect(text).toContain('Add camera');
+    // With saved cameras the manual form starts collapsed behind an "Add a camera" toggle.
+    expect(text).toContain('Add a camera');
     expect(cmp.cameras()).toHaveLength(1);
     expect(videoGroup.get('cameraId')).toBeTruthy();
   });
@@ -135,6 +136,21 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     await cmp.scan();
     expect(discovery.scan).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/');
     expect(cmp.candidates()).toEqual([{ name: 'Aft', host: '10.0.0.7' }]);
+  });
+
+  it('splits a pasted host:port across the Address and Port fields', () => {
+    cmp.manualForm.patchValue({ host: '192.168.1.50:8554', port: null });
+    (cmp as unknown as { normalizeHost: () => void }).normalizeHost();
+    expect(cmp.manualForm.get('host')?.value).toBe('192.168.1.50');
+    expect(cmp.manualForm.get('port')?.value).toBe(8554);
+  });
+
+  it('decomposes a pasted full camera URL into scheme/host/port/path', () => {
+    cmp.manualForm.patchValue({ host: 'rtsp://cam.local:554/stream1', scheme: 'rtsp', port: null, path: '' });
+    (cmp as unknown as { normalizeHost: () => void }).normalizeHost();
+    expect(cmp.manualForm.get('host')?.value).toBe('cam.local');
+    expect(cmp.manualForm.get('port')?.value).toBe(554);
+    expect(cmp.manualForm.get('path')?.value).toBe('/stream1');
   });
 
   it('saves a manual camera and selects it, with credentials', async () => {

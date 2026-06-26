@@ -99,11 +99,18 @@
         </div>
       }
 
+      @if (!manualOpen()) {
+        <button mat-stroked-button type="button" class="video-setup__add" (click)="manualOpen.set(true)">
+          <mat-icon>add</mat-icon>
+          <span>Add a camera</span>
+        </button>
+      } @else {
       <fieldset class="video-setup__manual" [formGroup]="manualForm">
         <legend class="video-setup__label">Add a camera</legend>
         <mat-form-field>
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" placeholder="Foredeck">
+          <mat-error>A name is required.</mat-error>
         </mat-form-field>
         <div class="video-setup__manual-row">
           <mat-form-field class="video-setup__manual-scheme">
@@ -116,16 +123,20 @@
           </mat-form-field>
           <mat-form-field class="video-setup__manual-host">
             <mat-label>Address (host or IP)</mat-label>
-            <input matInput formControlName="host" placeholder="192.168.1.50">
+            <input matInput formControlName="host" placeholder="192.168.1.50" (blur)="normalizeHost()">
+            <mat-hint>You can paste host:port or a full URL.</mat-hint>
+            <mat-error>Enter the camera’s address.</mat-error>
           </mat-form-field>
           <mat-form-field class="video-setup__manual-port">
             <mat-label>Port</mat-label>
             <input matInput type="number" formControlName="port" placeholder="554">
+            <mat-error>1–65535.</mat-error>
           </mat-form-field>
         </div>
         <mat-form-field>
           <mat-label>Path (optional)</mat-label>
           <input matInput formControlName="path" placeholder="/stream1">
+          <mat-error>Start the path with “/”.</mat-error>
         </mat-form-field>
         <div class="video-setup__manual-row">
           <mat-form-field class="video-setup__manual-host">
@@ -149,6 +160,7 @@
           <small class="video-setup__error" role="alert" aria-live="assertive">{{ err }}</small>
         }
       </fieldset>
+      }
     }
 
     @if (sourceKind === 'file') {

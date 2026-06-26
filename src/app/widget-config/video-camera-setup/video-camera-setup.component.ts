@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import {
-  FormGroupDirective, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup
+  FormGroupDirective, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, Validators
 } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -67,6 +67,8 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly scanMessage = signal<string | null>(null);
   protected readonly addError = signal<string | null>(null);
   protected readonly saving = signal(false);
+  /** Whether the manual "Add a camera" form is expanded (auto-opens when no cameras are saved). */
+  protected readonly manualOpen = signal(false);
 
   protected readonly videos = signal<IVideoAsset[]>([]);
   protected readonly uploading = signal(false);
@@ -99,11 +101,12 @@ export class VideoCameraSetupComponent implements OnInit {
     });
 
     this.manualForm = new UntypedFormGroup({
-      name: new UntypedFormControl(''),
-      scheme: new UntypedFormControl('rtsp'),
-      host: new UntypedFormControl(''),
-      port: new UntypedFormControl(null),
-      path: new UntypedFormControl(''),
+      name: new UntypedFormControl('', [Validators.required, Validators.maxLength(100)]),
+      scheme: new UntypedFormControl('rtsp', Validators.required),
+      // No colon: a host:port paste is split into the port field by normalizeHost().
+      host: new UntypedFormControl('', [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]+$/)]),
+      port: new UntypedFormControl(null, [Validators.min(1), Validators.max(65535)]),
+      path: new UntypedFormControl('', Validators.pattern(/^\/[^\s]*$/)),
       username: new UntypedFormControl(''),
       password: new UntypedFormControl('')
     });
@@ -199,8 +202,34 @@ export class VideoCameraSetupComponent implements OnInit {
   protected async refreshCameras(): Promise<void> {
     try {
       this.cameras.set(await this.resources.list(this.v2BaseUrl()));
+      // With no saved cameras, open the add form so the user isn't staring at an empty picker.
+      if (this.cameras().length === 0) {
+        this.manualOpen.set(true);
+      }
     } catch {
       // leave the existing list; the picker simply shows what we have
+    }
+  }
+
+  /** Pasting a host:port or a full camera URL into Address splits it across the right fields. */
+  protected normalizeHost(): void {
+    const raw = String(this.manualForm.get('host')?.value ?? '').trim();
+    if (!raw) {
+      return;
+    }
+    const url = raw.match(/^(rtsp|rtsps|rtmp|https?|onvif):\/\/(?:[^@/]+@)?([^:/]+)(?::(\d+))?(\/.*)?$/i);
+    if (url) {
+      this.manualForm.patchValue({
+        scheme: url[1].toLowerCase(),
+        host: url[2],
+        port: url[3] ? Number(url[3]) : this.manualForm.get('port')?.value,
+        path: url[4] ?? this.manualForm.get('path')?.value
+      });
+      return;
+    }
+    const hostPort = raw.match(/^([A-Za-z0-9._-]+):(\d+)$/);
+    if (hostPort) {
+      this.manualForm.patchValue({ host: hostPort[1], port: Number(hostPort[2]) });
     }
   }
 
@@ -232,12 +261,14 @@ export class VideoCameraSetupComponent implements OnInit {
 
   /** Seeds the manual form from a discovered camera. */
   protected useCandidate(candidate: ICameraCandidate): void {
+    this.manualOpen.set(true); // reveal the prefilled form
     this.manualForm.patchValue(candidateToFields(candidate));
     this.addError.set(null);
   }
 
   /** Validates and saves the manual camera, then selects it. */
   protected async addCamera(): Promise<void> {
+    this.manualForm.markAllAsTouched();
     this.addError.set(null);
     const fields = this.manualForm.value as Record<string, unknown>;
     const result = buildCameraRecord(fields);
