@@ -80,6 +80,9 @@
     @if (snapshotError(); as err) {
       <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
     }
+    @if (codecWarning(); as warn) {
+      <div class="video-widget__toast" role="status" aria-live="polite">{{ warn }}</div>
+    }
   </div>
 } @else {
   <div class="video-widget__empty">

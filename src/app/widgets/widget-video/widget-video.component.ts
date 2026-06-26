@@ -17,6 +17,7 @@ import {
 import { mapPreset } from './playback-presets.util';
 import { whepDelete, whepNegotiate, type FetchLike } from './whep.util';
 import { applyJitter, backoffDelayMs, DEFAULT_BACKOFF, shouldReconnect } from './reconnect.util';
+import { evaluateFirstFrame } from './first-frame.util';
 import {
   canShareSnapshot, captureVideoFrameJpegDataUrl, downloadBlob, shareSnapshot
 } from './snapshot-image.util';
@@ -101,6 +102,7 @@ export class WidgetVideoComponent {
 
   protected readonly snapshotError = signal<string | null>(null);
   protected readonly playbackError = signal<string | null>(null);
+  protected readonly codecWarning = signal<string | null>(null);
   protected readonly canRetry = signal(false);
   /** Live pipelines are torn down while the page/dashboard is hidden to save decoders, battery and heat. */
   private readonly visible = signal(typeof document === 'undefined' || !document.hidden);
@@ -118,6 +120,10 @@ export class WidgetVideoComponent {
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private boundVideo: HTMLVideoElement | null = null;
+  private firstFrameTimer: ReturnType<typeof setTimeout> | null = null;
+  private rvfcHandle: number | null = null;
+  private paintedFrame = false;
+  private static readonly FIRST_FRAME_TIMEOUT_MS = 8000;
 
   constructor() {
     // (Re)attach the right pipeline whenever the source, transport, preset or visibility changes — or
@@ -159,13 +165,56 @@ export class WidgetVideoComponent {
     }
   }
 
-  /** Successful playback resets the reconnect state. */
+  /** Successful playback resets the reconnect + first-frame state. */
   private readonly onPlaying = (): void => {
     this.reconnectAttempt = 0;
     this.canRetry.set(false);
     this.playbackError.set(null);
+    this.paintedFrame = true;
+    this.codecWarning.set(null);
     this.clearReconnectTimer();
+    this.clearFirstFrameWatchdog();
   };
+
+  /** Watches for a first painted frame; if none arrives while data is flowing, warns about the codec. */
+  private startFirstFrameWatchdog(video: HTMLVideoElement, gen: number): void {
+    this.clearFirstFrameWatchdog();
+    this.paintedFrame = false;
+    const rvfc = video as HTMLVideoElement & {
+      requestVideoFrameCallback?: (cb: () => void) => number;
+    };
+    if (typeof rvfc.requestVideoFrameCallback === 'function') {
+      this.rvfcHandle = rvfc.requestVideoFrameCallback(() => {
+        if (this.generation === gen) {
+          this.paintedFrame = true;
+        }
+      });
+    }
+    this.firstFrameTimer = setTimeout(() => {
+      if (this.generation !== gen) {
+        return;
+      }
+      const painted = this.paintedFrame || video.videoWidth > 0;
+      const verdict = evaluateFirstFrame({ paintedFrame: painted, hasData: video.readyState >= 2, timedOut: true });
+      if (verdict === 'no-decode') {
+        this.codecWarning.set(
+          'No picture — this device may not be able to decode this video (e.g. HEVC/H.265). Try a different stream or quality.'
+        );
+      }
+    }, WidgetVideoComponent.FIRST_FRAME_TIMEOUT_MS);
+  }
+
+  private clearFirstFrameWatchdog(): void {
+    if (this.firstFrameTimer) {
+      clearTimeout(this.firstFrameTimer);
+      this.firstFrameTimer = null;
+    }
+    if (this.rvfcHandle != null && this.boundVideo) {
+      const v = this.boundVideo as HTMLVideoElement & { cancelVideoFrameCallback?: (h: number) => void };
+      try { v.cancelVideoFrameCallback?.(this.rvfcHandle); } catch { /* ignore */ }
+    }
+    this.rvfcHandle = null;
+  }
 
   /** `<video>` error handling: terminal for files, reconnect for native HLS. */
   private readonly onError = (): void => {
@@ -214,6 +263,8 @@ export class WidgetVideoComponent {
   private dispose(): void {
     this.generation++;
     this.clearReconnectTimer();
+    this.clearFirstFrameWatchdog();
+    this.codecWarning.set(null);
     if (this.boundVideo) {
       this.boundVideo.removeEventListener('playing', this.onPlaying);
       this.boundVideo.removeEventListener('error', this.onError);
@@ -268,6 +319,7 @@ export class WidgetVideoComponent {
     video.addEventListener('playing', this.onPlaying);
     video.addEventListener('error', this.onError);
     this.boundVideo = video;
+    this.startFirstFrameWatchdog(video, gen);
 
     switch (pipe) {
       case 'file':
