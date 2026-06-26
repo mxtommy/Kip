@@ -45,4 +45,14 @@ describe('VideoCameraSetupComponent', () => {
     const input = fixture.nativeElement.querySelector('input[type="url"]') as HTMLInputElement;
     expect(input.value).toBe('https://cam.example/v.mp4');
   });
+
+  it('ensures the nested snapshot group with privacy + destination defaults', () => {
+    fixture.detectChanges();
+    const snapshot = videoGroup.get('snapshot') as UntypedFormGroup;
+    expect(snapshot).toBeTruthy();
+    expect(snapshot.get('embedLocation')?.value).toBe(true);
+    expect(snapshot.get('embedTelemetry')?.value).toBe(true);
+    expect(snapshot.get('defaultDestination')?.value).toBe('download');
+    expect(fixture.nativeElement.querySelector('[formgroupname="snapshot"]')).not.toBeNull();
+  });
 });

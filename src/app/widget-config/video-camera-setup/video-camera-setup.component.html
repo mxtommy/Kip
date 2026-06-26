@@ -64,4 +64,26 @@
     </div>
   </section>
 
+  <!-- Snapshot -->
+  <section class="video-setup__section" formGroupName="snapshot">
+    <p class="video-setup__label">Snapshot</p>
+    <div class="video-setup__toggles video-setup__toggles--stacked">
+      <mat-checkbox formControlName="embedLocation">
+        Embed location (GPS) in snapshot metadata
+      </mat-checkbox>
+      <small class="video-setup__hint">A shared or exported photo will reveal where the boat was.</small>
+      <mat-checkbox formControlName="embedTelemetry">
+        Embed other telemetry (time, speed, heading, depth, wind…)
+      </mat-checkbox>
+    </div>
+    <mat-form-field class="video-setup__fit">
+      <mat-label>Snapshot button sends to</mat-label>
+      <mat-select formControlName="defaultDestination">
+        <mat-option value="download">Download</mat-option>
+        <mat-option value="share">Share…</mat-option>
+        <mat-option value="signalk" disabled>Save to Signal K (coming soon)</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </section>
+
 </div>

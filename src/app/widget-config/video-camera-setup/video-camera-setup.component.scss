@@ -70,3 +70,14 @@
   gap: 4px 20px;
   align-items: center;
 }
+
+.video-setup__toggles--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.video-setup__hint {
+  opacity: 0.6;
+  margin: -2px 0 6px 0;
+}

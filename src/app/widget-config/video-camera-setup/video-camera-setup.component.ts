@@ -42,6 +42,12 @@ export class VideoCameraSetupComponent implements OnInit {
     this.ensure('autoplay', false);
     this.ensure('loop', false);
     this.ensure('objectFit', 'contain');
+
+    this.ensureGroup('snapshot', {
+      embedTelemetry: true,
+      embedLocation: true,
+      defaultDestination: 'download'
+    });
   }
 
   /** Currently selected source kind (defaults to 'url'). */
@@ -52,6 +58,19 @@ export class VideoCameraSetupComponent implements OnInit {
   private ensure(name: string, defaultValue: unknown): void {
     if (!this.videoGroup.get(name)) {
       this.videoGroup.addControl(name, new UntypedFormControl(defaultValue));
+    }
+  }
+
+  private ensureGroup(name: string, defaults: Record<string, unknown>): void {
+    let group = this.videoGroup.get(name) as UntypedFormGroup | null;
+    if (!(group instanceof UntypedFormGroup)) {
+      group = new UntypedFormGroup({});
+      this.videoGroup.addControl(name, group);
+    }
+    for (const [key, value] of Object.entries(defaults)) {
+      if (!group.get(key)) {
+        group.addControl(key, new UntypedFormControl(value));
+      }
     }
   }
 }
