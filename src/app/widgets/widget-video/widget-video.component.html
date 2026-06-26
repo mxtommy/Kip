@@ -62,6 +62,65 @@
           </mat-menu>
         </span>
       </div>
+
+      @if (showPtz()) {
+        <div class="video-widget__ptz" role="group" aria-label="Camera pan, tilt and zoom">
+          <div class="video-widget__dpad">
+            <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-up"
+              aria-label="Tilt up"
+              (pointerdown)="ptzStart(0, 1, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(0, 1, 0)" (keyup)="ptzStop()">
+              <mat-icon>keyboard_arrow_up</mat-icon>
+            </button>
+            <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-left"
+              aria-label="Pan left"
+              (pointerdown)="ptzStart(-1, 0, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(-1, 0, 0)" (keyup)="ptzStop()">
+              <mat-icon>keyboard_arrow_left</mat-icon>
+            </button>
+            <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-right"
+              aria-label="Pan right"
+              (pointerdown)="ptzStart(1, 0, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(1, 0, 0)" (keyup)="ptzStop()">
+              <mat-icon>keyboard_arrow_right</mat-icon>
+            </button>
+            <button type="button" mat-icon-button class="video-widget__ctrl video-widget__dpad-down"
+              aria-label="Tilt down"
+              (pointerdown)="ptzStart(0, -1, 0)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(0, -1, 0)" (keyup)="ptzStop()">
+              <mat-icon>keyboard_arrow_down</mat-icon>
+            </button>
+          </div>
+          <div class="video-widget__zoom">
+            <button type="button" mat-icon-button class="video-widget__ctrl"
+              aria-label="Zoom in"
+              (pointerdown)="ptzStart(0, 0, 1)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(0, 0, 1)" (keyup)="ptzStop()">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button type="button" mat-icon-button class="video-widget__ctrl"
+              aria-label="Zoom out"
+              (pointerdown)="ptzStart(0, 0, -1)" (pointerup)="ptzStop()" (pointerleave)="ptzStop()" (pointercancel)="ptzStop()"
+              (keydown)="!$event.repeat && ptzStart(0, 0, -1)" (keyup)="ptzStop()">
+              <mat-icon>remove</mat-icon>
+            </button>
+          </div>
+          @if (ptzPresets().length) {
+            <button type="button" mat-icon-button class="video-widget__ctrl"
+              [matMenuTriggerFor]="presetMenu" aria-label="Camera presets">
+              <mat-icon>bookmarks</mat-icon>
+            </button>
+            <mat-menu #presetMenu="matMenu">
+              @for (preset of ptzPresets(); track preset.token) {
+                <button mat-menu-item type="button" (click)="ptzGoto(preset.token)">{{ preset.name }}</button>
+              }
+            </mat-menu>
+          }
+        </div>
+      }
+      @if (ptzError(); as err) {
+        <div class="video-widget__toast" role="status" aria-live="polite">{{ err }}</div>
+      }
     } @else {
       <div class="video-widget__empty">
         <span class="video-widget__empty-title">Unsupported stream</span>

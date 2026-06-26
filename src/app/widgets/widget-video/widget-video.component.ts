@@ -15,6 +15,7 @@ import { SignalKConnectionService } from '../../core/services/signalk-connection
 import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
 import { resolveVideoSourceUrl } from './video-source.util';
 import { resolveGatewaySourceUrl } from './gateway-source.util';
+import { PtzClient, type IPtzPreset } from './ptz-client';
 import {
   IPlaybackCapabilities, selectPlaybackPipeline, TPlaybackPipeline
 } from './playback-pipeline.util';
@@ -63,6 +64,7 @@ export class WidgetVideoComponent {
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly data = inject(DataService);
   private readonly connection = inject(SignalKConnectionService);
+  private readonly ptz = inject(PtzClient);
 
   /** sk-video plugin base URL, tracked from the active server endpoint. */
   private readonly endpoint = toSignal(this.connection.serverServiceEndpoint$, { initialValue: null });
@@ -132,6 +134,19 @@ export class WidgetVideoComponent {
       typeof (document.createElement('video') as unknown as { webkitEnterFullscreen?: unknown }).webkitEnterFullscreen === 'function');
   protected readonly canShare = canShareSnapshot();
 
+  /** PTZ controls are offered for a saved camera served through the gateway. */
+  protected readonly showPtz = computed(
+    () =>
+      (this.videoConfig()?.sourceKind ?? 'url') === 'camera' &&
+      !!this.gatewayBaseUrl() &&
+      !!this.videoConfig()?.cameraId
+  );
+  protected readonly ptzPresets = signal<IPtzPreset[]>([]);
+  protected readonly ptzError = signal<string | null>(null);
+  /** Re-sent while a direction is held to defeat the gateway's auto-stop safety timeout. */
+  private ptzKeepAlive: ReturnType<typeof setInterval> | null = null;
+  private static readonly PTZ_KEEPALIVE_MS = 1200;
+
   private generation = 0;
   private hls: Hls | null = null;
   private pc: RTCPeerConnection | null = null;
@@ -165,6 +180,23 @@ export class WidgetVideoComponent {
       });
     });
 
+    // Load the camera's presets whenever a PTZ-capable camera source becomes active.
+    effect(() => {
+      const enabled = this.showPtz();
+      const base = this.gatewayBaseUrl();
+      const id = this.videoConfig()?.cameraId ?? null;
+      untracked(() => {
+        if (!enabled) {
+          this.ptzPresets.set([]);
+          return;
+        }
+        this.ptz
+          .listPresets(base, id)
+          .then((presets) => this.ptzPresets.set(presets))
+          .catch(() => this.ptzPresets.set([]));
+      });
+    });
+
     const onVisibility = () => this.visible.set(!document.hidden);
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', onVisibility);
@@ -173,6 +205,7 @@ export class WidgetVideoComponent {
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisibility);
       }
+      this.stopPtzKeepAlive();
       this.dispose();
     });
   }
@@ -279,6 +312,45 @@ export class WidgetVideoComponent {
     this.reconnectNonce.update(n => n + 1);
   }
 
+  /** Press-and-hold a direction: start moving and keep re-sending until released. */
+  protected ptzStart(pan: number, tilt: number, zoom: number): void {
+    this.stopPtzKeepAlive();
+    const send = () => {
+      void this.ptz
+        .move(this.gatewayBaseUrl(), this.videoConfig()?.cameraId ?? null, { pan, tilt, zoom })
+        .then(() => this.ptzError.set(null))
+        .catch(() => this.ptzError.set('Camera move failed'));
+    };
+    send();
+    this.ptzKeepAlive = setInterval(send, WidgetVideoComponent.PTZ_KEEPALIVE_MS);
+  }
+
+  /** Release: stop the keep-alive and command the camera to stop. */
+  protected ptzStop(): void {
+    if (!this.ptzKeepAlive) {
+      return; // not currently moving — avoid spurious stop commands (e.g. pointerleave without press)
+    }
+    this.stopPtzKeepAlive();
+    void this.ptz
+      .stop(this.gatewayBaseUrl(), this.videoConfig()?.cameraId ?? null)
+      .catch(() => undefined);
+  }
+
+  /** Recall a preset by token. */
+  protected ptzGoto(token: string): void {
+    void this.ptz
+      .gotoPreset(this.gatewayBaseUrl(), this.videoConfig()?.cameraId ?? null, token)
+      .then(() => this.ptzError.set(null))
+      .catch(() => this.ptzError.set('Could not recall preset'));
+  }
+
+  private stopPtzKeepAlive(): void {
+    if (this.ptzKeepAlive) {
+      clearInterval(this.ptzKeepAlive);
+      this.ptzKeepAlive = null;
+    }
+  }
+
   private dispose(): void {
     this.generation++;
     this.clearReconnectTimer();
@@ -370,6 +442,10 @@ export class WidgetVideoComponent {
   }
 
   private async attachWhep(endpoint: string, video: HTMLVideoElement, jitterMs: number, gen: number): Promise<void> {
+    if (typeof RTCPeerConnection === 'undefined') {
+      this.playbackError.set('WebRTC is not supported in this browser.');
+      return;
+    }
     const pc = new RTCPeerConnection();
     this.pc = pc;
     pc.addTransceiver('video', { direction: 'recvonly' });
