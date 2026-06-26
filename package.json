@@ -88,6 +88,7 @@
     "@types/js-quantities": "^1.6.6",
     "@types/lodash-es": "^4.17.9",
     "@types/node": "^24.1.0",
+    "@types/piexifjs": "^1.0.0",
     "@vitest/coverage-v8": "^4.1.0",
     "@zakj/no-sleep": "^0.13.5",
     "angular-eslint": "21.3.1",
@@ -120,6 +121,7 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
-    "@signalk/server-api": "^2.22.0"
+    "@signalk/server-api": "^2.22.0",
+    "piexifjs": "^1.0.6"
   }
 }
