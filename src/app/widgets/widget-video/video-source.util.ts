@@ -15,8 +15,25 @@ export function resolveVideoSourceUrl(
   video: IVideoWidgetConfig | null | undefined,
   origin: string
 ): string | null {
-  // Intentionally unimplemented — RED commit. Real behaviour lands in the GREEN commit.
-  void video;
-  void origin;
-  return null;
+  if (!video) {
+    return null;
+  }
+
+  // Only the direct-URL source is wired up today.
+  const kind = video.sourceKind ?? 'url';
+  if (kind !== 'url') {
+    return null;
+  }
+
+  const raw = video.url?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(raw, origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null;
+  } catch {
+    return null;
+  }
 }
