@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { mapPreset, type TVideoPreset } from '../../widgets/widget-video/playback-presets.util';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
 import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
@@ -22,7 +23,7 @@ import { CameraProbeClient, type ICameraProbeResult } from '../../widgets/widget
 import { VideoAssetsClient, VideoUploadError, type IVideoAsset } from '../../widgets/widget-video/video-assets-client';
 import {
   CAMERA_SCHEMES, buildCameraRecord, candidateToFields, slugifyCameraId,
-  type ICameraCandidate
+  type ICameraCandidate, type ICameraRecord
 } from '../../widgets/widget-video/camera-record.util';
 
 /**
@@ -40,7 +41,7 @@ import {
   imports: [
     ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatCheckboxModule, MatButtonToggleModule, MatButtonModule, MatIconModule, MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule, MatSlideToggleModule
   ]
 })
 export class VideoCameraSetupComponent implements OnInit {
@@ -71,6 +72,8 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly saving = signal(false);
   /** Whether the manual "Add a camera" form is expanded (auto-opens when no cameras are saved). */
   protected readonly manualOpen = signal(false);
+  /** When set, the manual form is editing this saved camera id rather than adding a new one. */
+  protected readonly editingId = signal<string | null>(null);
   protected readonly testing = signal(false);
   protected readonly testResult = signal<ICameraProbeResult | null>(null);
 
@@ -197,6 +200,12 @@ export class VideoCameraSetupComponent implements OnInit {
     return this.videoGroup?.get('sourceKind')?.value ?? 'url';
   }
 
+  /** The saved camera currently chosen in the picker, if any. */
+  protected get selectedCamera(): ISavedCamera | undefined {
+    const id = this.videoGroup?.get('cameraId')?.value as string | null;
+    return id ? this.cameras().find((c) => c.id === id) : undefined;
+  }
+
   /** Plain-language hint for the currently selected quality/latency preset. */
   protected get presetHint(): string {
     return mapPreset((this.videoGroup?.get('preset')?.value as TVideoPreset) ?? 'balanced').hint;
@@ -292,12 +301,63 @@ export class VideoCameraSetupComponent implements OnInit {
   /** Seeds the manual form from a discovered camera. */
   protected useCandidate(candidate: ICameraCandidate): void {
     this.manualOpen.set(true); // reveal the prefilled form
+    this.editingId.set(null); // a candidate is a NEW camera, not an edit
     this.manualForm.patchValue(candidateToFields(candidate));
     this.addError.set(null);
     this.testResult.set(null);
   }
 
-  /** Validates and saves the manual camera, then selects it. */
+  /** Opens the manual form pre-filled with the selected camera's details, in edit mode. */
+  protected editSelectedCamera(): void {
+    const cam = this.selectedCamera;
+    if (!cam) {
+      return;
+    }
+    this.editingId.set(cam.id);
+    this.manualOpen.set(true);
+    this.addError.set(null);
+    this.testResult.set(null);
+    // Credentials are write-only and never read back, so the password fields start blank — the user
+    // re-enters them only if they want to change them (see the credentials section).
+    this.manualForm.reset({
+      name: cam.name,
+      scheme: cam.source.scheme,
+      host: cam.source.host,
+      port: cam.source.port ?? null,
+      path: cam.source.path ?? '',
+      username: '',
+      password: ''
+    });
+  }
+
+  /** Leaves edit mode without saving, returning the form to a blank "add" state. */
+  protected cancelEdit(): void {
+    this.editingId.set(null);
+    this.addError.set(null);
+    this.testResult.set(null);
+    this.manualForm.reset({ scheme: 'rtsp', port: null });
+    this.manualOpen.set(false);
+  }
+
+  /** Enables or disables the selected camera, persisting the change to the server. */
+  protected async toggleEnabled(enabled: boolean): Promise<void> {
+    const cam = this.selectedCamera;
+    if (!cam) {
+      return;
+    }
+    try {
+      await this.resources.save(this.v2BaseUrl(), cam.id, {
+        name: cam.name,
+        enabled,
+        source: cam.source
+      });
+      await this.refreshCameras();
+    } catch {
+      this.addError.set('Could not update the camera.');
+    }
+  }
+
+  /** Validates and saves the manual camera (adding a new one, or updating the one being edited). */
   protected async addCamera(): Promise<void> {
     this.manualForm.markAllAsTouched();
     this.addError.set(null);
@@ -307,10 +367,15 @@ export class VideoCameraSetupComponent implements OnInit {
       this.addError.set(result.errors.join('. '));
       return;
     }
-    const id = this.uniqueId(slugifyCameraId(result.value.name));
+    const editing = this.editingId();
+    const id = editing ?? this.uniqueId(slugifyCameraId(result.value.name));
+    // Editing keeps the same id and must not flip a disabled camera back on, so preserve its state.
+    const record: ICameraRecord = editing
+      ? { ...result.value, enabled: this.cameras().find((c) => c.id === editing)?.enabled ?? true }
+      : result.value;
     this.saving.set(true);
     try {
-      await this.resources.save(this.v2BaseUrl(), id, result.value);
+      await this.resources.save(this.v2BaseUrl(), id, record);
       const username = `${fields['username'] ?? ''}`.trim();
       const password = `${fields['password'] ?? ''}`;
       if (username || password) {
@@ -320,6 +385,10 @@ export class VideoCameraSetupComponent implements OnInit {
       this.videoGroup.get('cameraId')?.setValue(id);
       this.manualForm.reset({ scheme: 'rtsp', port: null });
       this.candidates.set([]);
+      this.editingId.set(null);
+      if (editing) {
+        this.manualOpen.set(false); // collapse back to the picker after a successful edit
+      }
     } catch {
       this.addError.set('Could not save the camera. Check the SK Video plugin and your details.');
     } finally {

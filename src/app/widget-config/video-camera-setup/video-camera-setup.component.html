@@ -53,18 +53,32 @@
           <mat-label>Camera</mat-label>
           <mat-select formControlName="cameraId">
             @for (cam of cameras(); track cam.id) {
-              <mat-option [value]="cam.id">{{ cam.name }}</mat-option>
+              <mat-option [value]="cam.id">
+                {{ cam.name }}@if (!cam.enabled) {<span class="video-setup__off"> · off</span>}
+              </mat-option>
             }
             @if (!cameras().length) {
               <mat-option [value]="null" disabled>No saved cameras — add one below</mat-option>
             }
           </mat-select>
         </mat-form-field>
+        <button mat-icon-button type="button" (click)="editSelectedCamera()" [disabled]="!selectedCamera"
+          matTooltip="Edit selected camera" aria-label="Edit selected camera">
+          <mat-icon>edit</mat-icon>
+        </button>
         <button mat-icon-button type="button" (click)="removeSelected()"
           matTooltip="Remove selected camera" aria-label="Remove selected camera">
           <mat-icon>delete</mat-icon>
         </button>
       </div>
+      @if (selectedCamera; as cam) {
+        <mat-slide-toggle
+          class="video-setup__enable"
+          [checked]="cam.enabled"
+          (change)="toggleEnabled($event.checked)">
+          {{ cam.enabled ? 'Enabled — streaming' : 'Disabled — not streaming' }}
+        </mat-slide-toggle>
+      }
 
       <mat-form-field class="video-setup__fit">
         <mat-label>Connection</mat-label>
@@ -106,7 +120,7 @@
         </button>
       } @else {
       <fieldset class="video-setup__manual" [formGroup]="manualForm">
-        <legend class="video-setup__label">Add a camera</legend>
+        <legend class="video-setup__label">{{ editingId() ? 'Edit camera' : 'Add a camera' }}</legend>
         <mat-form-field>
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" placeholder="Foredeck">
@@ -162,9 +176,12 @@
             <span>Test connection</span>
           </button>
           <button mat-flat-button type="button" class="video-setup__add" (click)="addCamera()" [disabled]="saving()">
-            <mat-icon>add</mat-icon>
-            <span>Add camera</span>
+            <mat-icon>{{ editingId() ? 'save' : 'add' }}</mat-icon>
+            <span>{{ editingId() ? 'Save changes' : 'Add camera' }}</span>
           </button>
+          @if (editingId()) {
+            <button mat-button type="button" (click)="cancelEdit()">Cancel</button>
+          }
         </div>
         @if (testResult(); as r) {
           <small

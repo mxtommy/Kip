@@ -95,6 +95,17 @@
   }
 }
 
+// Disabled-camera marker shown after the name in the picker.
+.video-setup__off {
+  color: var(--kip-contrast-dim-color);
+}
+
+// Per-camera enable/disable toggle under the picker.
+.video-setup__enable {
+  margin: 2px 0 6px 2px;
+  font-size: 0.85rem;
+}
+
 .video-setup__scan {
   display: flex;
   align-items: center;

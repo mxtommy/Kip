@@ -176,6 +176,40 @@ describe('VideoCameraSetupComponent — camera mode', () => {
     await cmp.addCamera();
     expect(resources.save).not.toHaveBeenCalled();
   });
+
+  it('loads the selected camera into the form for editing and saves back to the same id', async () => {
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    const c = cmp as unknown as {
+      editSelectedCamera: () => void;
+      editingId: () => string | null;
+    };
+    c.editSelectedCamera();
+    expect(c.editingId()).toBe('foredeck');
+    expect(cmp.manualForm.get('name')?.value).toBe('Foredeck');
+    expect(cmp.manualForm.get('host')?.value).toBe('10.0.0.5');
+
+    cmp.manualForm.patchValue({ host: '10.0.0.99' });
+    await cmp.addCamera();
+    // Editing updates the SAME id (no new slug) and never generates a duplicate.
+    expect(resources.save).toHaveBeenCalledWith('http://h:3000/signalk/v2/api', 'foredeck', {
+      name: 'Foredeck',
+      enabled: true,
+      source: { scheme: 'rtsp', host: '10.0.0.99' }
+    });
+    expect(c.editingId()).toBeNull();
+  });
+
+  it('disables the selected camera via the enable toggle, preserving its source', async () => {
+    videoGroup.get('cameraId')?.setValue('foredeck');
+    await (cmp as unknown as { toggleEnabled: (enabled: boolean) => Promise<void> }).toggleEnabled(
+      false
+    );
+    expect(resources.save).toHaveBeenCalledWith('http://h:3000/signalk/v2/api', 'foredeck', {
+      name: 'Foredeck',
+      enabled: false,
+      source: { scheme: 'rtsp', host: '10.0.0.5' }
+    });
+  });
 });
 
 describe('VideoCameraSetupComponent — upload mode', () => {
