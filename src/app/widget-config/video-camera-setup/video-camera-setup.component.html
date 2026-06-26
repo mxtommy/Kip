@@ -152,10 +152,30 @@
         <small class="video-setup__hint" id="cred-note">
           Credentials are stored on the Signal K server only and never synced to your devices.
         </small>
-        <button mat-flat-button type="button" class="video-setup__add" (click)="addCamera()" [disabled]="saving()">
-          <mat-icon>add</mat-icon>
-          <span>Add camera</span>
-        </button>
+        <div class="video-setup__manual-actions">
+          <button mat-stroked-button type="button" (click)="testConnection()" [disabled]="testing()">
+            @if (testing()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate" />
+            } @else {
+              <mat-icon>wifi_tethering</mat-icon>
+            }
+            <span>Test connection</span>
+          </button>
+          <button mat-flat-button type="button" class="video-setup__add" (click)="addCamera()" [disabled]="saving()">
+            <mat-icon>add</mat-icon>
+            <span>Add camera</span>
+          </button>
+        </div>
+        @if (testResult(); as r) {
+          <small
+            class="video-setup__test"
+            [class.video-setup__test--ok]="r.ok"
+            [class.video-setup__test--bad]="!r.ok"
+            role="status"
+            aria-live="polite">
+            {{ r.ok ? '✓ ' : '✗ ' }}{{ r.message }}
+          </small>
+        }
         @if (addError(); as err) {
           <small class="video-setup__error" role="alert" aria-live="assertive">{{ err }}</small>
         }

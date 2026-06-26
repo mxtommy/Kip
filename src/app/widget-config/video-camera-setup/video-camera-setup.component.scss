@@ -154,3 +154,19 @@
 .video-setup__error {
   color: var(--mat-sys-error, #b3261e);
 }
+
+.video-setup__manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.video-setup__test {
+  &.video-setup__test--ok {
+    color: var(--kip-zone-nominal-color, #43a047);
+  }
+  &.video-setup__test--bad {
+    color: var(--kip-zone-alarm-color, #e53935);
+  }
+}

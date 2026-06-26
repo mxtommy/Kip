@@ -18,6 +18,7 @@ import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url
 import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
+import { CameraProbeClient, type ICameraProbeResult } from '../../widgets/widget-video/camera-probe-client';
 import { VideoAssetsClient, VideoUploadError, type IVideoAsset } from '../../widgets/widget-video/video-assets-client';
 import {
   CAMERA_SCHEMES, buildCameraRecord, candidateToFields, slugifyCameraId,
@@ -49,6 +50,7 @@ export class VideoCameraSetupComponent implements OnInit {
   private readonly discovery = inject(CameraDiscoveryClient);
   private readonly resources = inject(CamerasResourceClient);
   private readonly credentials = inject(CameraCredentialsClient);
+  private readonly probe = inject(CameraProbeClient);
   private readonly assets = inject(VideoAssetsClient);
 
   protected videoGroup!: UntypedFormGroup;
@@ -69,6 +71,8 @@ export class VideoCameraSetupComponent implements OnInit {
   protected readonly saving = signal(false);
   /** Whether the manual "Add a camera" form is expanded (auto-opens when no cameras are saved). */
   protected readonly manualOpen = signal(false);
+  protected readonly testing = signal(false);
+  protected readonly testResult = signal<ICameraProbeResult | null>(null);
 
   protected readonly videos = signal<IVideoAsset[]>([]);
   protected readonly uploading = signal(false);
@@ -233,6 +237,32 @@ export class VideoCameraSetupComponent implements OnInit {
     }
   }
 
+  /** Probes the camera being entered, before saving, and shows whether it answers. */
+  protected async testConnection(): Promise<void> {
+    this.manualForm.markAllAsTouched();
+    const fields = this.manualForm.value as Record<string, unknown>;
+    const record = buildCameraRecord(fields);
+    if (!record.valid || !record.value) {
+      this.testResult.set({ ok: false, message: record.errors.join('. ') || 'Check the camera details.' });
+      return;
+    }
+    this.testing.set(true);
+    this.testResult.set(null);
+    try {
+      this.testResult.set(
+        await this.probe.test(this.pluginBaseUrl(), {
+          source: record.value.source,
+          username: `${fields['username'] ?? ''}`.trim() || undefined,
+          password: `${fields['password'] ?? ''}` || undefined,
+        })
+      );
+    } catch {
+      this.testResult.set({ ok: false, message: 'Couldn’t reach the SK Video plugin.' });
+    } finally {
+      this.testing.set(false);
+    }
+  }
+
   /** Scans the network for cameras through the plugin. */
   protected async scan(): Promise<void> {
     if (this.scanning()) {
@@ -264,6 +294,7 @@ export class VideoCameraSetupComponent implements OnInit {
     this.manualOpen.set(true); // reveal the prefilled form
     this.manualForm.patchValue(candidateToFields(candidate));
     this.addError.set(null);
+    this.testResult.set(null);
   }
 
   /** Validates and saves the manual camera, then selects it. */
