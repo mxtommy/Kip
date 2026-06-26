@@ -33,6 +33,13 @@ Under **Source**, choose **Camera**:
 
 Pick **Delivery**: *Standard (HLS)* works everywhere; *Low latency (WebRTC)* is best for docking.
 
+## Uploaded videos
+
+With the **SK Video** plugin installed you can also store video files on the boat's Signal K server
+and play them on any device. Under **Source**, choose **Uploaded**, then **Upload a video** (MP4,
+WebM or MOV). Uploaded clips appear in the list to pick from, play back with seeking, and can be
+deleted with the trash button.
+
 ### Pan, tilt & zoom
 
 If the camera supports **PTZ** (pan/tilt/zoom over ONVIF), a control pad appears over the video.
