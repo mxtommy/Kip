@@ -1,0 +1,18 @@
+@if (sourceUrl(); as src) {
+  <video
+    class="video-widget__player"
+    [src]="src"
+    [style.object-fit]="objectFit()"
+    [muted]="muted()"
+    [autoplay]="autoplay()"
+    [loop]="loop()"
+    controls
+    playsinline
+    webkit-playsinline
+  ></video>
+} @else {
+  <div class="video-widget__empty">
+    <span class="video-widget__empty-title">No video source</span>
+    <small class="video-widget__empty-hint">Open the widget settings to add a video URL</small>
+  </div>
+}

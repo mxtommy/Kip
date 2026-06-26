@@ -36,6 +36,7 @@ import { WidgetChargerComponent } from '../../widgets/widget-charger/widget-char
 import { WidgetInverterComponent } from '../../widgets/widget-inverter/widget-inverter.component';
 import { WidgetAlternatorComponent } from '../../widgets/widget-alternator/widget-alternator.component';
 import { WidgetAcComponent } from '../../widgets/widget-ac/widget-ac.component';
+import { WidgetVideoComponent } from '../../widgets/widget-video/widget-video.component';
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -176,8 +177,9 @@ export class WidgetService {
     WidgetChargerComponent: WidgetChargerComponent,
     WidgetInverterComponent: WidgetInverterComponent,
     WidgetAlternatorComponent: WidgetAlternatorComponent,
-    WidgetAcComponent: WidgetAcComponent
-};
+    WidgetAcComponent: WidgetAcComponent,
+    WidgetVideoComponent: WidgetVideoComponent
+  };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
       name: 'Numeric',
@@ -426,7 +428,7 @@ export class WidgetService {
       selector: 'widget-charger',
       componentClassName: 'WidgetChargerComponent'
     },
-/*     {
+    {
       name: 'Alternator',
       description: 'Monitor alternator output and charging performance with voltage, current, power, revolutions and temperature metrics.',
       icon: 'alternator',
@@ -464,7 +466,7 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-ac',
       componentClassName: 'WidgetAcComponent'
-    }, */
+    },
     {
       name: 'Windsteer',
       description: 'A wind steering display that combines wind, wind sectors, heading, course over ground and next waypoint information.',
@@ -570,6 +572,19 @@ export class WidgetService {
       requiredPlugins: [],
       selector: 'widget-tutorial',
       componentClassName: 'WidgetTutorialComponent'
+    },
+    {
+      name: 'Video',
+      description: 'Play video from a URL with built-in player controls. IP-camera streaming, ONVIF pan/tilt/zoom and snapshots are added in later updates.',
+      icon: 'videoWidget',
+      minWidth: 2,
+      minHeight: 2,
+      defaultWidth: 8,
+      defaultHeight: 6,
+      category: 'Component',
+      requiredPlugins: [],
+      selector: 'widget-video',
+      componentClassName: 'WidgetVideoComponent'
     },
     {
       name: 'Racesteer (BETA)',

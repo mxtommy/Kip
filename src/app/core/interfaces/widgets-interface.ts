@@ -128,6 +128,35 @@ export interface SolarWidgetConfig {
 
 
 
+/** How the Video widget obtains its picture. */
+export type TVideoSourceKind = 'url' | 'file' | 'manual' | 'scan';
+
+/** How the `<video>` element fits its frame. */
+export type TVideoObjectFit = 'contain' | 'cover' | 'fill';
+
+/**
+ * Video widget configuration: which source feeds the player and how it is displayed.
+ *
+ * Only the `url` source is wired up today; `file` (uploaded to the Signal K server), `manual`
+ * (IP camera via the SK Video gateway) and `scan` (auto-discovery) are added in later updates.
+ */
+export interface IVideoWidgetConfig {
+  /** Which kind of source feeds the player. */
+  sourceKind?: TVideoSourceKind;
+  /** Direct URL to a browser-playable video (sourceKind 'url'). */
+  url?: string | null;
+  /** Id of a video uploaded to the Signal K server (sourceKind 'file'; not yet wired). */
+  fileAssetId?: string | null;
+  /** Mute audio. Required for the browser to allow autoplay. */
+  muted?: boolean;
+  /** Start playing as soon as the source is available. */
+  autoplay?: boolean;
+  /** Loop playback when the source is a file. */
+  loop?: boolean;
+  /** object-fit applied to the `<video>` element. */
+  objectFit?: TVideoObjectFit;
+}
+
 /**
  * Defines all possible Widget configuration properties.
  *
@@ -385,6 +414,9 @@ export interface IWidgetSvcConfig {
   widgetUrl?: string;
   /** Used by IFrame widget: allow input on iframe or not */
   allowInput?: boolean;
+
+  /** Used by the Video widget: source selection + display options. */
+  video?: IVideoWidgetConfig;
 
   /** Use by racetimer widget */
   timerLength?: number;
