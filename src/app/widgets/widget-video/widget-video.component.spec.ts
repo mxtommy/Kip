@@ -81,6 +81,33 @@ describe('WidgetVideoComponent', () => {
     );
   });
 
+  it('resolves an uploaded file source to the same-origin video URL', () => {
+    const options = signal<IWidgetSvcConfig | undefined>({
+      video: { sourceKind: 'file', fileAssetId: 'v1' }
+    });
+    TestBed.configureTestingModule({
+      imports: [WidgetVideoComponent],
+      providers: [
+        { provide: WidgetRuntimeDirective, useValue: { options } },
+        { provide: DataService, useValue: { getPathObject: () => null } },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({ httpServiceUrl: 'http://boat.local:3000/signalk/v1/api/' }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    });
+    const fixture = TestBed.createComponent(WidgetVideoComponent);
+    fixture.componentRef.setInput('id', 'test-id');
+    fixture.componentRef.setInput('type', 'widget-video');
+    fixture.componentRef.setInput('theme', null);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance as unknown as { sourceUrl: () => string | null };
+    expect(cmp.sourceUrl()).toBe('http://boat.local:3000/plugins/sk-video/videos/v1');
+  });
+
   it('shows PTZ controls and loads presets for a camera source', async () => {
     const ptz = {
       listPresets: vi.fn().mockResolvedValue([{ name: 'Dock', token: 't1' }]),

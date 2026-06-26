@@ -16,6 +16,7 @@ import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url
 import { resolveVideoSourceUrl } from './video-source.util';
 import { resolveGatewaySourceUrl } from './gateway-source.util';
 import { PtzClient, type IPtzPreset } from './ptz-client';
+import { VideoAssetsClient } from './video-assets-client';
 import {
   IPlaybackCapabilities, selectPlaybackPipeline, TPlaybackPipeline
 } from './playback-pipeline.util';
@@ -65,6 +66,7 @@ export class WidgetVideoComponent {
   private readonly data = inject(DataService);
   private readonly connection = inject(SignalKConnectionService);
   private readonly ptz = inject(PtzClient);
+  private readonly assets = inject(VideoAssetsClient);
 
   /** sk-video plugin base URL, tracked from the active server endpoint. */
   private readonly endpoint = toSignal(this.connection.serverServiceEndpoint$, { initialValue: null });
@@ -92,8 +94,12 @@ export class WidgetVideoComponent {
   protected readonly videoConfig = computed<IVideoWidgetConfig | null>(() => this.runtime.options()?.video ?? null);
   protected readonly sourceUrl = computed<string | null>(() => {
     const cfg = this.videoConfig();
-    if ((cfg?.sourceKind ?? 'url') === 'camera') {
+    const kind = cfg?.sourceKind ?? 'url';
+    if (kind === 'camera') {
       return resolveGatewaySourceUrl(cfg, this.gatewayBaseUrl());
+    }
+    if (kind === 'file') {
+      return this.assets.playbackUrl(this.gatewayBaseUrl(), cfg?.fileAssetId ?? null);
     }
     return resolveVideoSourceUrl(cfg, window.location.origin);
   });
