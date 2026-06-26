@@ -10,10 +10,26 @@ export interface IConnectionConfig {
   signalKSubscribeAll: boolean;
   useDeviceToken: boolean;
   loginName: string;
-  loginPassword: string;
+  // Transient only: collected by the login dialog and passed to login() in memory.
+  // Never persisted to localStorage (the session JWT is the cross-reload credential).
+  loginPassword?: string;
   useSharedConfig: boolean;
   sharedConfigName: string;
+  // Remote-control identity is per-device: a profile switch must not change whether this display
+  // participates in remote control or the name it advertises.
+  isRemoteControl: boolean;
+  instanceName: string;
 }
+
+/**
+ * Per-device connectionConfig schema version (its own version space, decoupled from the app config
+ * version). Only the one-time migration in AppNetworkInitService advances a stored config to this —
+ * nothing else may stamp it, or a write would prematurely mark the migration done and lose the lifted
+ * remote-control identity.
+ */
+export const CONNECTION_CONFIG_VERSION = 13;
+/** connectionConfig versions this build can load without forcing defaults. */
+export const SUPPORTED_CONNECTION_CONFIG_VERSIONS = [11, 12, 13];
 export interface IConfig {
   app: IAppConfig | null;
   theme: IThemeConfig | null;
@@ -25,8 +41,6 @@ export interface IAppConfig {
   autoNightMode: boolean;
   redNightMode: boolean;
   nightModeBrightness: number;
-  isRemoteControl: boolean;
-  instanceName: string;
   dataSets: IDatasetServiceDatasetConfig[];
   unitDefaults: IUnitDefaults;
   notificationConfig: INotificationConfig;

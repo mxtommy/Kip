@@ -8,8 +8,6 @@ export const DefaultAppConfig: IAppConfig = {
   "autoNightMode": true,
   "redNightMode": false,
   "nightModeBrightness": 0.27,
-  "isRemoteControl": false,
-  "instanceName": "",
   "dataSets": [],
   "unitDefaults": DefaultUnitsConfig,
   "notificationConfig": DefaultNotificationConfig,
@@ -30,14 +28,15 @@ export const defaultConfig: IConfig = {
 }
 
 export const DefaultConnectionConfig: IConnectionConfig = {
-  "configVersion": 12,
+  "configVersion": 13,
   "kipUUID": UUID.create(),
   "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,
   "signalKSubscribeAll": false,
   "useDeviceToken": false,
   "loginName": null,
-  "loginPassword": null,
   "useSharedConfig": false,
-  "sharedConfigName": "default"
+  "sharedConfigName": "default",
+  "isRemoteControl": false,
+  "instanceName": ""
 }

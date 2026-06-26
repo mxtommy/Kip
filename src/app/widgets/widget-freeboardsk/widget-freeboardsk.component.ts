@@ -5,6 +5,7 @@ import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy,
 import { ChangeDetectionStrategy } from '@angular/core';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
+import { buildFreeboardSkUrl } from './freeboard-sk-url.util';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { AppService, ITheme } from '../../core/services/app-service';
@@ -57,10 +58,12 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
       const token = this.authToken();
 
       untracked(() => {
-        const loginToken = token?.token;
-        this.widgetUrl = loginToken
-          ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`
-          : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
+        this.widgetUrl = buildFreeboardSkUrl({
+          cookieMode: this.auth.authMode === 'cookie',
+          appOrigin: window.location.origin,
+          serverUrl: this.appSettings.signalkUrl.url,
+          token: token?.token
+        });
       });
     });
 

@@ -6,8 +6,10 @@ import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject } from 'rxjs';
+import { tap, concatMap, catchError, finalize, lastValueFrom, of, BehaviorSubject, timeout } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
+
+const REMOTE_CONFIG_TIMEOUT_MS = 5000; // bounded so a hung applicationData fetch cannot stall the bootstrap
 
 export interface Config {
   name: string,
@@ -48,6 +50,8 @@ export class StorageService {
 
 
   private patchQueue$ = new Subject();  // REST call queue to force sequential calls
+  private _pendingPatches$ = new BehaviorSubject<number>(0); // in-flight + queued patch count, for awaitQueueDrain
+  private _patchFailures = 0; // monotonic count of failed patches, so awaitQueueDrain can report failure (not just emptiness)
   private patch = function (arg: IPatchAction) { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
@@ -84,7 +88,21 @@ export class StorageService {
 
     // Patch request queue to insure JSON Patch requests to SK server don't run over each other and cause collisions/conflicts. SK does not handle multiple async applicationData access calls
     this.patchQueue$
-      .pipe(concatMap((arg: IPatchAction) => this.patch(arg)), takeUntilDestroyed())
+      .pipe(
+        // Keep the queue alive when one patch fails (e.g. a read-only session's 401): without this,
+        // a thrown inner error terminates the subscription and silently drops every later save.
+        concatMap((arg: IPatchAction) =>
+          this.patch(arg).pipe(
+            catchError((err) => {
+              console.error('[Storage Service] Config patch failed; keeping the queue alive:', err);
+              this._patchFailures++;
+              return of(null);
+            }),
+            finalize(() => this._pendingPatches$.next(Math.max(0, this._pendingPatches$.value - 1)))
+          )
+        ),
+        takeUntilDestroyed()
+      )
       .subscribe(() => { /* queue item processed */ });
   }
 
@@ -150,6 +168,56 @@ export class StorageService {
     if (!this.storageServiceReady$.getValue()) {
       throw new Error('[StorageService] Not ready: storageServiceReady is false');
     }
+  }
+
+  /**
+   * Boundary guard: a config slot name reaches the server both as a URL path segment and as a
+   * JSON Patch path key. An empty/undefined name would target the wrong location (e.g. POST to
+   * `/undefined/...`), silently corrupting storage. Refuse it.
+   */
+  private assertSlotName(name: string, op: string): void {
+    if (!name) {
+      throw new Error(`[StorageService] Refusing ${op}: empty or undefined config slot name.`);
+    }
+  }
+
+  private enqueuePatch(patch: IPatchAction): void {
+    this._pendingPatches$.next(this._pendingPatches$.value + 1);
+    this.patchQueue$.next(patch);
+  }
+
+  /**
+   * Resolves once the sequential patch queue has drained, or `false` if it has not settled within
+   * `timeoutMs`. Used before a profile switch/reload so queued writes to the leaving profile are
+   * not abandoned, while a stalled write degrades to best-effort rather than hanging the UI.
+   *
+   * @param {number} timeoutMs Maximum time to wait before resolving false. Defaults to 5000.
+   * @returns {Promise<boolean>} True if the queue drained, false on timeout.
+   */
+  /**
+   * Resolves true only when the queue empties with no patch failure in the meantime; false if a
+   * patch failed while draining or the wait times out. Callers that treat a drain as a save/delete
+   * guarantee (e.g. profile switch/rename/delete) must check the result rather than assume success.
+   */
+  public awaitQueueDrain(timeoutMs = 5000): Promise<boolean> {
+    const failuresAtStart = this._patchFailures;
+    if (this._pendingPatches$.value === 0) {
+      return Promise.resolve(this._patchFailures === failuresAtStart);
+    }
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        sub.unsubscribe();
+        resolve(result);
+      };
+      const sub = this._pendingPatches$.subscribe((count) => {
+        if (count === 0) finish(this._patchFailures === failuresAtStart);
+      });
+      const timer = window.setTimeout(() => finish(false), timeoutMs);
+    });
   }
 
   /**
@@ -223,7 +291,7 @@ export class StorageService {
     }
 
     try {
-      const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url));
+      const remoteConfig = await lastValueFrom(this.http.get<IConfig>(url).pipe(timeout(REMOTE_CONFIG_TIMEOUT_MS)));
       if (this._logIO) {
         const appVer: unknown = (remoteConfig && typeof remoteConfig === 'object') ? (remoteConfig as IConfig)?.app?.configVersion : undefined;
         console.debug('[StorageService.getConfig Response]', { scope, configName, ver, appConfigVersion: appVer });
@@ -255,6 +323,7 @@ export class StorageService {
    */
   public async setConfig(scope: string, configName: string, config: IConfig, forceConfigFileVersion?: number | string): Promise<null> {
     this.ensureReady();
+    this.assertSlotName(configName, 'setConfig');
 
     const base = this.serverEndpoint + scope + "/kip/";
     const ver = forceConfigFileVersion ?? this.configFileVersion;
@@ -289,6 +358,10 @@ export class StorageService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public patchConfig(ObjType: string, value: any, forceConfigFileVersion?: number) {
     this.ensureReady();
+    if (!this.sharedConfigName) {
+      console.error('[StorageService] Refusing patchConfig: active config slot name is unset.');
+      return;
+    }
     const ver = forceConfigFileVersion ?? this.configFileVersion;
     const url = this.serverEndpoint + "user/kip/" + ver;
     let document;
@@ -391,7 +464,7 @@ export class StorageService {
         touchesConfigVersion
       });
     }
-    this.patchQueue$.next(patch);
+    this.enqueuePatch(patch);
   }
 
   /**
@@ -406,6 +479,7 @@ export class StorageService {
    */
   public patchGlobal(configName: string, scope: string, config: IConfig, operation: string, fileVersion?: number) {
     this.ensureReady();
+    this.assertSlotName(configName, 'patchGlobal');
     const ver = fileVersion ?? this.configFileVersion;
   const url = this.serverEndpoint + scope + "/kip/" + ver;
 
@@ -447,7 +521,7 @@ export class StorageService {
       const appVer: unknown = config?.app?.configVersion;
       console.debug('[StorageService.patchGlobal]', { scope, configName, operation, ver, url, appConfigVersionInValue: appVer });
     }
-    this.patchQueue$.next(patch);
+    this.enqueuePatch(patch);
   }
 
   /**
@@ -464,6 +538,7 @@ export class StorageService {
    */
   public removeItem(scope: string, name: string, forceConfigFileVersion?: number) {
     this.ensureReady();
+    this.assertSlotName(name, 'removeItem');
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (forceConfigFileVersion) {
       url = this.serverEndpoint + scope + "/kip/" + forceConfigFileVersion;
@@ -476,7 +551,7 @@ export class StorageService {
         }
       ]
     const patch: IPatchAction = { url, document };
-    this.patchQueue$.next(patch);
+    this.enqueuePatch(patch);
   }
 
   /**

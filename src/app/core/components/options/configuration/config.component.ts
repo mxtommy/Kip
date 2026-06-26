@@ -1,281 +1,232 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule }    from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
 import { AuthenticationService } from '../../../services/authentication.service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
 import { IConfig } from '../../../interfaces/app-settings.interfaces';
 import { StorageService } from '../../../services/storage.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { MatInput, MatInputModule } from '@angular/material/input';
-import { MatOption } from '@angular/material/core';
-import { MatSelect } from '@angular/material/select';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { ProfileService } from '../../../services/profile.service';
+import { DialogService } from '../../../services/dialog.service';
 import { MatButton } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatDivider } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
-
-interface IRemoteConfig {
-  scope: string,
-  name: string
-}
-
-interface IRemoteConfigOption extends IRemoteConfig {
-  key: string
-}
 
 @Component({
     selector: 'settings-config',
     templateUrl: './config.component.html',
     styleUrls: ['./config.component.scss'],
-    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatFormField, MatLabel, MatSelect, MatOption, MatInput, ReactiveFormsModule, MatInputModule]
+    imports: [RouterLink, FormsModule, MatDivider, MatButton, MatIconModule]
 })
 export class SettingsConfigComponent {
   private settings = inject(SettingsService);
   private storageSvc = inject(StorageService);
   private toast = inject(ToastService);
   private auth = inject(AuthenticationService);
-  private fb = inject(UntypedFormBuilder);
+  private profileService = inject(ProfileService);
+  private dialog = inject(DialogService);
 
-  private authToken = toSignal(this.auth.authToken$, { initialValue: null });
-  private serverConfigListSignal = signal<IRemoteConfig[]>([]);
-  private hasTokenSignal = computed(() => Boolean(this.authToken()?.token));
-  private isTokenTypeDeviceSignal = computed(() => Boolean(this.authToken()?.isDeviceAccessToken));
+  private isUserSession = toSignal(this.auth.isUserSession$, { initialValue: false });
 
-  protected readonly pageTitle: string = "Configurations";
-
-  public get hasToken(): boolean {
-    return this.hasTokenSignal();
-  }
-
-  public get isTokenTypeDevice(): boolean {
-    return this.isTokenTypeDeviceSignal();
-  }
-
+  protected readonly pageTitle = 'Profiles';
   public supportApplicationData = this.storageSvc.isAppDataSupported;
-  public serverConfigOptions = computed<IRemoteConfigOption[]>(() => this.serverConfigListSignal().map((config) => ({
-    scope: config.scope,
-    name: config.name,
-    key: `${config.scope}::${config.name}`
-  })));
-  public serverUpgradableConfigList: IRemoteConfig[] = [];
 
-  public copyConfigForm: UntypedFormGroup = this.fb.group({
-    sourceTarget: [{value: '', disabled: false}, Validators.required]
-  });
-  public storageLocation: string = null;
-  public locations: string[] = ["Local Storage", "Server Storage"];
+  // Profiles are user-scope: available with a real Signal K user session — a cookie-mode SSO session
+  // or a non-device token. Keying off isUserSession$ (not raw token presence) is what makes profiles
+  // appear in cookie mode, where the httpOnly session cookie carries auth and there is no JWT. A device
+  // token resolves to the shared 'global' scope, and an anonymous visitor has no user scope.
+  protected profilesAvailable = computed(() =>
+    this.supportApplicationData && this.isUserSession()
+  );
+  // Read is available to any user session; profile mutations (create/rename/duplicate/delete/import)
+  // need write capability — a read-only session must not get live write controls.
+  protected canWriteUserData = toSignal(this.auth.canWriteUserData$, { initialValue: false });
+  protected profiles = this.profileService.profiles;
 
-  public saveConfigName: string = null;
-  public saveConfigScope: string = null;
-  public deleteConfigKey: string = null;
-  public jsonData: IConfig = null;
-
-  private readonly authStateEffect = effect(() => {
-    if (!this.supportApplicationData) {
-      return;
+  private readonly profileLoadEffect = effect(() => {
+    if (this.profilesAvailable()) {
+      this.profileService.refresh().catch((err) => this.reportError(err));
     }
-
-    if (this.hasTokenSignal()) {
-      this.saveConfigScope = this.isTokenTypeDeviceSignal() ? 'global' : 'user';
-      this.getServerConfigList();
-      return;
-    }
-
-    this.deleteConfigKey = null;
   });
 
-  public getServerConfigList(configFileVersionName?: number) {
-    if (this.supportApplicationData) {
-      this.storageSvc.listConfigs(configFileVersionName)
-      .then((configs) => {
-        // Filter out entries with scope 'user' and name 'default'
-        const filteredConfigs = configs.filter(config => !(config.scope === 'user' && config.name === 'default'));
-
-        // see if we have an old config file
-        if(configFileVersionName) {
-          this.serverUpgradableConfigList = filteredConfigs;
-        } else {
-          this.serverConfigListSignal.set(filteredConfigs);
-        }
+  protected async switchProfile(name: string): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog.openConfirmationDialog({
+        title: 'Switch profile',
+        message: `Switch this device to "${name}"? KIP will reload to load the profile.`,
+        confirmBtnText: 'Switch',
+        cancelBtnText: 'Cancel'
       })
-      .catch((error: HttpErrorResponse) => {
-        switch (error.status) {
-          case 401:
-            this.toast.show("Storage Service: " + error.statusText + ". Signal K configuration must meet the following requirements; 1) Security enabled. 2) Application Data Storage Interface: On. 3) Either Allow Readonly Access enabled, or connecting with a user.", 0, false, 'error');
-            break;
-
-          default: this.toast.show("Cannot list configurations: " + error, 0, false, 'error' );
-            break;
-        }
-      });
-    }
-  }
-
-  public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean, forceSave?: boolean) {
-    if (this.supportApplicationData) {
-      // Prevent saving with scope 'user' and name 'default'
-      if ((scope === 'user' && name === 'default') && !forceSave) {
-        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, 'error');
-        return;
-      }
-
-      if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, 'success');
-        if (!dontRefreshConfigList || undefined) {
-          this.getServerConfigList();
-        }
-      } else {
-        this.toast.show("Configuration not saved to server", 0, false, 'error');
-      }
-    }
-  }
-
-  /**
-   * Save config to local storage
-   */
-  public saveToLocalstorage(config: IConfig) {
-    this.settings.replaceConfig("appConfig", config.app, false);
-    this.settings.replaceConfig("dashboardsConfig", config.dashboards, false);
-    this.settings.replaceConfig("themeConfig", config.theme, false);
-  }
-
-  public async copyConfig() {
-    const sourceTarget = this.parseConfigKey(this.copyConfigForm.value.sourceTarget);
-    if (!sourceTarget) {
-      this.toast.show('Please select a valid configuration to restore.', 0, false, 'error');
+    );
+    if (!confirmed) {
       return;
     }
-
-    let conf: IConfig = null;
     try {
-      await this.storageSvc.getConfig(sourceTarget.scope, sourceTarget.name)
-      .then((config: IConfig) => {
-        conf = config
+      await this.profileService.switchProfile(name);
+    } catch (err) {
+      this.reportError(err);
+    }
+  }
+
+  protected createProfile(): void {
+    this.dialog
+      .openNameDialog({
+        title: 'New profile',
+        name: '',
+        confirmBtnText: 'Create',
+        cancelBtnText: 'Cancel'
+      })
+      .afterClosed()
+      .subscribe(async (result) => {
+        if (!result?.name) {
+          return;
+        }
+        try {
+          await this.profileService.createProfile(result.name);
+        } catch (err) {
+          this.reportError(err);
+        }
       });
-    } catch (error) {
-      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, 'error');
+  }
+
+  protected renameProfile(name: string): void {
+    this.dialog
+      .openNameDialog({ title: 'Rename profile', name, confirmBtnText: 'Rename', cancelBtnText: 'Cancel' })
+      .afterClosed()
+      .subscribe(async (result) => {
+        if (!result?.name || result.name === name) {
+          return;
+        }
+        try {
+          await this.profileService.renameProfile(name, result.name);
+        } catch (err) {
+          this.reportError(err);
+        }
+      });
+  }
+
+  protected duplicateProfile(name: string): void {
+    this.dialog
+      .openNameDialog({ title: 'Duplicate profile', name: `${name} copy`, confirmBtnText: 'Duplicate', cancelBtnText: 'Cancel' })
+      .afterClosed()
+      .subscribe(async (result) => {
+        if (!result?.name) {
+          return;
+        }
+        try {
+          await this.profileService.duplicateProfile(name, result.name);
+        } catch (err) {
+          this.reportError(err);
+        }
+      });
+  }
+
+  protected async deleteProfile(name: string): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog.openConfirmationDialog({
+        title: 'Delete profile',
+        message: `Permanently delete profile "${name}"? This cannot be undone.`,
+        confirmBtnText: 'Delete',
+        cancelBtnText: 'Cancel'
+      })
+    );
+    if (!confirmed) {
       return;
     }
-
-    this.saveConfig(conf, 'user', 'default', false, true);
-    this.settings.reloadApp();
-  }
-
-  public deleteConfigByKey(configKey: string) {
-    const config = this.parseConfigKey(configKey);
-    if (!config) {
-      this.toast.show('Please select a valid configuration to delete.', 0, false, 'error');
-      return;
+    try {
+      await this.profileService.deleteProfile(name);
+    } catch (err) {
+      this.reportError(err);
     }
-
-    this.deleteConfig(config.scope, config.name);
-  }
-
-  public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
-    this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
-    this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, 'success');
-    if (!dontRefreshConfigList) {
-      this.getServerConfigList();
-    }
-  }
-
-  private parseConfigKey(configKey: string | null): IRemoteConfig | null {
-    if (!configKey) {
-      return null;
-    }
-
-    const [scope, ...nameParts] = configKey.split('::');
-    const name = nameParts.join('::');
-    if (!scope || !name) {
-      return null;
-    }
-
-    return { scope, name };
-  }
-
-  public resetConfigToDefault() {
-    this.settings.resetSettings();
-  }
-
-  public resetConnectionToDefault() {
-    this.settings.resetConnection();
-  }
-
-  public loadDemoConfig() {
-    this.settings.loadDemoConfig();
   }
 
   public getActiveConfig(): IConfig {
-    let conf: IConfig;
-    if (this.settings.useSharedConfig) {
-      conf = this.getLocalConfigFromMemory();
-    } else {
-      conf = this.getLocalConfigFromLocalStorage();
-    }
-    return conf;
+    return this.settings.useSharedConfig ? this.getLocalConfigFromMemory() : this.getLocalConfigFromLocalStorage();
   }
 
   public getLocalConfigFromMemory(): IConfig {
-    const localConfig: IConfig = {
-      "app": this.settings.getAppConfig(),
-      "dashboards": this.settings.getDashboardConfig(),
-      "theme": this.settings.getThemeConfig(),
+    return {
+      app: this.settings.getAppConfig(),
+      dashboards: this.settings.getDashboardConfig(),
+      theme: this.settings.getThemeConfig()
     };
-    return localConfig;
   }
 
   public getLocalConfigFromLocalStorage(): IConfig {
-    const localConfig: IConfig = {
-      "app": this.settings.loadConfigFromLocalStorage('appConfig'),
-      "dashboards": this.settings.loadConfigFromLocalStorage('dashboardsConfig'),
-      "theme": this.settings.loadConfigFromLocalStorage('themeConfig'),
+    return {
+      app: this.settings.loadConfigFromLocalStorage('appConfig'),
+      dashboards: this.settings.loadConfigFromLocalStorage('dashboardsConfig'),
+      theme: this.settings.loadConfigFromLocalStorage('themeConfig')
     };
-    return localConfig;
   }
 
   public downloadJsonConfig(): void {
-    const jsonData = this.getActiveConfig();
-    const jsonString = JSON.stringify(jsonData, null, 2);
+    const jsonString = JSON.stringify(this.getActiveConfig(), null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
-
-    const downloadURL = window.URL.createObjectURL(blob); // Generate a temporary download URL
-
-    // Create an invisible <a> element and trigger the download
+    const downloadURL = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadURL;
-    a.download = 'KipConfig.json'; // File name
+    a.download = 'KipConfig.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-
-    window.URL.revokeObjectURL(downloadURL); // Cleanup memory
+    window.URL.revokeObjectURL(downloadURL);
   }
 
-  public uploadJsonConfig(event: Event) {
+  /** Import a config file as a NEW profile (never overwrites the active one). */
+  public uploadJsonConfig(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file && file.type === "application/json") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          this.jsonData = JSON.parse(e.target?.result as string); // Parse JSON
-          if (this.hasToken) {
-            this.saveConfig(this.jsonData, 'user', 'default', false, true);
-          } else {
-            this.saveToLocalstorage(this.jsonData);
-          }
-          this.settings.reloadApp();
-        } catch (error) {
-          this.toast.show("File does not contain valid JSON.", 0, false, 'error');
-          console.error("Invalid JSON file format:", error);
-        }
-      };
-      reader.readAsText(file); // Read the file as text
-    } else {
-      this.toast.show("Please select a valid JSON file", 0, false, 'error');
+    if (!file || file.type !== 'application/json') {
+      this.toast.show('Please select a valid JSON file', 0, false, 'error');
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(e.target?.result as string);
+      } catch (err) {
+        this.toast.show('File does not contain valid JSON.', 0, false, 'error');
+        console.error('Invalid JSON file format:', err);
+        return;
+      }
+      this.dialog
+        .openNameDialog({ title: 'Import as new profile', name: '', confirmBtnText: 'Import', cancelBtnText: 'Cancel' })
+        .afterClosed()
+        .subscribe(async (result) => {
+          if (!result?.name) {
+            return;
+          }
+          try {
+            await this.profileService.importProfile(result.name, parsed);
+            this.toast.show(`Profile "${result.name}" imported`, 1000, true, 'success');
+          } catch (err) {
+            this.reportError(err);
+          }
+        });
+    };
+    reader.readAsText(file);
+    input.value = '';
   }
 
+  public loadDemoConfig(): void {
+    this.settings.loadDemoConfig();
+  }
+
+  public resetConfigToDefault(): void {
+    this.settings.resetSettings();
+  }
+
+  public resetConnectionToDefault(): void {
+    this.settings.resetConnection();
+  }
+
+  private reportError(err: unknown): void {
+    const message = err instanceof Error ? err.message : String(err);
+    this.toast.show(message, 0, false, 'error');
+  }
 }
