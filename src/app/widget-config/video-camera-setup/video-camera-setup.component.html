@@ -51,7 +51,7 @@
       <div class="video-setup__camera-row">
         <mat-form-field class="video-setup__camera-pick">
           <mat-label>Camera</mat-label>
-          <mat-select formControlName="cameraId">
+          <mat-select formControlName="cameraId" (selectionChange)="onCameraSelected($event.value)">
             @for (cam of cameras(); track cam.id) {
               <mat-option [value]="cam.id">
                 {{ cam.name }}@if (!cam.enabled) {<span class="video-setup__off"> · off</span>}
@@ -290,8 +290,8 @@
   <section class="video-setup__section">
     <h3 class="video-setup__label">Quality &amp; Latency</h3>
     <mat-button-toggle-group class="video-setup__sources" formControlName="preset" aria-label="Quality and latency preset">
-      <mat-button-toggle value="docking">
-        <span class="video-setup__source-name">Docking</span>
+      <mat-button-toggle value="live">
+        <span class="video-setup__source-name">Live</span>
         <small class="video-setup__soon">Lowest delay</small>
       </mat-button-toggle>
       <mat-button-toggle value="balanced">

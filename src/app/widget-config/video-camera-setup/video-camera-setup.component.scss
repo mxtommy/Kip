@@ -47,6 +47,9 @@
 }
 
 .video-setup__soon {
+  // Space the descriptor off the bold preset name so they don't run together
+  // (e.g. "Best Quality Smoothest", not "Best QualitySmoothest").
+  margin-left: 6px;
   font-size: 0.72rem;
   color: var(--kip-contrast-dim-color);
 }

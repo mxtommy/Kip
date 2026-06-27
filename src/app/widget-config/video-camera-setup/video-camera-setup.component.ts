@@ -215,6 +215,21 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
     return id ? this.cameras().find((c) => c.id === id) : undefined;
   }
 
+  /** When the user picks a saved camera, default the Title to its name (only if the Title is empty). */
+  protected onCameraSelected(id: string | null): void {
+    this.prefillTitleFromCamera(this.cameras().find((c) => c.id === id)?.name);
+  }
+
+  /** Prefills the widget Title with the camera name as a sensible default — but only when the user
+   *  hasn't set one (they can always change it), and only when a name is available. */
+  private prefillTitleFromCamera(name: string | null | undefined): void {
+    const label = this.videoGroup.get('label');
+    if (name && label && !`${label.value ?? ''}`.trim()) {
+      label.setValue(name);
+      label.markAsDirty();
+    }
+  }
+
   /** Plain-language hint for the currently selected quality/latency preset. */
   protected get presetHint(): string {
     return mapPreset((this.videoGroup?.get('preset')?.value as TVideoPreset) ?? 'balanced').hint;
@@ -484,6 +499,7 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
       }
       await this.refreshCameras();
       this.videoGroup.get('cameraId')?.setValue(id);
+      this.prefillTitleFromCamera(result.value.name);
       this.manualForm.reset({ scheme: 'rtsp', port: null });
       this.candidates.set([]);
       this.editingId.set(null);

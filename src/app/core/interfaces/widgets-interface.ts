@@ -144,7 +144,7 @@ export type TVideoObjectFit = 'contain' | 'cover' | 'fill';
 export type TVideoTransport = 'auto' | 'file' | 'hls' | 'mjpeg' | 'webrtc';
 
 /** Quality-vs-latency preset. */
-export type TVideoPreset = 'docking' | 'balanced' | 'best';
+export type TVideoPreset = 'live' | 'balanced' | 'best';
 
 export interface IVideoWidgetConfig {
   /** Which kind of source feeds the player. */

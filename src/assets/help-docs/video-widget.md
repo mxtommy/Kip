@@ -72,7 +72,7 @@ only — it is never copied onto your phone, tablet, or shared between devices.*
 **Delivery** lets you choose how the picture reaches you:
 
 - **Standard (HLS)** — works on every device. A second or two of delay. Good for most uses.
-- **Low latency (WebRTC)** — almost no delay. Best for docking and close manoeuvring.
+- **Low latency (WebRTC)** — almost no delay. Best for docking and close maneuvering.
 
 ### Move the camera (pan, tilt & zoom)
 
@@ -107,9 +107,9 @@ removed with the trash button.
 Live video always trades **delay** against **smoothness**. Under **Quality & Latency**, pick the
 balance you want:
 
-<img src="../../assets/help-docs/img/video/quality.png" alt="The Quality and Latency presets: Docking, Balanced, Best quality" title="Balance delay against smoothness" width="100%">
+<img src="../../assets/help-docs/img/video/quality.png" alt="The Quality and Latency presets: Live, Balanced, Best quality" title="Balance delay against smoothness" width="100%">
 
-- **Docking** — the least delay, for close-quarters manoeuvring.
+- **Live** — the least delay, for live, hands-on viewing (docking, fishing, on-deck work).
 - **Balanced** — a small delay with smooth, steady playback. Recommended.
 - **Best quality** — the smoothest, sharpest picture, with a bit more delay.
 

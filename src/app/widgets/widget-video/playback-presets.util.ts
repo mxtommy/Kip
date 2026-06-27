@@ -1,5 +1,5 @@
 /** Quality-vs-latency preset. */
-export type TVideoPreset = 'docking' | 'balanced' | 'best';
+export type TVideoPreset = 'live' | 'balanced' | 'best';
 
 /** hls.js tuning derived from a preset. */
 export interface IHlsTuning {
@@ -23,12 +23,12 @@ export interface IPresetTuning {
 }
 
 const PRESETS: Record<TVideoPreset, IPresetTuning> = {
-  docking: {
+  live: {
     hls: { lowLatencyMode: true, liveSyncDurationCount: 2, maxLiveSyncPlaybackRate: 2, backBufferLength: 0, maxBufferLength: 10 },
     jitterBufferTargetMs: 100,
     preferLowLatency: true,
-    label: 'Docking',
-    hint: 'Lowest delay — best for close-quarters manoeuvring.'
+    label: 'Live',
+    hint: 'Lowest delay — best for live, hands-on viewing.'
   },
   balanced: {
     hls: { lowLatencyMode: true, liveSyncDurationCount: 3, maxLiveSyncPlaybackRate: 1.2, backBufferLength: 30, maxBufferLength: 30 },

@@ -30,13 +30,13 @@ that saves battery and keeps your device cool.
 
 ### Set up a docking camera with almost no delay
 
-**You'll get:** a near-instant camera view for close-quarters manoeuvring, with on-screen steering if
+**You'll get:** a near-instant camera view for close-quarters maneuvering, with on-screen steering if
 the camera can move.
 
 1. Add a **Video** widget and set **Source** to **Camera**.
 2. Pick your stern or dock camera from the list (or scan/add it).
 3. Set **Delivery** to **Low latency (WebRTC)**.
-4. Set **Quality & Latency** to **Docking**.
+4. Set **Quality & Latency** to **Live**.
 5. Save. If the camera supports it, the **pan/tilt/zoom** pad appears over the picture.
 
 <img src="../../assets/help-docs/img/video/ptz.png" alt="On-screen pan, tilt and zoom controls" title="Steer the camera while docking" width="100%">

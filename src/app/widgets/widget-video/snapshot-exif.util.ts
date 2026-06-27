@@ -6,7 +6,7 @@ export interface ISnapshotTelemetry {
   latitude?: number | null;
   /** Longitude in decimal degrees (WGS-84). */
   longitude?: number | null;
-  /** Altitude in metres above sea level. */
+  /** Altitude in meters above sea level. */
   altitude?: number | null;
   /** Speed over ground, knots. */
   sogKnots?: number | null;

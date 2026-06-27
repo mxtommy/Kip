@@ -91,7 +91,7 @@
   width: 44px;
   height: 44px;
   // Flex-center the glyph on the backdrop — an explicit line-height left the
-  // PiP / fullscreen / snapshot icons riding high, off-centre on their pill.
+  // PiP / fullscreen / snapshot icons riding high, off-center on their pill.
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -189,7 +189,7 @@
   align-items: center;
 }
 
-// Severity cue: a coloured left edge so an error reads differently from a confirmation.
+// Severity cue: a colored left edge so an error reads differently from a confirmation.
 .video-widget__toast--error {
   border-left: 4px solid var(--kip-zone-alarm-color, #e53935);
 }

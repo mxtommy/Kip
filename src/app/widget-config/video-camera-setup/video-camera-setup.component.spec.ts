@@ -60,7 +60,7 @@ describe('VideoCameraSetupComponent', () => {
     expect(videoGroup.get('preset')?.value).toBe('balanced');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Quality');
-    expect(text).toContain('Docking');
+    expect(text).toContain('Live');
   });
 
   it('ensures the nested snapshot group with privacy + destination defaults', () => {
@@ -190,6 +190,23 @@ describe('VideoCameraSetupComponent — camera mode', () => {
       password: 'pw'
     });
     expect(videoGroup.get('cameraId')?.value).toBe('bow-cam');
+  });
+
+  it('prefills the Title from a newly added camera name', async () => {
+    cmp.manualForm.patchValue({ name: 'Bow Cam', scheme: 'rtsp', host: '10.0.0.9' });
+    await cmp.addCamera();
+    expect(videoGroup.get('label')?.value).toBe('Bow Cam');
+  });
+
+  it('prefills the Title when a saved camera is picked, but only if the Title is empty', () => {
+    const c = cmp as unknown as { onCameraSelected: (id: string) => void };
+    expect(`${videoGroup.get('label')?.value ?? ''}`.trim()).toBe('');
+    c.onCameraSelected('foredeck');
+    expect(videoGroup.get('label')?.value).toBe('Foredeck');
+    // A Title the user already set is never overwritten.
+    videoGroup.get('label')?.setValue('My Camera');
+    c.onCameraSelected('foredeck');
+    expect(videoGroup.get('label')?.value).toBe('My Camera');
   });
 
   it('does not save an invalid manual camera', async () => {
