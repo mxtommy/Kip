@@ -563,7 +563,7 @@ export class WidgetService {
     {
       name: 'Image',
       description: 'Displays an uploaded image (e.g. a diagram of where safety equipment is stowed) stored on the Signal K server, scaled to fit while preserving aspect ratio. Upload images or pick from the shared library in the widget options.',
-      icon: '',
+      icon: 'imageWidget',
       minWidth: 2,
       minHeight: 2,
       defaultWidth: 4,
