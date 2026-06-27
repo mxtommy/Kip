@@ -213,6 +213,30 @@
   color: var(--mat-sys-error, #b3261e);
 }
 
+// "Install the SK Video plugin" notice on the Camera / Uploaded tabs when the plugin is unavailable.
+.video-setup__plugin-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--kip-contrast-color);
+  background: color-mix(in srgb, var(--kip-blue-color, #4aa3ff) 16%, transparent);
+
+  mat-icon {
+    flex: 0 0 auto;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--kip-blue-color, #4aa3ff);
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
 .video-setup__manual-actions {
   display: flex;
   flex-wrap: wrap;

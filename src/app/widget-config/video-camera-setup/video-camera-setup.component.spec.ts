@@ -11,6 +11,16 @@ import { CamerasResourceClient } from '../../widgets/widget-video/cameras-resour
 import { CameraCredentialsClient } from '../../widgets/widget-video/camera-credentials-client';
 import { PtzClient } from '../../widgets/widget-video/ptz-client';
 import { VideoAssetsClient } from '../../widgets/widget-video/video-assets-client';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
+
+// The config dialog probes the sk-video plugin on open; these stubs control what it reports.
+function pluginNotFound() {
+  return { getPlugin: vi.fn().mockResolvedValue({ ok: false, error: { reason: 'not-found', statusCode: 404, message: 'x' }, capabilities: {} }) };
+}
+function pluginAvailable() {
+  return { getPlugin: vi.fn().mockResolvedValue({ ok: true, data: { state: { enabled: true } }, capabilities: {} }) };
+}
+const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 @Component({
   standalone: true,
@@ -368,5 +378,65 @@ describe('VideoCameraSetupComponent — upload mode', () => {
     await (cmp as unknown as { uploadFile: (f: File) => Promise<void> }).uploadFile(file);
     expect(assets.upload).toHaveBeenCalledWith('http://h:3000/plugins/sk-video/', file);
     expect(videoGroup.get('fileAssetId')?.value).toBe('v2');
+  });
+});
+
+describe('VideoCameraSetupComponent — plugin availability', () => {
+  const resources = { list: vi.fn().mockResolvedValue([]), save: vi.fn(), remove: vi.fn() };
+
+  async function mount(pluginStub: unknown) {
+    await TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [
+        { provide: PluginConfigClientService, useValue: pluginStub },
+        { provide: CamerasResourceClient, useValue: resources },
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({
+              httpServiceUrl: 'http://h:3000/signalk/v1/api/',
+              httpServiceUrlV2: 'http://h:3000/signalk/v2/api'
+            }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    }).compileComponents();
+    const f = TestBed.createComponent(HostComponent);
+    const vg = f.componentInstance.root.get('video') as UntypedFormGroup;
+    f.detectChanges(); // ngOnInit -> probePlugin
+    await flush(); // let the probe resolve
+    return { f, vg };
+  }
+
+  const banner = (f: ComponentFixture<HostComponent>) =>
+    (f.nativeElement as HTMLElement).querySelector('.video-setup__plugin-banner');
+
+  it('shows the install banner on the Camera tab when the plugin is unavailable', async () => {
+    const { f, vg } = await mount(pluginNotFound());
+    vg.get('sourceKind')?.setValue('camera');
+    f.detectChanges();
+    expect(banner(f)).not.toBeNull();
+    expect(banner(f)?.textContent).toContain('SK Video');
+  });
+
+  it('shows the banner on the Uploaded tab when the plugin is unavailable', async () => {
+    const { f, vg } = await mount(pluginNotFound());
+    vg.get('sourceKind')?.setValue('file');
+    f.detectChanges();
+    expect(banner(f)).not.toBeNull();
+  });
+
+  it('does not show the banner on the URL tab even when the plugin is unavailable', async () => {
+    const { f } = await mount(pluginNotFound());
+    f.detectChanges(); // stays on the default 'url' source
+    expect(banner(f)).toBeNull();
+  });
+
+  it('does not show the banner when the plugin is installed and enabled', async () => {
+    const { f, vg } = await mount(pluginAvailable());
+    vg.get('sourceKind')?.setValue('camera');
+    f.detectChanges();
+    expect(banner(f)).toBeNull();
   });
 });

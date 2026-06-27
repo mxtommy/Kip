@@ -21,6 +21,16 @@
       </mat-button-toggle>
     </mat-button-toggle-group>
 
+    @if (pluginMissing) {
+      <div class="video-setup__plugin-banner" role="status" aria-live="polite">
+        <mat-icon>extension_off</mat-icon>
+        <span>
+          The <strong>SK Video</strong> plugin isn't available on your Signal K server. Install and
+          enable it to add cameras and upload video. A web address (URL) works without it.
+        </span>
+      </div>
+    }
+
     @if (sourceKind === 'url') {
       <mat-form-field class="video-setup__url">
         <mat-label>Video URL</mat-label>

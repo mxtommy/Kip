@@ -15,7 +15,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { mapPreset, type TVideoPreset } from '../../widgets/widget-video/playback-presets.util';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
+import { classifyPluginPresence, type TPluginPresence } from '../../widgets/widget-video/plugin-presence.util';
 import { CameraDiscoveryClient, DiscoveryRateLimitedError } from '../../widgets/widget-video/discovery-client';
 import { CamerasResourceClient, type ISavedCamera } from '../../widgets/widget-video/cameras-resource-client';
 import { CameraCredentialsClient, type ICredentialPresence } from '../../widgets/widget-video/camera-credentials-client';
@@ -55,6 +57,7 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
   private readonly probe = inject(CameraProbeClient);
   private readonly ptz = inject(PtzClient);
   private readonly assets = inject(VideoAssetsClient);
+  private readonly pluginConfig = inject(PluginConfigClientService);
 
   protected videoGroup!: UntypedFormGroup;
   protected manualForm!: UntypedFormGroup;
@@ -89,6 +92,13 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
   protected readonly videos = signal<IVideoAsset[]>([]);
   protected readonly uploading = signal(false);
   protected readonly uploadError = signal<string | null>(null);
+
+  /** Whether the sk-video plugin (needed by the Camera and Uploaded tabs) is usable on the server. */
+  protected readonly pluginState = signal<TPluginPresence>('unknown');
+  /** True when the current tab needs the sk-video plugin but it isn't installed or enabled. */
+  protected get pluginMissing(): boolean {
+    return (this.sourceKind === 'camera' || this.sourceKind === 'file') && this.pluginState() === 'missing';
+  }
 
   ngOnInit(): void {
     const existing = this.rootFormGroup.control.get(this.formGroupName());
@@ -129,6 +139,17 @@ export class VideoCameraSetupComponent implements OnInit, OnDestroy {
 
     void this.refreshCameras();
     void this.refreshVideos();
+    void this.probePlugin();
+  }
+
+  /** Checks whether the sk-video plugin is installed and enabled, to surface a "needs the plugin"
+   *  banner on the Camera and Uploaded tabs (auth/network errors stay inconclusive — no false nag). */
+  private async probePlugin(): Promise<void> {
+    try {
+      this.pluginState.set(classifyPluginPresence(await this.pluginConfig.getPlugin('sk-video')));
+    } catch {
+      this.pluginState.set('unknown');
+    }
   }
 
   /** Loads the videos uploaded to the server. */

@@ -24,6 +24,7 @@ import {
   IPlaybackCapabilities, selectPlaybackPipeline, TPlaybackPipeline
 } from './playback-pipeline.util';
 import { mapPreset } from './playback-presets.util';
+import { classifyPluginPresence } from './plugin-presence.util';
 import { whepDelete, whepNegotiate, type FetchLike } from './whep.util';
 import { applyJitter, backoffDelayMs, DEFAULT_BACKOFF, shouldReconnect } from './reconnect.util';
 import { evaluateFirstFrame } from './first-frame.util';
@@ -265,24 +266,10 @@ export class WidgetVideoComponent {
     });
   }
 
-  /**
-   * Probe the sk-video plugin and record whether a camera/file source can actually use it. A
-   * definitive "not found" (or an installed-but-disabled plugin) is reported as missing; auth or
-   * network errors stay 'unknown' so we never wrongly tell the user to install a plugin that may
-   * just be unreachable right now.
-   */
+  /** Probe the sk-video plugin and record whether a camera/file source can actually use it. */
   private async probePlugin(): Promise<void> {
     try {
-      const res = await this.pluginConfig.getPlugin('sk-video');
-      if (res.ok) {
-        this.pluginState.set(res.data.state.enabled ? 'present' : 'missing');
-        return;
-      }
-      // Not installed (a definitive 404) is "missing"; auth/network errors are inconclusive, so we
-      // leave the state 'unknown' rather than wrongly nagging about a plugin that may be unreachable.
-      // The `'error' in res` guard is load-bearing: the compiler doesn't narrow this union on `ok`.
-      const reason = 'error' in res ? res.error.reason : 'unknown';
-      this.pluginState.set(reason === 'not-found' ? 'missing' : 'unknown');
+      this.pluginState.set(classifyPluginPresence(await this.pluginConfig.getPlugin('sk-video')));
     } catch {
       this.pluginState.set('unknown');
     }
