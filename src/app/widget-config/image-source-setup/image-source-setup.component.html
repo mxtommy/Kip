@@ -11,39 +11,72 @@
   </div>
 
   @if (uploading()) {
-    <mat-progress-bar mode="determinate" [value]="uploadProgress()" />
+    <mat-progress-bar mode="determinate" [value]="uploadProgress()" aria-label="Upload progress" />
   }
   @if (error(); as message) {
-    <p class="image-setup__error">{{ message }}</p>
+    <p class="image-setup__error" role="alert">{{ message }}</p>
   }
+  <!-- Visually-hidden live region: announces upload/delete status to screen readers. -->
+  <span class="image-setup__sr-only" aria-live="polite">{{ liveStatus() }}</span>
 
   <!-- Shared library / picker -->
-  @if (gallery().length) {
-    <div class="image-setup__gallery">
-      @for (asset of gallery(); track asset.id) {
-        <div class="image-setup__thumb" [class.image-setup__thumb--selected]="asset.id === selectedId()">
-          <button
-            type="button"
-            class="image-setup__thumb-select"
-            [title]="asset.name"
-            (click)="selectImage(asset.id)">
-            <img [src]="thumbUrl(asset.id)" [alt]="asset.name" loading="lazy" draggable="false">
-            @if (asset.id === selectedId()) {
-              <mat-icon class="image-setup__check">check_circle</mat-icon>
-            }
-          </button>
-          <button
-            type="button"
-            class="image-setup__delete"
-            title="Delete image"
-            (click)="deleteImage(asset.id, $event)">
-            <mat-icon>delete</mat-icon>
-          </button>
+  <h4 class="image-setup__heading">Boat image library</h4>
+  <p class="image-setup__hint">
+    Images are stored on the Signal K server and shared by every display on this boat.
+  </p>
+
+  @switch (galleryStatus()) {
+    @case ('loading') {
+      <div class="image-setup__gallery-status">
+        <mat-progress-spinner diameter="24" mode="indeterminate" />
+        <span class="image-setup__hint">Loading the shared library…</span>
+      </div>
+    }
+    @case ('error') {
+      <div class="image-setup__gallery-status">
+        <span class="image-setup__error" role="alert">{{ galleryError() }}</span>
+        <button mat-stroked-button type="button" (click)="refreshGallery()">Retry</button>
+      </div>
+    }
+    @default {
+      @if (gallery().length) {
+        <div class="image-setup__gallery" role="group" aria-label="Shared boat-wide image library">
+          @for (asset of gallery(); track asset.id) {
+            <figure class="image-setup__thumb" [class.image-setup__thumb--selected]="asset.id === selectedId()">
+              <button
+                type="button"
+                class="image-setup__thumb-select"
+                [attr.aria-pressed]="asset.id === selectedId()"
+                [attr.aria-label]="'Use ' + asset.name"
+                (click)="selectImage(asset.id)">
+                @if (brokenThumbs().has(asset.id)) {
+                  <span class="image-setup__thumb-broken"><mat-icon>broken_image</mat-icon></span>
+                } @else {
+                  <img [src]="thumbUrl(asset.id)" [alt]="asset.name" loading="lazy" draggable="false"
+                       (error)="markThumbBroken(asset.id)">
+                }
+                @if (asset.id === selectedId()) {
+                  <mat-icon class="image-setup__check" aria-hidden="true">check_circle</mat-icon>
+                }
+              </button>
+              <figcaption class="image-setup__thumb-foot">
+                <span class="image-setup__thumb-name" [title]="asset.name">{{ asset.name }}</span>
+                <button
+                  type="button"
+                  class="image-setup__delete"
+                  [attr.aria-label]="'Delete ' + asset.name + ' from shared library'"
+                  [title]="'Delete ' + asset.name"
+                  (click)="deleteImage(asset.id, $event)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </figcaption>
+            </figure>
+          }
         </div>
+      } @else {
+        <p class="image-setup__hint">No images in the shared Signal K library yet. Upload one to get started.</p>
       }
-    </div>
-  } @else {
-    <p class="image-setup__hint">No images uploaded yet.</p>
+    }
   }
 
   <!-- Display options -->
@@ -51,13 +84,14 @@
     <mat-label>Scaling</mat-label>
     <mat-select formControlName="imageFit">
       <mat-option value="contain">Fit (show whole image)</mat-option>
-      <mat-option value="cover">Fill (crop to container)</mat-option>
+      <mat-option value="cover">Fill (crop to fill the widget)</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field class="image-setup__field">
-    <mat-label>Alt text</mat-label>
-    <input matInput formControlName="altText" maxlength="200" placeholder="Describe the image">
+    <mat-label>Description</mat-label>
+    <input matInput formControlName="altText" maxlength="200">
+    <mat-hint>Read aloud by screen readers and shown if the image can't load.</mat-hint>
   </mat-form-field>
 
   <div class="image-setup__bg">
@@ -65,11 +99,23 @@
       Transparent background
     </mat-checkbox>
     @if (!isTransparent) {
-      <label class="image-setup__color">
-        Background color
-        <input type="color" [value]="backgroundControl.value" (input)="setBackground($event)">
-      </label>
+      <span class="image-setup__color">
+        <label class="image-setup__color-label" for="image-bg-color">Background color</label>
+        <input id="image-bg-color" type="color" [value]="backgroundControl.value" (input)="setBackground($event)">
+        <span class="image-setup__color-hex">{{ backgroundControl.value }}</span>
+      </span>
     }
+    <span class="image-setup__hint">Shown behind the image — in empty space and through see-through images.</span>
   </div>
+
+  <!-- Live preview of the chosen scaling + background (updates before Save) -->
+  @if (selectedId(); as sel) {
+    <figure class="image-setup__preview">
+      <div class="image-setup__preview-stage" [style.background]="backgroundControl.value || 'transparent'">
+        <img [src]="thumbUrl(sel)" alt="" [style.object-fit]="imageFitControl.value" draggable="false">
+      </div>
+      <figcaption class="image-setup__hint">Preview</figcaption>
+    </figure>
+  }
 
 </div>

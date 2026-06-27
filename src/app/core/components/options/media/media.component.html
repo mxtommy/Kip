@@ -3,12 +3,12 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <h3>Image Cache</h3>
       <p style="margin-bottom: 16px">
-        Uploaded images are stored on the Signal K server and resized copies are
-        cached on disk. Purging removes the generated copies; originals are kept
-        and copies regenerate on demand.
+        KIP keeps smaller copies of your images so they load quickly. Clearing frees
+        space on the Signal K server — your originals are kept and the smaller copies
+        are recreated when needed.
       </p>
       <div class="image-cache-size">
-        <span class="image-cache-label">On-disk cache:</span>
+        <span class="image-cache-label">Cache size:</span>
         <span class="image-cache-value">{{ imageCacheDisplay() }}</span>
       </div>
       <div class="formActionFooter image-cache-actions">
@@ -24,10 +24,10 @@
           mat-flat-button
           type="button"
           color="accent"
-          [disabled]="imageCachePurging()"
+          [disabled]="imageCachePurging() || imageCacheStats() === null"
           (click)="purgeImageCache()"
           >
-          Purge
+          Clear cache
         </button>
       </div>
     </div>

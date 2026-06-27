@@ -5,6 +5,8 @@ import { of, throwError } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ImageSourceSetupComponent } from './image-source-setup.component';
 import { ImageAssetService, IImageAsset } from '../../core/services/image-asset.service';
+import { DialogService } from '../../core/services/dialog.service';
+import { AppService } from '../../core/services/app-service';
 
 describe('ImageSourceSetupComponent', () => {
   let fixture: ComponentFixture<ImageSourceSetupComponent>;
@@ -22,10 +24,14 @@ describe('ImageSourceSetupComponent', () => {
     delete: vi.fn(() => of(undefined)),
     urlFor: vi.fn((id: string, w?: number) => `http://host/plugins/kip/images/${id}?w=${w}`)
   };
+  const dialogMock = { openConfirmationDialog: vi.fn(() => of(true)) };
+  const appMock = { cssThemeColors: { cardColor: '#1e1e1e' } };
 
   const api = () => component as unknown as {
     imageGroup: UntypedFormGroup;
     gallery: () => IImageAsset[];
+    galleryStatus: () => 'loading' | 'loaded' | 'error';
+    galleryError: () => string | null;
     error: () => string | null;
     uploading: () => boolean;
     validateFile: (file: File) => string | null;
@@ -50,7 +56,9 @@ describe('ImageSourceSetupComponent', () => {
       imports: [ImageSourceSetupComponent],
       providers: [
         { provide: FormGroupDirective, useValue: { control: formGroup } },
-        { provide: ImageAssetService, useValue: imagesMock }
+        { provide: ImageAssetService, useValue: imagesMock },
+        { provide: DialogService, useValue: dialogMock },
+        { provide: AppService, useValue: appMock }
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(ImageSourceSetupComponent);
@@ -85,10 +93,11 @@ describe('ImageSourceSetupComponent', () => {
     expect(group.get('backgroundColor')!.value).toBe('#112233');
   });
 
-  it('loads the shared library into the gallery on init', async () => {
+  it('loads the shared library into the gallery on init, newest first', async () => {
     await buildWith(new UntypedFormGroup({}));
     expect(imagesMock.list).toHaveBeenCalled();
-    expect(api().gallery().map(a => a.id)).toEqual(['img-1', 'img-2']);
+    // Sorted by createdAt descending so a just-uploaded image is easy to find.
+    expect(api().gallery().map(a => a.id)).toEqual(['img-2', 'img-1']);
   });
 
   it('rejects files over the 10 MB limit', async () => {
@@ -100,7 +109,7 @@ describe('ImageSourceSetupComponent', () => {
   it('rejects unsupported types that also lack a known extension', async () => {
     await buildWith(new UntypedFormGroup({}));
     const bad = fileOf('note.txt', 'text/plain', 100);
-    expect(api().validateFile(bad)).toContain('Unsupported');
+    expect(api().validateFile(bad)).toContain("isn't supported");
   });
 
   it('accepts a valid image within limits', async () => {
@@ -149,21 +158,46 @@ describe('ImageSourceSetupComponent', () => {
     const file = fileOf('new.png', 'image/png', 1024);
     Object.defineProperty(input, 'files', { value: [file], configurable: true });
     api().onFileSelected({ target: input } as unknown as Event);
-    expect(api().error()).toContain('logged in');
+    expect(api().error()).toContain('Sign in');
   });
 
-  it('clears the selection when the currently-selected image is deleted', async () => {
+  it('confirms before deleting, then clears the selection on success', async () => {
+    dialogMock.openConfirmationDialog.mockReturnValueOnce(of(true));
     await buildWith(new UntypedFormGroup({ imageId: new UntypedFormControl('img-1') }));
     api().deleteImage('img-1', { stopPropagation: vi.fn() } as unknown as Event);
+    expect(dialogMock.openConfirmationDialog).toHaveBeenCalled();
     expect(imagesMock.delete).toHaveBeenCalledWith('img-1');
     expect(api().imageGroup.get('imageId')!.value).toBeNull();
   });
 
-  it('toggles a transparent background on and off', async () => {
+  it('does NOT delete when the confirmation is declined', async () => {
+    dialogMock.openConfirmationDialog.mockReturnValueOnce(of(false));
+    await buildWith(new UntypedFormGroup({ imageId: new UntypedFormControl('img-1') }));
+    api().deleteImage('img-1', { stopPropagation: vi.fn() } as unknown as Event);
+    expect(imagesMock.delete).not.toHaveBeenCalled();
+    expect(api().imageGroup.get('imageId')!.value).toBe('img-1');
+  });
+
+  it('maps a 401 delete failure to a Sign in message', async () => {
+    dialogMock.openConfirmationDialog.mockReturnValueOnce(of(true));
+    imagesMock.delete.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 401 })));
+    await buildWith(new UntypedFormGroup({ imageId: new UntypedFormControl('img-1') }));
+    api().deleteImage('img-1', { stopPropagation: vi.fn() } as unknown as Event);
+    expect(api().error()).toContain('Sign in');
+  });
+
+  it('shows an error (not an empty library) when the list request fails', async () => {
+    imagesMock.list.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    await buildWith(new UntypedFormGroup({}));
+    expect(api().galleryStatus()).toBe('error');
+    expect(api().galleryError()).toBeTruthy();
+  });
+
+  it('toggles a transparent background on and off, seeding the opaque color from the theme', async () => {
     await buildWith(new UntypedFormGroup({}));
     expect(api().isTransparent).toBe(true);
     api().toggleTransparent(false);
-    expect(api().imageGroup.get('backgroundColor')!.value).toBe('#000000');
+    expect(api().imageGroup.get('backgroundColor')!.value).toBe('#1e1e1e');
     api().toggleTransparent(true);
     expect(api().imageGroup.get('backgroundColor')!.value).toBeNull();
   });

@@ -75,7 +75,7 @@ describe('SettingsMediaComponent', () => {
     expect(dialogMock.openConfirmationDialog).toHaveBeenCalled();
     expect(imagesMock.purgeCache).toHaveBeenCalled();
     expect(imagesMock.cacheStats).toHaveBeenCalled();
-    expect(toastMock.show).toHaveBeenCalledWith('Image cache purged', 1000, true, 'success');
+    expect(toastMock.show).toHaveBeenCalledWith('Cache cleared', 1000, true, 'success');
   });
 
   it('does not purge when the confirmation is declined', () => {

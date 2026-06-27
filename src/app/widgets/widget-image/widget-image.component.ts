@@ -30,6 +30,10 @@ export class WidgetImageComponent {
   };
 
   private readonly containerWidth = signal<number>(0);
+  /** True when the <img> fails to load (e.g. the shared image was deleted from another display, or
+   *  the server is briefly unreachable). Self-clears: the <img> stays mounted, so a later successful
+   *  (load) — including after the URL changes on resize — resets it. */
+  protected readonly loadFailed = signal(false);
 
   protected readonly imageConfig = computed(() => this.runtime.options()?.image ?? null);
   protected readonly altText = computed(() => this.imageConfig()?.altText ?? '');

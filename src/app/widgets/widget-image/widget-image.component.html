@@ -1,7 +1,12 @@
 <div class="image-widget-host" kipResizeObserver (kipResize)="onResize($event)" [style.background]="background()">
   @if (imageUrl(); as url) {
-    <img class="image-widget-img" [src]="url" [alt]="altText()" [style.object-fit]="objectFit()" draggable="false">
+    <img class="image-widget-img" [src]="url" [alt]="altText()" [style.object-fit]="objectFit()"
+         [hidden]="loadFailed()" draggable="false"
+         (error)="loadFailed.set(true)" (load)="loadFailed.set(false)">
+    @if (loadFailed()) {
+      <div class="image-widget-empty">Image unavailable</div>
+    }
   } @else {
-    <div class="image-widget-empty">No image selected</div>
+    <div class="image-widget-empty">No image selected. Pick one in widget settings.</div>
   }
 </div>

@@ -9,7 +9,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ImageAssetService, IImageAsset } from '../../core/services/image-asset.service';
+import { DialogService } from '../../core/services/dialog.service';
+import { AppService } from '../../core/services/app-service';
+
+type TGalleryStatus = 'loading' | 'loaded' | 'error';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_EXT = /\.(png|jpe?g|webp|gif|heic|heif|svg)$/i;
@@ -26,7 +31,7 @@ const ACCEPTED_TYPES = new Set([
   selector: 'image-source-setup',
   templateUrl: './image-source-setup.component.html',
   styleUrls: ['./image-source-setup.component.scss'],
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatProgressBarModule]
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatProgressBarModule, MatProgressSpinnerModule]
 })
 export class ImageSourceSetupComponent implements OnInit {
   readonly formGroupName = input.required<string>();
@@ -34,13 +39,23 @@ export class ImageSourceSetupComponent implements OnInit {
 
   private readonly rootFormGroup = inject(FormGroupDirective);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(DialogService);
+  private readonly app = inject(AppService);
   protected readonly images = inject(ImageAssetService);
 
   protected imageGroup!: UntypedFormGroup;
   protected readonly gallery = signal<IImageAsset[]>([]);
+  /** Distinguishes a genuinely empty shared library from a failed load (so we don't tell the
+   *  crew the library is empty when the server was simply unreachable). */
+  protected readonly galleryStatus = signal<TGalleryStatus>('loading');
+  protected readonly galleryError = signal<string | null>(null);
   protected readonly uploading = signal(false);
   protected readonly uploadProgress = signal(0);
   protected readonly error = signal<string | null>(null);
+  /** Screen-reader status line (upload progress / completion / deletion). */
+  protected readonly liveStatus = signal('');
+  /** Per-asset broken-thumbnail tracking (a variant can fail transiently). */
+  protected readonly brokenThumbs = signal<Set<string>>(new Set());
   /** Source of truth for the gallery highlight; kept in sync with the imageId control so the
    *  highlight updates under zoneless change detection even when set from async callbacks. */
   protected readonly selectedId = signal<string | null>(null);
@@ -69,15 +84,16 @@ export class ImageSourceSetupComponent implements OnInit {
   }
 
   protected get imageIdControl(): UntypedFormControl { return this.imageGroup.get('imageId') as UntypedFormControl; }
+  protected get imageFitControl(): UntypedFormControl { return this.imageGroup.get('imageFit') as UntypedFormControl; }
   protected get backgroundControl(): UntypedFormControl { return this.imageGroup.get('backgroundColor') as UntypedFormControl; }
 
   /** Client-side pre-check (the server is authoritative). Returns an error message or null. */
   validateFile(file: File): string | null {
     if (file.size > MAX_UPLOAD_BYTES) {
-      return 'File exceeds the 10 MB limit';
+      return 'This image is larger than the 10 MB limit. Choose a smaller file.';
     }
     if (file.type && !ACCEPTED_TYPES.has(file.type) && !ACCEPTED_EXT.test(file.name)) {
-      return 'Unsupported image type';
+      return "That image type isn't supported. Use JPG, PNG, WebP, GIF, HEIC/HEIF, or SVG.";
     }
     return null;
   }
@@ -96,6 +112,7 @@ export class ImageSourceSetupComponent implements OnInit {
     this.error.set(null);
     this.uploading.set(true);
     this.uploadProgress.set(0);
+    this.liveStatus.set('Uploading image…');
 
     this.images.upload(file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (httpEvent) => {
@@ -103,6 +120,7 @@ export class ImageSourceSetupComponent implements OnInit {
           this.uploadProgress.set(Math.round((httpEvent.loaded / httpEvent.total) * 100));
         } else if (httpEvent.type === HttpEventType.Response) {
           this.uploading.set(false);
+          this.liveStatus.set('Upload complete');
           const meta = httpEvent.body as IImageAsset | null;
           if (meta?.id) {
             this.selectImage(meta.id);
@@ -112,18 +130,32 @@ export class ImageSourceSetupComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.uploading.set(false);
-        this.error.set(this.describeUploadError(err));
+        this.error.set(this.describeAssetError(err, 'upload'));
+        this.liveStatus.set('Upload failed');
       }
     });
   }
 
-  private describeUploadError(err: HttpErrorResponse): string {
+  /** Maps an upload/delete HTTP error to plain, status-specific copy. The server is authoritative;
+   *  serverMessage (when present) is preferred for the cases the server can describe. */
+  private describeAssetError(err: HttpErrorResponse, verb: 'upload' | 'delete'): string {
     const serverMessage = (err?.error as { error?: string })?.error;
     switch (err?.status) {
-      case 401: return 'You must be logged in to the Signal K server to upload images.';
-      case 413: return 'File exceeds the 10 MB limit';
-      case 415: return serverMessage ?? 'Unsupported or unreadable image';
-      default: return serverMessage ?? 'Upload failed';
+      case 401: return `Sign in to the Signal K server to ${verb} images.`;
+      case 413: return 'This image is larger than the 10 MB limit. Choose a smaller file.';
+      case 415: return serverMessage ?? "That image type isn't supported, or the file couldn't be read.";
+      default: return serverMessage ?? (verb === 'upload'
+        ? "Couldn't upload the image. Check your Signal K server connection and try again."
+        : 'Could not delete the image.');
+    }
+  }
+
+  /** Maps a library-load failure so an unreachable server isn't shown as an empty library. */
+  private describeListError(err: HttpErrorResponse): string {
+    switch (err?.status) {
+      case 401: return 'Sign in to the Signal K server to load the image library.';
+      case 404: return "The image library plugin isn't installed or is disabled.";
+      default: return "Couldn't reach the Signal K server.";
     }
   }
 
@@ -133,14 +165,27 @@ export class ImageSourceSetupComponent implements OnInit {
     this.selectedId.set(id);
   }
 
+  /** Confirms before deleting, because the image lives in the SHARED, boat-wide library — one tap
+   *  would otherwise remove it from every display with no undo. */
   protected deleteImage(id: string, event: Event): void {
     event.stopPropagation();
-    this.images.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        if (this.selectedId() === id) this.selectImage(null);
-        this.refreshGallery();
-      },
-      error: () => this.error.set('Failed to delete image')
+    const name = this.gallery().find((a) => a.id === id)?.name ?? 'this image';
+    this.dialog.openConfirmationDialog({
+      title: 'Delete From Shared Library?',
+      message: `Delete "${name}"? This removes it from every display on the boat and can't be undone.`,
+      confirmBtnText: 'Delete',
+      cancelBtnText: 'Cancel'
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.error.set(null);
+      this.images.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          if (this.selectedId() === id) this.selectImage(null);
+          this.liveStatus.set('Image deleted');
+          this.refreshGallery();
+        },
+        error: (err: HttpErrorResponse) => this.error.set(this.describeAssetError(err, 'delete'))
+      });
     });
   }
 
@@ -148,15 +193,28 @@ export class ImageSourceSetupComponent implements OnInit {
     return this.images.urlFor(id, 160);
   }
 
+  /** Marks a thumbnail variant as failed to load (tile stays selectable — it may be valid at other sizes). */
+  protected markThumbBroken(id: string): void {
+    if (this.brokenThumbs().has(id)) return;
+    this.brokenThumbs.set(new Set(this.brokenThumbs()).add(id));
+  }
+
   protected refreshGallery(): void {
     const seq = ++this.galleryRequestSeq;
+    this.galleryStatus.set('loading');
     this.images.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (list) => {
-        if (seq === this.galleryRequestSeq) {
-          this.gallery.set(list);
-        }
+        if (seq !== this.galleryRequestSeq) return;
+        // Newest first so a just-uploaded image is easy to find.
+        this.gallery.set([...list].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')));
+        this.brokenThumbs.set(new Set());
+        this.galleryStatus.set('loaded');
       },
-      error: () => { /* listing is best-effort */ }
+      error: (err: HttpErrorResponse) => {
+        if (seq !== this.galleryRequestSeq) return;
+        this.galleryError.set(this.describeListError(err));
+        this.galleryStatus.set('error');
+      }
     });
   }
 
@@ -165,12 +223,31 @@ export class ImageSourceSetupComponent implements OnInit {
   }
 
   protected toggleTransparent(transparent: boolean): void {
-    this.backgroundControl.setValue(transparent ? null : '#000000');
+    this.backgroundControl.setValue(transparent ? null : this.defaultOpaqueColor());
     this.backgroundControl.markAsDirty();
+  }
+
+  /** The opaque backing defaults to the active theme's card color, not a hardcoded pure black. */
+  private defaultOpaqueColor(): string {
+    return toHex(this.app.cssThemeColors?.cardColor ?? '') ?? '#000000';
   }
 
   protected setBackground(event: Event): void {
     this.backgroundControl.setValue((event.target as HTMLInputElement).value);
     this.backgroundControl.markAsDirty();
   }
+}
+
+/** Normalises a CSS color (hex or rgb/rgba) to the `#rrggbb` that `<input type="color">` accepts. */
+function toHex(color: string): string | null {
+  const trimmed = color.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+  const rgb = trimmed.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+  if (rgb) {
+    const hex = (n: string) => Math.min(255, Number(n)).toString(16).padStart(2, '0');
+    return `#${hex(rgb[1])}${hex(rgb[2])}${hex(rgb[3])}`;
+  }
+  return null;
 }

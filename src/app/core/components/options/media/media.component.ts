@@ -50,12 +50,12 @@ export class SettingsMediaComponent {
     });
   }
 
-  /** Purge generated image variants (originals are kept and regenerate on demand). */
+  /** Clear the resized image copies (originals are kept and recreated on demand). */
   public purgeImageCache(): void {
     this.dialog.openConfirmationDialog({
-      title: 'Purge Image Cache',
-      message: 'Delete all generated image variants? Originals are kept and variants regenerate on demand.',
-      confirmBtnText: 'Purge',
+      title: 'Clear image cache?',
+      message: 'Clear the resized copies of all images? Your originals are kept and recreated when needed.',
+      confirmBtnText: 'Clear',
       cancelBtnText: 'Cancel'
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
       if (!confirmed) {
@@ -65,12 +65,12 @@ export class SettingsMediaComponent {
       this.images.purgeCache().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.imageCachePurging.set(false);
-          this.toast.show('Image cache purged', 1000, true, 'success');
+          this.toast.show('Cache cleared', 1000, true, 'success');
           this.refreshImageCache();
         },
         error: (error: HttpErrorResponse) => {
           this.imageCachePurging.set(false);
-          this.toast.show('Could not purge image cache: ' + (error?.statusText ?? error), 0, false, 'error');
+          this.toast.show("Couldn't clear the image cache: " + (error?.statusText ?? error), 0, false, 'error');
         }
       });
     });
