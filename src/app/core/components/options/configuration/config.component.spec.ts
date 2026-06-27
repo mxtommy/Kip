@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsConfigComponent } from './config.component';
 import { AuthenticationService, IAuthorizationToken } from '../../../services/authentication.service';
 import { StorageService } from '../../../services/storage.service';
 import { ToastService } from '../../../services/toast.service';
 import { SettingsService } from '../../../services/settings.service';
-import { ImageAssetService } from '../../../services/image-asset.service';
-import { DialogService } from '../../../services/dialog.service';
 
 const createToken = (overrides: Partial<IAuthorizationToken> = {}): IAuthorizationToken => ({
   token: 'token',
@@ -30,14 +28,6 @@ describe('SettingsConfigComponent', () => {
   let toastMock: {
     show: ReturnType<typeof vi.fn>;
   };
-  let imagesMock: {
-    ready: boolean;
-    cacheStats: ReturnType<typeof vi.fn>;
-    purgeCache: ReturnType<typeof vi.fn>;
-  };
-  let dialogMock: {
-    openConfirmationDialog: ReturnType<typeof vi.fn>;
-  };
 
   beforeEach(async () => {
     authTokenSubject = new BehaviorSubject<IAuthorizationToken | null>(null);
@@ -54,14 +44,6 @@ describe('SettingsConfigComponent', () => {
     };
     toastMock = {
       show: vi.fn()
-    };
-    imagesMock = {
-      ready: true,
-      cacheStats: vi.fn(() => of({ bytes: 1048576, files: 3 })),
-      purgeCache: vi.fn(() => of({ ok: true }))
-    };
-    dialogMock = {
-      openConfirmationDialog: vi.fn(() => of(true))
     };
 
     await TestBed.configureTestingModule({
@@ -89,9 +71,7 @@ describe('SettingsConfigComponent', () => {
             resetConnection: vi.fn(),
             loadDemoConfig: vi.fn()
           }
-        },
-        { provide: ImageAssetService, useValue: imagesMock },
-        { provide: DialogService, useValue: dialogMock }
+        }
       ]
     })
       .compileComponents();
@@ -136,35 +116,5 @@ describe('SettingsConfigComponent', () => {
 
     expect(toastMock.show).toHaveBeenCalledWith('Please select a valid configuration to delete.', 0, false, 'error');
     expect(storageMock.removeItem).not.toHaveBeenCalled();
-  });
-
-  it('loads and formats the image cache size on init', () => {
-    expect(imagesMock.cacheStats).toHaveBeenCalled();
-    const api = component as unknown as { imageCacheDisplay: () => string };
-    expect(api.imageCacheDisplay()).toBe('1.0 MB · 3 files');
-  });
-
-  it('shows Unavailable when the image service is not ready', () => {
-    imagesMock.ready = false;
-    component.refreshImageCache();
-    const api = component as unknown as { imageCacheDisplay: () => string };
-    expect(api.imageCacheDisplay()).toBe('Unavailable');
-  });
-
-  it('purges the image cache after confirmation and refreshes', () => {
-    imagesMock.cacheStats.mockClear();
-    component.purgeImageCache();
-
-    expect(dialogMock.openConfirmationDialog).toHaveBeenCalled();
-    expect(imagesMock.purgeCache).toHaveBeenCalled();
-    expect(imagesMock.cacheStats).toHaveBeenCalled();
-    expect(toastMock.show).toHaveBeenCalledWith('Image cache purged', 1000, true, 'success');
-  });
-
-  it('does not purge when the confirmation is declined', () => {
-    dialogMock.openConfirmationDialog.mockReturnValueOnce(of(false));
-    component.purgeImageCache();
-
-    expect(imagesMock.purgeCache).not.toHaveBeenCalled();
   });
 });

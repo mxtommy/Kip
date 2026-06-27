@@ -40,4 +40,4 @@ Uploaded content is treated as untrusted and is checked before it is stored:
 
 ## Managing the image cache
 
-Cached variants can be cleared at any time from **Settings → Configurations → Image Cache**. The card shows the current on-disk cache size and a **Purge** button. Purging only removes the generated copies — your original uploads are kept, and variants are regenerated automatically the next time they are displayed.
+Cached variants can be cleared at any time from **Settings → Media → Image Cache**. The card shows the current on-disk cache size and a **Purge** button. Purging only removes the generated copies — your original uploads are kept, and variants are regenerated automatically the next time they are displayed.
