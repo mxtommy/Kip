@@ -6,8 +6,29 @@ import { WidgetVideoComponent } from './widget-video.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { DataService } from '../../core/services/data.service';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 import { PtzClient } from './ptz-client';
 import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+
+// The global test stub reports the sk-video plugin as NOT installed (getPlugin -> not-found). These
+// helpers override it for tests that need the plugin to look present/disabled.
+function pluginAvailable() {
+  return { getPlugin: vi.fn().mockResolvedValue({ ok: true, data: { state: { enabled: true } }, capabilities: {} }) };
+}
+function pluginDisabled() {
+  return { getPlugin: vi.fn().mockResolvedValue({ ok: true, data: { state: { enabled: false } }, capabilities: {} }) };
+}
+function pluginNotFound() {
+  return {
+    getPlugin: vi.fn().mockResolvedValue({
+      ok: false,
+      error: { reason: 'not-found', statusCode: 404, message: 'not found' },
+      capabilities: {}
+    })
+  };
+}
+/** Flush microtasks + a macrotask so the async plugin probe settles before asserting. */
+const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 function setup(config: IWidgetSvcConfig) {
   const options = signal<IWidgetSvcConfig | undefined>(config);
@@ -125,6 +146,7 @@ describe('WidgetVideoComponent', () => {
         { provide: WidgetRuntimeDirective, useValue: { options } },
         { provide: DataService, useValue: { getPathObject: () => null } },
         { provide: PtzClient, useValue: ptz },
+        { provide: PluginConfigClientService, useValue: pluginAvailable() },
         {
           provide: SignalKConnectionService,
           useValue: {
@@ -139,7 +161,7 @@ describe('WidgetVideoComponent', () => {
     fixture.componentRef.setInput('type', 'widget-video');
     fixture.componentRef.setInput('theme', null);
     fixture.detectChanges();
-    await Promise.resolve(); // let listPresets resolve
+    await flush(); // let the plugin probe + listPresets resolve
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
@@ -170,6 +192,7 @@ describe('WidgetVideoComponent', () => {
         { provide: WidgetRuntimeDirective, useValue: { options } },
         { provide: DataService, useValue: { getPathObject: () => null } },
         { provide: PtzClient, useValue: ptz },
+        { provide: PluginConfigClientService, useValue: pluginAvailable() },
         {
           provide: SignalKConnectionService,
           useValue: {
@@ -184,7 +207,7 @@ describe('WidgetVideoComponent', () => {
     fixture.componentRef.setInput('type', 'widget-video');
     fixture.componentRef.setInput('theme', null);
     fixture.detectChanges();
-    await Promise.resolve();
+    await flush();
     fixture.detectChanges();
 
     const base = 'http://boat.local:3000/plugins/sk-video/';
@@ -218,5 +241,79 @@ describe('WidgetVideoComponent', () => {
       video: { sourceKind: 'url', url: 'https://cam.example/clip.mp4' }
     }).nativeElement;
     expect(el.querySelector('.video-widget__connecting')).not.toBeNull();
+  });
+
+  function mountVideo(config: IWidgetSvcConfig, plugin?: { getPlugin: unknown }) {
+    const options = signal<IWidgetSvcConfig | undefined>(config);
+    TestBed.configureTestingModule({
+      imports: [WidgetVideoComponent],
+      providers: [
+        { provide: WidgetRuntimeDirective, useValue: { options } },
+        { provide: DataService, useValue: { getPathObject: () => null } },
+        ...(plugin ? [{ provide: PluginConfigClientService, useValue: plugin }] : []),
+        {
+          provide: SignalKConnectionService,
+          useValue: {
+            serverServiceEndpoint$: of({ httpServiceUrl: 'http://boat.local:3000/signalk/v1/api/' }),
+            signalKURL: { url: null }
+          }
+        }
+      ]
+    });
+    const fixture = TestBed.createComponent(WidgetVideoComponent);
+    fixture.componentRef.setInput('id', 'test-id');
+    fixture.componentRef.setInput('type', 'widget-video');
+    fixture.componentRef.setInput('theme', null);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('tells the user to install the SK Video plugin for a camera source when it is not installed', async () => {
+    const fixture = mountVideo(
+      { video: { sourceKind: 'camera', cameraId: 'foredeck', transport: 'auto' } },
+      pluginNotFound()
+    );
+    await flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const empty = el.querySelector('.video-widget__empty');
+    expect(empty).not.toBeNull();
+    expect(empty?.textContent).toContain('SK Video plugin');
+    expect(el.querySelector('video')).toBeNull();
+  });
+
+  it('tells the user to install the SK Video plugin for an uploaded-file source when it is not installed', async () => {
+    const fixture = mountVideo({ video: { sourceKind: 'file', fileAssetId: 'v1' } }, pluginNotFound());
+    await flush();
+    fixture.detectChanges();
+    const empty = (fixture.nativeElement as HTMLElement).querySelector('.video-widget__empty');
+    expect(empty?.textContent).toContain('SK Video plugin');
+  });
+
+  it('shows the plugin message when SK Video is installed but disabled', async () => {
+    const fixture = mountVideo(
+      { video: { sourceKind: 'camera', cameraId: 'foredeck', transport: 'auto' } },
+      pluginDisabled()
+    );
+    await flush();
+    fixture.detectChanges();
+    const empty = (fixture.nativeElement as HTMLElement).querySelector('.video-widget__empty');
+    expect(empty?.textContent).toContain('SK Video plugin');
+  });
+
+  it('does not show the plugin message for a URL source (no plugin needed)', async () => {
+    const el: HTMLElement = setup({ video: { sourceKind: 'url', url: 'https://cam.example/clip.mp4' } }).nativeElement;
+    await flush();
+    expect(el.textContent).not.toContain('SK Video plugin required');
+  });
+
+  it('does not show the plugin message when SK Video is installed and enabled', async () => {
+    const fixture = mountVideo(
+      { video: { sourceKind: 'camera', cameraId: 'foredeck', transport: 'webrtc' } },
+      pluginAvailable()
+    );
+    await flush();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('SK Video plugin required');
   });
 });

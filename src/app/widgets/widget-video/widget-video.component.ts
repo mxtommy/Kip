@@ -13,6 +13,7 @@ import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.dir
 import { ITheme } from '../../core/services/app-service';
 import { DataService } from '../../core/services/data.service';
 import { SignalKConnectionService } from '../../core/services/signalk-connection.service';
+import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 import { resolveSignalKPluginBaseUrl } from '../../core/utils/signalk-plugin-url.util';
 import { resolveVideoSourceUrl } from './video-source.util';
 import { resolveGatewaySourceUrl } from './gateway-source.util';
@@ -69,6 +70,7 @@ export class WidgetVideoComponent {
   private readonly connection = inject(SignalKConnectionService);
   private readonly ptz = inject(PtzClient);
   private readonly assets = inject(VideoAssetsClient);
+  private readonly pluginConfig = inject(PluginConfigClientService);
 
   /** sk-video plugin base URL, tracked from the active server endpoint. */
   private readonly endpoint = toSignal(this.connection.serverServiceEndpoint$, { initialValue: null });
@@ -131,6 +133,18 @@ export class WidgetVideoComponent {
   protected readonly loop = computed(() => this.videoConfig()?.loop ?? false);
   protected readonly showMjpegWarning = computed(() => this.pipeline() === 'mjpeg' && this.isWebkit);
 
+  /** Camera and uploaded-file sources are served by the sk-video plugin; URL sources are not. */
+  protected readonly requiresPlugin = computed(() => {
+    const kind = this.videoConfig()?.sourceKind ?? 'url';
+    return kind === 'camera' || kind === 'file';
+  });
+  /** Result of probing the sk-video plugin: 'unknown' until checked (or if the check is inconclusive). */
+  private readonly pluginState = signal<'unknown' | 'present' | 'missing'>('unknown');
+  /** True once we've confirmed a source that needs the sk-video plugin can't use it (not installed or disabled). */
+  protected readonly pluginMissing = computed(
+    () => this.requiresPlugin() && this.pluginState() === 'missing'
+  );
+
   protected readonly snapshotError = signal<string | null>(null);
   /** Transient confirmation after a snapshot succeeds (e.g. "Snapshot saved"). */
   protected readonly snapshotMessage = signal<string | null>(null);
@@ -192,14 +206,32 @@ export class WidgetVideoComponent {
       const tuning = this.presetTuning();
       const video = this.videoRef()?.nativeElement ?? null;
       const visible = this.visible();
+      const pluginMissing = this.pluginMissing();
       this.reconnectNonce();
       untracked(() => {
-        // Tear down live pipelines while hidden; keep file playback (native <video> pauses itself).
-        if (!visible && this.isLive()) {
+        // Don't try to play a source whose plugin is missing, and tear down live pipelines while
+        // hidden (a native <video> file pauses itself).
+        if (pluginMissing || (!visible && this.isLive())) {
           this.dispose();
           return;
         }
         void this.attach(url, pipe, tuning, video);
+      });
+    });
+
+    // Probe the sk-video plugin when a source that needs it is selected, so we can tell the user to
+    // install it rather than showing a blank or endlessly-reconnecting player. Re-probes only when
+    // the source kind or the server endpoint changes, so enabling the plugin server-side clears the
+    // message on the next reconnect (or when the widget is reconfigured), not instantly.
+    effect(() => {
+      const needsPlugin = this.requiresPlugin();
+      this.endpoint();
+      untracked(() => {
+        if (!needsPlugin) {
+          this.pluginState.set('unknown');
+          return;
+        }
+        void this.probePlugin();
       });
     });
 
@@ -231,6 +263,29 @@ export class WidgetVideoComponent {
       this.stopPtzKeepAlive();
       this.dispose();
     });
+  }
+
+  /**
+   * Probe the sk-video plugin and record whether a camera/file source can actually use it. A
+   * definitive "not found" (or an installed-but-disabled plugin) is reported as missing; auth or
+   * network errors stay 'unknown' so we never wrongly tell the user to install a plugin that may
+   * just be unreachable right now.
+   */
+  private async probePlugin(): Promise<void> {
+    try {
+      const res = await this.pluginConfig.getPlugin('sk-video');
+      if (res.ok) {
+        this.pluginState.set(res.data.state.enabled ? 'present' : 'missing');
+        return;
+      }
+      // Not installed (a definitive 404) is "missing"; auth/network errors are inconclusive, so we
+      // leave the state 'unknown' rather than wrongly nagging about a plugin that may be unreachable.
+      // The `'error' in res` guard is load-bearing: the compiler doesn't narrow this union on `ok`.
+      const reason = 'error' in res ? res.error.reason : 'unknown';
+      this.pluginState.set(reason === 'not-found' ? 'missing' : 'unknown');
+    } catch {
+      this.pluginState.set('unknown');
+    }
   }
 
   private clearReconnectTimer(): void {

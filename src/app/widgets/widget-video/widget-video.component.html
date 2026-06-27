@@ -2,7 +2,14 @@
   <div class="video-widget__title">{{ label }}</div>
 }
 <div class="video-widget__stage">
-  @if (pipeline(); as pipe) {
+  @if (pluginMissing()) {
+    <div class="video-widget__empty">
+      <span class="video-widget__empty-title" role="heading" aria-level="2">SK Video plugin required</span>
+      <small class="video-widget__empty-hint">
+        Install and enable the SK Video plugin on your Signal K server to use cameras and uploaded video.
+      </small>
+    </div>
+  } @else if (pipeline(); as pipe) {
     @if (pipe === 'mjpeg') {
       <img
         class="video-widget__player"
