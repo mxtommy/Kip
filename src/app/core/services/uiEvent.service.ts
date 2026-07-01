@@ -2,20 +2,6 @@ import { Injectable, OnDestroy, signal } from '@angular/core';
 import screenfull from 'screenfull';
 import NoSleep from '@zakj/no-sleep';
 
-/**
- * Detects whether the app is running inside an iframe (e.g. Signal K app-dock, Freeboard).
- * When embedded, the host manages fullscreen, so KIP must defer to it (#1062).
- * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
- */
-export function isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
-  try {
-    return win.self !== win.top;
-  } catch {
-    // Reading window.top across origins throws a SecurityError -> we are embedded.
-    return true;
-  }
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -47,7 +33,7 @@ export class uiEventService implements OnDestroy {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isTest = (window as any).__KIP_TEST__;
     if (!isTest) {
-      if (isEmbeddedInIframe()) {
+      if (this.isEmbeddedInIframe()) {
         // Running inside a host iframe (app-dock, Freeboard, ...). The host owns fullscreen,
         // so hide KIP's control and defer to it (#1062).
         this.fullscreenSupported.set(false);
@@ -67,6 +53,20 @@ export class uiEventService implements OnDestroy {
       // In tests mark features unsupported to short-circuit code paths gracefully
       this.fullscreenSupported.set(false);
       this.noSleepSupported.set(false);
+    }
+  }
+
+  /**
+   * Detects whether the app is running inside an iframe (e.g. Signal K app-dock, Freeboard).
+   * When embedded, the host manages fullscreen, so KIP must defer to it (#1062).
+   * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
+   */
+  private isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
+    try {
+      return win.self !== win.top;
+    } catch {
+      // Reading window.top across origins throws a SecurityError -> we are embedded.
+      return true;
     }
   }
 
@@ -106,7 +106,7 @@ export class uiEventService implements OnDestroy {
   }
 
   public toggleFullScreen(): void {
-    if (isEmbeddedInIframe()) {
+    if (this.isEmbeddedInIframe()) {
       // The host iframe (e.g. app-dock) manages fullscreen; do nothing so we don't hijack it (#1062).
       return;
     }

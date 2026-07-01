@@ -1,6 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { uiEventService, isEmbeddedInIframe } from './uiEvent.service';
+import { uiEventService } from './uiEvent.service';
+
+/**
+ * Detects whether the app is running inside an iframe (e.g. Signal K app-dock, Freeboard).
+ * When embedded, the host manages fullscreen, so KIP must defer to it (#1062).
+ * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
+ */
+function isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
+  try {
+    return win.self !== win.top;
+  } catch {
+    // Reading window.top across origins throws a SecurityError -> we are embedded.
+    return true;
+  }
+}
 
 describe('GestureService', () => {
   let service: uiEventService;
