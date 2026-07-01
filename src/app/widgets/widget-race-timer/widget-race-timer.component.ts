@@ -1,4 +1,6 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { TimersService } from '../../core/services/timers.service';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { CanvasService } from '../../core/services/canvas.service';
@@ -25,6 +27,9 @@ export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly timers = inject(TimersService);
   private readonly canvas = inject(CanvasService);
+  private readonly destroyRef = inject(DestroyRef);
+  /** Active subscription to the shared race timer; replaced on re-arm, torn down on destroy. */
+  private timerSub?: Subscription;
 
   // Static config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -59,7 +64,7 @@ export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
       if (!cfg || !theme) return;
       untracked(() => {
-        this.applyColors(cfg.color, theme);
+        this.applyColors(cfg.color ?? 'contrast', theme);
         this.draw();
       });
     });
@@ -94,9 +99,13 @@ export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
   }
 
   private ensureTimer(initial: number) {
-    // subscribe only once per widget id
+    // The race timer is a shared singleton subject, so re-arming (config effect / reset) would
+    // otherwise stack a new subscription on top of the old ones. Tear down any previous
+    // subscription first, and bind the new one to the widget lifecycle so it cannot outlive the
+    // widget (the callback draws to the canvas and emits beeps).
+    this.timerSub?.unsubscribe();
     const obs = this.timers.createTimer(this.timeName, initial, 1000);
-    obs.subscribe(newValue => {
+    this.timerSub = obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(newValue => {
       this.dataValue = newValue;
       this.timerRunning.set(this.timers.isRunning(this.timeName));
       // zone & beeps
