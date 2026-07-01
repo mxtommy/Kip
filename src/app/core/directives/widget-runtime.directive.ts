@@ -1,4 +1,4 @@
-import { Directive, computed, effect, input, signal, untracked } from '@angular/core';
+import { Directive, computed, effect, input, output, signal, untracked } from '@angular/core';
 import { cloneDeep, merge } from 'lodash-es';
 import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
@@ -17,6 +17,7 @@ export class WidgetRuntimeDirective {
 
   // Default config input (typically from widget manifest DEFAULT_CONFIG)
   protected defaultConfig = signal<IWidgetSvcConfig | undefined>(undefined);
+  protected runtimeConfig = output<IWidgetSvcConfig | undefined>();
 
   // Internal runtime config
   private _runtimeConfig = signal<IWidgetSvcConfig | undefined>(undefined);
@@ -48,6 +49,7 @@ export class WidgetRuntimeDirective {
     this.lastBaseRef = base;
     this.lastUserRef = user;
     this.lastMergedRef = merged;
+    this.runtimeConfig.emit(merged);
     return merged;
   });
 
