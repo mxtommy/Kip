@@ -49,6 +49,26 @@ function aisDelta(mmsi, i, t) {
   });
 }
 
+// Deterministic scene deltas (for reproducible before/after radar screenshots).
+function selfSceneDelta(o, t) {
+  return JSON.stringify({ context: SELF_URN, updates: [{ $source: 'mock.0', timestamp: iso(t), values: [
+    { path: 'navigation.position', value: { latitude: o.lat, longitude: o.lon } },
+    { path: 'navigation.headingTrue', value: (o.heading ?? 0) * Math.PI / 180 },
+    { path: 'navigation.courseOverGroundTrue', value: (o.cog ?? o.heading ?? 0) * Math.PI / 180 },
+    { path: 'navigation.speedOverGround', value: o.sog ?? 5 },
+  ] }] });
+}
+function targetSceneDelta(tg, t) {
+  return JSON.stringify({ context: `vessels.urn:mrn:imo:mmsi:${tg.mmsi}`, updates: [{ $source: 'mock.ais', timestamp: iso(t), values: [
+    { path: 'navigation.position', value: { latitude: tg.lat, longitude: tg.lon } },
+    { path: 'navigation.headingTrue', value: (tg.heading ?? 0) * Math.PI / 180 },
+    { path: 'navigation.courseOverGroundTrue', value: (tg.cog ?? tg.heading ?? 0) * Math.PI / 180 },
+    { path: 'navigation.speedOverGround', value: tg.sog ?? 4 },
+    { path: 'name', value: tg.name ?? `T${tg.mmsi}` },
+    { path: 'mmsi', value: String(tg.mmsi) },
+  ] }] });
+}
+
 function helloMsg() {
   return JSON.stringify({ name: 'kip-mock', version: '2.3.0', self: SELF_URN, roles: ['master', 'main'], timestamp: iso(Date.now()) });
 }
@@ -117,6 +137,12 @@ export async function startServer({ publicDir, base, port }) {
     const timer = setInterval(() => {
       if (!control.streaming || ws.readyState !== ws.OPEN) return;
       const t = Date.now();
+      // Deterministic scene: fixed own-ship + fixed targets (reproducible screenshots).
+      if (control.staticScene) {
+        ws.send(selfSceneDelta(control.staticScene.ownShip, t)); sent++;
+        for (const tg of control.staticScene.targets) { ws.send(targetSceneDelta(tg, t)); sent++; }
+        return;
+      }
       ws.send(selfDelta(control.selfPaths, t)); sent++;
       const n = control.ais.count | 0;
       for (let i = 0; i < n; i++) { ws.send(aisDelta(mmsiBase + i, i, t)); sent++; }
