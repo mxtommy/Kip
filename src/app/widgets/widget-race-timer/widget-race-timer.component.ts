@@ -64,7 +64,7 @@ export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
       if (!cfg || !theme) return;
       untracked(() => {
-        this.applyColors(cfg.color, theme);
+        this.applyColors(cfg.color ?? 'contrast', theme);
         this.draw();
       });
     });
