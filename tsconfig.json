@@ -11,7 +11,7 @@
         "./dist/gauge-scales"
       ]
     },
-    "emitDecoratorMetadata": true,
+    "emitDecoratorMetadata": false,
     "experimentalDecorators": true,
     "target": "ES2022",
     "module": "es2020",
