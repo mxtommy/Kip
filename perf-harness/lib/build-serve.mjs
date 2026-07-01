@@ -37,8 +37,10 @@ export async function buildBranch(ref, label, { rebuild = true } = {}) {
     console.log(`[build] worktree ${label} <- ${ref}`);
     await sh('git', ['worktree', 'add', '--force', wt, ref], { cwd: REPO_DIR });
   }
-  console.log(`[build] npm ci (${label}) …`);
-  await sh('npm', ['ci', '--no-audit', '--no-fund'], { cwd: wt });
+  // npm install (not ci): the integration branch's lockfile trips npm ci's strict
+  // platform-optional-dep check; install reconciles it. Worktree is disposable.
+  console.log(`[build] npm install (${label}) …`);
+  await sh('npm', ['install', '--no-audit', '--no-fund'], { cwd: wt });
   console.log(`[build] production build (${label}) …`);
   await sh('npm', ['run', 'build:prod'], { cwd: wt });
   if (!(await exists(join(publicDir, 'index.html')))) {
