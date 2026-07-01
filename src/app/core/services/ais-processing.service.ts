@@ -640,14 +640,20 @@ export class AisProcessingService {
     this.targetsDirty$.next();
   }
 
-  /** Keep the retained target set within the hard cap by removing the oldest. */
+  /**
+   * Keep the retained target set within the hard cap by removing the oldest.
+   * Single O(n) pass per removed target (no full sort/allocation) so it stays
+   * cheap even under a high rate of new contexts.
+   */
   private enforceTargetCap(): void {
-    if (this.tracks.size <= this.maxTargets) return;
-    const overflow = this.tracks.size - this.maxTargets;
-    const oldest = Array.from(this.tracks.values())
-      .sort((a, b) => a.lastUpdateAt - b.lastUpdateAt)
-      .slice(0, overflow);
-    for (const track of oldest) this.removeTrack(track);
+    while (this.tracks.size > this.maxTargets) {
+      let oldest: AisTrack | null = null;
+      for (const track of this.tracks.values()) {
+        if (!oldest || track.lastUpdateAt < oldest.lastUpdateAt) oldest = track;
+      }
+      if (!oldest) break;
+      this.removeTrack(oldest);
+    }
   }
 
   /** Remove targets not heard from within the TTL, then enforce the hard cap. */
