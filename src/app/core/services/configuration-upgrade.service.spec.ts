@@ -50,4 +50,25 @@ describe('ConfigurationUpgradeService', () => {
         expect(mockStorage.listConfigs).toHaveBeenCalledWith(9);
         expect(service.error()).toBeNull();
     });
+
+    it('startFresh retires BOTH global and user legacy configs via an awaited write before resetting', async () => {
+        mockStorage.initConfig = null; // remote (Signal K) path
+        mockStorage.listConfigs.mockResolvedValueOnce([
+            { scope: 'global', name: 'gconf' },
+            { scope: 'user', name: 'uconf' }
+        ]);
+        mockStorage.getConfig.mockImplementation(async () => ({ app: { configVersion: 10 } }));
+
+        service.startFresh();
+
+        // The reset (which reloads the page) must run only after retiring completes.
+        await vi.waitFor(() => expect(mockAppSettings.resetSettings).toHaveBeenCalled());
+
+        // Global must be retired via an awaited setConfig (not a deferred fire-and-forget),
+        // to legacy file version 9 with configVersion 0 — same as the user scope.
+        expect(mockStorage.setConfig).toHaveBeenCalledWith(
+            'global', 'gconf', expect.objectContaining({ app: expect.objectContaining({ configVersion: 0 }) }), 9);
+        expect(mockStorage.setConfig).toHaveBeenCalledWith(
+            'user', 'uconf', expect.objectContaining({ app: expect.objectContaining({ configVersion: 0 }) }), 9);
+    });
 });
