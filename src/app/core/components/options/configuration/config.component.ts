@@ -113,23 +113,33 @@ export class SettingsConfigComponent {
     }
   }
 
-  public saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean, forceSave?: boolean) {
-    if (this.supportApplicationData) {
-      // Prevent saving with scope 'user' and name 'default'
-      if ((scope === 'user' && name === 'default') && !forceSave) {
-        this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, 'error');
-        return;
-      }
-
-      if (this.storageSvc.setConfig(scope, name, conf)) {
-        this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, 'success');
-        if (!dontRefreshConfigList || undefined) {
-          this.getServerConfigList();
-        }
-      } else {
-        this.toast.show("Configuration not saved to server", 0, false, 'error');
-      }
+  public async saveConfig(conf: IConfig, scope: string, name: string, dontRefreshConfigList?: boolean, forceSave?: boolean): Promise<boolean> {
+    if (!this.supportApplicationData) {
+      return false;
     }
+
+    // Prevent saving with scope 'user' and name 'default'
+    if ((scope === 'user' && name === 'default') && !forceSave) {
+      this.toast.show("Saving configuration with scope 'user' and name 'default' is not allowed.", 0, false, 'error');
+      return false;
+    }
+
+    // setConfig posts to the server asynchronously. We must await it so callers
+    // (upload, restore, save) only reload/refresh once the write has landed —
+    // otherwise reloadApp() navigates away and aborts the in-flight request,
+    // silently dropping the new configuration.
+    try {
+      await this.storageSvc.setConfig(scope, name, conf);
+    } catch {
+      this.toast.show("Configuration not saved to server", 0, false, 'error');
+      return false;
+    }
+
+    this.toast.show(`Configuration [${name}] saved to [${scope}] storage scope`, 1000, true, 'success');
+    if (!dontRefreshConfigList) {
+      this.getServerConfigList();
+    }
+    return true;
   }
 
   /**
@@ -159,8 +169,10 @@ export class SettingsConfigComponent {
       return;
     }
 
-    this.saveConfig(conf, 'user', 'default', false, true);
-    this.settings.reloadApp();
+    const saved = await this.saveConfig(conf, 'user', 'default', false, true);
+    if (saved) {
+      this.settings.reloadApp();
+    }
   }
 
   public deleteConfigByKey(configKey: string) {
@@ -173,8 +185,17 @@ export class SettingsConfigComponent {
     this.deleteConfig(config.scope, config.name);
   }
 
-  public deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
-    this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
+  public async deleteConfig (scope: string, name: string, forceConfigFileVersion?: number, dontRefreshConfigList?: boolean) {
+    // Await the delete so we only report success and refresh the list once the
+    // server has actually removed the entry; otherwise the dropdown can still
+    // show the just-deleted configuration and a failed delete looks successful.
+    try {
+      await this.storageSvc.removeItem(scope, name, forceConfigFileVersion);
+    } catch {
+      this.toast.show(`Configuration [${name}] could not be deleted from [${scope}] storage scope`, 0, false, 'error');
+      return;
+    }
+
     this.toast.show(`Configuration [${name}] deleted from [${scope}] storage scope`, 1000, false, 'success');
     if (!dontRefreshConfigList) {
       this.getServerConfigList();
@@ -258,19 +279,35 @@ export class SettingsConfigComponent {
     const file = input.files?.[0];
     if (file && file.type === "application/json") {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           this.jsonData = JSON.parse(e.target?.result as string); // Parse JSON
-          if (this.hasToken) {
-            this.saveConfig(this.jsonData, 'user', 'default', false, true);
-          } else {
-            this.saveToLocalstorage(this.jsonData);
-          }
-          this.settings.reloadApp();
         } catch (error) {
           this.toast.show("File does not contain valid JSON.", 0, false, 'error');
           console.error("Invalid JSON file format:", error);
+          return;
         }
+
+        if (this.hasToken) {
+          // Wait for the server write to complete before reloading; reloading
+          // mid-request aborts the upload and leaves the old config in place.
+          const saved = await this.saveConfig(this.jsonData, 'user', 'default', false, true);
+          if (!saved) {
+            return;
+          }
+        } else {
+          // localStorage.setItem can throw (quota exceeded, private mode). Contain
+          // it here so it surfaces an error instead of escaping this async handler
+          // as an unhandled rejection and silently skipping the reload.
+          try {
+            this.saveToLocalstorage(this.jsonData);
+          } catch (error) {
+            this.toast.show("Configuration not saved", 0, false, 'error');
+            console.error("Failed to save configuration to local storage:", error);
+            return;
+          }
+        }
+        this.settings.reloadApp();
       };
       reader.readAsText(file); // Read the file as text
     } else {

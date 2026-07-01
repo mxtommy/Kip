@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { Subject, Observable } from 'rxjs';
+import { Subject, BehaviorSubject, Observable } from 'rxjs';
 import { WidgetStreamsDirective } from './widget-streams.directive';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
@@ -476,5 +476,85 @@ describe('WidgetStreamsDirective', () => {
         subj.next({ data: { value: 'F', timestamp: new Date() }, state: 'normal' } as IPathUpdate);
         await vi.advanceTimersByTimeAsync(35);
         expect(hits).toEqual(['A', 'C', 'D', 'E', 'F']);
+    });
+});
+
+/**
+ * Faithful-to-DataService fake: path values live in a BehaviorSubject (so the current value is
+ * replayed on re-subscription), and timeoutPathObservable() resets the value to null - exactly
+ * like the real service does on a TTL timeout.
+ */
+class TtlFakeDataService {
+    subjects = new Map<string, BehaviorSubject<IPathUpdate>>();
+    timeoutCalls: { path: string; pathType: string }[] = [];
+
+    private keyFor(path: string, source?: string): string {
+        return `${path}|${source?.trim() || 'default'}`;
+    }
+
+    subscribePath(path: string, source?: string): Observable<IPathUpdate> {
+        const key = this.keyFor(path, source);
+        if (!this.subjects.has(key)) {
+            this.subjects.set(key, new BehaviorSubject<IPathUpdate>(
+                { data: { value: null, timestamp: null }, state: 'normal' } as IPathUpdate
+            ));
+        }
+        return this.subjects.get(key)!.asObservable();
+    }
+
+    timeoutPathObservable(path: string, pathType: string): void {
+        this.timeoutCalls.push({ path, pathType });
+        // Mirror the real DataService: a TTL timeout resets the path value to null.
+        this.subjects.get(this.keyFor(path))?.next(
+            { data: { value: null, timestamp: null }, state: 'normal' } as IPathUpdate
+        );
+    }
+}
+
+describe('WidgetStreamsDirective TTL value reset (#1069)', () => {
+    let directive: WidgetStreamsDirective;
+    let dataSvc: TtlFakeDataService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                WidgetStreamsDirective,
+                { provide: DataService, useClass: TtlFakeDataService },
+                { provide: UnitsService, useClass: FakeUnitsService }
+            ]
+        });
+        directive = TestBed.inject(WidgetStreamsDirective);
+        dataSvc = TestBed.inject(DataService) as unknown as TtlFakeDataService;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('resets the value to null after a TTL timeout even with suppressBootstrapNull enabled', async () => {
+        vi.useFakeTimers();
+        vi.spyOn(console, 'log'); // silence timeout/retry logs
+        const cfg = makeCfg({
+            path: 'env.ttl', source: null, pathType: 'number', sampleTime: 50,
+            suppressBootstrapNull: true, enableTimeout: true, dataTimeout: 0.02
+        });
+        directive.setStreamsConfig(cfg);
+
+        const hits: (number | null)[] = [];
+        directive.observe('p', u => hits.push((u?.data?.value as number | null) ?? null));
+
+        const subj = dataSvc.subjects.get('env.ttl|default')!;
+        // A real value arrives (e.g. engine running).
+        subj.next({ data: { value: 500, timestamp: new Date() }, state: 'normal' } as IPathUpdate);
+        await vi.advanceTimersByTimeAsync(10);
+        expect(hits).toEqual([500]);
+
+        // Engine stops: no more data. Let the TTL fire and the retry resubscribe (retryDelay = 5s).
+        await vi.advanceTimersByTimeAsync(5100);
+
+        expect(dataSvc.timeoutCalls.length).toBeGreaterThanOrEqual(1);
+        // The widget must be reset to null ("--"), not left showing the stale 500.
+        expect(hits[hits.length - 1]).toBeNull();
     });
 });

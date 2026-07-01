@@ -241,7 +241,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.8);
-  z-index: 19;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -258,7 +258,7 @@
   background: transparent;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-  z-index: 20;
+  z-index: 31;
   display: block;
   font-family: Roboto;
   font-size: 1.1rem;

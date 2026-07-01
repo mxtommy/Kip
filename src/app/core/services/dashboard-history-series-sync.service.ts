@@ -127,8 +127,15 @@ export class DashboardHistorySeriesSyncService {
     }
 
     try {
-      await this.kipSeries.reconcileSeries(nextSeries);
-      this.lastSubmittedSignature = nextSignature;
+      // reconcileSeries resolves to null on failure (it swallows errors and does
+      // NOT throw), so we must inspect the result. Only mark the signature as
+      // submitted on a real success; otherwise leave it unset so the next cycle retries.
+      const result = await this.kipSeries.reconcileSeries(nextSeries);
+      if (result) {
+        this.lastSubmittedSignature = nextSignature;
+      } else {
+        console.warn('[DashboardHistorySeriesSyncService] Reconcile did not complete; will retry on next cycle');
+      }
     } catch (error) {
       console.error('[DashboardHistorySeriesSyncService] Reconcile failed:', error);
       // Don't update lastSubmittedSignature so next cycle will retry

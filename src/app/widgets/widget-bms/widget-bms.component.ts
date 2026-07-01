@@ -1,5 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import * as d3 from 'd3';
+import { select, type Selection } from 'd3-selection';
+import { arc } from 'd3-shape';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
@@ -100,10 +101,10 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('bmsSvg');
-  private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private root?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private bankLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private batteryLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private svg?: Selection<SVGSVGElement, unknown, null, undefined>;
+  private root?: Selection<SVGGElement, unknown, null, undefined>;
+  private bankLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private batteryLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private readonly bankGaugeBackgroundPath = this.buildSemiGaugeArcPath(WidgetBmsComponent.BANK_GAUGE_RADIUS, 1);
 
   private glowFilterId = '';
@@ -322,7 +323,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private initializeSvg(): void {
-    this.svg = d3.select(this.svgRef().nativeElement);
+    this.svg = select(this.svgRef().nativeElement);
     this.svg
       .attr('viewBox', `0 0 ${WidgetBmsComponent.VIEWBOX_WIDTH} ${WidgetBmsComponent.MIN_VIEWBOX_HEIGHT}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
@@ -805,7 +806,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankEnter.append('g').attr('class', 'bank-bms-batteries');
     bankEnter.append('text').attr('class', 'bank-title');
 
-    const bankMerged = bankEnter.merge(bankSelection as d3.Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
+    const bankMerged = bankEnter.merge(bankSelection as Selection<SVGGElement, BmsRenderBank, SVGGElement, unknown>);
     bankMerged.attr('transform', item => `translate(${item.x},${item.y})`);
     if (renderLayout.banks.length > 1) {
       bankMerged.select('text.bank-title')
@@ -896,7 +897,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     bankMerged
       .select<SVGGElement>('g.bank-bms-batteries')
       .each((bankItem, index, nodes) => {
-        const inBankContainer = d3.select(nodes[index]);
+        const inBankContainer = select(nodes[index]);
         const inBankSelection = inBankContainer
           .selectAll<SVGGElement, BmsRenderBattery>('g.battery-card')
           .data(bankItem.batteries, battery => battery.key);
@@ -908,7 +909,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
         this.appendBatteryCardSkeleton(inBankEnter);
 
         const inBankMerged = inBankEnter.merge(
-          inBankSelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
+          inBankSelection as Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
         );
         this.renderBatteryCards(inBankMerged, widgetColors, snapshot.batteries.length > 1);
 
@@ -929,7 +930,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     this.appendBatteryCardSkeleton(batteryEnter);
 
     const batteryMerged = batteryEnter.merge(
-      batterySelection as d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
+      batterySelection as Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>
     );
     this.renderBatteryCards(batteryMerged, widgetColors, true);
 
@@ -1054,7 +1055,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
     return totalInnerWidth / WidgetBmsComponent.IN_BANK_COLUMNS;
   }
 
-  private appendBatteryCardSkeleton(selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>): void {
+  private appendBatteryCardSkeleton(selection: Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>): void {
     selection.append('rect').attr('class', 'bms-battery').attr('rx', 4).attr('ry', 4);
     selection.append('rect').attr('class', 'bms-battery-tip').attr('rx', 1).attr('ry', 1);
     selection.append('rect').attr('class', 'bms-charge-fill').attr('rx', 3).attr('ry', 3);
@@ -1070,7 +1071,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderBatteryCards(
-    selection: d3.Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
+    selection: Selection<SVGGElement, BmsRenderBattery, SVGGElement, unknown>,
     widgetColors: ReturnType<typeof getColors>,
     showTitle: boolean
   ): void {
@@ -1160,7 +1161,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       .attr('color', item => item.compact ? widgetColors.dim : widgetColors.color)
       .attr('filter', item => item.displayModel.socGlowEnabled ? `url(#${this.glowFilterId})` : null)
       .each((item, index, nodes) => {
-        const iconGroup = d3.select(nodes[index]);
+        const iconGroup = select(nodes[index]);
         const iconKey = item.displayModel.iconKey;
         const iconTemplate = iconKey === 'power_renewal' ? this.powerRenewalIconTemplate : this.powerAvailableIconTemplate;
         if (!iconTemplate) {
@@ -1285,7 +1286,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
       const y = radius * Math.sin(startAngle);
       return `M ${x} ${y}`;
     }
-    return d3.arc()({
+    return arc()({
       innerRadius: radius,
       outerRadius: radius,
       startAngle,

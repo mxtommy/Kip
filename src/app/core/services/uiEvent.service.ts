@@ -33,7 +33,12 @@ export class uiEventService implements OnDestroy {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isTest = (window as any).__KIP_TEST__;
     if (!isTest) {
-      if (screenfull.isEnabled) {
+      if (this.isEmbeddedInIframe()) {
+        // Running inside a host iframe (app-dock, Freeboard, ...). The host owns fullscreen,
+        // so hide KIP's control and defer to it (#1062).
+        this.fullscreenSupported.set(false);
+        console.log('[UI Event Service] Running inside an iframe; fullscreen control hidden, deferring to host.');
+      } else if (screenfull.isEnabled) {
         screenfull.on('change', this.fullscreenChangeHandler);
       } else {
         this.fullscreenSupported.set(false);
@@ -48,6 +53,20 @@ export class uiEventService implements OnDestroy {
       // In tests mark features unsupported to short-circuit code paths gracefully
       this.fullscreenSupported.set(false);
       this.noSleepSupported.set(false);
+    }
+  }
+
+  /**
+   * Detects whether the app is running inside an iframe (e.g. Signal K app-dock, Freeboard).
+   * When embedded, the host manages fullscreen, so KIP must defer to it (#1062).
+   * Accessing `top` across origins throws a SecurityError, which itself means we are embedded.
+   */
+  private isEmbeddedInIframe(win: { self: unknown; top: unknown } = window): boolean {
+    try {
+      return win.self !== win.top;
+    } catch {
+      // Reading window.top across origins throws a SecurityError -> we are embedded.
+      return true;
     }
   }
 
@@ -87,6 +106,10 @@ export class uiEventService implements OnDestroy {
   }
 
   public toggleFullScreen(): void {
+    if (this.isEmbeddedInIframe()) {
+      // The host iframe (e.g. app-dock) manages fullscreen; do nothing so we don't hijack it (#1062).
+      return;
+    }
     if (screenfull.isEnabled) {
       if (!this.fullscreenStatus()) {
         screenfull.request();
@@ -109,7 +132,7 @@ export class uiEventService implements OnDestroy {
 
   public addGestureListeners(onSwipeLeft: (e: Event | CustomEvent) => void, onSwipeRight: (e: Event | CustomEvent) => void): void {
     if (!this.boundPreventGestures) {
-      this.boundPreventGestures = this.preventBrowserHistorySwipeGestures.bind(this);
+      this.boundPreventGestures = (evt: Event) => this.preventBrowserHistorySwipeGestures(evt as TouchEvent);
     }
     document.addEventListener('openLeftSidenav', onSwipeLeft);
     document.addEventListener('openRightSidenav', onSwipeRight);

@@ -6,7 +6,7 @@ import { IConfig } from "../interfaces/app-settings.interfaces";
 import { compare } from 'compare-versions';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/internal/Subject';
-import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject } from 'rxjs';
+import { tap, concatMap, catchError, lastValueFrom, BehaviorSubject, of } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
 
 export interface Config {
@@ -23,7 +23,10 @@ export interface IStorageRemoteBootstrapContext {
 interface IPatchAction {
   url: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  document: any
+  document: any,
+  // Optional deferred handlers so callers can await a queued patch's completion.
+  resolve?: () => void,
+  reject?: (error: unknown) => void
 }
 
 @Injectable({
@@ -52,8 +55,20 @@ export class StorageService {
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
-        tap(() => console.log("[Storage Service] Remote config patch request completed successfully")),
-        catchError((error) => this.handleError(error))
+        tap({
+          next: () => console.log("[Storage Service] Remote config patch request completed successfully"),
+          // Settle on completion (not on the value emission) so the deferred
+          // promise resolves whenever the request terminates successfully, even
+          // if the response body is empty.
+          complete: () => arg.resolve?.()
+        }),
+        catchError((error) => {
+          this.logError(error);
+          arg.reject?.(error);
+          // Swallow the error so the sequential patch queue keeps processing
+          // subsequent requests instead of terminating on the first failure.
+          return of(null);
+        })
       );
   }
 
@@ -462,7 +477,7 @@ export class StorageService {
    *
    * @memberof StorageService
    */
-  public removeItem(scope: string, name: string, forceConfigFileVersion?: number) {
+  public removeItem(scope: string, name: string, forceConfigFileVersion?: number): Promise<void> {
     this.ensureReady();
     let url = this.serverEndpoint + scope + "/kip/" + this.configFileVersion;
     if (forceConfigFileVersion) {
@@ -475,8 +490,12 @@ export class StorageService {
           "path": `/${name}`
         }
       ]
-    const patch: IPatchAction = { url, document };
-    this.patchQueue$.next(patch);
+    // Resolve only once the queued delete patch has actually run on the server,
+    // so callers can refresh their config list against the post-delete state.
+    return new Promise<void>((resolve, reject) => {
+      const patch: IPatchAction = { url, document, resolve, reject };
+      this.patchQueue$.next(patch);
+    });
   }
 
   /**
@@ -533,7 +552,7 @@ export class StorageService {
     return this._isRemoteContextBootstrapped;
   }
 
-  private handleError(error: HttpErrorResponse) {
+  private logError(error: HttpErrorResponse) {
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly.
       console.error('[Storage Service] An error occurred:', error.error);
@@ -542,7 +561,11 @@ export class StorageService {
       // The response body may contain clues as to what went wrong.
       console.error(`[Storage Service] Backend returned error: `, error.message);
     }
-    // Return an observable with a user-facing error message.
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    this.logError(error);
+    // Rethrow so awaiting callers (get/set/list) observe the failure.
     throw error;
   }
 

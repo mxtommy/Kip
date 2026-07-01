@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -17,7 +17,7 @@ interface AisDialogPayload {
   styleUrls: ['./dialog-ais-target.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DialogAisTargetComponent implements OnDestroy {
+export class DialogAisTargetComponent implements OnInit, OnDestroy {
   private static readonly CLOCK_INTERVAL_MS = 1000;
   private readonly data = inject<DialogComponentData>(MAT_DIALOG_DATA);
   private readonly units = inject(UnitsService);
@@ -25,7 +25,7 @@ export class DialogAisTargetComponent implements OnDestroy {
   private readonly now = signal(Date.now());
   private nowTimer: number | null = null;
 
-  constructor() {
+  ngOnInit(): void {
     this.startClock();
   }
 
@@ -39,12 +39,12 @@ export class DialogAisTargetComponent implements OnDestroy {
 
   protected formatDirection(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return '--';
-    return this.units.convertToUnit('deg', value).toFixed(0);
+    return this.units.convertToUnit('deg', value)?.toFixed(0) ?? '--';
   }
 
   protected formatNauticalMilesWithUnit(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return '--';
-    return `${this.units.convertToUnit('nm', value).toFixed(1)} nm`;
+    return `${this.units.convertToUnit('nm', value)?.toFixed(1)} nm`;
   }
 
   protected formatAngleWithUnit(value: number | null | undefined): string {
@@ -83,7 +83,7 @@ export class DialogAisTargetComponent implements OnDestroy {
 
   protected formatLatLon(value: number | null | undefined, d : "latitudeMin" | "longitudeMin"): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return '--';
-    return this.units.convertToUnit(d, value).toString();
+    return this.units.convertToUnit(d, value)?.toString() ?? '--';
   }
 
   protected formatText(value: string | null | undefined): string {

@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewEncapsulation, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import * as d3 from 'd3';
+import { select, type Selection } from 'd3-selection';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
 import { getColors } from '../../core/utils/themeColors.utils';
@@ -46,7 +46,7 @@ interface RenderTarget {
   x: number;
   y: number;
   heading: number;
-  status: string;
+  status: string | undefined;
   aisClass: string | undefined;
   type: string;
   iconHref: string | null;
@@ -185,13 +185,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return Math.min(Math.max(index, 0), maxIndex);
   });
 
-  private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private root?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private ringsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private vectorsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private targetsLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private selectedLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private ownShipLayer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private svg?: Selection<SVGSVGElement, unknown, null, undefined>;
+  private root?: Selection<SVGGElement, unknown, null, undefined>;
+  private ringsLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private vectorsLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private targetsLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private selectedLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private ownShipLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private viewRotationSmoothed: number | null = null;
   private lastRotationAt: number | null = null;
 
@@ -285,7 +285,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private initSvg(): void {
-    this.svg = d3.select(this.svgRef().nativeElement);
+    this.svg = select(this.svgRef().nativeElement);
     this.svg.attr('class', 'ais-radar');
 
     this.root = this.svg.append('g').attr('class', 'radar-root');
@@ -393,7 +393,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.root.attr('transform', `scale(${scale})`);
 
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
-    const ringColor = getColors(cfg.color, theme).dim;
+    const ringColor = getColors(cfg.color ?? 'contrast', theme).dim;
     this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
@@ -459,7 +459,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.enter()
       .append('circle')
       .attr('class', 'ring')
-      .merge(selection as d3.Selection<SVGCircleElement, { value: number; radius: number }, SVGGElement, unknown>)
+      .merge(selection as Selection<SVGCircleElement, { value: number; radius: number }, SVGGElement, unknown>)
       .attr('r', d => d.radius)
       .attr('stroke', ringColor);
 
@@ -474,7 +474,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     labelSelection.enter()
       .append('text')
       .attr('class', 'ring-label')
-      .merge(labelSelection as d3.Selection<SVGTextElement, { key: string; value: number; x: number; y: number }, SVGGElement, unknown>)
+      .merge(labelSelection as Selection<SVGTextElement, { key: string; value: number; x: number; y: number }, SVGGElement, unknown>)
       .attr('x', d => d.x)
       .attr('y', d => d.y)
       .attr('text-anchor', 'middle')
@@ -490,7 +490,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     centerSelection.enter()
       .append('circle')
       .attr('class', 'radar-center')
-      .merge(centerSelection as d3.Selection<SVGCircleElement, { r: number }, SVGGElement, unknown>)
+      .merge(centerSelection as Selection<SVGCircleElement, { r: number }, SVGGElement, unknown>)
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', d => d.r)
@@ -498,7 +498,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     centerSelection.exit().remove();
 
-    const ownShipSelection = this.ownShipLayer
+    const ownShipSelection = this.ownShipLayer!
       .selectAll<SVGGElement, { size: number }>('g.radar-ownship')
       .data(showSelf ? [{ size: this.resolveOwnShipBaseSize(scale) }] : []);
 
@@ -511,7 +511,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       .attr('href', this.ownShipIconHref ?? null)
       .attr('xlink:href', this.ownShipIconHref ?? null);
 
-    const ownShipMerged = ownShipEnter.merge(ownShipSelection as d3.Selection<SVGGElement, { size: number }, SVGGElement, unknown>);
+    const ownShipMerged = ownShipEnter.merge(ownShipSelection as Selection<SVGGElement, { size: number }, SVGGElement, unknown>);
 
     ownShipMerged
       .attr('transform', `rotate(${ownShipRotation})`);
@@ -693,8 +693,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const signature = this.buildTrackSignature(track);
       let cached = this.targetCache.get(track.id);
       if (!cached || cached.signature !== signature) {
-        const distance = this.distanceNm(origin, track.position);
-        const bearing = this.ais.getBearingTrue(origin, track.position) ?? 0;
+        const distance = this.distanceNm(origin, track.position!);
+        const bearing = this.ais.getBearingTrue(origin, track.position!) ?? 0;
         const trackHeading = this.toDegreesIfRadians(this.isVesselLike(track) ? track.headingTrue : null);
         const trackCog = this.toDegreesIfRadians(this.isVesselLike(track) ? track.courseOverGroundTrue : null);
         cached = {
@@ -812,7 +812,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderVectorLines(
-    layer: d3.Selection<SVGGElement, unknown, null, undefined>,
+    layer: Selection<SVGGElement, unknown, null, undefined>,
     className: string,
     data: VectorLine[]
   ): void {
@@ -823,7 +823,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.enter()
       .append('line')
       .attr('class', d => `${className} ${d.className}`)
-      .merge(selection as d3.Selection<SVGLineElement, VectorLine, SVGGElement, unknown>)
+      .merge(selection as Selection<SVGLineElement, VectorLine, SVGGElement, unknown>)
       .attr('x1', d => d.x1)
       .attr('y1', d => d.y1)
       .attr('x2', d => d.x2)
@@ -842,7 +842,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     tipSelection.enter()
       .append('circle')
       .attr('class', d => `${className}-tip ${d.className}`)
-      .merge(tipSelection as d3.Selection<SVGCircleElement, VectorLine, SVGGElement, unknown>)
+      .merge(tipSelection as Selection<SVGCircleElement, VectorLine, SVGGElement, unknown>)
       .attr('cx', d => d.x2)
       .attr('cy', d => d.y2)
       .attr('r', 2.5)
@@ -875,7 +875,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     enter.append('title');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, RenderTarget, SVGGElement, unknown>);
+    const merged = enter.merge(selection as Selection<SVGGElement, RenderTarget, SVGGElement, unknown>);
 
     merged
       .attr('transform', d => `translate(${d.x}, ${d.y}) rotate(${d.heading})`)
@@ -911,7 +911,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     selection.enter()
       .append('path')
       .attr('class', 'selected-ring')
-      .merge(selection as d3.Selection<SVGPathElement, RenderTarget, SVGGElement, unknown>)
+      .merge(selection as Selection<SVGPathElement, RenderTarget, SVGGElement, unknown>)
       .attr('transform', d => `translate(${d.x}, ${d.y})`)
       .attr('d', cornerPath);
 
@@ -953,13 +953,18 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private openTargetDialog(target: AisTrack, iconHref: string | null): void {
     this.selectedId.set(target.id);
+    const targetSnapshot = this.snapshotAisTrack(target);
     this.dialog.openAisDetailDialog({
-      title: this.buildTargetTitle(target),
+      title: this.buildTargetTitle(targetSnapshot),
       iconHref: iconHref ?? undefined,
       component: 'ais-target',
       componentType: DialogAisTargetComponent,
-      payload: { target }
+      payload: { target: targetSnapshot }
     }).subscribe();
+  }
+
+  private snapshotAisTrack(target: AisTrack): AisTrack {
+    return structuredClone(target);
   }
 
   private resolveMenuItems(event: MouseEvent, target: RenderTarget): TargetMenuItem[] {
@@ -1109,7 +1114,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     ].join('|');
   }
 
-  private buildClassName(target: { status: string; type: string; aisClass: string | undefined; navState: string | undefined; id: string }): string {
+  private buildClassName(target: { status: string | undefined; type: string; aisClass: string | undefined; navState: string | undefined; id: string }): string {
     const classes = [
       `status-${target.status}`,
       `type-${target.type}`,
@@ -1304,10 +1309,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private distanceNm(a: Position, b: Position): number {
     const R = 6371e3; // meters
-    const phi1 = a.latitude * Math.PI / 180;
-    const phi2 = b.latitude * Math.PI / 180;
-    const dPhi = (b.latitude - a.latitude) * Math.PI / 180;
-    const dLambda = (b.longitude - a.longitude) * Math.PI / 180;
+    const phi1 = a.latitude! * Math.PI / 180;
+    const phi2 = b.latitude! * Math.PI / 180;
+    const dPhi = (b.latitude! - a.latitude!) * Math.PI / 180;
+    const dLambda = (b.longitude! - a.longitude!) * Math.PI / 180;
 
     const sinDP = Math.sin(dPhi / 2);
     const sinDL = Math.sin(dLambda / 2);

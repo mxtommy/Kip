@@ -2,7 +2,7 @@ import { Directive, DestroyRef, inject, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
-import { Observable, Observer, Subject, delayWhen, map, retryWhen, sampleTime, skipWhile, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
+import { Observable, Observer, Subject, delayWhen, filter, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Directive({

@@ -9,6 +9,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
+// Prism (code highlighting) and ClipboardJS (code copy buttons) are used ONLY by the markdown
+// help pages. They are imported here, in this lazily-loaded route component, so they ship in the
+// help chunk instead of the eager initial bundle (previously they were global scripts in
+// angular.json loaded on every route). Prism core already bundles javascript/clike, so the bash
+// and typescript language packs extend cleanly. Prism self-registers `window.Prism`; ngx-markdown
+// reads a global `ClipboardJS`, so it is assigned explicitly below.
+import 'prismjs';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-typescript';
+import ClipboardJS from 'clipboard';
+(window as unknown as { ClipboardJS?: typeof ClipboardJS }).ClipboardJS = ClipboardJS;
+
 interface HelpMenuEntry {
   title: string;
   file: string;

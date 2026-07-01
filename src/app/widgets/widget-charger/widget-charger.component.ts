@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import * as d3 from 'd3';
+import { select, type Selection } from 'd3-selection';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { States, TState } from '../../core/interfaces/signalk-interfaces';
@@ -69,8 +69,8 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('chargerSvg');
-  private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private layer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private svg?: Selection<SVGSVGElement, unknown, null, undefined>;
+  private layer?: Selection<SVGGElement, unknown, null, undefined>;
 
   private readonly pendingPathUpdates = new Map<string, { id: string; key: string; source: string | null; value: unknown; state: TState | null }>();
   private pathBatchTimerId: number | null = null;
@@ -240,7 +240,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   }
 
   private initializeSvg(): void {
-    this.svg = d3.select(this.svgRef().nativeElement);
+    this.svg = select(this.svgRef().nativeElement);
     this.svg
       .attr('viewBox', `0 0 ${WidgetChargerComponent.VIEWBOX_WIDTH} ${WidgetChargerComponent.CARD_HEIGHT}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
@@ -703,7 +703,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
     chargerTemperature.append('tspan').attr('class', 'temperature-metric-value');
     chargerTemperature.append('tspan').attr('class', 'temperature-metric-unit');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; id: string; charger: ChargerSnapshot; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as Selection<SVGGElement, { key: string; id: string; charger: ChargerSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
     merged.select('g.charger-display-group')
@@ -722,7 +722,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
               ? 'var(--kip-zone-alarm-color)'
               : snapshot.widgetColors.color;
 
-        const shapeGroup = d3.select(nodes[_index]);
+        const shapeGroup = select(nodes[_index]);
         shapeGroup.select('path.charger-shape-bulk')
           .attr('fill', this.isShapeMode(mode, 'bulk') || this.isShapeMode(mode, 'boost') || isPowerSupply ? fillOnColor : fillOffColor)
           .attr('stroke', strokeColor);

@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import * as d3 from 'd3';
+import { select, type Selection } from 'd3-selection';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import type { ITheme } from '../../core/services/app-service';
@@ -73,8 +73,8 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('inverterSvg');
-  private svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private layer?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private svg?: Selection<SVGSVGElement, unknown, null, undefined>;
+  private layer?: Selection<SVGGElement, unknown, null, undefined>;
 
   private readonly pendingPathUpdates = new Map<string, { id: string; key: string; value: unknown; state: TState | null }>();
   private pathBatchTimerId: number | null = null;
@@ -246,7 +246,7 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   }
 
   private initializeSvg(): void {
-    this.svg = d3.select(this.svgRef().nativeElement);
+    this.svg = select(this.svgRef().nativeElement);
     this.svg
       .attr('viewBox', `0 0 ${WidgetInverterComponent.VIEWBOX_WIDTH} ${WidgetInverterComponent.CARD_HEIGHT}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
@@ -567,7 +567,7 @@ export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
     enter.append('text').attr('class', 'inverter-metrics-1');
     enter.append('text').attr('class', 'inverter-metrics-2');
 
-    const merged = enter.merge(selection as d3.Selection<SVGGElement, { key: string; inverter: InverterSnapshot; y: number }, SVGGElement, unknown>);
+    const merged = enter.merge(selection as Selection<SVGGElement, { key: string; inverter: InverterSnapshot; y: number }, SVGGElement, unknown>);
 
     merged.attr('transform', item => `translate(0, ${item.y})`);
 

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { BehaviorSubject } from 'rxjs';
 import { IDynamicControl } from '../../core/interfaces/widgets-interface';
 
 import { PathControlConfigComponent } from './path-control-config.component';
@@ -16,7 +17,18 @@ describe('PathControlConfigComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PathControlConfigComponent],
       providers: [
-        { provide: SignalKConnectionService, useValue: { skServerVersion: '2.14.0' } },
+        {
+          // Real AuthenticationService/StorageService get pulled in via the DI HTTP interceptor and
+          // subscribe to these streams, so mirror the global connection stub (plus skServerVersion).
+          provide: SignalKConnectionService,
+          useValue: {
+            skServerVersion: '2.14.0',
+            serverServiceEndpoint$: new BehaviorSubject({ operation: 0, httpServiceUrl: '', WsServiceUrl: '', subscribeAll: false }),
+            serverVersion$: new BehaviorSubject(null),
+            signalKURL: { url: 'http://localhost' },
+            getServiceEndpointStatusAsO(): unknown { return this.serverServiceEndpoint$.asObservable(); }
+          }
+        },
         {
           provide: DataService,
           useValue: {
