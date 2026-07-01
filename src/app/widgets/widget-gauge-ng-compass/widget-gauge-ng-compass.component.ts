@@ -6,6 +6,7 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
+import { gaugeAnimationDurationMs } from '../../core/utils/gauge-animation.util';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -233,7 +234,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
     else {
       g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = true;
     }
-    g.animateOnInit = false; g.animation = this.animationEnabled(); g.animatedValue = this.animationEnabled(); g.animationRule = 'linear'; g.animationDuration = (gaugePathConfig?.sampleTime ?? 500) - 50;
+    g.animateOnInit = false; g.animation = this.animationEnabled(); g.animatedValue = this.animationEnabled(); g.animationRule = 'linear'; g.animationDuration = gaugeAnimationDurationMs(gaugePathConfig?.sampleTime ?? 500);
     // Colors (RGBA unsupported -> convert)
     const palette = getColors(cfg.color ?? 'contrast', theme);
     const dim = rgbaToHex(palette.dim);
