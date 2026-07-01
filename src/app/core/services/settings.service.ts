@@ -145,7 +145,9 @@ export class SettingsService {
    * @memberof SettingsService
    */
   public loadConfigFromLocalStorage(type: string) {
-    let config = JSON.parse(localStorage.getItem(type) ?? '');
+    // A missing key returns null; JSON.parse('') would throw, so fall back to the string 'null'
+    // which parses to null and triggers the default-loading branch below (the intended behavior).
+    let config = JSON.parse(localStorage.getItem(type) ?? 'null');
 
     if (config === null) {
       console.log(`[AppSettings Service] Error loading ${type} config. Force loading ${type} defaults`);

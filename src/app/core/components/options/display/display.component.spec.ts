@@ -31,6 +31,7 @@ class ToastServiceMock {
 }
 
 class SettingsServiceMock {
+    public getDisablePathValidation() { return false; }
     public getNightModeBrightness() { return 0.27; }
     public getAutoNightMode() { return false; }
     public getThemeName() { return ''; }

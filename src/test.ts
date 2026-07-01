@@ -4,6 +4,29 @@ import { cwd } from 'node:process';
 // Mark global test flag before anything else so app code can detect test context
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).__KIP_TEST__ = true;
+
+// jsdom in this unit-test runner ships WITHOUT Web Storage, so `localStorage`/`sessionStorage`
+// are undefined. Any service that reads localStorage in its constructor (AuthenticationService,
+// SettingsService, StorageService, …) throws "Cannot read properties of undefined (reading
+// 'getItem')" and every spec that builds that real service fails. Provide an in-memory polyfill.
+if (typeof globalThis.localStorage === 'undefined') {
+  class MemoryStorage implements Storage {
+    private store = new Map<string, string>();
+    get length(): number { return this.store.size; }
+    clear(): void { this.store.clear(); }
+    getItem(key: string): string | null { return this.store.has(key) ? this.store.get(key)! : null; }
+    key(index: number): string | null { return Array.from(this.store.keys())[index] ?? null; }
+    removeItem(key: string): void { this.store.delete(key); }
+    setItem(key: string, value: string): void { this.store.set(key, String(value)); }
+  }
+  for (const name of ['localStorage', 'sessionStorage']) {
+    const value = new MemoryStorage();
+    Object.defineProperty(globalThis, name, { configurable: true, value });
+    if (typeof window !== 'undefined') {
+      Object.defineProperty(window, name, { configurable: true, value });
+    }
+  }
+}
 // Neutralize hard navigation that break Karma connection
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loc: any = window.location;
@@ -438,6 +461,8 @@ class SettingsServiceStub {
   public getNightModeBrightness(): number { return this.nightModeBrightnessSubject.value; }
   public getNotificationServiceConfigAsO(): Observable<import('./app/core/interfaces/app-settings.interfaces').INotificationConfig> { return this._notificationConfig.asObservable(); }
   public getNotificationConfig(): import('./app/core/interfaces/app-settings.interfaces').INotificationConfig { return this._notificationConfig.value; }
+  // Used by SettingsDisplayComponent at field init (model<boolean>(this.settings.getDisablePathValidation())).
+  public getDisablePathValidation(): boolean { return false; }
 }
 
 // Lightweight runtime directive stub so components can inject it in tests
