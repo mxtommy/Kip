@@ -54,6 +54,26 @@ const typeFromUnits = (units: string): string => {
 };
 
 /**
+ * Builds an {@link IPathData} whose `timestamp` Date is created lazily and memoized on first
+ * access. This runs on the hot path (once per delta per registered path), and the large majority
+ * of consumers (numeric gauges, charts, text) only ever read `value` and never touch `timestamp`,
+ * so deferring the `new Date(...)` avoids a short-lived allocation per delta and the GC pressure it
+ * causes over long sessions on low-power devices. The public `Date | null` contract is preserved.
+ */
+const buildPathData = (value: unknown, rawTimestamp: string | number | Date | null | undefined): IPathData => {
+  let cached: Date | null | undefined;
+  return {
+    value,
+    get timestamp(): Date | null {
+      if (cached === undefined) {
+        cached = rawTimestamp ? new Date(rawTimestamp) : null;
+      }
+      return cached;
+    }
+  };
+};
+
+/**
  * The `IPathRegistration` interface represents a registration object used to track a path's Subjects.
  * Each registration is used to share the same Subject with multiple Observers.
  * The `subscribePath()` and `unsubscribePath()` methods return the registration's subject as an Observable.
@@ -441,11 +461,7 @@ export class DataService implements OnDestroy {
     // Update path register Subjects with new data
     const pathRegisterItems = this._pathRegisterByPath.get(updatePath) ?? [];
     if (pathRegisterItems.length) {
-      const pathData: IPathData = {
-        value: pathItem.pathValue,
-        timestamp: pathItem.pathTimestamp ? new Date(pathItem.pathTimestamp) : null
-      };
-
+      const pathData = buildPathData(pathItem.pathValue, pathItem.pathTimestamp);
       const defaultSource = pathRegisterItems.find(item => item.source === "default");
       if (defaultSource) {
         defaultSource._pathData$.next(pathData);
@@ -656,10 +672,7 @@ export class DataService implements OnDestroy {
     const timestamp = useDefault ? pathItem.pathTimestamp : pathItem.sources?.[source]?.sourceTimestamp ?? null;
 
     return {
-      data: {
-        value,
-        timestamp: timestamp ? new Date(timestamp) : null
-      },
+      data: buildPathData(value, timestamp),
       state: pathItem.state || States.Normal
     };
   }
