@@ -244,3 +244,43 @@ describe('AisProcessingService target eviction (bounds unbounded growth)', () =>
     expect(internals().tracks.size).toBe(1);
   });
 });
+
+/**
+ * Own-ship updates used to set the `ownShip` signal (a brand-new object) on every
+ * self.navigation.* delta with no throttle/equality guard. The radar render effect
+ * depends on ownShip(), so a moving/anchored vessel with a streaming compass drove
+ * a full O(targets) re-render per fix. These tests pin the throttle + value guard.
+ */
+describe('AisProcessingService own-ship throttling', () => {
+  let stream$: Subject<IPathUpdateWithPath>;
+  let service: AisProcessingService;
+
+  function push(fullPath: string, value: unknown): void {
+    stream$.next({ path: fullPath, update: { data: { value, timestamp: new Date('2026-06-24T00:00:00Z') }, state: 'normal' } } as IPathUpdateWithPath);
+    vi.advanceTimersByTime(300); // > 250ms throttle, so the throttled flush fires
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    stream$ = new Subject<IPathUpdateWithPath>();
+    TestBed.configureTestingModule({
+      providers: [AisProcessingService, { provide: DataService, useValue: { subscribePathTree: () => stream$.asObservable() } as Partial<DataService> }]
+    });
+    service = TestBed.inject(AisProcessingService);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('does not emit a new ownShip object when the value is unchanged', () => {
+    push('self.navigation.headingTrue', 1.5);
+    const ref = service.ownShip();
+    expect(ref.headingTrue).toBe(1.5);
+    push('self.navigation.headingTrue', 1.5); // identical fix
+    expect(service.ownShip()).toBe(ref);      // no redundant emission => stable reference
+  });
+
+  it('emits an updated ownShip when the value changes', () => {
+    push('self.navigation.headingTrue', 1.5);
+    push('self.navigation.headingTrue', 2.0);
+    expect(service.ownShip().headingTrue).toBe(2.0);
+  });
+});
