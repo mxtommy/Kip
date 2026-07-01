@@ -183,3 +183,64 @@ describe('AisProcessingService applyAisUpdate dispatch', () => {
     expect(track!.ais.status).toBe('confirmed');
   });
 });
+
+/**
+ * Eviction bounds unbounded target growth (the "unresponsive after a while"
+ * freeze): many Signal K setups never send an explicit `status: 'remove'`, so
+ * every distinct MMSI ever heard used to accumulate for the app lifetime,
+ * making every flush + radar render O(targets) and heavier over uptime.
+ */
+describe('AisProcessingService target eviction (bounds unbounded growth)', () => {
+  let stream$: Subject<IPathUpdateWithPath>;
+  let service: AisProcessingService;
+  const EVENT_TS = new Date('2026-06-24T00:00:00Z').getTime();
+
+  function makeEvent(fullPath: string, value: unknown): IPathUpdateWithPath {
+    return { path: fullPath, update: { data: { value, timestamp: new Date(EVENT_TS) }, state: 'normal' } } as IPathUpdateWithPath;
+  }
+  function push(fullPath: string, value: unknown): void {
+    stream$.next(makeEvent(fullPath, value));
+    vi.advanceTimersByTime(300);
+  }
+  const internals = () => service as unknown as {
+    tracks: Map<string, unknown>;
+    contextIndex: Map<string, string>;
+    mmsiIndex: Map<string, Set<string>>;
+    maxTargets: number;
+    evictStaleTracks: (nowMs: number) => void;
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    stream$ = new Subject<IPathUpdateWithPath>();
+    TestBed.configureTestingModule({
+      providers: [AisProcessingService, { provide: DataService, useValue: { subscribePathTree: () => stream$.asObservable() } as Partial<DataService> }]
+    });
+    service = TestBed.inject(AisProcessingService);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('caps the retained track set at maxTargets, evicting the oldest, and prunes the indexes', () => {
+    internals().maxTargets = 5;
+    for (let i = 0; i < 12; i++) {
+      push(`vessels.urn:mrn:imo:mmsi:${100000000 + i}.navigation.position.latitude`, 10 + i * 0.001);
+    }
+    expect(internals().tracks.size).toBe(5);
+    // indexes must not leak entries for evicted tracks
+    expect(internals().contextIndex.size).toBe(5);
+  });
+
+  it('evicts tracks not updated within the TTL when the sweep runs', () => {
+    push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
+    expect(internals().tracks.size).toBe(1);
+    // 11 minutes after the last update (default TTL is 10 min) -> evicted
+    internals().evictStaleTracks(EVENT_TS + 11 * 60 * 1000);
+    expect(internals().tracks.size).toBe(0);
+  });
+
+  it('keeps tracks that were updated within the TTL', () => {
+    push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
+    internals().evictStaleTracks(EVENT_TS + 60 * 1000); // 1 min later, within TTL
+    expect(internals().tracks.size).toBe(1);
+  });
+});
