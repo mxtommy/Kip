@@ -146,6 +146,8 @@ export class AisProcessingService {
   private maxTargets = MAX_TARGETS;
   private targetTtlMs = TARGET_TTL_MS;
   private readonly targetsDirty$ = new Subject<void>();
+  private readonly ownShipDirty$ = new Subject<void>();
+  private pendingOwnShip: OwnShipState = {};
 
   private readonly _targets = signal<AisTrack[]>([]);
   private readonly _ownShip = signal<OwnShipState>({});
@@ -192,6 +194,12 @@ export class AisProcessingService {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.evictStaleTracks(Date.now()));
 
+    // Coalesce own-ship updates to the target cadence and only push the signal
+    // when a value actually changed, so the radar doesn't do a full re-render on
+    // every raw GPS/compass fix.
+    this.ownShipDirty$
+      .pipe(throttleTime(THROTTLE_MS, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.flushOwnShip());
   }
 
   private handleAisTreeUpdate(event: IPathUpdateWithPath): void {
@@ -241,7 +249,7 @@ export class AisProcessingService {
   }
 
   private applyOwnShipUpdate(path: string, value: unknown): void {
-    const next = { ...this._ownShip() } as OwnShipState;
+    const next = { ...this.pendingOwnShip } as OwnShipState;
     const position = this.readPositionValue(value);
 
     switch (path) {
@@ -277,7 +285,21 @@ export class AisProcessingService {
         return;
     }
 
-    this._ownShip.set(next);
+    this.pendingOwnShip = next;
+    this.ownShipDirty$.next();
+  }
+
+  private flushOwnShip(): void {
+    if (!this.ownShipChanged(this._ownShip(), this.pendingOwnShip)) return;
+    this._ownShip.set(this.pendingOwnShip);
+  }
+
+  private ownShipChanged(a: OwnShipState, b: OwnShipState): boolean {
+    return a.headingTrue !== b.headingTrue
+      || a.courseOverGroundTrue !== b.courseOverGroundTrue
+      || a.speedOverGround !== b.speedOverGround
+      || a.position?.latitude !== b.position?.latitude
+      || a.position?.longitude !== b.position?.longitude;
   }
 
   private applyAisUpdate(update: AisUpdate): void {
