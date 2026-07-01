@@ -14,6 +14,9 @@ export class CanvasService {
   private observedCanvases = new Map<HTMLCanvasElement, { autoRelease?: boolean }>();
   private dprMediaQuery: MediaQueryList | null = null;
   private resizeCallbacks = new WeakMap<HTMLCanvasElement, (w: number, h: number) => void>();
+  /** Canvases whose size changed, awaiting a time-sliced resize flush. */
+  private pendingResize = new Map<HTMLCanvasElement, DOMRectReadOnly>();
+  private resizeRafId: number | null = null;
   /**
    * Memo of optimal font sizes keyed by (text, rounded maxWidth, rounded maxHeight, fontWeight).
    * The binary search below runs a handful of measureText() calls on every value redraw of the
@@ -82,49 +85,14 @@ export class CanvasService {
         console.log('[CanvasService] Creating shared ResizeObserver for all canvases');
       }
       this.sharedResizeObserver = new ResizeObserver(entries => {
-        if (this.debug) {
-          console.log('[CanvasService] Shared ResizeObserver callback fired', entries.map(entry => {
-            const target = entry.target as HTMLCanvasElement;
-            const parent = target.parentElement;
-            return {
-              tag: target.tagName,
-              id: target.id,
-              class: target.className,
-              parent: parent ? {
-                tag: parent.tagName,
-                class: parent.className,
-                id: parent.id
-              } : null,
-              contentRect: entry.contentRect,
-              style: { width: target.style.width, height: target.style.height },
-              backingStore: { width: target.width, height: target.height }
-            };
-          }));
-        }
+        // Coalesce entries and process them time-sliced across animation frames
+        // (see flushResizes) so a fullscreen / grid-relayout storm that resizes
+        // every canvas at once can't become a single long task that blocks input
+        // (including the exit-fullscreen gesture).
         for (const entry of entries) {
-          const target = entry.target as HTMLCanvasElement;
-          if (this.debug) {
-            const parent = target.parentElement;
-            console.log('[CanvasService] Shared ResizeObserver entry (detailed)', {
-              tag: target.tagName,
-              id: target.id,
-              class: target.className,
-              parent: parent ? {
-                tag: parent.tagName,
-                class: parent.className,
-                id: parent.id
-              } : null,
-              contentRect: entry.contentRect,
-              style: { width: target.style.width, height: target.style.height },
-              backingStore: { width: target.width, height: target.height }
-            });
-          }
-          this.setHighDPISize(target, entry.contentRect);
-          const cb = this.resizeCallbacks.get(target);
-          if (cb) {
-            cb(Math.round(entry.contentRect.width), Math.round(entry.contentRect.height));
-          }
+          this.pendingResize.set(entry.target as HTMLCanvasElement, entry.contentRect);
         }
+        this.scheduleResizeFlush();
       });
     }
     this.sharedResizeObserver.observe(canvas);
@@ -252,12 +220,48 @@ export class CanvasService {
   * drawing into the 2D context may require scaling (the service handles that
   * for offscreen canvases by calling `setTransform` or `scale`).
    */
+  private scheduleResizeFlush(): void {
+    if (this.resizeRafId !== null) return;
+    this.resizeRafId = requestAnimationFrame(() => this.flushResizes());
+  }
+
+  /**
+   * Apply pending canvas resizes within a per-frame time budget, deferring any
+   * remainder to the next animation frame. Bounds the worst-case task so a
+   * many-canvas resize storm never blocks the main thread in one shot.
+   */
+  private flushResizes(): void {
+    this.resizeRafId = null;
+    const budgetMs = 8;
+    const start = performance.now();
+    for (const [canvas, rect] of this.pendingResize) {
+      this.pendingResize.delete(canvas);
+      this.setHighDPISize(canvas, rect);
+      const cb = this.resizeCallbacks.get(canvas);
+      if (cb) cb(Math.round(rect.width), Math.round(rect.height));
+      if (this.pendingResize.size > 0 && performance.now() - start > budgetMs) {
+        this.scheduleResizeFlush();
+        return;
+      }
+    }
+  }
+
   public setHighDPISize(canvas: HTMLCanvasElement, parentContainer: DOMRectReadOnly): void {
     const cssWidth = Math.round(parentContainer.width);
     const cssHeight = Math.round(parentContainer.height);
+    const devWidth = Math.round(cssWidth * this.scaleFactor);
+    const devHeight = Math.round(cssHeight * this.scaleFactor);
 
-    canvas.width = Math.round(cssWidth * this.scaleFactor);
-    canvas.height = Math.round(cssHeight * this.scaleFactor);
+    // Reassigning canvas.width/height always reallocates and clears the backing
+    // store even when the value is identical. Skip it (and the transform reset)
+    // when the device-pixel size is unchanged — avoids most of the redundant
+    // work during resize/fullscreen storms and sub-pixel jitter.
+    if (canvas.width === devWidth && canvas.height === devHeight) {
+      return;
+    }
+
+    canvas.width = devWidth;
+    canvas.height = devHeight;
 
     canvas.style.width = `${cssWidth}px`;
     canvas.style.height = `${cssHeight}px`;
