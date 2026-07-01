@@ -10,7 +10,7 @@ import { WidgetsListComponent } from '../components/widgets-list/widgets-list.co
 import { UpgradeConfigComponent } from '../components/upgrade-config/upgrade-config.component';
 import { DialogDashboardPageEditorComponent } from '../components/dialog-dashboard-page-editor/dialog-dashboard-page-editor.component';
 import { DialogAisTargetComponent } from '../../widgets/widget-ais-radar/dialog-ais-target/dialog-ais-target.component';
-import { IWidgetHistoryChartDialogData, WidgetHistoryChartDialogComponent } from '../components/widget-history-chart-dialog/widget-history-chart-dialog.component';
+import type { IWidgetHistoryChartDialogData, WidgetHistoryChartDialogComponent } from '../components/widget-history-chart-dialog/widget-history-chart-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -104,12 +104,16 @@ export class DialogService {
    * Opens a history-only chart dialog for a widget.
    *
    * @param {IWidgetHistoryChartDialogData} data Widget history dialog payload.
-   * @returns {MatDialogRef<WidgetHistoryChartDialogComponent>} Dialog reference.
+   * @returns {Promise<MatDialogRef<WidgetHistoryChartDialogComponent>>} Dialog reference.
+   *
+   * @remarks The history chart dialog (and its chart.js dependency) is lazy-loaded so it stays out
+   * of the initial bundle and is only fetched the first time a user opens widget history.
    *
    * @example
-   * const ref = dialogService.openWidgetHistoryDialog({ title: 'History', widget, seriesDefinitions });
+   * const ref = await dialogService.openWidgetHistoryDialog({ title: 'History', widget, seriesDefinitions });
    */
-  public openWidgetHistoryDialog(data: IWidgetHistoryChartDialogData): MatDialogRef<WidgetHistoryChartDialogComponent> {
+  public async openWidgetHistoryDialog(data: IWidgetHistoryChartDialogData): Promise<MatDialogRef<WidgetHistoryChartDialogComponent>> {
+    const { WidgetHistoryChartDialogComponent } = await import('../components/widget-history-chart-dialog/widget-history-chart-dialog.component');
     return this.dialog.open(WidgetHistoryChartDialogComponent,
       {
         data,

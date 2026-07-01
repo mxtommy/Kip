@@ -1,41 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { Type } from '@angular/core';
 import { PluginConfigClientService } from './plugin-config-client.service';
-import { WidgetNumericComponent } from '../../widgets/widget-numeric/widget-numeric.component';
-import { WidgetTextComponent } from '../../widgets/widget-text/widget-text.component';
-import { WidgetWindTrendsChartComponent } from '../../widgets/widget-windtrends-chart/widget-windtrends-chart.component';
-import { WidgetWindComponent } from '../../widgets/widget-windsteer/widget-windsteer.component';
-import { WidgetTutorialComponent } from '../../widgets/widget-tutorial/widget-tutorial.component';
-import { WidgetSliderComponent } from '../../widgets/widget-slider/widget-slider.component';
-import { WidgetSimpleLinearComponent } from '../../widgets/widget-simple-linear/widget-simple-linear.component';
-import { WidgetRacesteerComponent } from '../../widgets/widget-racesteer/widget-racesteer.component';
-import { WidgetRacerTimerComponent } from '../../widgets/widget-racer-timer/widget-racer-timer.component';
-import { WidgetRacerLineComponent } from '../../widgets/widget-racer-line/widget-racer-line.component';
-import { WidgetRaceTimerComponent } from '../../widgets/widget-race-timer/widget-race-timer.component';
-import { WidgetPositionComponent } from '../../widgets/widget-position/widget-position.component';
-import { WidgetAisRadarComponent } from '../../widgets/widget-ais-radar/widget-ais-radar.component';
-import { WidgetLabelComponent } from '../../widgets/widget-label/widget-label.component';
-import { WidgetIframeComponent } from '../../widgets/widget-iframe/widget-iframe.component';
-import { WidgetHorizonComponent } from '../../widgets/widget-horizon/widget-horizon.component';
-import { WidgetHeelGaugeComponent } from '../../widgets/widget-heel-gauge/widget-heel-gauge.component';
-import { WidgetSteelGaugeComponent } from '../../widgets/widget-gauge-steel/widget-gauge-steel.component';
-import { WidgetGaugeNgRadialComponent } from '../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component';
-import { WidgetGaugeNgLinearComponent } from '../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component';
-import { WidgetGaugeNgCompassComponent } from '../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component';
-import { WidgetFreeboardskComponent } from '../../widgets/widget-freeboardsk/widget-freeboardsk.component';
-import { WidgetAnchorAlarmComponent } from '../../widgets/widget-anchor-alarm/widget-anchor-alarm.component';
-import { WidgetDatetimeComponent } from '../../widgets/widget-datetime/widget-datetime.component';
-import { WidgetDataChartComponent } from '../../widgets/widget-data-chart/widget-data-chart.component';
-import { WidgetBooleanSwitchComponent } from '../../widgets/widget-boolean-switch/widget-boolean-switch.component';
-import { WidgetMultiStateSwitchComponent } from '../../widgets/widget-multi-state-switch/widget-multi-state-switch.component';
-import { WidgetZonesStatePanelComponent } from '../../widgets/widget-zones-state-panel/widget-zones-state-panel.component';
-import { WidgetAutopilotComponent } from '../../widgets/widget-autopilot/widget-autopilot.component';
-import { WidgetBmsComponent } from '../../widgets/widget-bms/widget-bms.component';
-import { WidgetSolarChargerComponent } from '../../widgets/widget-solar-charger/widget-solar-charger.component';
-import { WidgetChargerComponent } from '../../widgets/widget-charger/widget-charger.component';
-import { WidgetInverterComponent } from '../../widgets/widget-inverter/widget-inverter.component';
-import { WidgetAlternatorComponent } from '../../widgets/widget-alternator/widget-alternator.component';
-import { WidgetAcComponent } from '../../widgets/widget-ac/widget-ac.component';
+import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
+// Widget view components are NOT imported statically. They are loaded on demand through the lazy
+// loader map below so each widget's code (and its heavy vendor deps: chart.js, d3, canvas-gauges,
+// etc.) ships in its own chunk and is only downloaded when that widget type is actually placed on a
+// dashboard. See `_componentTypeMap` and `getComponentType()`.
 
 export const WIDGET_CATEGORIES = ['Core', 'Gauge', 'Component', 'Racing'] as const;
 export type TWidgetCategories = typeof WIDGET_CATEGORIES[number];
@@ -138,45 +108,49 @@ export class WidgetService {
   private readonly _pluginConfig = inject(PluginConfigClientService);
   private readonly _widgetCategories = [...WIDGET_CATEGORIES];
   // Cache for selector -> component Type resolutions to avoid repeated definition scans
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly _componentTypeCache = new Map<string, Type<any> | undefined>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly _componentTypeMap: Record<string, Type<any>> = {
-    WidgetNumericComponent: WidgetNumericComponent,
-    WidgetTextComponent: WidgetTextComponent,
-    WidgetWindTrendsChartComponent: WidgetWindTrendsChartComponent,
-    WidgetWindComponent: WidgetWindComponent,
-    WidgetTutorialComponent: WidgetTutorialComponent,
-    WidgetSliderComponent: WidgetSliderComponent,
-    WidgetSimpleLinearComponent: WidgetSimpleLinearComponent,
-    WidgetRacesteerComponent: WidgetRacesteerComponent,
-    WidgetRacerTimerComponent: WidgetRacerTimerComponent,
-    WidgetRacerLineComponent: WidgetRacerLineComponent,
-    WidgetRaceTimerComponent: WidgetRaceTimerComponent,
-    WidgetPositionComponent: WidgetPositionComponent,
-    WidgetAisRadarComponent: WidgetAisRadarComponent,
-    WidgetLabelComponent: WidgetLabelComponent,
-    WidgetIframeComponent: WidgetIframeComponent,
-    WidgetHorizonComponent: WidgetHorizonComponent,
-    WidgetHeelGaugeComponent: WidgetHeelGaugeComponent,
-    WidgetSteelGaugeComponent: WidgetSteelGaugeComponent,
-    WidgetGaugeNgRadialComponent: WidgetGaugeNgRadialComponent,
-    WidgetGaugeNgLinearComponent: WidgetGaugeNgLinearComponent,
-    WidgetGaugeNgCompassComponent: WidgetGaugeNgCompassComponent,
-    WidgetFreeboardskComponent: WidgetFreeboardskComponent,
-    WidgetAnchorAlarmComponent: WidgetAnchorAlarmComponent,
-    WidgetDatetimeComponent: WidgetDatetimeComponent,
-    WidgetDataChartComponent: WidgetDataChartComponent,
-    WidgetBooleanSwitchComponent: WidgetBooleanSwitchComponent,
-    WidgetMultiStateSwitchComponent: WidgetMultiStateSwitchComponent,
-    WidgetZonesStatePanelComponent: WidgetZonesStatePanelComponent,
-    WidgetAutopilotComponent: WidgetAutopilotComponent,
-    WidgetBmsComponent: WidgetBmsComponent,
-    WidgetSolarChargerComponent: WidgetSolarChargerComponent,
-    WidgetChargerComponent: WidgetChargerComponent,
-    WidgetInverterComponent: WidgetInverterComponent,
-    WidgetAlternatorComponent: WidgetAlternatorComponent,
-    WidgetAcComponent: WidgetAcComponent
+  // Resolved component-type promises, deduped per selector so repeat/concurrent lookups reuse one import().
+  private readonly _componentTypePromise = new Map<string, Promise<Type<unknown> | undefined>>();
+  // Static DEFAULT_CONFIG captured when a widget loads, so config-only consumers (historical-series
+  // reconciliation) can read it synchronously without forcing a chunk download.
+  private readonly _defaultConfigCache = new Map<string, IWidgetSvcConfig | undefined>();
+  // Lazy loaders: each value dynamically imports its widget component on first use, so the widget's
+  // code + vendor deps live in a separate chunk fetched only when that widget type is instantiated.
+  private readonly _componentTypeMap: Record<string, () => Promise<Type<unknown>>> = {
+    WidgetNumericComponent: () => import('../../widgets/widget-numeric/widget-numeric.component').then(m => m.WidgetNumericComponent),
+    WidgetTextComponent: () => import('../../widgets/widget-text/widget-text.component').then(m => m.WidgetTextComponent),
+    WidgetWindTrendsChartComponent: () => import('../../widgets/widget-windtrends-chart/widget-windtrends-chart.component').then(m => m.WidgetWindTrendsChartComponent),
+    WidgetWindComponent: () => import('../../widgets/widget-windsteer/widget-windsteer.component').then(m => m.WidgetWindComponent),
+    WidgetTutorialComponent: () => import('../../widgets/widget-tutorial/widget-tutorial.component').then(m => m.WidgetTutorialComponent),
+    WidgetSliderComponent: () => import('../../widgets/widget-slider/widget-slider.component').then(m => m.WidgetSliderComponent),
+    WidgetSimpleLinearComponent: () => import('../../widgets/widget-simple-linear/widget-simple-linear.component').then(m => m.WidgetSimpleLinearComponent),
+    WidgetRacesteerComponent: () => import('../../widgets/widget-racesteer/widget-racesteer.component').then(m => m.WidgetRacesteerComponent),
+    WidgetRacerTimerComponent: () => import('../../widgets/widget-racer-timer/widget-racer-timer.component').then(m => m.WidgetRacerTimerComponent),
+    WidgetRacerLineComponent: () => import('../../widgets/widget-racer-line/widget-racer-line.component').then(m => m.WidgetRacerLineComponent),
+    WidgetRaceTimerComponent: () => import('../../widgets/widget-race-timer/widget-race-timer.component').then(m => m.WidgetRaceTimerComponent),
+    WidgetPositionComponent: () => import('../../widgets/widget-position/widget-position.component').then(m => m.WidgetPositionComponent),
+    WidgetAisRadarComponent: () => import('../../widgets/widget-ais-radar/widget-ais-radar.component').then(m => m.WidgetAisRadarComponent),
+    WidgetLabelComponent: () => import('../../widgets/widget-label/widget-label.component').then(m => m.WidgetLabelComponent),
+    WidgetIframeComponent: () => import('../../widgets/widget-iframe/widget-iframe.component').then(m => m.WidgetIframeComponent),
+    WidgetHorizonComponent: () => import('../../widgets/widget-horizon/widget-horizon.component').then(m => m.WidgetHorizonComponent),
+    WidgetHeelGaugeComponent: () => import('../../widgets/widget-heel-gauge/widget-heel-gauge.component').then(m => m.WidgetHeelGaugeComponent),
+    WidgetSteelGaugeComponent: () => import('../../widgets/widget-gauge-steel/widget-gauge-steel.component').then(m => m.WidgetSteelGaugeComponent),
+    WidgetGaugeNgRadialComponent: () => import('../../widgets/widget-gauge-ng-radial/widget-gauge-ng-radial.component').then(m => m.WidgetGaugeNgRadialComponent),
+    WidgetGaugeNgLinearComponent: () => import('../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component').then(m => m.WidgetGaugeNgLinearComponent),
+    WidgetGaugeNgCompassComponent: () => import('../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component').then(m => m.WidgetGaugeNgCompassComponent),
+    WidgetFreeboardskComponent: () => import('../../widgets/widget-freeboardsk/widget-freeboardsk.component').then(m => m.WidgetFreeboardskComponent),
+    WidgetAnchorAlarmComponent: () => import('../../widgets/widget-anchor-alarm/widget-anchor-alarm.component').then(m => m.WidgetAnchorAlarmComponent),
+    WidgetDatetimeComponent: () => import('../../widgets/widget-datetime/widget-datetime.component').then(m => m.WidgetDatetimeComponent),
+    WidgetDataChartComponent: () => import('../../widgets/widget-data-chart/widget-data-chart.component').then(m => m.WidgetDataChartComponent),
+    WidgetBooleanSwitchComponent: () => import('../../widgets/widget-boolean-switch/widget-boolean-switch.component').then(m => m.WidgetBooleanSwitchComponent),
+    WidgetMultiStateSwitchComponent: () => import('../../widgets/widget-multi-state-switch/widget-multi-state-switch.component').then(m => m.WidgetMultiStateSwitchComponent),
+    WidgetZonesStatePanelComponent: () => import('../../widgets/widget-zones-state-panel/widget-zones-state-panel.component').then(m => m.WidgetZonesStatePanelComponent),
+    WidgetAutopilotComponent: () => import('../../widgets/widget-autopilot/widget-autopilot.component').then(m => m.WidgetAutopilotComponent),
+    WidgetBmsComponent: () => import('../../widgets/widget-bms/widget-bms.component').then(m => m.WidgetBmsComponent),
+    WidgetSolarChargerComponent: () => import('../../widgets/widget-solar-charger/widget-solar-charger.component').then(m => m.WidgetSolarChargerComponent),
+    WidgetChargerComponent: () => import('../../widgets/widget-charger/widget-charger.component').then(m => m.WidgetChargerComponent),
+    WidgetInverterComponent: () => import('../../widgets/widget-inverter/widget-inverter.component').then(m => m.WidgetInverterComponent),
+    WidgetAlternatorComponent: () => import('../../widgets/widget-alternator/widget-alternator.component').then(m => m.WidgetAlternatorComponent),
+    WidgetAcComponent: () => import('../../widgets/widget-ac/widget-ac.component').then(m => m.WidgetAcComponent)
 };
   private readonly _widgetDefinition: readonly WidgetDescription[] = [
     {
@@ -647,41 +621,67 @@ export class WidgetService {
   }
 
   /**
-   * Resolves a widget's runtime component Type from its selector.
+   * Resolves a widget's runtime component Type from its selector by dynamically importing the
+   * widget's chunk on demand.
    *
    * Flow:
    *  1. Locate the widget definition whose `selector` matches the provided string.
-   *  2. Look up the definition's `componentClassName` inside `_componentTypeMap`.
-   *  3. Return the component Type if the widget has been migrated; otherwise `undefined`.
+   *  2. Look up the definition's lazy loader inside `_componentTypeMap` and `import()` it.
+   *  3. Resolve with the component Type (and cache its DEFAULT_CONFIG), or `undefined` if unknown.
    *
-   * Host2 will fall back to a safe default (currently Numeric) when `undefined` is returned.
-   * This allows incremental migration without breaking existing dashboard configs.
-   *
-   * NOTE: We intentionally keep this lightweight instead of using dynamic `import()` to
-   * preserve tree‑shaking.
+   * The returned promise is cached per selector so repeat/concurrent lookups reuse a single import.
+   * Host2 (and widget-embedded) await this before creating the child; they fall back to a safe
+   * default when it resolves `undefined`.
    *
    * @param selector Dashboard widget type / selector (e.g. `widget-numeric`).
-   * @returns Angular component Type or undefined if not yet migrated.
+   * @returns Promise resolving to the Angular component Type, or undefined if unknown / failed to load.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public getComponentType(selector: string): Type<any> | undefined {
-    // Only return cached value if it's a defined component Type; avoid sticky undefined caching
-    const cached = this._componentTypeCache.get(selector);
-    if (cached) return cached;
+  public getComponentType(selector: string): Promise<Type<unknown> | undefined> {
+    const existing = this._componentTypePromise.get(selector);
+    if (existing) return existing;
 
     const def = this._widgetDefinition.find(w => w.selector === selector);
-    if (!def) return undefined;
+    if (!def) return Promise.resolve(undefined);
 
-    const resolved = this._componentTypeMap[def.componentClassName];
-    if (!resolved) {
-      // Do NOT cache undefined so that adding a new mapping later in dev picks it up without reload
+    const loader = this._componentTypeMap[def.componentClassName];
+    if (!loader) {
       if (typeof ngDevMode !== 'undefined' && ngDevMode) {
         console.warn('[WidgetService] No component mapping for', def.componentClassName);
       }
-      return undefined;
+      return Promise.resolve(undefined);
     }
-    this._componentTypeCache.set(selector, resolved);
-    return resolved;
+
+    const promise = loader()
+      .then(componentType => {
+        // Capture the static DEFAULT_CONFIG so config-only consumers can read it without re-loading.
+        this._defaultConfigCache.set(
+          selector,
+          (componentType as { DEFAULT_CONFIG?: IWidgetSvcConfig }).DEFAULT_CONFIG
+        );
+        return componentType;
+      })
+      .catch((error: unknown) => {
+        // Drop the cached promise so a later attempt can retry the import after a transient failure.
+        this._componentTypePromise.delete(selector);
+        console.error('[WidgetService] Failed to load component for', def.componentClassName, error);
+        return undefined;
+      });
+
+    this._componentTypePromise.set(selector, promise);
+    return promise;
+  }
+
+  /**
+   * Synchronously returns a widget type's static DEFAULT_CONFIG IF its component has already been
+   * loaded (e.g. it is rendered on a dashboard). Returns `undefined` for widgets whose chunk has not
+   * been fetched yet — config-only callers should treat that as "not yet known" and fall back to the
+   * saved config rather than force a chunk download.
+   *
+   * @param selector Dashboard widget type / selector (e.g. `widget-numeric`).
+   * @returns The cached DEFAULT_CONFIG, or undefined if the component has not been loaded.
+   */
+  public getDefaultConfig(selector: string): IWidgetSvcConfig | undefined {
+    return this._defaultConfigCache.get(selector);
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, OnDestroy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
@@ -74,7 +74,7 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
  * In the parent component template use:
  *   <widget-embedded [widgetProperties]="xteWidgetProps"></widget-embedded>
  */
-export class WidgetEmbeddedComponent implements OnInit {
+export class WidgetEmbeddedComponent implements OnInit, OnDestroy {
   @Input({ required: true }) protected widgetProperties!: IWidget;
   // Mark static:true so the outlet is available during ngOnInit allowing
   // runtime initialization + child creation before the first stability check.
@@ -87,6 +87,7 @@ export class WidgetEmbeddedComponent implements OnInit {
   protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
   private childRef: ComponentRef<WidgetViewComponentBase>;
   private compType: Type<WidgetViewComponentBase>
+  private _destroyed = false;
 
   constructor() {
     effect(() => {
@@ -100,7 +101,17 @@ export class WidgetEmbeddedComponent implements OnInit {
   ngOnInit(): void {
     const type = this.widgetProperties.type;
     if (!type) return;
-    this.compType = this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    // Widget components are lazy-loaded, so resolution is async.
+    void this.loadAndCreateChild(type);
+  }
+
+  ngOnDestroy(): void {
+    this._destroyed = true;
+  }
+
+  private async loadAndCreateChild(type: string): Promise<void> {
+    this.compType = await this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    if (this._destroyed) return; // host torn down while the chunk loaded
 
     // Initialize runtime
     this._runtime?.initialize?.(undefined, this.widgetProperties.config);
@@ -110,13 +121,14 @@ export class WidgetEmbeddedComponent implements OnInit {
     this._streams?.applyStreamsConfigDiff?.(merged);
     this._meta?.applyMetaConfigDiff?.(merged);
 
-    // Create the child component BEFORE first change detection completes so its
     if (this.outlet && this.compType) {
       this.childRef = this.outlet.createComponent(this.compType);
       this.childRef.setInput('id', this.widgetProperties.uuid);
       this.childRef.setInput('type', this.widgetProperties.type);
       // Pass current theme value; ongoing updates handled by effect in ctor.
       this.childRef.setInput('theme', this.theme());
+      // Created after the import resolved (outside the initial CD pass), so render it now.
+      this.childRef.changeDetectorRef.detectChanges();
     }
   }
 }
