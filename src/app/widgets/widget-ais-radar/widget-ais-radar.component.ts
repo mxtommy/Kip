@@ -46,7 +46,7 @@ interface RenderTarget {
   x: number;
   y: number;
   heading: number;
-  status: string;
+  status: string | undefined;
   aisClass: string | undefined;
   type: string;
   iconHref: string | null;
@@ -393,7 +393,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     this.root.attr('transform', `scale(${scale})`);
 
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
-    const ringColor = getColors(cfg.color, theme).dim;
+    const ringColor = getColors(cfg.color ?? 'contrast', theme).dim;
     this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
     if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
@@ -498,7 +498,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     centerSelection.exit().remove();
 
-    const ownShipSelection = this.ownShipLayer
+    const ownShipSelection = this.ownShipLayer!
       .selectAll<SVGGElement, { size: number }>('g.radar-ownship')
       .data(showSelf ? [{ size: this.resolveOwnShipBaseSize(scale) }] : []);
 
@@ -693,8 +693,8 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       const signature = this.buildTrackSignature(track);
       let cached = this.targetCache.get(track.id);
       if (!cached || cached.signature !== signature) {
-        const distance = this.distanceNm(origin, track.position);
-        const bearing = this.ais.getBearingTrue(origin, track.position) ?? 0;
+        const distance = this.distanceNm(origin, track.position!);
+        const bearing = this.ais.getBearingTrue(origin, track.position!) ?? 0;
         const trackHeading = this.toDegreesIfRadians(this.isVesselLike(track) ? track.headingTrue : null);
         const trackCog = this.toDegreesIfRadians(this.isVesselLike(track) ? track.courseOverGroundTrue : null);
         cached = {
@@ -1109,7 +1109,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     ].join('|');
   }
 
-  private buildClassName(target: { status: string; type: string; aisClass: string | undefined; navState: string | undefined; id: string }): string {
+  private buildClassName(target: { status: string | undefined; type: string; aisClass: string | undefined; navState: string | undefined; id: string }): string {
     const classes = [
       `status-${target.status}`,
       `type-${target.type}`,
@@ -1304,10 +1304,10 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private distanceNm(a: Position, b: Position): number {
     const R = 6371e3; // meters
-    const phi1 = a.latitude * Math.PI / 180;
-    const phi2 = b.latitude * Math.PI / 180;
-    const dPhi = (b.latitude - a.latitude) * Math.PI / 180;
-    const dLambda = (b.longitude - a.longitude) * Math.PI / 180;
+    const phi1 = a.latitude! * Math.PI / 180;
+    const phi2 = b.latitude! * Math.PI / 180;
+    const dPhi = (b.latitude! - a.latitude!) * Math.PI / 180;
+    const dLambda = (b.longitude! - a.longitude!) * Math.PI / 180;
 
     const sinDP = Math.sin(dPhi / 2);
     const sinDL = Math.sin(dLambda / 2);
