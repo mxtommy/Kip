@@ -119,6 +119,13 @@ export class WidgetStreamsDirective {
     const toUnit = (val: number) => convert ? this.unitsService.convertToUnit(convert, val) : val;
 
     let data$: Observable<IPathUpdate> = base$;
+    if (suppressBootstrapNull) {
+      data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
+    }
+    // Sample the RAW stream first, then convert units AFTER sampling.
+    const initial$ = data$.pipe(take(1));
+    const sampled$ = data$.pipe(sampleTime(sample));
+    data$ = merge(initial$, sampled$);
     if (pathType === 'number') {
       data$ = data$.pipe(
         map(x => ({
@@ -130,20 +137,6 @@ export class WidgetStreamsDirective {
         } as IPathUpdate))
       );
     }
-    if (suppressBootstrapNull) {
-      // Drop only the LEADING (bootstrap) null values. Once a real value has been seen, let
-      // everything through - including a later null produced by a TTL timeout. The flag is
-      // captured here, outside the operator, so it survives the timeout/retry resubscription
-      // below; a plain skipWhile would reset on every retry and swallow the timeout null (#1069).
-      let seenNonNull = false;
-      data$ = data$.pipe(filter(x => {
-        if (x?.data?.value != null) seenNonNull = true;
-        return seenNonNull;
-      }));
-    }
-    const initial$ = data$.pipe(take(1));
-    const sampled$ = data$.pipe(sampleTime(sample));
-    data$ = merge(initial$, sampled$);
     if (enableTimeout) {
       data$ = data$.pipe(
         timeout({
