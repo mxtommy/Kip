@@ -14,10 +14,21 @@ export class CanvasService {
   private observedCanvases = new Map<HTMLCanvasElement, { autoRelease?: boolean }>();
   private dprMediaQuery: MediaQueryList | null = null;
   private resizeCallbacks = new WeakMap<HTMLCanvasElement, (w: number, h: number) => void>();
+  /**
+   * Memo of optimal font sizes keyed by (text, rounded maxWidth, rounded maxHeight, fontWeight).
+   * The binary search below runs a handful of measureText() calls on every value redraw of the
+   * numeric/text/position/race widgets, yet the geometry only changes on resize — so the result is
+   * highly repeatable. Cleared once web fonts load (fallback-font metrics differ), and bounded.
+   */
+  private readonly _fontSizeCache = new Map<string, number>();
+  private static readonly FONT_SIZE_CACHE_LIMIT = 600;
 
   constructor() {
     // Wait for font loading to complete
     this.fontsReadyPromise = this.createFontsReadyPromise();
+    // Fallback-font measurements differ from the loaded web font, so drop any sizes computed
+    // before the fonts settled; subsequent draws recompute with the correct metrics.
+    this.fontsReadyPromise.then(() => this._fontSizeCache.clear()).catch(() => this._fontSizeCache.clear());
   }
 
   private getDocumentFonts(): FontFaceSet | null {
@@ -447,6 +458,12 @@ export class CanvasService {
   * ensure the context transform so callers may pass CSS units).
    */
   public calculateOptimalFontSize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxHeight: number, fontWeight = 'normal'): number {
+    const cacheKey = `${fontWeight}|${Math.round(maxWidth)}|${Math.round(maxHeight)}|${text}`;
+    const cached = this._fontSizeCache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     let minFontSize = 1;
     let maxFontSize = maxHeight;
     let fontSize = maxFontSize;
@@ -463,6 +480,11 @@ export class CanvasService {
       }
     }
 
+    // Bound memory: a fresh value set easily caps out if every tick has a unique value string.
+    if (this._fontSizeCache.size >= CanvasService.FONT_SIZE_CACHE_LIMIT) {
+      this._fontSizeCache.clear();
+    }
+    this._fontSizeCache.set(cacheKey, maxFontSize);
     return maxFontSize;
   }
 

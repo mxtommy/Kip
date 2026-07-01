@@ -274,239 +274,244 @@ export class AisProcessingService {
       track.closestApproach = {};
     }
 
-    let removed = false;
-    const handlers: Record<string, () => void> = {
-      mmsi: () => this.applyMmsi(track, update.value),
-      name: () => { track.name = this.toStringOrUndefined(update.value); },
-      'communication.callsignVhf': () => {
+    switch (update.path) {
+      case 'mmsi':
+        this.applyMmsi(track, update.value);
+        break;
+      case 'name':
+        track.name = this.toStringOrUndefined(update.value);
+        break;
+      case 'communication.callsignVhf':
         if (this.isVesselLike(track)) {
           track.callsign = this.toStringOrUndefined(update.value);
         }
-      },
-      'navigation.destination': () => {
+        break;
+      case 'navigation.destination':
+      case 'navigation.destination.commonName':
         if (this.isVesselLike(track)) {
           track.destination = this.toStringOrUndefined(update.value);
         }
-      },
-      'navigation.destination.commonName': () => {
-        if (this.isVesselLike(track)) {
-          track.destination = this.toStringOrUndefined(update.value);
-        }
-      },
-      'navigation.destination.eta': () => {
+        break;
+      case 'navigation.destination.eta':
         if (this.isVesselLike(track)) {
           track.eta = this.toStringOrUndefined(update.value);
         }
-      },
-      'design.beam': () => {
+        break;
+      case 'design.beam':
         if (this.isVesselLike(track)) {
           track.design = { ...(track.design ?? {}), beam: this.toNumberOrUndefined(update.value) };
         }
-      },
-      'design.length.overall': () => {
+        break;
+      case 'design.length.overall':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             length: { ...(track.design?.length ?? {}), overall: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.length.hull': () => {
+        break;
+      case 'design.length.hull':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             length: { ...(track.design?.length ?? {}), hull: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.length.waterline': () => {
+        break;
+      case 'design.length.waterline':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             length: { ...(track.design?.length ?? {}), waterline: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.draft.maximum': () => {
+        break;
+      case 'design.draft.maximum':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             draft: { ...(track.design?.draft ?? {}), maximum: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.draft.minimum': () => {
+        break;
+      case 'design.draft.minimum':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             draft: { ...(track.design?.draft ?? {}), minimum: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.draft.current': () => {
+        break;
+      case 'design.draft.current':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             draft: { ...(track.design?.draft ?? {}), current: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.draft.canoe': () => {
+        break;
+      case 'design.draft.canoe':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             draft: { ...(track.design?.draft ?? {}), canoe: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'registrations.imo': () => {
+        break;
+      case 'registrations.imo':
         if (this.isVesselLike(track)) {
           track.imo = this.toStringOrUndefined(update.value);
         }
-      },
-      'navigation.courseOverGroundTrue': () => {
+        break;
+      case 'navigation.courseOverGroundTrue':
         if (this.isVesselLike(track)) {
           track.courseOverGroundTrue = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.headingTrue': () => {
+        break;
+      case 'navigation.headingTrue':
         if (this.isVesselLike(track)) {
           track.headingTrue = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.rateOfTurn': () => {
+        break;
+      case 'navigation.rateOfTurn':
         if (this.isVesselLike(track)) {
           track.rateOfTurn = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.specialManeuver': () => {
+        break;
+      case 'navigation.specialManeuver':
         if (this.isVesselLike(track)) {
           track.specialManeuver = this.toStringOrUndefined(update.value);
         }
-      },
-      'navigation.speedOverGround': () => {
+        break;
+      case 'navigation.speedOverGround':
         if (this.isVesselLike(track)) {
           track.speedOverGround = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.state': () => {
+        break;
+      case 'navigation.state':
         if (this.isVesselLike(track)) {
           track.navState = this.toStringOrUndefined(update.value);
         }
-      },
-      'sensors.ais.class': () => {
+        break;
+      case 'sensors.ais.class':
         track.ais.class = this.normalizeAisClass(update.value);
-      },
-      'sensors.ais.status': () => {
-        const status = this.normalizeAisStatus(update.value);
-        if (!status) return;
-        if (status === 'remove') {
-          this.removeTrack(track);
-          removed = true;
-          return;
+        break;
+      case 'sensors.ais.status':
+        {
+          const status = this.normalizeAisStatus(update.value);
+          if (!status) break;
+          if (status === 'remove') {
+            this.removeTrack(track);
+            return;
+          }
+          track.ais.status = status;
         }
-        track.ais.status = status;
-      },
-      'sensors.ais.fromBow': () => {
+        break;
+      case 'sensors.ais.fromBow':
         if (this.isVesselLike(track)) {
           track.fromBow = this.toNumberOrUndefined(update.value);
         }
-      },
-      'sensors.ais.fromCenter': () => {
+        break;
+      case 'sensors.ais.fromCenter':
         if (this.isVesselLike(track)) {
           track.fromCenter = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.position.latitude': () => {
-        const latitude = this.toNumberOrUndefined(update.value);
-        if (latitude === undefined) return;
-        track.position = { ...(track.position ?? {}), latitude };
-        track.lastPositionAt = update.timestampMs;
-      },
-      'navigation.position.longitude': () => {
-        const longitude = this.toNumberOrUndefined(update.value);
-        if (longitude === undefined) return;
-        track.position = { ...(track.position ?? {}), longitude };
-        track.lastPositionAt = update.timestampMs;
-      },
-      'navigation.position.altitude': () => {
-        const altitude = this.toNumberOrUndefined(update.value);
-        if (track.position) {
-          track.position = { ...track.position, altitude };
-        }
-      },
-      'navigation.position': () => {
-        const position = this.readPositionValue(update.value);
-        if (position) {
-          track.position = position;
+        break;
+      case 'navigation.position.latitude':
+        {
+          const latitude = this.toNumberOrUndefined(update.value);
+          if (latitude === undefined) break;
+          track.position = { ...(track.position ?? {}), latitude };
           track.lastPositionAt = update.timestampMs;
         }
-      },
-      'atonType.id': () => {
+        break;
+      case 'navigation.position.longitude':
+        {
+          const longitude = this.toNumberOrUndefined(update.value);
+          if (longitude === undefined) break;
+          track.position = { ...(track.position ?? {}), longitude };
+          track.lastPositionAt = update.timestampMs;
+        }
+        break;
+      case 'navigation.position.altitude':
+        {
+          const altitude = this.toNumberOrUndefined(update.value);
+          if (track.position) {
+            track.position = { ...track.position, altitude };
+          }
+        }
+        break;
+      case 'navigation.position':
+        {
+          const position = this.readPositionValue(update.value);
+          if (position) {
+            track.position = position;
+            track.lastPositionAt = update.timestampMs;
+          }
+        }
+        break;
+      case 'atonType.id':
         if (this.isAton(track)) {
           track.typeId = this.toNumberOrUndefined(update.value);
         }
-      },
-      'atonType.name': () => {
+        break;
+      case 'atonType.name':
         if (this.isAton(track)) {
           track.typeName = this.toStringOrUndefined(update.value);
         }
-      },
-      virtual: () => {
+        break;
+      case 'virtual':
         if (this.isAton(track)) {
           track.virtual = Boolean(update.value);
         }
-      },
-      offPosition: () => {
+        break;
+      case 'offPosition':
         if (this.isAton(track)) {
           track.offPosition = Boolean(update.value);
         }
-      },
-      'design.aisShipType.id': () => {
+        break;
+      case 'design.aisShipType.id':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             aisShipType: { ...(track.design?.aisShipType ?? {}), id: this.toNumberOrUndefined(update.value) }
           };
         }
-      },
-      'design.aisShipType.name': () => {
+        break;
+      case 'design.aisShipType.name':
         if (this.isVesselLike(track)) {
           track.design = {
             ...(track.design ?? {}),
             aisShipType: { ...(track.design?.aisShipType ?? {}), name: this.toStringOrUndefined(update.value) }
           };
         }
-      },
-      'navigation.closestApproach.distance': () => {
+        break;
+      case 'navigation.closestApproach.distance':
         if (this.isVesselLike(track) && track.closestApproach) {
           track.closestApproach.distance = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.closestApproach.timeTo': () => {
+        break;
+      case 'navigation.closestApproach.timeTo':
         if (this.isVesselLike(track) && track.closestApproach) {
           track.closestApproach.timeTo = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.closestApproach.range': () => {
+        break;
+      case 'navigation.closestApproach.range':
         if (this.isVesselLike(track) && track.closestApproach) {
           track.closestApproach.range = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.closestApproach.bearing': () => {
+        break;
+      case 'navigation.closestApproach.bearing':
         if (this.isVesselLike(track) && track.closestApproach) {
           track.closestApproach.bearing = this.toNumberOrUndefined(update.value);
         }
-      },
-      'navigation.closestApproach.collisionRiskRating': () => {
+        break;
+      case 'navigation.closestApproach.collisionRiskRating':
         if (this.isVesselLike(track) && track.closestApproach) {
           track.closestApproach.collisionRiskRating = this.toNumberOrUndefined(update.value);
         }
-      }
-    };
-
-    handlers[update.path]?.();
-    if (removed) return;
+        break;
+    }
 
     this.updateTargetsSignal();
   }

@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy, ChangeDetectorRef, NgZone, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { ITheme } from '../../core/services/app-service';
@@ -48,8 +48,6 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
     multiChildCtrls: []
   };
 
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly ngZone = inject(NgZone);
   protected readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private readonly streams = inject(WidgetStreamsDirective, { optional: true });
 
@@ -106,14 +104,11 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
               ? ([0, 1, null].includes(val) ? Boolean(val) : ctrl.value)
               : val;
 
-            this.ngZone.run(() => {
-              this.switchControls.update(list => {
-                const i = list.findIndex(c => c.pathID === ctrl.pathID);
-                if (i === -1) return list;
-                const updated = { ...list[i], value: nextVal };
-                return [...list.slice(0, i), updated, ...list.slice(i + 1)];
-              });
-              this.cdr.markForCheck();
+            this.switchControls.update(list => {
+              const i = list.findIndex(c => c.pathID === ctrl.pathID);
+              if (i === -1) return list;
+              const updated = { ...list[i], value: nextVal };
+              return [...list.slice(0, i), updated, ...list.slice(i + 1)];
             });
           });
         });

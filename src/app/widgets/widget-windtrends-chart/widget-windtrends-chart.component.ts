@@ -81,6 +81,8 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private chart: Chart<keyof ChartTypeRegistry, { x: number; y: number; }[], unknown>;
   private _dsDirectionSub: Subscription = null;
   private _dsSpeedSub: Subscription = null;
+  /** Pending coalesced chart recompute+repaint frame id (one per animation frame across both streams). */
+  private _chartUpdateRafId: number | null = null;
   private datasetConfig: IDatasetServiceDatasetConfig = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
   private xCenter: number | null = null;
@@ -723,8 +725,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           for (let i = 0; i <= 4; i++) this.chart.data.datasets[i].data.shift();
         }
       }
-      this.updateChartAfterDataChange();
-      this.ngZone.runOutsideAngular(() => { this.chart?.update('none'); });
+      this.scheduleChartUpdate();
     });
 
     this._dsSpeedSub = batchThenLiveSpd$?.subscribe(dsPointOrBatch => {
@@ -736,8 +737,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           for (let i = 5; i <= 9; i++) this.chart.data.datasets[i].data.shift();
         }
       }
-      this.updateChartAfterDataChange();
-      this.ngZone.runOutsideAngular(() => { this.chart?.update('none'); });
+      this.scheduleChartUpdate();
     });
   }
 
@@ -827,6 +827,21 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     const base = step / Math.pow(10, exp);
     const chosen = mantissas.find(m => base <= m) ?? mantissas[mantissas.length - 1];
     return chosen * Math.pow(10, exp);
+  }
+
+  /**
+   * Coalesce the chart recompute + repaint into a single animation frame. The direction (-twd) and
+   * speed (-tws) streams frequently emit in the same frame; without this, each emission runs the
+   * full 10-dataset y recompute and a chart.update('none'), doing that work twice per frame.
+   */
+  private scheduleChartUpdate(): void {
+    if (this._chartUpdateRafId != null) return;
+    this._chartUpdateRafId = requestAnimationFrame(() => {
+      this._chartUpdateRafId = null;
+      if (!this.chart) return;
+      this.updateChartAfterDataChange();
+      this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
+    });
   }
 
   private updateChartAfterDataChange() {
@@ -1121,6 +1136,10 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   ngOnDestroy(): void {
     this._dsDirectionSub?.unsubscribe();
     this._dsSpeedSub?.unsubscribe();
+    if (this._chartUpdateRafId != null) {
+      cancelAnimationFrame(this._chartUpdateRafId);
+      this._chartUpdateRafId = null;
+    }
     // we need to destroy when moving Pages to remove Chart Objects
     this.chart?.destroy();
     const canvas = this.widgetDataChart?.()?.nativeElement as HTMLCanvasElement | undefined;

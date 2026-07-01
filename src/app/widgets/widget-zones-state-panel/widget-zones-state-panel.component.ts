@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, NgZone, computed, effect, inject, input, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -43,8 +43,6 @@ export class WidgetZonesStatePanelComponent {
     multiChildCtrls: []
   };
 
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly ngZone = inject(NgZone);
   protected readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   private readonly notificationsService = inject(NotificationsService);
   protected readonly dashboard = inject(DashboardService);
@@ -80,7 +78,6 @@ export class WidgetZonesStatePanelComponent {
       untracked(() => {
         this.labelColor.set(getColors(cfg.color, theme).dim);
       });
-      this.cdr.markForCheck()
     });
 
     // Effect: rebuild controls and paths when config changes
@@ -109,7 +106,6 @@ export class WidgetZonesStatePanelComponent {
         // immediately (no need to wait for the next notification delta).
         this.applyNotificationsSnapshot(this.notifications());
       });
-      this.cdr.markForCheck()
     });
 
     // Effect: update controls from notifications as they change
@@ -128,41 +124,35 @@ export class WidgetZonesStatePanelComponent {
       if (n?.path) notifByPath.set(n.path, n);
     }
 
-    this.ngZone.run(() => {
-      let didChange = false;
+    // The update callback returns the SAME list reference when nothing changed, so the signal
+    // (and therefore change detection) only fires when a control's state/message actually changes.
+    this.zonesControls.update(list => {
+      let nextList: IDynamicControl[] | null = null;
 
-      this.zonesControls.update(list => {
-        let nextList: IDynamicControl[] | null = null;
+      for (let i = 0; i < list.length; i++) {
+        const ctrl = list[i];
+        const notificationPath = this.pathIdToNotificationPath.get(ctrl.pathID);
+        const notification = notificationPath ? notifByPath.get(notificationPath) : undefined;
+        if (!notification) continue;
 
-        for (let i = 0; i < list.length; i++) {
-          const ctrl = list[i];
-          const notificationPath = this.pathIdToNotificationPath.get(ctrl.pathID);
-          const notification = notificationPath ? notifByPath.get(notificationPath) : undefined;
-          if (!notification) continue;
+        const state = notification.value?.['state'] as string | undefined;
+        const message = notification.value?.['message'] as string | undefined;
 
-          const state = notification.value?.['state'] as string | undefined;
-          const message = notification.value?.['message'] as string | undefined;
+        if (ctrl.notificationState === state && ctrl.notificationMessage === message) continue;
 
-          if (ctrl.notificationState === state && ctrl.notificationMessage === message) continue;
+        if (!nextList) nextList = [...list];
+        nextList[i] = {
+          ...ctrl,
+          notificationState: state,
+          notificationMessage: message,
+        };
+      }
 
-          if (!nextList) nextList = [...list];
-          nextList[i] = {
-            ...ctrl,
-            notificationState: state,
-            notificationMessage: message,
-          };
-          didChange = true;
-        }
-
-        return nextList ?? list;
-      });
-
-      if (didChange) this.cdr.markForCheck();
+      return nextList ?? list;
     });
   }
 
   onResized(event: ResizeObserverEntry): void {
     this.hostSize.set({ width: event.contentRect.width, height: event.contentRect.height });
-    this.cdr.markForCheck();
   }
 }

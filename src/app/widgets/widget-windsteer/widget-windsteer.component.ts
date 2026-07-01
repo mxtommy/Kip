@@ -1,4 +1,4 @@
-import { Component, OnDestroy, NgZone, inject, ChangeDetectionStrategy, ChangeDetectorRef, input, effect, untracked, signal } from '@angular/core';
+import { Component, OnDestroy, inject, ChangeDetectionStrategy, input, effect, untracked, signal } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgWindsteerComponent } from '../svg-windsteer/svg-windsteer.component';
@@ -155,8 +155,6 @@ export class WidgetWindComponent implements OnDestroy {
 
   public readonly runtime = inject(WidgetRuntimeDirective); // accessed in template
   private readonly stream = inject(WidgetStreamsDirective);
-  private zones = inject(NgZone);
-  private cdr = inject(ChangeDetectorRef);
 
   // Removed local registeredPaths guard; rely on WidgetStreamsDirective diff + idempotent observe() with stable callbacks
 
@@ -195,8 +193,6 @@ export class WidgetWindComponent implements OnDestroy {
   private lastUnwrapped: number | null = null;
   private lastSector: { min?: number; mid?: number; max?: number } = {};
 
-  private markScheduled = false;
-  private scheduleRafId: number | null = null;
   private readonly DEG_EPSILON = 1;      // degrees
   private readonly SPEED_EPSILON = 0.1;  // knots
 
@@ -220,35 +216,35 @@ export class WidgetWindComponent implements OnDestroy {
     if (u.data.value == null) u.data.value = 0;
     const next = this.normalizeAngle(u.data.value);
     if (!this.hasHeading || this.angleDelta(this.currentHeading(), next) >= this.DEG_EPSILON) {
-      this.currentHeading.set(next); this.hasHeading = true; this.scheduleMarkForCheck();
+      this.currentHeading.set(next); this.hasHeading = true;
     }
   };
   private onCOGUpdate = (u: IPathUpdate) => {
     if (u.data.value == null) u.data.value = 0;
     const next = this.normalizeAngle(u.data.value);
     if (!this.hasCOG || this.angleDelta(this.courseOverGroundAngle(), next) >= this.DEG_EPSILON) {
-      this.courseOverGroundAngle.set(next); this.hasCOG = true; this.scheduleMarkForCheck();
+      this.courseOverGroundAngle.set(next); this.hasCOG = true;
     }
   };
   private onDriftUpdate = (u: IPathUpdate) => {
     if (u.data.value == null) u.data.value = 0;
     const next = u.data.value;
     if (!this.hasDrift || Math.abs(this.driftFlow() - next) >= this.SPEED_EPSILON) {
-      this.driftFlow.set(next); this.hasDrift = true; this.scheduleMarkForCheck();
+      this.driftFlow.set(next); this.hasDrift = true;
     }
   };
   private onSetUpdate = (u: IPathUpdate) => {
     if (u.data.value == null) u.data.value = 0;
     const next = this.normalizeAngle(u.data.value);
     if (!this.hasSet || this.angleDelta(this.driftSet(), next) >= this.DEG_EPSILON) {
-      this.driftSet.set(next); this.hasSet = true; this.scheduleMarkForCheck();
+      this.driftSet.set(next); this.hasSet = true;
     }
   };
   private onWaypointUpdate = (u: IPathUpdate) => {
     const raw = u.data.value;
     const next = this.normalizeAngle(raw);
     if (!this.hasWPT || this.angleDelta(this.waypointAngle(), next) >= this.DEG_EPSILON) {
-      this.waypointAngle.set(next); this.hasWPT = true; this.scheduleMarkForCheck();
+      this.waypointAngle.set(next); this.hasWPT = true;
     }
   };
   private onAppWindAngle = (u: IPathUpdate) => {
@@ -259,21 +255,20 @@ export class WidgetWindComponent implements OnDestroy {
       this.appWindAngle.set(next); this.hasAWA = true;
       const cfg = this.runtime.options();
       if (cfg?.windSectorEnable) this.addHistoricalWindDirection(this.normalizeAngle(raw));
-      this.scheduleMarkForCheck();
     }
   };
   private onAppWindSpeed = (u: IPathUpdate) => {
     if (u.data.value == null) u.data.value = 0;
     const next = u.data.value;
     if (!this.hasAWS || Math.abs(this.appWindSpeed() - next) >= this.SPEED_EPSILON) {
-      this.appWindSpeed.set(next); this.hasAWS = true; this.scheduleMarkForCheck();
+      this.appWindSpeed.set(next); this.hasAWS = true;
     }
   };
   private onTrueWindSpeed = (u: IPathUpdate) => {
     if (u.data.value == null) u.data.value = 0;
     const next = u.data.value;
     if (!this.hasTWS || Math.abs(this.trueWindSpeed() - next) >= this.SPEED_EPSILON) {
-      this.trueWindSpeed.set(next); this.hasTWS = true; this.scheduleMarkForCheck();
+      this.trueWindSpeed.set(next); this.hasTWS = true;
     }
   };
   private onTrueWindAngle = (u: IPathUpdate) => {
@@ -283,32 +278,26 @@ export class WidgetWindComponent implements OnDestroy {
     const base = (path.includes('angleTrueWater') || path.includes('angleTrueGround')) ? this.addHeading(this.currentHeading(), u.data.value) : u.data.value;
     const next = this.normalizeAngle(base);
     if (!this.hasTWA || this.angleDelta(this.trueWindAngle(), next) >= this.DEG_EPSILON) {
-      this.trueWindAngle.set(next); this.hasTWA = true; this.scheduleMarkForCheck();
+      this.trueWindAngle.set(next); this.hasTWA = true;
     }
   };
 
   private registerStreams() {
     const cfg = this.runtime.options();
     if (!cfg) return;
-    this.zones.runOutsideAngular(() => {
-      this.stream.observe('headingPath', this.onHeadingUpdate);
-      this.stream.observe('courseOverGround', this.onCOGUpdate);
-      this.stream.observe('drift', this.onDriftUpdate);
-      this.stream.observe('set', this.onSetUpdate);
-      this.stream.observe('nextWaypointBearing', this.onWaypointUpdate);
-      this.stream.observe('appWindAngle', this.onAppWindAngle);
-      this.stream.observe('appWindSpeed', this.onAppWindSpeed);
-      this.stream.observe('trueWindSpeed', this.onTrueWindSpeed);
-      this.stream.observe('trueWindAngle', this.onTrueWindAngle);
-    });
+    this.stream.observe('headingPath', this.onHeadingUpdate);
+    this.stream.observe('courseOverGround', this.onCOGUpdate);
+    this.stream.observe('drift', this.onDriftUpdate);
+    this.stream.observe('set', this.onSetUpdate);
+    this.stream.observe('nextWaypointBearing', this.onWaypointUpdate);
+    this.stream.observe('appWindAngle', this.onAppWindAngle);
+    this.stream.observe('appWindSpeed', this.onAppWindSpeed);
+    this.stream.observe('trueWindSpeed', this.onTrueWindSpeed);
+    this.stream.observe('trueWindAngle', this.onTrueWindAngle);
   }
 
   ngOnDestroy() {
     this.stopWindSectors();
-    if (this.scheduleRafId != null) {
-      cancelAnimationFrame(this.scheduleRafId);
-      this.scheduleRafId = null;
-    }
   }
 
   private startWindSectors() {
@@ -324,14 +313,11 @@ export class WidgetWindComponent implements OnDestroy {
       this.trueWindMidHistoric.set(undefined);
       this.trueWindMaxHistoric.set(undefined);
       this.lastSector = {};
-      this.scheduleMarkForCheck();
       return;
     }
 
-    this.zones.runOutsideAngular(() => {
-      this.windSectorObservableSub = interval(1000).subscribe(() => {
-        this.historicalCleanup();
-      });
+    this.windSectorObservableSub = interval(1000).subscribe(() => {
+      this.historicalCleanup();
     });
   }
 
@@ -366,7 +352,6 @@ export class WidgetWindComponent implements OnDestroy {
         this.trueWindMidHistoric.set(undefined);
         this.trueWindMaxHistoric.set(undefined);
         this.lastSector = {};
-        this.scheduleMarkForCheck();
       }
       return;
     }
@@ -386,7 +371,6 @@ export class WidgetWindComponent implements OnDestroy {
       this.trueWindMidHistoric.set(nextMid);
       this.trueWindMaxHistoric.set(nextMax);
       this.lastSector = { min: nextMin, mid: nextMid, max: nextMax };
-      this.scheduleMarkForCheck();
     }
   }
 
@@ -411,15 +395,4 @@ export class WidgetWindComponent implements OnDestroy {
   private addHeading(h1: number, h2: number) { let h3 = (h1 + h2) % 360; if (h3 < 0) h3 += 360; return h3; }
   private angleDelta(from: number, to: number): number { const d = ((to - from + 540) % 360) - 180; return Math.abs(d); }
 
-  private scheduleMarkForCheck() {
-    if (this.markScheduled) return;
-    this.markScheduled = true;
-    this.zones.runOutsideAngular(() => {
-      this.scheduleRafId = requestAnimationFrame(() => {
-        this.zones.run(() => { this.cdr.markForCheck(); });
-        this.markScheduled = false;
-        this.scheduleRafId = null;
-      });
-    });
-  }
 }
