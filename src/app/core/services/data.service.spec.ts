@@ -112,6 +112,30 @@ describe('DataService', () => {
     expect(latest!.state).toBe(States.Alert);
   });
 
+  it('exposes the value timestamp lazily as a memoized Date', () => {
+    let latest: IPathUpdate | undefined;
+
+    service
+      .subscribePath('self.navigation.speedThroughWater', 'default')
+      .subscribe(update => (latest = update));
+
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedThroughWater',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:05.000Z',
+      value: 3.2,
+    });
+
+    expect(latest).toBeTruthy();
+    // The lazy getter returns the correct Date when a consumer reads it...
+    const ts = latest!.data.timestamp;
+    expect(ts).toBeInstanceOf(Date);
+    expect(ts!.toISOString()).toBe('2026-01-01T00:00:05.000Z');
+    // ...and is memoized: repeated reads return the same instance (no re-allocation).
+    expect(latest!.data.timestamp).toBe(ts);
+  });
+
   it('emits equivalent sequences for subscribePathTree and subscribePathTreeWithInitial', () => {
     dataPathUpdates$.next({
       context: 'self',
