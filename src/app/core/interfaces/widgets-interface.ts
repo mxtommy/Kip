@@ -438,7 +438,7 @@ export interface IAutopilotConfig {
   /** Set heading direction type is Magnetic or True */
   headingDirectionTrue: boolean,
   /** Set API version of the autopilot. v1 only supports Signal K autopilot plugin (also known as Raymarine autopilot) */
-  apiVersion: "v1" | "v2",
+  apiVersion: "v1" | "v2" | null,
   /** The autopilot provider supports multiple autopilot
    * operating simultaneously. Set the autopilot instance ID to control
    * ('_default', 'pypilot-1', 'pypilot-2', 'raymarine-1', etc.). Use

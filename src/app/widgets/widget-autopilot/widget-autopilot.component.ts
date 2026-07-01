@@ -284,14 +284,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // Exposed for template access (displayName)
   protected readonly runtime = inject(WidgetRuntimeDirective);
-  private readonly streams = inject(WidgetStreamsDirective, { optional: true });
+  private readonly streams = inject(WidgetStreamsDirective);
 
   private readonly _requests = inject(SignalkRequestsService);
   private readonly http = inject(HttpClient);
   protected readonly dashboard = inject(DashboardService);
   private readonly _destroyRef = inject(DestroyRef);
 
-  private apiEndpoints: IV2ApiEndpoints;
+  private apiEndpoints!: IV2ApiEndpoints;
 
   // Autopilot state Management
   protected apState = signal<string | null>(null);
@@ -325,12 +325,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     const state = this.apState();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const engaged = this.apEngaged();
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
 
     if (!apiVersion) return true;
 
     if (apiVersion === "v1") {
-      return (['standby', 'off-line'].includes(state)) ? true : false;
+      return (state && ['standby', 'off-line'].includes(state)) ? true : false;
     }
 
     if (apiVersion === "v2") {
@@ -340,7 +340,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   });
   protected readonly apBtnDisabled = computed(() => {
     const engaged = this.apEngaged();
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
 
     if (apiVersion === "v1") {
       return this.apMode() === 'standby' ? true : false;
@@ -352,21 +352,21 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   });
   protected readonly adjustHdgBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
+    if (mode && ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
   });
   protected readonly tackBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
+    if (mode && ['auto', 'compass', 'gps', 'wind', 'true wind', 'standby'].includes(mode)) {
       return true;
     }
     return false;
   });
   protected readonly routeBtnVisibility = computed(() => {
     const mode = this.apMode();
-    if ( mode === 'route' ||  mode === 'nav') {
+    if (mode && (mode === 'route' || mode === 'nav')) {
       return true;
     }
     return false;
@@ -379,10 +379,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   protected msgOverlayText = signal<string>('');
   protected errorOverlayVisibility = signal<string>('hidden');
   protected errorOverlayText = signal<string>('');
-  private handleCountDownCounterTimeout: ReturnType<typeof setTimeout> | null = null;
-  private handleConfirmActionTimeout: ReturnType<typeof setTimeout> | null = null;
-  private handleDisplayErrorTimeout: ReturnType<typeof setTimeout> | null = null;
-  private handleMessageTimeout: ReturnType<typeof setTimeout> | null = null;
+  private handleCountDownCounterTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+  private handleConfirmActionTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+  private handleDisplayErrorTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+  private handleMessageTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
   private isPersistentError = false; // Track if current error should persist
   protected countDownValue = -1;
   private actionToBeConfirmed = "";
@@ -390,7 +390,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // Mode Menu
   protected menuItems = computed<MenuItem[]>(() => {
     const mode = this.apMode();
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
     let menuItems: MenuItem[] = [];
 
     untracked(() => {
@@ -572,7 +572,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const cfg = this.runtime?.options();
+      const cfg = this.runtime.options();
       if (!cfg) return;
       untracked(() => {
         // Cancel any ongoing HTTP requests
@@ -601,9 +601,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       state: ''
     };
 
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
-    const instanceId = this.runtime.options().autopilot.instanceId;
-    const pluginId = this.runtime.options().autopilot.pluginId;
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
+    const instanceId = this.runtime.options()?.autopilot?.instanceId;
+    const pluginId = this.runtime.options()?.autopilot?.pluginId;
 
     // Helper for persistent error state
     const setPersistentError = (message: string) => {
@@ -663,7 +663,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   private autopilotModes(): string[] {
-    const modes = this.runtime.options().autopilot.modes;
+    const modes = this.runtime.options()?.autopilot?.modes;
 
     if (Array.isArray(modes)) {
       return modes;
@@ -715,7 +715,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   private startV1Subscriptions(): void {
     // For V1, we use this single legacy path
-    this.runtime.options().paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
+    this.runtime.options()?.paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
     this.streams.observe('autopilotMode', newValue => {
       if (newValue.data?.value) {
         this.apMode.set(newValue.data.value);
@@ -741,12 +741,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
         if (newValue.data.value === null) {
           this.rudder.set(null);
         } else {
-          this.rudder.set(this.runtime.options().autopilot.invertRudder ? -newValue.data.value : newValue.data.value);
+          this.rudder.set(this.runtime.options()?.autopilot?.invertRudder ? -newValue.data.value : newValue.data.value);
         }
       }
     );
 
-    if (this.runtime.options().autopilot.headingDirectionTrue) {
+    if (this.runtime.options()?.autopilot?.headingDirectionTrue) {
       this.streams.observe('headingTrue', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
     } else {
       this.streams.observe('headingMag', newValue => this.heading.set(newValue.data.value != null ? newValue.data.value : 0));
@@ -785,7 +785,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.currentRequests.clear();
   }
 
-  protected buildAndSendCommand(cmd: string): void {
+  protected async buildAndSendCommand(cmd: string): Promise<void> {
     const cmdAction = COMMANDS[cmd];
     if (typeof cmdAction === 'undefined') {
       alert('Unknown Autopilot command: ' + cmd);
@@ -806,23 +806,23 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       this.clearConfirmCmd();
       if ((cmd === 'tackToPort') || (cmd === 'tackToStarboard')) {
         const direction = cmd === 'tackToPort' ? 'port' : 'starboard';
-        this.performTackOrGybe('tack', direction);
+        await this.performTackOrGybe('tack', direction);
       }
       if ( (cmd === 'route' && this.apMode() === 'route') || (cmd === 'route' && this.apMode() === 'nav') ) {
-        this.routeCommand(cmd, COMMANDS['advanceWaypoint']);
+        await this.routeCommand(cmd, COMMANDS['advanceWaypoint']);
       }
       return;
     }
-    this.routeCommand(cmd, cmdAction);
+    await this.routeCommand(cmd, cmdAction);
   }
 
-  private routeCommand(cmd: string, cmdAction: IV1CommandDefinition): void {
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+  private async routeCommand(cmd: string, cmdAction: IV1CommandDefinition): Promise<void> {
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
     if (apiVersion === 'v2') {
       if (cmd === 'route' && this.apMode() === 'nav') {
         cmd = 'advanceWaypoint';
       }
-      this.sendV2Command(cmd);
+      await this.sendV2Command(cmd);
     } else if (apiVersion === 'v1' && !cmdAction.path.startsWith('v2:')) {
       // V1 command
       this.sendV1Command(cmdAction);
@@ -918,13 +918,13 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
         if (this.dodgeModeActive()) {
           this.executeRestRequest('DELETE', targetCommand).then(response => {
-            if (response.statusCode !== 200) {
+            if (response.statusCode === 200) {
               this.dodgeModeActive.set(false);
             }
           });
         } else {
           this.executeRestRequest('POST', targetCommand).then(response => {
-            if (response.statusCode !== 200) {
+            if (response.statusCode === 200) {
               this.dodgeModeActive.set(true);
             }
           });
@@ -966,7 +966,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   private async executeRestRequest(method: 'POST' | 'PUT' | 'DELETE', cmd: IV2CommandDefinition): Promise<IV2CommandResponse> {
     try {
-      let response: IV2CommandResponse;
+      let response: IV2CommandResponse | null = null;
 
       switch(method) {
         case 'POST':
@@ -1036,9 +1036,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     }
   }
 
-  private performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): void {
-    if (this.runtime.options().autopilot.apiVersion === 'v2') {
-      this.sendV2Command(operation, {value: direction});
+  private async performTackOrGybe(operation: 'tack' | 'gybe', direction: 'port' | 'starboard'): Promise<void> {
+    if (this.runtime.options()?.autopilot?.apiVersion === 'v2') {
+      await this.sendV2Command(operation, { value: direction });
     } else {
       // Fall back to V1
       if (operation !== 'tack') return;
@@ -1050,7 +1050,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // V2 Absolute Target Method (class only - no UI yet)
   protected setAbsoluteTarget(heading: number): void {
-    if (this.runtime.options().autopilot.apiVersion === 'v2') {
+    if (this.runtime.options()?.autopilot?.apiVersion === 'v2') {
       this.sendV2Command('target_heading', {"value": heading, "units": "deg"});
     } else {
       console.error('[Autopilot Widget] Absolute target only available in V2 API');
@@ -1059,7 +1059,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   // V2 Dodge Method (class only - no UI yet)
   protected toggleDodge(): void {
-    if (this.runtime.options().autopilot.apiVersion === 'v2') {
+    if (this.runtime.options()?.autopilot?.apiVersion === 'v2') {
       this.sendV2Command('dodge');
     } else {
       console.warn('[Autopilot Widget] Dodge mode only available in V2 API');
@@ -1121,8 +1121,12 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   }
 
   private clearConfirmCmd(): void {
-    clearTimeout(this.handleConfirmActionTimeout);
-    clearTimeout(this.handleCountDownCounterTimeout);
+    if (this.handleConfirmActionTimeout !== undefined) {
+      clearTimeout(this.handleConfirmActionTimeout);
+    }
+    if (this.handleCountDownCounterTimeout !== undefined) {
+      clearTimeout(this.handleCountDownCounterTimeout);
+    }
     this.countDownValue = -1;
     this.countdownOverlayVisibility.set("hidden");
     this.countdownOverlayText.set("");
@@ -1131,7 +1135,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   private updateCountDownCounter(message: string): void {
     if (this.countDownValue > 0) {
-      clearTimeout(this.handleCountDownCounterTimeout);
+      if (this.handleCountDownCounterTimeout !== undefined) {
+        clearTimeout(this.handleCountDownCounterTimeout);
+      }
       this.countdownOverlayText.set(message);
       this.countDownValue -= 1;
       this.handleCountDownCounterTimeout = setTimeout(() => {
@@ -1139,7 +1145,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       }, 1000);
     } else {
       this.countDownValue = -1;
+      if (this.handleCountDownCounterTimeout !== undefined) {
         clearTimeout(this.handleCountDownCounterTimeout);
+      }
     }
   }
 
@@ -1157,7 +1165,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.errorOverlayText.set(errMsg);
     this.errorOverlayVisibility.set("visible");
 
-    clearTimeout(this.handleDisplayErrorTimeout);
+    if (this.handleDisplayErrorTimeout !== undefined) {
+      clearTimeout(this.handleDisplayErrorTimeout);
+    }
     this.handleDisplayErrorTimeout = setTimeout(() => {
       // Only hide if it's not a persistent error
       if (!this.isPersistentError) {
@@ -1180,9 +1190,9 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.menuOpen.set(false);
   }
 
-  private parseMenuItems(menuItems: MenuItem[], mode: string): MenuItem[] {
+  private parseMenuItems(menuItems: MenuItem[], mode: string | null): MenuItem[] {
     // Set enabled/disabled state for each mode menu item based
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
     const parsedMenuItems = menuItems.map(item => {
       if (item.isCancel) return { ...item, current: false, disabled: false };
 
@@ -1222,9 +1232,17 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     this.cancelAllHttpRequests();
 
     // Clear any pending timeouts
-    clearTimeout(this.handleCountDownCounterTimeout);
-    clearTimeout(this.handleConfirmActionTimeout);
-    clearTimeout(this.handleDisplayErrorTimeout);
-    clearTimeout(this.handleMessageTimeout);
+    if (this.handleCountDownCounterTimeout !== undefined) {
+      clearTimeout(this.handleCountDownCounterTimeout);
+    }
+    if (this.handleConfirmActionTimeout !== undefined) {
+      clearTimeout(this.handleConfirmActionTimeout);
+    }
+    if (this.handleDisplayErrorTimeout !== undefined) {
+      clearTimeout(this.handleDisplayErrorTimeout);
+    }
+    if (this.handleMessageTimeout !== undefined) {
+      clearTimeout(this.handleMessageTimeout);
+    }
   }
 }
