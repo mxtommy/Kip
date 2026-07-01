@@ -953,18 +953,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   private openTargetDialog(target: AisTrack, iconHref: string | null): void {
     this.selectedId.set(target.id);
-    const targetSnapshot = this.snapshotAisTrack(target);
     this.dialog.openAisDetailDialog({
-      title: this.buildTargetTitle(targetSnapshot),
+      title: this.buildTargetTitle(target),
       iconHref: iconHref ?? undefined,
       component: 'ais-target',
       componentType: DialogAisTargetComponent,
-      payload: { target: targetSnapshot }
+      payload: { target }
     }).subscribe();
-  }
-
-  private snapshotAisTrack(target: AisTrack): AisTrack {
-    return structuredClone(target);
   }
 
   private resolveMenuItems(event: MouseEvent, target: RenderTarget): TargetMenuItem[] {

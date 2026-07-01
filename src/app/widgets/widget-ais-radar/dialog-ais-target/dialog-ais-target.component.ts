@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -17,7 +17,7 @@ interface AisDialogPayload {
   styleUrls: ['./dialog-ais-target.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DialogAisTargetComponent implements OnInit, OnDestroy {
+export class DialogAisTargetComponent implements OnDestroy {
   private static readonly CLOCK_INTERVAL_MS = 1000;
   private readonly data = inject<DialogComponentData>(MAT_DIALOG_DATA);
   private readonly units = inject(UnitsService);
@@ -25,7 +25,7 @@ export class DialogAisTargetComponent implements OnInit, OnDestroy {
   private readonly now = signal(Date.now());
   private nowTimer: number | null = null;
 
-  ngOnInit(): void {
+  constructor() {
     this.startClock();
   }
 
