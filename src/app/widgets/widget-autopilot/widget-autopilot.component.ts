@@ -715,7 +715,14 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
   private startV1Subscriptions(): void {
     // For V1, we use this single legacy path
-    this.runtime.options()?.paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
+    const cfg = this.runtime.options();
+    if (cfg?.paths) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const paths = cfg.paths as Record<string, any>;
+      if (paths['autopilotMode']) {
+        paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
+      }
+    }
     this.streams.observe('autopilotMode', newValue => {
       if (newValue.data?.value) {
         this.apMode.set(newValue.data.value);
