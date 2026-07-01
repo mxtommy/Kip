@@ -1,0 +1,15 @@
+{
+  "name": "kip-perf-harness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reproducible main-thread / freeze measurement harness for KIP. Self-contained: its deps never touch the app package.json.",
+  "scripts": {
+    "measure": "node run.mjs",
+    "serve": "node serve.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.0",
+    "ws": "^8.18.0"
+  }
+}
