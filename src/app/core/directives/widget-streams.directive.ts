@@ -122,10 +122,7 @@ export class WidgetStreamsDirective {
     if (suppressBootstrapNull) {
       data$ = data$.pipe(skipWhile(x => x?.data?.value == null));
     }
-    // Sample the RAW stream first, then convert units AFTER sampling. The unit conversion is a
-    // pure function of the value (and maps null -> null), so the emitted values are identical to
-    // converting upstream — but the conversion now runs only at the sampled rate (plus the fast
-    // first emission) instead of on every incoming delta.
+    // Sample the RAW stream first, then convert units AFTER sampling.
     const initial$ = data$.pipe(take(1));
     const sampled$ = data$.pipe(sampleTime(sample));
     data$ = merge(initial$, sampled$);
