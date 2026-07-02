@@ -75,11 +75,40 @@ export class RootModalWidgetConfigComponent implements OnInit {
     });
     this.unitList = this.units.getConversionsForPath(''); // array of Group or Groups: "angle", "speed", etc...
     this.formMaster = this.generateFormGroups(this.widgetConfig);
+    this.setupWindsteerControlState();
     this.formMaster.statusChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.saveDisabled.set(this.formMaster.invalid));
     queueMicrotask(() => this.saveDisabled.set(this.formMaster.invalid));
     this.colors = this.app.configurableThemeColors;
+  }
+
+  private setupWindsteerControlState(): void {
+    const compassModeControl = this.formMaster.get('compassModeEnabled') as UntypedFormControl | null;
+    const courseOverGroundControl = this.formMaster.get('courseOverGroundEnable') as UntypedFormControl | null;
+    const waypointEnableControl = this.formMaster.get('waypointEnable') as UntypedFormControl | null;
+    const driftEnableControl = this.formMaster.get('driftEnable') as UntypedFormControl | null;
+
+    if (!compassModeControl || !courseOverGroundControl || !waypointEnableControl || !driftEnableControl) {
+      return;
+    }
+
+    const syncCourseOverGroundDisabledState = (isCompassModeEnabled: unknown): void => {
+      if (isCompassModeEnabled === true) {
+        courseOverGroundControl.enable({ emitEvent: false });
+        waypointEnableControl.enable({ emitEvent: false });
+        driftEnableControl.enable({ emitEvent: false });
+        return;
+      }
+      courseOverGroundControl.disable({ emitEvent: false });
+      waypointEnableControl.disable({ emitEvent: false });
+      driftEnableControl.disable({ emitEvent: false });
+    };
+
+    syncCourseOverGroundDisabledState(compassModeControl.value);
+    compassModeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => syncCourseOverGroundDisabledState(value));
   }
 
   // Helper to ensure we only treat plain object literals as nested groups and not arrays, dates, etc.

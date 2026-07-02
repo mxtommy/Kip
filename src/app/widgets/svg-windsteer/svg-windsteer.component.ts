@@ -2,7 +2,7 @@ import { Component, ElementRef, input, viewChild, signal, effect, untracked, Cha
 import { animateRotation, animateAngleTransition, animateSectorTransition, SectorAngles } from '../../core/utils/svg-animate.util';
 import { DecimalPipe } from '@angular/common';
 
-const angle = ([a, b], [c, d], [e, f]) => (Math.atan2(f - d, e - c) - Math.atan2(b - d, a - c) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+const angle = ([a, b]: [number, number], [c, d]: [number, number], [e, f]: [number, number]) => (Math.atan2(f - d, e - c) - Math.atan2(b - d, a - c) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
 
 interface ISVGRotationObject {
   oldValue: number,
@@ -26,7 +26,7 @@ export class SvgWindsteerComponent implements OnDestroy {
 
   protected readonly compassHeading = input.required<number>();
   protected readonly compassModeEnabled = input.required<boolean>();
-  protected readonly courseOverGroundAngle = input<number>(undefined);
+  protected readonly courseOverGroundAngle = input<number | undefined>(undefined);
   protected readonly courseOverGroundEnabled = input.required<boolean>();
   protected readonly trueWindAngle = input.required<number>();
   protected readonly twsEnabled = input.required<boolean>();
@@ -37,18 +37,18 @@ export class SvgWindsteerComponent implements OnDestroy {
   protected readonly awsEnabled = input.required<boolean>();
   protected readonly appWindSpeed = input.required<number>();
   protected readonly appWindSpeedUnit = input.required<string>();
-  protected readonly laylineAngle = input<number>(undefined);
+  protected readonly laylineAngle = input<number | undefined>(undefined);
   protected readonly closeHauledLineEnabled = input.required<boolean>();
   protected readonly sailSetupEnabled = input.required<boolean>();
   protected readonly windSectorEnabled = input.required<boolean>();
   protected readonly driftEnabled = input.required<boolean>();
-  protected readonly driftSet = input<number>(undefined);
-  protected readonly driftFlow = input<number>(undefined);
-  protected readonly waypointAngle = input<number>(undefined);
+  protected readonly driftSet = input<number | undefined>(undefined);
+  protected readonly driftFlow = input<number | undefined>(undefined);
+  protected readonly waypointAngle = input<number | undefined>(undefined);
   protected readonly waypointEnabled = input.required<boolean>();
-  protected readonly trueWindMinHistoric = input<number>(undefined);
-  protected readonly trueWindMidHistoric = input<number>(undefined);
-  protected readonly trueWindMaxHistoric = input<number>(undefined);
+  protected readonly trueWindMinHistoric = input<number | undefined>(undefined);
+  protected readonly trueWindMidHistoric = input<number | undefined>(undefined);
+  protected readonly trueWindMaxHistoric = input<number | undefined>(undefined);
 
   protected compass: ISVGRotationObject = { oldValue: 0, newValue: 0 };
   protected twa: ISVGRotationObject = { oldValue: 0, newValue: 0 };
@@ -385,14 +385,14 @@ export class SvgWindsteerComponent implements OnDestroy {
     }
 
     const portNew = {
-      min: this.trueWindMinHistoric(),
-      mid: this.trueWindMidHistoric(),
-      max: this.trueWindMaxHistoric()
+      min: this.trueWindMinHistoric() ?? 0,
+      mid: this.trueWindMidHistoric() ?? 0,
+      max: this.trueWindMaxHistoric() ?? 0
     };
     const stbdNew = {
-      min: this.trueWindMinHistoric(),
-      mid: this.trueWindMidHistoric(),
-      max: this.trueWindMaxHistoric()
+      min: this.trueWindMinHistoric() ?? 0,
+      mid: this.trueWindMidHistoric() ?? 0,
+      max: this.trueWindMaxHistoric() ?? 0
     };
 
     if (!this.windSectorsInitialized) {
