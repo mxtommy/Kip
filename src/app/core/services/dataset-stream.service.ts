@@ -80,8 +80,6 @@ export class DatasetStreamService implements OnDestroy {
     "self.environment.wind.angleTrueGround",
     "self.environment.wind.angleTrueWater",
     "self.steering.rudderAngle",
-    // advancedwind wind shift is a fast−slow direction delta in (−π, π]; it is named
-    // "directionTrue.*" but is signed, unlike its .fast/.slow siblings (0..2π). (#1070)
     "self.environment.wind.directionTrue.trend.shift"
   ]);
 
