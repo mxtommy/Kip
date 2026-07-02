@@ -351,9 +351,10 @@ describe('WidgetHost2Component', () => {
         testWidget.autoOpenOptionsOnCreate = true;
 
         fixture.detectChanges();
-        await Promise.resolve();
+        await vi.waitFor(() => {
+            expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
+        });
 
-        expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
         expect(testWidget.autoOpenOptionsOnCreate).toBeUndefined();
     });
 
@@ -374,9 +375,10 @@ describe('WidgetHost2Component', () => {
         dialogServiceMock.openWidgetOptions.mockReturnValue({ afterClosed: () => of(null) });
 
         fixture.detectChanges();
-        await Promise.resolve();
+        await vi.waitFor(() => {
+            expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
+        });
 
-        expect(dialogServiceMock.openWidgetOptions).toHaveBeenCalledTimes(1);
         expect(testWidget.config).toEqual(configSnapshot);
     });
 });
