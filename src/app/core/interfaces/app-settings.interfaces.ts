@@ -35,6 +35,7 @@ export interface IAppConfig {
   splitShellSwipeDisabled?: boolean;
   splitShellWidth?: number;
   widgetHistoryDisabled?: boolean;
+  browserTabTitle?: string;
 }
 
 export interface IThemeConfig {

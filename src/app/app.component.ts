@@ -28,6 +28,8 @@ import { RemoteDashboardsService } from './core/services/remote-dashboards.servi
 import { ToastService } from './core/services/toast.service';
 import { AppNetworkInitService, IBootstrapIssue } from './core/services/app-initNetwork.service';
 import { DashboardHistorySeriesSyncService } from './core/services/dashboard-history-series-sync.service';
+import { Title } from '@angular/platform-browser';
+import { resolveBrowserTabTitle } from './core/utils/browser-tab-title.util';
 
 @Component({
   selector: 'app-root',
@@ -62,6 +64,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _uiEvent = inject(uiEventService);
   private readonly _dialog = inject(DialogService);
   public readonly settings = inject(SettingsService);
+  private readonly _titleService = inject(Title);
+  private readonly _browserTabTitle = toSignal(this.settings.getBrowserTabTitleAsO(), { initialValue: 'KIP' });
   private readonly _responsive = inject(BreakpointObserver);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _notificationOverlay = inject(NotificationOverlayService);
@@ -89,6 +93,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly _hotkeyHandler = (key: string) => this.handleKeyDown(key);
 
   constructor() {
+    // Keep the browser tab title (document.title) in sync with the user setting (#1055).
+    effect(() => {
+      this._titleService.setTitle(resolveBrowserTabTitle(this._browserTabTitle()));
+    });
+
     effect(() => {
       if (this.settings.configUpgrade()) {
         const liveVersion = this.settings.getConfigVersion();
