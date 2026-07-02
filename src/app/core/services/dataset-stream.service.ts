@@ -79,7 +79,8 @@ export class DatasetStreamService implements OnDestroy {
     "self.environment.wind.angleApparent",
     "self.environment.wind.angleTrueGround",
     "self.environment.wind.angleTrueWater",
-    "self.steering.rudderAngle"
+    "self.steering.rudderAngle",
+    "self.environment.wind.directionTrue.trend.shift"
   ]);
 
   constructor() {

@@ -381,4 +381,16 @@ describe('DatasetStreamService', () => {
         expect(final.lastMinimum).toBeCloseTo(6.1959188446, 6); // 355°
         expect(final.lastMaximum).toBeCloseTo(0.0872664626, 6); // 5°
     }));
+
+    it('treats the advancedwind wind-shift path as a signed angle, while its fast/slow trend siblings stay compass directions (#1070)', inject([DatasetStreamService], (service: DatasetStreamService) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const resolve = (path: string, unit: string) => (service as any).resolveAngleDomain(path, unit);
+
+        // advancedwind publishes the wind SHIFT (fast−slow delta) in −π..π; it must keep its sign
+        // instead of wrapping into the 0..2π compass domain (the #1070 discontinuity).
+        expect(resolve('self.environment.wind.directionTrue.trend.shift', 'rad')).toBe('signed');
+        // The .fast/.slow trend averages are absolute compass directions and must NOT be signed.
+        expect(resolve('self.environment.wind.directionTrue.trend.fast', 'rad')).toBe('direction');
+        expect(resolve('self.environment.wind.directionTrue.trend.slow', 'rad')).toBe('direction');
+    }));
 });
