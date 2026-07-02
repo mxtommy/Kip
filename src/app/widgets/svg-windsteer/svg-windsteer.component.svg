@@ -579,7 +579,7 @@
           style="fill-opacity:0.5;stroke:none" />
      </g>
       <g #wptIndicator
-        [attr.display]="waypointActive() ? 'inline' : 'none'">
+        [attr.display]="waypointActive() && compassModeEnabled() ? 'inline' : 'none'">
         <path
           clip-path="url(#clipPath16)"
           class="next-waypoint-bar"
@@ -596,7 +596,7 @@
           ry="17.361118" />
       </g>
       <g #setIndicator
-        [style.display]="driftEnabled() ? 'inline' : 'none'">
+        [style.display]="driftEnabled() && compassModeEnabled() ? 'inline' : 'none'">
         <path id="setArrow"
           style="fill:url(#linearGradient14);stroke:none;stroke-width:1.18648"
           d="m 563.93337,480.60403 -64.4901,-94.9673 -63.37665,95.71396 58.48691,-30.71299 0.77713,133.08346 c 0.0992,16.99331 2.52916,30.65913 5.44822,30.64209 2.91911,-0.0171 5.18926,-13.71032 5.09001,-30.70362 l -0.77782,-133.20444 z" />
@@ -654,7 +654,7 @@
     </g>
   </g>
   <g id="layerCurrent"
-     [style.display]="driftEnabled() ? 'inline' : 'none'">
+     [style.display]="driftEnabled() && compassModeEnabled() ? 'inline' : 'none'">
     <text id="text11"
        xml:space="preserve"
        class="contrast-text"
@@ -666,7 +666,7 @@
   <g id="layerIndicators"
     style="display:inline">
     <g #cogIndicator
-      [attr.display]="courseOverGroundEnabled() ? 'inline' : 'none'">
+      [attr.display]="courseOverGroundEnabled() && compassModeEnabled() ? 'inline' : 'none'">
       <path
         class="course-over-ground"
         style="stroke-width:14.7329;stroke-linecap:square"

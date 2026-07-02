@@ -202,6 +202,7 @@ export class WidgetWindComponent implements OnDestroy {
       const cfg = this.runtime.options();
       if (!cfg) return;
       untracked(() => {
+
         this.appWindSpeedUnit.set(cfg.paths['appWindSpeed'].convertUnitTo);
         this.trueWindSpeedUnit.set(cfg.paths['trueWindSpeed'].convertUnitTo);
         this.registerStreams();
@@ -338,7 +339,7 @@ export class WidgetWindComponent implements OnDestroy {
 
   private historicalCleanup() {
     if (!this.runtime.options()?.windSectorEnable) return;
-    const cutoff = Date.now() - (this.runtime.options().windSectorWindowSeconds * 1000);
+    const cutoff = Date.now() - (this.runtime.options()?.windSectorWindowSeconds ?? 5) * 1000;
     while (this.windSamples.length && this.windSamples[0].t < cutoff) {
       const removed = this.windSamples.shift();
       if (!removed) break;
