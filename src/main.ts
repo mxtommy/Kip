@@ -26,10 +26,43 @@ import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient, withXhr }
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { AppOverlayContainer } from './app/core/utils/app-overlay-container';
 import { RouterOverlayNavigationService } from './app/core/services/router-overlay-navigation.service';
+import {
+  Chart,
+  CategoryScale,
+  Filler,
+  Legend,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  SubTitle,
+  TimeScale,
+  Title,
+  Tooltip,
+} from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
+import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 
 if (environment.production) {
   enableProdMode();
 }
+
+// Register Chart.js building blocks and plugins once at startup, before any chart instance is created.
+Chart.register(
+  annotationPlugin,
+  ChartStreaming,
+  CategoryScale,
+  Filler,
+  Legend,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  SubTitle,
+  TimeScale,
+  Title,
+  Tooltip,
+);
 
 bootstrapApplication(AppComponent, {
   providers: [

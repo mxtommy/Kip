@@ -13,9 +13,6 @@ import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dat
 
 import { Chart, ChartConfiguration, ChartData, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import ChartStreaming from '@aziham/chartjs-plugin-streaming';
-
-Chart.register(ChartStreaming, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle);
 
 interface IChartColors {
   valueLine: string,

@@ -10,11 +10,7 @@ import { ITheme } from '../../core/services/app-service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
 import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
-import ChartStreaming from '@aziham/chartjs-plugin-streaming';
-
-Chart.register(annotationPlugin, ChartStreaming, Filler, Title, SubTitle, TimeScale, LinearScale, LineController, PointElement, LineElement,);
 
 interface AnnPlugin {
   annotation?: {
