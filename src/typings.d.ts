@@ -7,18 +7,20 @@ declare module '*.svg?raw' {
 }
 
 declare module '@godind/canvas-gauges' {
-	export interface BaseGauge {}
-	export interface GenericOptions {}
-	export interface LinearGauge {}
-	export interface LinearGaugeOptions {}
-	export interface RadialGauge {}
-	export interface RadialGaugeOptions {}
+  export type BaseGauge = unknown;
+  export type GenericOptions = unknown;
+  export type LinearGauge = unknown;
+  export type LinearGaugeOptions = unknown;
+  export type RadialGauge = unknown;
+  export type RadialGaugeOptions = unknown;
 }
 
 declare module 'express' {
-	export interface IRouter {}
+  export type IRouter = unknown;
 }
 
 declare module 'baconjs' {
-	export interface Bus<T = unknown, U = unknown> {}
+  export interface Bus<T = unknown, U = unknown> {
+    readonly __baconBusBrand?: [T, U];
+  }
 }

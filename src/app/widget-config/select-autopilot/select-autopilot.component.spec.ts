@@ -4,14 +4,13 @@ import { UntypedFormControl, UntypedFormGroup, ReactiveFormsModule } from '@angu
 import { provideHttpClient, withXhr } from '@angular/common/http';
 
 import { SelectAutopilotComponent } from './select-autopilot.component';
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component } from '@angular/core';
 import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 
 @Component({
   selector: 'host-wrapper',
   standalone: true,
   imports: [ReactiveFormsModule, SelectAutopilotComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<form [formGroup]="root"><select-autopilot [formGroupName]="groupName"></select-autopilot></form>`
 })
 class HostWrapperComponent {

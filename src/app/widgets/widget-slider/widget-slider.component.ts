@@ -104,6 +104,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
     });
 
     effect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cfg = this.cfg();
       const gaugePath = this.gaugePathConfig();
       if (!gaugePath?.path) return; // nothing to observe yet
@@ -123,22 +124,16 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const cfg = this.cfg();
-
-    if (cfg) {
-      this.getColors(cfg.color ?? 'contrast');
-    }
+    this.getColors(this.cfg().color ?? 'contrast');
 
     this.valueChange$
       .pipe(
         map((value) => {
-          const cfg = this.cfg();
           const scale = this.displayScale();
-          if (!cfg) return value;
           // Check if the value is within 1% of the lower or upper bounds
-          if (this.isWithinMargin(value, scale.lower, cfg)) {
+          if (this.isWithinMargin(value, scale.lower)) {
             return scale.lower; // Exact lower bound
-          } else if (this.isWithinMargin(value, scale.upper, cfg)) {
+          } else if (this.isWithinMargin(value, scale.upper)) {
             return scale.upper; // Exact upper bound
           }
           return parseFloat(value.toFixed(2)); // Round to 2 decimal places
@@ -152,24 +147,20 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   private mapValueToPosition(value: number): number {
-    const cfg = this.cfg();
     const scale = this.displayScale();
-    if (!cfg) return value;
     const scaleRange = scale.upper - scale.lower;
     const lineRange = this.LINE_WIDTH;
     return ((value - scale.lower) / scaleRange) * lineRange + this.LINE_START;
   }
 
   private mapPositionToValue(position: number): number {
-    const cfg = this.cfg();
     const scale = this.displayScale();
-    if (!cfg) return position;
     const scaleRange = scale.upper - scale.lower;
     const lineRange = this.LINE_WIDTH;
     return ((position - this.LINE_START) / lineRange) * scaleRange + scale.lower;
   }
 
-  private isWithinMargin(value: number, target: number, cfg: IWidgetSvcConfig): boolean {
+  private isWithinMargin(value: number, target: number): boolean {
     const scale = this.displayScale();
     const margin = (scale.upper - scale.lower) * 0.01; // 1% margin
     return Math.abs(value - target) <= margin;

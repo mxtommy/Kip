@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
 import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
-import type {IPathArray, IWidgetPath, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import type {IWidgetPath, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {CanvasService} from '../../core/services/canvas.service';
 import {getColors} from '../../core/utils/themeColors.utils';
 import {DashboardService} from '../../core/services/dashboard.service';

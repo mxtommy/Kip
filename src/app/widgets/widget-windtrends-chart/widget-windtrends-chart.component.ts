@@ -11,7 +11,7 @@ import { ITheme } from '../../core/services/app-service';
 import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/dataset-stream.service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 

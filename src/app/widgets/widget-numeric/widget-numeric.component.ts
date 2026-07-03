@@ -88,6 +88,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   });
 
   private subscriptionSignature = computed(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cfg = this.normalizedConfig();
     const pathCfg = this.numericPathConfig();
     if (!pathCfg?.path) return null;

@@ -130,6 +130,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   constructor() {
     // Observe data stream reactively
     effect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cfg = this.normalizedConfig();
       const theme = this.theme();
       const gaugePathCfg = this.gaugePathConfig();

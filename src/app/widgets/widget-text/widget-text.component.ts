@@ -69,6 +69,7 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     effect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cfg = this.normalizedConfig();
       if (this.isDestroyed || !this.canvasCtx) return;
       untracked(() => {

@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardService } from './../../core/services/dashboard.service';
 import { ITheme } from '../../core/services/app-service';
 import { ToastService } from '../../core/services/toast.service';
-import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ISkPossibleValue } from '../../core/interfaces/signalk-interfaces';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';

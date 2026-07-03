@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Router, Route, RouterOutlet, provideRouter } from '@angular/router';
@@ -15,7 +15,6 @@ class MockSettingsService {
 
 @Component({
   selector: 'test-route-target',
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: ''
 })
 class TestRouteTargetComponent {}
@@ -23,7 +22,6 @@ class TestRouteTargetComponent {}
 @Component({
   selector: 'test-router-host',
   imports: [RouterOutlet],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<router-outlet />'
 })
 class TestRouterHostComponent {}
