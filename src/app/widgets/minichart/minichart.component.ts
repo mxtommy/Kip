@@ -290,9 +290,6 @@ export class MinichartComponent implements OnDestroy {
       legend: {
         display: false
       },
-      annotation: {
-        annotations: {}
-      },
        streaming: {
         duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,
         delay: dataSourceInfo.sampleTime,
