@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, input, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input, inject, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { UnitsService } from '../../services/units.service';
@@ -65,7 +65,6 @@ export class DataInspectorRowComponent implements OnInit {
 @Component({
     selector: 'dialog-unit-selector',
     templateUrl: 'data-inspector-row-unit-modal.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
     MatDialogTitle,
     MatDialogContent,

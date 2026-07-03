@@ -1,4 +1,4 @@
-import { Component, effect, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { Dashboard } from './../../services/dashboard.service';
 
 
@@ -7,7 +7,6 @@ import { Dashboard } from './../../services/dashboard.service';
   standalone: true,
   imports: [],
   templateUrl: './dashboard-scroller.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard-scroller.component.scss',
 })
 export class DashboardScrollerComponent {

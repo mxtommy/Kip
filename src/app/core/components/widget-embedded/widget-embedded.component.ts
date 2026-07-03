@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnInit, OnDestroy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { IWidget, IWidgetSvcConfig } from '../../interfaces/widgets-interface';
@@ -17,7 +17,6 @@ interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
   imports: [MatCardModule],
   templateUrl: './widget-embedded.component.html',
   styleUrl: './widget-embedded.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
   hostDirectives: [
     { directive: WidgetStreamsDirective },
     { directive: WidgetMetadataDirective },
