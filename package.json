@@ -109,7 +109,7 @@
     "jsdom": "^26.1.0",
     "lodash-es": "^4.17.23",
     "ng-packagr": "^22.0.1",
-    "ngx-markdown": "^21.0.1",
+    "ngx-markdown": "^22.0.0",
     "prismjs": "^1.30.0",
     "pwa-asset-generator": "^8.1.1",
     "rxjs": "^7.8.2",
