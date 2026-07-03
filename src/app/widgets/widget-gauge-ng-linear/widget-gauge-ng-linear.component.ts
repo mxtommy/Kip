@@ -8,7 +8,7 @@
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
-import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
 import { getColors } from '../../core/utils/themeColors.utils';
@@ -19,6 +19,8 @@ import { WidgetStreamsDirective } from '../../core/directives/widget-streams.dir
 import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.directive';
 import { UnitsService } from '../../core/services/units.service';
 import { ITheme } from '../../core/services/app-service';
+
+type HostLinearGaugeOptions = LinearGaugeOptions & Record<string, unknown>;
 
 @Component({
   selector: 'widget-gauge-ng-linear',
@@ -80,53 +82,69 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   // Reactive presentation
   protected textValue = signal('--');
   protected value = signal<number | null | undefined>(undefined);
+  protected displayValue = computed<number>(() => this.value() ?? 0);
   /** True after first datapoint has been received (including zero). */
   protected shouldRenderGauge = computed(() => this.value() !== undefined);
-  protected gaugeOptions: LinearGaugeOptions = {} as LinearGaugeOptions;
+  protected gaugeOptions: HostLinearGaugeOptions = {} as HostLinearGaugeOptions;
   private viewReady = signal(false);
   /** True after first non-animated frame has been rendered. */
   private gaugeBootstrapped = signal(false);
   /** Enables smooth transitions only after the first static frame. */
   private animationEnabled = computed(() => this.gaugeBootstrapped());
   private currentState = signal<string>(States.Normal);
+  private normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetGaugeNgLinearComponent.DEFAULT_CONFIG);
+  private gaugePathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.gaugePath;
+  });
+  private normalizedScale = computed(() => {
+    const displayScale = this.normalizedConfig().displayScale ?? WidgetGaugeNgLinearComponent.DEFAULT_CONFIG.displayScale!;
+    return {
+      ...displayScale,
+      lower: displayScale.lower ?? 0,
+      upper: displayScale.upper ?? 100,
+    };
+  });
 
   private adjustedScale = computed<IScale>(() => {
-    const cfg = this.runtime.options();
-    if (!cfg) return { min: 0, max: 100, majorTicks: [] };
+    const cfg = this.normalizedConfig();
+    const displayScale = this.normalizedScale();
     if (cfg.gauge?.enableTicks) {
-      return adjustLinearScaleAndMajorTicks(cfg.displayScale.lower, cfg.displayScale.upper);
+      return adjustLinearScaleAndMajorTicks(displayScale.lower, displayScale.upper);
     }
-    return { min: cfg.displayScale.lower, max: cfg.displayScale.upper, majorTicks: [] };
+    return { min: displayScale.lower, max: displayScale.upper, majorTicks: [] };
   });
   private highlights = computed<IDataHighlight[]>(() => {
     const zones = this.metadata.zones();
-    const cfg = this.runtime.options();
+    const cfg = this.normalizedConfig();
     const theme = this.theme();
+    const gaugePathCfg = this.gaugePathConfig();
 
     if (!zones?.length) return [];
-    if (!cfg || !theme) return [];
+    if (!theme) return [];
     if (cfg.ignoreZones) return [];
 
-    if (!cfg.paths?.['gaugePath']) return [];
-    return getHighlights(zones, theme, cfg.paths['gaugePath'].convertUnitTo, this.unitsService, this.adjustedScale().min, this.adjustedScale().max);
+    if (!gaugePathCfg) return [];
+    return getHighlights(zones, theme, gaugePathCfg.convertUnitTo ?? '', this.unitsService, this.adjustedScale().min, this.adjustedScale().max);
   });
-  protected displayName = computed(() => this.runtime.options()?.displayName || 'Gauge Label');
+  protected displayName = computed(() => this.normalizedConfig().displayName || 'Gauge Label');
 
   constructor() {
     // Observe data stream reactively
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
-      if (!cfg || !theme) return;
-      if (!cfg.paths?.['gaugePath'].path) return;
+      const gaugePathCfg = this.gaugePathConfig();
+      const displayScale = this.normalizedScale();
+      if (!theme || !gaugePathCfg?.path) return;
 
       untracked(() => this.streams.observe('gaugePath', path => {
         const raw = (path?.data?.value as number) ?? null;
         if (raw == null) {
-          this.value.set(cfg.displayScale.lower);
+          this.value.set(displayScale.lower);
           this.textValue.set('--');
         } else {
-          const clamped = Math.min(Math.max(raw, cfg.displayScale.lower), cfg.displayScale.upper);
+          const clamped = Math.min(Math.max(raw, displayScale.lower), displayScale.upper);
           this.value.set(clamped);
           if (this.textValue() === '--') this.textValue.set('');
         }
@@ -138,8 +156,8 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
     // Metadata observation
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg || cfg.ignoreZones) return;
+      const cfg = this.normalizedConfig();
+      if (cfg.ignoreZones) return;
       untracked(() => this.metadata.observe('gaugePath'));
     });
 
@@ -154,7 +172,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
             this.ngGauge()?.update({ highlights: [] });
           } else {
             const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
-            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.runtime.options().gauge?.highlightsWidth });
+            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.normalizedConfig().gauge?.highlightsWidth });
           }
         } catch { /* ignore */ }
       });
@@ -162,12 +180,14 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
 
     // Build / update gauge options when config/theme/scale change
     effect(() => {
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
       // include scale dependency so options rebuild on scale recompute
       const scale = this.adjustedScale();
+      if (!theme) return;
 
       untracked(() => {
-        this.buildGaugeOptions(this.runtime.options(), theme, scale);
+        this.buildGaugeOptions(cfg, theme, scale);
         if (this.viewReady()) {
           try {
             this.ngGauge()?.update(this.gaugeOptions);
@@ -196,13 +216,14 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
       const state = this.currentState();
       if (!this.viewReady()) return;
       untracked(() => {
-        const cfg = this.runtime.options();
+        const cfg = this.normalizedConfig();
         const theme = this.theme();
+        if (!theme) return;
         if (cfg.ignoreZones) return;
 
-        const opt: LinearGaugeOptions = {};
+        const opt: HostLinearGaugeOptions = {} as HostLinearGaugeOptions;
         const enableNeedle = cfg.gauge?.enableNeedle;
-        const palette = getColors(cfg.color, theme);
+        const palette = getColors(cfg.color ?? 'contrast', theme);
         switch (state) {
           case States.Alarm:
             if (enableNeedle) {
@@ -248,10 +269,11 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   }
 
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
-    const opt = this.gaugeOptions = {} as LinearGaugeOptions;
+    const opt = this.gaugeOptions = {} as HostLinearGaugeOptions;
     const isVertical = cfg.gauge?.subType === 'vertical';
     const enableNeedle = cfg.gauge?.enableNeedle;
     const ticks = cfg.gauge?.enableTicks;
+    const gaugePathCfg = this.gaugePathConfig();
     // Canvas size (defer dynamic resize until AfterViewInit)
     opt.minValue = scale.min; opt.maxValue = scale.max;
     opt.valueInt = cfg.numInt ?? 1; opt.valueDec = cfg.numDecimal ?? 2;
@@ -265,7 +287,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.needleStart = enableNeedle ? (isVertical ? 200 : 155) : -45;
     opt.needleEnd = enableNeedle ? (isVertical ? 175 : 180) : 55;
     opt.needleShadow = true; opt.needleSide = 'both';
-    opt.units = cfg.paths?.['gaugePath']?.convertUnitTo; opt.fontUnits = 'Roboto'; opt.fontUnitsWeight = 'normal';
+    opt.units = gaugePathCfg?.convertUnitTo ?? ''; opt.fontUnits = 'Roboto'; opt.fontUnitsWeight = 'normal';
     opt.borders = false; opt.borderOuterWidth = 0; opt.borderMiddleWidth = 0; opt.borderInnerWidth = 0; opt.borderShadowWidth = 0; opt.borderRadius = 0;
     // Value box
     opt.valueBox = true; opt.valueBoxWidth = 35; opt.valueBoxStroke = 0; opt.valueBoxBorderRadius = 10;
@@ -274,7 +296,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.fontNumbers = 'Roboto'; opt.fontNumbersWeight = 'normal'; opt.fontUnitsSize = isVertical ? 40 : 35;
     opt.colorTitle = getColors('contrast', theme).dim; opt.colorUnits = getColors('contrast', theme).dim;
     opt.colorValueBoxBackground = theme.background;
-    const palette = getColors(cfg.color, theme);
+    const palette = getColors(cfg.color ?? 'contrast', theme);
     // baseline colors
     opt.colorValueText = palette.color;
     if (enableNeedle) {
@@ -294,7 +316,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.ticksWidth = ticks ? (enableNeedle ? (isVertical ? 15 : 10) : 10) : 0;
     opt.ticksPadding = ticks ? (isVertical ? (enableNeedle ? 0 : 5) : (enableNeedle ? 9 : 8)) : 0;
     opt.tickSide = 'left';
-    opt.animation = this.animationEnabled(); opt.animationRule = 'linear'; opt.animatedValue = this.animationEnabled(); opt.animateOnInit = false; opt.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 25;
+    opt.animation = this.animationEnabled(); opt.animationRule = 'linear'; opt.animatedValue = this.animationEnabled(); opt.animateOnInit = false; opt.animationDuration = (gaugePathCfg?.sampleTime ?? 500) - 25;
     opt.highlights = []; opt.highlightsWidth = cfg.gauge?.highlightsWidth;
     // pre-populate highlights if already available
     const h = this.highlights();
@@ -315,37 +337,37 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     const rect = el.getBoundingClientRect();
     const aspect = 0.3;
     let height: number; let width: number;
-    const cfg = this.runtime.options();
-    const isVertical = cfg?.gauge?.subType === 'vertical';
+    const cfg = this.normalizedConfig();
+    const isVertical = cfg.gauge?.subType === 'vertical';
     if (isVertical) { height = rect.height; width = rect.height * aspect; } else { width = rect.width; height = rect.width * aspect; }
-    const resize: LinearGaugeOptions = { height, width } as LinearGaugeOptions;
+    const resize: HostLinearGaugeOptions = { height, width } as HostLinearGaugeOptions;
     try { this.ngGauge()?.update(resize); } catch { /* ignore */ }
   }
 
   public onResized(evt: ResizeObserverEntry): void {
-    const cfg = this.runtime.options();
-    if (!cfg) return;
+    const cfg = this.normalizedConfig();
     const aspectRatio = 0.3;
     const isVertical = cfg.gauge?.subType === 'vertical';
-    const resize: LinearGaugeOptions = {};
+    let width = 0;
+    let height = 0;
 
     if (isVertical) {
-      resize.height = evt.contentRect.height;
-      resize.width = resize.height * aspectRatio;
-      if (resize.width > evt.contentRect.width) {
-        resize.width = evt.contentRect.width;
-        resize.height = resize.width / aspectRatio;
+      height = evt.contentRect.height;
+      width = height * aspectRatio;
+      if (width > evt.contentRect.width) {
+        width = evt.contentRect.width;
+        height = width / aspectRatio;
       }
     } else {
-      resize.width = evt.contentRect.width;
-      resize.height = resize.width * aspectRatio;
-      if (resize.height > evt.contentRect.height) {
-        resize.height = evt.contentRect.height;
-        resize.width = resize.height / aspectRatio;
+      width = evt.contentRect.width;
+      height = width * aspectRatio;
+      if (height > evt.contentRect.height) {
+        height = evt.contentRect.height;
+        width = height / aspectRatio;
       }
     }
 
-    resize.height = (resize.height ?? 0) - 10;
+    const resize: HostLinearGaugeOptions = { width, height: height - 10 } as HostLinearGaugeOptions;
     try { this.ngGauge()?.update(resize); } catch { /* ignore */ }
   }
 }

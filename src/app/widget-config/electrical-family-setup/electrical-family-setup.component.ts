@@ -59,7 +59,7 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
 
     return this.discoveredIds().map(id => ({ value: id, label: id }));
   });
-  protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
+  protected readonly hasGroups = computed(() => (this.groupsFormArray?.length ?? 0) > 0);
   protected readonly supportsGroups = computed(() => !!this.groupsFormArray);
 
   private discoveryToken?: PathDiscoveryToken;
@@ -105,6 +105,10 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
   }
 
   protected addGroup(): void {
+    if (!this.groupsFormArray) {
+      return;
+    }
+
     const slug = this.setupLabel().toLowerCase().replace(/\s+/g, '-');
     const nextGroup: ElectricalGroupConfig = {
       id: `${slug}-group-${Date.now()}`,
@@ -118,6 +122,10 @@ export class ElectricalFamilySetupComponent implements OnInit, OnDestroy {
   }
 
   protected removeGroup(index: number): void {
+    if (!this.groupsFormArray) {
+      return;
+    }
+
     this.groupsFormArray.removeAt(index);
     this.groupsFormArray.markAsDirty();
   }

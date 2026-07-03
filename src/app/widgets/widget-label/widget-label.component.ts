@@ -51,7 +51,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
       if (!cfg || !theme) return;
       untracked(() => {
-        this.fgColor.set(this.mapColor(cfg.color, theme));
+        this.fgColor.set(this.mapColor(cfg.color ?? 'contrast', theme));
         this.bgColor.set(this.mapColor(cfg.bgColor ?? 'grey', theme));
         this.draw();
       });
@@ -66,7 +66,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private mapColor(colorName: string, theme: ITheme): string {
+  private mapColor(colorName: string | undefined, theme: ITheme): string {
     switch (colorName) {
       case 'contrast': return theme.contrast;
       case 'blue': return theme.blue;

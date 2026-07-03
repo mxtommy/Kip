@@ -14,25 +14,25 @@
     <span matTextSuffix>Seconds</span>
   </mat-form-field>
 </div>
-<ng-container [formGroup]="pathsFormGroup">
-  @if(isArray()) {
-    @for (group of pathsFormGroup.controls; track $index) {
-      <path-control-config style="display: block;"
-        [pathFormGroup]="group"
-        [filterSelfPaths]="filterSelfPaths().value"
-        [multiCTRLArray]="multiCTRLArray">
-      </path-control-config>
-    }
-  } @else {
-    @for (group of pathsFormGroup.controls | objectKeys; track $index) {
-      <path-control-config style="display: block;"
-        [pathFormGroup]="pathsFormGroup.get(group)"
-        [filterSelfPaths]="filterSelfPaths().value"
-        [multiCTRLArray]="multiCTRLArray">
-      </path-control-config>
-    }
+@if(isArray()) {
+  @for (group of arrayPathControls; track $index) {
+    <path-control-config style="display: block;"
+      [pathFormGroup]="getPathFormGroup(group)"
+      [filterSelfPaths]="filterSelfPaths().value"
+      [multiCTRLArray]="multiCTRLArray">
+    </path-control-config>
   }
-</ng-container>
+} @else if (pathControlsGroup) {
+  <ng-container [formGroup]="pathControlsGroup">
+    @for (group of groupPathKeys; track $index) {
+      <path-control-config style="display: block;"
+        [pathFormGroup]="getPathFormGroup(group)"
+        [filterSelfPaths]="filterSelfPaths().value"
+        [multiCTRLArray]="multiCTRLArray">
+      </path-control-config>
+    }
+  </ng-container>
+}
 <mat-checkbox
   name="filterSelfPaths"
   [formControl]="filterSelfPaths()">

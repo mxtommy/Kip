@@ -84,6 +84,10 @@ export class WidgetRacesteerComponent implements OnDestroy {
   protected readonly trueWindMinHistoric = signal<number>(0);
   protected readonly trueWindMidHistoric = signal<number>(0);
   protected readonly trueWindMaxHistoric = signal<number>(0);
+  protected readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetRacesteerComponent.DEFAULT_CONFIG);
+  protected readonly sailSetupEnabledValue = computed<boolean>(() => this.normalizedConfig().sailSetupEnable ?? false);
+  protected readonly driftEnabledValue = computed<boolean>(() => this.normalizedConfig().driftEnable ?? false);
+  protected readonly waypointEnabledValue = computed<boolean>(() => this.normalizedConfig().waypointEnable ?? false);
 
   private windSectorSub: Subscription | null = null;
   private historicalWindDirection: IWindDirSample[] = [];
@@ -91,7 +95,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
   constructor() {
     // Heading
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       if (!cfg) return;
       const paths = cfg.paths as IPathArray | undefined; // Host2 config uses object map
       const path = paths?.['headingPath']?.path;
@@ -173,7 +177,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
         if (cfg.windSectorEnable) {
           const heading = this.currentHeading();
           const relative360 = this.addHeading(heading, raw == null ? 0 : raw);
-          this.addHistoricalWindDirection(relative360, cfg.windSectorWindowSeconds);
+          this.addHistoricalWindDirection(relative360, cfg.windSectorWindowSeconds ?? 5);
         }
       }));
     });
@@ -213,7 +217,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('targetAngle', pkt => {
         const v = pkt?.data?.value as number | null;
-        this.targetAngle.set(v);
+        this.targetAngle.set(v ?? 0);
       }));
     });
 
@@ -330,11 +334,11 @@ export class WidgetRacesteerComponent implements OnDestroy {
 
     // Start / stop wind sectors interval
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       if (!cfg) return;
       if (cfg.windSectorEnable) {
         if (!this.windSectorSub) {
-          untracked(() => this.windSectorSub = interval(500).subscribe(() => this.historicalCleanup(cfg.windSectorWindowSeconds)));
+          untracked(() => this.windSectorSub = interval(500).subscribe(() => this.historicalCleanup(cfg.windSectorWindowSeconds ?? 5)));
         }
       } else {
         this.windSectorSub?.unsubscribe();

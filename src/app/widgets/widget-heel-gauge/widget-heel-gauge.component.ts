@@ -1,5 +1,5 @@
 import { Component, computed, effect, signal, viewChild, ElementRef, inject, NgZone, AfterViewInit, input, untracked, ChangeDetectionStrategy } from '@angular/core';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { ITheme } from '../../core/services/app-service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -48,10 +48,15 @@ export class WidgetHeelGaugeComponent implements AfterViewInit {
   });
 
   protected themeColorValue = signal('contrast');
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetHeelGaugeComponent.DEFAULT_CONFIG);
+  private readonly anglePathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.angle;
+  });
   // Ready flag after initial frame to enable CSS transitions if needed
   protected readonly ready = signal(false);
   protected readonly pointerTransition = computed(() => {
-    const ms = this.runtime.options()?.paths?.['angle']?.sampleTime ?? 1000;
+    const ms = this.anglePathConfig()?.sampleTime ?? 1000;
     const duration = Math.max(100, ms * 0.95);
     return `transform ${duration}ms ease-in-out`;
   });
@@ -101,9 +106,8 @@ export class WidgetHeelGaugeComponent implements AfterViewInit {
   constructor() {
     // Observe angle path when config present
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
-      const angleCfg = cfg.paths?.['angle'];
+      const cfg = this.normalizedConfig();
+      const angleCfg = this.anglePathConfig();
       if (!angleCfg?.path) return; // nothing to observe if path empty
       // Establish observation outside reactive tracking of angle updates
       untracked(() => this.streams.observe('angle', pkt => {

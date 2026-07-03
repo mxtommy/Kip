@@ -5,6 +5,17 @@ import type { ITheme } from '../../core/services/app-service';
 import { ISkZone, States } from '../../core/interfaces/signalk-interfaces';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
 
+interface SteelGaugeHandle {
+  setValueAnimated?(value: number): void;
+  setTitleString?(value: string): void;
+  setBackgroundColor?(value: unknown): void;
+  setFrameDesign?(value: unknown): void;
+  setMinValue?(value: number): void;
+  setMaxValue?(value: number): void;
+  setValue?(value: number): void;
+  getValue?(): number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare let steelseries: any; // 3rd party global (loaded from asset in production build)
 
@@ -72,25 +83,25 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private readonly canvasService = inject(CanvasService);
   protected readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('gaugeCanvas');
 
-  readonly widgetUUID = input<string>(undefined);
-  readonly subType = input<string>(undefined); // linear or radial
-  readonly barGauge = input<boolean>(undefined);
-  readonly radialSize = input<string>(undefined);
-  readonly backgroundColor = input<string>(undefined);
-  readonly frameColor = input<string>(undefined);
-  readonly minValue = input<number>(undefined);
-  readonly maxValue = input<number>(undefined);
-  readonly decimals = input<number>(undefined);
-  readonly zones = input<ISkZone[]>(undefined);
-  readonly title = input<string>(undefined);
-  readonly units = input<string>(undefined);
-  readonly value = input<number>(undefined);
+  readonly widgetUUID = input<string | undefined>();
+  readonly subType = input<string | undefined>(); // linear or radial
+  readonly barGauge = input<boolean | undefined>();
+  readonly radialSize = input<string | undefined>();
+  readonly backgroundColor = input<string | undefined>();
+  readonly frameColor = input<string | undefined>();
+  readonly minValue = input<number | undefined>();
+  readonly maxValue = input<number | undefined>();
+  readonly decimals = input<number | undefined>();
+  readonly zones = input<ISkZone[] | undefined>();
+  readonly title = input<string | undefined>();
+  readonly units = input<string | undefined>();
+  readonly value = input<number | undefined>();
   // eslint-disable-next-line @angular-eslint/no-input-rename
-  readonly theme = input<ITheme>(undefined, { alias: "themeColors" });
+  readonly theme = input<ITheme | undefined>(undefined, { alias: "themeColors" });
 
   private gaugeStarted = false;
-  private gauge;
-  private gaugeOptions = {};
+  private gauge: SteelGaugeHandle | null = null;
+  private gaugeOptions: Record<string, unknown> = {};
   protected paddingTop = 0;
   private lastSizeSignature = '';
   private resizeTimer: number | null = null;
@@ -101,15 +112,20 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private buildOptions() {
+    this.gaugeOptions = {};
+
+    const minValue = this.minValue() ?? 0;
+    const maxValue = this.maxValue() ?? 100;
+
     //minMax
-    this.gaugeOptions['minValue'] = this.minValue();
-    this.gaugeOptions['maxValue'] = this.maxValue();
+    this.gaugeOptions['minValue'] = minValue;
+    this.gaugeOptions['maxValue'] = maxValue;
     const decimals = this.decimals();
     this.gaugeOptions['lcdDecimals'] = decimals !== undefined && decimals !== null ? decimals : 2;
 
     //labels
-    this.gaugeOptions['titleString'] = this.title();
-    this.gaugeOptions['unitString'] = this.units();
+    this.gaugeOptions['titleString'] = this.title() ?? '';
+    this.gaugeOptions['unitString'] = this.units() ?? '';
 
     // Radial Arc size
     if (this.subType() == 'radial') {
@@ -120,33 +136,47 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     // Define some sections
     const zones = this.zones();
     if (zones) {
+      const theme = this.theme();
+      const zoneThemeColors = {
+        emergency: theme?.zoneEmergency ?? 'rgba(0,0,0,0)',
+        alarm: theme?.zoneAlarm ?? 'rgba(0,0,0,0)',
+        warn: theme?.zoneWarn ?? 'rgba(0,0,0,0)',
+        alert: theme?.zoneAlert ?? 'rgba(0,0,0,0)',
+        nominal: theme?.zoneNominal ?? 'rgba(0,0,0,0)'
+      };
 
-      const sections = [];
-      const areas = [];
+      const sections: unknown[] = [];
+      const areas: unknown[] = [];
 
       // Sort zones based on lower value
-      const sortedZones = [...zones].sort((a, b) => a.lower - b.lower);
+      const sortedZones = [...zones].sort((a, b) => (a.lower ?? Number.NEGATIVE_INFINITY) - (b.lower ?? Number.NEGATIVE_INFINITY));
 
       for (const zone of sortedZones) {
-        let lower: number = null;
-        let upper: number = null;
+        const zoneLower = zone.lower;
+        const zoneUpper = zone.upper;
+        if (zoneLower === undefined || zoneUpper === undefined) {
+          continue;
+        }
+
+        let lower = zoneLower;
+        let upper = zoneUpper;
 
         let color: string;
         switch (zone.state) {
           case States.Emergency:
-            color = this.theme().zoneEmergency;
+            color = zoneThemeColors.emergency;
             break;
           case States.Alarm:
-            color = this.theme().zoneAlarm;
+            color = zoneThemeColors.alarm;
             break;
           case States.Warn:
-            color = this.theme().zoneWarn;
+            color = zoneThemeColors.warn;
             break;
           case States.Alert:
-            color = this.theme().zoneAlert;
+            color = zoneThemeColors.alert;
             break;
           case States.Nominal:
-            color = this.theme().zoneNominal;
+            color = zoneThemeColors.nominal;
             break;
           default:
             color = "rgba(0,0,0,0)";
@@ -155,28 +185,24 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
         // Perform Units conversions on zone range
         const units = this.units();
         if (units == "ratio") {
-          lower = zone.lower;
-          upper = zone.upper;
+          lower = zoneLower;
+          upper = zoneUpper;
         } else {
-          lower = this.unitsService.convertToUnit(units, zone.lower);
-          upper = this.unitsService.convertToUnit(units, zone.upper);
+          lower = this.unitsService.convertToUnit(units ?? '', zoneLower) ?? zoneLower;
+          upper = this.unitsService.convertToUnit(units ?? '', zoneUpper) ?? zoneUpper;
         }
 
         // Skip zones that are completely outside the gauge range
-        if (upper < this.minValue() || lower > this.maxValue()) {
+        if (upper < minValue || lower > maxValue) {
           continue;
         }
 
-        // If lower or upper are null, set them to minValue or maxValue
-        lower = lower !== null ? lower : this.minValue();
-        upper = upper !== null ? upper : this.maxValue();
-
         // Ensure lower does not go below minValue
-        lower = Math.max(lower, this.minValue());
+        lower = Math.max(lower, minValue);
 
         // Ensure upper does not exceed maxValue
-        if (upper > this.maxValue()) {
-          upper = this.maxValue();
+        if (upper > maxValue) {
+          upper = maxValue;
           sections.push(steelseries.Section(lower, upper, color));
           break;
         }
@@ -190,11 +216,13 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     //Colors
-    if (SteelBackgroundColors[this.backgroundColor()]) {
-      this.gaugeOptions['backgroundColor'] = SteelBackgroundColors[this.backgroundColor()];
+    const backgroundColor = this.backgroundColor();
+    if (backgroundColor && backgroundColor in SteelBackgroundColors) {
+      this.gaugeOptions['backgroundColor'] = SteelBackgroundColors[backgroundColor as keyof typeof SteelBackgroundColors];
     }
-    if (SteelFrameColors[this.frameColor()]) {
-      this.gaugeOptions['frameDesign'] = SteelFrameColors[this.frameColor()];
+    const frameColor = this.frameColor();
+    if (frameColor && frameColor in SteelFrameColors) {
+      this.gaugeOptions['frameDesign'] = SteelFrameColors[frameColor as keyof typeof SteelFrameColors];
     }
     if (this.barGauge()) {
       this.gaugeOptions['valueColor'] = steelseries.ColorDef.GREEN;
@@ -207,7 +235,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     this.gaugeOptions['ledVisible'] = false;
   }
 
-  private setGaugeType(radialSize: string): string {
+  private setGaugeType(radialSize: string | undefined): unknown {
     switch (radialSize) {
       case 'quarter':
         return steelseries.GaugeType.TYPE1;
@@ -279,31 +307,31 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.gaugeStarted) { return; }
-    if (changes.value && !changes.value.firstChange) {
-        this.gauge.setValueAnimated(changes.value.currentValue);
+    if (changes.value && !changes.value.firstChange && changes.value.currentValue != null) {
+        this.gauge?.setValueAnimated?.(changes.value.currentValue);
     }
     if (changes.zones) {
       this.pendingStructuralRebuild = true;
       this.startGauge(true); // sections require rebuild
     }
     if (changes.title) {
-      this.gauge.setTitleString(changes.title.currentValue);
+      this.gauge?.setTitleString?.(changes.title.currentValue ?? '');
     }
-    if(changes.backgroundColor) {
-      this.gauge.setBackgroundColor(SteelBackgroundColors[changes.backgroundColor.currentValue]);
+    if(changes.backgroundColor && changes.backgroundColor.currentValue in SteelBackgroundColors) {
+      this.gauge?.setBackgroundColor?.(SteelBackgroundColors[changes.backgroundColor.currentValue as keyof typeof SteelBackgroundColors]);
     }
-    if(changes.frameColor) {
-      this.gauge.setFrameDesign(SteelFrameColors[changes.frameColor.currentValue]);
+    if(changes.frameColor && changes.frameColor.currentValue in SteelFrameColors) {
+      this.gauge?.setFrameDesign?.(SteelFrameColors[changes.frameColor.currentValue as keyof typeof SteelFrameColors]);
     }
     if (changes.radialSize){
       this.pendingStructuralRebuild = true;
       this.startGauge(true); // radial geometry change
     }
-    if(changes.minValue) {
-      this.gauge.setMinValue(changes.minValue.currentValue);
+    if(changes.minValue && changes.minValue.currentValue != null) {
+      this.gauge?.setMinValue?.(changes.minValue.currentValue);
     }
-    if(changes.maxValue) {
-      this.gauge.setMaxValue(changes.maxValue.currentValue);
+    if(changes.maxValue && changes.maxValue.currentValue != null) {
+      this.gauge?.setMaxValue?.(changes.maxValue.currentValue);
     }
   }
 
@@ -312,7 +340,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     if (this.gauge && this.gauge.setValue) {
       // Call setValue to stop any running setValueAnimated animations
       const currentValue = this.gauge.getValue ? this.gauge.getValue() : this.value();
-      this.gauge.setValue(currentValue);
+      this.gauge.setValue(currentValue ?? 0);
     }
 
     // Steelseries draws into the canvas with id widgetUUID(). Release it to free GPU memory.

@@ -1,6 +1,5 @@
-@let cfg = runtime.options();
   <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
-    [displayName]="cfg.displayName"
+    [displayName]="displayNameSafe()"
     [displayNameColor]="$safeNavigationMigration(theme()?.contrastDim)"
     [unitLabel]="unitsLabel()"
     [dataValue]="dataValue()"
@@ -8,7 +7,7 @@
     [barColor]="barColor()"
     [barColorGradient]="barColorGradient()"
     [barColorBackground]="barColorBackground()"
-    [gaugeMaxValue]="cfg.displayScale.upper"
-    [gaugeMinValue]="cfg.displayScale.lower"
+    [gaugeMaxValue]="gaugeMaxValue()"
+    [gaugeMinValue]="gaugeMinValue()"
     [highlights]="highlights()"
   ></svg-simple-linear-gauge>

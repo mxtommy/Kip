@@ -1,5 +1,5 @@
 import { Component, OnDestroy, AfterViewInit, inject, effect, viewChild, ElementRef, input, untracked, NgZone, ChangeDetectionStrategy, computed } from '@angular/core';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { ITheme } from '../../core/services/app-service';
@@ -57,6 +57,8 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   // Directives/services
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly streams = inject(WidgetStreamsDirective);
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetHorizonComponent.DEFAULT_CONFIG);
+  private readonly horizonPaths = computed<Record<string, IWidgetPath>>(() => (this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined) ?? {});
 
   // Static default config (legacy parity + displayName)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -124,8 +126,8 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   constructor() {
     // Observe pitch path
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pitchCfg = cfg.paths?.['gaugePitchPath'];
+      const cfg = this.normalizedConfig();
+      const pitchCfg = this.horizonPaths()['gaugePitchPath'];
       if (!pitchCfg?.path) return;
       untracked(() => this.streams.observe('gaugePitchPath', pkt => {
         const v = (pkt?.data?.value as number) ?? 0;
@@ -139,8 +141,8 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
 
     // Observe roll path
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const rollCfg = cfg.paths?.['gaugeRollPath'];
+      const cfg = this.normalizedConfig();
+      const rollCfg = this.horizonPaths()['gaugeRollPath'];
       if (!rollCfg?.path) return;
       untracked(() => this.streams.observe('gaugeRollPath', pkt => {
         const v = (pkt?.data?.value as number) ?? 0;
@@ -247,10 +249,11 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
     if (typeof steelseries === 'undefined') return;
     const frameMap = getSteelFrameDesign(steelseries);
     const pointerMap = getSteelPointerColors(steelseries);
+    const faceColor = (cfg.gauge?.faceColor ?? 'anthracite') as keyof ReturnType<typeof getSteelFrameDesign>;
     this.gaugeOptions = {
       pointerColor: pointerMap.Red,
       frameVisible: !(cfg.gauge?.noFrameVisible ?? false),
-      frameDesign: frameMap[cfg.gauge?.faceColor ?? 'anthracite'],
+      frameDesign: frameMap[faceColor],
       foregroundVisible: false,
       size
     };

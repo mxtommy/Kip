@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, untracked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, untracked, computed } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -40,17 +40,22 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly stream = inject(WidgetStreamsDirective);
   private readonly canvas = inject(CanvasService);
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetTextComponent.DEFAULT_CONFIG);
+  private readonly stringPathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.stringPath;
+  });
 
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  private canvasElement: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  private canvasElement!: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D | null = null;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
   private cssWidth = 0;
   private cssHeight = 0;
   private dataValue: string | null = null;
-  protected labelColor = signal<string>(undefined);
-  private valueColor: string = undefined;
+  protected labelColor = signal<string>('');
+  private valueColor = '';
   private isDestroyed = false; // guard against callbacks after destroyed
   private streamRegistered = false;
 
@@ -58,8 +63,6 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
     effect(() => {
       const theme = this.theme();
       untracked(() => {
-        const cfg = this.runtime?.options();
-        if (!cfg) return;
         if (theme) {
           this.setColors();
           this.drawWidget();
@@ -68,8 +71,7 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     effect(() => {
-      const cfg = this.runtime?.options();
-      if (!cfg) return;
+      const cfg = this.normalizedConfig();
       if (this.isDestroyed || !this.canvasCtx) return;
       untracked(() => {
         this.setColors();
@@ -104,8 +106,8 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   private startWidget(): void {
     this.dataValue = null;
     if (!this.streamRegistered) {
-      const cfg = this.runtime?.options();
-      if (cfg?.paths?.['stringPath']?.path) {
+      const pathCfg = this.stringPathConfig();
+      if (pathCfg?.path) {
         this.stream.observe('stringPath', (newValue: IPathUpdate) => {
           this.dataValue = newValue.data.value as string;
           this.drawWidget();
@@ -118,10 +120,10 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private setColors(): void {
-    const cfg = this.runtime?.options();
-    if (!cfg) return;
-    this.labelColor.set(getColors(cfg.color, this.theme()).dim);
-    this.valueColor = getColors(cfg.color, this.theme()).color;
+    const cfg = this.normalizedConfig();
+    const color = cfg.color ?? 'contrast';
+    this.labelColor.set(getColors(color, this.theme()).dim);
+    this.valueColor = getColors(color, this.theme()).color;
   }
 
   // Runtime config updates are handled by Host2; effects above re-run on changes.
@@ -138,21 +140,22 @@ export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   drawWidget() {
     if (!this.canvasCtx) return;
     const titleHeight = Math.floor(this.cssHeight * 0.1);
-    const cfg = this.runtime.options();
-    const bgText = cfg.displayName + '|' + this.labelColor();
+    const cfg = this.normalizedConfig();
+    const displayName = cfg.displayName ?? 'Gauge Label';
+    const bgText = displayName + '|' + this.labelColor();
 
     if (!this.titleBitmap ||
         this.titleBitmap.width !== this.canvasElement.width ||
         this.titleBitmap.height !== this.canvasElement.height ||
         this.titleBitmapText !== bgText) {
       this.titleBitmap = this.canvas.createTitleBitmap(
-        cfg.displayName,
+        displayName,
         this.labelColor(),
         'normal',
         this.cssWidth,
         this.cssHeight
       );
-      this.titleBitmapText = cfg.displayName + '|' + this.labelColor();
+      this.titleBitmapText = displayName + '|' + this.labelColor();
     }
 
     this.canvas.clearCanvas(this.canvasCtx, this.cssWidth, this.cssHeight);

@@ -1,10 +1,10 @@
-import { Component, AfterViewInit, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, computed } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
 
 @Component({
@@ -47,6 +47,8 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
   private longPos = '';
   protected labelColor = signal<string>('');
   private valueColor = '';
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetPositionComponent.DEFAULT_CONFIG);
+  private readonly positionPaths = computed<Record<string, IWidgetPath>>(() => (this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined) ?? {});
 
   // Static default config cloned from legacy implementation
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -85,11 +87,11 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
   constructor() {
     // Theme / palette effect
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
-      if (!cfg || !theme) return;
+      if (!theme) return;
       untracked(() => {
-        const palette = getColors(cfg.color, theme);
+        const palette = getColors(cfg.color ?? 'contrast', theme);
         this.labelColor.set(palette.dim);
         this.valueColor = palette.color;
         this.draw();
@@ -98,9 +100,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
 
     // Observe longitude path
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
-      const pathCfg = cfg.paths?.['longPath'];
+      const pathCfg = this.positionPaths()['longPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('longPath', pkt => {
         const val = pkt?.data?.value as number | null;
@@ -114,8 +114,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
 
     // Observe latitude path
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = cfg.paths?.['latPath'];
+      const pathCfg = this.positionPaths()['latPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('latPath', pkt => {
         const val = pkt?.data?.value as number | null;
@@ -162,8 +161,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
 
   private draw(): void {
     if (!this.ctx || !this.canvasElement) return;
-    const cfg = this.runtime.options();
-    if (!cfg) return;
+    const cfg = this.normalizedConfig();
     const name = cfg.displayName || 'Position';
     const titleColor = this.labelColor();
     if (

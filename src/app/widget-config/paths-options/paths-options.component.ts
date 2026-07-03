@@ -1,7 +1,6 @@
 import { Component, OnChanges, OnInit, SimpleChanges, input, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import type { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
-import { ObjectKeysPipe } from '../../core/pipes/object-keys.pipe';
 import { PathControlConfigComponent } from '../path-control-config/path-control-config.component';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
@@ -19,7 +18,7 @@ export interface IAddNewPath {
     templateUrl: './paths-options.component.html',
     styleUrls: ['./paths-options.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, PathControlConfigComponent, ObjectKeysPipe]
+    imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, PathControlConfigComponent]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {
   private rootFormGroup = inject(FormGroupDirective);
@@ -30,25 +29,29 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
   readonly enableTimeout = input.required<UntypedFormControl>();
   readonly dataTimeout = input.required<UntypedFormControl>();
   readonly filterSelfPaths = input.required<UntypedFormControl>();
-  readonly addPathEvent = input<IAddNewPathObject>(undefined);
-  readonly delPathEvent = input<string>(undefined);
-  readonly updatePathEvent = input<IDynamicControl[]>(undefined);
+  readonly addPathEvent = input<IAddNewPathObject | undefined>();
+  readonly delPathEvent = input<string | undefined>();
+  readonly updatePathEvent = input<IDynamicControl[] | undefined>();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected pathsFormGroup!: any;
+  protected pathsFormArray?: UntypedFormArray;
+  protected pathControlsGroup?: UntypedFormGroup;
   protected multiCTRLArray: IDynamicControl[] = [];
 
   ngOnInit(): void {
     if (this.isArray()) {
-      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormArray;
-      this.multiCTRLArray = this.rootFormGroup.control.get('multiChildCtrls').value;
+      this.pathsFormArray = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormArray;
+      this.multiCTRLArray = (this.rootFormGroup.control.get('multiChildCtrls')?.value as IDynamicControl[] | null) ?? [];
     } else {
-      this.pathsFormGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormGroup;
+      this.pathControlsGroup = this.rootFormGroup.control.get(this.formGroupName()) as UntypedFormGroup;
     }
   }
 
   public addPath(newPath: IAddNewPathObject): void {
-    this.pathsFormGroup.push(
+    if (!this.pathsFormArray) {
+      return;
+    }
+
+    this.pathsFormArray.push(
       this.fb.group({
         description: [newPath.path.description],
         path: [newPath.path.path, Validators.required],
@@ -64,16 +67,32 @@ export class PathsOptionsComponent implements OnInit, OnChanges {
         supportsPut: [newPath.path.supportsPut],
       })
     );
-    this.pathsFormGroup.updateValueAndValidity();
-    this.multiCTRLArray = this.rootFormGroup.control.get('multiChildCtrls').value;
+    this.pathsFormArray.updateValueAndValidity();
+    this.multiCTRLArray = (this.rootFormGroup.control.get('multiChildCtrls')?.value as IDynamicControl[] | null) ?? [];
   }
 
   private delPath(): void {
-    this.multiCTRLArray = this.rootFormGroup.control.get('multiChildCtrls').value;
+    this.multiCTRLArray = (this.rootFormGroup.control.get('multiChildCtrls')?.value as IDynamicControl[] | null) ?? [];
   }
 
   private updatePath(ctrls: IDynamicControl[]): void {
     this.multiCTRLArray = ctrls;
+  }
+
+  protected get arrayPathControls(): AbstractControl[] {
+    return this.pathsFormArray?.controls ?? [];
+  }
+
+  protected get groupPathKeys(): string[] {
+    return this.pathControlsGroup ? Object.keys(this.pathControlsGroup.controls) : [];
+  }
+
+  protected getPathFormGroup(controlOrKey: AbstractControl | string): UntypedFormGroup {
+    if (typeof controlOrKey === 'string') {
+      return this.pathControlsGroup?.get(controlOrKey) as UntypedFormGroup;
+    }
+
+    return controlOrKey as UntypedFormGroup;
   }
 
   ngOnChanges(changes: SimpleChanges): void {

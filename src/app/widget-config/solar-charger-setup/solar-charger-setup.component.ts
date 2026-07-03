@@ -46,7 +46,7 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
   protected readonly discoveredSolarIds = signal<string[]>([]);
   protected readonly discoveredTrackedDevices = signal<ElectricalTrackedDevice[]>([]);
   protected readonly selectedTrackedDeviceIds = signal<string[]>([]);
-  protected readonly hasGroups = computed(() => this.groupsFormArray?.length > 0);
+  protected readonly hasGroups = computed(() => (this.groupsFormArray?.length ?? 0) > 0);
   protected readonly supportsGroups = computed(() => !!this.groupsFormArray);
   protected readonly optionIds = computed(() => {
     const selected = this.selectedTrackedDeviceIds();
@@ -143,6 +143,10 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
   }
 
   protected addGroup(): void {
+    if (!this.groupsFormArray) {
+      return;
+    }
+
     const next: ElectricalGroupConfig = {
       id: `solar-bank-${Date.now()}`,
       name: 'New Group',
@@ -155,6 +159,10 @@ export class SolarChargerSetupComponent implements OnInit, OnDestroy {
   }
 
   protected removeGroup(index: number): void {
+    if (!this.groupsFormArray) {
+      return;
+    }
+
     this.groupsFormArray.removeAt(index);
     this.groupsFormArray.markAsDirty();
   }

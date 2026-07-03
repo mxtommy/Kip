@@ -11,7 +11,7 @@
     [decimals]="$safeNavigationMigration(runtime.options()?.numDecimal)"
     [zones]="zones()"
     [title]="displayName()"
-    [units]="$safeNavigationMigration(runtime.options()?.paths?.['gaugePath']?.convertUnitTo)"
+    [units]="gaugeUnits()"
     [value]="dataValue()"
     [themeColors]="theme()"
   ></gauge-steel>

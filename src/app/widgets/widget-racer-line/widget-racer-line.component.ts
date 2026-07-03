@@ -14,7 +14,7 @@ import {
 import { ChangeDetectionStrategy } from '@angular/core';
 import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
 import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
-import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import type {IPathArray, IWidgetPath, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {CanvasService} from '../../core/services/canvas.service';
 import {getColors} from '../../core/utils/themeColors.utils';
 import {DashboardService} from '../../core/services/dashboard.service';
@@ -103,7 +103,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
         pathType: 'string',
         pathRequired: false,
         isPathConfigurable: false,
-        convertUnitTo: null,
+        convertUnitTo: undefined,
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         sampleTime: 1000
@@ -115,7 +115,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
         pathType: null,
         pathRequired: false,
         isPathConfigurable: false,
-        convertUnitTo: null,
+        convertUnitTo: undefined,
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         sampleTime: 1000
@@ -172,20 +172,24 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   private maxValueTextHeight = 0;
   private displayLineIndex = 0;
   private lines: string[] = [];
-  private startLineName: string = null;
+  private startLineName: string | null = null;
   protected portBiasValue = signal<string>('');
   protected lineLengthValue = signal<string>('');
   protected stbBiasValue = signal<string>('');
   protected mode = signal<number>(0);
+  private readonly normalizedConfig = signal<IWidgetSvcConfig>(WidgetRacerLineComponent.DEFAULT_CONFIG);
+  private get pathsRecord(): Record<string, IWidgetPath> {
+    return ((this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG).paths as Record<string, IWidgetPath> | undefined) ?? {};
+  }
 
   constructor() {
     // Theme/palette effect
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG;
       const theme = this.theme();
-      if (!cfg || !theme) return;
+      if (!theme) return;
       untracked(() => {
-        const palette = getColors(cfg.color, theme);
+        const palette = getColors(cfg.color ?? 'contrast', theme);
         this.labelColor.set(palette.dim);
         this.valueColor = palette.color;
         this.draw();
@@ -194,8 +198,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Observe dtsPath
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = (cfg.paths as IPathArray | undefined)?.['dtsPath'];
+      const pathCfg = this.pathsRecord['dtsPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('dtsPath', pkt => {
         this.dtsValue = pkt?.data?.value ?? null;
@@ -206,8 +209,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Observe lineLengthPath
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = (cfg.paths as IPathArray | undefined)?.['lineLengthPath'];
+      const pathCfg = this.pathsRecord['lineLengthPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('lineLengthPath', pkt => {
         this.lengthValue = pkt?.data?.value ?? null;
@@ -218,8 +220,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Observe lineBiasPath
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = (cfg.paths as IPathArray | undefined)?.['lineBiasPath'];
+      const pathCfg = this.pathsRecord['lineBiasPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('lineBiasPath', pkt => {
         this.biasValue = pkt?.data?.value ?? null;
@@ -229,8 +230,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Observe Start Line Name
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = (cfg.paths as IPathArray | undefined)?.['startLineNamePath'];
+      const pathCfg = this.pathsRecord['startLineNamePath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('startLineNamePath', pkt => {
         console.log('startLineName: ' + JSON.stringify(pkt ?? 'no data'));
@@ -248,8 +248,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Observe lines
     effect(() => {
-      const cfg = this.runtime.options(); if (!cfg) return;
-      const pathCfg = (cfg.paths as IPathArray | undefined)?.['linesPath'];
+      const pathCfg = this.pathsRecord['linesPath'];
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('linesPath', pkt => {
         console.log('lines: ' + JSON.stringify(pkt ?? 'no data'));
@@ -269,12 +268,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Stream: TTL
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) {
-        return;
-      }
-      const paths = cfg.paths as IPathArray | undefined;
-      const path = paths?.['ttlPath']?.path;
+      const path = this.pathsRecord['ttlPath']?.path;
       if (!path) {
         return;
       }
@@ -286,12 +280,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     // Stream: TTB
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) {
-        return;
-      }
-      const paths = cfg.paths as IPathArray | undefined;
-      const path = paths?.['ttbPath']?.path;
+      const path = this.pathsRecord['ttbPath']?.path;
       if (!path) {
         return;
       }
@@ -336,11 +325,11 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   }
 
   public setLineEnd(end: string): string {
-    return this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.id());
+    return this.signalk.putRequest('navigation.racing.setStartLine', {end, position: 'bow'}, this.id()) ?? '';
   }
 
   public adjustLineEnd(end: string, delta: number, rotateRadians: number): string {
-    return this.signalk.putRequest('navigation.racing.setStartLine', {end, delta, rotate: rotateRadians || null}, this.id());
+    return this.signalk.putRequest('navigation.racing.setStartLine', {end, delta, rotate: rotateRadians}, this.id()) ?? '';
   }
 
   public nextDisplayLineName() {
@@ -367,12 +356,12 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
     this.draw();
   }
 
-  public toRadians(deg: number): number | null {
-    return deg ? deg * (Math.PI / 180) : null;
+  public toRadians(deg: number): number {
+    return deg * (Math.PI / 180);
   }
   private draw(): void {
     if (!this.ctx || !this.canvasElement) return;
-    const cfg = this.runtime.options();
+    const cfg = this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG;
     const name = cfg?.displayName || 'DTS';
     const titleColor = this.labelColor();
     if (!this.titleBitmap || !cfg || this.titleBitmap.width !== this.canvasElement.width || this.titleBitmap.height !== this.canvasElement.height || this.titleBitmapText !== name || this.titleBitmapColor !== titleColor) {
@@ -398,7 +387,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
     this.canvas.drawText(
       this.ctx,
-      (this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo || 'm',
+      this.pathsRecord['dtsPath']?.convertUnitTo || 'm',
       Math.floor(this.cssWidth * 0.975),
       Math.floor(this.cssHeight * 0.60),
       Math.floor(this.cssWidth * 0.95),
@@ -466,7 +455,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
 
   private getValueText(): string {
     if (this.dtsValue === null) return '--';
-    const cfg = this.runtime.options();
+    const cfg = this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG;
     return this.dtsValue.toFixed(cfg?.numDecimal ?? 0);
   }
 
@@ -484,34 +473,36 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   }
 
   private getTimeToLineText(): string {
-    return this.toHHMMSS(this.ttlValue);
+    return this.toHHMMSS(this.ttlValue ?? 0);
   }
 
   private getTimeToBurnText(): string {
-    return this.toHHMMSS(this.ttbValue);
+    return this.toHHMMSS(this.ttbValue ?? 0);
   }
   private setLenBias(): void {
-    const cfg = this.runtime.options(); if (!cfg) return;
-    if ((cfg.paths as IPathArray)['lineLengthPath'].path && this.lengthValue != null) {
-      let unit = (cfg.paths as IPathArray)['lineLengthPath'].convertUnitTo;
+    const cfg = this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG;
+    const lineLengthCfg = this.pathsRecord['lineLengthPath'];
+    const lineBiasCfg = this.pathsRecord['lineBiasPath'];
+    if (lineLengthCfg?.path && this.lengthValue != null) {
+      let unit = lineLengthCfg.convertUnitTo;
       if (unit === 'feet') unit = '′';
-      this.lineLengthValue.set(`―${this.applyDecorations(this.lengthValue.toFixed(cfg.numDecimal))}${unit}―`);
+      this.lineLengthValue.set(`―${this.applyDecorations(this.lengthValue.toFixed(cfg.numDecimal ?? 0))}${unit ?? ''}―`);
     }
-    if ((cfg.paths as IPathArray)['lineBiasPath'].path && this.biasValue != null) {
-      let unit = (cfg.paths as IPathArray)['lineBiasPath'].convertUnitTo;
+    if (lineBiasCfg?.path && this.biasValue != null) {
+      let unit = lineBiasCfg.convertUnitTo;
       if (unit === 'feet') unit = '′';
       if (this.biasValue < 0) {
-        this.portBiasValue.set('+' + (-this.biasValue).toFixed(cfg.numDecimal) + unit);
-        this.stbBiasValue.set(this.biasValue.toFixed(cfg.numDecimal) + unit);
+        this.portBiasValue.set('+' + (-this.biasValue).toFixed(cfg.numDecimal ?? 0) + (unit ?? ''));
+        this.stbBiasValue.set(this.biasValue.toFixed(cfg.numDecimal ?? 0) + (unit ?? ''));
       } else {
-        this.portBiasValue.set(' ' + (-this.biasValue).toFixed(cfg.numDecimal) + unit);
-        this.stbBiasValue.set(' +' + this.biasValue.toFixed(cfg.numDecimal) + unit);
+        this.portBiasValue.set(' ' + (-this.biasValue).toFixed(cfg.numDecimal ?? 0) + (unit ?? ''));
+        this.stbBiasValue.set(' +' + this.biasValue.toFixed(cfg.numDecimal ?? 0) + (unit ?? ''));
       }
     }
   }
 
   private applyDecorations(txt: string): string {
-    switch ((this.runtime.options()?.paths as IPathArray | undefined)?.['dtsPath']?.convertUnitTo) {
+    switch (this.pathsRecord['dtsPath']?.convertUnitTo) {
       case 'percent':
       case 'percentraw':
         return txt + '%';
@@ -521,8 +512,8 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateDtsColor(): void {
-    const theme = this.theme(); const cfg = this.runtime.options();
-    if (!theme || !cfg) return;
+    const theme = this.theme(); const cfg = this.runtime.options() ?? WidgetRacerLineComponent.DEFAULT_CONFIG;
+    if (!theme) return;
     if (cfg.ignoreZones) {
       if (!this.dtsValue) this.dtsColor = this.valueColor;
       else if (this.dtsValue < 0) this.dtsColor = theme.zoneAlarm;

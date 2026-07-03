@@ -3,7 +3,7 @@
     #radialGauge
     kipResizeObserver
     [options]="gaugeOptions"
-    [value]="value()"
+    [value]="displayValue()"
     [attr.value-text]="textValue()"
     (resizeChange)="onResized($event)"
   ></radial-gauge>

@@ -26,7 +26,7 @@ export class WidgetIframeComponent implements AfterViewInit, OnDestroy {
 
   // Static default config (legacy parity)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    widgetUrl: null,
+    widgetUrl: undefined,
     allowInput: false
   };
 

@@ -47,7 +47,7 @@ export class DisplayChartOptionsComponent implements OnInit {
 
   readonly numDecimal = input.required<UntypedFormControl>();
   readonly color = input.required<UntypedFormControl>();
-  protected colors = [];
+  protected colors: ReadonlyArray<{ label: string; value: string }> = [];
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;

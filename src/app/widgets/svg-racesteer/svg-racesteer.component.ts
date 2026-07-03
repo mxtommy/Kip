@@ -2,7 +2,9 @@ import { Component, ElementRef, input, viewChild, signal, effect, computed, untr
 import { DecimalPipe } from '@angular/common';
 import { animateRotation, animateAngleTransition, animateSectorTransition, type SectorAngles } from '../../core/utils/svg-animate.util';
 
-const angle = ([a,b],[c,d],[e,f]) => (Math.atan2(f-d,e-c)-Math.atan2(b-d,a-c)+3*Math.PI)%(2*Math.PI)-Math.PI;
+type Point2D = [number, number];
+
+const angle = ([a, b]: Point2D, [c, d]: Point2D, [e, f]: Point2D) => (Math.atan2(f - d, e - c) - Math.atan2(b - d, a - c) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
 
 interface ISVGRotationObject {
   oldValue: number,
@@ -34,14 +36,14 @@ export class SvgRacesteerComponent implements OnDestroy {
   protected readonly VMG = input.required<number>();
   protected readonly sailSetupEnabled = input.required<boolean>();
   protected readonly driftEnabled = input.required<boolean>();
-  protected readonly driftSet = input<number>(undefined);
-  protected readonly driftFlow = input<number>(undefined);
+  protected readonly driftSet = input<number | undefined>();
+  protected readonly driftFlow = input<number | undefined>();
   protected readonly waypointEnabled = input.required<boolean>();
-  protected readonly waypointAngle = input<number>(undefined);
-  protected readonly vmgToWaypoint = input<number>(undefined);
-  protected readonly trueWindMinHistoric = input<number>(undefined);
-  protected readonly trueWindMidHistoric = input<number>(undefined);
-  protected readonly trueWindMaxHistoric = input<number>(undefined);
+  protected readonly waypointAngle = input<number | undefined>();
+  protected readonly vmgToWaypoint = input<number | undefined>();
+  protected readonly trueWindMinHistoric = input<number | undefined>();
+  protected readonly trueWindMidHistoric = input<number | undefined>();
+  protected readonly trueWindMaxHistoric = input<number | undefined>();
   protected readonly gradianColor = input.required<{ start: string; stop: string }>();
 
   protected compass: ISVGRotationObject = { oldValue: 0, newValue: 0 };

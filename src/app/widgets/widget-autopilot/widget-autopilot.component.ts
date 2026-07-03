@@ -315,6 +315,18 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
     return v1Heading ?? null;
   });
+  protected readonly autopilotConfig = computed<NonNullable<IWidgetSvcConfig['autopilot']>>(
+    () => this.runtime.options()?.autopilot ?? (WidgetAutopilotComponent.DEFAULT_CONFIG.autopilot as NonNullable<IWidgetSvcConfig['autopilot']>)
+  );
+  protected readonly autopilotApiVersion = computed(() => this.autopilotConfig().apiVersion);
+  protected readonly targetPilotHeadingTrue = computed<boolean>(() => this.autopilotConfig().courseDirectionTrue ?? false);
+  protected readonly headingDirectionTrue = computed<boolean>(() => this.autopilotConfig().headingDirectionTrue ?? false);
+  protected readonly displayApMode = computed<TApMode>(() => this.apMode() ?? 'off-line');
+  protected readonly displayAutopilotTarget = computed<number>(() => this.autopilotTarget() ?? 0);
+  protected readonly displayCrossTrackError = computed<number>(() => this.crossTrackError() ?? 0);
+  protected readonly displayHeading = computed<number>(() => this.heading() ?? 0);
+  protected readonly displayWindAngleApparent = computed<number>(() => this.windAngleApparent() ?? 0);
+  protected readonly displayRudder = computed<number>(() => this.rudder() ?? 0);
 
   // Request management
   private currentRequests = new Set<Observable<unknown>>();
@@ -322,7 +334,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
   protected readonly standbyButtonLabel = computed(() => {
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.autopilotConfig().apiVersion;
 
     if (apiVersion === "v2" && this.apEngaged() === false) {
       return "Engage";
@@ -610,9 +622,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       state: ''
     };
 
-    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
-    const instanceId = this.runtime.options()?.autopilot?.instanceId;
-    const pluginId = this.runtime.options()?.autopilot?.pluginId;
+    const autopilot = this.autopilotConfig();
+    const apiVersion = autopilot.apiVersion;
+    const instanceId = autopilot.instanceId;
+    const pluginId = autopilot.pluginId;
 
     // Helper for persistent error state
     const setPersistentError = (message: string) => {

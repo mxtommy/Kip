@@ -32,12 +32,12 @@ export const defaultConfig: IConfig = {
 export const DefaultConnectionConfig: IConnectionConfig = {
   "configVersion": 12,
   "kipUUID": UUID.create(),
-  "signalKUrl": null, // get's overwritten with host at getDefaultConnectionConfig()
+  "signalKUrl": "", // get's overwritten with host at getDefaultConnectionConfig()
   "proxyEnabled": false,
   "signalKSubscribeAll": false,
   "useDeviceToken": false,
-  "loginName": null,
-  "loginPassword": null,
+  "loginName": "",
+  "loginPassword": "",
   "useSharedConfig": false,
   "sharedConfigName": "default"
 }

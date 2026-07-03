@@ -52,14 +52,14 @@ export class RootModalWidgetConfigComponent implements OnInit {
   protected widgetConfig = inject<IWidgetSvcConfig>(MAT_DIALOG_DATA);
 
   public titleDialog = "Widget Options";
-  public formMaster: UntypedFormGroup;
-  public availableDataSets: IDatasetServiceDatasetConfig[];
+  public formMaster!: UntypedFormGroup;
+  public availableDataSets: IDatasetServiceDatasetConfig[] = [];
   public unitList: { default?: string, conversions?: IUnitGroup[] } = {};
   public isPathArray = false;
-  public addPathEvent: IAddNewPathObject;
-  public delPathEvent: string;
-  public updatePathEvent: IDynamicControl[];
-  public colors = [];
+  public addPathEvent?: IAddNewPathObject;
+  public delPathEvent?: string;
+  public updatePathEvent?: IDynamicControl[];
+  public colors: ReadonlyArray<{ label: string; value: string }> = [];
   protected readonly saveDisabled = signal(true);
 
   ngOnInit() {
@@ -212,14 +212,14 @@ export class RootModalWidgetConfigComponent implements OnInit {
     // use addControl for formGroup and addControl for formControl
     const fg = new UntypedFormGroup({});
     Object.keys(formData).forEach(key => {
-      fg.addControl(key, this.generatePathFields(key, formData[key]));
+      const pathKeyName = key as keyof IWidgetPath;
+      fg.addControl(key, this.generatePathFields(pathKeyName, formData[pathKeyName]));
     });
     return fg;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private generatePathFields(key: string, value: any): UntypedFormControl {
-    let ctrl: UntypedFormControl = null;
+  private generatePathFields(key: keyof IWidgetPath, value: unknown): UntypedFormControl {
+    let ctrl = new UntypedFormControl(value);
 
     switch (key) {
       case "path": ctrl = new UntypedFormControl(value);
@@ -240,7 +240,7 @@ export class RootModalWidgetConfigComponent implements OnInit {
   private generateCtrlArray(formData: IDynamicControl): UntypedFormGroup {
     const fg = this.fb.group(formData);
     const ctrlLabel = fg.get('ctrlLabel');
-    ctrlLabel.addValidators(Validators.required);
+    ctrlLabel?.addValidators(Validators.required);
     return fg;
   }
 
@@ -252,7 +252,8 @@ export class RootModalWidgetConfigComponent implements OnInit {
     ctrlUpdates.forEach(ctrl => {
       const pathsFormArray = this.formMaster.get('paths') as UntypedFormArray;
 
-      pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
+      pathsFormArray.controls.forEach(control => {
+        const fg = control as UntypedFormGroup;
         const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
         if (pathIDCtrl.value == ctrl.pathID) {
           fg.controls['description'].setValue(ctrl.ctrlLabel);
@@ -266,7 +267,8 @@ export class RootModalWidgetConfigComponent implements OnInit {
   public deletePath(e: IDeleteEventObj): void {
     const pathsFormArray = this.formMaster.get('paths') as UntypedFormArray;
     let i = 0;
-    pathsFormArray.controls.forEach((fg: UntypedFormGroup) => {
+    pathsFormArray.controls.forEach(control => {
+      const fg = control as UntypedFormGroup;
       const pathIDCtrl = fg.get('pathID') as UntypedFormControl;
       if (pathIDCtrl.value == e.pathID) {
         pathsFormArray.removeAt(i);

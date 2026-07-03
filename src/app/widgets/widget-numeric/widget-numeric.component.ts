@@ -1,6 +1,6 @@
 import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, untracked, input, OnInit, computed } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -62,19 +62,19 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
 
   protected showMiniChart = signal<boolean>(false);
-  protected labelColor = signal<string>(undefined);
-  private canvasElement: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  protected labelColor = signal<string>('');
+  private canvasElement!: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D | null = null;
   private cssWidth = 0;
   private cssHeight = 0;
   private backgroundBitmap: HTMLCanvasElement | null = null;
   private backgroundBitmapText: string | null = null;
 
-  private dataValue: number = null;
-  private maxValue: number = null;
-  private minValue: number = null;
-  private valueColor: string = undefined;
-  private valueStateColor: string = undefined;
+  private dataValue: number | null = null;
+  private maxValue: number | null = null;
+  private minValue: number | null = null;
+  private valueColor = '';
+  private valueStateColor = '';
   private maxValueTextWidth = 0;
   private maxValueTextHeight = 0;
   private maxMinMaxTextWidth = 0;
@@ -83,10 +83,15 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   private pathDataState: States | null = null;
   private isDestroyed = false;
   private lastSubscriptionSignature: string | null = null;
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetNumericComponent.DEFAULT_CONFIG);
+  private readonly numericPathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.numericPath;
+  });
 
   private subscriptionSignature = computed(() => {
-    const cfg = this.runtime?.options();
-    const pathCfg = cfg?.paths?.['numericPath'];
+    const cfg = this.normalizedConfig();
+    const pathCfg = this.numericPathConfig();
     if (!pathCfg?.path) return null;
     const src = (pathCfg.source?.trim() || 'default');
     return [
@@ -107,7 +112,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       this.maxValue = this.dataValue;
     }
 
-    if (!this.runtime?.options().ignoreZones) {
+    if (!this.normalizedConfig().ignoreZones) {
       if (this.pathDataState !== newValue.state) {
         this.pathDataState = newValue.state as States;
         switch (newValue.state) {
@@ -130,10 +135,10 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   };
 
   constructor() {
-    this.showMiniChart.set(this.runtime.options().showMiniChart);
+    this.showMiniChart.set(this.normalizedConfig().showMiniChart ?? false);
     effect(() => {
       const theme = this.theme();
-      const color = this.runtime?.options()?.color;
+      const color = this.normalizedConfig().color;
 
       untracked(() => {
         if (theme && color !== undefined) {
@@ -171,8 +176,8 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
     effect(() => {
       const show = this.showMiniChart();
       const chart = this.miniChart();
-      const cfg = this.runtime?.options();
-      const pathInfo = cfg?.paths?.['numericPath'];
+      const cfg = this.normalizedConfig();
+      const pathInfo = this.numericPathConfig();
       const miniChartSignature = [
         cfg?.showMiniChart ? '1' : '0',
         pathInfo?.path ?? '',
@@ -189,7 +194,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
       if (!show) return;
       if (!chart) return; // will re-run when present
       this.setMiniChart();
-      this.miniChart().startChart();
+      chart.startChart();
     });
   }
 
@@ -228,8 +233,8 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private manageDatasetAndChart(): void {
-    const cfg = this.runtime.options();
-    const pathInfo = cfg.paths['numericPath'];
+    const cfg = this.normalizedConfig();
+    const pathInfo = this.numericPathConfig();
     const show = !!cfg.showMiniChart;
     this.showMiniChart.set(show);
     if (!show) {
@@ -242,37 +247,40 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private setMiniChart(): void {
-    const cfg = this.runtime.options();
-    const pathInfo = cfg.paths['numericPath'];
-    this.miniChart().dataPath = pathInfo?.path ?? null;
-    this.miniChart().dataSource = pathInfo?.source ?? 'default';
-    this.miniChart().color = cfg.color;
-    this.miniChart().convertUnitTo = pathInfo?.convertUnitTo;
-    this.miniChart().numDecimal = cfg.numDecimal;
-    this.miniChart().yScaleMin = cfg.yScaleMin;
-    this.miniChart().yScaleMax = cfg.yScaleMax;
-    this.miniChart().inverseYAxis = cfg.inverseYAxis;
-    this.miniChart().verticalChart = cfg.verticalChart;
-    this.miniChart().datasetUUID = this.id();
+    const chart = this.miniChart();
+    const cfg = this.normalizedConfig();
+    const pathInfo = this.numericPathConfig();
+    if (!chart) return;
+
+    chart.dataPath = pathInfo?.path ?? null;
+    chart.dataSource = pathInfo?.source ?? 'default';
+    chart.color = cfg.color ?? 'contrast';
+    chart.convertUnitTo = pathInfo?.convertUnitTo ?? null;
+    chart.numDecimal = cfg.numDecimal ?? null;
+    chart.yScaleMin = cfg.yScaleMin ?? null;
+    chart.yScaleMax = cfg.yScaleMax ?? null;
+    chart.inverseYAxis = cfg.inverseYAxis ?? false;
+    chart.verticalChart = cfg.verticalChart ?? null;
+    chart.datasetUUID = this.id();
   }
 
   private setColors(): void {
-    const cfg = this.runtime.options();
-    if (!cfg) return;
-    this.labelColor.set(getColors(cfg.color, this.theme()).dim);
-    this.valueStateColor = this.valueColor = getColors(cfg.color, this.theme()).color;
+    const cfg = this.normalizedConfig();
+    const theme = this.theme();
+    const color = cfg.color ?? 'contrast';
+    this.labelColor.set(getColors(color, theme).dim);
+    this.valueStateColor = this.valueColor = getColors(color, theme).color;
     this.backgroundBitmap = null;
     this.backgroundBitmapText = null;
   }
 
   private drawWidget(): void {
     if (!this.canvasCtx) return;
-    const cfg = this.runtime.options();
-    if (!cfg) return;
-    const unit = cfg.paths['numericPath'].convertUnitTo;
+    const cfg = this.normalizedConfig();
+    const unit = this.numericPathConfig()?.convertUnitTo ?? '';
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;
-    const bgText = cfg.displayName + '|' + unit;
+    const bgText = (cfg.displayName ?? '') + '|' + unit;
 
     if (!this.backgroundBitmap ||
         this.backgroundBitmap.width !== this.canvasElement.width ||
@@ -285,7 +293,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
         (ctx) => {
           this.canvas['drawTitleInternal'](
             ctx,
-            cfg.displayName,
+            cfg.displayName ?? '',
             this.labelColor(),
             'normal',
             this.cssWidth,
@@ -324,8 +332,10 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private drawValue(): void {
     const valueText = this.getValueText();
+    const ctx = this.canvasCtx;
+    if (!ctx) return;
     this.canvas.drawText(
-      this.canvasCtx,
+      ctx,
       valueText,
       Math.floor(this.cssWidth / 2),
       Math.floor((this.cssHeight / 2) * 1.15),
@@ -338,28 +348,32 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private getValueText(): string {
     if (this.dataValue === null) return "--";
-    const cUnit = this.runtime.options().paths['numericPath'].convertUnitTo;
+    const cfg = this.normalizedConfig();
+    const cUnit = this.numericPathConfig()?.convertUnitTo ?? '';
     if (['latitudeSec', 'latitudeMin', 'longitudeSec', 'longitudeMin', 'D HH:MM:SS'].includes(cUnit)) {
       return this.dataValue.toString();
     }
-    return this.applyDecorations(this.dataValue.toFixed(this.runtime.options().numDecimal));
+    return this.applyDecorations(this.dataValue.toFixed(cfg.numDecimal ?? 1));
   }
 
   private drawMinMax(): void {
-    const cfg = this.runtime.options();
+    const cfg = this.normalizedConfig();
     if (!cfg.showMin && !cfg.showMax) return;
+    const decimals = cfg.numDecimal ?? 1;
     let valueText = '';
     if (cfg.showMin) {
-      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(cfg.numDecimal))}` : ' Min: --';
+      valueText = this.minValue != null ? ` Min: ${this.applyDecorations(this.minValue.toFixed(decimals))}` : ' Min: --';
     }
     if (cfg.showMax) {
-      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(cfg.numDecimal))}` : ' Max: --';
+      valueText += this.maxValue != null ? ` Max: ${this.applyDecorations(this.maxValue.toFixed(decimals))}` : ' Max: --';
     }
     valueText = valueText.trim();
     const marginX = 10 * this.canvas.scaleFactor;
     const marginY = 5 * this.canvas.scaleFactor;
+    const ctx = this.canvasCtx;
+    if (!ctx) return;
     this.canvas.drawText(
-      this.canvasCtx,
+      ctx,
       valueText,
       marginX,
       Math.floor(this.cssHeight - marginY),
@@ -373,7 +387,7 @@ export class WidgetNumericComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private applyDecorations(txtValue: string): string {
-    switch (this.runtime.options().paths['numericPath'].convertUnitTo) {
+    switch (this.numericPathConfig()?.convertUnitTo ?? '') {
       case 'percent':
       case 'percentraw':
         txtValue += '%';

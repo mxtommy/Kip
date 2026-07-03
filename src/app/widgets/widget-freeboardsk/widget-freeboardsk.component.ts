@@ -47,7 +47,8 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
 
   private viewReady = false;
   private iframeLoaded = false;
-  public widgetUrl: string = null;
+  public widgetUrl: string | null = null;
+  protected widgetUrlSafe = '';
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {};
 
   constructor() {
@@ -58,9 +59,13 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
 
       untracked(() => {
         const loginToken = token?.token;
-        this.widgetUrl = loginToken
-          ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`
-          : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
+        const signalkBaseUrl = this.appSettings.signalkUrl?.url;
+        this.widgetUrl = signalkBaseUrl
+          ? (loginToken
+            ? `${signalkBaseUrl}/@signalk/freeboard-sk/?token=${loginToken}`
+            : `${signalkBaseUrl}/@signalk/freeboard-sk/`)
+          : null;
+        this.widgetUrlSafe = this.widgetUrl ?? '';
       });
     });
 
@@ -161,7 +166,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   };
 
   private getExpectedIframeOrigin(): string | null {
-    const candidate = this.widgetUrl || this.appSettings.signalkUrl.url;
+    const candidate = this.widgetUrl || this.appSettings.signalkUrl?.url;
     if (!candidate) return null;
     try {
       return new URL(candidate).origin;

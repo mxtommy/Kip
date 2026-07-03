@@ -1,6 +1,6 @@
-import { Component, OnDestroy, inject, ChangeDetectionStrategy, input, effect, untracked, signal } from '@angular/core';
+import { Component, OnDestroy, inject, input, effect, untracked, signal, computed } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IPathArray, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { SvgWindsteerComponent } from '../svg-windsteer/svg-windsteer.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -10,8 +10,7 @@ import { ITheme } from '../../core/services/app-service';
 @Component({
   selector: 'widget-wind-steer',
   templateUrl: './widget-windsteer.component.html',
-  imports: [SvgWindsteerComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  imports: [SvgWindsteerComponent]
 })
 export class WidgetWindComponent implements OnDestroy {
   public id = input.required<string>();
@@ -155,6 +154,17 @@ export class WidgetWindComponent implements OnDestroy {
 
   public readonly runtime = inject(WidgetRuntimeDirective); // accessed in template
   private readonly stream = inject(WidgetStreamsDirective);
+  protected readonly cfg = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetWindComponent.DEFAULT_CONFIG);
+  protected readonly compassModeEnabledValue = computed(() => this.cfg().compassModeEnabled ?? false);
+  protected readonly courseOverGroundEnabledValue = computed(() => this.cfg().courseOverGroundEnable ?? false);
+  protected readonly twsEnabledValue = computed(() => this.cfg().twsEnable ?? false);
+  protected readonly twaEnabledValue = computed(() => this.cfg().twaEnable ?? false);
+  protected readonly awsEnabledValue = computed(() => this.cfg().awsEnable ?? false);
+  protected readonly laylineAngleValue = computed(() => this.cfg().laylineAngle ?? 40);
+  protected readonly closeHauledLineEnabledValue = computed(() => this.cfg().laylineEnable ?? false);
+  protected readonly windSectorEnabledValue = computed(() => this.cfg().windSectorEnable ?? false);
+  protected readonly driftEnabledValue = computed(() => this.cfg().driftEnable ?? false);
+  protected readonly waypointEnabledValue = computed(() => this.cfg().waypointEnable ?? false);
 
   // Removed local registeredPaths guard; rely on WidgetStreamsDirective diff + idempotent observe() with stable callbacks
 
@@ -199,12 +209,11 @@ export class WidgetWindComponent implements OnDestroy {
   constructor() {
     // Stable stream callbacks registered via effect; directive handles diffing
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
+      const cfg = this.cfg();
+      const paths = cfg.paths as IPathArray | undefined;
       untracked(() => {
-
-        this.appWindSpeedUnit.set(cfg.paths['appWindSpeed'].convertUnitTo);
-        this.trueWindSpeedUnit.set(cfg.paths['trueWindSpeed'].convertUnitTo);
+        this.appWindSpeedUnit.set(paths?.['appWindSpeed']?.convertUnitTo ?? '');
+        this.trueWindSpeedUnit.set(paths?.['trueWindSpeed']?.convertUnitTo ?? '');
         this.registerStreams();
         this.stopWindSectors();
         this.startWindSectors();
@@ -214,29 +223,25 @@ export class WidgetWindComponent implements OnDestroy {
 
   // Stable callbacks -------------------------------------------------
   private onHeadingUpdate = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = this.normalizeAngle(u.data.value);
+    const next = this.normalizeAngle(this.getPathValueOrZero(u));
     if (!this.hasHeading || this.angleDelta(this.currentHeading(), next) >= this.DEG_EPSILON) {
       this.currentHeading.set(next); this.hasHeading = true;
     }
   };
   private onCOGUpdate = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = this.normalizeAngle(u.data.value);
+    const next = this.normalizeAngle(this.getPathValueOrZero(u));
     if (!this.hasCOG || this.angleDelta(this.courseOverGroundAngle(), next) >= this.DEG_EPSILON) {
       this.courseOverGroundAngle.set(next); this.hasCOG = true;
     }
   };
   private onDriftUpdate = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = u.data.value;
+    const next = this.getPathValueOrZero(u);
     if (!this.hasDrift || Math.abs(this.driftFlow() - next) >= this.SPEED_EPSILON) {
       this.driftFlow.set(next); this.hasDrift = true;
     }
   };
   private onSetUpdate = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = this.normalizeAngle(u.data.value);
+    const next = this.normalizeAngle(this.getPathValueOrZero(u));
     if (!this.hasSet || this.angleDelta(this.driftSet(), next) >= this.DEG_EPSILON) {
       this.driftSet.set(next); this.hasSet = true;
     }
@@ -249,8 +254,7 @@ export class WidgetWindComponent implements OnDestroy {
     }
   };
   private onAppWindAngle = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const raw = u.data.value;
+    const raw = this.getPathValueOrZero(u);
     const next = this.normalizeAngle(raw);
     if (!this.hasAWA || this.angleDelta(this.appWindAngle(), next) >= this.DEG_EPSILON) {
       this.appWindAngle.set(next); this.hasAWA = true;
@@ -259,24 +263,21 @@ export class WidgetWindComponent implements OnDestroy {
     }
   };
   private onAppWindSpeed = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = u.data.value;
+    const next = this.getPathValueOrZero(u);
     if (!this.hasAWS || Math.abs(this.appWindSpeed() - next) >= this.SPEED_EPSILON) {
       this.appWindSpeed.set(next); this.hasAWS = true;
     }
   };
   private onTrueWindSpeed = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const next = u.data.value;
+    const next = this.getPathValueOrZero(u);
     if (!this.hasTWS || Math.abs(this.trueWindSpeed() - next) >= this.SPEED_EPSILON) {
       this.trueWindSpeed.set(next); this.hasTWS = true;
     }
   };
   private onTrueWindAngle = (u: IPathUpdate) => {
-    if (u.data.value == null) u.data.value = 0;
-    const cfg = this.runtime.options();
-    const path = cfg?.paths['trueWindAngle'].path || '';
-    const base = computeTrueWindBaseAngle(path, u.data.value, this.currentHeading(), !!cfg?.compassModeEnabled);
+    const cfg = this.cfg();
+    const path = ((cfg.paths as IPathArray | undefined)?.['trueWindAngle']?.path) || '';
+    const base = computeTrueWindBaseAngle(path, this.getPathValueOrZero(u), this.currentHeading(), !!cfg?.compassModeEnabled);
     const next = this.normalizeAngle(base);
     if (!this.hasTWA || this.angleDelta(this.trueWindAngle(), next) >= this.DEG_EPSILON) {
       this.trueWindAngle.set(next); this.hasTWA = true;
@@ -309,7 +310,7 @@ export class WidgetWindComponent implements OnDestroy {
     this.lastUnwrapped = null;
     this.lastSector = {};
 
-    if (!this.runtime.options()?.windSectorEnable) {
+    if (!this.cfg().windSectorEnable) {
       this.trueWindMinHistoric.set(undefined);
       this.trueWindMidHistoric.set(undefined);
       this.trueWindMaxHistoric.set(undefined);
@@ -338,8 +339,8 @@ export class WidgetWindComponent implements OnDestroy {
   }
 
   private historicalCleanup() {
-    if (!this.runtime.options()?.windSectorEnable) return;
-    const cutoff = Date.now() - (this.runtime.options()?.windSectorWindowSeconds ?? 5) * 1000;
+    if (!this.cfg().windSectorEnable) return;
+    const cutoff = Date.now() - (this.cfg().windSectorWindowSeconds ?? 5) * 1000;
     while (this.windSamples.length && this.windSamples[0].t < cutoff) {
       const removed = this.windSamples.shift();
       if (!removed) break;
@@ -363,16 +364,23 @@ export class WidgetWindComponent implements OnDestroy {
     const nextMin = this.normalizeAngle(minU);
     const nextMid = this.normalizeAngle(midU);
     const nextMax = this.normalizeAngle(maxU);
+    const prevMin = this.lastSector.min;
+    const prevMid = this.lastSector.mid;
+    const prevMax = this.lastSector.max;
     const changed =
-      this.lastSector.min === undefined || this.angleDelta(this.lastSector.min!, nextMin) >= this.DEG_EPSILON ||
-      this.lastSector.mid === undefined || this.angleDelta(this.lastSector.mid!, nextMid) >= this.DEG_EPSILON ||
-      this.lastSector.max === undefined || this.angleDelta(this.lastSector.max!, nextMax) >= this.DEG_EPSILON;
+      prevMin === undefined || this.angleDelta(prevMin, nextMin) >= this.DEG_EPSILON ||
+      prevMid === undefined || this.angleDelta(prevMid, nextMid) >= this.DEG_EPSILON ||
+      prevMax === undefined || this.angleDelta(prevMax, nextMax) >= this.DEG_EPSILON;
     if (changed) {
       this.trueWindMinHistoric.set(nextMin);
       this.trueWindMidHistoric.set(nextMid);
       this.trueWindMaxHistoric.set(nextMax);
       this.lastSector = { min: nextMin, mid: nextMid, max: nextMax };
     }
+  }
+
+  private getPathValueOrZero(update: IPathUpdate): number {
+    return update.data.value == null ? 0 : update.data.value;
   }
 
   private stopWindSectors() {

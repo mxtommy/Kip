@@ -24,19 +24,23 @@ export interface IDeleteEventObj {
 export class BooleanControlConfigComponent implements OnInit {
   private app = inject(AppService);
   readonly ctrlFormGroup = input.required<UntypedFormGroup>();
-  readonly controlIndex = input<number>(undefined);
-  readonly arrayLength = input<number>(undefined);
+  readonly controlIndex = input.required<number>();
+  readonly arrayLength = input.required<number>();
   public readonly deleteCtrl = output<IDeleteEventObj>();
   public readonly moveUp = output<number>();
   public readonly moveDown = output<number>();
-  protected colors = [];
+  protected colors: ReadonlyArray<{ label: string; value: string }> = [];
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;
   }
 
   public deleteControl() {
-    const delEvent: IDeleteEventObj = {ctrlIndex: this.controlIndex(), pathID: this.ctrlFormGroup().get('pathID').value};
+    const pathID = this.ctrlFormGroup().get('pathID')?.value;
+    const delEvent: IDeleteEventObj = {
+      ctrlIndex: this.controlIndex(),
+      pathID: typeof pathID === 'string' ? pathID : ''
+    };
     this.deleteCtrl.emit(delEvent);
   }
 

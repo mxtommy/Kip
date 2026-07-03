@@ -50,7 +50,7 @@ export class WidgetZonesStatePanelComponent {
   // Reactive state
   protected notifications = toSignal<INotification[]>(this.notificationsService.observeNotifications());
   public zonesControls = signal<IDynamicControl[]>([]);
-  protected labelColor = signal<string | undefined>(undefined);
+  protected labelColor = signal<string>('');
   protected noTitleClass = computed<string>(() => {
     const cfg = this.runtime?.options();
     return (cfg?.showLabel === false) ? 'widgets-container-no-title' : 'widgets-container';
@@ -76,7 +76,7 @@ export class WidgetZonesStatePanelComponent {
       const cfg = this.runtime?.options();
       if (!theme || !cfg) return;
       untracked(() => {
-        this.labelColor.set(getColors(cfg.color, theme).dim);
+        this.labelColor.set(getColors(cfg.color ?? 'contrast', theme).dim);
       });
     });
 
