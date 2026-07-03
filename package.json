@@ -92,7 +92,7 @@
     "@types/node": "^24.1.0",
     "@vitest/coverage-v8": "^4.1.0",
     "@zakj/no-sleep": "^0.13.5",
-    "angular-eslint": "21.3.1",
+    "angular-eslint": "^21.3.1",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.0.1",
