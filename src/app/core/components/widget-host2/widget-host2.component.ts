@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -14,7 +14,7 @@ import { DialogService } from '../../services/dialog.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widget-host-bottom-sheet.component';
 import { WidgetService } from '../../services/widget.service';
-import { AppService } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
 import { isKipSeriesEnabled, isKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
@@ -75,7 +75,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
 
   private readonly settings = inject(SettingsService);
 
-  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true }) as Signal<ITheme>;
   protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
   private compType: Type<WidgetViewComponentBase>

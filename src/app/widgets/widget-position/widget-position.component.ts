@@ -18,7 +18,7 @@ export class WidgetPositionComponent implements AfterViewInit, OnDestroy {
   // Functional Host2 inputs provided by dashboard container
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Directives/services
   protected readonly runtime = inject(WidgetRuntimeDirective);

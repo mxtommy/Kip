@@ -19,7 +19,7 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
 export class WidgetRacesteerComponent implements OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static full default config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {

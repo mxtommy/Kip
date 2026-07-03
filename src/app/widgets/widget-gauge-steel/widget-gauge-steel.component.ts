@@ -18,7 +18,7 @@ export class WidgetSteelGaugeComponent {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Inject host directives
   protected readonly runtime = inject(WidgetRuntimeDirective);

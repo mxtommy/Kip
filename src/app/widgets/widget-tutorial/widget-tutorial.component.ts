@@ -16,7 +16,7 @@ import { RouterLink } from '@angular/router';
 export class WidgetTutorialComponent  {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     filterSelfPaths: true

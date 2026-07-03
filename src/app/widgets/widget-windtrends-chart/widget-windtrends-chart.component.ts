@@ -42,7 +42,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   // Host2 functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
   // Runtime directive (merged config) provided by Host2
   private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   // Static default config consumed by Host2 runtime merge

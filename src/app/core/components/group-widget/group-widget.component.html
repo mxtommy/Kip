@@ -1,5 +1,5 @@
 <widget-title
-  [text]="runtime.options().displayName"
+  [text]="runtime.options().displayName ?? ''"
   [color]="runtime.options().color">
 </widget-title>
 @if (!dashboard.isDashboardStatic()) {

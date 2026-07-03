@@ -31,7 +31,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
   // Host2 functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Inject directives/services
   private readonly runtime = inject(WidgetRuntimeDirective);

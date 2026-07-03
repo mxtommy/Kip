@@ -42,7 +42,7 @@ export class WidgetDataChartComponent implements OnDestroy {
   // Host2 functional inputs supplied by host container
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 runtime directive (merged config)
   private readonly runtime = inject(WidgetRuntimeDirective);

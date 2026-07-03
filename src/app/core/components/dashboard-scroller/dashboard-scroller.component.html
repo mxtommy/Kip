@@ -1,9 +1,10 @@
 @let _activePage = activePage();
-@let _dashboards = dashboards();  
+@let _dashboards = dashboards() ?? [];
+@let _currentDashboard = _activePage === null || _activePage === undefined ? null : _dashboards[_activePage];
 
-@if (visible()) {
+@if (visible() && _currentDashboard) {
   <div class="page-scroll-title page-scroll-container" animate.enter="fade-toast">
-    <span class="page-label">{{ _dashboards[_activePage].name }}</span>
+    <span class="page-label">{{ _currentDashboard.name }}</span>
   </div>
   <div class="page-scroll-page-number page-scroll-container fade-toast" animate.enter="fade-toast">
     @for (page of _dashboards; track page.id; let index = $index) {

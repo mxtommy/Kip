@@ -8,6 +8,7 @@ import { MatOptgroup, MatOption } from '@angular/material/core';
 
 import { MatSelect } from '@angular/material/select';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
+import type { IConversionPathList } from '../../services/units.service';
 
 
 @Component({
@@ -23,17 +24,18 @@ export class DataInspectorRowComponent implements OnInit {
   private _dialog = inject(MatDialog);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly path = input.required<string>();
-  readonly source = input<string>(undefined);
+  readonly source = input<string | undefined>(undefined);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly pathValue = input<any>(undefined);
   readonly type = input.required<string>();
 
-  units = null;
+  units: IConversionPathList | null = null;
   selectedUnit = "unitless"
 
   ngOnInit() {
-    this.units = this._units.getConversionsForPath(this.path());
-    this.selectedUnit = this.units.base;
+    const units = this._units.getConversionsForPath(this.path());
+    this.units = units;
+    this.selectedUnit = units.base;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

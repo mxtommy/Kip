@@ -42,7 +42,7 @@ interface UiOption {
 export class WidgetMultiStateSwitchComponent {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Switch Label',

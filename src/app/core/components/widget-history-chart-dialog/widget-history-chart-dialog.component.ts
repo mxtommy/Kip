@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, model, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, model, signal, untracked, viewChild, Signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -19,7 +19,7 @@ import {
   transformDualAxisMetricValue
 } from '../../contracts/electrical-history-chart.contract';
 import { HistoryToChartMapperService } from '../../services/history-to-chart-mapper.service';
-import { AppService } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
 import { UnitsService } from '../../services/units.service';
 import { HistoryApiClientService } from '../../services/history-api-client.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -60,7 +60,7 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
 
   protected readonly chartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('historyCanvas');
 
-  private theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+  private theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true }) as Signal<ITheme>;
 
   protected loading = signal<boolean>(true);
   protected error = signal<string | null>(null);

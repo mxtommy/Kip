@@ -16,7 +16,7 @@ import { ITheme } from '../../core/services/app-service';
 export class WidgetWindComponent implements OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     supportAutomaticHistoricalSeries: false,

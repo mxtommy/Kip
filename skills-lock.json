@@ -6,6 +6,12 @@
       "sourceType": "github",
       "computedHash": "2789fdf11e2a70832ce2e6e79954018325a010ebdd45c5d4b1e7bfdf44679b7c"
     },
+    "angular-developer": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "skillPath": "angular-developer/SKILL.md",
+      "computedHash": "71ec40398a5194a446b23dbaf46c00d8f9f7fa6b944b69a0ea7f36893302a2fa"
+    },
     "angular-di": {
       "source": "analogjs/angular-skills",
       "sourceType": "github",
@@ -25,6 +31,12 @@
       "source": "analogjs/angular-skills",
       "sourceType": "github",
       "computedHash": "ad8821177929ea09eb94e7fc386d842c76c7f39b6c4d7aa3176ba3596dbabecc"
+    },
+    "angular-new-app": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "skillPath": "angular-new-app/SKILL.md",
+      "computedHash": "49bd84ab08bd3498c52f476bed48fbb942dc6dbc0925607e84549adbed34bccf"
     },
     "angular-routing": {
       "source": "analogjs/angular-skills",

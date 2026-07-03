@@ -15,7 +15,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Runtime directive
   protected readonly runtime = inject(WidgetRuntimeDirective);

@@ -52,7 +52,7 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   // Functional inputs (Host2)
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Directives/services
   protected readonly runtime = inject(WidgetRuntimeDirective);

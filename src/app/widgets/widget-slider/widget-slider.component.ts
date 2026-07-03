@@ -21,7 +21,7 @@ import { KipResizeObserverDirective } from '../../core/directives/kip-resize-obs
 export class WidgetSliderComponent implements OnInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     supportAutomaticHistoricalSeries: false,
     displayName: 'Slider Label',

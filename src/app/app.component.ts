@@ -114,8 +114,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const msg = this.upgrade.messages();
       // Only run if the overlay is visible and there are messages
-      if (this.upgrade.upgrading() && msg.length && this.upgradeMessagesRef()) {
-        const ul = this.upgradeMessagesRef().nativeElement;
+      const upgradeMessagesRef = this.upgradeMessagesRef();
+      if (this.upgrade.upgrading() && msg.length && upgradeMessagesRef) {
+        const ul = upgradeMessagesRef.nativeElement;
         // Scroll to the bottom
         ul.scrollTop = ul.scrollHeight;
       }
@@ -145,7 +146,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     effect(() => {
-      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && (this.notificationsInfo()?.alarmCount ?? 0) > 0;
       const sidenavOpen = this.notificationsSidenavOpened();
 
       // If sidenav is open, immediately close overlay and cancel any scheduled open
@@ -190,7 +191,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait), {
+      initialValue: { matches: false, breakpoints: {} }
+    });
 
     this._connectionStateMachine.status$
       .pipe(takeUntilDestroyed(this._destroyRef))

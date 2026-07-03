@@ -31,7 +31,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 directives (applied by host container)
   private readonly runtime = inject(WidgetRuntimeDirective);

@@ -36,7 +36,7 @@ export class WidgetRacerLineComponent implements AfterViewInit, OnDestroy {
   // Functional inputs (Host2 contract)
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 directives/services
   protected readonly runtime = inject(WidgetRuntimeDirective);

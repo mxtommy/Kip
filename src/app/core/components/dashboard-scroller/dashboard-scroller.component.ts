@@ -12,7 +12,7 @@ import { Dashboard } from './../../services/dashboard.service';
 })
 export class DashboardScrollerComponent {
   protected activePage = input<number | null>();
-  protected dashboards = input<Dashboard[]>();
+  protected dashboards = input<Dashboard[] | null>();
   protected visible = signal(false);
 
   constructor() {

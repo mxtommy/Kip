@@ -60,7 +60,7 @@ export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
 
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
   public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   private readonly runtime = inject(WidgetRuntimeDirective);

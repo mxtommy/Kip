@@ -17,6 +17,7 @@
     "module": "es2020",
     "isolatedModules": false,
     "resolveJsonModule": true
+    ,"ignoreDeprecations": "6.0"
   },
   "angularCompilerOptions": {
     "preserveWhitespaces": false,

@@ -19,7 +19,7 @@ import { ITheme } from '../../core/services/app-service';
 export class WidgetTextComponent implements AfterViewInit, OnInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Gauge Label',
     filterSelfPaths: true,

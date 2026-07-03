@@ -17,7 +17,7 @@ export class WidgetIframeComponent implements AfterViewInit, OnDestroy {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Runtime directive (config merge done by container)
   protected readonly runtime = inject(WidgetRuntimeDirective);

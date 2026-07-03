@@ -82,9 +82,12 @@ export class DashboardsEditorComponent {
 
   protected editDashboard(itemIndex: number): void {
     const dashboard = this._dashboard.dashboards()[itemIndex];
+    if (!dashboard) {
+      return;
+    }
     this._dialog.openDashboardPageEditorDialog({
       title: 'Dashboard Options',
-      name: dashboard.name,
+      name: dashboard.name ?? '',
       icon: dashboard.icon || 'dashboard-dashboard',
       confirmBtnText: 'Save',
       cancelBtnText: 'Cancel',
@@ -121,6 +124,9 @@ export class DashboardsEditorComponent {
 
       // Update active dashboard index if it was affected by the move
       const currentActive = this._dashboard.activeDashboard();
+      if (currentActive === null) {
+        return updatedDashboards;
+      }
       if (currentActive === event.previousIndex) {
         // Active item was moved to new position
         this._dashboard.activeDashboard.set(event.currentIndex);

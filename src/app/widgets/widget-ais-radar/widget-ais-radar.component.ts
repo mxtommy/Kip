@@ -130,7 +130,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   protected readonly runtime = inject(WidgetRuntimeDirective);
   private readonly ais = inject(AisProcessingService);

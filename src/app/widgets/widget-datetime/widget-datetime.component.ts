@@ -18,7 +18,7 @@ import { ITheme } from '../../core/services/app-service';
 export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly streams = inject(WidgetStreamsDirective);

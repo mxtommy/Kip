@@ -100,7 +100,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         if (this._previousIsStaticState !== isStatic) {
           this._previousIsStaticState = isStatic;
           try {
-            this._gridstack().grid.setStatic(isStatic);
+            const gridCmp = this._gridstack();
+            gridCmp.grid?.setStatic(isStatic);
           } catch { /* ignore if grid not ready */ }
         }
       });
@@ -110,7 +111,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const activeIdx = this.dashboard.activeDashboard();
 
       untracked(() => {
-        this.loadDashboard(activeIdx);
+        if (activeIdx !== null && activeIdx !== undefined) {
+          this.loadDashboard(activeIdx);
+        }
       });
     });
   }
@@ -127,7 +130,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     // Hook Gridstack drag lifecycle early to suppress long-press during slow drags
     try {
-      const grid = this._gridstack().grid as { on: (event: string, cb: (...args: unknown[]) => void) => void };
+      const gridCmp = this._gridstack();
+      const grid = gridCmp.grid as { on: (event: string, cb: (...args: unknown[]) => void) => void } | undefined;
       if (grid && typeof grid.on === 'function') {
         grid.on('dragstart', () => {
           this._uiEvent.isDragging.set(true);
@@ -148,13 +152,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
       if (action) {
-        this._gridstack().grid.getGridItems().forEach((item: GridItemHTMLElement) => {
+        const gridCmp = this._gridstack();
+        if (!gridCmp.grid) return;
+        gridCmp.grid.getGridItems().forEach((item: GridItemHTMLElement) => {
          /*  let subGrid: GridStackOptions = {};
           if (item.gridstackNode.subGridOpts) {
             subGrid = item.gridstackNode.subGridOpts;
           } */
 
-          if (item.gridstackNode.id === action.id) {
+          const node = item.gridstackNode;
+          if (!node?.id) {
+            return;
+          }
+
+          if (node.id === action.id) {
             switch (action.operation) {
               case 'delete':
                 this.deleteWidget(item);
@@ -239,16 +250,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
    * @memberof DashboardComponent
    */
   private loadDashboard(dashboardId: number): void {
-    const dashboard = cloneDeep(this.dashboard.dashboards()[dashboardId]);
+    const dashboards = this.dashboard.dashboards();
+    const dashboard = dashboards[dashboardId];
     const _gridstack = this._gridstack();
     // If grid not yet ready (rare timing race), retry next microtask.
-    if (!_gridstack?.grid) {
+    if (!_gridstack?.grid || !dashboard) {
       queueMicrotask(() => this.loadDashboard(dashboardId));
       return;
     }
     // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
     _gridstack.grid.batchUpdate();
-    _gridstack.grid.load(dashboard.configuration);
+    _gridstack.grid.load(dashboard.configuration ?? []);
     _gridstack.grid.batchUpdate(false);
     this.syncGridEmptyState();
   }
@@ -268,9 +280,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected saveDashboard(): void {
-    const serializedData = this._gridstack().grid.save(false, false) as NgGridStackWidget[] || null;
+    const gridCmp = this._gridstack();
+    if (!gridCmp.grid) return;
+    const serializedData = gridCmp.grid.save(false, false) as NgGridStackWidget[] || null;
     const immutableConfiguration = cloneDeep(serializedData);
-    this.dashboard.updateConfiguration(this.dashboard.activeDashboard(), immutableConfiguration);
+    const activeDashboard = this.dashboard.activeDashboard();
+    if (activeDashboard !== null && activeDashboard !== undefined) {
+      this.dashboard.updateConfiguration(activeDashboard, immutableConfiguration);
+    }
   }
 
   protected saveLayoutChanges(): void {
@@ -280,7 +297,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   protected cancelLayoutChanges(): void {
-    this.loadDashboard(this.dashboard.activeDashboard());
+    const activeDashboard = this.dashboard.activeDashboard();
+    if (activeDashboard !== null && activeDashboard !== undefined) {
+      this.loadDashboard(activeDashboard);
+    }
     this.dashboard.setStaticDashboard(true);
     this.dashboard.notifyLayoutEditCanceled();
   }
@@ -293,8 +313,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       const detail = ((e as CustomEvent).detail || {}) as PressGestureDetail;
       const inputX = detail.center?.x ?? detail.x ?? 0;
       const inputY = detail.center?.y ?? detail.y ?? 0;
-      const gridCell = this._gridstack().grid.getCellFromPixel({ left: inputX, top: inputY });
-      const isMinCellSpaceEmpty = this._gridstack().grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2);
+      const gridCmp = this._gridstack();
+      const grid = gridCmp.grid;
+      if (!grid) return;
+      const gridCell = grid.getCellFromPixel({ left: inputX, top: inputY });
+      const isMinCellSpaceEmpty = grid.isAreaEmpty(gridCell.x, gridCell.y, 1, 2);
 
       if (isMinCellSpaceEmpty) {
         if (this.dashboard.widgetClipboard()) {
@@ -517,7 +540,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
 
     // NEW: if default doesn't fit, pick the biggest size that fits (between min and default)
-    const grid = this._gridstack().grid;
+    const gridCmp = this._gridstack();
+    const grid = gridCmp.grid;
+    if (!grid) {
+      return;
+    }
     const minW = Number(widget.minWidth ?? 1);
     const minH = Number(widget.minHeight ?? 2);
     const maxW = Number(widget.defaultWidth ?? minW);
@@ -539,9 +566,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       newWidget.h = best.h;
     }
 
-    const item = this._gridstack().grid.addWidget(newWidget);
-    if (item.gridstackNode.subGrid) {
-      item.gridstackNode.subGridOpts.row = item.gridstackNode.subGridOpts.minRow = item.gridstackNode.subGridOpts.maxRow = item.gridstackNode.h; // Ensure subgrid rows match initial height
+    const item = grid.addWidget(newWidget);
+    const node = item.gridstackNode;
+    if (node?.subGrid && node.subGridOpts) {
+      node.subGridOpts.row = node.subGridOpts.minRow = node.subGridOpts.maxRow = node.h; // Ensure subgrid rows match initial height
     }
   }
 
@@ -580,7 +608,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     if (this._suppressDrag) return;
     this._suppressDrag = true;
     // Temporarily set grid static so internal pointermove handlers ignore drags
-    try { this._gridstack().grid.setStatic(true); } catch { /* ignore if grid not ready */ }
+    try {
+      const gridCmp = this._gridstack();
+      gridCmp.grid?.setStatic(true);
+    } catch { /* ignore if grid not ready */ }
     ['pointerup', 'mouseup', 'touchend'].forEach(type => {
       document.dispatchEvent(new Event(type, { bubbles: true }));
     });
@@ -591,14 +622,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this._suppressDrag = false;
       // Restore original static (edit) state: if dashboard not static we re-enable drag
       if (!this.dashboard.isDashboardStatic()) {
-        try { this._gridstack().grid.setStatic(false); } catch { /* ignore if grid not ready */ }
+        try {
+          const gridCmp = this._gridstack();
+          gridCmp.grid?.setStatic(false);
+        } catch { /* ignore if grid not ready */ }
       }
     }
   }
 
   private duplicateWidget(item: GridItemHTMLElement): void {
     const ID = UUID.create();
-    const source: NgGridStackWidget = item.gridstackNode;
+    const source = item.gridstackNode;
+    if (!source?.input?.widgetProperties) {
+      return;
+    }
     const newItem = {
       w: source.w, h: source.h,
       id: ID,
@@ -613,13 +650,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     } as NgGridStackWidget;
 
     const _gridstack = this._gridstack();
-    if (_gridstack.grid.willItFit(newItem)) {
-      _gridstack.grid.addWidget(newItem);
+    const grid = _gridstack.grid;
+    if (!grid) {
+      return;
+    }
+
+    if (grid.willItFit(newItem)) {
+      grid.addWidget(newItem);
     } else {
       newItem.h = 2;
       newItem.w = 1;
-      if (_gridstack.grid.willItFit(newItem)) {
-        _gridstack.grid.addWidget(newItem);
+      if (grid.willItFit(newItem)) {
+        grid.addWidget(newItem);
       } else {
         this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, 'error');
       }
@@ -654,14 +696,19 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
 
     const _gridstack = this._gridstack();
-    if (_gridstack.grid.willItFit(newItem)) {
-      _gridstack.grid.addWidget(newItem);
+    const grid = _gridstack.grid;
+    if (!grid) {
+      return;
+    }
+
+    if (grid.willItFit(newItem)) {
+      grid.addWidget(newItem);
       this.dashboard.clearWidgetClipboard();
     } else {
       newItem.h = 2;
       newItem.w = 1;
-      if (_gridstack.grid.willItFit(newItem)) {
-        _gridstack.grid.addWidget(newItem);
+      if (grid.willItFit(newItem)) {
+        grid.addWidget(newItem);
         this.dashboard.clearWidgetClipboard();
       } else {
         this.toast.show('Insufficient space on the dashboard. Please reorganize to free up space.', 0, false, 'error');
@@ -672,7 +719,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private deleteWidget(item: GridItemHTMLElement): void {
     const ngNode = item.gridstackNode as NgGridStackNode;
 
-    this._gridstack().grid.removeWidget(item);
+    const gridCmp = this._gridstack();
+    gridCmp.grid?.removeWidget(item);
 
     if (ngNode?.id) {
       this.datasetLifecycle.removeOwnedDatasets(ngNode.id, true);

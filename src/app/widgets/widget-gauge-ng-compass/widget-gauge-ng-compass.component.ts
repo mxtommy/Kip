@@ -51,7 +51,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Inject directives/services
   private readonly runtime = inject(WidgetRuntimeDirective);
