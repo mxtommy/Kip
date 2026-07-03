@@ -148,7 +148,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private toViewRow(path: ISkPathData): DataInspectorViewRow {
     return {
       path: path.path,
-      type: path.type,
+      type: path.type ?? '',
       supportsPut: path.meta?.supportsPut === true,
       sourceRows: Object.entries(path.sources ?? {}).map(([key, source]) => ({
         key,

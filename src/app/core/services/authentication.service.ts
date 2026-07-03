@@ -264,7 +264,8 @@ export class AuthenticationService implements OnDestroy {
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;
-        console.log("[Authentication Service] Session Authorization Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        const tokenExpiry = authorizationToken.expiry;
+        console.log("[Authentication Service] Session Authorization Token received. Token Expiration: " + (tokenExpiry != null ? this.getTokenExpirationDate(tokenExpiry) : 'NEVER'));
         this._IsLoggedIn$.next(true);
         this._authToken$.next(authorizationToken);
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
@@ -310,6 +311,9 @@ export class AuthenticationService implements OnDestroy {
 
   // not yet implemented by Signal K but part of the specs. Using contained token string expiration value instead for now
   private renewToken() {
+    if (!this.validateTokenUrl) {
+      throw new Error('Validation token URL is not set');
+    }
     return this.http.post<HttpResponse<Response>>(this.validateTokenUrl, null, {observe: 'response'});
   }
 
@@ -321,6 +325,13 @@ export class AuthenticationService implements OnDestroy {
    * @memberof AuthenticationService
    */
   public async logout(isLoginAction: boolean): Promise<void> {
+    if (!this.logoutUrl) {
+      this._IsLoggedIn$.next(false);
+      if (!isLoginAction) {
+        this._authToken$.next(null);
+      }
+      return;
+    }
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.logoutUrl, null))
       .then(() => {
@@ -365,7 +376,8 @@ export class AuthenticationService implements OnDestroy {
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;
-        console.log("[Authentication Service] Device Access Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        const tokenExpiry = authorizationToken.expiry;
+        console.log("[Authentication Service] Device Access Token received. Token Expiration: " + (tokenExpiry != null ? this.getTokenExpirationDate(tokenExpiry) : 'NEVER'));
         this._IsLoggedIn$.next(false);
         this._authToken$.next(authorizationToken);
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));

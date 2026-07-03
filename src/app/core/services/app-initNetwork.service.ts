@@ -34,9 +34,9 @@ export interface IBootstrapIssue {
 
 @Injectable()
 export class AppNetworkInitService implements OnDestroy {
-  private config: IConnectionConfig;
-  private isLoggedIn: boolean = null;
-  private loggedInSubscription: Subscription = null;
+  private config: IConnectionConfig = { ...DefaultConnectionConfig };
+  private isLoggedIn = false;
+  private loggedInSubscription?: Subscription;
 
   private readonly connection = inject(SignalKConnectionService);
   private readonly auth = inject(AuthenticationService);
@@ -54,7 +54,15 @@ export class AppNetworkInitService implements OnDestroy {
   constructor () {
     this.loggedInSubscription = this.auth.isLoggedIn$.subscribe((isLoggedIn) => {
       this.isLoggedIn = isLoggedIn;
-    })
+    });
+  }
+
+  private getErrorStatus(error: unknown): number | undefined {
+    if (!error || typeof error !== 'object') {
+      return undefined;
+    }
+    const withStatus = error as { status?: unknown };
+    return typeof withStatus.status === 'number' ? withStatus.status : undefined;
   }
 
   public async initNetworkServices() {
@@ -105,7 +113,8 @@ export class AppNetworkInitService implements OnDestroy {
 
     } catch (error) {
       startupDegraded = true;
-      if (error?.status === 404 && this.config?.useSharedConfig) {
+      const status = this.getErrorStatus(error);
+      if (status === 404 && this.config?.useSharedConfig) {
         const legacyUpgradeAvailable = await this.probeLegacyUpgradeAvailability(this.config.sharedConfigName);
         this._bootstrapIssue$.next({
           reason: 'missing-shared-config',
@@ -113,15 +122,15 @@ export class AppNetworkInitService implements OnDestroy {
           sharedConfigName: this.config.sharedConfigName,
           legacyUpgradeAvailable
         });
-      } else if (error?.status === 0) {
+      } else if (status === 0) {
         this._bootstrapIssue$.next({ reason: 'network-unreachable', statusCode: 0 });
-      } else if (error?.status === 401) {
+      } else if (status === 401) {
         this._bootstrapIssue$.next({ reason: 'unauthorized', statusCode: 401 });
       } else {
-        this._bootstrapIssue$.next({ reason: 'unknown', statusCode: error?.status });
+        this._bootstrapIssue$.next({ reason: 'unknown', statusCode: status });
       }
 
-      if (error.status === 0) {
+      if (status === 0) {
         const finalState = await this.waitForHttpRetryCompletion();
         if (finalState === ConnectionState.HTTPConnected || this.connectionStateMachine.isHTTPConnected()) {
           console.warn('[AppInit Network Service] Initial connection recovered during retry cycle. Skipping fallback route.');
@@ -129,7 +138,7 @@ export class AppNetworkInitService implements OnDestroy {
           console.warn("[AppInit Network Service] Initialization failed after HTTP retries. Redirecting to settings page.");
           await this.router.navigate(['/options']);
         }
-      } else if (error.status === 401) {
+      } else if (status === 401) {
         console.warn("[AppInit Network Service] Initialization failed. Unauthorized access. Redirecting to login page.");
         await this.router.navigate(['/login']);
       } else {
@@ -237,10 +246,11 @@ export class AppNetworkInitService implements OnDestroy {
       try {
         await this.auth.login({ usr: this.config.loginName, pwd: this.config.loginPassword });
       } catch (error) {
-        if (error.status === 0) {
-          this.router.navigate(['/settings']);
-        } else if (error.status === 401) {
-          this.router.navigate(['/login']);
+        const status = this.getErrorStatus(error);
+        if (status === 0) {
+          await this.router.navigate(['/settings']);
+        } else if (status === 401) {
+          await this.router.navigate(['/login']);
         }
         throw error;  // Re-throw the error to be handled by the caller
       }
@@ -252,10 +262,11 @@ export class AppNetworkInitService implements OnDestroy {
   }
 
   private loadLocalStorageConfig(): void {
-    this.config = JSON.parse(localStorage.getItem(CONNECTION_CONFIG_KEY));
+    const raw = localStorage.getItem(CONNECTION_CONFIG_KEY);
+    this.config = raw ? JSON.parse(raw) as IConnectionConfig : ({ ...DefaultConnectionConfig } as IConnectionConfig);
 
-    if (!this.config) {
-      this.config = DefaultConnectionConfig;
+    if (!raw) {
+      this.config = { ...DefaultConnectionConfig };
       this.config.signalKUrl = window.location.origin;
       console.log(`[AppInit Network Service] Connection Configuration not found. Creating configuration using Auto-Discovery URL: ${this.config.signalKUrl}`);
       this.setLocalStorageConfig();

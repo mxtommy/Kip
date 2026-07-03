@@ -124,7 +124,7 @@ export class SignalKDeltaService implements OnDestroy {
     // Monitor Token changes
     this.auth.authToken$
       .pipe(takeUntilDestroyed(this._destroyRef))
-      .subscribe((token: IAuthorizationToken) => {
+      .subscribe((token: IAuthorizationToken | null) => {
         if (this.authToken != token) {
           this.authToken = token;
 

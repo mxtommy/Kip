@@ -20,10 +20,10 @@ export class SettingsComponent {
   private readonly _router = inject(Router);
   protected readonly app = inject(AppService);
   private readonly _responsive = inject(BreakpointObserver);
-  private readonly _isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
-  private readonly _isPhoneLandscape = toSignal(this._responsive.observe(Breakpoints.HandsetLandscape));
-  protected isPhonePortrait = computed(() => this._isPhonePortrait().matches);
-  protected isPhoneLandscape = computed(() => this._isPhoneLandscape().matches);
+  private readonly _isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait), { initialValue: { matches: false, breakpoints: {} } });
+  private readonly _isPhoneLandscape = toSignal(this._responsive.observe(Breakpoints.HandsetLandscape), { initialValue: { matches: false, breakpoints: {} } });
+  protected isPhonePortrait = computed(() => this._isPhonePortrait()?.matches ?? false);
+  protected isPhoneLandscape = computed(() => this._isPhoneLandscape()?.matches ?? false);
 
   protected closePage() {
     this._router.navigate(['/dashboard']);

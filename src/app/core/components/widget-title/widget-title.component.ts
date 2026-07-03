@@ -13,8 +13,8 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
   protected color = input.required<string>();
   protected canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private canvas = inject(CanvasService);
-  private canvasElement: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  private canvasElement: HTMLCanvasElement | null = null;
+  private canvasCtx: CanvasRenderingContext2D | null = null;
   private isReady = false;
   private cssWidth = 0;
   private cssHeight = 0;
@@ -22,9 +22,12 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
   constructor() {
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.canvasElement = this.canvasRef().nativeElement;
     this.canvasCtx = this.canvasElement.getContext('2d');
+    if (!this.canvasCtx) {
+      return;
+    }
     this.canvas.registerCanvas(this.canvasElement, {
       autoRelease: true,
       onResize: (w, h) => {
@@ -46,12 +49,16 @@ export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy
   }
 
   protected drawTitle() {
-    if (!this.isReady) return;
+    if (!this.isReady || !this.canvasCtx) return;
     this.canvas.drawTitle(this.canvasCtx, this.text(), this.color(), 'normal', this.cssWidth, this.cssHeight);
   }
 
   ngOnDestroy(): void {
-    try { this.canvas.unregisterCanvas(this.canvasElement); }
+    try {
+      if (this.canvasElement) {
+        this.canvas.unregisterCanvas(this.canvasElement);
+      }
+    }
     catch { /* ignore */ }
     this.canvasCtx = null;
     this.canvasElement = null;

@@ -53,6 +53,42 @@ export interface ITheme {
   providedIn: 'root'
 })
 export class AppService {
+  private static readonly EMPTY_THEME: ITheme = {
+    blue: '',
+    blueDim: '',
+    blueDimmer: '',
+    green: '',
+    greenDim: '',
+    greenDimmer: '',
+    purple: '',
+    purpleDim: '',
+    purpleDimmer: '',
+    yellow: '',
+    yellowDim: '',
+    yellowDimmer: '',
+    pink: '',
+    pinkDim: '',
+    pinkDimmer: '',
+    orange: '',
+    orangeDim: '',
+    orangeDimmer: '',
+    contrast: '',
+    contrastDim: '',
+    contrastDimmer: '',
+    grey: '',
+    greyDim: '',
+    greyDimmer: '',
+    port: '',
+    starboard: '',
+    zoneNominal: '',
+    zoneAlert: '',
+    zoneWarn: '',
+    zoneAlarm: '',
+    zoneEmergency: '',
+    background: '',
+    cardColor: ''
+  };
+
   private readonly MODE_PATH: string = 'self.environment.mode';
   public readonly configurableThemeColors: {label: string, value: string}[] = [
     {label: "Contrast", value: "contrast"},
@@ -64,8 +100,8 @@ export class AppService {
     {label: "Purple", value: "purple"},
     {label: "Grey", value: "grey"}
   ];
-  public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme|null>(null);
-  private _cssThemeColorRoles: ITheme = null;
+  public readonly cssThemeColorRoles$ = new BehaviorSubject<ITheme>(AppService.EMPTY_THEME);
+  private _cssThemeColorRoles: ITheme = AppService.EMPTY_THEME;
   private readonly _settings = inject(SettingsService);
   private readonly _data = inject(DataService);
   private readonly _iconRegistry = inject(MatIconRegistry);
@@ -98,9 +134,12 @@ export class AppService {
     });
 
     effect(() => {
-      const mode = this._environmentMode().data.value;
+      const mode = this._environmentMode()?.data?.value;
 
       untracked(() => {
+        if (typeof mode !== 'string') {
+          return;
+        }
         if (this.previousEnvironmentMode === mode) return; // No change in mode
 
         this.previousEnvironmentMode = mode;

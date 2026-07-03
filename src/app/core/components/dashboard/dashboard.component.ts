@@ -150,7 +150,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     } catch { /* ignore grid hook errors */ }
 
-    this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation) => {
+    this.dashboard.widgetAction$.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((action: widgetOperation | null) => {
       if (action) {
         const gridCmp = this._gridstack();
         if (!gridCmp.grid) return;
@@ -632,7 +632,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private duplicateWidget(item: GridItemHTMLElement): void {
     const ID = UUID.create();
-    const source = item.gridstackNode;
+    type NodeWithWidgetInput = NgGridStackNode & {
+      selector?: string;
+      input?: { widgetProperties?: { type: string; config: unknown } };
+    };
+    const source = item.gridstackNode as NodeWithWidgetInput | undefined;
     if (!source?.input?.widgetProperties) {
       return;
     }

@@ -42,7 +42,7 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
 };
 
 // Translate units from sk metadata to appropriate type category
-const typeFromUnits = (units: string): string => {
+const typeFromUnits = (units: string): string | undefined => {
   if (!units) {
     return undefined;
   }
@@ -265,7 +265,7 @@ export class DataService implements OnDestroy {
     }
 
     let currentValue: unknown = null;
-    let currentTimestamp: string | null = null;
+    let currentTimestamp: string | null | undefined = null;
     let currentDateTimestamp: Date | null = null;
     let state: TState = States.Normal;
     let pathUpdate: IPathUpdate = {

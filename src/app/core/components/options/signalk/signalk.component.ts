@@ -66,13 +66,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
 
   protected readonly activityGraph = viewChild<ElementRef<HTMLCanvasElement>>('activityGraph');
 
-  public connectionConfig: IConnectionConfig;
+  public connectionConfig: IConnectionConfig = this.settings.getConnectionConfig();
   public isConnecting = false; // Loading state for connect button
 
-  public authToken: IAuthorizationToken;
+  public authToken: IAuthorizationToken | null = null;
 
-  public endpointServiceStatus: IEndpointStatus;
-  public streamStatus: IStreamStatus;
+  public endpointServiceStatus: IEndpointStatus = this.signalKConnectionService.serverServiceEndpoint$.getValue();
+  public streamStatus: IStreamStatus = this.deltaService.streamEndpoint$.getValue();
 
   protected readonly internetAvailabilityLabel = computed(() => {
     if (this.internetReachability.isChecking()) {
@@ -91,17 +91,17 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   });
 
 
-  private _chart: Chart = null;
-  private textColor: string; // Store the computed text color for chart styling
+  private _chart: Chart | null = null;
+  private textColor = ''; // Store the computed text color for chart styling
 
-  ngOnInit() {
+  ngOnInit(): void {
     // get Signal K connection configuration
     this.connectionConfig = this.settings.getConnectionConfig();
 
     // get authentication token status
     this.auth.authToken$.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe((token: IAuthorizationToken) => {
+    ).subscribe((token: IAuthorizationToken | null) => {
       if (token) {
         this.authToken = token;
       } else {
@@ -125,7 +125,12 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   ngAfterViewInit(): void {
-    this.textColor = window.getComputedStyle(this.activityGraph().nativeElement).color;
+    const graph = this.activityGraph();
+    if (!graph) {
+      return;
+    }
+
+    this.textColor = window.getComputedStyle(graph.nativeElement).color;
     this._chart?.destroy();
     this.startChart();
 
@@ -133,6 +138,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this.DataService.getSignalkDeltaUpdateStatistics().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((update: IDeltaUpdate) => {
+      if (!this._chart) {
+        return;
+      }
       this._chart.data.datasets[0].data.push({ x: update.timestamp, y: update.value });
       if (this._chart.data.datasets[0].data.length > 10) {
         this._chart.data.datasets[0].data.shift();
@@ -145,7 +153,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Opens the user credential modal dialog for authentication.
    * @param errorMsg Optional error message to display in the modal
    */
-  public openUserCredentialModal(errorMsg: string) {
+  public openUserCredentialModal(errorMsg?: string | null): void {
     const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       data: {
         user: this.connectionConfig.loginName,
@@ -218,7 +226,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Creates a time-series chart showing data update frequency over time.
    */
   private startChart() {
-    this._chart = new Chart(this.activityGraph().nativeElement.getContext('2d'), {
+    const graph = this.activityGraph();
+    const context = graph?.nativeElement.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    this._chart = new Chart(context, {
       type: 'line',
       data: {
         datasets: [
@@ -286,13 +300,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    */
   public useSharedConfigToggleClick(e: MatSlideToggleChange): void {
     if (e.checked) {
-      const version: string = this.signalKConnectionService.serverVersion$.getValue();
-      if (!compare(version, '1.46.2', ">=")) {
+      const version = this.signalKConnectionService.serverVersion$.getValue();
+      if (!version || !compare(version, '1.46.2', ">=")) {
         this.toast.show("Configuration sharing requires Signal K version 1.46.2 or better", 0, false, 'warn');
         this.connectionConfig.useSharedConfig = false;
         return;
       }
-      this.openUserCredentialModal(null);
+      this.openUserCredentialModal();
     }
   };
 

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Chart, ChartConfiguration, ChartDataset, Color, LegendItem, LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { IWidget } from '../../interfaces/widgets-interface';
+import { IPathArray, IWidget, IWidgetPath } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';
 import { isKipTemplateSeriesDefinition, type IKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
 import {
@@ -218,7 +218,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
           if (dualAxisSeries) {
             y = transformDualAxisMetricValue(dualAxisSeries, y);
           } else if (convertUnitTo) {
-            y = this.units.convertToUnit(convertUnitTo, y);
+            const converted = this.units.convertToUnit(convertUnitTo, y);
+            y = converted ?? y;
           }
         }
         return { x: point.timestamp, y };
@@ -422,7 +423,8 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       path,
       expansionMode: null,
       familyKey: null,
-      allowedIds: null
+      allowedIds: null,
+      trackedDevices: undefined
     }));
   }
 
@@ -609,16 +611,24 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
     return this.getUnitsLabel(convertUnitTo);
   }
 
+  private getWidgetPathConfig(widget: IWidget | null | undefined, pathKey: string): IWidgetPath | undefined {
+    const paths = widget?.config?.paths;
+    if (!paths || Array.isArray(paths)) {
+      return undefined;
+    }
+    return (paths as IPathArray)[pathKey];
+  }
+
   private resolveConvertUnitTo(rawPath?: string): string | null {
     const widgetConfig = this.data.widget?.config;
     if (!widgetConfig) {
       return null;
     }
 
-    if (widgetConfig.paths && typeof widgetConfig.paths === 'object') {
+    if (widgetConfig.paths && !Array.isArray(widgetConfig.paths)) {
       if (rawPath) {
         for (const key of Object.keys(widgetConfig.paths)) {
-          const pathCfg = widgetConfig.paths[key];
+          const pathCfg = this.getWidgetPathConfig(this.data.widget, key);
           if (pathCfg?.path === rawPath && pathCfg.convertUnitTo) {
             return pathCfg.convertUnitTo;
           }
@@ -626,8 +636,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       }
 
       const firstPathKey = Object.keys(widgetConfig.paths)[0];
-      if (firstPathKey && widgetConfig.paths[firstPathKey]?.convertUnitTo) {
-        return widgetConfig.paths[firstPathKey].convertUnitTo;
+      const firstPathCfg = firstPathKey ? this.getWidgetPathConfig(this.data.widget, firstPathKey) : undefined;
+      if (firstPathCfg?.convertUnitTo) {
+        return firstPathCfg.convertUnitTo;
       }
     }
 
@@ -706,7 +717,9 @@ export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit,
       const dataset = label.datasetIndex != null
         ? chart.data.datasets[label.datasetIndex] as HistoryChartDataset
         : null;
-      const borderDash = Array.isArray(dataset?.borderDash) ? dataset.borderDash : [];
+      const borderDash = Array.isArray(dataset?.borderDash)
+        ? dataset.borderDash.filter((value): value is number => typeof value === 'number')
+        : [];
       return {
         ...label,
         fillStyle: 'transparent' as Color,

@@ -1,9 +1,9 @@
 import { MatIconModule } from '@angular/material/icon';
-import { Component, inject, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ElementRef, viewChild, ChangeDetectionStrategy, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatBadgeModule } from '@angular/material/badge';
-import { NotificationsService } from '../../services/notifications.service';
+import { INotificationInfo, NotificationsService } from '../../services/notifications.service';
 
 @Component({
   selector: 'notification-badge',
@@ -15,7 +15,10 @@ import { NotificationsService } from '../../services/notifications.service';
 export class NotificationBadgeComponent {
   protected badgeButton = viewChild.required<ElementRef<HTMLButtonElement>>('badgeButton');
   private readonly _notifications = inject(NotificationsService);
-  protected readonly notificationsInfo = toSignal(this._notifications.observerNotificationsInfo());
+  protected readonly notificationsInfo: Signal<INotificationInfo> = toSignal(
+    this._notifications.observerNotificationsInfo(),
+    { requireSync: true }
+  ) as Signal<INotificationInfo>;
 
   protected openNotificationMenu(): void {
     const sidenavEvent = new Event('openRightSidenav', { bubbles: true, cancelable: true });

@@ -78,7 +78,7 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
   protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true }) as Signal<ITheme>;
   protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
-  private compType: Type<WidgetViewComponentBase>
+  private compType: Type<WidgetViewComponentBase> | undefined;
   private _hasInitialized = false;
   private _destroyed = false;
   private readonly openOverlays = new Set<TOverlayGate>();
@@ -134,8 +134,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
    * render, so it guards against the host being destroyed mid-load and explicitly renders the child.
    */
   private async loadAndCreateChild(type: string, shouldAutoOpenOptions: boolean): Promise<void> {
-    this.compType = await this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
-    if (this._destroyed) return; // host was torn down while the chunk loaded
+    const resolvedCompType = await this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    if (this._destroyed || !resolvedCompType) return; // host was torn down while the chunk loaded
+    this.compType = resolvedCompType;
 
     // Resolve default configuration for this component type using helper
     const defaultCfg = this.getDefaultConfig();
@@ -240,6 +241,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
     try {
       const dashboards = this.dashboard.dashboards();
       const activeIdx = this.dashboard.activeDashboard();
+      if (activeIdx == null || activeIdx < 0) {
+        return undefined;
+      }
       const dash = dashboards?.[activeIdx];
       type NodeWithConfig = NgGridStackWidget & {
         input?: { widgetProperties?: { config?: IWidgetSvcConfig } };

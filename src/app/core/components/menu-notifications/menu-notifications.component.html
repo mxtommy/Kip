@@ -1,7 +1,7 @@
 <mat-list class="menu-item-container">
   @for(menuItem of menuNotifications(); track menuItem.path) {
   <div class="notification-container">
-    @switch (menuItem.value.state) {
+    @switch (menuItem.value?.state ?? 'normal') {
       @case ("nominal") {
         <mat-icon>info</mat-icon>
       }
@@ -21,15 +21,15 @@
         <mat-icon class="icon-emergency-color">emergency_home</mat-icon>
       }
     }
-    <div class="notification-title">{{ menuItem.value.state }}</div>
+    <div class="notification-title">{{ menuItem.value?.state ?? '' }}</div>
     <div class="notification-path scrollable-text">
       {{ menuItem.path | slice : 14 }}
     </div>
-    <div class="notification-text">{{ menuItem.value.message }}</div>
+    <div class="notification-text">{{ menuItem.value?.message ?? '' }}</div>
     <button
       mat-icon-button
       class="notification-action-btn"
-      [disabled]="!menuItem.value.method?.includes('sound')"
+      [disabled]="!menuItem.value?.method?.includes('sound')"
       (click)="silence(menuItem.path)"
     >
       <mat-icon>music_off</mat-icon>

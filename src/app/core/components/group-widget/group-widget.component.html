@@ -1,6 +1,6 @@
 <widget-title
-  [text]="runtime.options().displayName ?? ''"
-  [color]="runtime.options().color">
+  [text]="runtime.options()?.displayName ?? ''"
+  [color]="runtime.options()?.color ?? ''">
 </widget-title>
 @if (!dashboard.isDashboardStatic()) {
   <div class="widgetOverlay"

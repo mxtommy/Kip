@@ -56,8 +56,8 @@ export interface IPathUpdateEvent {
   path: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pathValue: any;
-  pathTimestamp: string;
-  type: string;
+  pathTimestamp: string | undefined;
+  type: string | undefined;
   state: TState;
   defaultSource?: string; // default source
   sources: Record<string, { // per source data

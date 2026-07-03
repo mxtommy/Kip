@@ -1,6 +1,6 @@
 import { Directive, computed, effect, input, signal, untracked } from '@angular/core';
 import { cloneDeep, merge } from 'lodash-es';
-import type { IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import type { IPathArray, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
 @Directive({
   selector: '[widget-runtime]',
@@ -69,9 +69,11 @@ export class WidgetRuntimeDirective {
   }
 
   /** Retrieve a single path config safely from current merged options. */
-  public getPathCfg(pathKey: string): string | undefined {
+  public getPathCfg(pathKey: string): IWidgetPath | undefined {
     const cfg = this.options();
-    return cfg?.paths?.[pathKey];
+    const paths = cfg?.paths;
+    if (!paths || Array.isArray(paths)) return undefined;
+    return (paths as IPathArray)[pathKey];
   }
 
   /** Set (replace) the user runtime portion of the configuration. */

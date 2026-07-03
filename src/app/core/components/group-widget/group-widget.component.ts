@@ -83,7 +83,7 @@ export class GroupWidgetComponent extends BaseWidget implements OnInit {
 
       this._dialog.openWidgetOptions({
         title: 'Widget Options',
-        config: cloneDeep(this.runtime.options()),
+        config: cloneDeep(this.runtime.options() ?? {}),
         confirmBtnText: 'Save',
         cancelBtnText: 'Cancel'
       }).afterClosed().subscribe(result => {
