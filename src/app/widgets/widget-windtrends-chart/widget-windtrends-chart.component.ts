@@ -740,8 +740,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         this.pushRowsToDatasets(dsPointOrBatch);
       } else {
         this.pushRowsToDatasets([dsPointOrBatch]);
-        if (chart.data.datasets[0].data.length > dataSourceInfo.maxDataPoints) {
-          for (let i = 0; i <= 4; i++) chart.data.datasets[i].data.shift();
+        const dirDataset = chart.data.datasets[0]?.data;
+        if (Array.isArray(dirDataset) && dirDataset.length > dataSourceInfo.maxDataPoints) {
+          for (let i = 0; i <= 4; i++) {
+            const ds = chart.data.datasets[i]?.data;
+            if (Array.isArray(ds)) ds.shift();
+          }
         }
       }
       this.scheduleChartUpdate();
@@ -755,8 +759,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         this.pushRowsToSpeedDatasets(dsPointOrBatch);
       } else {
         this.pushRowsToSpeedDatasets([dsPointOrBatch]);
-        if (chart.data.datasets[5].data.length > dataSourceInfo.maxDataPoints) {
-          for (let i = 5; i <= 9; i++) chart.data.datasets[i].data.shift();
+        const spdDataset = chart.data.datasets[5]?.data;
+        if (Array.isArray(spdDataset) && spdDataset.length > dataSourceInfo.maxDataPoints) {
+          for (let i = 5; i <= 9; i++) {
+            const ds = chart.data.datasets[i]?.data;
+            if (Array.isArray(ds)) ds.shift();
+          }
         }
       }
       this.scheduleChartUpdate();
@@ -829,7 +837,9 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     if (!chart) return;
     const types: ('value' | 'sma' | 'avg' | 'min' | 'max')[] = ['value', 'sma', 'avg', 'min', 'max'];
     types.forEach((type, i) => {
-      (chart.data.datasets[baseIndex + i].data as IDataSetRow[])
+      const dataset = chart.data.datasets[baseIndex + i];
+      if (!dataset || !Array.isArray(dataset.data)) return;
+      (dataset.data as IDataSetRow[])
         .push(...this.transformRows(rows, type, toUnit, unwrap));
     });
   }
@@ -862,10 +872,25 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     if (this._chartUpdateRafId != null) return;
     this._chartUpdateRafId = requestAnimationFrame(() => {
       this._chartUpdateRafId = null;
-      if (!this.chart) return;
+      if (!this.chart || !this.hasValidDatasets()) return;
       this.updateChartAfterDataChange();
       this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
     });
+  }
+
+  /**
+   * Verify that all datasets are properly initialized before chart update.
+   * This prevents the annotation plugin from trying to access undefined datasets.
+   */
+  private hasValidDatasets(): boolean {
+    const datasets = this.chart?.data?.datasets;
+    if (!Array.isArray(datasets) || datasets.length < 10) return false;
+    // Ensure all 10 datasets exist and have data array
+    for (let i = 0; i < 10; i++) {
+      const ds = datasets[i];
+      if (!ds || !Array.isArray(ds.data)) return false;
+    }
+    return true;
   }
 
   private updateChartAfterDataChange() {
