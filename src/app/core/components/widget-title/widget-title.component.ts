@@ -1,10 +1,11 @@
-import { AfterViewInit, Component, ElementRef, inject, input, OnChanges, SimpleChanges, viewChild, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, input, OnChanges, SimpleChanges, viewChild, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../services/canvas.service';
 
 @Component({
   selector: 'widget-title',
   imports: [],
   templateUrl: './widget-title.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './widget-title.component.scss'
 })
 export class WidgetTitleComponent implements AfterViewInit, OnChanges, OnDestroy {

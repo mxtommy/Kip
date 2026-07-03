@@ -1,4 +1,4 @@
-import { Component, input, output, signal, effect, untracked } from '@angular/core';
+import { Component, input, output, signal, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
 
@@ -10,6 +10,7 @@ interface IconData {
   selector: 'select-icon',
   imports: [MatIconModule],
   templateUrl: './select-icon.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './select-icon.component.scss'
 })
 export class SelectIconComponent {

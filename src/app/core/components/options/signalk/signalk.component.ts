@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
@@ -35,6 +35,7 @@ import { InternetReachabilityService } from '../../../services/internet-reachabi
   selector: 'settings-signalk',
   templateUrl: './signalk.component.html',
   styleUrls: ['./signalk.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
     MatFormField,

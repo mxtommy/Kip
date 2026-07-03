@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/button-toggle';
 import { WidgetDescriptionWithPluginStatus, WidgetService, WidgetDescription } from '../../services/widget.service';
 import { WidgetListCardComponent } from '../widget-list-card/widget-list-card.component';
@@ -8,6 +8,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'widgets-list',
   imports: [MatButtonToggleModule, WidgetListCardComponent],
   templateUrl: './widgets-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './widgets-list.component.scss'
 })
 export class WidgetsListComponent implements OnInit {

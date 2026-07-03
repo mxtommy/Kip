@@ -1,4 +1,4 @@
-<widget-title [text]="(runtime?.options()?.displayName)" [color]="labelColor()"/>
+<widget-title [text]="($safeNavigationMigration(runtime?.options()?.displayName))" [color]="labelColor()"/>
 <div class="widgets-container" kipResizeObserver (resizeChange)="onResized()">
   <svg width="100%" height="100%" viewBox="0 40 200 40">
       <rect

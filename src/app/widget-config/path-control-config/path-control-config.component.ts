@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, SimpleChange, input, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChange, input, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { IPathMetaData } from "../../core/interfaces/app-interfaces";
 import { IConversionPathList, ISkBaseUnit, UnitsService } from '../../core/services/units.service';
@@ -48,6 +48,7 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
     selector: 'path-control-config',
     templateUrl: './path-control-config.component.html',
     styleUrls: ['./path-control-config.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatAutocompleteModule, MatIconButton, MatSuffix, MatOption, MatError, MatSelect, MatOptgroup, AsyncPipe, MatIconModule, MatHint]
 })
 export class PathControlConfigComponent implements OnInit, OnChanges {

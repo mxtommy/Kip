@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output, inject } from '@angular/core';
+import { Component, OnInit, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -18,6 +18,7 @@ export interface IDeleteEventObj {
     selector: 'boolean-control-config',
     templateUrl: './boolean-control-config.component.html',
     styleUrls: ['./boolean-control-config.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {

@@ -1,16 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { UntypedFormControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 
 import { SelectAutopilotComponent } from './select-autopilot.component';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 
 @Component({
   selector: 'host-wrapper',
   standalone: true,
   imports: [ReactiveFormsModule, SelectAutopilotComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<form [formGroup]="root"><select-autopilot [formGroupName]="groupName"></select-autopilot></form>`
 })
 class HostWrapperComponent {
@@ -32,7 +33,7 @@ describe('SelectAutopilotComponent', () => {
     await TestBed.configureTestingModule({
       imports: [HostWrapperComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         { provide: PluginConfigClientService, useValue: { getPlugin: () => Promise.resolve({ ok: false }) } }
       ]
     })

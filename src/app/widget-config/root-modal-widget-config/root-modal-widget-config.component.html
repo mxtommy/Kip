@@ -3,7 +3,7 @@
   <mat-dialog-content class="widget-config-dialog-content">
     <mat-tab-group class="tab-group-content">
       <mat-tab label="Display">
-        @if ((widgetConfig?.datachartPath !== undefined)) {
+        @if (($safeNavigationMigration(widgetConfig?.datachartPath) !== undefined)) {
           <config-display-chart-options
             class="tab-content"
             [displayName]="displayNameToControl"
@@ -35,7 +35,7 @@
         } @else {
           <div class="display-content tab-content">
             <div class="widget-options-grid">
-              @if ((widgetConfig?.widgetUrl !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.widgetUrl) !== undefined)) {
                 <mat-form-field class="options-grid-span2">
                   <mat-label>URL</mat-label>
                   <input
@@ -47,7 +47,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.allowInput !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.allowInput) !== undefined)) {
                 <mat-checkbox
                   class="options-grid-span2"
                   name="allowInput"
@@ -59,8 +59,8 @@
                   interactions.
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.displayName !== undefined)) {
-                @if (widgetConfig?.showLabel !== undefined) {
+              @if (($safeNavigationMigration(widgetConfig?.displayName) !== undefined)) {
+                @if ($safeNavigationMigration(widgetConfig?.showLabel) !== undefined) {
                   <div class="flex-container options-grid-span2">
                     <div class="panel-group">
                       <mat-form-field class="full-width">
@@ -115,7 +115,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.numInt !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.numInt) !== undefined)) {
                 <mat-form-field>
                   <mat-label>Integer Places</mat-label>
                   <input
@@ -130,7 +130,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.numDecimal !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.numDecimal) !== undefined)) {
                 <mat-form-field
                   [class]="
                     widgetConfig.showMiniChart !== undefined
@@ -151,17 +151,17 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.showMin !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.showMin) !== undefined)) {
                 <mat-checkbox name="showMin" formControlName="showMin">
                   Show Min recorded value
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.showMax !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.showMax) !== undefined)) {
                 <mat-checkbox name="showMax" formControlName="showMax">
                   Show Max recorded value
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.nextDashboard !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.nextDashboard) !== undefined)) {
                 <mat-form-field [class.options-grid-span2]="!widgetConfig.numInt">
                   <mat-label>Next Dashboard after start</mat-label>
                   <input
@@ -175,7 +175,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.convertUnitTo !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.convertUnitTo) !== undefined)) {
                 <mat-form-field class="fields">
                   <mat-label>Display Units</mat-label>
                   <mat-select
@@ -198,12 +198,12 @@
                   </mat-select>
                 </mat-form-field>
               }
-              @if (widgetConfig?.playBeeps !== undefined) {
+              @if ($safeNavigationMigration(widgetConfig?.playBeeps) !== undefined) {
                 <mat-checkbox name="playBeeps" formControlName="playBeeps">
                   Enable beeps on count down
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.dateFormat !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.dateFormat) !== undefined)) {
                 <display-datetime-options
                   class="options-grid-span2"
                   [dateFormat]="dateFormatToControl"
@@ -212,7 +212,7 @@
                 </display-datetime-options>
               }
               <!-- sail gauge stuff -->
-               @if ((widgetConfig?.compassModeEnabled !== undefined)) {
+               @if (($safeNavigationMigration(widgetConfig?.compassModeEnabled) !== undefined)) {
                 <mat-checkbox
                   class="fields options-grid-span2"
                   name="compassModeEnabled"
@@ -221,7 +221,7 @@
                   Enable Advanced Compass Mode
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.laylineEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.laylineEnable) !== undefined)) {
                 <mat-checkbox
                   class="fields"
                   name="laylineEnable"
@@ -230,7 +230,7 @@
                   Close-hauled Lines
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.laylineEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.laylineEnable) !== undefined)) {
                 <mat-form-field>
                   <mat-label>Optimal Close-hauled Angle</mat-label>
                   <input
@@ -244,7 +244,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.windSectorEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.windSectorEnable) !== undefined)) {
                 <mat-checkbox
                   name="windSectorEnable"
                   formControlName="windSectorEnable"
@@ -252,7 +252,7 @@
                   Wind Sectors
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.windSectorEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.windSectorEnable) !== undefined)) {
                 <mat-form-field>
                   <mat-label>Sector Duration (sec)</mat-label>
                   <input
@@ -266,17 +266,17 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.awsEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.awsEnable) !== undefined)) {
                 <mat-checkbox name="awsEnable" formControlName="awsEnable">
                   Apparent Wind Speed Value
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.twsEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.twsEnable) !== undefined)) {
                 <mat-checkbox name="twsEnable" formControlName="twsEnable">
                   True Wind Speed Value
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.courseOverGroundEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.courseOverGroundEnable) !== undefined)) {
                 <mat-checkbox
                   name="courseOverGroundEnable"
                   formControlName="courseOverGroundEnable"
@@ -284,12 +284,12 @@
                   Course Over Ground
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.twaEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.twaEnable) !== undefined)) {
                 <mat-checkbox name="twaEnable" formControlName="twaEnable">
                   True Wind Angle Indicator
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.waypointEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.waypointEnable) !== undefined)) {
                 <mat-checkbox
                   name="waypointEnable"
                   formControlName="waypointEnable"
@@ -297,12 +297,12 @@
                   Next Waypoint
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.driftEnable !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.driftEnable) !== undefined)) {
                 <mat-checkbox name="driftEnable" formControlName="driftEnable">
                   Drift
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.minValue !== undefined) &&
+              @if (($safeNavigationMigration(widgetConfig?.minValue) !== undefined) &&
                 !formMaster.get('displayScale')) {
                 <mat-form-field>
                   <mat-label>Minimum Value</mat-label>
@@ -315,7 +315,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.maxValue !== undefined) &&
+              @if (($safeNavigationMigration(widgetConfig?.maxValue) !== undefined) &&
                 !formMaster.get('displayScale')) {
                 <mat-form-field>
                   <mat-label>Maximum Value</mat-label>
@@ -328,7 +328,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.ignoreZones !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.ignoreZones) !== undefined)) {
                 <mat-checkbox name="ignoreZones" formControlName="ignoreZones">
                   Ignore Zones configuration
                 </mat-checkbox>
@@ -481,7 +481,7 @@
                   </mat-select>
                 </mat-form-field>
               }
-              @if ((widgetConfig?.color !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.color) !== undefined)) {
                 <mat-form-field class="options-grid-span2">
                   <mat-label>Color</mat-label>
                   <mat-select
@@ -498,7 +498,7 @@
                   </mat-select>
                 </mat-form-field>
               }
-              @if ((widgetConfig?.timeScale !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.timeScale) !== undefined)) {
                 <mat-form-field class="options-grid-span2">
                   <mat-label>Scale Span</mat-label>
                   <mat-select
@@ -517,7 +517,7 @@
                   <a routerLink="/help" style="color: var(--kip-blue-color); cursor: pointer; text-decoration: underline;">Learn more</a>
                 </div>
               }
-              @if ((widgetConfig?.showMiniChart !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.showMiniChart) !== undefined)) {
                 <mat-checkbox
                   class="options-grid-span2"
                   name="showMiniChart"
@@ -527,7 +527,7 @@
                   <i>(Too many graphs may affect performance)</i>
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.yScaleMin !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.yScaleMin) !== undefined)) {
                 <mat-form-field>
                   <mat-label>Suggested Scale Start</mat-label>
                   <input
@@ -540,7 +540,7 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.yScaleMax !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.yScaleMax) !== undefined)) {
                 <mat-form-field>
                   <mat-label>Suggested Scale End</mat-label>
                   <input
@@ -553,22 +553,22 @@
                   />
                 </mat-form-field>
               }
-              @if ((widgetConfig?.inverseYAxis !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.inverseYAxis) !== undefined)) {
                 <mat-checkbox name="inverseYAxis" formControlName="inverseYAxis">
                   Inverse Scale Axis
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.verticalChart !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.verticalChart) !== undefined)) {
                 <mat-checkbox name="verticalChart" formControlName="verticalChart">
                   Vertical Data Graph
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.noBgColor !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.noBgColor) !== undefined)) {
                 <mat-checkbox name="noBgColor" formControlName="noBgColor">
                   Disable background color
                 </mat-checkbox>
               }
-              @if ((widgetConfig?.bgColor !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.bgColor) !== undefined)) {
                 <mat-form-field>
                 <mat-label>Background Color</mat-label>
                 <mat-select
@@ -585,7 +585,7 @@
                 </mat-select>
               </mat-form-field>
               }
-              @if ((widgetConfig?.ais !== undefined)) {
+              @if (($safeNavigationMigration(widgetConfig?.ais) !== undefined)) {
                 <ng-container formGroupName="ais">
                   <mat-form-field>
                     <mat-label>View Mode</mat-label>
@@ -720,13 +720,13 @@
           </div>
         }
       </mat-tab>
-      @if (widgetConfig?.ais !== undefined) {
+      @if ($safeNavigationMigration(widgetConfig?.ais) !== undefined) {
         <mat-tab label="Filter">
           <ais-target-options formGroupName="ais" />
         </mat-tab>
       }
       <!-- Boolean Multi Child Control Config Panel -->
-      @if ((widgetConfig?.multiChildCtrls !== undefined)) {
+      @if (($safeNavigationMigration(widgetConfig?.multiChildCtrls) !== undefined)) {
         <mat-tab label="Controls">
           <div class="tab-content">
             <div>
@@ -756,7 +756,7 @@
         </mat-tab>
       }
       <!-- Paths stuff -->
-      @if ((widgetConfig?.paths !== undefined)) {
+      @if (($safeNavigationMigration(widgetConfig?.paths) !== undefined)) {
         <mat-tab label="Paths">
           <div class="tab-content">
             <div>
@@ -831,8 +831,8 @@
       <!-- end Gauge stuff-->
 
       <!-- PUT Requests -->
-      @if ((widgetConfig?.putEnable !== undefined) &&
-        (widgetConfig?.multiChildCtrls === undefined)) {
+      @if (($safeNavigationMigration(widgetConfig?.putEnable) !== undefined) &&
+        ($safeNavigationMigration(widgetConfig?.multiChildCtrls) === undefined)) {
         <mat-tab label="Put Request">
           <div class="tab-content">
             <p>
@@ -861,7 +861,7 @@
       <!-- End PUT Requests-->
 
       <!-- Charts -->
-      @if (widgetConfig?.datachartPath !== undefined) {
+      @if ($safeNavigationMigration(widgetConfig?.datachartPath) !== undefined) {
         <mat-tab label="Dataset">
           <ng-template mat-tab-label>
             @if (!formMaster.controls.datachartPath.valid) {

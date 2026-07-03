@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormArray, FormGroupDirective, ReactiveFormsModule, UntypedFormArray, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -15,6 +15,7 @@ import type { BmsBankConnectionMode, ElectricalGroupConfig, ElectricalTrackedDev
   selector: 'electrical-family-setup',
   templateUrl: './electrical-family-setup.component.html',
   styleUrl: './electrical-family-setup.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,

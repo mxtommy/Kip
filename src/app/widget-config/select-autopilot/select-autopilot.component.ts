@@ -27,7 +27,7 @@
  * - Used in widget configuration to allow users to select and configure autopilot options.
  * - Integrates with Angular Reactive Forms and Material
  */
-import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { PluginConfigClientService } from '../../core/services/plugin-config-client.service';
 import { IV2AutopilotOptionsResponse, IV2AutopilotProvider } from '../../core/interfaces/signalk-autopilot-interfaces';
 import { HttpClient } from '@angular/common/http';
@@ -63,6 +63,7 @@ const FAILSAFE_OPTIONS_RESPONSE: IV2AutopilotOptionsResponse = {
   selector: 'select-autopilot',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatInputModule, TitleCasePipe],
   templateUrl: './select-autopilot.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './select-autopilot.component.scss'
 })
 export class SelectAutopilotComponent implements OnInit {

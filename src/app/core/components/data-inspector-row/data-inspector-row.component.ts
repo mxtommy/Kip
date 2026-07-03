@@ -64,6 +64,7 @@ export class DataInspectorRowComponent implements OnInit {
 @Component({
     selector: 'dialog-unit-selector',
     templateUrl: 'data-inspector-row-unit-modal.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
     MatDialogTitle,
     MatDialogContent,

@@ -27,19 +27,19 @@
             @if (hasClosestApproach(target.closestApproach)) {
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">Bearing</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit(target.closestApproach?.bearing) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit($safeNavigationMigration(target.closestApproach?.bearing)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">Range</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.range) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit($safeNavigationMigration(target.closestApproach?.range)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">CPA</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.distance) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit($safeNavigationMigration(target.closestApproach?.distance)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">TCPA</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime(target.closestApproach?.timeTo) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime($safeNavigationMigration(target.closestApproach?.timeTo)) }}</span>
               </div>
               <div class="ais-dialog-item ais-dialog-item-span">
                 <mat-divider></mat-divider>
@@ -95,11 +95,11 @@
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.latitude), "latitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.longitude), "longitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item" style="grid-column: span 2;">
               <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
@@ -131,19 +131,19 @@
             @if (hasClosestApproach(target.closestApproach)) {
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">Bearing</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit(target.closestApproach?.bearing) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatAngleWithUnit($safeNavigationMigration(target.closestApproach?.bearing)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">Range</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.range) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit($safeNavigationMigration(target.closestApproach?.range)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">CPA</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit(target.closestApproach?.distance) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatNauticalMilesWithUnit($safeNavigationMigration(target.closestApproach?.distance)) }}</span>
               </div>
               <div class="ais-dialog-item">
                 <span class="ais-dialog-key mat-subtitle-2">TCPA</span>
-                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime(target.closestApproach?.timeTo) }}</span>
+                <span class="ais-dialog-value mat-body-2">{{ formatRemainingTime($safeNavigationMigration(target.closestApproach?.timeTo)) }}</span>
               </div>
               <div class="ais-dialog-item ais-dialog-item-span">
                 <mat-divider></mat-divider>
@@ -199,11 +199,11 @@
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.latitude), "latitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.longitude), "longitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item" style="grid-column: span 2;">
               <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
@@ -225,7 +225,7 @@
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Type ID</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatText(target.typeId?.toString()) }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatText($safeNavigationMigration(target.typeId?.toString())) }}</span>
             </div>
             <div class="ais-dialog-item ais-dialog-item-span">
               <mat-divider></mat-divider>
@@ -243,11 +243,11 @@
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.latitude), "latitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.longitude), "longitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item" style="grid-column: span 2;">
               <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>
@@ -277,11 +277,11 @@
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Latitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.latitude, "latitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.latitude), "latitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item">
               <span class="ais-dialog-key mat-subtitle-2">Longitude</span>
-              <span class="ais-dialog-value mat-body-2">{{ formatLatLon(target.position?.longitude, "longitudeMin") }}</span>
+              <span class="ais-dialog-value mat-body-2">{{ formatLatLon($safeNavigationMigration(target.position?.longitude), "longitudeMin") }}</span>
             </div>
             <div class="ais-dialog-item" style="grid-column: span 2;">
               <span class="ais-dialog-value mat-body-4" style="grid-column: span 2;text-align: center;">Received {{ formatSinceTimestamp(target.lastPositionAt) }} ago</span>

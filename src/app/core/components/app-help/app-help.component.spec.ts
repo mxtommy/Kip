@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppHelpComponent } from './app-help.component';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { ApplicationRef, Component } from '@angular/core';
+import { ApplicationRef, Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -31,6 +31,7 @@ class MockActivatedRoute {
 @Component({
     selector: 'markdown',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: '<ng-content></ng-content>'
 })
 class MarkdownStubComponent {
@@ -63,7 +64,7 @@ describe('AppHelpComponent', () => {
             providers: [
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: activatedRoute },
-                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClient(withXhr(), withInterceptorsFromDi()),
                 provideHttpClientTesting()
             ]
         })

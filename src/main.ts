@@ -22,7 +22,7 @@ import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { AppNetworkInitService } from './app/core/services/app-initNetwork.service';
 import { ConnectionStateMachine } from './app/core/services/connection-state-machine.service';
 import { AuthenticationInterceptor } from './app/core/interceptors/authentication-interceptor';
-import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, withInterceptorsFromDi, provideHttpClient, withXhr } from '@angular/common/http';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { AppOverlayContainer } from './app/core/utils/app-overlay-container';
 import { RouterOverlayNavigationService } from './app/core/services/router-overlay-navigation.service';
@@ -84,7 +84,7 @@ bootstrapApplication(AppComponent, {
     TimersService,
     StorageService,
     provideMarkdown(),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
     provideRouter(routes, withHashLocation()),
     // Ensure CDK Overlay container is created inside the application root so
     // overlays share the same stacking context as the app elements (sidenavs, etc.)

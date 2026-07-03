@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, viewChild, signal, Signal, model, computed } from '@angular/core';
+import { Component, inject, OnInit, viewChild, signal, Signal, model, computed, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { AppService } from '../../../services/app-service';
@@ -23,6 +23,7 @@ import { compare } from 'compare-versions';
     selector: 'settings-display',
     templateUrl: './display.component.html',
     styleUrls: ['./display.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         FormsModule,
         MatDividerModule,

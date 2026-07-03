@@ -1,4 +1,4 @@
-import { Component, Type, input } from '@angular/core';
+import { Component, Type, input, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
@@ -13,6 +13,7 @@ import type { IWidget } from '../../interfaces/widgets-interface';
 @Component({
   selector: 'test-lazy-widget',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<span class="test-lazy-widget">loaded</span>'
 })
 class TestLazyWidgetComponent {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { SettingsUnitsComponent } from '../units/units.component';
 import { SettingsNotificationsComponent } from '../notifications/notifications.component';
 import { SettingsSignalkComponent } from '../signalk/signalk.component';
@@ -11,6 +11,7 @@ import { SettingsConfigComponent } from '../configuration/config.component';
     selector: 'tabs',
     templateUrl: './tabs.component.html',
     styleUrls: ['./tabs.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
       MatTabGroup,
       MatTab,

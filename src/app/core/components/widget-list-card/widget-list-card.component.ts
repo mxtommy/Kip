@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [CommonModule, MatIconModule],
   templateUrl: './widget-list-card.component.html',
   styleUrl: './widget-list-card.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: { '(keydown)': 'onKeydown($event)' }
 })
 export class WidgetListCardComponent {

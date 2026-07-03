@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   selector: 'settings',
   imports: [MatIconModule, MatButtonModule, TileLargeIconComponent, MatDividerModule, DashboardsEditorComponent, DashboardsEditorComponent],
   templateUrl: './settings.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './settings.component.scss'
 })
 export class SettingsComponent {

@@ -1,4 +1,4 @@
-import { Component, inject, effect, signal, computed, DestroyRef } from '@angular/core';
+import { Component, inject, effect, signal, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { MarkdownComponent } from 'ngx-markdown';
 import { httpResource } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,6 +44,7 @@ interface RawHelpMenuEntry {
   standalone: true,
   imports: [MarkdownComponent, MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule],
   templateUrl: './app-help.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app-help.component.scss'
 })
 export class AppHelpComponent {

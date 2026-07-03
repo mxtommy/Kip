@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-modal-user-credential',
     templateUrl: './modal-user-credential.component.html',
     styleUrls: ['./modal-user-credential.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, MatDialogTitle, MatDialogContent, MatFormField, MatLabel, MatInput, MatError, MatDivider, MatDialogActions, MatButton, MatDialogClose]
 })
 export class ModalUserCredentialComponent {

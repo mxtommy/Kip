@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GestureDirective } from './gesture.directive';
@@ -6,6 +6,7 @@ import { GestureDirective } from './gesture.directive';
 @Component({
     selector: 'test-gesture-host',
     imports: [GestureDirective],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
     <div
       id="host"

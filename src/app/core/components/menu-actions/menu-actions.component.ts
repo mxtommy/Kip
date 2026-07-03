@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, input, OnDestroy, computed } from '@angular/core';
+import { AfterViewInit, Component, inject, input, OnDestroy, computed, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DashboardService } from '../../services/dashboard.service';
@@ -25,6 +25,7 @@ interface MenuActionItem extends LargeIconTile {
   standalone: true,
   imports: [MatIconModule, MatButtonModule, TileLargeIconComponent],
   templateUrl: './menu-actions.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu-actions.component.scss'
 })
 

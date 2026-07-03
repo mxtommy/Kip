@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatRippleModule } from '@angular/material/core';
@@ -13,6 +13,7 @@ export interface LargeIconTile {
   selector: 'tile-large-icon',
   imports: [MatIconModule, MatCardModule, MatRippleModule],
   templateUrl: './tile-large-icon.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './tile-large-icon.component.scss'
 })
 export class TileLargeIconComponent {

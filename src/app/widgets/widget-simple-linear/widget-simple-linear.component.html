@@ -1,7 +1,7 @@
 @let cfg = runtime.options();
   <svg-simple-linear-gauge class="simpleLinearGaugeContainer"
     [displayName]="cfg.displayName"
-    [displayNameColor]="theme()?.contrastDim"
+    [displayNameColor]="$safeNavigationMigration(theme()?.contrastDim)"
     [unitLabel]="unitsLabel()"
     [dataValue]="dataValue()"
     [dataValueLabel]="dataLabelValue()"
