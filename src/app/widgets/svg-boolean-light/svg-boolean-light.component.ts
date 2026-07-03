@@ -1,5 +1,4 @@
 import { Component, DoCheck, input, output } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
@@ -8,7 +7,6 @@ import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.comp
 
 @Component({
   selector: 'app-svg-boolean-light',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './svg-boolean-light.component.svg'
 })
 export class SvgBooleanLightComponent implements DoCheck {

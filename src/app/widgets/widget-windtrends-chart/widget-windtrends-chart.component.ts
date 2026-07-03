@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -36,7 +36,6 @@ interface IDataSetRow {
   selector: 'widget-windtrends-chart',
   templateUrl: './widget-windtrends-chart.component.html',
   styleUrl: './widget-windtrends-chart.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetWindTrendsChartComponent implements OnDestroy {
   // Host2 functional inputs

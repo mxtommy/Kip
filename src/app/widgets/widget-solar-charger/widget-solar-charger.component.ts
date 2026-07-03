@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { select, type Selection } from 'd3-selection';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getColors, resolveZoneAwareColor } from '../../core/utils/themeColors.utils';
@@ -25,7 +25,6 @@ interface SolarRenderSnapshot {
   templateUrl: './widget-solar-charger.component.html',
   styleUrl: './widget-solar-charger.component.scss',
   imports: [WidgetTitleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetSolarChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly SOLAR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-solar-charger');

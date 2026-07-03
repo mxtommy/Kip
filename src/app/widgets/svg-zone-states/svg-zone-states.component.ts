@@ -1,5 +1,4 @@
 import { Component, computed, effect, input, output, signal, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
@@ -9,7 +8,6 @@ import { getColors } from "../../core/utils/themeColors.utils";
 
 @Component({
   selector: 'app-svg-zone-states',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './svg-zone-states.component.svg',
   styleUrls: ['./svg-zone-states.component.scss']
 })

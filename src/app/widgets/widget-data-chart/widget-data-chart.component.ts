@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
@@ -36,7 +36,6 @@ interface IDataSetRow { x: number, y: number }
   selector: 'widget-data-chart',
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetDataChartComponent implements OnDestroy {
   // Host2 functional inputs supplied by host container

@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked, computed } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
@@ -16,7 +16,6 @@ import { KipResizeObserverDirective } from '../../core/directives/kip-resize-obs
   imports: [ KipResizeObserverDirective, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
   styleUrl: './widget-slider.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetSliderComponent implements OnInit, OnDestroy {
   public id = input.required<string>();

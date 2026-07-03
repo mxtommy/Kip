@@ -1,5 +1,4 @@
 import { Component, effect, signal, inject, input, untracked, computed } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { SvgSimpleLinearGaugeComponent } from '../svg-simple-linear-gauge/svg-simple-linear-gauge.component';
 import type { IDataHighlight, IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
@@ -13,7 +12,6 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
   selector: 'widget-simple-linear',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-simple-linear.component.html',
   styleUrls: ['./widget-simple-linear.component.scss'],
   imports: [ SvgSimpleLinearGaugeComponent ]

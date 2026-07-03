@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, Signal } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { NotificationsService } from '../../services/notifications.service';
 import { Methods, States } from '../../interfaces/signalk-interfaces';
 import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
@@ -18,7 +18,6 @@ import { INotification } from '../../services/notifications.service';
   templateUrl: './menu-notifications.component.html',
   styleUrls: ['./menu-notifications.component.scss'],
   imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule, SlicePipe],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MenuNotificationsComponent {
   private readonly _notificationsService = inject(NotificationsService);

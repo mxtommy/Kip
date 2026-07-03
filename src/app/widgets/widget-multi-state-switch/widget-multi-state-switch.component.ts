@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardService } from './../../core/services/dashboard.service';
 import { ITheme } from '../../core/services/app-service';
@@ -36,7 +36,6 @@ interface UiOption {
   selector: 'widget-multi-state-switch',
   templateUrl: './widget-multi-state-switch.component.html',
   styleUrl: './widget-multi-state-switch.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [WidgetTitleComponent]
 })
 export class WidgetMultiStateSwitchComponent {

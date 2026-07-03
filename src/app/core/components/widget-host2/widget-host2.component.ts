@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed, Signal } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, inputBinding, computed, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -40,7 +40,6 @@ type TOverlayGate = 'history' | 'options' | 'sheet';
     { directive: WidgetMetadataDirective },
     { directive: WidgetRuntimeDirective }
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 /**

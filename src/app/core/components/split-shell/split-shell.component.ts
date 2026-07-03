@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
+import { Component, computed, effect, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SettingsService } from '../../services/settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -11,7 +11,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'split-shell',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, WidgetFreeboardskComponent, DashboardComponent, MatButtonModule, MatIconModule],
   templateUrl: './split-shell.component.html',
   styleUrl: './split-shell.component.scss'

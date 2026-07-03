@@ -1,5 +1,4 @@
 import { Component, AfterViewInit, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, computed } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -9,7 +8,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-position',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-position.component.html',
   styleUrls: ['./widget-position.component.scss'],
   imports: []

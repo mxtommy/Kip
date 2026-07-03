@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, input, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 
 import { UnitsService } from '../../services/units.service';
@@ -16,7 +16,6 @@ import type { IConversionPathList } from '../../services/units.service';
     templateUrl: './data-inspector-row.component.html',
     styleUrls: ['./data-inspector-row.component.css'],
     encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MatCell, MatButtonModule]
 })
 export class DataInspectorRowComponent implements OnInit {

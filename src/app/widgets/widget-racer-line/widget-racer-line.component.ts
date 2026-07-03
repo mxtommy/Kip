@@ -11,7 +11,6 @@ import {
   untracked,
   viewChild
 } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
 import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
 import type {IPathArray, IWidgetPath, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
@@ -27,7 +26,6 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 
 @Component({
   selector: 'widget-racer-line',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-racer-line.component.html',
   styleUrls: ['./widget-racer-line.component.scss'],
   imports: [MatButtonModule, MatIconModule, MatTooltipModule]

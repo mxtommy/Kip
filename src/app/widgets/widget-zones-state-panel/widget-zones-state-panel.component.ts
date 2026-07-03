@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -19,7 +19,6 @@ export interface IDimensions {
   selector: 'widget-zones-state-panel',
   templateUrl: './widget-zones-state-panel.component.html',
   styleUrls: ['./widget-zones-state-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, SvgZoneStatesComponent, WidgetTitleComponent]
 })
 export class WidgetZonesStatePanelComponent {

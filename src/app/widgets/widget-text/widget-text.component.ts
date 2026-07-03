@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, untracked, computed } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
@@ -11,7 +10,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-text',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-text.component.html',
   styleUrls: ['./widget-text.component.scss'],
   imports: []

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { FormGroupDirective, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
@@ -9,7 +9,6 @@ import { VesselIconKey, VESSEL_ICON_KEYS } from '../../core/utils/ais-icon-regis
   imports: [ReactiveFormsModule, MatCheckboxModule, MatDividerModule],
   templateUrl: './ais-target-options.component.html',
   styleUrl: './ais-target-options.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AisTargetOptionsComponent implements OnInit {
   readonly formGroupName = input.required<string>();

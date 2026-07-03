@@ -1,4 +1,4 @@
-import { Component, inject, Input, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { WidgetTitleComponent } from '../widget-title/widget-title.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { GestureDirective } from "../../directives/gesture.directive";
@@ -18,7 +18,6 @@ import { BaseWidget, NgCompInputs } from 'gridstack/dist/angular';
   hostDirectives: [
     { directive: WidgetRuntimeDirective }
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroupWidgetComponent extends BaseWidget implements OnInit {
   // Gridstack supplies a single widgetProperties object - does NOT support input signal yet

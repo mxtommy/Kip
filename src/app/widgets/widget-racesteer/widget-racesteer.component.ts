@@ -1,5 +1,4 @@
 import { Component, effect, signal, computed, inject, input, untracked, OnDestroy } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { SvgRacesteerComponent } from '../svg-racesteer/svg-racesteer.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -11,7 +10,6 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
 
 @Component({
   selector: 'widget-racesteer',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-racesteer.component.html',
   styleUrls: ['./widget-racesteer.component.scss'],
   imports: [SvgRacesteerComponent]
@@ -315,8 +313,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg || !cfg.twsEnable) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const paths = cfg.paths as Record<string, any> | undefined;
+      const paths = cfg.paths as IPathArray | undefined;
       const path = paths?.['trueWindAngle']?.path;
       if (!path) return;
       untracked(() => this.streams.observe('trueWindAngle', pkt => {

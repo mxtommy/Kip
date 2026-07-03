@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewEncapsulation, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewEncapsulation, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { select, type Selection } from 'd3-selection';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ITheme } from '../../core/services/app-service';
@@ -120,7 +120,6 @@ interface RadarFilterState {
   templateUrl: './widget-ais-radar.component.html',
   styleUrls: ['./widget-ais-radar.component.scss'],
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private static readonly TARGET_ICON_SIZE_PX = 16;

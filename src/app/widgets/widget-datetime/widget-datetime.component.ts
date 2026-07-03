@@ -1,5 +1,4 @@
 import { Component, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, computed, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { formatDate } from '@angular/common';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { CanvasService } from '../../core/services/canvas.service';
@@ -10,7 +9,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-datetime',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-datetime.component.html',
   styleUrls: ['./widget-datetime.component.scss'],
   imports: []

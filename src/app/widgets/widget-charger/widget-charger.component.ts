@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { select, type Selection } from 'd3-selection';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
@@ -29,7 +29,6 @@ function escapeRegex(value: string): string {
   templateUrl: './widget-charger.component.html',
   styleUrl: './widget-charger.component.scss',
   imports: [WidgetTitleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetChargerComponent implements AfterViewInit, OnDestroy {
   private static readonly CHARGER_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-charger');

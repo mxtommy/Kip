@@ -1,4 +1,4 @@
-import { Component, OnDestroy, AfterViewInit, inject, effect, viewChild, ElementRef, input, untracked, NgZone, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, OnDestroy, AfterViewInit, inject, effect, viewChild, ElementRef, input, untracked, NgZone, computed } from '@angular/core';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -46,7 +46,6 @@ function getSteelFrameDesign(ss: any) {
   selector: 'widget-horizon',
   templateUrl: './widget-horizon.component.html',
   styleUrls: ['./widget-horizon.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
   // Functional inputs (Host2)

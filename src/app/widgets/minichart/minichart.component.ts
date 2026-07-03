@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
 import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
@@ -34,7 +34,6 @@ type AverageDatasetType = 'sma' | 'ema' | 'dema' | 'avg';
   imports: [],
   templateUrl: './minichart.component.html',
   styleUrls: ['./minichart.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MinichartComponent implements OnDestroy {
   protected readonly theme = input.required<ITheme>();

@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, viewChild, signal, untracked, input } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -7,7 +6,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-label',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-label.component.html',
   styleUrl: './widget-label.component.scss'
 })

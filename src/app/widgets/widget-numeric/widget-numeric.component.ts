@@ -1,5 +1,4 @@
 import { Component, OnDestroy, AfterViewInit, ElementRef, inject, signal, viewChild, effect, untracked, input, OnInit, computed } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { MinichartComponent } from '../minichart/minichart.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -13,7 +12,6 @@ import { States } from '../../core/interfaces/signalk-interfaces';
 
 @Component({
   selector: 'widget-numeric',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-numeric.component.html',
   styleUrls: ['./widget-numeric.component.scss'],
   imports: [MinichartComponent]

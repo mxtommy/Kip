@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { select, type Selection } from 'd3-selection';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
@@ -36,7 +36,6 @@ interface InverterRenderSnapshot {
   templateUrl: './widget-inverter.component.html',
   styleUrl: './widget-inverter.component.scss',
   imports: [WidgetTitleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetInverterComponent implements AfterViewInit, OnDestroy {
   private static readonly INVERTER_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-inverter');

@@ -6,7 +6,6 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
 import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -44,7 +43,6 @@ type CompassGaugeOptions = RadialGaugeOptions & Record<string, unknown>;
 
 @Component({
   selector: 'widget-gauge-ng-compass',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, GaugesModule],
   templateUrl: './widget-gauge-ng-compass.component.html',
   styleUrl: './widget-gauge-ng-compass.component.scss'

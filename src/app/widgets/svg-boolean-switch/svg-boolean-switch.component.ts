@@ -1,4 +1,4 @@
-import { Component, DoCheck, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DoCheck, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
@@ -7,7 +7,6 @@ import { createSwipeGuard } from '../../core/utils/pointer-swipe-guard.util';
 @Component({
     selector: 'app-svg-boolean-switch',
   templateUrl: './svg-boolean-switch.component.svg',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SvgBooleanSwitchComponent implements DoCheck {
   // eslint-disable-next-line @angular-eslint/no-input-rename

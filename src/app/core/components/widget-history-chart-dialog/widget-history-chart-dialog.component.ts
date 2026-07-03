@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, model, signal, untracked, viewChild, Signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, model, signal, untracked, viewChild, Signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -48,7 +48,6 @@ export interface IWidgetHistoryChartDialogData {
   imports: [ MatDialogModule, MatButtonToggleModule, MatButtonModule, MatIconModule, FormsModule],
   templateUrl: './widget-history-chart-dialog.component.html',
   styleUrl: './widget-history-chart-dialog.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetHistoryChartDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly historyApiClient = inject(HistoryApiClientService);

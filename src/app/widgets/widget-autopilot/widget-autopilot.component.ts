@@ -22,13 +22,13 @@
  *
  * @requires HttpClient, Angular Signals
  */
-import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
 import { MatBadgeModule } from '@angular/material/badge';
-import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { IWidget, IWidgetSvcConfig, IPathArray } from '../../core/interfaces/widgets-interface';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
@@ -116,7 +116,6 @@ const V2_MODE_LABELS: Record<string, string> = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetEmbeddedComponent],
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {
@@ -739,9 +738,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     // For V1, we use this single legacy path
     const cfg = this.runtime.options();
     if (cfg?.paths) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const paths = cfg.paths as Record<string, any>;
-      if (paths['autopilotMode']) {
+      const paths = cfg.paths as IPathArray | undefined;
+      if (paths?.['autopilotMode']) {
         paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
       }
     }
