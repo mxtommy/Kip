@@ -258,8 +258,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       return;
     }
     // Batch load for a single DOM update eliminates one-frame empty dashboard flicker.
+    const dashboardConfiguration = cloneDeep(dashboard.configuration ?? []);
     _gridstack.grid.batchUpdate();
-    _gridstack.grid.load(dashboard.configuration ?? []);
+    _gridstack.grid.load(dashboardConfiguration);
     _gridstack.grid.batchUpdate(false);
     this.syncGridEmptyState();
   }

@@ -17,6 +17,7 @@ interface DashboardComponentPrivateApi {
     saveDashboard: () => void;
     nextDashboard: () => void;
     previousDashboard: () => void;
+    loadDashboard: (dashboardId: number) => void;
     _gridstack: () => {
         grid: {
             save: (saveContent: boolean, saveGridOpt: boolean) => unknown;
@@ -138,6 +139,17 @@ describe('DashboardComponent', () => {
 
         expect(privateApi._gridstack().grid.save).toHaveBeenCalledWith(false, false);
         expect(mockDashboardService.updateConfiguration).toHaveBeenCalledWith(0, []);
+    });
+
+    it('should clone dashboard configuration before loading gridstack', () => {
+        const configuration = [{ id: 'widget-1', x: 0, y: 0, w: 2, h: 2 }];
+        mockDashboardService.dashboards.set([{ id: 'd-0', configuration }]);
+
+        privateApi.loadDashboard(0);
+
+        const loadedConfiguration = vi.mocked(gridMock.grid.load).mock.lastCall?.[0];
+        expect(loadedConfiguration).toEqual(configuration);
+        expect(loadedConfiguration).not.toBe(configuration);
     });
 
     it('should navigate to next dashboard when static', () => {
