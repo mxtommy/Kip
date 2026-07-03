@@ -777,8 +777,8 @@ export const DemoConnectionConfig: IConnectionConfig = {
   "proxyEnabled": false,
   "signalKSubscribeAll": false,
   "useDeviceToken": false,
-  "loginName": null,
-  "loginPassword": null,
+  "loginName": "",
+  "loginPassword": "",
   "useSharedConfig": false,
   "sharedConfigName": "default"
 }

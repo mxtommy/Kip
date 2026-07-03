@@ -6,7 +6,8 @@ import { WidgetStreamsDirective } from '../../directives/widget-streams.directiv
 import { WidgetMetadataDirective } from '../../directives/widget-metadata.directive';
 import { WidgetRuntimeDirective } from '../../directives/widget-runtime.directive';
 import { WidgetService } from '../../services/widget.service';
-import { AppService } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
+import { Signal } from '@angular/core';
 
 // Base shape expected from view components
 interface WidgetViewComponentBase { defaultConfig?: IWidgetSvcConfig }
@@ -84,9 +85,9 @@ export class WidgetEmbeddedComponent implements OnInit, OnDestroy {
   private readonly _runtime = inject(WidgetRuntimeDirective, { optional: true });
   private readonly _widgetService = inject(WidgetService);
   private readonly _app = inject(AppService);
-  protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true });
-  private childRef: ComponentRef<WidgetViewComponentBase>;
-  private compType: Type<WidgetViewComponentBase>
+  protected theme = toSignal(this._app.cssThemeColorRoles$, { requireSync: true }) as Signal<ITheme>;
+  private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
+  private compType: Type<WidgetViewComponentBase> | undefined;
   private _destroyed = false;
 
   constructor() {
@@ -110,8 +111,9 @@ export class WidgetEmbeddedComponent implements OnInit, OnDestroy {
   }
 
   private async loadAndCreateChild(type: string): Promise<void> {
-    this.compType = await this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
-    if (this._destroyed) return; // host torn down while the chunk loaded
+    const resolvedCompType = await this._widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    if (this._destroyed || !resolvedCompType) return; // host torn down while the chunk loaded
+    this.compType = resolvedCompType;
 
     // Initialize runtime
     this._runtime?.initialize?.(undefined, this.widgetProperties.config);

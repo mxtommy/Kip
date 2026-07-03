@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, viewChild, signal, untracked, input } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { CanvasService } from '../../core/services/canvas.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -7,7 +6,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-label',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-label.component.html',
   styleUrl: './widget-label.component.scss'
 })
@@ -15,7 +13,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Runtime directive
   protected readonly runtime = inject(WidgetRuntimeDirective);
@@ -51,7 +49,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
       const theme = this.theme();
       if (!cfg || !theme) return;
       untracked(() => {
-        this.fgColor.set(this.mapColor(cfg.color, theme));
+        this.fgColor.set(this.mapColor(cfg.color ?? 'contrast', theme));
         this.bgColor.set(this.mapColor(cfg.bgColor ?? 'grey', theme));
         this.draw();
       });
@@ -66,7 +64,7 @@ export class WidgetLabelComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private mapColor(colorName: string, theme: ITheme): string {
+  private mapColor(colorName: string | undefined, theme: ITheme): string {
     switch (colorName) {
       case 'contrast': return theme.contrast;
       case 'blue': return theme.blue;

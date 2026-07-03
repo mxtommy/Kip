@@ -1,4 +1,4 @@
-import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { SettingsService } from '../../core/services/settings.service';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -11,12 +11,11 @@ import { RouterLink } from '@angular/router';
     templateUrl: './widget-tutorial.component.html',
     styleUrls: ['./widget-tutorial.component.scss'],
     imports: [ MatButton, RouterLink ],
-    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetTutorialComponent  {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     filterSelfPaths: true

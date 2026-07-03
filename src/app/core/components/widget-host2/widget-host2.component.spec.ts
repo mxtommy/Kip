@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { WidgetHost2Component } from './widget-host2.component';
@@ -15,6 +15,17 @@ import { SettingsService } from '../../services/settings.service';
 import { UnitsService } from '../../services/units.service';
 import { KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
 import { IWidget } from '../../interfaces/widgets-interface';
+
+@Component({
+    selector: 'test-host2-child',
+    template: ''
+})
+class TestHost2ChildComponent {
+    public id = input<string>();
+    public type = input<string>();
+    public theme = input<unknown>();
+    public static readonly DEFAULT_CONFIG = {};
+}
 
 function createPointerUpTouchEvent(init: PointerEventInit): PointerEvent {
     if (typeof PointerEvent !== 'undefined') {
@@ -58,6 +69,9 @@ describe('WidgetHost2Component', () => {
     let bottomSheetMock: {
         open: Mock;
     };
+    let widgetServiceMock: {
+        getComponentType: Mock;
+    };
     let testWidget: IWidget;
 
     beforeEach(async () => {
@@ -85,6 +99,9 @@ describe('WidgetHost2Component', () => {
         kipSeriesMock = {
             getSeriesDefinitions: vi.fn().mockResolvedValue([])
         };
+        widgetServiceMock = {
+            getComponentType: vi.fn().mockReturnValue(undefined)
+        };
 
         await TestBed.configureTestingModule({
             imports: [WidgetHost2Component],
@@ -111,9 +128,7 @@ describe('WidgetHost2Component', () => {
                 },
                 {
                     provide: WidgetService,
-                    useValue: {
-                        getComponentType: vi.fn().mockReturnValue(undefined)
-                    }
+                    useValue: widgetServiceMock
                 },
                 {
                     provide: AppService,
@@ -349,6 +364,7 @@ describe('WidgetHost2Component', () => {
     it('auto-opens options once on init for brand-new widgets', async () => {
         dashboard.isDashboardStatic.set(false);
         testWidget.autoOpenOptionsOnCreate = true;
+        widgetServiceMock.getComponentType.mockResolvedValue(TestHost2ChildComponent);
 
         fixture.detectChanges();
         await vi.waitFor(() => {
@@ -370,6 +386,7 @@ describe('WidgetHost2Component', () => {
     it('keeps widget config unchanged when auto-open options dialog is canceled', async () => {
         dashboard.isDashboardStatic.set(false);
         testWidget.autoOpenOptionsOnCreate = true;
+        widgetServiceMock.getComponentType.mockResolvedValue(TestHost2ChildComponent);
         const configSnapshot = JSON.parse(JSON.stringify(testWidget.config));
 
         dialogServiceMock.openWidgetOptions.mockReturnValue({ afterClosed: () => of(null) });

@@ -17,7 +17,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
     selector: 'settings-notifications',
     templateUrl: './notifications.component.html',
     styleUrls: ['./notifications.component.scss'],
-
     imports: [
         FormsModule,
         MatCheckbox,
@@ -39,21 +38,21 @@ export class SettingsNotificationsComponent {
   public notificationDisabledExpandPanel = false;
 
   constructor() {
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait), { initialValue: { matches: false, breakpoints: {} } });
     this.notificationConfig = cloneDeep(this.settings.getNotificationConfig());
   }
 
   public saveAllSettings():void {
     this.settings.setNotificationConfig(cloneDeep(this.notificationConfig));
-    this.notificationsForm().form.markAsPristine();
+    this.notificationsForm()?.form?.markAsPristine();
     this.toast.show("Configuration saved", 1000, true, 'message');
   }
 
   public togglePanel(e: MatSlideToggleChange): void {
     if(e.checked) {
       this.notificationDisabledExpandPanel = false;
-      this.statePanel().close();
-      this.soundPanel().close();
+      this.statePanel()?.close();
+      this.soundPanel()?.close();
     }
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
+import { Component, computed, effect, inject, signal, ElementRef, viewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SettingsService } from '../../services/settings.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -11,7 +11,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'split-shell',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, WidgetFreeboardskComponent, DashboardComponent, MatButtonModule, MatIconModule],
   templateUrl: './split-shell.component.html',
   styleUrl: './split-shell.component.scss'
@@ -26,8 +25,16 @@ export class SplitShellComponent implements OnDestroy {
   public panelRatio = signal<number>(this._settings.getSplitShellWidth());
   private originalPanelRatio: number | null = null; // captured when entering edit (non-static) mode
   public panelWidth = signal<number>(0); // derived pixels
-  public panelCollapsed = computed(() => !!this._dashboard.dashboards()[this._dashboard.activeDashboard()]?.collapseSplitShell);
-  protected fskShellSwipeDisabled = toSignal(this._settings.getSplitShellSwipeDisabledAsO());
+  public panelCollapsed = computed(() => {
+    const dashboards = this._dashboard.dashboards();
+    const active = this._dashboard.activeDashboard();
+    if (active == null || active < 0) {
+      return false;
+    }
+    return !!dashboards[active]?.collapseSplitShell;
+  });
+  private readonly _fskShellSwipeDisabled = toSignal(this._settings.getSplitShellSwipeDisabledAsO(), { initialValue: false });
+  protected readonly fskShellSwipeDisabled = computed(() => this._fskShellSwipeDisabled() ?? false);
 
   // Only show toggle on handset (portrait) per requirement
   private handset$ = this.breakpointObserver.observe(Breakpoints.HandsetPortrait);

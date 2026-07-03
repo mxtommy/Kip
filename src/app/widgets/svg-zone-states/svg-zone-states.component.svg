@@ -21,7 +21,7 @@
         xmlns="http://www.w3.org/1999/xhtml"
         [style.color]="ctrlLabelColor()"
         style="width:180px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;line-height:1.1;text-align:center;overflow:hidden;word-break:break-word;white-space:normal;">
-        {{ data().ctrlLabel }}
+        {{ data()?.ctrlLabel }}
       </div>
     </foreignObject>
 
@@ -50,7 +50,7 @@
           xmlns="http://www.w3.org/1999/xhtml"
           [style.color]="messageTxtColor()"
           style="width:166px;height:41px;display:flex;align-items:center;justify-content:center; font-weight:regular;font-size:12px;line-height:1.1;text-align:center;overflow:hidden;word-break:break-word;white-space:normal;padding:2px">
-          {{ data().notificationMessage }}
+          {{ data()?.notificationMessage }}
         </div>
       </foreignObject>
   </g>

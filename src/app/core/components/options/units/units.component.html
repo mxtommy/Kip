@@ -9,7 +9,7 @@
           [placeholder] = "control.key"
           [formControlName] = "control.key"
           required>
-          @for(unit of groupUnits[control.key]; track unit.measure) {
+          @for(unit of (groupUnits[control.key] ?? []); track unit.measure) {
             <mat-option [value]="unit.measure" >{{ unit.description }}</mat-option>
           }
         </mat-select>

@@ -1,5 +1,5 @@
-import { Component, effect, signal, input, inject, untracked, computed, ChangeDetectionStrategy } from '@angular/core';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { Component, effect, signal, input, inject, untracked, computed } from '@angular/core';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { GaugeSteelComponent } from '../gauge-steel/gauge-steel.component';
 import { ISkZone } from '../../core/interfaces/signalk-interfaces';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -11,14 +11,13 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-gauge-steel',
   templateUrl: './widget-gauge-steel.component.html',
   styleUrls: ['./widget-gauge-steel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [GaugeSteelComponent],
 })
 export class WidgetSteelGaugeComponent {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Inject host directives
   protected readonly runtime = inject(WidgetRuntimeDirective);
@@ -62,14 +61,19 @@ export class WidgetSteelGaugeComponent {
   // Reactive state
   protected readonly dataValue = signal<number>(0);
   protected readonly zones = signal<ISkZone[]>([]);
-  protected readonly displayName = computed(() => this.runtime.options()?.displayName || 'Gauge Label');
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetSteelGaugeComponent.DEFAULT_CONFIG);
+  private readonly gaugePathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.gaugePath;
+  });
+  protected readonly displayName = computed(() => this.normalizedConfig().displayName || 'Gauge Label');
+  protected readonly gaugeUnits = computed(() => this.gaugePathConfig()?.convertUnitTo ?? '');
 
   constructor() {
     // Data path effect
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
-      const pathCfg = cfg.paths?.['gaugePath'];
+      const cfg = this.normalizedConfig();
+      const pathCfg = this.gaugePathConfig();
       if (!pathCfg?.path) return;
       untracked(() => this.streams.observe('gaugePath', pkt => {
         const raw = pkt?.data?.value as number | undefined;
@@ -86,13 +90,12 @@ export class WidgetSteelGaugeComponent {
 
     // Zones observation effect
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
+      const cfg = this.normalizedConfig();
       if (cfg.ignoreZones) {
         this.zones.set([]);
         return;
       }
-      const pathCfg = cfg.paths?.['gaugePath'];
+      const pathCfg = this.gaugePathConfig();
       if (!pathCfg?.path) {
         this.zones.set([]);
         return;

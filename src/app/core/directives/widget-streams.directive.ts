@@ -1,7 +1,7 @@
 import { Directive, DestroyRef, inject, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
-import { IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import { IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 import { Observable, Observer, Subject, delayWhen, filter, map, retryWhen, sampleTime, tap, throwError, timeout, timer, takeUntil, take, merge, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -56,13 +56,13 @@ export class WidgetStreamsDirective {
     };
   }
 
-  private computePathSignature(pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string; suppressBootstrapNull?: boolean }): string {
+  private computePathSignature(pathCfg: { path: string; pathType?: string | null; sampleTime?: number; convertUnitTo?: string; source?: string | null; suppressBootstrapNull?: boolean }): string {
     const normalizedPath = this.normalizePath(pathCfg.path) ?? '';
     const src = (pathCfg.source?.trim() || 'default');
-    return [normalizedPath, pathCfg.pathType, pathCfg.sampleTime, pathCfg.convertUnitTo, src, pathCfg.suppressBootstrapNull ? '1' : '0'].join('|');
+    return [normalizedPath, pathCfg.pathType ?? '', pathCfg.sampleTime, pathCfg.convertUnitTo, src, pathCfg.suppressBootstrapNull ? '1' : '0'].join('|');
   }
 
-  private computeBaseKey(path: string, source?: string): string {
+  private computeBaseKey(path: string, source?: string | null): string {
     const normalizedPath = this.normalizePath(path) ?? '';
     const src = (source?.trim() || 'default');
     return `${normalizedPath}|${src}`;
@@ -79,12 +79,39 @@ export class WidgetStreamsDirective {
     return `timeout:${cfg.enableTimeout ? '1' : '0'}:${cfg.dataTimeout ?? ''}`;
   }
 
+  private getPathKeys(paths: IWidgetSvcConfig['paths']): string[] {
+    if (!paths) return [];
+    if (Array.isArray(paths)) {
+      return paths.map((pathCfg, index) => {
+        const id = typeof pathCfg.pathID === 'string' ? pathCfg.pathID.trim() : '';
+        return id || String(index);
+      });
+    }
+    return Object.keys(paths);
+  }
+
+  private getPathConfig(paths: IWidgetSvcConfig['paths'], pathKey: string): IWidgetPath | undefined {
+    if (!paths) return undefined;
+    if (Array.isArray(paths)) {
+      const byId = paths.find((pathCfg) => typeof pathCfg.pathID === 'string' && pathCfg.pathID.trim() === pathKey);
+      if (byId) {
+        return byId;
+      }
+      const index = Number(pathKey);
+      if (Number.isInteger(index) && index >= 0) {
+        return paths[index];
+      }
+      return undefined;
+    }
+    return paths[pathKey];
+  }
+
   private ensureStreamsMap(): void {
     if (!this.streams) this.streams = new Map<string, Observable<IPathUpdate>>();
   }
 
   /** Create (or reuse) base observable, assemble pipeline, and subscribe with diff-aware replacement. */
-  private buildAndSubscribe(pathName: string, next: (value: IPathUpdate) => void, cfg: IWidgetSvcConfig, pathCfg: { path: string; pathType: string; sampleTime?: number; convertUnitTo?: string; source?: string; suppressBootstrapNull?: boolean }): void {
+  private buildAndSubscribe(pathName: string, next: (value: IPathUpdate) => void, cfg: IWidgetSvcConfig, pathCfg: { path: string; pathType?: string | null; sampleTime?: number; convertUnitTo?: string; source?: string | null; suppressBootstrapNull?: boolean }): void {
     const normalizedPath = this.normalizePath(pathCfg.path);
     if (!normalizedPath) {
       const existing = this.subscriptions.get(pathName);
@@ -111,7 +138,7 @@ export class WidgetStreamsDirective {
     const timeoutErrorMsg = `[Widget] ${cfg.displayName} - ${dataTimeout / 1000} second data update timeout reached for `;
     const retryErrorMsg = `[Widget] ${cfg.displayName} - Retrying in ${retryDelay / 1000} seconds`;
 
-    const pathType = pathCfg.pathType;
+    const pathType = pathCfg.pathType ?? '';
     const convert = pathCfg.convertUnitTo;
     const suppressBootstrapNull = !!pathCfg.suppressBootstrapNull;
     let sample = Number(pathCfg.sampleTime);
@@ -242,7 +269,7 @@ export class WidgetStreamsDirective {
     this.rootSignature = newRootSig;
 
     // If no previous config just exit (widget view will call observe and build on demand)
-    if (!prevCfg || !prevCfg.paths || !Object.keys(prevCfg.paths).length) return;
+    if (!prevCfg || !prevCfg.paths || !this.getPathKeys(prevCfg.paths).length) return;
     if (!cfg || !cfg.paths) {
       // All removed
       this.subscriptions.forEach(s => s.sub.unsubscribe());
@@ -252,8 +279,8 @@ export class WidgetStreamsDirective {
       this.registrations = [];
       return;
     }
-    const oldPaths = Object.keys(prevCfg.paths);
-    const newPaths = Object.keys(cfg.paths);
+    const oldPaths = this.getPathKeys(prevCfg.paths);
+    const newPaths = this.getPathKeys(cfg.paths);
     const removed = oldPaths.filter(p => !newPaths.includes(p));
     for (const r of removed) {
       const existing = this.subscriptions.get(r);
@@ -265,7 +292,7 @@ export class WidgetStreamsDirective {
     }
     const rootChanged = prevRootSig !== newRootSig;
     for (const p of newPaths) {
-      const pathCfg = cfg.paths[p];
+      const pathCfg = this.getPathConfig(cfg.paths, p);
       const normalizedPath = this.normalizePath(pathCfg?.path);
       if (!normalizedPath) {
         const existing = this.subscriptions.get(p);
@@ -346,7 +373,8 @@ export class WidgetStreamsDirective {
     this.registrations.push({ pathName, next });
 
     const cfg = this._streamsConfig();
-    if (!cfg || !cfg.paths?.[pathName]) {
+    const pathCfg = this.getPathConfig(cfg?.paths, pathName);
+    if (!cfg || !pathCfg) {
       // Config missing - cleanup existing subscription but keep registration for later
       const existing = this.subscriptions.get(pathName);
       if (existing) {
@@ -358,7 +386,6 @@ export class WidgetStreamsDirective {
       return;
     }
 
-    const pathCfg = cfg.paths[pathName];
     const normalizedPath = this.normalizePath(pathCfg?.path);
     if (!normalizedPath) {
       // Invalid path - cleanup subscription and remove registration

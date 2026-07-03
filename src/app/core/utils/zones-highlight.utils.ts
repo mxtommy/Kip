@@ -40,8 +40,8 @@ export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: st
   // Sort zones based on lower value
   const sortedZones = [...zones].sort((a, b) => (a.lower ?? -Infinity) - (b.lower ?? -Infinity));
   for (const zone of sortedZones) {
-    let lower: number = null;
-    let upper: number = null;
+    let lower = lowerScale;
+    let upper = upperScale;
 
     let color: string;
     switch (zone.state) {
@@ -70,13 +70,13 @@ export function getHighlights(zones: ISkZone[], theme: ITheme, convertUnitTo: st
     if (zone.lower == null) {
       lower = lowerScale;
     } else {
-      lower = unitsService.convertToUnit(convertUnitTo, zone.lower);
+      lower = unitsService.convertToUnit(convertUnitTo, zone.lower) ?? lowerScale;
     }
 
     if (zone.upper == null) {
       upper = upperScale;
     } else {
-      upper = unitsService.convertToUnit(convertUnitTo, zone.upper);
+      upper = unitsService.convertToUnit(convertUnitTo, zone.upper) ?? upperScale;
     }
 
     // If unit conversion fails, skip this zone.

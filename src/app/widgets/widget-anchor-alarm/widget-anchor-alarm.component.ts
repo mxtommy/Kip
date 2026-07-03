@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -9,7 +9,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-anchor-alarm',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-anchor-alarm.component.html',
   styleUrls: ['./widget-anchor-alarm.component.scss']
 })
@@ -17,7 +16,7 @@ export class WidgetAnchorAlarmComponent implements AfterViewInit, OnDestroy {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Runtime directive (config merge done by container)
   protected readonly runtime = inject(WidgetRuntimeDirective);

@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardService } from './../../core/services/dashboard.service';
 import { ITheme } from '../../core/services/app-service';
 import { ToastService } from '../../core/services/toast.service';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { ISkPossibleValue } from '../../core/interfaces/signalk-interfaces';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -36,13 +36,12 @@ interface UiOption {
   selector: 'widget-multi-state-switch',
   templateUrl: './widget-multi-state-switch.component.html',
   styleUrl: './widget-multi-state-switch.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [WidgetTitleComponent]
 })
 export class WidgetMultiStateSwitchComponent {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     displayName: 'Switch Label',
@@ -60,7 +59,7 @@ export class WidgetMultiStateSwitchComponent {
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         showConvertUnitTo: false,
-        convertUnitTo: null,
+        convertUnitTo: undefined,
         sampleTime: 500
       }
     },
@@ -79,18 +78,18 @@ export class WidgetMultiStateSwitchComponent {
 
   private readonly skRequest = toSignal(this.signalkRequestsService.subscribeRequest(), { initialValue: null });
 
-  protected readonly cfg = computed(() => this.runtime.options());
-  protected readonly displayName = computed(() => this.cfg()?.displayName);
-  protected readonly showLabel = computed(() => this.cfg()?.showLabel);
+  protected readonly cfg = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetMultiStateSwitchComponent.DEFAULT_CONFIG);
+  protected readonly displayName = computed(() => this.cfg().displayName ?? 'Switch Label');
+  protected readonly showLabel = computed(() => this.cfg().showLabel ?? true);
   private readonly controlPath = computed(() => this.getControlPath(this.cfg()));
 
-  protected readonly accentColor = signal<string | undefined>(undefined);
-  protected readonly accentDim = signal<string | undefined>(undefined);
-  protected readonly accentDimmer = signal<string | undefined>(undefined);
+  protected readonly accentColor = signal<string>('');
+  protected readonly accentDim = signal<string>('');
+  protected readonly accentDimmer = signal<string>('');
 
-  protected readonly textColor = signal<string | undefined>(undefined);
-  protected readonly textDim = signal<string | undefined>(undefined);
-  protected readonly textDimmer = signal<string | undefined>(undefined);
+  protected readonly textColor = signal<string>('');
+  protected readonly textDim = signal<string>('');
+  protected readonly textDimmer = signal<string>('');
 
   protected readonly currentValue = signal<unknown>(null);
 
@@ -158,7 +157,7 @@ export class WidgetMultiStateSwitchComponent {
   constructor() {
     effect(() => {
       const theme = this.theme();
-      const wdColor = this.cfg().color;
+      const wdColor = this.cfg().color ?? 'contrast';
       if (!theme || !wdColor) return;
       untracked(() => {
         //getColors(cfg.color ?? 'contrast', theme);

@@ -22,13 +22,13 @@
  *
  * @requires HttpClient, Angular Signals
  */
-import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, untracked, DestroyRef, computed, linkedSignal, input, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
 import { MatBadgeModule } from '@angular/material/badge';
-import { IWidget, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import { IWidget, IWidgetSvcConfig, IPathArray } from '../../core/interfaces/widgets-interface';
 import { SvgAutopilotComponent } from '../svg-autopilot/svg-autopilot.component';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { SignalkRequestsService, skRequest } from '../../core/services/signalk-requests.service';
@@ -116,14 +116,13 @@ const V2_MODE_LABELS: Record<string, string> = {
     selector: 'widget-autopilot',
     templateUrl: './widget-autopilot.component.html',
     styleUrls: ['./widget-autopilot.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [SvgAutopilotComponent, MatButtonModule, TitleCasePipe, MatIconModule, MatBadgeModule, WidgetEmbeddedComponent],
 })
 export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // Host2 functional inputs (provided by widget-host2 wrapper)
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -315,6 +314,18 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
 
     return v1Heading ?? null;
   });
+  protected readonly autopilotConfig = computed<NonNullable<IWidgetSvcConfig['autopilot']>>(
+    () => this.runtime.options()?.autopilot ?? (WidgetAutopilotComponent.DEFAULT_CONFIG.autopilot as NonNullable<IWidgetSvcConfig['autopilot']>)
+  );
+  protected readonly autopilotApiVersion = computed(() => this.autopilotConfig().apiVersion);
+  protected readonly targetPilotHeadingTrue = computed<boolean>(() => this.autopilotConfig().courseDirectionTrue ?? false);
+  protected readonly headingDirectionTrue = computed<boolean>(() => this.autopilotConfig().headingDirectionTrue ?? false);
+  protected readonly displayApMode = computed<TApMode>(() => this.apMode() ?? 'off-line');
+  protected readonly displayAutopilotTarget = computed<number>(() => this.autopilotTarget() ?? 0);
+  protected readonly displayCrossTrackError = computed<number>(() => this.crossTrackError() ?? 0);
+  protected readonly displayHeading = computed<number>(() => this.heading() ?? 0);
+  protected readonly displayWindAngleApparent = computed<number>(() => this.windAngleApparent() ?? 0);
+  protected readonly displayRudder = computed<number>(() => this.rudder() ?? 0);
 
   // Request management
   private currentRequests = new Set<Observable<unknown>>();
@@ -322,7 +333,7 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
   // Keypad buttons & layout
   protected apGrid = computed(() => this.apMode() ? 'grid' : 'none');
   protected readonly standbyButtonLabel = computed(() => {
-    const apiVersion = this.runtime.options().autopilot.apiVersion;
+    const apiVersion = this.autopilotConfig().apiVersion;
 
     if (apiVersion === "v2" && this.apEngaged() === false) {
       return "Engage";
@@ -610,9 +621,10 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
       state: ''
     };
 
-    const apiVersion = this.runtime.options()?.autopilot?.apiVersion;
-    const instanceId = this.runtime.options()?.autopilot?.instanceId;
-    const pluginId = this.runtime.options()?.autopilot?.pluginId;
+    const autopilot = this.autopilotConfig();
+    const apiVersion = autopilot.apiVersion;
+    const instanceId = autopilot.instanceId;
+    const pluginId = autopilot.pluginId;
 
     // Helper for persistent error state
     const setPersistentError = (message: string) => {
@@ -726,9 +738,8 @@ export class WidgetAutopilotComponent implements OnInit, OnDestroy {
     // For V1, we use this single legacy path
     const cfg = this.runtime.options();
     if (cfg?.paths) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const paths = cfg.paths as Record<string, any>;
-      if (paths['autopilotMode']) {
+      const paths = cfg.paths as IPathArray | undefined;
+      if (paths?.['autopilotMode']) {
         paths['autopilotMode'].path = API_PATHS.V1_MODE_PATH;
       }
     }

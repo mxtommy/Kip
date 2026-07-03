@@ -14,12 +14,22 @@ import { UUID } from '../utils/uuid.util';
 import { TMethod, ISignalKDataValueUpdate, ISkMetadata, ISignalKNotification, States, Methods } from '../interfaces/signalk-interfaces';
 import { IMeta } from '../interfaces/app-interfaces';
 
-const alarmTrack = {
+const alarmTrack: Record<number, string> = {
   1000: 'notification', // filler / silent (stop)
   1001: 'alert',
   1002: 'warn',
   1003: 'alarm',
   1004: 'emergency',
+};
+
+type SoundMuteKey = keyof INotificationConfig['sound'];
+const stateToMuteKey: Record<States, SoundMuteKey> = {
+  [States.Normal]: 'muteNormal',
+  [States.Nominal]: 'muteNominal',
+  [States.Alert]: 'muteAlert',
+  [States.Warn]: 'muteWarn',
+  [States.Alarm]: 'muteAlarm',
+  [States.Emergency]: 'muteEmergency',
 };
 
 export interface INotification {
@@ -63,12 +73,12 @@ export class NotificationsService implements OnDestroy {
     emergency: { sound: 4, visual: 2 },
   };
 
-  private _notificationSettingsSubscription: Subscription = null;
-  private _notificationDataStreamSubscription: Subscription = null;
-  private _notificationMetaStreamSubscription: Subscription = null;
-  private _resetServiceSubscription: Subscription = null;
+  private _notificationSettingsSubscription: Subscription | null = null;
+  private _notificationDataStreamSubscription: Subscription | null = null;
+  private _notificationMetaStreamSubscription: Subscription | null = null;
+  private _resetServiceSubscription: Subscription | null = null;
 
-  private _notificationConfig: INotificationConfig;
+  private _notificationConfig: INotificationConfig = DefaultNotificationConfig;
   private _notificationConfig$ = new BehaviorSubject<INotificationConfig>(DefaultNotificationConfig);
 
   private _notifications: INotification[] = [];
@@ -78,10 +88,10 @@ export class NotificationsService implements OnDestroy {
   // --- HTMLAudioElement (audio) state ----------------------------------------
   // Cache one player per track id and reuse across switches.
   private _players = new Map<number, HTMLAudioElement>();
-  private _activeAlarmSoundtrack: number = null;
+  private _activeAlarmSoundtrack: number | null = null;
   private _isMuted = false;
 
-  private _lastEmittedValue: IAlarmInfo = null;
+  private _lastEmittedValue: IAlarmInfo | null = null;
 
   constructor() {
     this._notificationSettingsSubscription = this.settings.getNotificationServiceConfigAsO()
@@ -250,6 +260,10 @@ export class NotificationsService implements OnDestroy {
   }
 
   private getNotificationSeverity(message: INotification): { aSev: number; vSev: number } {
+    if (!message.value) {
+      return { aSev: 0, vSev: 0 };
+    }
+
     const state = message.value['state'];
     const severity = NotificationsService.ALARM_SEVERITIES[state];
     if (!severity) {
@@ -260,8 +274,9 @@ export class NotificationsService implements OnDestroy {
     let aSev = severity.sound;
     let vSev = severity.visual;
 
+    const muteKey = stateToMuteKey[state as States];
     if (!message.value['method'].includes(Methods.Sound) ||
-        this._notificationConfig.sound[`mute${state.charAt(0).toUpperCase() + state.slice(1)}`] ||
+        (muteKey ? this._notificationConfig.sound[muteKey] : false) ||
         this._isMuted) {
       aSev = 0;
     }
@@ -370,9 +385,10 @@ export class NotificationsService implements OnDestroy {
     this._activeAlarmSoundtrack = trackId;
     player.muted = this._isMuted;
     player.currentTime = 0;
-    player.play().catch(err => {
+    player.play().catch((err: unknown) => {
       // Autoplay blocked by browser policy - requires user interaction first
-      console.debug('Alarm audio playback blocked:', err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.debug('Alarm audio playback blocked:', errorMessage);
       if (!this.audioBlockedNotificationShown) {
         this.audioBlockedNotificationShown = true;
         // Show persistent toast requiring user interaction to dismiss

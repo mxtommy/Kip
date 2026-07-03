@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { select, type Selection } from 'd3-selection';
 import { arc } from 'd3-shape';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -54,7 +54,6 @@ interface BmsRenderSnapshot {
   selector: 'widget-bms',
   templateUrl: './widget-bms.component.html',
   styleUrl: './widget-bms.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatIconModule, WidgetTitleComponent]
 })
 export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
@@ -63,7 +62,7 @@ export class WidgetBmsComponent implements AfterViewInit, OnDestroy {
 
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
   public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {

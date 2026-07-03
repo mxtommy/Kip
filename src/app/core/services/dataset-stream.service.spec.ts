@@ -147,7 +147,7 @@ describe('DatasetStreamService', () => {
         await (service as any).start(config.uuid);
 
         expect(historyServiceMock.getValues).toHaveBeenCalled();
-        const request = vi.mocked(historyServiceMock.getValues).mock.lastCall[0] as {
+        const request = (vi.mocked(historyServiceMock.getValues).mock.lastCall?.[0] ?? {}) as {
             resolution: number;
         };
         // Last 5 Minutes resolves to sampleTime=2500ms, therefore history resolution=3s

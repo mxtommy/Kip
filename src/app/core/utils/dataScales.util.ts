@@ -54,7 +54,7 @@ export function adjustLinearScaleAndMajorTicks(minValue: number, maxValue: numbe
 function calcNiceNumber(range: number, round: boolean): number {
   const exponent = Math.floor(Math.log10(range));   // exponent of range
   const fraction = range / Math.pow(10, exponent);  // fractional part of range
-  let niceFraction: number = null;                  // nice, rounded fraction
+  let niceFraction = 1;                  // nice, rounded fraction
 
   if (round) {
       if (1.5 > fraction) {

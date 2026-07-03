@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Component, DoCheck, OnDestroy, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DoCheck, OnDestroy, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
@@ -8,18 +8,17 @@ import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.comp
   selector: 'app-svg-boolean-button',
   templateUrl: './svg-boolean-button.component.svg',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   // eslint-disable-next-line @angular-eslint/no-input-rename
-  readonly data = input<IDynamicControl>(null, { alias: "controlData" });
-  readonly theme = input<ITheme>(null);
+  readonly data = input<IDynamicControl | null>(null, { alias: "controlData" });
+  readonly theme = input<ITheme | null>(null);
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
   private toggleOff = "0 35 180 35";
   private toggleOn = "0 0 180 35";
-  private oldTheme: ITheme = null;
+  private oldTheme: ITheme | null = null;
 
   private holdTimeoutId: ReturnType<typeof setTimeout> | null = null; // delay before starting momentary emit
   private emitIntervalId: ReturnType<typeof setInterval> | null = null; // repeating emit while pressed
@@ -29,14 +28,17 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   private pointerStartY = 0;
 
   public viewBox: string = this.toggleOff;
-  public labelColorEnabled = null;
-  public labelColorDisabled = null;
-  public valueColor = null;
+  public labelColorEnabled: string | null = null;
+  public labelColorDisabled: string | null = null;
+  public valueColor: string | null = null;
   private ctrlColor = '';
 
   ngDoCheck(): void {
     this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;
     const data = this.data();
+    if (!data) {
+      return;
+    }
     if (data.color != this.ctrlColor) {
       this.ctrlColor = data.color;
       this.getColors(data.color);
@@ -44,12 +46,17 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
 
     const theme = this.theme();
     if (this.oldTheme != theme) {
-      this.oldTheme = theme
-      this.getColors(this.data().color);
+      this.oldTheme = theme;
+      this.getColors(data.color);
     }
   }
 
   public handleClickDown(event: PointerEvent): void {
+    const currentData = this.data();
+    if (!currentData) {
+      return;
+    }
+
     this.isSwiping = false;
     this.pointerStartX = event.clientX;
     this.pointerStartY = event.clientY;
@@ -61,7 +68,7 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
         // Momentary mode
         this.pressed = true;
 
-        const state: IDynamicControl = cloneDeep(this.data());
+        const state: IDynamicControl = cloneDeep(currentData);
         state.value = this.pressed;
 
         // Start emitting the state every 100ms
@@ -110,51 +117,56 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   }
 
   private getColors(color: string): void {
+    const theme = this.theme();
+    if (!theme) {
+      return;
+    }
+
     switch (color) {
       case "contrast":
         this.labelColorEnabled = 'black';
-        this.labelColorDisabled = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
+        this.labelColorDisabled = theme.contrastDim;
+        this.valueColor = theme.contrast;
         break;
       case "blue":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().blueDim;
-        this.valueColor = this.theme().blue;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.blueDim;
+        this.valueColor = theme.blue;
         break;
       case "green":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().greenDim;
-        this.valueColor = this.theme().green;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.greenDim;
+        this.valueColor = theme.green;
         break;
       case "pink":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().pinkDim;
-        this.valueColor = this.theme().pink;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.pinkDim;
+        this.valueColor = theme.pink;
         break;
       case "orange":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().orangeDim;
-        this.valueColor = this.theme().orange;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.orangeDim;
+        this.valueColor = theme.orange;
         break;
       case "purple":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().purpleDim;
-        this.valueColor = this.theme().purple;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.purpleDim;
+        this.valueColor = theme.purple;
         break;
       case "grey":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().greyDim;
-        this.valueColor = this.theme().grey;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.greyDim;
+        this.valueColor = theme.grey;
         break;
       case "yellow":
-        this.labelColorEnabled = this.theme().contrast;
-        this.labelColorDisabled = this.theme().yellowDim;
-        this.valueColor = this.theme().yellow;
+        this.labelColorEnabled = theme.contrast;
+        this.labelColorDisabled = theme.yellowDim;
+        this.valueColor = theme.yellow;
         break;
       default:
         this.labelColorEnabled = 'black';
-        this.labelColorDisabled = this.theme().contrastDim;
-        this.valueColor = this.theme().contrast;
+        this.labelColorDisabled = theme.contrastDim;
+        this.valueColor = theme.contrast;
         break;
     }
   }

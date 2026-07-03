@@ -42,7 +42,7 @@ const isRfc3339StringDate = (date: Date | string): boolean => {
 };
 
 // Translate units from sk metadata to appropriate type category
-const typeFromUnits = (units: string): string => {
+const typeFromUnits = (units: string): string | undefined => {
   if (!units) {
     return undefined;
   }
@@ -264,8 +264,8 @@ export class DataService implements OnDestroy {
       return matchingPaths.pathDataUpdate$;
     }
 
-    let currentValue: string = null;
-    let currentTimestamp: string = null;
+    let currentValue: unknown = null;
+    let currentTimestamp: string | null | undefined = null;
     let currentDateTimestamp: Date | null = null;
     let state: TState = States.Normal;
     let pathUpdate: IPathUpdate = {
@@ -275,7 +275,7 @@ export class DataService implements OnDestroy {
       },
       state: state
     };
-    let metaUpdate: ISkMetadata = null;
+    let metaUpdate: ISkMetadata | null = null;
 
     const dataPath = this._skData.get(path);
 
@@ -415,7 +415,7 @@ export class DataService implements OnDestroy {
     // Find the path item in _skData or create a new one if it doesn't exist
     let pathItem = this._skData.get(updatePath);
     if (!pathItem) {
-      let pathType: string = dataPath.value === null ? undefined : typeof (dataPath.value);
+      let pathType: string | undefined = dataPath.value === null ? undefined : typeof (dataPath.value);
       if (pathType === "string" && isRfc3339StringDate(dataPath.value)) {
         pathType = "Date";
       }
@@ -504,7 +504,7 @@ export class DataService implements OnDestroy {
           state: pendingState ?? States.Normal,
           defaultSource: undefined,
           sources: {},
-          meta: meta.meta ? cloneDeep(meta.meta) : null,
+          meta: meta.meta ? cloneDeep(meta.meta) : undefined,
         };
         this._skData.set(metaPath, pathObject);
         if (pendingState !== undefined) {
@@ -521,6 +521,10 @@ export class DataService implements OnDestroy {
         // IMPORTANT: Avoid in-place mutation of the meta object. Consumers using Angular
         // signals depend on reference changes to trigger recomputation.
         pathObject.meta = merge({}, pathObject.meta, meta.meta);
+      }
+
+      if (!pathObject) {
+        return;
       }
 
       const entries = this._pathRegisterByPath.get(metaPath);
@@ -742,19 +746,17 @@ export class DataService implements OnDestroy {
   public timeoutPathObservable(path: string, pathType: string): void {
     const pathRegister = this._pathRegister.find(item => item.path == path);
     if (pathRegister) {
-      let timeoutValue: IPathUpdate;
+      const timeoutValue: IPathUpdate = {
+        data: {
+          value: null,
+          timestamp: null
+        },
+        state: States.Normal
+      };
 
       if (['string', 'Date', 'number', 'multiple'].includes(pathType)) {
-        timeoutValue = {
-          data: {
-            value: null,
-            timestamp: null
-          },
-          state: States.Normal
-        };
+        pathRegister.pathDataUpdate$.next(timeoutValue);
       }
-
-      pathRegister.pathDataUpdate$.next(timeoutValue);
     }
   }
 

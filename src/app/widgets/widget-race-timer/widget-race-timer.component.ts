@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, signal, untracked, input, AfterViewInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { TimersService } from '../../core/services/timers.service';
@@ -14,14 +14,13 @@ import { ITheme } from '../../core/services/app-service';
   selector: 'widget-racetimer',
   templateUrl: './widget-race-timer.component.html',
   styleUrls: ['./widget-race-timer.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatButtonModule, MatIconModule]
 })
 export class WidgetRaceTimerComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 runtime (for config + timers not path-driven)
   protected readonly runtime = inject(WidgetRuntimeDirective);

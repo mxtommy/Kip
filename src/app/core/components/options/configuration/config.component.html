@@ -8,7 +8,7 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="saveConfigForm"
-        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope, saveConfigName)"
+        (ngSubmit)="saveConfig(this.getActiveConfig(), saveConfigScope ?? '', saveConfigName ?? 'No Name')"
         #saveConfigForm="ngForm"
         >
         <h3>Backup</h3>
@@ -67,7 +67,7 @@
     <div class="flex-item-rounded-card rounded-card-color">
       <form
         name="deleteConfigForm"
-        (ngSubmit)="deleteConfigByKey(deleteConfigKey)"
+        (ngSubmit)="deleteConfigByKey(deleteConfigKey ?? '')"
         #deleteConfigForm="ngForm"
         >
         <h3>Delete</h3>

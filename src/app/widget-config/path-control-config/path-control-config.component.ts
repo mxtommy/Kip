@@ -80,10 +80,15 @@ export class PathControlConfigComponent implements OnInit, OnChanges {
     const pathFormGroup = this.pathFormGroup();
     if (pathFormGroup.controls['path'].disabled) return;
     // Path Unit filter setup
-    this.pathSkUnitsFiltersList = this._units.skBaseUnits.sort((a, b) => {
-      return a.properties.quantity > b.properties.quantity ? 1 : -1;
+    const sortedUnits = [...this._units.skBaseUnits].sort((left, right) => {
+      const quantityCompare = left.properties.quantity.localeCompare(right.properties.quantity);
+      if (quantityCompare !== 0) {
+        return quantityCompare;
+      }
+
+      return left.properties.display.localeCompare(right.properties.display);
     });
-    this.pathSkUnitsFiltersList.unshift(this.unitlessUnit);
+    this.pathSkUnitsFiltersList = [this.unitlessUnit, ...sortedUnits];
 
     if (pathFormGroup.value.pathSkUnitsFilter) {
       this.pathSkUnitsFilterControl.setValue(this.pathSkUnitsFiltersList.find(item => item.unit === this.pathFormGroup().value.pathSkUnitsFilter) ?? null, { onlySelf: true });

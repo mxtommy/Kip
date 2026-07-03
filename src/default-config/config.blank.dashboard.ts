@@ -2,7 +2,7 @@ import { Dashboard } from '../app/core/services/dashboard.service';
 
 export const DefaultDashboard: Dashboard[] = [
     {
-      id: null,
+  id: '',
       name: 'Dashboard 1',
       icon: 'dashboard-dashboard',
       configuration: [

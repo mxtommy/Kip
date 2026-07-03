@@ -5,7 +5,7 @@ import { BehaviorSubject, lastValueFrom, Subscription } from 'rxjs';
 import { distinctUntilChanged } from "rxjs/operators";
 
 export interface IAuthorizationToken {
-  expiry: number;
+  expiry: number | null;
   token: string;
   isDeviceAccessToken: boolean;
 }
@@ -26,22 +26,23 @@ export class AuthenticationService implements OnDestroy {
 
   private _IsLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._IsLoggedIn$.asObservable();
-  private _authToken$ = new BehaviorSubject<IAuthorizationToken>(null);
+  private _authToken$ = new BehaviorSubject<IAuthorizationToken | null>(null);
   public authToken$ = this._authToken$.asObservable();
-  private connectionEndpointSubscription: Subscription = null;
-  private authTokenSubscription: Subscription = null;
+  private connectionEndpointSubscription: Subscription | null = null;
+  private authTokenSubscription: Subscription | null = null;
   private renewalTimerId: ReturnType<typeof setTimeout> | null = null; // Node & browser compatible handle
   private isRenewingToken = false; // Prevent overlapping renewals
 
   // Network connection
-  private loginUrl = null;
-  private logoutUrl = null;
-  private validateTokenUrl = null;
+  private loginUrl: string | null = null;
+  private logoutUrl: string | null = null;
+  private validateTokenUrl: string | null = null;
 
   constructor()
   {
     // load local storage token
-    const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+    const tokenRaw = localStorage.getItem('authorization_token');
+    const token: IAuthorizationToken | null = tokenRaw ? JSON.parse(tokenRaw) : null;
     if (token) {
       if (token.isDeviceAccessToken) {
         if (token.expiry === null) {
@@ -79,7 +80,7 @@ export class AuthenticationService implements OnDestroy {
 
     // Endpoint connection observer
     this.connectionEndpointSubscription =  this.conn.serverServiceEndpoint$.subscribe((endpoint: IEndpointStatus) => {
-      if (endpoint.operation === 2) {
+      if (endpoint.operation === 2 && endpoint.httpServiceUrl) {
         const httpApiUrl: string = endpoint.httpServiceUrl.substring(0, endpoint.httpServiceUrl.length - 4); // this removes 'api/' from the end
         this.loginUrl = httpApiUrl + loginEndpoint;
         this.logoutUrl = httpApiUrl + logoutEndpoint;
@@ -89,6 +90,10 @@ export class AuthenticationService implements OnDestroy {
   }
 
   private scheduleRenewalChunk(token: IAuthorizationToken) {
+    if (token.expiry == null) {
+      return;
+    }
+
     const now = Date.now();
     const bufferedRenewMs = (token.expiry - tokenRenewalBuffer) * 1000; // ms timestamp when we WANT to renew
     const remaining = bufferedRenewMs - now;
@@ -126,7 +131,8 @@ export class AuthenticationService implements OnDestroy {
 
     this.isRenewingToken = true;
 
-    const token: IAuthorizationToken = JSON.parse(localStorage.getItem('authorization_token'));
+    const tokenRaw = localStorage.getItem('authorization_token');
+    const token: IAuthorizationToken | null = tokenRaw ? JSON.parse(tokenRaw) : null;
     if (!token) {
       console.warn('[Authentication Service] No token found in local storage. Cannot renew.');
       this.isRenewingToken = false;
@@ -137,6 +143,11 @@ export class AuthenticationService implements OnDestroy {
       console.warn('[Authentication Service] Device Access Token expired. Manual renewal required.');
       this.isRenewingToken = false;
     } else {
+      if (token.expiry == null) {
+        console.warn('[Authentication Service] Session token has no expiry. Skipping renewal scheduling.');
+        this.isRenewingToken = false;
+        return;
+      }
       const nowSec = Math.floor(Date.now() / 1000);
       const remainingSec = token.expiry - nowSec;
       if (this.isTokenExpired(token.expiry)) {
@@ -149,7 +160,13 @@ export class AuthenticationService implements OnDestroy {
         this.scheduleRenewalChunk(token);
       } else {
         console.log(`[Authentication Service] User session Token within renewal window (${remainingSec}s remaining). Renewing token...`);
-        const connectionConfig = JSON.parse(localStorage.getItem('connectionConfig'));
+        const connectionConfigRaw = localStorage.getItem('connectionConfig');
+        const connectionConfig = connectionConfigRaw ? JSON.parse(connectionConfigRaw) : null;
+        if (!connectionConfig?.loginName || !connectionConfig?.loginPassword) {
+          this.isRenewingToken = false;
+          console.warn('[Authentication Service] Missing connection credentials for token renewal.');
+          return;
+        }
         this.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword })
           .then(() => {
             console.log('[Authentication Service] Token successfully renewed.');
@@ -182,7 +199,7 @@ export class AuthenticationService implements OnDestroy {
    * invalid credentials, or server errors. Consumers should handle errors using try/catch or .catch().
    */
   public async login({ usr, pwd, newUrl }: { usr: string; pwd: string; newUrl?: string; }): Promise<void> {
-    let serverLoginFullUrl: string;
+    let serverLoginFullUrl: string | null = '';
     if (newUrl) {
       serverLoginFullUrl = newUrl.replace(/\/+$/, '') + defaultApiPath + loginEndpoint;
     } else {
@@ -201,7 +218,11 @@ export class AuthenticationService implements OnDestroy {
     await lastValueFrom(this.http.post<{ token: string }>(serverLoginFullUrl, {"username" : usr, "password" : pwd}, {observe: 'response'}))
       .then((loginResponse: HttpResponse<{ token: string }>) => {
           console.log("[Authentication Service] User " + usr + " login successful");
-          this.setSession(loginResponse.body.token);
+        if (loginResponse.body?.token) {
+            this.setSession(loginResponse.body.token);
+          } else {
+            throw new Error('Login response did not include a token');
+          }
       })
       .catch(error => {
         this.deleteToken();
@@ -229,7 +250,7 @@ export class AuthenticationService implements OnDestroy {
     if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
       const authorizationToken: IAuthorizationToken = {
-        'token' : null, 'expiry' : null, 'isDeviceAccessToken' : false
+        token: '', expiry: null, isDeviceAccessToken: false
       };
 
       if(expiry === undefined) {
@@ -243,7 +264,8 @@ export class AuthenticationService implements OnDestroy {
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;
-        console.log("[Authentication Service] Session Authorization Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        const tokenExpiry = authorizationToken.expiry;
+        console.log("[Authentication Service] Session Authorization Token received. Token Expiration: " + (tokenExpiry != null ? this.getTokenExpirationDate(tokenExpiry) : 'NEVER'));
         this._IsLoggedIn$.next(true);
         this._authToken$.next(authorizationToken);
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));
@@ -289,6 +311,9 @@ export class AuthenticationService implements OnDestroy {
 
   // not yet implemented by Signal K but part of the specs. Using contained token string expiration value instead for now
   private renewToken() {
+    if (!this.validateTokenUrl) {
+      throw new Error('Validation token URL is not set');
+    }
     return this.http.post<HttpResponse<Response>>(this.validateTokenUrl, null, {observe: 'response'});
   }
 
@@ -300,6 +325,13 @@ export class AuthenticationService implements OnDestroy {
    * @memberof AuthenticationService
    */
   public async logout(isLoginAction: boolean): Promise<void> {
+    if (!this.logoutUrl) {
+      this._IsLoggedIn$.next(false);
+      if (!isLoginAction) {
+        this._authToken$.next(null);
+      }
+      return;
+    }
     localStorage.removeItem('authorization_token');
     await lastValueFrom(this.http.put(this.logoutUrl, null))
       .then(() => {
@@ -329,7 +361,7 @@ export class AuthenticationService implements OnDestroy {
     if (token) {
       const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
       const authorizationToken: IAuthorizationToken = {
-        'token' : null, 'expiry' : null, 'isDeviceAccessToken' : true
+        token: '', expiry: null, isDeviceAccessToken: true
       };
 
       if(expiry === undefined) {
@@ -344,7 +376,8 @@ export class AuthenticationService implements OnDestroy {
       } else {
         authorizationToken.token = token;
         authorizationToken.expiry = expiry;
-        console.log("[Authentication Service] Device Access Token received. Token Expiration: " + this.getTokenExpirationDate(authorizationToken.expiry));
+        const tokenExpiry = authorizationToken.expiry;
+        console.log("[Authentication Service] Device Access Token received. Token Expiration: " + (tokenExpiry != null ? this.getTokenExpirationDate(tokenExpiry) : 'NEVER'));
         this._IsLoggedIn$.next(false);
         this._authToken$.next(authorizationToken);
         localStorage.setItem('authorization_token', JSON.stringify(authorizationToken));

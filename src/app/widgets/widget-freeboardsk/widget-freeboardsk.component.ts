@@ -2,7 +2,6 @@ import { DashboardService } from './../../core/services/dashboard.service';
 import { AuthenticationService, IAuthorizationToken } from './../../core/services/authentication.service';
 import { SettingsService } from './../../core/services/settings.service';
 import { AfterViewInit, Component, ElementRef, effect, inject, input, OnDestroy, viewChild, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { SafePipe } from "../../core/pipes/safe.pipe";
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -22,7 +21,6 @@ interface FreeboardCommandMessage {
 
 @Component({
   selector: 'widget-freeboardsk',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-freeboardsk.component.html',
   styleUrl: './widget-freeboardsk.component.scss',
   imports: [SafePipe]
@@ -47,7 +45,8 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
 
   private viewReady = false;
   private iframeLoaded = false;
-  public widgetUrl: string = null;
+  public widgetUrl: string | null = null;
+  protected widgetUrlSafe = '';
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {};
 
   constructor() {
@@ -58,9 +57,13 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
 
       untracked(() => {
         const loginToken = token?.token;
-        this.widgetUrl = loginToken
-          ? `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/?token=${loginToken}`
-          : `${this.appSettings.signalkUrl.url}/@signalk/freeboard-sk/`;
+        const signalkBaseUrl = this.appSettings.signalkUrl?.url;
+        this.widgetUrl = signalkBaseUrl
+          ? (loginToken
+            ? `${signalkBaseUrl}/@signalk/freeboard-sk/?token=${loginToken}`
+            : `${signalkBaseUrl}/@signalk/freeboard-sk/`)
+          : null;
+        this.widgetUrlSafe = this.widgetUrl ?? '';
       });
     });
 
@@ -161,7 +164,7 @@ export class WidgetFreeboardskComponent implements AfterViewInit, OnDestroy {
   };
 
   private getExpectedIframeOrigin(): string | null {
-    const candidate = this.widgetUrl || this.appSettings.signalkUrl.url;
+    const candidate = this.widgetUrl || this.appSettings.signalkUrl?.url;
     if (!candidate) return null;
     try {
       return new URL(candidate).origin;

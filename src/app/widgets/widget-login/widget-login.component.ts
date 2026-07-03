@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthenticationService } from "../../core/services/authentication.service";
 import { SettingsService } from '../../core/services/settings.service';
@@ -11,7 +10,6 @@ import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-widget-login',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-login.component.html',
   styleUrls: ['./widget-login.component.css']
 })
@@ -21,7 +19,7 @@ export class WidgetLoginComponent implements OnInit {
   private toast = inject(ToastService);
   private settings = inject(SettingsService);
 
-  public connectionConfig: IConnectionConfig = null;
+  public connectionConfig: IConnectionConfig | null = null;
 
   ngOnInit(): void {
     this.connectionConfig = this.settings.getConnectionConfig();
@@ -29,11 +27,16 @@ export class WidgetLoginComponent implements OnInit {
   }
 
   public openUserCredentialModal(errorMsg: string) {
+    const connectionConfig = this.connectionConfig;
+    if (!connectionConfig) {
+      return;
+    }
+
     const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       disableClose: true,
       data: {
-        user: this.connectionConfig.loginName,
-        password: this.connectionConfig.loginPassword,
+        user: connectionConfig.loginName,
+        password: connectionConfig.loginPassword,
         error: errorMsg
       }
     });
@@ -42,16 +45,21 @@ export class WidgetLoginComponent implements OnInit {
       if (data === undefined || !data) {
         return; //clicked Cancel or navigated await from page using url bar.
       } else {
-        this.connectionConfig.loginName = data.user;
-        this.connectionConfig.loginPassword = data.password;
-        this.settings.setConnectionConfig(this.connectionConfig);
+        connectionConfig.loginName = data.user;
+        connectionConfig.loginPassword = data.password;
+        this.settings.setConnectionConfig(connectionConfig);
         this.serverLogin();
       }
     });
   }
 
   private serverLogin(newUrl?: string) {
-    this.auth.login({ usr: this.connectionConfig.loginName, pwd: this.connectionConfig.loginPassword, newUrl })
+    const connectionConfig = this.connectionConfig;
+    if (!connectionConfig) {
+      return;
+    }
+
+    this.auth.login({ usr: connectionConfig.loginName, pwd: connectionConfig.loginPassword, newUrl })
     .then(() => {
       this.settings.reloadApp();
     })

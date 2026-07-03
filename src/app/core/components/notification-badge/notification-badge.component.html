@@ -6,12 +6,12 @@
     role="button"
     aria-label="Open notifications"
     [attr.aria-haspopup]="true"
-    [class.warn]="notificationsInfo().isWarn"
-    [class.alarm-emergency-blink]="notificationsInfo().isAlarmEmergency"
+    [class.warn]="notificationsInfo()?.isWarn"
+    [class.alarm-emergency-blink]="notificationsInfo()?.isAlarmEmergency"
     #badgeButton>
     <mat-icon aria-hidden="false" class="icon-alert-color"
-      [matBadgeHidden]="!notificationsInfo().alarmCount"
-      [matBadge]="notificationsInfo().alarmCount"
+      [matBadgeHidden]="!(notificationsInfo()?.alarmCount ?? 0)"
+      [matBadge]="notificationsInfo()?.alarmCount ?? 0"
       matBadgeSize="large"
       matBadgePosition="after"
       matBadgeOverlap="true">notifications

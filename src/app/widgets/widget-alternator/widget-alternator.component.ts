@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { select, type Selection } from 'd3-selection';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
@@ -36,7 +36,6 @@ interface AlternatorRenderSnapshot {
   templateUrl: './widget-alternator.component.html',
   styleUrl: './widget-alternator.component.scss',
   imports: [WidgetTitleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
   private static readonly ALTERNATOR_DESCRIPTOR = getElectricalWidgetFamilyDescriptor('widget-alternator');
@@ -64,7 +63,7 @@ export class WidgetAlternatorComponent implements AfterViewInit, OnDestroy {
 
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
   public renderMode = input<ElectricalCardDisplayMode | null>(null);
 
   private readonly runtime = inject(WidgetRuntimeDirective);

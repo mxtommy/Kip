@@ -9,7 +9,7 @@ import { AuthenticationService } from './authentication.service';
 import { UUID } from '../utils/uuid.util'
 import { ToastService } from './toast.service';
 
-const deltaStatusCodes = {
+const deltaStatusCodes: Record<number, string> = {
   200: "The request was successfully.",
   202: "Request accepted and pending completion.",
   400: "Something is wrong with the client's request.",
@@ -22,8 +22,8 @@ const deltaStatusCodes = {
 }
 export interface skRequest {
   requestId: string;
-  state: string;
-  statusCode: number;
+  state: string | null;
+  statusCode: number | null;
   statusCodeDescription?: string;
   widgetUUID?: string;
   message?: string;
@@ -72,7 +72,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting Device Authorization Token");
     this.signalKDeltaService.publishDelta(deviceTokenRequest);
 
-    const request = {
+    const request: skRequest = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -111,7 +111,7 @@ export class SignalkRequestsService {
     console.log("[Request Service] Requesting User Login");
     this.signalKDeltaService.publishDelta(loginRequest);
 
-    const request = {
+    const request: skRequest = {
       requestId: requestId,
       state: null,
       statusCode: null
@@ -179,9 +179,17 @@ export class SignalkRequestsService {
   private updateRequest(delta: ISignalKDeltaMessage) {
     const index = this.requests.findIndex(r => r.requestId == delta.requestId);
     if (index > -1) {  // exists in local array
-      this.requests[index].state = delta.state;
-      this.requests[index].statusCode = delta.statusCode;
+      this.requests[index].state = delta.state ?? null;
+      this.requests[index].statusCode = delta.statusCode ?? null;
       this.requests[index].message = delta.message;
+
+      if (typeof delta.statusCode !== 'number') {
+        this.toast.show('Unknown Request Status Code received: undefined', 0, false, 'error');
+        console.error('[Request Service] Unknown Request Status Code received: undefined');
+        this.requestStatus$.next(this.requests[index]);
+        this.requests.splice(index, 1);
+        return;
+      }
 
       const currentStatusCode = deltaStatusCodes[delta.statusCode];
 
@@ -194,7 +202,7 @@ export class SignalkRequestsService {
         }
 
         if (this.requests[index].statusCode == 400) {
-          this.toast.show(this.requests[index].message, 0, false, 'error');
+          this.toast.show(this.requests[index].message ?? 'Status Code 400 with missing return message received', 0, false, 'error');
           console.log("[Request Service] " + this.requests[index].message );
         }
 
@@ -221,8 +229,10 @@ export class SignalkRequestsService {
         }
 
       } else {
-        this.toast.show("Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message, 0, false, 'error');
-        console.error("[Request Service] Unknown Request Status Code received: " + this.requests[index].statusCode + " - " + deltaStatusCodes[this.requests[index].statusCode] + " - " + this.requests[index].message);
+        const statusCode = this.requests[index].statusCode;
+        const statusText = typeof statusCode === 'number' ? (deltaStatusCodes[statusCode] ?? 'Unknown status') : 'Unknown status';
+        this.toast.show("Unknown Request Status Code received: " + statusCode + " - " + statusText + " - " + this.requests[index].message, 0, false, 'error');
+        console.error("[Request Service] Unknown Request Status Code received: " + statusCode + " - " + statusText + " - " + this.requests[index].message);
       }
       try {
         this.requestStatus$.next(this.requests[index]);    // dispatched results

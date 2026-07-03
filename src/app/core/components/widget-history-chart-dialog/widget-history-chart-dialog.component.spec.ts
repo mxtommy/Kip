@@ -467,7 +467,7 @@ describe('WidgetHistoryChartDialogComponent', () => {
 
     await component.loadHistoryDatasets();
 
-    const calls = historyApiClientMock.getValues.mock.calls.map((c: [{ paths: string }]) => c[0].paths);
+    const calls = historyApiClientMock.getValues.mock.calls.map(c => (c[0] as { paths: string }).paths);
     const panelPowerIdx = calls.findIndex((p: string) => p.includes('panelPower'));
     const currentIdx = calls.findIndex((p: string) => p.includes('.current'));
 

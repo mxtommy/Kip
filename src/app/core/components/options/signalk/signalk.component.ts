@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
@@ -60,18 +60,19 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly internetReachability = inject(InternetReachabilityService);
   protected readonly auth = inject(AuthenticationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly canvasService = inject(CanvasService);
 
 
   protected readonly activityGraph = viewChild<ElementRef<HTMLCanvasElement>>('activityGraph');
 
-  public connectionConfig: IConnectionConfig;
+  public connectionConfig: IConnectionConfig = this.settings.getConnectionConfig();
   public isConnecting = false; // Loading state for connect button
 
-  public authToken: IAuthorizationToken;
+  public authToken: IAuthorizationToken | null = null;
 
-  public endpointServiceStatus: IEndpointStatus;
-  public streamStatus: IStreamStatus;
+  public endpointServiceStatus: IEndpointStatus = this.signalKConnectionService.serverServiceEndpoint$.getValue();
+  public streamStatus: IStreamStatus = this.deltaService.streamEndpoint$.getValue();
 
   protected readonly internetAvailabilityLabel = computed(() => {
     if (this.internetReachability.isChecking()) {
@@ -90,22 +91,23 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   });
 
 
-  private _chart: Chart = null;
-  private textColor: string; // Store the computed text color for chart styling
+  private _chart: Chart | null = null;
+  private textColor = ''; // Store the computed text color for chart styling
 
-  ngOnInit() {
+  ngOnInit(): void {
     // get Signal K connection configuration
     this.connectionConfig = this.settings.getConnectionConfig();
 
     // get authentication token status
     this.auth.authToken$.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe((token: IAuthorizationToken) => {
+    ).subscribe((token: IAuthorizationToken | null) => {
       if (token) {
         this.authToken = token;
       } else {
         this.authToken = null;
       }
+      this.cdr.markForCheck();
     });
 
     // get Signal K connection status
@@ -113,6 +115,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((status: IEndpointStatus) => {
       this.endpointServiceStatus = status;
+      this.cdr.markForCheck();
     });
 
     // get Delta Service WebSocket stream status
@@ -120,11 +123,17 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
+      this.cdr.markForCheck();
     });
   }
 
   ngAfterViewInit(): void {
-    this.textColor = window.getComputedStyle(this.activityGraph().nativeElement).color;
+    const graph = this.activityGraph();
+    if (!graph) {
+      return;
+    }
+
+    this.textColor = window.getComputedStyle(graph.nativeElement).color;
     this._chart?.destroy();
     this.startChart();
 
@@ -132,6 +141,9 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
     this.DataService.getSignalkDeltaUpdateStatistics().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((update: IDeltaUpdate) => {
+      if (!this._chart) {
+        return;
+      }
       this._chart.data.datasets[0].data.push({ x: update.timestamp, y: update.value });
       if (this._chart.data.datasets[0].data.length > 10) {
         this._chart.data.datasets[0].data.shift();
@@ -144,7 +156,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Opens the user credential modal dialog for authentication.
    * @param errorMsg Optional error message to display in the modal
    */
-  public openUserCredentialModal(errorMsg: string) {
+  public openUserCredentialModal(errorMsg?: string | null): void {
     const dialogRef = this.dialog.open(ModalUserCredentialComponent, {
       data: {
         user: this.connectionConfig.loginName,
@@ -159,6 +171,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       if (!data) { return } // User clicked cancel
       this.connectionConfig.loginName = data.user;
       this.connectionConfig.loginPassword = data.password;
+      this.cdr.markForCheck();
       this.connectToServer();
     });
   }
@@ -217,7 +230,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    * Creates a time-series chart showing data update frequency over time.
    */
   private startChart() {
-    this._chart = new Chart(this.activityGraph().nativeElement.getContext('2d'), {
+    const graph = this.activityGraph();
+    const context = graph?.nativeElement.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    this._chart = new Chart(context, {
       type: 'line',
       data: {
         datasets: [
@@ -285,13 +304,13 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
    */
   public useSharedConfigToggleClick(e: MatSlideToggleChange): void {
     if (e.checked) {
-      const version: string = this.signalKConnectionService.serverVersion$.getValue();
-      if (!compare(version, '1.46.2', ">=")) {
+      const version = this.signalKConnectionService.serverVersion$.getValue();
+      if (!version || !compare(version, '1.46.2', ">=")) {
         this.toast.show("Configuration sharing requires Signal K version 1.46.2 or better", 0, false, 'warn');
         this.connectionConfig.useSharedConfig = false;
         return;
       }
-      this.openUserCredentialModal(null);
+      this.openUserCredentialModal();
     }
   };
 

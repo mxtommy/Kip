@@ -22,7 +22,7 @@ export class SettingsUnitsComponent implements OnInit {
   private toast = inject(ToastService);
 
   public unitsFormGroup = new UntypedFormGroup({});
-  protected groupUnits: Record<string, IUnit>[] = [];
+  protected groupUnits: Record<string, IUnit[]> = {};
 
   ngOnInit() {
     const unitsSettings: IUnitDefaults = this.settings.getDefaultUnits();
@@ -31,7 +31,7 @@ export class SettingsUnitsComponent implements OnInit {
 
     for (const groupRaw of unitGroupsRaw) {
       if (groupRaw.group === "Position") continue; // Skip the iteration when key is "Position" as it's not a valid unit group as-is. We need to use position Objects instead. Then we can set format properly.
-      const units = [];
+      const units: IUnit[] = [];
 
       for (const unit of groupRaw.units) {
         units.push(unit);

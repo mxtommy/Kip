@@ -3,7 +3,7 @@ import { Subject, takeUntil, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService } from '../services/data.service';
 import { ISkMetadata, ISkPossibleValue, ISkZone } from '../interfaces/signalk-interfaces';
-import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
+import { IWidget, IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
 
 @Directive({
   selector: '[widget-metadata]',
@@ -29,6 +29,28 @@ import { IWidget, IWidgetSvcConfig } from '../interfaces/widgets-interface';
  * 2. Multi-path: Call `observe(pathKey)` for each path requiring zones
  */
 export class WidgetMetadataDirective {
+    private resolvePathConfig(cfg: IWidgetSvcConfig, pathKey?: string): IWidgetPath | undefined {
+      const paths = cfg.paths;
+      if (!paths) return undefined;
+
+      if (Array.isArray(paths)) {
+        if (typeof pathKey === 'string') {
+          const byId = paths.find((p) => typeof p.pathID === 'string' && p.pathID.trim() === pathKey);
+          if (byId) return byId;
+
+          const index = Number(pathKey);
+          if (Number.isInteger(index) && index >= 0) {
+            return paths[index];
+          }
+        }
+
+        return paths[0];
+      }
+
+      const key = pathKey ?? Object.keys(paths)[0];
+      return key ? paths[key] : undefined;
+    }
+
   /**
    * Optional widget input for standalone usage.
    * Typically not needed since config contains all path information.
@@ -133,9 +155,9 @@ export class WidgetMetadataDirective {
    */
   public observe(pathKey?: string): void {
     const cfg = this._metaConfig();
-    if (!cfg?.paths || Object.keys(cfg.paths).length === 0) return;
-    const key = pathKey ?? Object.keys(cfg.paths)[0];
-    const path = cfg.paths[key]?.path;
+    if (!cfg?.paths) return;
+    const pathCfg = this.resolvePathConfig(cfg, pathKey);
+    const path = pathCfg?.path;
     if (!path) return;
 
     // Signature gating handled here (path alone defines zones signature)

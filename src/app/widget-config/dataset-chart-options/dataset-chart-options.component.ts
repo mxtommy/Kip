@@ -137,7 +137,14 @@ export class DatasetChartOptionsComponent implements OnInit {
     this.setPathUnits(pathObject.path);
   }
 
-  private setPathSources(pathObject: ISkPathData): void {
+  private setPathSources(pathObject: ISkPathData | null): void {
+    if (!pathObject) {
+      this.pathSources.set([]);
+      this.datachartSource().reset();
+      this.datachartSource().disable();
+      return;
+    }
+
     if (Object.keys(pathObject.sources).length == 1) {
       this.pathSources.set(['default']);
       this.datachartSource().setValue('default');

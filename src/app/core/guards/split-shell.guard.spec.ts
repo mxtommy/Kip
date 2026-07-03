@@ -18,7 +18,7 @@ describe('splitShellGuard', () => {
     let createUrlTreeMock: ReturnType<typeof vi.fn>;
     let defaultTree: UrlTree;
 
-    const runGuard = (segments: string[]) => TestBed.runInInjectionContext(() => splitShellGuard({} as Route, segments.map(s => new UrlSegment(s, {}))));
+    const runGuard = (segments: string[]) => TestBed.runInInjectionContext(() => splitShellGuard({} as Route, segments.map(s => new UrlSegment(s, {})), {} as never));
 
     beforeEach(() => {
         createUrlTreeMock = vi.fn().mockName("Router.createUrlTree");

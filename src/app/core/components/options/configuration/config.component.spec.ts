@@ -129,7 +129,7 @@ describe('SettingsConfigComponent', () => {
   });
 
   it('restoring a configuration reloads only after the save resolves', async () => {
-    let resolveSave: (value: unknown) => void;
+    let resolveSave!: (value: unknown) => void;
     storageMock.setConfig.mockReturnValueOnce(new Promise((resolve) => { resolveSave = resolve; }));
     component.copyConfigForm.setValue({ sourceTarget: 'global::multi-test2' });
 
@@ -164,7 +164,7 @@ describe('SettingsConfigComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    let resolveSave: (value: unknown) => void;
+    let resolveSave!: (value: unknown) => void;
     storageMock.setConfig.mockReturnValueOnce(new Promise((resolve) => { resolveSave = resolve; }));
 
     const file = new File(
@@ -207,7 +207,7 @@ describe('SettingsConfigComponent', () => {
 
   it('refreshes the configuration list only after a delete completes', async () => {
     storageMock.listConfigs.mockClear();
-    let resolveDelete: () => void;
+    let resolveDelete!: () => void;
     storageMock.removeItem.mockReturnValueOnce(new Promise<void>((resolve) => { resolveDelete = resolve; }));
 
     const done = component.deleteConfig('global', 'multi-test2');

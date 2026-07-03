@@ -6,10 +6,9 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
@@ -40,9 +39,10 @@ function convertNegToPortDegree(degree: number) {
   return degree;
 }
 
+type CompassGaugeOptions = RadialGaugeOptions & Record<string, unknown>;
+
 @Component({
   selector: 'widget-gauge-ng-compass',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, GaugesModule],
   templateUrl: './widget-gauge-ng-compass.component.html',
   styleUrl: './widget-gauge-ng-compass.component.scss'
@@ -51,7 +51,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Inject directives/services
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -101,6 +101,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   // Data/state
   protected textValue = signal('--');
   protected value = signal<number | null | undefined>(undefined);
+  protected displayValue = computed<number>(() => this.value() ?? 0);
   /** True after first datapoint has been received (including zero). */
   protected shouldRenderGauge = computed(() => this.value() !== undefined);
   /** True after first non-animated frame has been rendered. */
@@ -111,7 +112,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   readonly ngGauge = viewChild<RadialGauge>('compassGauge');
   readonly gauge = viewChild('compassGauge', { read: ElementRef });
   private viewReady = signal(false);
-  protected gaugeOptions: RadialGaugeOptions = {} as RadialGaugeOptions;
+  protected gaugeOptions: CompassGaugeOptions = {} as CompassGaugeOptions;
   protected colorStrokeTicks = '';
   private currentState = signal<States>(States.Normal);
   private lastAppliedState: States | null = null;
@@ -136,7 +137,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
       const cfg = this.runtime.options();
       const theme = this.theme();
       if (!cfg || !theme) return;
-      const pCfg = cfg.paths?.['gaugePath'];
+      const pCfg = (cfg.paths as Record<string, IWidgetPath> | undefined)?.['gaugePath'];
       if (!pCfg?.path) return;
       untracked(() => this.streams.observe('gaugePath', pkt => {
         let raw = (pkt?.data?.value as number) ?? null;
@@ -144,7 +145,8 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
           this.value.set(0);
           this.textValue.set('--');
         } else {
-          if (this.negToPortPaths.includes(pCfg.path)) raw = convertNegToPortDegree(raw);
+          const gaugePath = pCfg.path;
+          if (gaugePath && this.negToPortPaths.includes(gaugePath)) raw = convertNegToPortDegree(raw);
           const clamped = Math.min(Math.max(raw, 0), 360);
           this.value.set(clamped);
           this.textValue.set(clamped.toFixed(0));
@@ -192,7 +194,7 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
       if (!this.viewReady()) return;
       if (state === this.lastAppliedState) return;
       untracked(() => {
-        const opt: RadialGaugeOptions = {};
+        const opt: CompassGaugeOptions = {} as CompassGaugeOptions;
         switch (state) {
           case States.Emergency: opt.colorValueText = theme.zoneEmergency; break;
           case States.Alarm: opt.colorValueText = theme.zoneAlarm; break;
@@ -207,9 +209,10 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
   }
 
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme) {
-    const g = this.gaugeOptions = {} as RadialGaugeOptions;
+    const g = this.gaugeOptions = {} as CompassGaugeOptions;
+    const gaugePathConfig = (cfg.paths as Record<string, IWidgetPath> | undefined)?.['gaugePath'];
     g.title = this.displayName();
-    g.minValue = 0; g.maxValue = 360; g.units = cfg.paths?.['gaugePath']?.convertUnitTo || '';
+    g.minValue = 0; g.maxValue = 360; g.units = gaugePathConfig?.convertUnitTo || '';
     // Use configured integer/decimal digits (compass default: whole degrees)
     g.valueDec = cfg.numDecimal ?? 0; g.valueInt = cfg.numInt ?? 1;
     g.barProgress = false; g.barWidth = 0;
@@ -230,9 +233,9 @@ export class WidgetGaugeNgCompassComponent implements AfterViewInit {
     else {
       g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = true;
     }
-    g.animateOnInit = false; g.animation = this.animationEnabled(); g.animatedValue = this.animationEnabled(); g.animationRule = 'linear'; g.animationDuration = (cfg.paths?.['gaugePath']?.sampleTime ?? 500) - 50;
+    g.animateOnInit = false; g.animation = this.animationEnabled(); g.animatedValue = this.animationEnabled(); g.animationRule = 'linear'; g.animationDuration = (gaugePathConfig?.sampleTime ?? 500) - 50;
     // Colors (RGBA unsupported -> convert)
-    const palette = getColors(cfg.color, theme);
+    const palette = getColors(cfg.color ?? 'contrast', theme);
     const dim = rgbaToHex(palette.dim);
     const contrastDim = rgbaToHex(getColors('contrast', theme).dim);
     g.colorBarProgress = palette.color; g.colorBorderMiddle = dim; g.colorBorderMiddleEnd = dim; g.colorNeedle = palette.color; g.colorNeedleEnd = palette.color;

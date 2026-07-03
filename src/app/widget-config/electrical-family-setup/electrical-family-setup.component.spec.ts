@@ -225,18 +225,18 @@ describe('ElectricalFamilySetupComponent', () => {
       pathObject.path = familyCase.path;
       pathObject.defaultSource = familyCase.firstSource;
 
-      dataMock.getPathObject.mockImplementation((path: string) => {
+      dataMock.getPathObject.mockImplementation((path?: string) => {
         if (path === rootOnlyPath) {
           return {
             ...structuredClone(pathObject),
-            path,
+            path: path ?? '',
             sources: {}
           };
         }
 
         return {
           ...structuredClone(pathObject),
-          path,
+          path: path ?? '',
           sources: {
             [familyCase.firstSource]: {
               sourceTimestamp: '2026-04-02T00:00:00.000Z',

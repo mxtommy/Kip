@@ -1,10 +1,10 @@
-import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild, input, untracked, computed } from '@angular/core';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { ToastService } from '../../core/services/toast.service';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { WidgetTitleComponent } from '../../core/components/widget-title/widget-title.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -16,12 +16,11 @@ import { KipResizeObserverDirective } from '../../core/directives/kip-resize-obs
   imports: [ KipResizeObserverDirective, WidgetTitleComponent ],
   templateUrl: './widget-slider.component.html',
   styleUrl: './widget-slider.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetSliderComponent implements OnInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme|null>();
+  public theme = input.required<ITheme>();
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     supportAutomaticHistoricalSeries: false,
     displayName: 'Slider Label',
@@ -36,7 +35,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
         showConvertUnitTo: false,
-        convertUnitTo: null,
+        convertUnitTo: undefined,
         supportsPut: true,
         sampleTime: 500
       }
@@ -57,12 +56,12 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private readonly signalkRequestsService = inject(SignalkRequestsService);
   private readonly toast = inject(ToastService);
 
-  protected labelColor = signal<string>(undefined)
-  protected barColor = signal<string>(undefined);
+  protected labelColor = signal<string>('')
+  protected barColor = signal<string>('');
 
-  private lineStartPx: number;
-  private lineWidthPx: number;
-  private lineEndPx: number;
+  private lineStartPx = 0;
+  private lineWidthPx = 0;
+  private lineEndPx = 0;
 
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -75,6 +74,20 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   private readonly LINE_START = 20;
   private readonly LINE_WIDTH = 160;
   private colorMap: Map<string, { label: string; bar: string }> | null = null;
+  protected readonly cfg = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetSliderComponent.DEFAULT_CONFIG);
+  private readonly gaugePathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.cfg().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.gaugePath;
+  });
+  protected readonly displayNameSafe = computed(() => this.cfg().displayName ?? 'Slider Label');
+  private readonly displayScale = computed(() => {
+    const scale = this.cfg().displayScale ?? WidgetSliderComponent.DEFAULT_CONFIG.displayScale!;
+    return {
+      ...scale,
+      lower: scale.lower ?? 0,
+      upper: scale.upper ?? 1,
+    };
+  });
 
   private valueChange$ = new Subject<number>();
 
@@ -82,25 +95,26 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
     // Theme + color reaction
     effect(() => {
       const theme = this.theme();
-      const cfg = this.runtime.options();
+      const cfg = this.cfg();
       if (!cfg || !theme) return;
       untracked(() => {
         this.ensureColorMap();
-        this.getColors(cfg.color);
+        this.getColors(cfg.color ?? 'contrast');
       });
     });
 
     effect(() => {
-      const cfg = this.runtime.options();
-      const path = cfg?.paths?.['gaugePath']?.path;
-      if (!cfg || !path) return; // nothing to observe yet
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const cfg = this.cfg();
+      const gaugePath = this.gaugePathConfig();
+      if (!gaugePath?.path) return; // nothing to observe yet
 
       untracked(() => {
         this.calculateLineBounds();
 
         this.streams.observe('gaugePath', (newValue) => {
           if (!newValue || !newValue.data) {
-            queueMicrotask(() => this.updateHandlePosition(this.mapValueToPosition(cfg.displayScale.lower)));
+            queueMicrotask(() => this.updateHandlePosition(this.mapValueToPosition(this.displayScale().lower)));
             return;
           }
           queueMicrotask(() => this.updateHandlePosition(this.mapValueToPosition(newValue.data.value as number)));
@@ -110,22 +124,17 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const cfg = this.runtime.options();
-
-    if (cfg) {
-      this.getColors(cfg.color);
-    }
+    this.getColors(this.cfg().color ?? 'contrast');
 
     this.valueChange$
       .pipe(
         map((value) => {
-          const cfg = this.runtime.options();
-          if (!cfg) return value;
+          const scale = this.displayScale();
           // Check if the value is within 1% of the lower or upper bounds
-          if (this.isWithinMargin(value, cfg.displayScale.lower, cfg)) {
-            return cfg.displayScale.lower; // Exact lower bound
-          } else if (this.isWithinMargin(value, cfg.displayScale.upper, cfg)) {
-            return cfg.displayScale.upper; // Exact upper bound
+          if (this.isWithinMargin(value, scale.lower)) {
+            return scale.lower; // Exact lower bound
+          } else if (this.isWithinMargin(value, scale.upper)) {
+            return scale.upper; // Exact upper bound
           }
           return parseFloat(value.toFixed(2)); // Round to 2 decimal places
         }),
@@ -138,28 +147,30 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
   }
 
   private mapValueToPosition(value: number): number {
-    const cfg = this.runtime.options();
-    if (!cfg) return value;
-    const scaleRange = cfg.displayScale.upper - cfg.displayScale.lower;
+    const scale = this.displayScale();
+    const scaleRange = scale.upper - scale.lower;
     const lineRange = this.LINE_WIDTH;
-    return ((value - cfg.displayScale.lower) / scaleRange) * lineRange + this.LINE_START;
+    return ((value - scale.lower) / scaleRange) * lineRange + this.LINE_START;
   }
 
   private mapPositionToValue(position: number): number {
-    const cfg = this.runtime.options();
-    if (!cfg) return position;
-    const scaleRange = cfg.displayScale.upper - cfg.displayScale.lower;
+    const scale = this.displayScale();
+    const scaleRange = scale.upper - scale.lower;
     const lineRange = this.LINE_WIDTH;
-    return ((position - this.LINE_START) / lineRange) * scaleRange + cfg.displayScale.lower;
+    return ((position - this.LINE_START) / lineRange) * scaleRange + scale.lower;
   }
 
-  private isWithinMargin(value: number, target: number, cfg: IWidgetSvcConfig): boolean {
-    const margin = (cfg.displayScale.upper - cfg.displayScale.lower) * 0.01; // 1% margin
+  private isWithinMargin(value: number, target: number): boolean {
+    const scale = this.displayScale();
+    const margin = (scale.upper - scale.lower) * 0.01; // 1% margin
     return Math.abs(value - target) <= margin;
   }
 
   public sendValue(value: unknown): void {
-    const path = this.runtime.options()?.paths?.['gaugePath']?.path;
+    const path = this.gaugePathConfig()?.path;
+    if (!path) {
+      return;
+    }
     this.signalkRequestsService.putRequest(
       path,
       value,
@@ -214,11 +225,11 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
         this.updateHandlePosition(constrainedX);
         const handlePosition = this.handlePositionView();
 
-        const cfg = this.runtime.options();
-        if (cfg && handlePosition <= this.LINE_START) {
-          this.pathValue = cfg.displayScale.lower; // Exact lower bound
-        } else if (cfg && handlePosition >= this.LINE_START + this.LINE_WIDTH) {
-          this.pathValue = cfg.displayScale.upper; // Exact upper bound
+        const scale = this.displayScale();
+        if (handlePosition <= this.LINE_START) {
+          this.pathValue = scale.lower; // Exact lower bound
+        } else if (handlePosition >= this.LINE_START + this.LINE_WIDTH) {
+          this.pathValue = scale.upper; // Exact upper bound
         } else {
           this.pathValue = this.mapPositionToValue(handlePosition);
         }
@@ -249,6 +260,7 @@ export class WidgetSliderComponent implements OnInit, OnDestroy {
     this.ensureColorMap();
     if (!this.colorMap) return;
     const colors = this.colorMap.get(color) || this.colorMap.get("contrast");
+    if (!colors) return;
     this.labelColor.set(colors.label);
     this.barColor.set(colors.bar);
   }

@@ -1,6 +1,6 @@
-@let cfg = this.runtime?.options();
+@let cfg = $safeNavigationMigration(this.runtime?.options());
 @if (cfg?.showLabel) {
-  <widget-title [text]="(cfg?.displayName)" [color]="labelColor()"></widget-title>
+  <widget-title [text]="($safeNavigationMigration(cfg?.displayName)) ?? ''" [color]="labelColor()"></widget-title>
 }
 <div [class]="noTitleClass()" #widgetContainer kipResizeObserver (resizeChange)="onResized($event)">
   @for (ctrl of zonesControls(); track $index) {

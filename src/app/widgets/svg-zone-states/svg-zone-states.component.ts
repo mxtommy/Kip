@@ -1,5 +1,4 @@
 import { Component, computed, effect, input, output, signal, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-zones-state-panel/widget-zones-state-panel.component';
@@ -9,20 +8,19 @@ import { getColors } from "../../core/utils/themeColors.utils";
 
 @Component({
   selector: 'app-svg-zone-states',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './svg-zone-states.component.svg',
   styleUrls: ['./svg-zone-states.component.scss']
 })
 export class SvgZoneStatesComponent {
   // eslint-disable-next-line @angular-eslint/no-input-rename
-  readonly data = input<IDynamicControl>(null, { alias: "controlData" });
-  readonly theme = input<ITheme>(null);
+  readonly data = input<IDynamicControl | null>(null, { alias: "controlData" });
+  readonly theme = input<ITheme | null>(null);
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  public ctrlLabelColor = signal<string>(null);
-  public ctrlStateColor = signal<string>(null);
-  public messageTxtColor = signal<string>(null);
+  public ctrlLabelColor = signal<string>('');
+  public ctrlStateColor = signal<string>('');
+  public messageTxtColor = signal<string>('');
 
   protected shouldEmergencyBlink = computed(() => {
     const s = (this.data()?.notificationState ?? '').toLowerCase();
@@ -38,6 +36,9 @@ export class SvgZoneStatesComponent {
     effect(() => {
       const data = this.data();
       const theme = this.theme();
+      if (!data || !theme) {
+        return;
+      }
 
       untracked(() => {
         switch (data.notificationState) {

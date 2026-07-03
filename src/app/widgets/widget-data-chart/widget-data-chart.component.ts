@@ -1,5 +1,5 @@
 import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, computed } from '@angular/core';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
@@ -9,7 +9,7 @@ import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.dir
 import { ITheme } from '../../core/services/app-service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
 import ChartStreaming from '@aziham/chartjs-plugin-streaming';
@@ -36,13 +36,12 @@ interface IDataSetRow { x: number, y: number }
   selector: 'widget-data-chart',
   templateUrl: './widget-data-chart.component.html',
   styleUrl: './widget-data-chart.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetDataChartComponent implements OnDestroy {
   // Host2 functional inputs supplied by host container
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 runtime directive (merged config)
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -77,20 +76,20 @@ export class WidgetDataChartComponent implements OnDestroy {
     startScaleAtZero: false,
     verticalChart: false,
     showYScale: false,
-    yScaleSuggestedMin: null,
-    yScaleSuggestedMax: null,
+    yScaleSuggestedMin: undefined,
+    yScaleSuggestedMax: undefined,
     enableMinMaxScaleLimit: false,
-    yScaleMin: null,
-    yScaleMax: null,
+    yScaleMin: undefined,
+    yScaleMax: undefined,
   };
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = { datasets: [] };
-  public lineChartOptions: ChartConfiguration['options'] = {
+  public lineChartOptions: NonNullable<ChartConfiguration<'line', IDataSetRow[]>['options']> = {
     parsing: false,
     datasets: { line: { pointRadius: 0, pointHoverRadius: 0, tension: 0.4 } },
     animations: { tension: { easing: 'easeInOutCubic' } }
   };
-  public lineChartType: ChartType = 'line';
-  private chart: Chart;
+  public readonly lineChartType = 'line' as const;
+  private chart: Chart<'line', IDataSetRow[]> | null = null;
   private dsServiceSub: Subscription | null = null;
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
@@ -101,7 +100,7 @@ export class WidgetDataChartComponent implements OnDestroy {
   });
   private pathSignature = computed<string | undefined>(() => {
     const cfg = this.runtime.options();
-    if (!cfg.datachartPath) {
+    if (!cfg?.datachartPath) {
       return undefined;
     }
     return [cfg.datachartPath, cfg.convertUnitTo, cfg.datachartSource, cfg.timeScale, cfg.period].join('|');
@@ -117,7 +116,10 @@ export class WidgetDataChartComponent implements OnDestroy {
         if (sig !== this.previousPathSignature) {
           untracked(() => {
           this.previousPathSignature = sig;
-          this.rebuildForDataset(this.runtime.options());
+          const cfg = this.runtime.options();
+          if (cfg) {
+            this.rebuildForDataset(cfg);
+          }
           });
         }
       });
@@ -131,7 +133,7 @@ export class WidgetDataChartComponent implements OnDestroy {
       untracked(() => {
         const verticalChanged = this.lastVerticalChart !== null && this.lastVerticalChart !== cfg.verticalChart;
         if (verticalChanged) {
-          this.lastVerticalChart = cfg.verticalChart;
+          this.lastVerticalChart = cfg.verticalChart ?? false;
           this.rebuildForDataset(cfg);
         } else if (this.chart) {
           // Styling / axis / annotation toggles / showAverageData
@@ -164,14 +166,20 @@ export class WidgetDataChartComponent implements OnDestroy {
 
     this.datasetLifecycle.syncDataChartDataset(this.id(), cfg, this.pathSignature());
 
-    this.datasetConfig = this.dsService.getDatasetConfig(this.id());
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.id());
+    this.datasetConfig = this.dsService.getDatasetConfig(this.id()) ?? null;
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.id()) ?? null;
     if (!this.datasetConfig) return; // dataset not ready yet
     this.createDatasets(cfg);
     this.setChartOptions(cfg);
     // Always recreate chart instance on rebuild to ensure orientation/scale axis changes apply
     this.chart?.destroy();
-    this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+    const canvas = this.widgetDataChart()?.nativeElement;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) {
+      return;
+    }
+
+    this.chart = new Chart<'line', IDataSetRow[]>(ctx, {
       type: this.lineChartType,
       data: this.lineChartData,
       options: this.lineChartOptions
@@ -181,6 +189,11 @@ export class WidgetDataChartComponent implements OnDestroy {
   }
 
   private setChartOptions(cfg: IWidgetSvcConfig): void {
+    const datasetConfig = this.datasetConfig;
+    if (!datasetConfig) {
+      return;
+    }
+
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
     this.lineChartOptions.indexAxis = cfg.verticalChart ? 'y' : 'x';
@@ -191,16 +204,16 @@ export class WidgetDataChartComponent implements OnDestroy {
           type: "realtime",
           display: cfg.showTimeScale,
           position: cfg.verticalChart ? "right" : "left",
-          suggestedMin: "",
-          suggestedMax: "",
+          suggestedMin: undefined,
+          suggestedMax: undefined,
           title: {
             display: true,
-            text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
+            text: `Last ${datasetConfig.period} ${datasetConfig.timeScaleFormat}`,
             align: "center",
             color: this.getThemeColors().averageChartLine
           },
           time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            unit: datasetConfig.timeScaleFormat as TimeUnit,
             minUnit: "second",
             round: "second",
             displayFormats: {
@@ -228,10 +241,10 @@ export class WidgetDataChartComponent implements OnDestroy {
           type: "linear",
           display: cfg.showYScale,
           position: cfg.verticalChart ? "top" : "bottom",
-          suggestedMin: cfg.enableMinMaxScaleLimit ? null : cfg.yScaleSuggestedMin,
-          suggestedMax: cfg.enableMinMaxScaleLimit ? null : cfg.yScaleSuggestedMax,
-          min: cfg.enableMinMaxScaleLimit ? cfg.yScaleMin : null,
-          max: cfg.enableMinMaxScaleLimit ? cfg.yScaleMax : null,
+          suggestedMin: cfg.enableMinMaxScaleLimit ? undefined : cfg.yScaleSuggestedMin,
+          suggestedMax: cfg.enableMinMaxScaleLimit ? undefined : cfg.yScaleSuggestedMax,
+          min: cfg.enableMinMaxScaleLimit ? cfg.yScaleMin : undefined,
+          max: cfg.enableMinMaxScaleLimit ? cfg.yScaleMax : undefined,
           beginAtZero: cfg.startScaleAtZero,
           reverse: cfg.inverseYAxis,
           title: {
@@ -261,12 +274,12 @@ export class WidgetDataChartComponent implements OnDestroy {
           display: cfg.showTimeScale,
           title: {
             display: true,
-            text: `Last ${this.datasetConfig.period} ${this.datasetConfig.timeScaleFormat}`,
+            text: `Last ${datasetConfig.period} ${datasetConfig.timeScaleFormat}`,
             align: "center",
             color: this.getThemeColors().averageChartLine
           },
           time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            unit: datasetConfig.timeScaleFormat as TimeUnit,
             minUnit: "second",
             round: "second",
             displayFormats: {
@@ -293,10 +306,10 @@ export class WidgetDataChartComponent implements OnDestroy {
         y: {
           display: cfg.showYScale,
           position: "right",
-          suggestedMin: cfg.enableMinMaxScaleLimit ? null : cfg.yScaleSuggestedMin,
-          suggestedMax: cfg.enableMinMaxScaleLimit ? null : cfg.yScaleSuggestedMax,
-          min: cfg.enableMinMaxScaleLimit ? cfg.yScaleMin : null,
-          max: cfg.enableMinMaxScaleLimit ? cfg.yScaleMax : null,
+          suggestedMin: cfg.enableMinMaxScaleLimit ? undefined : cfg.yScaleSuggestedMin,
+          suggestedMax: cfg.enableMinMaxScaleLimit ? undefined : cfg.yScaleSuggestedMax,
+          min: cfg.enableMinMaxScaleLimit ? cfg.yScaleMin : undefined,
+          max: cfg.enableMinMaxScaleLimit ? cfg.yScaleMax : undefined,
           beginAtZero: cfg.startScaleAtZero,
           reverse: cfg.inverseYAxis,
           title: {
@@ -354,7 +367,7 @@ export class WidgetDataChartComponent implements OnDestroy {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
             display: cfg.showDatasetMinimumValueLine,
-            value: null,
+            value: undefined,
             drawTime: 'afterDatasetsDraw',
             label: {
               display: true,
@@ -369,7 +382,7 @@ export class WidgetDataChartComponent implements OnDestroy {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
             display: cfg.showDatasetMaximumValueLine,
-            value: null,
+            value: undefined,
             drawTime: 'afterDatasetsDraw',
             label: {
               display: true,
@@ -384,7 +397,7 @@ export class WidgetDataChartComponent implements OnDestroy {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
             display: cfg.showDatasetAverageValueLine,
-            value: null,
+            value: undefined,
             borderDash: [6, 6],
             borderColor: this.getThemeColors().averageChartLine,
             drawTime: 'afterDatasetsDraw',
@@ -402,9 +415,9 @@ export class WidgetDataChartComponent implements OnDestroy {
         display: false
       },
        streaming: {
-        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
-        delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
+        duration: (this.dataSourceInfo?.maxDataPoints ?? 0) * (this.dataSourceInfo?.sampleTime ?? 0),
+        delay: this.dataSourceInfo?.sampleTime ?? 0,
+        frameRate: datasetConfig.timeScaleFormat === "day" ? 5 : datasetConfig.timeScaleFormat === "hour" ? 8 : datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
        }
     }
   }
@@ -542,13 +555,13 @@ export class WidgetDataChartComponent implements OnDestroy {
   private getThemeColors(): IChartColors {
     const widgetColor = this.runtime.options()?.color;
     const colors: IChartColors = {
-      valueLine: null,
-      valueFill: null,
-      averageLine: null,
-      averageFill: null,
-      averageChartLine: null,
-      chartLabel: null,
-      chartValue: null
+      valueLine: '',
+      valueFill: '',
+      averageLine: '',
+      averageFill: '',
+      averageChartLine: '',
+      chartLabel: '',
+      chartValue: ''
     };
 
     switch (widgetColor) {
@@ -700,8 +713,8 @@ export class WidgetDataChartComponent implements OnDestroy {
   }
 
   private getUnitsLabel(): string {
-    let label: string = null;
-    const unit = this.runtime.options()?.convertUnitTo;
+    let label = '';
+    const unit = this.runtime.options()?.convertUnitTo ?? '';
     switch (unit) {
 
       case "percent":
@@ -738,13 +751,18 @@ export class WidgetDataChartComponent implements OnDestroy {
     if (!cfg?.datachartPath) return;
     this.dsServiceSub?.unsubscribe();
     const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(this.id());
-    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+    if (!batchThenLive$) {
+      return;
+    }
+
+    this.dsServiceSub = batchThenLive$.subscribe(dsPointOrBatch => {
       if (!this.chart) return;
       if (Array.isArray(dsPointOrBatch)) {
         const valueRows = this.transformDatasetRows(dsPointOrBatch, 0);
         this.chart.data.datasets[0].data.push(...valueRows);
         if (cfg.showAverageData && this.lineChartData.datasets[1]) {
-          const avgRows = this.transformDatasetRows(dsPointOrBatch, cfg.datasetAverageArray);
+          const avgDatasetType = (cfg.datasetAverageArray ?? 'sma') as 'sma' | 'ema' | 'dema' | 'avg';
+          const avgRows = this.transformDatasetRows(dsPointOrBatch, avgDatasetType);
           this.chart.data.datasets[1].data.push(...avgRows);
         }
 
@@ -759,7 +777,8 @@ export class WidgetDataChartComponent implements OnDestroy {
           this.chart.data.datasets[0].data.shift();
         } */
         if (cfg.showAverageData && this.lineChartData.datasets[1]) {
-          const avgRow = this.transformDatasetRows([dsPointOrBatch], cfg.datasetAverageArray)[0];
+          const avgDatasetType = (cfg.datasetAverageArray ?? 'sma') as 'sma' | 'ema' | 'dema' | 'avg';
+          const avgRow = this.transformDatasetRows([dsPointOrBatch], avgDatasetType)[0];
           this.chart.data.datasets[1].data.push(avgRow);
           /* if (this.chart.data.datasets[1].data.length > (this.dataSourceInfo?.maxDataPoints ?? 0)) {
             this.chart.data.datasets[1].data.shift();
@@ -772,41 +791,66 @@ export class WidgetDataChartComponent implements OnDestroy {
   }
 
   private applyTitleAndAnnotationValues(point: IDatasetServiceDatapoint, cfg: IWidgetSvcConfig): void {
-    const trackValue: number = cfg.trackAgainstAverage ? (point.data.sma ?? point.data.value) : point.data.value;
-    const convertedTrack = this.unitsService.convertToUnit(cfg.convertUnitTo, trackValue);
-    if (Number.isFinite(convertedTrack)) {
-      this.chart.options.plugins.title.text = `${convertedTrack.toFixed(cfg.numDecimal)} ${this.getUnitsLabel()} `;
+    if (!this.chart) {
+      return;
     }
 
-    const lastAverage = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastAverage);
-    const lastMinimum = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastMinimum);
-    const lastMaximum = this.unitsService.convertToUnit(cfg.convertUnitTo, point.data.lastMaximum);
+    const convertUnitTo = cfg.convertUnitTo ?? '';
+    const decimals = cfg.numDecimal ?? 1;
+    const trackValue: number = cfg.trackAgainstAverage ? (point.data.sma ?? point.data.value) : point.data.value;
+    const convertedTrack = this.unitsService.convertToUnit(convertUnitTo, trackValue);
+    if (convertedTrack != null && Number.isFinite(convertedTrack)) {
+      const plugins = this.chart.options.plugins as ({ title?: { text?: string } } & AnnPlugin) | undefined;
+      if (plugins?.title) {
+        plugins.title.text = `${convertedTrack.toFixed(decimals)} ${this.getUnitsLabel()} `;
+      }
+    }
+
+    const lastAverage = point.data.lastAverage != null
+      ? (this.unitsService.convertToUnit(convertUnitTo, point.data.lastAverage) ?? undefined)
+      : undefined;
+    const lastMinimum = point.data.lastMinimum != null
+      ? (this.unitsService.convertToUnit(convertUnitTo, point.data.lastMinimum) ?? undefined)
+      : undefined;
+    const lastMaximum = point.data.lastMaximum != null
+      ? (this.unitsService.convertToUnit(convertUnitTo, point.data.lastMaximum) ?? undefined)
+      : undefined;
 
     const plugins = this.chart.options.plugins as unknown as AnnPlugin;
     const ann = plugins.annotation?.annotations;
     if (!ann) return;
 
-    if (Number.isFinite(lastAverage) && ann.averageLine?.value !== lastAverage) {
+    if (lastAverage != null && Number.isFinite(lastAverage) && ann.averageLine?.value !== lastAverage) {
       ann.averageLine.value = lastAverage;
-      ann.averageLine.label.content = `${lastAverage.toFixed(cfg.numDecimal)}`;
+      if (ann.averageLine.label) {
+        ann.averageLine.label.content = `${lastAverage.toFixed(decimals)}`;
+      }
     }
 
-    if (Number.isFinite(lastMinimum) && ann.minimumLine?.value !== lastMinimum) {
+    if (lastMinimum != null && Number.isFinite(lastMinimum) && ann.minimumLine?.value !== lastMinimum) {
       ann.minimumLine.value = lastMinimum;
-      ann.minimumLine.label.content = `${lastMinimum.toFixed(cfg.numDecimal)}`;
+      if (ann.minimumLine.label) {
+        ann.minimumLine.label.content = `${lastMinimum.toFixed(decimals)}`;
+      }
     }
 
-    if (Number.isFinite(lastMaximum) && ann.maximumLine?.value !== lastMaximum) {
+    if (lastMaximum != null && Number.isFinite(lastMaximum) && ann.maximumLine?.value !== lastMaximum) {
       ann.maximumLine.value = lastMaximum;
-      ann.maximumLine.label.content = `${lastMaximum.toFixed(cfg.numDecimal)}`;
+      if (ann.maximumLine.label) {
+        ann.maximumLine.label.content = `${lastMaximum.toFixed(decimals)}`;
+      }
     }
   }
 
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: 0 | 'sma' | 'ema' | 'dema' | 'avg'): IDataSetRow[] {
     const cfg = this.runtime.options();
-    const convert = (v: number) => this.unitsService.convertToUnit(cfg.convertUnitTo, v);
-    const verticalChart = cfg.verticalChart;
-    const avgKey = cfg.datasetAverageArray;
+    if (!cfg) {
+      return [];
+    }
+
+    const convert = (v: number) => this.unitsService.convertToUnit(cfg.convertUnitTo ?? '', v) ?? v;
+    const verticalChart = cfg.verticalChart === true;
+    const avgKey = cfg.datasetAverageArray as 'sma' | 'ema' | 'dema' | 'avg';
 
     return rows.map(row => {
       if (verticalChart) {
@@ -819,7 +863,7 @@ export class WidgetDataChartComponent implements OnDestroy {
             dema: row.data.doubleEma,
             avg: row.data.lastAverage
           };
-          return { x: convert(avgMap[avgKey]), y: row.timestamp };
+          return { x: convert(avgMap[avgKey] ?? row.data.value), y: row.timestamp };
         }
       } else {
         if (datasetType === 0) {
@@ -831,7 +875,7 @@ export class WidgetDataChartComponent implements OnDestroy {
             dema: row.data.doubleEma,
             avg: row.data.lastAverage
           };
-          return { x: row.timestamp, y: convert(avgMap[avgKey]) };
+          return { x: row.timestamp, y: convert(avgMap[avgKey] ?? row.data.value) };
         }
       }
     });

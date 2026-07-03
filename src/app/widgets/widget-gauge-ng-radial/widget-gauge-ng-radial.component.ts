@@ -6,9 +6,8 @@
  * instantiated gauge config.
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, inject, input, untracked, computed, signal } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { GaugesModule, RadialGaugeOptions, RadialGauge } from '@godind/ng-canvas-gauges';
-import { IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { States } from '../../core/interfaces/signalk-interfaces';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
@@ -20,9 +19,10 @@ import { WidgetMetadataDirective } from '../../core/directives/widget-metadata.d
 import { UnitsService } from '../../core/services/units.service';
 import { ITheme } from '../../core/services/app-service';
 
+type HostRadialGaugeOptions = RadialGaugeOptions & Record<string, unknown>;
+
 @Component({
   selector: 'widget-gauge-ng-radial',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-gauge-ng-radial.component.html',
   styleUrls: ['./widget-gauge-ng-radial.component.scss'],
   imports: [KipResizeObserverDirective, GaugesModule]
@@ -31,7 +31,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Host2 directives (applied by host container)
   private readonly runtime = inject(WidgetRuntimeDirective);
@@ -86,6 +86,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
   // Reactive state
   protected value = signal<number | null | undefined>(undefined);
+  protected displayValue = computed<number>(() => this.value() ?? 0);
   /** True after first datapoint has been received (including zero). */
   protected shouldRenderGauge = computed(() => this.value() !== undefined);
   protected textValue = signal('--');
@@ -94,9 +95,13 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   private gaugeBootstrapped = signal(false);
   /** Enables smooth transitions only after the first static frame. */
   private animationEnabled = computed(() => this.gaugeBootstrapped());
+  private normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetGaugeNgRadialComponent.DEFAULT_CONFIG);
+  private gaugePathConfig = computed<IWidgetPath | undefined>(() => {
+    const paths = this.normalizedConfig().paths as Record<string, IWidgetPath> | undefined;
+    return paths?.gaugePath;
+  });
   private adjustedScale = computed<IScale>(() => {
-    const cfg = this.runtime.options();
-    if (!cfg) return { min: 0, max: 100, majorTicks: [] };
+    const cfg = this.normalizedConfig();
     if (cfg.gauge?.subType === 'capacity') {
       return { min: cfg.displayScale?.lower ?? 0, max: cfg.displayScale?.upper ?? 100, majorTicks: [] };
     }
@@ -109,31 +114,32 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   });
   private highlights = computed<IDataHighlight[]>(() => {
     const zones = this.metadata.zones();
-    const cfg = this.runtime.options();
+    const cfg = this.normalizedConfig();
     const theme = this.theme();
+    const pathCfg = this.gaugePathConfig();
 
     if (!zones?.length) return [];
-    if (!cfg || !theme) return [];
+    if (!theme) return [];
     if (cfg.ignoreZones) return [];
     if (cfg.gauge?.subType !== 'measuring') return []; // only measuring subtype shows bands
 
-    const pathCfg = cfg.paths?.['gaugePath'];
+    if (!pathCfg) return [];
     const scale = this.adjustedScale();
     const invert = cfg.gauge?.barStartPosition === 'right';
-    return getHighlights(zones, theme, pathCfg.convertUnitTo, this.unitsService, scale.min, scale.max, invert);
+    return getHighlights(zones, theme, pathCfg.convertUnitTo ?? '', this.unitsService, scale.min, scale.max, invert);
   });
-  protected displayName = computed(() => this.runtime.options()?.displayName);
+  protected displayName = computed(() => this.normalizedConfig().displayName ?? 'Gauge Label');
   private pathDataState = signal<States | null>(null);
   private viewReady = signal(false);
-  protected gaugeOptions: RadialGaugeOptions = {} as RadialGaugeOptions;
+  protected gaugeOptions: HostRadialGaugeOptions = {} as HostRadialGaugeOptions;
 
   constructor() {
     // Data subscription effect
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
-      if (!cfg || !theme) return;
-      if (!cfg.paths?.['gaugePath'].path) return;
+      const pathCfg = this.gaugePathConfig();
+      if (!theme || !pathCfg?.path) return;
 
       untracked(() => this.streams.observe('gaugePath', path => {
         if (path.state !== this.pathDataState()) {
@@ -157,8 +163,8 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
     // Metadata observation (idempotent) – only when zones not ignored
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg || cfg.ignoreZones) return;
+      const cfg = this.normalizedConfig();
+      if (cfg.ignoreZones) return;
       untracked(() => this.metadata.observe('gaugePath'));
     });
 
@@ -173,7 +179,7 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
             this.ngGauge()?.update({ highlights: [] });
           } else {
             const serialized = JSON.stringify(hl) as unknown as string; // gauge lib tolerates stringified form
-            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.runtime.options().gauge?.highlightsWidth });
+            this.ngGauge()?.update({ highlights: serialized, highlightsWidth: this.normalizedConfig().gauge?.highlightsWidth });
           }
         } catch { /* ignore */ }
       });
@@ -181,12 +187,14 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
 
     // Gauge option builder effect
     effect(() => {
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
       // include scale dependency so options rebuild on scale recompute
       const scale = this.adjustedScale(); // reading for dependency
+      if (!theme) return;
 
       untracked(() => {
-        this.buildGaugeOptions(this.runtime.options(), theme, scale);
+        this.buildGaugeOptions(cfg, theme, scale);
         if (this.viewReady()) {
           try {
             this.ngGauge()?.update(this.gaugeOptions);
@@ -214,11 +222,13 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
       const state = this.pathDataState();
       if (!this.viewReady()) return;
       untracked(() => {
-        const cfg = this.runtime.options();
+        const cfg = this.normalizedConfig();
         const theme = this.theme();
+        if (!theme) return;
         if (cfg.ignoreZones) return;
 
-        const option: RadialGaugeOptions = {};
+        const option: HostRadialGaugeOptions = {} as HostRadialGaugeOptions;
+        const palette = getColors(cfg.color ?? 'contrast', theme);
         switch (state) {
           case States.Alarm:
             option.colorBorderMiddle = theme.cardColor;
@@ -237,8 +247,8 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
             break;
           default:
             option.colorBorderMiddle = theme.cardColor;
-            option.colorBarProgress = cfg.gauge?.subType === 'measuring' ? getColors(cfg.color, theme).color : getColors(cfg.color, theme).dim;
-            option.colorValueText = getColors(cfg.color, theme).color;
+            option.colorBarProgress = cfg.gauge?.subType === 'measuring' ? palette.color : palette.dim;
+            option.colorValueText = palette.color;
         }
         try {
           this.ngGauge()?.update(option);
@@ -258,10 +268,10 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
   }
 
   public onResized(event: ResizeObserverEntry): void {
-    const resize: RadialGaugeOptions = {
+    const resize: HostRadialGaugeOptions = {
       height: event.contentRect.height,
       width: event.contentRect.width
-    };
+    } as HostRadialGaugeOptions;
     try {
       this.ngGauge()?.update(resize);
     } catch { /* ignore */ }
@@ -271,18 +281,20 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     const el = this.gauge()?.nativeElement as HTMLElement | null;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const resize: RadialGaugeOptions = { height: rect.height, width: rect.width } as RadialGaugeOptions;
+    const resize: HostRadialGaugeOptions = { height: rect.height, width: rect.width } as HostRadialGaugeOptions;
     try {
       this.ngGauge()?.update(resize);
     } catch { /* ignore */ }
   }
 
   private buildGaugeOptions(cfg: IWidgetSvcConfig, theme: ITheme, scale: IScale) {
-    const g = {} as RadialGaugeOptions;
+    const g = {} as HostRadialGaugeOptions;
+    const pathCfg = this.gaugePathConfig();
+    const gaugeCfg = cfg.gauge ?? WidgetGaugeNgRadialComponent.DEFAULT_CONFIG.gauge!;
     g.title = this.displayName();
     g.minValue = scale.min;
     g.maxValue = scale.max;
-    g.units = cfg.paths?.['gaugePath']?.convertUnitTo;
+    g.units = pathCfg?.convertUnitTo ?? '';
     g.highlights = [];
     // Include initial highlights if already available (after view init effect will re-apply).
     const initialHl = this.highlights();
@@ -301,36 +313,37 @@ export class WidgetGaugeNgRadialComponent implements AfterViewInit {
     g.valueInt = cfg.numInt ?? 1; g.valueDec = cfg.numDecimal ?? 2; g.majorTicksInt = g.valueInt; g.majorTicksDec = g.valueDec;
     g.highlightsWidth = cfg.gauge?.highlightsWidth;
     g.animation = this.animationEnabled(); g.animateOnInit = false; g.animatedValue = this.animationEnabled(); g.animationRule = 'linear';
-    const st = cfg.paths?.['gaugePath']?.sampleTime ?? 500; g.animationDuration = st - 25;
+    const st = pathCfg?.sampleTime ?? 500; g.animationDuration = st - 25;
     g.colorBorderShadow = false; g.colorBorderOuter = theme.cardColor; g.colorBorderOuterEnd = ''; g.colorBorderMiddle = theme.cardColor; g.colorBorderMiddleEnd = '';
     g.colorPlate = g.colorPlateEnd = theme.cardColor; g.colorBar = theme.background;
 
-    g.barProgress = cfg.gauge?.enableProgressbar; g.colorBarProgress = getColors(cfg.color, theme).color;
-    g.colorNeedle = getColors(cfg.color, theme).color; g.colorNeedleEnd = getColors(cfg.color, theme).color;
+    const palette = getColors(cfg.color ?? 'contrast', theme);
+    g.barProgress = cfg.gauge?.enableProgressbar; g.colorBarProgress = palette.color;
+    g.colorNeedle = palette.color; g.colorNeedleEnd = palette.color;
     g.needleShadow = true; g.colorNeedleShadowUp = "black"; g.colorNeedleShadowDown = "black";
     g.colorNeedleCircleInner = g.colorPlate; g.colorNeedleCircleInnerEnd = g.colorPlate; g.colorNeedleCircleOuter = g.colorPlate; g.colorNeedleCircleOuterEnd = g.colorPlate;
 
-    g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = getColors(cfg.color, theme).color;
+    g.colorTitle = theme.contrastDim; g.colorUnits = theme.contrastDim; g.colorValueText = palette.color;
     this.colorStrokeTicks.set(theme.contrastDim); g.colorMinorTicks = theme.contrastDim;
     g.animationTarget = this.ANIMATION_TARGET_NEEDLE; g.useMinPath = false;
 
     // subtype specific
-    if (cfg.gauge?.subType === 'capacity') {
+    if (gaugeCfg.subType === 'capacity') {
       g.fontTitleSize = 40;
       g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 10; g.valueBoxBorderRadius = 5; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
       g.colorMajorTicks = g.colorPlate; g.colorNumbers = g.colorMinorTicks = '' as unknown as string;
 
-      g.barWidth = 20; g.colorBarProgress = getColors(cfg.color, theme).dim;
-      g.needle = cfg.gauge.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 75; g.needleEnd = 95; g.needleCircleSize = 1; g.needleCircleInner = false; g.needleCircleOuter = false;
-      g.ticksAngle = 360; g.startAngle = (cfg.gauge?.scaleStart as number) || 180; g.majorTicks = 0 as unknown as string[]; g.exactTicks = true; g.strokeTicks = false; g.minorTicks = 0; g.numbersMargin = 0; g.fontNumbersSize = 0;
+      g.barWidth = 20; g.colorBarProgress = palette.dim;
+      g.needle = gaugeCfg.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 75; g.needleEnd = 95; g.needleCircleSize = 1; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.ticksAngle = 360; g.startAngle = (gaugeCfg.scaleStart as number) || 180; g.majorTicks = 0 as unknown as string[]; g.exactTicks = true; g.strokeTicks = false; g.minorTicks = 0; g.numbersMargin = 0; g.fontNumbersSize = 0;
       g.borders = true; g.borderOuterWidth = 2; g.borderMiddleWidth = 1; g.borderInnerWidth = 0; g.borderShadowWidth = 0;
 
     } else { // measuring
       g.fontTitleSize = 24;
       g.barWidth = 15; g.valueBox = true; g.fontValueSize = 60; g.valueBoxWidth = 100; g.valueBoxBorderRadius = 0; g.valueBoxStroke = 0; g.colorValueBoxBackground = '';
-      g.needle = cfg.gauge.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 0; g.needleEnd = 95; g.needleCircleSize = 10; g.needleCircleInner = false; g.needleCircleOuter = false;
-      g.ticksAngle = 270; g.startAngle = 45; g.barStartPosition = cfg.gauge?.barStartPosition || 'left';
-      if (cfg.gauge.enableTicks) {
+      g.needle = gaugeCfg.enableNeedle; g.needleType = this.LINE; g.needleWidth = 2; g.needleStart = 0; g.needleEnd = 95; g.needleCircleSize = 10; g.needleCircleInner = false; g.needleCircleOuter = false;
+      g.ticksAngle = 270; g.startAngle = 45; g.barStartPosition = gaugeCfg.barStartPosition || 'left';
+      if (gaugeCfg.enableTicks) {
         g.strokeTicks = true; g.majorTicks = scale.majorTicks as unknown as string[]; g.minorTicks = 2; g.exactTicks = false; g.numbersMargin = 3; g.fontNumbersSize = 15;
         g.colorMajorTicks = theme.contrastDim; g.colorNumbers = theme.contrastDim;
       } else {

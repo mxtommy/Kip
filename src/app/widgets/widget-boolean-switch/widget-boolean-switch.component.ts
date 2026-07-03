@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked, OnDestroy, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked, OnDestroy, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SignalkRequestsService } from '../../core/services/signalk-requests.service';
 import { ITheme } from '../../core/services/app-service';
@@ -23,14 +23,13 @@ export interface IDimensions {
   selector: 'widget-boolean-switch',
   templateUrl: './widget-boolean-switch.component.html',
   styleUrls: ['./widget-boolean-switch.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, SvgBooleanSwitchComponent, SvgBooleanButtonComponent, SvgBooleanLightComponent, WidgetTitleComponent]
 })
 export class WidgetBooleanSwitchComponent implements OnDestroy {
   // Host2 functional inputs (provided by widget-host2 wrapper)
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -58,7 +57,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
 
   // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
-  protected labelColor = signal<string | undefined>(undefined);
+  protected labelColor = signal<string>('');
   protected noTitleClass = computed<string>(() => {
     const cfg = this.runtime?.options();
     return (cfg?.showLabel === false) ? 'widgets-container-no-title' : 'widgets-container';
@@ -74,7 +73,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
       const cfg = this.runtime?.options();
       if (!theme || !cfg) return;
       untracked(() => {
-        this.labelColor.set(getColors(cfg.color, theme).dim);
+        this.labelColor.set(getColors(cfg.color ?? 'contrast', theme).dim);
       });
     });
 
@@ -87,7 +86,8 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
       untracked(() => {
         this.switchControls.set(controls);
         // Register path observers for each control (idempotent via directive)
-        if (!this.streams) return;
+        const streams = this.streams;
+        if (!streams) return;
         controls.forEach(ctrl => {
           const pathsArr = cfg.paths as IWidgetPath[] | undefined;
           if (!pathsArr?.length) return;
@@ -97,7 +97,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
           if (!pathEntry?.path) return; // guard empty path
           // NOTE: WidgetStreamsDirective.observe expects the logical key of cfg.paths.
           // Since cfg.paths is an array here, keys are '0', '1', ... Use the index as string.
-          this.streams.observe(String(idx), pkt => {
+          streams.observe(String(idx), pkt => {
             // packet shape: pkt.data.value
             const val = pkt?.data?.value;
             const nextVal = ctrl.isNumeric

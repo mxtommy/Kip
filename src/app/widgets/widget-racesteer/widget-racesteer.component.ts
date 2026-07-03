@@ -1,5 +1,4 @@
 import { Component, effect, signal, computed, inject, input, untracked, OnDestroy } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { SvgRacesteerComponent } from '../svg-racesteer/svg-racesteer.component';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
@@ -11,7 +10,6 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
 
 @Component({
   selector: 'widget-racesteer',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-racesteer.component.html',
   styleUrls: ['./widget-racesteer.component.scss'],
   imports: [SvgRacesteerComponent]
@@ -19,7 +17,7 @@ interface IWindDirSample { timestamp: number; windDirection: number; }
 export class WidgetRacesteerComponent implements OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static full default config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -84,6 +82,10 @@ export class WidgetRacesteerComponent implements OnDestroy {
   protected readonly trueWindMinHistoric = signal<number>(0);
   protected readonly trueWindMidHistoric = signal<number>(0);
   protected readonly trueWindMaxHistoric = signal<number>(0);
+  protected readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetRacesteerComponent.DEFAULT_CONFIG);
+  protected readonly sailSetupEnabledValue = computed<boolean>(() => this.normalizedConfig().sailSetupEnable ?? false);
+  protected readonly driftEnabledValue = computed<boolean>(() => this.normalizedConfig().driftEnable ?? false);
+  protected readonly waypointEnabledValue = computed<boolean>(() => this.normalizedConfig().waypointEnable ?? false);
 
   private windSectorSub: Subscription | null = null;
   private historicalWindDirection: IWindDirSample[] = [];
@@ -91,7 +93,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
   constructor() {
     // Heading
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       if (!cfg) return;
       const paths = cfg.paths as IPathArray | undefined; // Host2 config uses object map
       const path = paths?.['headingPath']?.path;
@@ -173,7 +175,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
         if (cfg.windSectorEnable) {
           const heading = this.currentHeading();
           const relative360 = this.addHeading(heading, raw == null ? 0 : raw);
-          this.addHistoricalWindDirection(relative360, cfg.windSectorWindowSeconds);
+          this.addHistoricalWindDirection(relative360, cfg.windSectorWindowSeconds ?? 5);
         }
       }));
     });
@@ -213,7 +215,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
       if (!path) return;
       untracked(() => this.streams.observe('targetAngle', pkt => {
         const v = pkt?.data?.value as number | null;
-        this.targetAngle.set(v);
+        this.targetAngle.set(v ?? 0);
       }));
     });
 
@@ -311,8 +313,7 @@ export class WidgetRacesteerComponent implements OnDestroy {
     effect(() => {
       const cfg = this.runtime.options();
       if (!cfg || !cfg.twsEnable) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const paths = cfg.paths as Record<string, any> | undefined;
+      const paths = cfg.paths as IPathArray | undefined;
       const path = paths?.['trueWindAngle']?.path;
       if (!path) return;
       untracked(() => this.streams.observe('trueWindAngle', pkt => {
@@ -330,11 +331,11 @@ export class WidgetRacesteerComponent implements OnDestroy {
 
     // Start / stop wind sectors interval
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       if (!cfg) return;
       if (cfg.windSectorEnable) {
         if (!this.windSectorSub) {
-          untracked(() => this.windSectorSub = interval(500).subscribe(() => this.historicalCleanup(cfg.windSectorWindowSeconds)));
+          untracked(() => this.windSectorSub = interval(500).subscribe(() => this.historicalCleanup(cfg.windSectorWindowSeconds ?? 5)));
         }
       } else {
         this.windSectorSub?.unsubscribe();

@@ -1,6 +1,7 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { NotificationsService } from '../../services/notifications.service';
 import { Methods, States } from '../../interfaces/signalk-interfaces';
+import { INotificationConfig } from '../../interfaces/app-settings.interfaces';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { SlicePipe } from '@angular/common';
@@ -10,25 +11,28 @@ import { MatIconModule } from '@angular/material/icon';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, combineLatest } from 'rxjs';
 import isEqual from 'lodash-es/isEqual';
+import { INotification } from '../../services/notifications.service';
 
 @Component({
   selector: 'menu-notifications',
   templateUrl: './menu-notifications.component.html',
   styleUrls: ['./menu-notifications.component.scss'],
   imports: [MatListModule, MatButtonModule, MatBadgeModule, MatTooltipModule, MatIconModule, SlicePipe],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MenuNotificationsComponent {
   private readonly _notificationsService = inject(NotificationsService);
   private readonly _notifications$ = this._notificationsService.observeNotifications();
-  protected readonly notificationConfig = toSignal(this._notificationsService.observeNotificationConfiguration(), { requireSync: true });
+  protected readonly notificationConfig = toSignal<INotificationConfig>(
+    this._notificationsService.observeNotificationConfiguration(),
+    { requireSync: true }
+  );
 
   /**
    * menuNotifications is driven by both the notifications stream and the
    * notification configuration. Use combineLatest so changes to config
    * immediately reflect in the derived list.
    */
-  protected readonly menuNotifications = toSignal(
+  protected readonly menuNotifications: Signal<INotification[]> = toSignal(
     combineLatest([this._notifications$, this._notificationsService.observeNotificationConfiguration()]).pipe(
       map(([notifications, cfg]) => {
         const statesToFilter: States[] = [];
@@ -45,7 +49,7 @@ export class MenuNotificationsComponent {
       })
     ),
     { requireSync: true, equal: isEqual }
-  );
+  ) as Signal<INotification[]>;
   protected isMuted = false;
 
   protected mutePlayer(state: boolean): void {

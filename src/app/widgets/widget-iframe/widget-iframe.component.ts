@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, effect, ElementRef, inject, OnDestroy, signal, viewChild, input, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { generateSwipeScript } from '../../core/utils/iframe-inputs-inject.utils';
@@ -9,7 +8,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-iframe',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-iframe.component.html',
   styleUrls: ['./widget-iframe.component.scss']
 })
@@ -17,7 +15,7 @@ export class WidgetIframeComponent implements AfterViewInit, OnDestroy {
   // Functional Host2 inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Runtime directive (config merge done by container)
   protected readonly runtime = inject(WidgetRuntimeDirective);
@@ -26,7 +24,7 @@ export class WidgetIframeComponent implements AfterViewInit, OnDestroy {
 
   // Static default config (legacy parity)
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
-    widgetUrl: null,
+    widgetUrl: undefined,
     allowInput: false
   };
 

@@ -1,4 +1,4 @@
-import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, ChangeDetectionStrategy, inputBinding, computed } from '@angular/core';
+import { Component, inject, Type, ViewChild, ViewContainerRef, Input, effect, ComponentRef, OnDestroy, OnInit, untracked, inputBinding, computed, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { GestureDirective } from '../../directives/gesture.directive';
@@ -14,7 +14,7 @@ import { DialogService } from '../../services/dialog.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { WidgetHostBottomSheetComponent } from '../widget-host-bottom-sheet/widget-host-bottom-sheet.component';
 import { WidgetService } from '../../services/widget.service';
-import { AppService } from '../../services/app-service';
+import { AppService, ITheme } from '../../services/app-service';
 import { DashboardHistorySeriesSyncService } from '../../services/dashboard-history-series-sync.service';
 import { IKipSeriesDefinition, KipSeriesApiClientService } from '../../services/kip-series-api-client.service';
 import { isKipSeriesEnabled, isKipTemplateSeriesDefinition } from '../../contracts/kip-series-contract';
@@ -40,7 +40,6 @@ type TOverlayGate = 'history' | 'options' | 'sheet';
     { directive: WidgetMetadataDirective },
     { directive: WidgetRuntimeDirective }
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 /**
@@ -75,10 +74,10 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
 
   private readonly settings = inject(SettingsService);
 
-  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true });
+  protected theme = toSignal(this.app.cssThemeColorRoles$, { requireSync: true }) as Signal<ITheme>;
   protected readonly dashboardStaticView = computed(() => this.dashboard.isDashboardStatic());
   private childRef: ComponentRef<WidgetViewComponentBase> | null = null;
-  private compType: Type<WidgetViewComponentBase>
+  private compType: Type<WidgetViewComponentBase> | undefined;
   private _hasInitialized = false;
   private _destroyed = false;
   private readonly openOverlays = new Set<TOverlayGate>();
@@ -134,8 +133,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
    * render, so it guards against the host being destroyed mid-load and explicitly renders the child.
    */
   private async loadAndCreateChild(type: string, shouldAutoOpenOptions: boolean): Promise<void> {
-    this.compType = await this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
-    if (this._destroyed) return; // host was torn down while the chunk loaded
+    const resolvedCompType = await this.widgetService.getComponentType(type) as Type<WidgetViewComponentBase> | undefined;
+    if (this._destroyed || !resolvedCompType) return; // host was torn down while the chunk loaded
+    this.compType = resolvedCompType;
 
     // Resolve default configuration for this component type using helper
     const defaultCfg = this.getDefaultConfig();
@@ -240,6 +240,9 @@ export class WidgetHost2Component extends BaseWidget implements OnInit, OnDestro
     try {
       const dashboards = this.dashboard.dashboards();
       const activeIdx = this.dashboard.activeDashboard();
+      if (activeIdx == null || activeIdx < 0) {
+        return undefined;
+      }
       const dash = dashboards?.[activeIdx];
       type NodeWithConfig = NgGridStackWidget & {
         input?: { widgetProperties?: { config?: IWidgetSvcConfig } };

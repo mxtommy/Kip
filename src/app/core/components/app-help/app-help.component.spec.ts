@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppHelpComponent } from './app-help.component';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ApplicationRef, Component } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -63,7 +63,7 @@ describe('AppHelpComponent', () => {
             providers: [
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: activatedRoute },
-                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClient(withXhr(), withInterceptorsFromDi()),
                 provideHttpClientTesting()
             ]
         })
@@ -124,7 +124,7 @@ describe('AppHelpComponent', () => {
         expect(files.map(f => f.file)).toEqual(expected);
     }
 
-    async function flushMenu(res: unknown = mockMenu) {
+    async function flushMenu(res: object = mockMenu as object) {
         const req = httpMock.expectOne('assets/help-docs/menu.json');
         expect(req.request.method).toBe('GET');
         req.flush(res);

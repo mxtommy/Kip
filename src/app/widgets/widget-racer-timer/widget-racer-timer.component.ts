@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   DestroyRef,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -12,10 +13,9 @@ import {
   untracked,
   viewChild
 } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import {WidgetRuntimeDirective} from '../../core/directives/widget-runtime.directive';
 import {WidgetStreamsDirective} from '../../core/directives/widget-streams.directive';
-import {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
+import type {IPathArray, IWidgetSvcConfig} from '../../core/interfaces/widgets-interface';
 import {ITheme} from '../../core/services/app-service';
 import {SignalkRequestsService} from '../../core/services/signalk-requests.service';
 import {DashboardService} from '../../core/services/dashboard.service';
@@ -30,7 +30,6 @@ import {MatInput} from '@angular/material/input';
 
 @Component({
   selector: 'widget-racer-timer',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
   imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, MatInput]
@@ -39,7 +38,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   // Functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -86,15 +85,16 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   private valueStateColor = '';
   protected startAtTime = signal<string>('00:00:00');
   protected startAtTimeEdit = model<string>('');
+  private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetRacerTimerComponent.DEFAULT_CONFIG);
 
   constructor() {
     // Theme / palette effect
     effect(() => {
-      const cfg = this.runtime.options();
+      const cfg = this.normalizedConfig();
       const theme = this.theme();
-      if (!cfg || !theme) return;
+      if (!theme) return;
       untracked(() => {
-        const palette = getColors(cfg.color, theme);
+        const palette = getColors(cfg.color ?? 'contrast', theme);
         this.labelColor.set(palette.dim);
         this.valueColor = palette.color;
         this.valueStateColor = palette.color;
@@ -104,8 +104,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
 
     // Stream: TTS
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
+      const cfg = this.normalizedConfig();
       const paths = cfg.paths as IPathArray | undefined;
       const path = paths?.['ttsPath']?.path;
       if (!path) return;
@@ -115,7 +114,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
         this.updateValueColor();
         this.draw();
         if (this.shouldBeep(lastTts, this.ttsValue)) this.beepForValue(this.ttsValue!);
-        if (cfg.nextDashboard >= 0 && lastTts === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
+        if ((cfg.nextDashboard ?? -1) >= 0 && lastTts === 1 && this.ttsValue === 0 && (!this.dtsValue || this.dtsValue >= 0)) {
           // Navigation handled externally (legacy used router) – could inject Router if needed
         }
       }));
@@ -123,8 +122,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
 
     // Stream: start time
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
+      const cfg = this.normalizedConfig();
       const paths = cfg.paths as IPathArray | undefined;
       const path = paths?.['startTimePath']?.path;
       if (!path) return;
@@ -145,8 +143,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
 
     // Stream: distance to start line
     effect(() => {
-      const cfg = this.runtime.options();
-      if (!cfg) return;
+      const cfg = this.normalizedConfig();
       const paths = cfg.paths as IPathArray | undefined;
       const path = paths?.['dtsPath']?.path;
       if (!path) return;
@@ -235,8 +232,8 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateValueColor() {
-    const theme = this.theme(); const cfg = this.runtime.options();
-    if (!theme || !cfg) return;
+    const theme = this.theme(); const cfg = this.normalizedConfig();
+    if (!theme) return;
     if (cfg.ignoreZones) {
       if (!this.ttsValue) this.valueStateColor = this.valueColor;
       else if (this.ttsValue === 0) this.valueStateColor = this.valueColor;
@@ -266,7 +263,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   }
 
   private getValueText(): string {
-    return this.toHHMMSS(this.ttsValue);
+    return this.toHHMMSS(this.ttsValue ?? 0);
   }
 
   private draw() {

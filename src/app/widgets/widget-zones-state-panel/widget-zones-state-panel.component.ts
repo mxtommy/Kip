@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ITheme } from '../../core/services/app-service';
 import { IWidgetSvcConfig, IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -19,13 +19,12 @@ export interface IDimensions {
   selector: 'widget-zones-state-panel',
   templateUrl: './widget-zones-state-panel.component.html',
   styleUrls: ['./widget-zones-state-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KipResizeObserverDirective, SvgZoneStatesComponent, WidgetTitleComponent]
 })
 export class WidgetZonesStatePanelComponent {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   // Static default config consumed by runtime merge
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
@@ -50,7 +49,7 @@ export class WidgetZonesStatePanelComponent {
   // Reactive state
   protected notifications = toSignal<INotification[]>(this.notificationsService.observeNotifications());
   public zonesControls = signal<IDynamicControl[]>([]);
-  protected labelColor = signal<string | undefined>(undefined);
+  protected labelColor = signal<string>('');
   protected noTitleClass = computed<string>(() => {
     const cfg = this.runtime?.options();
     return (cfg?.showLabel === false) ? 'widgets-container-no-title' : 'widgets-container';
@@ -76,7 +75,7 @@ export class WidgetZonesStatePanelComponent {
       const cfg = this.runtime?.options();
       if (!theme || !cfg) return;
       untracked(() => {
-        this.labelColor.set(getColors(cfg.color, theme).dim);
+        this.labelColor.set(getColors(cfg.color ?? 'contrast', theme).dim);
       });
     });
 

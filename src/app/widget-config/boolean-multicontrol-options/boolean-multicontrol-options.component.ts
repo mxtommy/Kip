@@ -33,9 +33,9 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
   public readonly addPath = output<IAddNewPathObject>();
   public readonly updatePath = output<IDynamicControl[]>();
   public readonly delPath = output<IDeleteEventObj>();
-  public multiFormGroup: UntypedFormGroup = null;
+  public multiFormGroup!: UntypedFormGroup;
   public arrayLength = 0;
-  private multiCtrlArraySubscription: Subscription = null;
+  private multiCtrlArraySubscription?: Subscription;
 
   ngOnInit(): void {
     this.arrayLength = this.multiCtrlArray().length;
@@ -77,7 +77,7 @@ export class BooleanMultiControlOptionsComponent implements OnInit, OnDestroy {
         isPathConfigurable: true,
         showPathSkUnitsFilter: false,
         pathSkUnitsFilter: null,
-        convertUnitTo: null,
+        convertUnitTo: undefined,
         sampleTime: 500
       },
       ctrlType: this.zonesOnlyPaths() ? 4 : 3 // 4 = Zones State, 3 = indicator

@@ -64,13 +64,13 @@ export class SettingsConfigComponent {
   public copyConfigForm: UntypedFormGroup = this.fb.group({
     sourceTarget: [{value: '', disabled: false}, Validators.required]
   });
-  public storageLocation: string = null;
+  public storageLocation: string | null = null;
   public locations: string[] = ["Local Storage", "Server Storage"];
 
-  public saveConfigName: string = null;
-  public saveConfigScope: string = null;
-  public deleteConfigKey: string = null;
-  public jsonData: IConfig = null;
+  public saveConfigName: string | null = null;
+  public saveConfigScope: string | null = null;
+  public deleteConfigKey: string | null = null;
+  public jsonData: IConfig | null = null;
 
   private readonly authStateEffect = effect(() => {
     if (!this.supportApplicationData) {
@@ -146,9 +146,13 @@ export class SettingsConfigComponent {
    * Save config to local storage
    */
   public saveToLocalstorage(config: IConfig) {
-    this.settings.replaceConfig("appConfig", config.app, false);
+    if (config.app) {
+      this.settings.replaceConfig("appConfig", config.app, false);
+    }
     this.settings.replaceConfig("dashboardsConfig", config.dashboards, false);
-    this.settings.replaceConfig("themeConfig", config.theme, false);
+    if (config.theme) {
+      this.settings.replaceConfig("themeConfig", config.theme, false);
+    }
   }
 
   public async copyConfig() {
@@ -158,14 +162,22 @@ export class SettingsConfigComponent {
       return;
     }
 
-    let conf: IConfig = null;
+    let conf: IConfig | null = null;
     try {
       await this.storageSvc.getConfig(sourceTarget.scope, sourceTarget.name)
       .then((config: IConfig) => {
-        conf = config
+        conf = config;
       });
-    } catch (error) {
-      this.toast.show("Cannot retrieve server configuration: " + error.statusText, 0, false, 'error');
+    } catch (error: unknown) {
+      const statusText = typeof error === 'object' && error && 'statusText' in error
+        ? String((error as { statusText?: unknown }).statusText ?? 'Unknown error')
+        : 'Unknown error';
+      this.toast.show("Cannot retrieve server configuration: " + statusText, 0, false, 'error');
+      return;
+    }
+
+    if (!conf) {
+      this.toast.show('Cannot retrieve server configuration.', 0, false, 'error');
       return;
     }
 
@@ -289,6 +301,10 @@ export class SettingsConfigComponent {
         }
 
         if (this.hasToken) {
+          if (!this.jsonData) {
+            this.toast.show("Configuration not saved", 0, false, 'error');
+            return;
+          }
           // Wait for the server write to complete before reloading; reloading
           // mid-request aborts the upload and leaves the old config in place.
           const saved = await this.saveConfig(this.jsonData, 'user', 'default', false, true);
@@ -296,6 +312,10 @@ export class SettingsConfigComponent {
             return;
           }
         } else {
+          if (!this.jsonData) {
+            this.toast.show("Configuration not saved", 0, false, 'error');
+            return;
+          }
           // localStorage.setItem can throw (quota exceeded, private mode). Contain
           // it here so it surfaces an error instead of escaping this async handler
           // as an unhandled rejection and silently skipping the reload.

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, AfterViewInit, effect, Signal, model, DestroyRef, signal, viewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthenticationService } from './core/services/authentication.service';
@@ -31,7 +31,6 @@ import { DashboardHistorySeriesSyncService } from './core/services/dashboard-his
 
 @Component({
   selector: 'app-root',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   imports: [MenuNotificationsComponent, MenuActionsComponent, MatButtonModule, MatMenuModule, MatIconModule, RouterModule, MatSidenavModule, GestureDirective, OverlayModule, MatProgressSpinnerModule]
@@ -114,8 +113,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const msg = this.upgrade.messages();
       // Only run if the overlay is visible and there are messages
-      if (this.upgrade.upgrading() && msg.length && this.upgradeMessagesRef()) {
-        const ul = this.upgradeMessagesRef().nativeElement;
+      const upgradeMessagesRef = this.upgradeMessagesRef();
+      if (this.upgrade.upgrading() && msg.length && upgradeMessagesRef) {
+        const ul = upgradeMessagesRef.nativeElement;
         // Scroll to the bottom
         ul.scrollTop = ul.scrollHeight;
       }
@@ -145,7 +145,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     effect(() => {
-      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && this.notificationsInfo().alarmCount > 0;
+      const shouldShowBadge = this.dashboardVisible() && this._dashboard.isDashboardStatic() && (this.notificationsInfo()?.alarmCount ?? 0) > 0;
       const sidenavOpen = this.notificationsSidenavOpened();
 
       // If sidenav is open, immediately close overlay and cancel any scheduled open
@@ -190,7 +190,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait), {
+      initialValue: { matches: false, breakpoints: {} }
+    });
 
     this._connectionStateMachine.status$
       .pipe(takeUntilDestroyed(this._destroyRef))

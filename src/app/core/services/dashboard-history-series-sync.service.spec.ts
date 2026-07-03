@@ -273,7 +273,7 @@ describe('DashboardHistorySeriesSyncService', () => {
 
         expect(reconcileSpy).toHaveBeenCalledTimes(1);
 
-        const submitted = vi.mocked(reconcileSpy).mock.lastCall[0];
+        const submitted = vi.mocked(reconcileSpy).mock.lastCall?.[0] ?? [];
         expect(submitted.length).toBe(1);
         expect(submitted[0]).toEqual({
             seriesId: 'widget-numeric-1:auto:navigation-speedthroughwater:default',
@@ -323,7 +323,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         await vi.advanceTimersByTimeAsync(800);
 
         expect(reconcileSpy).toHaveBeenCalledTimes(1);
-        const submitted = vi.mocked(reconcileSpy).mock.lastCall[0];
+        const submitted = vi.mocked(reconcileSpy).mock.lastCall?.[0] ?? [];
         expect(seriesIds(submitted)).toEqual([
             'widget-data-1:datachart',
             'widget-numeric-1:auto:navigation-headingtrue:default',
@@ -331,13 +331,13 @@ describe('DashboardHistorySeriesSyncService', () => {
             'widget-wind-1:wind-speed'
         ]);
 
-        const dataChart = submitted.find(series => series.seriesId === 'widget-data-1:datachart');
+        const dataChart = submitted.find((series: IKipSeriesDefinition) => series.seriesId === 'widget-data-1:datachart');
         expect(dataChart?.path).toBe('navigation.speedThroughWater');
 
-        const windDirection = submitted.find(series => series.seriesId === 'widget-wind-1:wind-direction');
+        const windDirection = submitted.find((series: IKipSeriesDefinition) => series.seriesId === 'widget-wind-1:wind-direction');
         expect(windDirection?.path).toBe('self.environment.wind.directionTrue');
 
-        const windSpeed = submitted.find(series => series.seriesId === 'widget-wind-1:wind-speed');
+        const windSpeed = submitted.find((series: IKipSeriesDefinition) => series.seriesId === 'widget-wind-1:wind-speed');
         expect(windSpeed?.path).toBe('self.environment.wind.speedTrue');
     });
 
@@ -489,7 +489,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         await vi.advanceTimersByTimeAsync(800);
 
         expect(reconcileSpy).toHaveBeenCalledTimes(1);
-        const submitted = vi.mocked(reconcileSpy).mock.lastCall[0];
+        const submitted = vi.mocked(reconcileSpy).mock.lastCall?.[0] ?? [];
         expect(submitted[0].path).toBe('navigation.speedOverGround');
     });
 
@@ -527,12 +527,12 @@ describe('DashboardHistorySeriesSyncService', () => {
         await vi.advanceTimersByTimeAsync(800);
 
         expect(reconcileSpy).toHaveBeenCalledTimes(1);
-        const submitted = vi.mocked(reconcileSpy).mock.lastCall[0];
+        const submitted = vi.mocked(reconcileSpy).mock.lastCall?.[0] ?? [];
         expect(seriesIds(submitted)).toEqual([
             'array-1:auto:navigation-headingtrue:default',
             'auto-1:auto:navigation-speedthroughwater:default'
         ]);
-        expect(submitted.every(item => item.retentionDurationMs === 86400000)).toBe(true);
+        expect(submitted.every((item: IKipSeriesDefinition) => item.retentionDurationMs === 86400000)).toBe(true);
     });
 
     it('should deduplicate duplicate numeric paths with same source per widget', async () => {
@@ -590,7 +590,7 @@ describe('DashboardHistorySeriesSyncService', () => {
         await vi.advanceTimersByTimeAsync(800);
 
         expect(reconcileSpy).toHaveBeenCalledTimes(1);
-        expect(vi.mocked(reconcileSpy).mock.lastCall[0].length).toBe(1);
+        expect((vi.mocked(reconcileSpy).mock.lastCall?.[0] ?? []).length).toBe(1);
     });
 
     it('resolves dedicated data chart and wind trends mappings via public widget resolver', () => {

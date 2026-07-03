@@ -1,7 +1,6 @@
 import { Component, OnDestroy, ElementRef, AfterViewInit, effect, inject, viewChild, signal, input, computed, untracked } from '@angular/core';
-import { ChangeDetectionStrategy } from '@angular/core';
 import { formatDate } from '@angular/common';
-import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
 import { CanvasService } from '../../core/services/canvas.service';
 import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -10,7 +9,6 @@ import { ITheme } from '../../core/services/app-service';
 
 @Component({
   selector: 'widget-datetime',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './widget-datetime.component.html',
   styleUrls: ['./widget-datetime.component.scss'],
   imports: []
@@ -18,7 +16,7 @@ import { ITheme } from '../../core/services/app-service';
 export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
 
   private readonly runtime = inject(WidgetRuntimeDirective);
   private readonly streams = inject(WidgetStreamsDirective);
@@ -45,8 +43,8 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   };
 
   private canvasMainRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvasMainRef');
-  private canvasElement: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  private canvasElement!: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D | null = null;
   private titleBitmap: HTMLCanvasElement | null = null;
   private titleBitmapText: string | null = null;
   private titleBitmapColor: string | null = null;
@@ -58,14 +56,14 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
   protected dataValue = signal<string | null>(null);
   private _timeZoneGTM = "";
   private isDestroyed = false; // guard against callbacks after destroyed
-  protected labelColor = signal<string>(undefined);
-  private valueColor: string = undefined;
+  protected labelColor = signal<string>('');
+  private valueColor = '';
   private maxTextWidth = 0;
   private maxTextHeight = 0;
 
-  protected displayName = computed(() => this.runtime.options()?.displayName);
-  protected dateFormat = computed(() => this.runtime.options()?.dateFormat);
-  protected dateTimezone = computed(() => this.runtime.options()?.dateTimezone);
+  protected displayName = computed(() => this.runtime.options()?.displayName ?? 'Time Label');
+  protected dateFormat = computed(() => this.runtime.options()?.dateFormat ?? 'dd/MM/yyyy HH:mm:ss');
+  protected dateTimezone = computed(() => this.runtime.options()?.dateTimezone ?? 'System Timezone -');
 
   constructor() {
     effect(() => {
@@ -74,7 +72,7 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
       if (!cfg || !theme) return;
       untracked(() => {
         this.applyColors();
-        const pathCfg = cfg.paths?.['gaugePath'];
+        const pathCfg = (cfg.paths as Record<string, IWidgetPath> | undefined)?.['gaugePath'];
         if (!pathCfg?.path) return; // wait for path
         this._timeZoneGTM = this.getGMTOffset(this.dateTimezone());
         // Subscribe once per config change
@@ -139,8 +137,8 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
     const cfg = this.runtime.options();
     const theme = this.theme();
     if (!cfg || !theme) return;
-    this.labelColor.set(getColors(cfg.color, theme).dim);
-    this.valueColor = getColors(cfg.color, theme).color;
+    this.labelColor.set(getColors(cfg.color ?? 'contrast', theme).dim);
+    this.valueColor = getColors(cfg.color ?? 'contrast', theme).color;
   }
 
   ngOnDestroy() {
@@ -162,7 +160,7 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
     if (!this.titleBitmap ||
       this.titleBitmap.width !== this.canvasElement.width ||
       this.titleBitmap.height !== this.canvasElement.height ||
-      this.titleBitmapText !== `${this.displayName()}-${this.runtime.options().color}` ||
+      this.titleBitmapText !== `${this.displayName()}-${this.runtime.options()?.color ?? 'contrast'}` ||
       this.titleBitmapColor !== titleColor
     ) {
       this.titleBitmap = this.canvas.createTitleBitmap(
@@ -172,7 +170,7 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
         this.cssWidth,
         this.cssHeight
       );
-      this.titleBitmapText = `${this.displayName()}-${this.runtime.options().color}`;
+      this.titleBitmapText = `${this.displayName()}-${this.runtime.options()?.color ?? 'contrast'}`;
       this.titleBitmapColor = titleColor;
     }
 
@@ -194,8 +192,8 @@ export class WidgetDatetimeComponent implements AfterViewInit, OnDestroy {
       try {
         valueText = formatDate(cur, this.dateFormat(), 'en-US', this._timeZoneGTM);
       } catch (error) {
-        valueText = error;
-        console.log('[Date Time Widget]: ' + error);
+        valueText = String(error);
+        console.log('[Date Time Widget]: ' + String(error));
       }
     }
 

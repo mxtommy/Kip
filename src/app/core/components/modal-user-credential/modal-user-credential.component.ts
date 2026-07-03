@@ -18,7 +18,7 @@ export class ModalUserCredentialComponent {
   data = inject<{
     user: string;
     password: string;
-    error: string;
+    error: string | null;
 }>(MAT_DIALOG_DATA);
 
   titleDialog = "Sign in to Signal K";

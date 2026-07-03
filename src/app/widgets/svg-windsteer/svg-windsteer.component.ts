@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, viewChild, signal, effect, untracked, ChangeDetectionStrategy, OnDestroy, NgZone, inject } from '@angular/core';
+import { Component, ElementRef, input, viewChild, signal, effect, untracked, OnDestroy, NgZone, inject } from '@angular/core';
 import { animateRotation, animateAngleTransition, animateSectorTransition, SectorAngles } from '../../core/utils/svg-animate.util';
 import { DecimalPipe } from '@angular/common';
 
@@ -14,7 +14,6 @@ interface ISVGRotationObject {
   templateUrl: './svg-windsteer.component.svg',
   styleUrl: './svg-windsteer.component.scss',
   imports: [DecimalPipe],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SvgWindsteerComponent implements OnDestroy {
   protected readonly rotatingDial = viewChild.required<ElementRef<SVGGElement>>('rotatingDial');

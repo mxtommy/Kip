@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, Signal } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IWidgetSvcConfig } from '../../core/interfaces/widgets-interface';
@@ -11,7 +11,7 @@ import { ITheme } from '../../core/services/app-service';
 import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/dataset-stream.service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale, ChartTypeRegistry } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 
@@ -36,13 +36,12 @@ interface IDataSetRow {
   selector: 'widget-windtrends-chart',
   templateUrl: './widget-windtrends-chart.component.html',
   styleUrl: './widget-windtrends-chart.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetWindTrendsChartComponent implements OnDestroy {
   // Host2 functional inputs
   public id = input.required<string>();
   public type = input.required<string>();
-  public theme = input.required<ITheme | null>();
+  public theme = input.required<ITheme>();
   // Runtime directive (merged config) provided by Host2
   private readonly runtime = inject(WidgetRuntimeDirective, { optional: true });
   // Static default config consumed by Host2 runtime merge
@@ -57,12 +56,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private readonly canvasService = inject(CanvasService);
   private readonly unitsService = inject(UnitsService);
   private readonly responsive = inject(BreakpointObserver);
-  protected isPhonePortrait: Signal<BreakpointState>;
+  protected isPhonePortrait: Signal<BreakpointState | undefined>;
   readonly widgetDataChart = viewChild('widgetDataChart', { read: ElementRef });
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
   };
-  public lineChartOptions: ChartConfiguration['options'] = {
+  public lineChartOptions: NonNullable<ChartConfiguration<'line', IDataSetRow[]>['options']> = {
     parsing: false,
     datasets: {
       line: {
@@ -77,14 +76,14 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       }
     }
   }
-  public lineChartType: ChartType = 'line';
-  private chart: Chart<keyof ChartTypeRegistry, { x: number; y: number; }[], unknown>;
-  private _dsDirectionSub: Subscription = null;
-  private _dsSpeedSub: Subscription = null;
+  public readonly lineChartType = 'line' as const;
+  private chart: Chart<'line', IDataSetRow[]> | null = null;
+  private _dsDirectionSub: Subscription | null = null;
+  private _dsSpeedSub: Subscription | null = null;
   /** Pending coalesced chart recompute+repaint frame id (one per animation frame across both streams). */
   private _chartUpdateRafId: number | null = null;
-  private datasetConfig: IDatasetServiceDatasetConfig = null;
-  private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
+  private datasetConfig: IDatasetServiceDatasetConfig | null = null;
+  private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private xCenter: number | null = null;
   private xStep: number | null = null;
   private xCenterSpeed: number | null = null;
@@ -109,6 +108,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private readonly UNIT_PHONE_PORTRAIT_FONT_SIZE = 14;
   private readonly UNIT_PADDING = 8;            // px between speed value and 'kts'
   private readonly UNIT_PHONE_PORTRAIT_PADDING = 3;            // px between speed value and 'kts'
+  private readonly isPortrait = (): boolean => this.isPhonePortrait()?.matches === true;
 
   // Paint background under grid lines (chartArea only) so it appears beneath grids
   private gridBackgroundPlugin = {
@@ -128,7 +128,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   };
   private centerTickPlugin = {
     id: 'centerTickStyle',
-    afterDraw: (chart) => {
+    afterDraw: (chart: Chart) => {
       const ctx = chart.ctx as CanvasRenderingContext2D;
       const area = chart.chartArea as ChartArea;
       const theme = this.theme();
@@ -164,7 +164,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         ctx.restore();
         ctx.save();
         ctx.fillStyle = theme.contrastDim;
-        ctx.font = this.isPhonePortrait().matches ? `bold ${this.CENTER_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.CENTER_LABEL_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPortrait() ? `bold ${this.CENTER_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.CENTER_LABEL_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         const y = this.axisTopLabelY(scale);
@@ -186,7 +186,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           ctx.save();
           // Match tick label color for xSpeed axis
           ctx.fillStyle = this.resolveTickColor(chart, xSpeedScale, xmax);
-          ctx.font = this.isPhonePortrait().matches ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
+          ctx.font = this.isPortrait() ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'right';
           ctx.textBaseline = 'top';
           const y = this.axisTopLabelY(xSpeedScale);
@@ -219,7 +219,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           ctx.save();
           // Match tick label color for x axis
           ctx.fillStyle = this.resolveTickColor(chart, xScale, xmin);
-          ctx.font = this.isPhonePortrait().matches ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
+          ctx.font = this.isPortrait() ? `normal ${this.TICK_LABEL_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `normal ${this.TICK_LABEL_FONT_SIZE}px ${def.family}`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
           const y = this.axisTopLabelY(xScale);
@@ -239,18 +239,18 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         ctx.save();
         ctx.fillStyle = chartColors.chartValue;
         // Draw speed value centered
-        ctx.font = this.isPhonePortrait().matches ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPortrait() ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const speedText = `${lastSpeed.toFixed(1)}`;
         const speedX = area.left + (area.width / 4);
-        const speedY = area.top - (this.isPhonePortrait().matches ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET);
+        const speedY = area.top - (this.isPortrait() ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET);
         ctx.fillText(speedText, speedX, speedY);
         // Measure speed text to place unit right after it
         const metrics = ctx.measureText(speedText);
-        const unitX = speedX + (metrics.width / 2) + (this.isPhonePortrait().matches ? this.UNIT_PHONE_PORTRAIT_PADDING : this.UNIT_PADDING);
-        const unitY = area.top - (this.isPhonePortrait().matches ? this.TOP_UNIT_PHONE_PORTRAIT_Y_OFFSET : this.TOP_UNIT_Y_OFFSET);
-        ctx.font = this.isPhonePortrait().matches ? `bold ${this.UNIT_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.UNIT_FONT_SIZE}px ${def.family}`;
+        const unitX = speedX + (metrics.width / 2) + (this.isPortrait() ? this.UNIT_PHONE_PORTRAIT_PADDING : this.UNIT_PADDING);
+        const unitY = area.top - (this.isPortrait() ? this.TOP_UNIT_PHONE_PORTRAIT_Y_OFFSET : this.TOP_UNIT_Y_OFFSET);
+        ctx.font = this.isPortrait() ? `bold ${this.UNIT_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.UNIT_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'left';
         ctx.fillText('kts', unitX, unitY);
         ctx.restore();
@@ -264,10 +264,10 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         const dir = this.normalizeAngle(lastDir);
         ctx.save();
         ctx.fillStyle = chartColors.chartValue;
-        ctx.font = this.isPhonePortrait().matches ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
+        ctx.font = this.isPortrait() ? `bold ${this.SPEED_VALUE_PHONE_PORTRAIT_FONT_SIZE}px ${def.family}` : `bold ${this.SPEED_VALUE_FONT_SIZE}px ${def.family}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - (this.isPhonePortrait().matches ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET));
+        ctx.fillText(`${dir.toFixed(0)}°`, area.left + (3 * area.width / 4), area.top - (this.isPortrait() ? this.TOP_VALUE_PHONE_PORTRAIT_Y_OFFSET : this.TOP_VALUE_Y_OFFSET));
         ctx.restore();
       }
 
@@ -302,7 +302,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   };
 
   constructor() {
-    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this.responsive.observe(Breakpoints.HandsetPortrait), { initialValue: undefined });
     // Theme or config color changes -> restyle chart
     effect(() => {
       const theme = this.theme();
@@ -335,13 +335,15 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private startWidget(): void {
     // Guard until canvas view is ready
     if (!this.widgetDataChart()) return;
-    this.datasetConfig = this._dataset.getDatasetConfig(`${this.id()}-twd`);
-    this.dataSourceInfo = this._dataset.getDataSourceInfo(`${this.id()}-twd`);
+    this.datasetConfig = this._dataset.getDatasetConfig(`${this.id()}-twd`) ?? null;
+    this.dataSourceInfo = this._dataset.getDataSourceInfo(`${this.id()}-twd`) ?? null;
     if (!this.datasetConfig) return;
     this.createDatasets();
     this.setChartOptions();
     if (!this.chart) {
-      this.chart = new Chart(this.widgetDataChart().nativeElement.getContext('2d'), {
+      const ctx = this.widgetDataChart()?.nativeElement.getContext('2d');
+      if (!ctx) return;
+      this.chart = new Chart<'line', IDataSetRow[]>(ctx, {
         type: this.lineChartType,
         data: this.lineChartData,
         options: this.lineChartOptions,
@@ -361,6 +363,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   }
 
   private setChartOptions() {
+    const datasetConfig = this.datasetConfig;
+    const dataSourceInfo = this.dataSourceInfo;
+    if (!datasetConfig || !dataSourceInfo) {
+      return;
+    }
+
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
@@ -383,7 +391,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         reverse: true, // 0 (now) at top; older increases downward
         title: {
           display: true,
-          text: `${this.datasetConfig.timeScaleFormat}`,
+            text: `${datasetConfig.timeScaleFormat}`,
           align: "center"
         },
         ticks: {
@@ -392,10 +400,10 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           includeBounds: true,
           align: 'inner',
           major: { enabled: true },
-          font: this.isPhonePortrait().matches ? { size: 12 } : { size: 16 },
-          callback: (value: number) => {
+          font: this.isPortrait() ? { size: 12 } : { size: 16 },
+          callback: (value: string | number) => {
             const ms = Number(value);
-            const fmt = this.datasetConfig?.timeScaleFormat;
+            const fmt = datasetConfig.timeScaleFormat;
             const windowMs = this.getWindowMs(fmt);
             // 5-minute scale: show whole minutes
             if (fmt === 'Last 5 Minutes') {
@@ -434,15 +442,16 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           stepSize: xDefaultStep,
           minRotation: 0,
           maxRotation: 0,
-          callback: (value: number) => {
+          callback: (value: string | number) => {
+            const numericValue = Number(value);
             // Hide the default center tick label; plugin will draw a bold themed label there
             const center = this.xCenter ?? Number.NaN;
-            if (this.nearlyEqual(value, center)) return '';
+            if (this.nearlyEqual(numericValue, center)) return '';
             // Hide leftmost label (at min) to avoid overlap with custom shifted label
             const scales = this.chart?.options?.scales as unknown as { x?: { min?: number } } | undefined;
             const minOpt = scales?.x?.min;
-            if (typeof minOpt === 'number' && this.nearlyEqual(value as number, minOpt)) return '';
-            const wrapped = ((value % 360 + 360) % 360);
+            if (typeof minOpt === 'number' && this.nearlyEqual(numericValue, minOpt)) return '';
+            const wrapped = ((numericValue % 360 + 360) % 360);
             return `${wrapped.toFixed(0)}°`;
           },
           // Make the center tick bold and themed using precomputed midpoint/step
@@ -450,7 +459,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenter ?? Number.NaN;
             const isCenter = this.nearlyEqual(tickVal, center);
-            return this.isPhonePortrait().matches ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
+            return this.isPortrait() ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
@@ -490,7 +499,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           stepSize: xsDefaultStep,
           minRotation: 0,
           maxRotation: 0,
-          callback: (value: number) => {
+          callback: (value: string | number) => {
             const center = this.xCenterSpeed ?? Number.NaN;
             if (this.nearlyEqual(value as number, center)) return '';
             // Hide rightmost label (at max) to avoid overlap with custom shifted label
@@ -507,7 +516,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
             const center = this.xCenterSpeed ?? Number.NaN;
             const isCenter = this.nearlyEqual(tickVal, center);
-            return this.isPhonePortrait().matches ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
+            return this.isPortrait() ? { size: 11, weight: isCenter ? 'bold' : 'normal' } : { size: 20, weight: isCenter ? 'bold' : 'normal' };
           },
           color: (ctx) => {
             const tickVal = (ctx as unknown as { tick?: { value: number } }).tick?.value ?? Number.NaN;
@@ -538,23 +547,26 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         align: "end",
         text: `TWD `,
         color: this.getThemeColors().chartLabel,
-        padding: this.isPhonePortrait().matches ? { top: 3, bottom: 0 } : { top: 3, bottom: 0 },
-        font: this.isPhonePortrait().matches ? { size: 16, weight: 'normal' } : { size: 35, weight: 'normal' }
+        padding: this.isPortrait() ? { top: 3, bottom: 0 } : { top: 3, bottom: 0 },
+        font: this.isPortrait() ? { size: 16, weight: 'normal' } : { size: 35, weight: 'normal' }
       },
       subtitle: {
         display: true,
         align: "start",
          text: ` TWS`,
         color: this.getThemeColors().chartLabel,
-        padding: this.isPhonePortrait().matches ? { top: -18, bottom: 12 } : { top: -41, bottom: 12 },
-        font: this.isPhonePortrait().matches ? { size: 16 } : { size: 35 }
+        padding: this.isPortrait() ? { top: -18, bottom: 12 } : { top: -41, bottom: 12 },
+        font: this.isPortrait() ? { size: 16 } : { size: 35 }
       },
       legend: { display: false
       },
+      annotation: {
+        annotations: {}
+      },
       streaming: {
-        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
-        delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
+        duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,
+        delay: dataSourceInfo.sampleTime,
+        frameRate: datasetConfig.timeScaleFormat === "day" ? 5 : datasetConfig.timeScaleFormat === "hour" ? 8 : datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
       }
     }
 
@@ -597,7 +609,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         borderColor: (context) => {
           const chart = context.chart as Chart;
           const { ctx } = chart;
-          return this.lineGradientForAxis(ctx, chart, 'x');
+          return this.lineGradientForAxis(ctx, chart, 'x') ?? this.getThemeColors().averageLine;
         },
         backgroundColor: 'red',
         xAxisID: 'x'
@@ -666,7 +678,7 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         borderColor: (context) => {
           const chart = context.chart as Chart;
           const { ctx } = chart;
-          return this.lineGradientForAxis(ctx, chart, 'xSpeed');
+          return this.lineGradientForAxis(ctx, chart, 'xSpeed') ?? this.getThemeColors().averageLine;
         },
         xAxisID: 'xSpeed'
       },
@@ -712,29 +724,50 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private startStreaming(): void {
     this._dsDirectionSub?.unsubscribe();
     this._dsSpeedSub?.unsubscribe();
+    if (!this.chart || !this.dataSourceInfo) {
+      return;
+    }
 
     const batchThenLiveDir$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-twd`);
     const batchThenLiveSpd$ = this._dataset.getDatasetBatchThenLiveObservable(`${this.id()}-tws`);
 
-    this._dsDirectionSub = batchThenLiveDir$?.subscribe(dsPointOrBatch => {
+    if (!batchThenLiveDir$ || !batchThenLiveSpd$) {
+      return;
+    }
+
+    this._dsDirectionSub = batchThenLiveDir$.subscribe(dsPointOrBatch => {
+      const chart = this.chart;
+      const dataSourceInfo = this.dataSourceInfo;
+      if (!chart || !dataSourceInfo) return;
       if (Array.isArray(dsPointOrBatch)) {
         this.pushRowsToDatasets(dsPointOrBatch);
       } else {
         this.pushRowsToDatasets([dsPointOrBatch]);
-        if (this.chart.data.datasets[0].data.length > this.dataSourceInfo.maxDataPoints) {
-          for (let i = 0; i <= 4; i++) this.chart.data.datasets[i].data.shift();
+        const dirDataset = chart.data.datasets[0]?.data;
+        if (Array.isArray(dirDataset) && dirDataset.length > dataSourceInfo.maxDataPoints) {
+          for (let i = 0; i <= 4; i++) {
+            const ds = chart.data.datasets[i]?.data;
+            if (Array.isArray(ds)) ds.shift();
+          }
         }
       }
       this.scheduleChartUpdate();
     });
 
-    this._dsSpeedSub = batchThenLiveSpd$?.subscribe(dsPointOrBatch => {
+    this._dsSpeedSub = batchThenLiveSpd$.subscribe(dsPointOrBatch => {
+      const chart = this.chart;
+      const dataSourceInfo = this.dataSourceInfo;
+      if (!chart || !dataSourceInfo) return;
       if (Array.isArray(dsPointOrBatch)) {
         this.pushRowsToSpeedDatasets(dsPointOrBatch);
       } else {
         this.pushRowsToSpeedDatasets([dsPointOrBatch]);
-        if (this.chart.data.datasets[5].data.length > this.dataSourceInfo.maxDataPoints) {
-          for (let i = 5; i <= 9; i++) this.chart.data.datasets[i].data.shift();
+        const spdDataset = chart.data.datasets[5]?.data;
+        if (Array.isArray(spdDataset) && spdDataset.length > dataSourceInfo.maxDataPoints) {
+          for (let i = 5; i <= 9; i++) {
+            const ds = chart.data.datasets[i]?.data;
+            if (Array.isArray(ds)) ds.shift();
+          }
         }
       }
       this.scheduleChartUpdate();
@@ -803,9 +836,13 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
 
   // Push a batch of rows into 5 consecutive datasets starting at baseIndex
   private pushRowsGeneric(rows: IDatasetServiceDatapoint[], baseIndex: 0 | 5, toUnit: 'deg' | 'knots', unwrap: boolean): void {
+    const chart = this.chart;
+    if (!chart) return;
     const types: ('value' | 'sma' | 'avg' | 'min' | 'max')[] = ['value', 'sma', 'avg', 'min', 'max'];
     types.forEach((type, i) => {
-      (this.chart.data.datasets[baseIndex + i].data as IDataSetRow[])
+      const dataset = chart.data.datasets[baseIndex + i];
+      if (!dataset || !Array.isArray(dataset.data)) return;
+      (dataset.data as IDataSetRow[])
         .push(...this.transformRows(rows, type, toUnit, unwrap));
     });
   }
@@ -838,17 +875,34 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     if (this._chartUpdateRafId != null) return;
     this._chartUpdateRafId = requestAnimationFrame(() => {
       this._chartUpdateRafId = null;
-      if (!this.chart) return;
+      if (!this.chart || !this.hasValidDatasets()) return;
       this.updateChartAfterDataChange();
       this.ngZone.runOutsideAngular(() => this.chart?.update('none'));
     });
   }
 
+  /**
+   * Verify that all datasets are properly initialized before chart update.
+   * This prevents the annotation plugin from trying to access undefined datasets.
+   */
+  private hasValidDatasets(): boolean {
+    const datasets = this.chart?.data?.datasets;
+    if (!Array.isArray(datasets) || datasets.length < 10) return false;
+    // Ensure all 10 datasets exist and have data array
+    for (let i = 0; i < 10; i++) {
+      const ds = datasets[i];
+      if (!ds || !Array.isArray(ds.data)) return false;
+    }
+    return true;
+  }
+
   private updateChartAfterDataChange() {
+    const chart = this.chart;
+    if (!chart) return;
     // Calculate dynamic x (direction) scale range based on lastAverage center and lastMin/Max distances (with wrap-around)
-    const dirAvgArr = this.chart.data.datasets[2]?.data as IDataSetRow[] | undefined;
-    const dirSmaArr = this.chart.data.datasets[1]?.data as IDataSetRow[] | undefined;
-    const dirValArr = this.chart.data.datasets[0]?.data as IDataSetRow[] | undefined;
+    const dirAvgArr = chart.data.datasets[2]?.data as IDataSetRow[] | undefined;
+    const dirSmaArr = chart.data.datasets[1]?.data as IDataSetRow[] | undefined;
+    const dirValArr = chart.data.datasets[0]?.data as IDataSetRow[] | undefined;
     const hasAvg = !!dirAvgArr?.length;
     const hasSma = !!dirSmaArr?.length;
     const hasVal = !!dirValArr?.length;
@@ -862,8 +916,8 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           : undefined;
     if (typeof centerVal === 'number' && isFinite(centerVal)) {
       // Try to use lastMinimum/Maximum if available; else derive half-range from recent window using angular distance
-      const minDs = this.chart.data.datasets[3]?.data as IDataSetRow[] | undefined;
-      const maxDs = this.chart.data.datasets[4]?.data as IDataSetRow[] | undefined;
+      const minDs = chart.data.datasets[3]?.data as IDataSetRow[] | undefined;
+      const maxDs = chart.data.datasets[4]?.data as IDataSetRow[] | undefined;
       const lastMin = minDs?.length ? minDs[minDs.length - 1].x : undefined;
       const lastMax = maxDs?.length ? maxDs[maxDs.length - 1].x : undefined;
       const minDiff = typeof lastMin === 'number' && isFinite(lastMin) ? this.angularDiff(centerVal, lastMin) : Number.NaN;
@@ -892,10 +946,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       // Place center exactly at lastAverage
       const xMin = centerVal - 2 * dStep;
       const xMax = centerVal + 2 * dStep;
-      this.chart.options.scales.x.min = xMin;
-      this.chart.options.scales.x.max = xMax;
-      const xScale = this.chart.options.scales as unknown as { x: { ticks?: { stepSize?: number } } };
-      xScale.x.ticks = { ...(xScale.x.ticks ?? {}), stepSize: dStep };
+      const xScale = chart.options.scales as unknown as { x?: { min?: number; max?: number; ticks?: { stepSize?: number } } };
+      if (xScale.x) {
+        xScale.x.min = xMin;
+        xScale.x.max = xMax;
+        xScale.x.ticks = { ...(xScale.x.ticks ?? {}), stepSize: dStep };
+      }
 
       // Cache for tick styling
       this.xCenter = centerVal;
@@ -903,12 +959,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
     }
 
     // Calculate dynamic xSpeed (knots) scale range based on lastAverage center and lastMin/Max distances
-    const sAvgArr = this.chart.data.datasets[7]?.data as IDataSetRow[] | undefined;
+    const sAvgArr = chart.data.datasets[7]?.data as IDataSetRow[] | undefined;
     if (sAvgArr && sAvgArr.length) {
       const sIdx = sAvgArr.length - 1;
       const sAvg = sAvgArr[sIdx]?.x ?? 0;
-      const sMin = (this.chart.data.datasets[8].data as IDataSetRow[])[sIdx]?.x ?? sAvg;
-      const sMax = (this.chart.data.datasets[9].data as IDataSetRow[])[sIdx]?.x ?? sAvg;
+      const sMin = (chart.data.datasets[8].data as IDataSetRow[])[sIdx]?.x ?? sAvg;
+      const sMax = (chart.data.datasets[9].data as IDataSetRow[])[sIdx]?.x ?? sAvg;
       const sDiffMin = Math.abs(sAvg - sMin);
       const sDiffMax = Math.abs(sMax - sAvg);
       let halfRangeS = Math.max(sDiffMin, sDiffMax);
@@ -922,10 +978,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
       // Keep center exactly at lastAverage Speed
       const spMin = sAvg - 2 * spStep;
       const spMax = sAvg + 2 * spStep;
-      const scales = this.chart.options.scales as unknown as { xSpeed: { min?: number; max?: number; ticks?: { stepSize?: number } } };
-      scales.xSpeed.min = spMin;
-      scales.xSpeed.max = spMax;
-      scales.xSpeed.ticks = { ...(scales.xSpeed.ticks ?? {}), stepSize: spStep };
+      const scales = chart.options.scales as unknown as { xSpeed?: { min?: number; max?: number; ticks?: { stepSize?: number } } };
+      if (scales.xSpeed) {
+        scales.xSpeed.min = spMin;
+        scales.xSpeed.max = spMax;
+        scales.xSpeed.ticks = { ...(scales.xSpeed.ticks ?? {}), stepSize: spStep };
+      }
 
       // cache for tick styling on speed axis
       this.xCenterSpeed = sAvg;
@@ -934,19 +992,22 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
 
     // Fixed, non-scrolling y-axis window (relative age)
     const windowMs = this.getWindowMs(this.datasetConfig?.timeScaleFormat);
-    const data0 = this.chart.data.datasets[0].data as (IDataSetRow[]);
+    const data0 = chart.data.datasets[0].data as (IDataSetRow[]);
     if (data0.length > 0) {
       const nowTs = Date.now();
       // Recompute y for all datasets as age (ms) relative to now
-      this.chart.data.datasets.forEach(ds => {
+      chart.data.datasets.forEach(ds => {
         (ds.data as IDataSetRow[]).forEach(p => {
           const ts = p.ts ?? p.y;
           p.y = Math.max(0, Math.min(windowMs, nowTs - ts));
         });
       });
       // Lock y scale to [0, window]
-      this.chart.options.scales.y.min = 0;
-      this.chart.options.scales.y.max = windowMs;
+      const yScale = chart.options.scales as unknown as { y?: { min?: number; max?: number; ticks?: { stepSize?: number; count?: number } } };
+      if (yScale.y) {
+        yScale.y.min = 0;
+        yScale.y.max = windowMs;
+      }
       // Explicit step per selected window
       let step: number;
       const fmt = this.datasetConfig?.timeScaleFormat;
@@ -965,11 +1026,12 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
           step = windowMs / 5;
           break;
       }
-      const yScale = this.chart.options.scales as unknown as { y: { ticks?: { stepSize?: number; count?: number } } };
-      const ticksCopy = { ...(yScale.y.ticks ?? {}) } as { stepSize?: number; count?: number };
-      delete ticksCopy.count;
-      ticksCopy.stepSize = step;
-      yScale.y.ticks = ticksCopy;
+      if (yScale.y) {
+        const ticksCopy = { ...(yScale.y.ticks ?? {}) } as { stepSize?: number; count?: number };
+        delete ticksCopy.count;
+        ticksCopy.stepSize = step;
+        yScale.y.ticks = ticksCopy;
+      }
     }
   }
 
@@ -1023,13 +1085,13 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
   private getThemeColors(): IChartColors {
   const widgetColor = this.runtime?.options()?.color;
     const colors: IChartColors = {
-      valueLine: null,
-      valueFill: null,
-      averageLine: null,
-      averageFill: null,
-      averageChartLine: null,
-      chartLabel: null,
-      chartValue: null
+      valueLine: '',
+      valueFill: '',
+      averageLine: '',
+      averageFill: '',
+      averageChartLine: '',
+      chartLabel: '',
+      chartValue: ''
     };
 
     switch (widgetColor) {

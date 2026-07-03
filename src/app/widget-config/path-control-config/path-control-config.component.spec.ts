@@ -12,6 +12,14 @@ import { UnitsService } from '../../core/services/units.service';
 describe('PathControlConfigComponent', () => {
   let component: PathControlConfigComponent;
   let fixture: ComponentFixture<PathControlConfigComponent>;
+  const mockUnitsService = {
+    skBaseUnits: [
+      { unit: 'rad', properties: { display: '°', quantity: 'Angle', quantityDisplay: '∠', description: 'Radians' } },
+      { unit: 'deg', properties: { display: 'Position', quantity: 'Angle', quantityDisplay: '∠', description: 'Position degrees' } }
+    ],
+    getConversions: () => [],
+    getConversionsForPath: () => ({ base: 'deg', conversions: [] })
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -36,7 +44,7 @@ describe('PathControlConfigComponent', () => {
             getPathsAndMetaByType: () => ([])
           }
         },
-        { provide: UnitsService, useValue: { skBaseUnits: [], getConversions: () => [] } }
+        { provide: UnitsService, useValue: mockUnitsService }
       ]
     })
       .compileComponents();
@@ -68,5 +76,31 @@ describe('PathControlConfigComponent', () => {
 
   it('should be created', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should build a stable unit filter list without mutating base units', () => {
+    const baseUnitsSnapshot = structuredClone(mockUnitsService.skBaseUnits);
+    const filterPathForm = new UntypedFormGroup({
+      description: new UntypedFormControl('Position'),
+      path: new UntypedFormControl('navigation.position'),
+      pathID: new UntypedFormControl('uuid-2'),
+      source: new UntypedFormControl('default'),
+      pathType: new UntypedFormControl('number'),
+      supportsPut: new UntypedFormControl(true),
+      isPathConfigurable: new UntypedFormControl(true),
+      showPathSkUnitsFilter: new UntypedFormControl(true),
+      pathSkUnitsFilter: new UntypedFormControl(null),
+      convertUnitTo: new UntypedFormControl('deg'),
+      sampleTime: new UntypedFormControl(500),
+      pathRequired: new UntypedFormControl(true)
+    });
+
+    const filterFixture = TestBed.createComponent(PathControlConfigComponent);
+    filterFixture.componentRef.setInput('pathFormGroup', filterPathForm);
+    filterFixture.componentRef.setInput('multiCTRLArray', [] as IDynamicControl[]);
+    filterFixture.componentRef.setInput('filterSelfPaths', false);
+
+    expect(() => filterFixture.detectChanges()).not.toThrow();
+    expect(mockUnitsService.skBaseUnits).toEqual(baseUnitsSnapshot);
   });
 });

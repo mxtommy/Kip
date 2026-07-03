@@ -6,9 +6,9 @@ KIP architecture rules belong in `.github/instructions/project.instructions.md`.
 
 ## TypeScript Quality
 
-- Keep strict typing. Do not weaken TypeScript config to bypass errors.
-- Prefer explicit domain types over ad hoc inline shapes.
-- Avoid `any`; use `unknown` and narrow with type guards.
+- Use strict type checking. Do not weaken TypeScript config to bypass errors.
+- Prefer type inference when the type is obvious
+- Avoid the `any` type; use `unknown` when type is uncertain
 - Prefer immutable patterns for shared data structures.
 - Keep function signatures small and focused.
 

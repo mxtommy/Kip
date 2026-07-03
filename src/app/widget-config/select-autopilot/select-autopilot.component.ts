@@ -72,7 +72,7 @@ private readonly _destroyRef = inject(DestroyRef);
 private readonly http = inject(HttpClient);
 
 private rootFormGroup = inject(FormGroupDirective);
-protected autopilotFormGroup: UntypedFormGroup;
+protected autopilotFormGroup!: UntypedFormGroup;
 
 // API Version Detection
 protected apiVersion = signal<'v1' | 'v2' | null>(null);
@@ -92,7 +92,7 @@ private currentRequests = new Set<Observable<unknown>>();
 
 constructor() {
   effect(() => {
-    this.autopilotFormGroup.get('apiVersion')?.setValue(this.apiVersion(), { emitEvent: false });
+    this.autopilotFormGroup?.get('apiVersion')?.setValue(this.apiVersion(), { emitEvent: false });
   });
 }
 

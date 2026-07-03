@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, inject, DestroyRef, Signal, effect, viewChild, ChangeDetectorRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -35,7 +35,6 @@ interface DataInspectorViewRow {
   selector: 'data-inspector',
   templateUrl: './data-inspector.component.html',
   styleUrls: ['./data-inspector.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ MatFormFieldModule, MatTableModule, MatInputModule, MatPaginatorModule, MatSortModule, DataInspectorRowComponent, PageHeaderComponent, MatButtonModule, MatIconModule, MatTooltipModule]
 })
 export class DataInspectorComponent implements AfterViewInit, OnDestroy {
@@ -69,7 +68,9 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait));
+    this.isPhonePortrait = toSignal(this._responsive.observe(Breakpoints.HandsetPortrait), {
+      initialValue: { matches: false, breakpoints: {} }
+    });
 
     effect(() => {
       if (this.isPhonePortrait().matches) {
@@ -146,7 +147,7 @@ export class DataInspectorComponent implements AfterViewInit, OnDestroy {
   private toViewRow(path: ISkPathData): DataInspectorViewRow {
     return {
       path: path.path,
-      type: path.type,
+      type: path.type ?? '',
       supportsPut: path.meta?.supportsPut === true,
       sourceRows: Object.entries(path.sources ?? {}).map(([key, source]) => ({
         key,

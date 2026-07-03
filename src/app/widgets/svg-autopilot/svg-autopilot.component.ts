@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, input, viewChild, effect, computed, untracked, signal, NgZone, inject, OnDestroy } from '@angular/core';
 import { animateRotation, animateRudderWidth } from '../../core/utils/svg-animate.util';
 import { TApMode } from '../../core/interfaces/signalk-autopilot-interfaces';
 
@@ -7,7 +7,6 @@ import { TApMode } from '../../core/interfaces/signalk-autopilot-interfaces';
   selector: 'app-svg-autopilot',
   templateUrl: './svg-autopilot.component.svg',
   styleUrl: './svg-autopilot.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: []
 })
 export class SvgAutopilotComponent implements OnDestroy {

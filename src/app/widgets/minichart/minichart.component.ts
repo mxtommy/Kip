@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, ElementRef, viewChild, inject, effect, NgZone, input, untracked } from '@angular/core';
 import { DatasetStreamService, IDatasetServiceDatapoint, IDatasetServiceDataSourceInfo } from '../../core/services/dataset-stream.service';
 import { IDatasetServiceDatasetConfig } from '../../core/services/dataset-stream.service';
 import { Subscription } from 'rxjs';
@@ -6,7 +6,7 @@ import { CanvasService } from '../../core/services/canvas.service';
 import { ITheme } from '../../core/services/app-service';
 import { UnitsService } from '../../core/services/units.service';
 
-import { Chart, ChartConfiguration, ChartData, ChartType, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import ChartStreaming from '@aziham/chartjs-plugin-streaming';
 
@@ -27,25 +27,26 @@ interface IDataSetRow {
   y: number
 }
 
+type AverageDatasetType = 'sma' | 'ema' | 'dema' | 'avg';
+
 @Component({
   selector: 'minichart',
   imports: [],
   templateUrl: './minichart.component.html',
   styleUrls: ['./minichart.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MinichartComponent implements OnDestroy {
   protected readonly theme = input.required<ITheme>();
-  public color: string = null;
-  public dataPath: string = null;
-  public dataSource: string = null;
-  public convertUnitTo: string = null;
-  public numDecimal: number = null;
-  public yScaleMin: number = null;
-  public yScaleMax: number = null;
+  public color: string | null = null;
+  public dataPath: string | null = null;
+  public dataSource: string | null = null;
+  public convertUnitTo: string | null = null;
+  public numDecimal: number | null = null;
+  public yScaleMin: number | null = null;
+  public yScaleMax: number | null = null;
   public inverseYAxis = false;
-  public verticalChart = null;
-  public datasetUUID: string = null;
+  public verticalChart: boolean | null = null;
+  public datasetUUID: string | null = null;
   protected unitsService = inject(UnitsService);
   private readonly dsService = inject(DatasetStreamService);
   private readonly ngZone = inject(NgZone);
@@ -54,7 +55,7 @@ export class MinichartComponent implements OnDestroy {
   public lineChartData: ChartData<'line', { x: number, y: number }[]> = {
     datasets: []
   };
-  public lineChartOptions: ChartConfiguration['options'] = {
+  public lineChartOptions: NonNullable<ChartConfiguration<'line', IDataSetRow[]>['options']> = {
     parsing: false,
     datasets: {
       line: {
@@ -69,16 +70,16 @@ export class MinichartComponent implements OnDestroy {
       }
     }
   }
-  public lineChartType: ChartType = 'line';
-  private chart;
-  private dsServiceSub: Subscription = null;
-  private datasetConfig: IDatasetServiceDatasetConfig = null;
-  private dataSourceInfo: IDatasetServiceDataSourceInfo = null;
+  public readonly lineChartType = 'line' as const;
+  private chart: Chart<'line', IDataSetRow[]> | null = null;
+  private dsServiceSub: Subscription | null = null;
+  private datasetConfig: IDatasetServiceDatasetConfig | null = null;
+  private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private isDestroyed = false;
   private lastChartSignature: string | null = null;
 
   private config = {
-    datasetAverageArray: 'sma',
+    datasetAverageArray: 'sma' as AverageDatasetType,
     showAverageData: false,
     trackAgainstAverage: false,
     startScaleAtZero: false,
@@ -103,10 +104,10 @@ export class MinichartComponent implements OnDestroy {
 
   public startChart(): void {
     if (this.isDestroyed || !this.datasetUUID) return;
-    this.datasetConfig = this.dsService.getDatasetConfig(this.datasetUUID);
-    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.datasetUUID);
+    this.datasetConfig = this.dsService.getDatasetConfig(this.datasetUUID) ?? null;
+    this.dataSourceInfo = this.dsService.getDataSourceInfo(this.datasetUUID) ?? null;
 
-    if (this.datasetConfig) {
+    if (this.datasetConfig && this.dataSourceInfo) {
       const chartSignature = this.buildChartSignature();
       if (this.chart && chartSignature === this.lastChartSignature) {
         return;
@@ -122,7 +123,7 @@ export class MinichartComponent implements OnDestroy {
       const ctx = canvasEl?.getContext('2d');
       if (!ctx) return;
 
-      this.chart = new Chart(ctx, {
+      this.chart = new Chart<'line', IDataSetRow[]>(ctx, {
         type: this.lineChartType,
         data: this.lineChartData,
         options: this.lineChartOptions
@@ -150,6 +151,12 @@ export class MinichartComponent implements OnDestroy {
   }
 
   private setChartOptions() {
+    const datasetConfig = this.datasetConfig;
+    const dataSourceInfo = this.dataSourceInfo;
+    if (!datasetConfig || !dataSourceInfo) {
+      return;
+    }
+
     this.lineChartOptions.maintainAspectRatio = false;
     this.lineChartOptions.animation = false;
 
@@ -160,10 +167,10 @@ export class MinichartComponent implements OnDestroy {
         x: {
           display: false,
           position: "right",
-          suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
-          suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
-          min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
-          max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
+          suggestedMin: this.config.enableMinMaxScaleLimit ? undefined : this.numberOrUndefined(this.yScaleMin),
+          suggestedMax: this.config.enableMinMaxScaleLimit ? undefined : this.numberOrUndefined(this.yScaleMax),
+          min: this.config.enableMinMaxScaleLimit ? this.numberOrUndefined(this.yScaleMin) : undefined,
+          max: this.config.enableMinMaxScaleLimit ? this.numberOrUndefined(this.yScaleMax) : undefined,
           beginAtZero: this.config.startScaleAtZero,
           reverse: this.inverseYAxis,
           title: {
@@ -173,7 +180,7 @@ export class MinichartComponent implements OnDestroy {
           },
           ticks: {
             maxTicksLimit: 8,
-            precision: this.numDecimal,
+            precision: this.numberOrUndefined(this.numDecimal),
             color: this.getThemeColors().averageChartLine,
             major: {
               enabled: true,
@@ -191,7 +198,7 @@ export class MinichartComponent implements OnDestroy {
             display: false
           },
           time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            unit: datasetConfig.timeScaleFormat as TimeUnit,
             minUnit: "second",
             round: "second",
             displayFormats: {
@@ -225,7 +232,7 @@ export class MinichartComponent implements OnDestroy {
             display: false
           },
           time: {
-            unit: this.datasetConfig.timeScaleFormat as TimeUnit,
+            unit: datasetConfig.timeScaleFormat as TimeUnit,
             minUnit: "second",
             round: "second",
             displayFormats: {
@@ -252,10 +259,10 @@ export class MinichartComponent implements OnDestroy {
         y: {
           display: false,
           position: "right",
-          suggestedMin: this.config.enableMinMaxScaleLimit ? null : this.yScaleMin,
-          suggestedMax: this.config.enableMinMaxScaleLimit ? null : this.yScaleMax,
-          min: this.config.enableMinMaxScaleLimit ? this.yScaleMin : null,
-          max: this.config.enableMinMaxScaleLimit ? this.yScaleMax : null,
+          suggestedMin: this.config.enableMinMaxScaleLimit ? undefined : this.numberOrUndefined(this.yScaleMin),
+          suggestedMax: this.config.enableMinMaxScaleLimit ? undefined : this.numberOrUndefined(this.yScaleMax),
+          min: this.config.enableMinMaxScaleLimit ? this.numberOrUndefined(this.yScaleMin) : undefined,
+          max: this.config.enableMinMaxScaleLimit ? this.numberOrUndefined(this.yScaleMax) : undefined,
           beginAtZero: this.config.startScaleAtZero,
           reverse: this.inverseYAxis,
           title: {
@@ -265,7 +272,7 @@ export class MinichartComponent implements OnDestroy {
           },
           ticks: {
             maxTicksLimit: 8,
-            precision: this.numDecimal,
+            precision: this.numberOrUndefined(this.numDecimal),
             color: this.getThemeColors().averageChartLine,
             major: {
               enabled: true,
@@ -283,12 +290,19 @@ export class MinichartComponent implements OnDestroy {
       legend: {
         display: false
       },
+      annotation: {
+        annotations: {}
+      },
        streaming: {
-        duration: this.dataSourceInfo.maxDataPoints * this.dataSourceInfo.sampleTime,
-        delay: this.dataSourceInfo.sampleTime,
-        frameRate: this.datasetConfig.timeScaleFormat === "day" ? 5 : this.datasetConfig.timeScaleFormat === "hour" ? 8 : this.datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
+        duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,
+        delay: dataSourceInfo.sampleTime,
+        frameRate: datasetConfig.timeScaleFormat === "day" ? 5 : datasetConfig.timeScaleFormat === "hour" ? 8 : datasetConfig.timeScaleFormat === "minute" ? 15 : 30,
        }
     }
+  }
+
+  private numberOrUndefined(value: number | null): number | undefined {
+    return value ?? undefined;
   }
 
   private createDatasets() {
@@ -337,13 +351,13 @@ export class MinichartComponent implements OnDestroy {
   private getThemeColors(): IChartColors {
     const widgetColor = this.color;
     const colors: IChartColors = {
-      valueLine: null,
-      valueFill: null,
-      averageLine: null,
-      averageFill: null,
-      averageChartLine: null,
-      chartLabel: null,
-      chartValue: null
+      valueLine: '',
+      valueFill: '',
+      averageLine: '',
+      averageFill: '',
+      averageChartLine: '',
+      chartLabel: '',
+      chartValue: ''
     };
 
     switch (widgetColor) {
@@ -496,14 +510,20 @@ export class MinichartComponent implements OnDestroy {
 
   private startStreaming(): void {
     this.dsServiceSub?.unsubscribe();
+    if (!this.datasetUUID || !this.chart) {
+      return;
+    }
 
     const batchThenLive$ = this.dsService.getDatasetBatchThenLiveObservable(
       this.datasetUUID
     );
+    if (!batchThenLive$) {
+      return;
+    }
 
-    this.dsServiceSub = batchThenLive$?.subscribe(dsPointOrBatch => {
+    this.dsServiceSub = batchThenLive$.subscribe(dsPointOrBatch => {
       if (this.isDestroyed || !this.chart) return;
-      const chartWithCtx = this.chart as { ctx?: CanvasRenderingContext2D | null };
+      const chartWithCtx = this.chart as Chart<'line', IDataSetRow[]> & { ctx?: CanvasRenderingContext2D | null };
       if (!chartWithCtx.ctx) return;
 
       if (Array.isArray(dsPointOrBatch)) {
@@ -533,7 +553,7 @@ export class MinichartComponent implements OnDestroy {
 
       this.ngZone.runOutsideAngular(() => {
         if (this.isDestroyed || !this.chart) return;
-        const safeChart = this.chart as { ctx?: CanvasRenderingContext2D | null; update: (mode?: string) => void };
+        const safeChart = this.chart as Chart<'line', IDataSetRow[]> & { ctx?: CanvasRenderingContext2D | null; update: (mode?: string) => void };
         if (!safeChart.ctx) return;
         safeChart.update('none');
       });
@@ -548,10 +568,10 @@ export class MinichartComponent implements OnDestroy {
     this.lastChartSignature = null;
   }
 
-  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType): IDataSetRow[] {
+  private transformDatasetRows(rows: IDatasetServiceDatapoint[], datasetType: 0 | AverageDatasetType): IDataSetRow[] {
     const convert = (v: number) =>
-      this.unitsService.convertToUnit(this.convertUnitTo, v);
-    const verticalChart = this.verticalChart;
+      this.unitsService.convertToUnit(this.convertUnitTo ?? '', v) ?? v;
+    const verticalChart = this.verticalChart === true;
     const avgKey = this.config.datasetAverageArray;
 
     return rows.map(row => {
@@ -565,7 +585,7 @@ export class MinichartComponent implements OnDestroy {
             dema: row.data.doubleEma,
             avg: row.data.lastAverage
           };
-          return { x: convert(avgMap[avgKey]), y: row.timestamp };
+          return { x: convert(avgMap[avgKey] ?? row.data.value), y: row.timestamp };
         }
       } else {
         if (datasetType === 0) {
@@ -577,7 +597,7 @@ export class MinichartComponent implements OnDestroy {
             dema: row.data.doubleEma,
             avg: row.data.lastAverage
           };
-          return { x: row.timestamp, y: convert(avgMap[avgKey]) };
+          return { x: row.timestamp, y: convert(avgMap[avgKey] ?? row.data.value) };
         }
       }
     });

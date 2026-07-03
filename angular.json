@@ -68,11 +68,19 @@
             "dev": {
               "optimization": false,
               "sourceMap": true
+            },
+            "test": {
+              "optimization": false,
+              "sourceMap": true,
+              "polyfills": [
+                "zone.js",
+                "src/polyfills.ts"
+              ]
             }
           }
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "kip:build"
           },
@@ -86,7 +94,7 @@
           }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "kip:build"
           }
@@ -95,7 +103,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "src/tsconfig.spec.json",
-            "buildTarget": "kip:build:dev",
+            "buildTarget": "kip:build:test",
             "runnerConfig": "vitest.config.ts"
           }
         },

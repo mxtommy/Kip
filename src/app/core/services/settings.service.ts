@@ -190,29 +190,32 @@ export class SettingsService {
   }
 
   private pushSettings(): void {
+    const appConfig = this.activeConfig.app ?? this.getDefaultAppConfig();
+    this.activeConfig.app = appConfig;
+
     if (this.activeConfig.theme) {
       this.themeName.next(this.activeConfig.theme.themeName);
     }
-    this.dataSets = this.activeConfig.app.dataSets;
-    this.unitDefaults.next(this.activeConfig.app.unitDefaults);
-    this.kipKNotificationConfig.next(this.activeConfig.app.notificationConfig);
+    this.dataSets = appConfig.dataSets;
+    this.unitDefaults.next(appConfig.unitDefaults);
+    this.kipKNotificationConfig.next(appConfig.notificationConfig);
 
-    if (this.activeConfig.app.autoNightMode === undefined) {
+    if (appConfig.autoNightMode === undefined) {
       this.setAutoNightMode(false);
     } else {
-      this.autoNightMode.next(this.activeConfig.app.autoNightMode);
+      this.autoNightMode.next(appConfig.autoNightMode);
     }
 
-    if (this.activeConfig.app.redNightMode === undefined) {
+    if (appConfig.redNightMode === undefined) {
       this.setRedNightMode(false);
     } else {
-      this.redNightMode.next(this.activeConfig.app.redNightMode);
+      this.redNightMode.next(appConfig.redNightMode);
     }
 
-    if (this.activeConfig.app.nightModeBrightness === undefined) {
+    if (appConfig.nightModeBrightness === undefined) {
       this.setNightModeBrightness(0.2);
     } else {
-      this.nightModeBrightness.next(this.activeConfig.app.nightModeBrightness);
+      this.nightModeBrightness.next(appConfig.nightModeBrightness);
     }
 
     if (this.activeConfig.dashboards === undefined) {
@@ -221,50 +224,50 @@ export class SettingsService {
       this._dashboards = this.activeConfig.dashboards;
     }
 
-    if (this.activeConfig.app.isRemoteControl === undefined) {
+    if (appConfig.isRemoteControl === undefined) {
       this.setIsRemoteControl(false);
     } else {
-      this.isRemoteControl.next(this.activeConfig.app.isRemoteControl);
+      this.isRemoteControl.next(appConfig.isRemoteControl);
     }
 
-    if (this.activeConfig.app.instanceName === undefined) {
+    if (appConfig.instanceName === undefined) {
       this.setInstanceName('');
     } else {
-      this.instanceName.next(this.activeConfig.app.instanceName);
+      this.instanceName.next(appConfig.instanceName);
     }
 
-    if (this.activeConfig.app.splitShellEnabled === undefined) {
+    if (appConfig.splitShellEnabled === undefined) {
       this.setSplitShellEnabled(false);
     } else {
-      this.splitShellEnabled.next(this.activeConfig.app.splitShellEnabled);
+      this.splitShellEnabled.next(appConfig.splitShellEnabled);
     }
 
-    if (this.activeConfig.app.splitShellSide === undefined) {
+    if (appConfig.splitShellSide === undefined) {
       this.setSplitShellSide('left');
     } else {
-      this.splitShellSide.next(this.activeConfig.app.splitShellSide);
+      this.splitShellSide.next(appConfig.splitShellSide);
     }
 
-    if (this.activeConfig.app.splitShellSwipeDisabled === undefined) {
+    if (appConfig.splitShellSwipeDisabled === undefined) {
       this.setSplitShellSwipeDisabled(false);
     } else {
-      this.splitShellSwipeDisabled.next(this.activeConfig.app.splitShellSwipeDisabled);
+      this.splitShellSwipeDisabled.next(appConfig.splitShellSwipeDisabled);
     }
 
-    if (this.activeConfig.app.splitShellWidth === undefined) {
+    if (appConfig.splitShellWidth === undefined) {
       this.setSplitShellWidth(0.5); // default ratio
     } else {
-      this.splitShellWidth.next(this.activeConfig.app.splitShellWidth);
+      this.splitShellWidth.next(appConfig.splitShellWidth);
     }
 
     const serverVersion = this.server.serverVersion$.getValue();
     const historyApiSupported = typeof serverVersion === 'string' && serverVersion.trim().length > 0
       ? compare(serverVersion, '2.22.1', ">=")
       : false;
-    if (this.activeConfig.app.widgetHistoryDisabled === undefined) {
+    if (appConfig.widgetHistoryDisabled === undefined) {
       this.setWidgetHistoryDisabled(historyApiSupported ? false : true);
     } else {
-      this.widgetHistoryDisabled.next(historyApiSupported ? this.activeConfig.app.widgetHistoryDisabled : true);
+      this.widgetHistoryDisabled.next(historyApiSupported ? appConfig.widgetHistoryDisabled : true);
     }
   }
 

@@ -12,7 +12,7 @@ export interface DialogComponentData {
   component: string;
   iconHref?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  componentType?: ComponentType<any>;
+  componentType?: ComponentType<any> | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 }
