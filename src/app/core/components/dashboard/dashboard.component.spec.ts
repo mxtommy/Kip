@@ -178,8 +178,9 @@ describe('DashboardComponent', () => {
             addWidgetToGrid: (w: unknown, x: number, y: number) => void;
         }).addWidgetToGrid(widget, 1, 1);
 
-        const addedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall[0];
-        expect(addedWidget.input.widgetProperties.autoOpenOptionsOnCreate).toBe(true);
+        const addedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall?.[0];
+        expect(addedWidget).toBeDefined();
+        expect(addedWidget!.input.widgetProperties.autoOpenOptionsOnCreate).toBe(true);
     });
 
     it('should mark newly added group widget to auto-open options on create', () => {
@@ -196,8 +197,9 @@ describe('DashboardComponent', () => {
             addWidgetToGrid: (w: unknown, x: number, y: number) => void;
         }).addWidgetToGrid(widget, 1, 1);
 
-        const addedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall[0];
-        expect(addedWidget.input.widgetProperties.autoOpenOptionsOnCreate).toBe(true);
+        const addedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall?.[0];
+        expect(addedWidget).toBeDefined();
+        expect(addedWidget!.input.widgetProperties.autoOpenOptionsOnCreate).toBe(true);
     });
 
     it('should not mark duplicated widget for auto-open options', () => {
@@ -220,8 +222,9 @@ describe('DashboardComponent', () => {
             duplicateWidget: (node: unknown) => void;
         }).duplicateWidget(item);
 
-        const duplicatedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall[0];
-        expect(duplicatedWidget.input.widgetProperties.autoOpenOptionsOnCreate).toBeUndefined();
+        const duplicatedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall?.[0];
+        expect(duplicatedWidget).toBeDefined();
+        expect(duplicatedWidget!.input.widgetProperties.autoOpenOptionsOnCreate).toBeUndefined();
     });
 
     it('should not mark pasted widget for auto-open options', () => {
@@ -242,8 +245,9 @@ describe('DashboardComponent', () => {
             pasteCopiedWidget: (x?: number, y?: number) => void;
         }).pasteCopiedWidget(1, 1);
 
-        const pastedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall[0];
-        expect(pastedWidget.input.widgetProperties.autoOpenOptionsOnCreate).toBeUndefined();
+        const pastedWidget = vi.mocked(gridMock.grid.addWidget).mock.lastCall?.[0];
+        expect(pastedWidget).toBeDefined();
+        expect(pastedWidget!.input.widgetProperties.autoOpenOptionsOnCreate).toBeUndefined();
     });
 
     it('should not add a widget when add-widget dialog is canceled', () => {

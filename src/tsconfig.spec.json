@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "../out-tsc/spec",
     "baseUrl": "./",
+    "module": "ES2022",
     "types": [
       "vitest/globals",
       "node"

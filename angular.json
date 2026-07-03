@@ -68,6 +68,14 @@
             "dev": {
               "optimization": false,
               "sourceMap": true
+            },
+            "test": {
+              "optimization": false,
+              "sourceMap": true,
+              "polyfills": [
+                "zone.js",
+                "src/polyfills.ts"
+              ]
             }
           }
         },
@@ -95,7 +103,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "src/tsconfig.spec.json",
-            "buildTarget": "kip:build:dev",
+            "buildTarget": "kip:build:test",
             "runnerConfig": "vitest.config.ts"
           }
         },

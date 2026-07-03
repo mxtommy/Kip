@@ -20,7 +20,7 @@ describe('CanvasService', () => {
       font: '',
       measureText(text: string): TextMetrics {
         measureCalls++;
-        const px = parseInt(this.font, 10) || 10;
+        const px = parseInt((this as { font: string }).font, 10) || 10;
         return { width: text.length * px * 0.5 } as TextMetrics;
       }
     } as unknown as CanvasRenderingContext2D;

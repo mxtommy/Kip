@@ -47,7 +47,7 @@ describe('SettingsService', () => {
     });
 
     it('reloads only after the demo config save resolves', async () => {
-      let resolveSave: (value: unknown) => void;
+      let resolveSave!: (value: unknown) => void;
       storageMock.setConfig.mockReturnValueOnce(new Promise((resolve) => { resolveSave = resolve; }));
 
       service.loadDemoConfig();

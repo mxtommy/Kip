@@ -50,7 +50,7 @@ class MockDashboardService {
     }[] { return this._dashboards(); }
     activeDashboard() { return 0; }
     isDashboardStatic() { return true; }
-    public widgetAction$ = new BehaviorSubject<widgetOperation>(null).asObservable();
+    public widgetAction$ = new BehaviorSubject<widgetOperation>(null as unknown as widgetOperation).asObservable();
     public layoutEditSaved() { return 0; }
     public layoutEditCanceled() { return 0; }
     setCollapseSplitShell(collapsed: boolean): void {

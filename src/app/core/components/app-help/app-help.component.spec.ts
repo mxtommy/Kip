@@ -124,7 +124,7 @@ describe('AppHelpComponent', () => {
         expect(files.map(f => f.file)).toEqual(expected);
     }
 
-    async function flushMenu(res: unknown = mockMenu) {
+    async function flushMenu(res: object = mockMenu as object) {
         const req = httpMock.expectOne('assets/help-docs/menu.json');
         expect(req.request.method).toBe('GET');
         req.flush(res);

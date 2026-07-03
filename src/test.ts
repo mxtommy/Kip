@@ -185,7 +185,7 @@ import { WidgetRuntimeDirective } from './app/core/directives/widget-runtime.dir
 import { WidgetStreamsDirective } from './app/core/directives/widget-streams.directive';
 import { WidgetMetadataDirective } from './app/core/directives/widget-metadata.directive';
 import { ENVIRONMENT_INITIALIZER, signal, inject as diInject, provideZonelessChangeDetection } from '@angular/core';
-import type { IWidgetSvcConfig } from './app/core/interfaces/widgets-interface';
+import type { IWidgetPath, IWidgetSvcConfig } from './app/core/interfaces/widgets-interface';
 import type { IAppConfig } from './app/core/interfaces/app-settings.interfaces';
 import type {
   IPluginApiCapabilities,
@@ -247,7 +247,7 @@ class AuthenticationServiceStub {
   // Minimal stub surface for tests that inject AuthenticationService
   private _isLoggedIn$ = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._isLoggedIn$.asObservable();
-  private _authToken$ = new BehaviorSubject<{ expiry: number | null; token: string | null; isDeviceAccessToken: boolean }>(null);
+  private _authToken$ = new BehaviorSubject<{ expiry: number | null; token: string | null; isDeviceAccessToken: boolean } | null>(null);
   public authToken$ = this._authToken$.asObservable();
   login = async () => { this._isLoggedIn$.next(true); };
   logout = async () => { this._isLoggedIn$.next(false); this._authToken$.next(null); };
@@ -263,7 +263,7 @@ const ActivatedRouteStub = {
 interface IEndpointStatusStub { operation: number; httpServiceUrl?: string; WsServiceUrl?: string; subscribeAll?: boolean }
 class SignalKConnectionServiceStub {
   public serverServiceEndpoint$ = new BehaviorSubject<IEndpointStatusStub>({ operation: 0, httpServiceUrl: '', WsServiceUrl: '', subscribeAll: false });
-  public serverVersion$ = new BehaviorSubject<string>(null);
+  public serverVersion$ = new BehaviorSubject<string | null>(null);
   // Provide a default URL object to satisfy services building API URLs
   public signalKURL = { url: 'http://localhost' } as { url: string };
 
@@ -470,7 +470,7 @@ class WidgetRuntimeDirectiveStub implements Partial<WidgetRuntimeDirective> {
   // Expose API surface commonly used by widgets; provide safe defaults
   public options = signal<IWidgetSvcConfig | undefined>({} as unknown as IWidgetSvcConfig);
   public firstPathKey = signal<string | undefined>(undefined);
-  public getPathCfg(pathKey: string): string | undefined { void pathKey; return undefined; }
+  public getPathCfg(pathKey: string): IWidgetPath | undefined { void pathKey; return undefined; }
   public setRuntimeConfig(cfg: IWidgetSvcConfig | undefined): void { void cfg; }
   public initialize(defaultCfg: IWidgetSvcConfig | undefined, savedCfg: IWidgetSvcConfig | undefined): void { void defaultCfg; void savedCfg; }
 }
