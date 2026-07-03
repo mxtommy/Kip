@@ -26,8 +26,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormsModule} from '@angular/forms';
 
-Chart.register(LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend);
-
 interface ChartPoint {
   x: number;
   y: number;

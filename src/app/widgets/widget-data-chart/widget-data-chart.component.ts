@@ -10,15 +10,11 @@ import { ITheme } from '../../core/services/app-service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
 import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import 'chartjs-adapter-date-fns';
-import ChartStreaming from '@aziham/chartjs-plugin-streaming';
-
-Chart.register(annotationPlugin, ChartStreaming, Filler, Title, SubTitle, TimeScale, LinearScale, LineController, PointElement, LineElement,);
 
 interface AnnPlugin {
   annotation?: {
-    annotations?: Record<string, { value?: number; label?: { content?: string } }>
+    annotations?: Record<string, { value?: number; display?: boolean; label?: { display?: boolean; content?: string } }>
   }
 }
 interface IChartColors {
@@ -94,6 +90,9 @@ export class WidgetDataChartComponent implements OnDestroy {
   private datasetConfig: IDatasetServiceDatasetConfig | null = null;
   private dataSourceInfo: IDatasetServiceDataSourceInfo | null = null;
   private lastVerticalChart: boolean | null = null;
+  private lastAverageValue: number | null = null;
+  private lastMinimumValue: number | null = null;
+  private lastMaximumValue: number | null = null;
   protected hasPath = computed<boolean>(() => {
     const cfg = this.runtime.options();
     return !!cfg?.datachartPath;
@@ -366,11 +365,12 @@ export class WidgetDataChartComponent implements OnDestroy {
           minimumLine: {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
-            display: cfg.showDatasetMinimumValueLine,
-            value: undefined,
+            display: cfg.showDatasetMinimumValueLine && this.lastMinimumValue !== null,
+            value: this.lastMinimumValue ?? 0,
             drawTime: 'afterDatasetsDraw',
             label: {
-              display: true,
+              display: cfg.showDatasetMinimumValueLine && this.lastMinimumValue !== null,
+              content: this.lastMinimumValue !== null ? `${this.lastMinimumValue.toFixed(cfg.numDecimal ?? 1)}` : '',
               position: "start",
               yAdjust: 12,
               padding: 4,
@@ -381,11 +381,12 @@ export class WidgetDataChartComponent implements OnDestroy {
           maximumLine: {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
-            display: cfg.showDatasetMaximumValueLine,
-            value: undefined,
+            display: cfg.showDatasetMaximumValueLine && this.lastMaximumValue !== null,
+            value: this.lastMaximumValue ?? 0,
             drawTime: 'afterDatasetsDraw',
             label: {
-              display: true,
+              display: cfg.showDatasetMaximumValueLine && this.lastMaximumValue !== null,
+              content: this.lastMaximumValue !== null ? `${this.lastMaximumValue.toFixed(cfg.numDecimal ?? 1)}` : '',
               position: "start",
               yAdjust: -12,
               padding: 4,
@@ -396,13 +397,14 @@ export class WidgetDataChartComponent implements OnDestroy {
           averageLine: {
             type: 'line',
             scaleID: cfg.verticalChart ? 'x' : 'y',
-            display: cfg.showDatasetAverageValueLine,
-            value: undefined,
+            display: cfg.showDatasetAverageValueLine && this.lastAverageValue !== null,
+            value: this.lastAverageValue ?? 0,
             borderDash: [6, 6],
             borderColor: this.getThemeColors().averageChartLine,
             drawTime: 'afterDatasetsDraw',
             label: {
-              display: true,
+              display: cfg.showDatasetAverageValueLine && this.lastAverageValue !== null,
+              content: this.lastAverageValue !== null ? `${this.lastAverageValue.toFixed(cfg.numDecimal ?? 1)}` : '',
               position: "start",
               padding: 4,
               color: this.getThemeColors().chartValue,
@@ -545,11 +547,23 @@ export class WidgetDataChartComponent implements OnDestroy {
   private updateAnnotationVisibility(): void {
     const cfg = this.runtime.options();
     if (!cfg || !this.chart) return;
-    const annCfg = (this.chart.options.plugins as unknown as { annotation?: { annotations?: Record<string, { display?: boolean }> } }).annotation?.annotations;
+    const annCfg = (this.chart.options.plugins as unknown as { annotation?: { annotations?: Record<string, { display?: boolean; label?: { display?: boolean } }> } }).annotation?.annotations;
     if (!annCfg) return;
-    if (annCfg.minimumLine) annCfg.minimumLine.display = cfg.showDatasetMinimumValueLine;
-    if (annCfg.maximumLine) annCfg.maximumLine.display = cfg.showDatasetMaximumValueLine;
-    if (annCfg.averageLine) annCfg.averageLine.display = cfg.showDatasetAverageValueLine;
+    if (annCfg.minimumLine) {
+      const show = cfg.showDatasetMinimumValueLine && this.lastMinimumValue !== null;
+      annCfg.minimumLine.display = show;
+      if (annCfg.minimumLine.label) annCfg.minimumLine.label.display = show;
+    }
+    if (annCfg.maximumLine) {
+      const show = cfg.showDatasetMaximumValueLine && this.lastMaximumValue !== null;
+      annCfg.maximumLine.display = show;
+      if (annCfg.maximumLine.label) annCfg.maximumLine.label.display = show;
+    }
+    if (annCfg.averageLine) {
+      const show = cfg.showDatasetAverageValueLine && this.lastAverageValue !== null;
+      annCfg.averageLine.display = show;
+      if (annCfg.averageLine.label) annCfg.averageLine.label.display = show;
+    }
   }
 
   private getThemeColors(): IChartColors {
@@ -820,24 +834,58 @@ export class WidgetDataChartComponent implements OnDestroy {
     const ann = plugins.annotation?.annotations;
     if (!ann) return;
 
-    if (lastAverage != null && Number.isFinite(lastAverage) && ann.averageLine?.value !== lastAverage) {
-      ann.averageLine.value = lastAverage;
-      if (ann.averageLine.label) {
-        ann.averageLine.label.content = `${lastAverage.toFixed(decimals)}`;
+    this.lastAverageValue = lastAverage != null && Number.isFinite(lastAverage) ? lastAverage : null;
+    this.lastMinimumValue = lastMinimum != null && Number.isFinite(lastMinimum) ? lastMinimum : null;
+    this.lastMaximumValue = lastMaximum != null && Number.isFinite(lastMaximum) ? lastMaximum : null;
+
+    if (ann.averageLine) {
+      if (this.lastAverageValue !== null) {
+        ann.averageLine.value = this.lastAverageValue;
+        ann.averageLine.display = cfg.showDatasetAverageValueLine;
+        if (ann.averageLine.label) {
+          ann.averageLine.label.display = cfg.showDatasetAverageValueLine;
+          ann.averageLine.label.content = `${this.lastAverageValue.toFixed(decimals)}`;
+        }
+      } else {
+        ann.averageLine.display = false;
+        if (ann.averageLine.label) {
+          ann.averageLine.label.display = false;
+          ann.averageLine.label.content = '';
+        }
       }
     }
 
-    if (lastMinimum != null && Number.isFinite(lastMinimum) && ann.minimumLine?.value !== lastMinimum) {
-      ann.minimumLine.value = lastMinimum;
-      if (ann.minimumLine.label) {
-        ann.minimumLine.label.content = `${lastMinimum.toFixed(decimals)}`;
+    if (ann.minimumLine) {
+      if (this.lastMinimumValue !== null) {
+        ann.minimumLine.value = this.lastMinimumValue;
+        ann.minimumLine.display = cfg.showDatasetMinimumValueLine;
+        if (ann.minimumLine.label) {
+          ann.minimumLine.label.display = cfg.showDatasetMinimumValueLine;
+          ann.minimumLine.label.content = `${this.lastMinimumValue.toFixed(decimals)}`;
+        }
+      } else {
+        ann.minimumLine.display = false;
+        if (ann.minimumLine.label) {
+          ann.minimumLine.label.display = false;
+          ann.minimumLine.label.content = '';
+        }
       }
     }
 
-    if (lastMaximum != null && Number.isFinite(lastMaximum) && ann.maximumLine?.value !== lastMaximum) {
-      ann.maximumLine.value = lastMaximum;
-      if (ann.maximumLine.label) {
-        ann.maximumLine.label.content = `${lastMaximum.toFixed(decimals)}`;
+    if (ann.maximumLine) {
+      if (this.lastMaximumValue !== null) {
+        ann.maximumLine.value = this.lastMaximumValue;
+        ann.maximumLine.display = cfg.showDatasetMaximumValueLine;
+        if (ann.maximumLine.label) {
+          ann.maximumLine.label.display = cfg.showDatasetMaximumValueLine;
+          ann.maximumLine.label.content = `${this.lastMaximumValue.toFixed(decimals)}`;
+        }
+      } else {
+        ann.maximumLine.display = false;
+        if (ann.maximumLine.label) {
+          ann.maximumLine.label.display = false;
+          ann.maximumLine.label.content = '';
+        }
       }
     }
   }

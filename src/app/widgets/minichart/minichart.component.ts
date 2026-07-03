@@ -8,10 +8,6 @@ import { UnitsService } from '../../core/services/units.service';
 
 import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import ChartStreaming from '@aziham/chartjs-plugin-streaming';
-
-
-Chart.register(ChartStreaming, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale);
 
 interface IChartColors {
   valueLine: string,
@@ -289,9 +285,6 @@ export class MinichartComponent implements OnDestroy {
     this.lineChartOptions.plugins = {
       legend: {
         display: false
-      },
-      annotation: {
-        annotations: {}
       },
        streaming: {
         duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,
