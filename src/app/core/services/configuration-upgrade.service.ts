@@ -147,7 +147,7 @@ export class ConfigurationUpgradeService {
 
     } else if (version === 11 && !this._settings.useSharedConfig) {
       // LocalStorage upgrade path for config version 11
-      const upgradedConfig: IConfig = { app: null, dashboards: null, theme: null };
+      const upgradedConfig: IConfig = { app: null, dashboards: [], theme: null };
       upgradedConfig.app = this._settings.getAppConfig();
       upgradedConfig.dashboards = this._settings.getDashboardConfig();
       upgradedConfig.theme = this._settings.getThemeConfig();
@@ -166,13 +166,18 @@ export class ConfigurationUpgradeService {
       this.upgrading.set(false);
     } else {
       // LocalStorage upgrade path for config version 10
-      const localStorageConfig: v10IConfig = { app: null, widget: null, layout: null, theme: null };
+      const localStorageConfig = {} as v10IConfig;
       localStorageConfig.app = this._settings.loadConfigFromLocalStorage('appConfig');
       localStorageConfig.widget = this._settings.loadConfigFromLocalStorage('widgetConfig');
       localStorageConfig.layout = this._settings.loadConfigFromLocalStorage('layoutConfig');
       localStorageConfig.theme = this._settings.loadConfigFromLocalStorage('themeConfig');
 
       const transformedApp = this.transformApp(localStorageConfig.app as IAppConfig);
+      if (!transformedApp) {
+        this.pushError('[Upgrade] Invalid local app configuration. Aborting migration.');
+        this.upgrading.set(false);
+        return;
+      }
       const datasetInfo = this.extractAppDatasets(transformedApp);
       const transformedTheme = this.transformTheme(localStorageConfig.theme);
       const rootSplits = localStorageConfig.layout?.rootSplits || [];
@@ -205,7 +210,9 @@ export class ConfigurationUpgradeService {
         .then(async (rootConfigs: Config[]) => {
           for (const rootConfig of rootConfigs) {
             const oldConfiguration = await this._storage.getConfig(rootConfig.scope, rootConfig.name, this.legacyFileVersion) as unknown as IConfig;
-            oldConfiguration.app.configVersion = 0; // retire
+            if (oldConfiguration.app) {
+              oldConfiguration.app.configVersion = 0; // retire
+            }
             try {
               // Await the retire write for BOTH scopes so it completes before the
               // finally() block runs resetSettings() and reloads the page. The old
@@ -226,12 +233,16 @@ export class ConfigurationUpgradeService {
           // close handled by component dialog; service only reloads on upgrade path
         });
     } else {
-      const localStorageConfig: IConfig = { app: null, dashboards: null, theme: null };
+      const localStorageConfig: IConfig = { app: null, dashboards: [], theme: null };
       localStorageConfig.app = this._settings.loadConfigFromLocalStorage('appConfig');
       localStorageConfig.theme = this._settings.loadConfigFromLocalStorage('themeConfig');
-      localStorageConfig.app.configVersion = this.targetConfigVersion; // baseline fresh
-      localStorageConfig.app.nightModeBrightness = 0.27;
-      localStorageConfig.theme.themeName = '';
+      if (localStorageConfig.app) {
+        localStorageConfig.app.configVersion = this.targetConfigVersion; // baseline fresh
+        localStorageConfig.app.nightModeBrightness = 0.27;
+      }
+      if (localStorageConfig.theme) {
+        localStorageConfig.theme.themeName = '';
+      }
       localStorage.setItem('appConfig', JSON.stringify(localStorageConfig.app));
       localStorage.setItem('themeConfig', JSON.stringify(localStorageConfig.theme));
       localStorage.removeItem('widgetConfig');
@@ -243,11 +254,19 @@ export class ConfigurationUpgradeService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async transformConfig(rootConfig: Config): Promise<any> {
     const config = await this._storage.getConfig(rootConfig.scope, rootConfig.name, this.legacyFileVersion) as unknown as v10IConfig;
+    if (!config.app) {
+      this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is missing app config. Skipping.`);
+      return null;
+    }
     if (config.app.configVersion !== this.legacyConfigVersion) {
       this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} is not an upgradable version ${this.legacyConfigVersion} config. Skipping.`);
       return null;
     }
     const transformedApp = this.transformApp(config.app as IAppConfig);
+    if (!transformedApp) {
+      this.pushError(`[Upgrade Service] ${rootConfig.scope}/${rootConfig.name} failed to transform app config. Skipping.`);
+      return null;
+    }
     const datasetInfo = this.extractAppDatasets(transformedApp);
     const transformedTheme = this.transformTheme(config.theme);
     const rootSplits = config.layout?.rootSplits || [];
@@ -311,17 +330,19 @@ export class ConfigurationUpgradeService {
       let updatedDatachartCount = 0;
       if (dashboard && Array.isArray(dashboard.configuration)) {
         dashboard.configuration.forEach((widget: NgGridStackWidget) => {
-          if (widget && typeof widget === 'object' && widget.input?.widgetProperties?.config) {
-            const dataset = datasetInfo.find(ds => ds.datasetUUID === widget.input?.widgetProperties?.config.datasetUUID);
+          const widgetProperties = widget?.input?.widgetProperties;
+          const widgetConfig = widgetProperties?.config as Record<string, unknown> | undefined;
+          if (widget && typeof widget === 'object' && widgetConfig) {
+            const dataset = datasetInfo.find(ds => ds.datasetUUID === widgetConfig.datasetUUID);
             if (dataset) {
               // Add or replace all dataset properties except 'datasetUUID'
               Object.entries(dataset).forEach(([key, value]) => {
                 if (key !== 'datasetUUID') {
-                  widget.input.widgetProperties.config[key] = value;
+                  widgetConfig[key] = value;
                 }
               });
-              delete widget.input.widgetProperties.config?.datasetUUID;
-              delete widget.input.widgetProperties.config?.timeScaleFormat;
+              delete widgetConfig.datasetUUID;
+              delete widgetConfig.timeScaleFormat;
               updatedDatachartCount++;
             }
           }
@@ -356,7 +377,7 @@ export class ConfigurationUpgradeService {
     return config;
   }
 
-  private transformApp(app: IAppConfig): IAppConfig {
+  private transformApp(app: IAppConfig): IAppConfig | null {
     if (!app) return null;
     const clone = cloneDeep(app);
     clone.configVersion = this.targetConfigVersion;
@@ -368,7 +389,7 @@ export class ConfigurationUpgradeService {
     return clone;
   }
 
-  private transformTheme(theme: v10IThemeConfig): IThemeConfig {
+  private transformTheme(theme: v10IThemeConfig): IThemeConfig | null {
     if (!theme) return null;
     const themeConfig: IThemeConfig = { themeName: '' };
     return themeConfig;
@@ -376,6 +397,10 @@ export class ConfigurationUpgradeService {
 
   private upgradeConfig(config: IConfig): IConfig | null {
     try {
+      if (!config.app) {
+        this.pushError('[Upgrade Service] Missing app config. Skipping...');
+        return null;
+      }
       if (config.app.configVersion !== 11) {
         this.pushError(`[Upgrade Service] Config version ${config.app.configVersion} upgrade is not supported. Skipping...`);
         return null;
@@ -398,10 +423,11 @@ export class ConfigurationUpgradeService {
                 }
                 // Helper to safely double a numeric property if > 0 (handles undefined and numeric strings)
                 const maybeDouble = (prop: string) => {
-                  const raw = widget[prop] as unknown;
+                  const mutableWidget = widget as unknown as Record<string, unknown>;
+                  const raw = mutableWidget[prop];
                   const numVal = typeof raw === 'string' ? Number(raw) : (raw as number);
                   if (Number.isFinite(numVal) && numVal !== 0) {
-                    widget[prop] = numVal * 2;
+                    mutableWidget[prop] = numVal * 2;
                     dimensionUpdatedCount++;
                   }
                 };
@@ -411,16 +437,17 @@ export class ConfigurationUpgradeService {
                 maybeDouble('y');
 
                 // If width/height were missing, add them using minW/minH (or 2)
-                if (widget['w'] === undefined || widget['w'] === null) {
-                  const minW = widget['minW'];
+                const mutableWidget = widget as unknown as Record<string, unknown>;
+                if (mutableWidget['w'] === undefined || mutableWidget['w'] === null) {
+                  const minW = mutableWidget['minW'];
                   const baseW = minW ? minW : 2;
-                  widget['w'] = baseW;
+                  mutableWidget['w'] = baseW;
                   dimensionUpdatedCount++;
                 }
-                if (widget['h'] === undefined || widget['h'] === null) {
-                  const minH = widget['minH'];
+                if (mutableWidget['h'] === undefined || mutableWidget['h'] === null) {
+                  const minH = mutableWidget['minH'];
                   const baseH = minH ? minH : 2;
-                  widget['h'] = baseH;
+                  mutableWidget['h'] = baseH;
                   dimensionUpdatedCount++;
                 }
               }
@@ -442,7 +469,7 @@ export class ConfigurationUpgradeService {
       };
 
     } catch (error) {
-      this.pushError(`[Upgrade Service] Error upgrading ${config.app.configVersion}: ${(error as Error).message}`);
+      this.pushError(`[Upgrade Service] Error upgrading ${config}: ${(error as Error).message}`);
       return null;
     }
   }
@@ -501,10 +528,11 @@ export class ConfigurationUpgradeService {
 
           // Helper to safely double a numeric property if > 0 (handles undefined and numeric strings)
           const maybeDouble = (prop: string) => {
-            const raw = widget[prop] as unknown;
+            const mutableWidget = widget as unknown as Record<string, unknown>;
+            const raw = mutableWidget[prop];
             const numVal = typeof raw === 'string' ? Number(raw) : (raw as number);
             if (Number.isFinite(numVal) && numVal !== 0) {
-              widget[prop] = numVal * 2;
+              mutableWidget[prop] = numVal * 2;
               dimensionUpdatedCount++;
             }
           };
@@ -514,18 +542,19 @@ export class ConfigurationUpgradeService {
           maybeDouble('y');
 
           // If width/height were missing, add them using minW/minH (or 2) and scale to new grid (x2)
-          if (widget['w'] === undefined || widget['w'] === null) {
-            const minWRaw = widget['minW'] as unknown;
+          const mutableWidget = widget as unknown as Record<string, unknown>;
+          if (mutableWidget['w'] === undefined || mutableWidget['w'] === null) {
+            const minWRaw = mutableWidget['minW'] as unknown;
             const minW = typeof minWRaw === 'string' ? Number(minWRaw) : (minWRaw as number);
             const baseW = Number.isFinite(minW) && minW! > 0 ? (minW as number) : 2;
-            widget['w'] = baseW * 2;
+            mutableWidget['w'] = baseW * 2;
             dimensionUpdatedCount++;
           }
-          if (widget['h'] === undefined || widget['h'] === null) {
-            const minHRaw = widget['minH'] as unknown;
+          if (mutableWidget['h'] === undefined || mutableWidget['h'] === null) {
+            const minHRaw = mutableWidget['minH'] as unknown;
             const minH = typeof minHRaw === 'string' ? Number(minHRaw) : (minHRaw as number);
             const baseH = Number.isFinite(minH) && minH! > 0 ? (minH as number) : 2;
-            widget['h'] = baseH * 2;
+            mutableWidget['h'] = baseH * 2;
             dimensionUpdatedCount++;
           }
         }
@@ -549,7 +578,7 @@ export class ConfigurationUpgradeService {
     const traverseSplitSets = (splitSetUUID: string) => {
       const splitSet = splitSets.find(set => set.uuid === splitSetUUID);
       if (!splitSet) { issues.push(`Missing splitSet with UUID: ${splitSetUUID}`); return; }
-      splitSet.splitAreas.forEach(area => {
+      splitSet.splitAreas.forEach((area: { type: string; uuid: string }) => {
         if (area.type === 'widget') {
           const widget = widgetMap.get(area.uuid);
           if (widget) {

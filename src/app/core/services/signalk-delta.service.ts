@@ -43,7 +43,7 @@ export class SignalKDeltaService implements OnDestroy {
   // Self URN message stream Observer
   private _vesselSelfUrn$ = new Subject<string>();
   // local self URN to filter data based on root node (self or others)
-  private _selfUrn: string = undefined;
+  private _selfUrn?: string;
 
   // Delta Service Endpoint status publishing
   public streamEndpoint: IStreamStatus = {
@@ -54,16 +54,16 @@ export class SignalKDeltaService implements OnDestroy {
   public streamEndpoint$: BehaviorSubject<IStreamStatus> = new BehaviorSubject<IStreamStatus>(this.streamEndpoint);
 
   // Websocket config
-  private endpointWS: string = null;
+  private endpointWS: string | null = null;
   private SubscriptionType = "self";
   private readonly WS_CONNECTION_SUBSCRIBE = "?subscribe=";
   private readonly WS_CONNECTION_META = "&sendMeta=all"; // default but we could use none + specific paths in the future
-  private socketWS$: WebSocketSubject<object>;
+  private socketWS$: WebSocketSubject<object> | null = null;
   public socketWSCloseEvent$ = new Subject<CloseEvent>();
   public socketWSOpenEvent$ = new Subject<Event>();
 
   // Token
-  private authToken: IAuthorizationToken = null;
+  private authToken: IAuthorizationToken | null = null;
 
   private server = inject(SignalKConnectionService);
   private auth = inject(AuthenticationService);
@@ -322,14 +322,14 @@ export class SignalKDeltaService implements OnDestroy {
     if (message.self) {
       this._selfUrn = message.self;
       this._vesselSelfUrn$.next(message.self);
-      this.server.setServerInfo(message.name, message.version, message.roles);
+      this.server.setServerInfo(message.name, message.version, message.roles ?? []);
       return;
     }
 
     console.warn("[Delta Service] Unknown message type. Message content:" + message);
   }
 
-  private parseUpdates(updates: ISignalKUpdateMessage[], context: string): void {
+  private parseUpdates(updates: ISignalKUpdateMessage[], context?: string): void {
     // if (context != this._selfUrn) {    // remove non self root nodes
     //   return;
     // }
@@ -349,7 +349,7 @@ export class SignalKDeltaService implements OnDestroy {
               if (this.DO_NOT_FLATTEN_PATHS.some(sub_string => item.path.includes(sub_string))) {
                 // Skip flattening, treat as a single value
                 const dataPath: IPathValueData = {
-                  context: context,
+                  context: this.resolveContext(context),
                   path: item.path,
                   source: update.$source,
                   timestamp: update.timestamp,
@@ -362,7 +362,7 @@ export class SignalKDeltaService implements OnDestroy {
                 const flattenedItems = this.flattenObjectValue(item.value, item.path);
                 flattenedItems.forEach(flatItem => {
                   const dataPath: IPathValueData = {
-                    context: context,
+                    context: this.resolveContext(context),
                     path: flatItem.path,
                     source: update.$source,
                     timestamp: update.timestamp,
@@ -374,7 +374,7 @@ export class SignalKDeltaService implements OnDestroy {
                 // Fall back to single-level flattening for objects that exceed limits
                 Object.keys(item.value).forEach(key => {
                   const dataPath: IPathValueData = {
-                    context: context,
+                    context: this.resolveContext(context),
                     path: `${item.path}.${key}`,
                     source: update.$source,
                     timestamp: update.timestamp,
@@ -386,7 +386,7 @@ export class SignalKDeltaService implements OnDestroy {
             } else {
               // It's a Primitive type or a null value
               const dataPath: IPathValueData = {
-                context: context,
+                context: this.resolveContext(context),
                 path: item.path,
                 source: update.$source,
                 timestamp: update.timestamp,
@@ -449,22 +449,27 @@ export class SignalKDeltaService implements OnDestroy {
     return results;
   }
 
-  private parseSkMeta(metadata: ISignalKMeta, context: string) {
+  private parseSkMeta(metadata: ISignalKMeta, context?: string) {
     if (metadata.value.properties !== undefined) {
-      Object.keys(metadata.value.properties).forEach(key => {
+      const properties = metadata.value.properties as Record<string, unknown>;
+      Object.keys(properties).forEach(key => {
         this._skMetadata$.next({
-          context: context,
+          context: this.resolveContext(context),
           path: `${metadata.path}.${key}`,
-          meta: metadata.value.properties[key],
+          meta: properties[key] as IMeta['meta'],
         });
       });
     } else {
       this._skMetadata$.next({
-        context: context,
+        context: this.resolveContext(context),
         path: metadata.path,
         meta: metadata.value,
       });
     }
+  }
+
+  private resolveContext(context?: string): string {
+    return context ?? this._selfUrn ?? 'vessels.self';
   }
 
   // WebSocket Stream Status observable

@@ -44,7 +44,7 @@ export interface IDatasetServiceDataSourceInfo {
 
 interface IDatasetServiceDataSource extends IDatasetServiceDataSourceInfo {
   uuid: string;
-  pathObserverSubscription: Subscription;
+  pathObserverSubscription: Subscription | null;
   historicalData: number[];
 };
 interface IDatasetServiceObserverRegistration {
@@ -174,24 +174,22 @@ export class DatasetStreamService implements OnDestroy {
     const smoothingPeriodFactor = 0.25;
     const targetPointsPerWindow = 120;
     const minSampleTimeMs = 100;
-    const newDataSourceConfiguration: IDatasetServiceDataSource = {
-      uuid: dsConf.uuid,
-      pathObserverSubscription: null,
-      sampleTime: null,
-      maxDataPoints: null,
-      smoothingPeriod: null,
-      historicalData: []
-    }
-
     const windowMs = resolveWindowMs(dsConf.timeScaleFormat, dsConf.period);
 
     // Target a consistent datapoint density across time windows.
     // For very small windows, enforce a minimum sampling interval for performance.
     const derivedSampleTimeMs = windowMs > 0 ? Math.max(minSampleTimeMs, Math.round(windowMs / targetPointsPerWindow)) : 1000;
+    const maxDataPoints = Math.max(1, Math.ceil(windowMs / derivedSampleTimeMs));
+    const smoothingPeriod = Math.max(1, Math.floor(maxDataPoints * smoothingPeriodFactor));
 
-    newDataSourceConfiguration.sampleTime = derivedSampleTimeMs;
-    newDataSourceConfiguration.maxDataPoints = Math.max(1, Math.ceil(windowMs / derivedSampleTimeMs));
-    newDataSourceConfiguration.smoothingPeriod = Math.max(1, Math.floor(newDataSourceConfiguration.maxDataPoints * smoothingPeriodFactor));
+    const newDataSourceConfiguration: IDatasetServiceDataSource = {
+      uuid: dsConf.uuid,
+      pathObserverSubscription: null,
+      sampleTime: derivedSampleTimeMs,
+      maxDataPoints,
+      smoothingPeriod,
+      historicalData: []
+    }
 
     // Enforce minimum of 1 for maxDataPoints to prevent infinite size array
     if (!newDataSourceConfiguration.maxDataPoints || newDataSourceConfiguration.maxDataPoints < 1) {
@@ -318,9 +316,9 @@ export class DatasetStreamService implements OnDestroy {
 
       const datapoint: IDatasetServiceDatapoint = this.updateDataset(dataSource, configuration.baseUnit, angleDomain);
 
-      this._svcSubjectObserverRegistry
-        .find(registration => registration.datasetUuid === dataSource.uuid)
-        .rxjsSubject.next(datapoint);
+      const registration = this._svcSubjectObserverRegistry
+        .find(observerRegistration => observerRegistration.datasetUuid === dataSource.uuid);
+      registration?.rxjsSubject.next(datapoint);
     });
   }
 
@@ -421,8 +419,11 @@ export class DatasetStreamService implements OnDestroy {
    */
   private stop(uuid: string) {
     const dsIndex = this._svcDataSource.findIndex(d => d.uuid == uuid);
+    if (dsIndex === -1) {
+      return;
+    }
     console.log(`[DatasetStreamService] Stopping Dataset ${uuid} data capture`);
-    this._svcDataSource[dsIndex].pathObserverSubscription.unsubscribe();
+    this._svcDataSource[dsIndex].pathObserverSubscription?.unsubscribe();
     this._svcDataSource.splice(dsIndex, 1);
   }
 
@@ -443,7 +444,7 @@ export class DatasetStreamService implements OnDestroy {
    * @return {*}  {IDatasetServiceDatasetConfig} A Dataset configuration object
    * @memberof DatasetStreamService
    */
-  public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig {
+  public getDatasetConfig(uuid: string): IDatasetServiceDatasetConfig | undefined {
     return this._svcDatasetConfigs.find(config => config.uuid === uuid);
   }
 
@@ -454,7 +455,7 @@ export class DatasetStreamService implements OnDestroy {
    * @return {*}  {IDatasetServiceDatasetConfig} A data Source configuration object
    * @memberof DatasetStreamService
    */
-  public getDataSourceInfo(uuid: string): IDatasetServiceDataSourceInfo {
+  public getDataSourceInfo(uuid: string): IDatasetServiceDataSourceInfo | undefined {
     return this._svcDataSource.find(config => config.uuid === uuid);
   }
 
@@ -480,7 +481,7 @@ export class DatasetStreamService implements OnDestroy {
       uuid: uuid,
       path: path,
       pathSource: source,
-      baseUnit: this.data.getPathUnitType(path),
+      baseUnit: this.data.getPathUnitType(path) ?? '',
       timeScaleFormat: timeScaleFormat,
       period: period,
       label: label,
@@ -519,7 +520,7 @@ export class DatasetStreamService implements OnDestroy {
 
     this.stop(datasetConfig.uuid);
     console.log(`[DatasetStreamService] Updating Dataset: ${datasetConfig.uuid}`);
-    datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path);
+    datasetConfig.baseUnit = this.data.getPathUnitType(datasetConfig.path) ?? '';
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(conf => conf.uuid === datasetConfig.uuid), 1, datasetConfig);
 
     this.start(datasetConfig.uuid);
@@ -548,7 +549,8 @@ export class DatasetStreamService implements OnDestroy {
     // Clean service data entries
     this._svcDatasetConfigs.splice(this._svcDatasetConfigs.findIndex(c => c.uuid === uuid), 1);
     // stop Subject Observers
-    this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid).rxjsSubject.complete();
+    const registration = this._svcSubjectObserverRegistry.find(r => r.datasetUuid === uuid);
+    registration?.rxjsSubject.complete();
     this._svcSubjectObserverRegistry.splice(this._svcSubjectObserverRegistry.findIndex(r => r.datasetUuid === uuid), 1);
 
     if (serialize === true) this.appSettings.saveDataSets(this._svcDatasetConfigs);
@@ -581,7 +583,7 @@ export class DatasetStreamService implements OnDestroy {
    * @param {number} batchSize The number of datapoints to batch for new subscribers
    * @returns {Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint>}
    */
-  public getDatasetBatchThenLiveObservable(dataSetUuid: string): Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint> {
+  public getDatasetBatchThenLiveObservable(dataSetUuid: string): Observable<IDatasetServiceDatapoint[] | IDatasetServiceDatapoint> | null {
     const registration = this._svcSubjectObserverRegistry.find(
       registration => registration.datasetUuid == dataSetUuid
     );
@@ -619,10 +621,10 @@ export class DatasetStreamService implements OnDestroy {
    * @memberof DatasetStreamService
    */
   private updateDataset(ds: IDatasetServiceDataSource, unit: string, domain: AngleDomain = 'scalar'): IDatasetServiceDatapoint {
-    let avgCalc: number = null;
-    let smaCalc: number = null;
-    let minCalc: number = null;
-    let maxCalc: number = null;
+    let avgCalc: number | undefined;
+    let smaCalc: number | undefined;
+    let minCalc: number | undefined;
+    let maxCalc: number | undefined;
 
     if (unit === "rad") {
       // Circular statistics for angles
@@ -664,8 +666,6 @@ export class DatasetStreamService implements OnDestroy {
             : this.normalizeToDirection(ds.historicalData[ds.historicalData.length - 1]))
           : ds.historicalData[ds.historicalData.length - 1],
         sma: smaCalc,
-        ema: null,
-        doubleEma: null,
         lastAverage: avgCalc,
         lastMinimum: minCalc,
         lastMaximum: maxCalc
@@ -674,8 +674,8 @@ export class DatasetStreamService implements OnDestroy {
 
     return newDatapoint;
 
-    function calculateAverage(arr: number[]): number | null {
-      if (arr.length === 0) return null;
+    function calculateAverage(arr: number[]): number | undefined {
+      if (arr.length === 0) return undefined;
       const sum = arr.reduce((acc, val) => acc + val, 0);
       return sum / arr.length;
     }

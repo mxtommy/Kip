@@ -37,21 +37,21 @@ export class StorageService {
   private http = inject(HttpClient);
   private readonly _auth = inject(AuthenticationService);
 
-  private serverEndpoint: string = null;
+  private serverEndpoint: string | null = null;
   public isAppDataSupported = false;
-  private configFileVersion: number = null;
-  public sharedConfigName: string;
-  private InitConfig: IConfig = null;
+  private configFileVersion: number | null = null;
+  public sharedConfigName = '';
+  private InitConfig: IConfig | null = null;
   private _isRemoteContextBootstrapped = false;
   public storageServiceReady$ = new BehaviorSubject<boolean>(false);
   private _isLoggedIn = false;
-  private _networkStatus: IEndpointStatus = undefined;
+  private _networkStatus: IEndpointStatus | undefined = undefined;
   // Instrumentation toggle
   private _logIO = false; // set to false to silence logging
 
 
-  private patchQueue$ = new Subject();  // REST call queue to force sequential calls
-  private patch = function (arg: IPatchAction) { // http JSON Patch function
+  private patchQueue$ = new Subject<IPatchAction>();  // REST call queue to force sequential calls
+  private patch = (arg: IPatchAction) => { // http JSON Patch function
     //console.log(`[Storage Service] Send patch request:\n${JSON.stringify(arg.document)}`);
     return this.http.post(arg.url, arg.document)
       .pipe(
@@ -184,7 +184,7 @@ export class StorageService {
     const serverConfigs: Config[] = [];
     if (!this.serverEndpoint) {
       console.warn("[Storage Service] No server endpoint set. Cannot retrieve config list");
-      return null;
+      return [];
     }
 
     const base = this.serverEndpoint;
@@ -249,7 +249,7 @@ export class StorageService {
       return cloneDeep(remoteConfig);
     } catch (error) {
       this.handleError(error as HttpErrorResponse); // throws
-      return null; // unreachable
+      throw error;
     }
   }
 
@@ -569,7 +569,7 @@ export class StorageService {
     throw error;
   }
 
-  public get initConfig(): IConfig {
+  public get initConfig(): IConfig | null {
     return this.InitConfig;
   }
 }

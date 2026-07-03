@@ -31,7 +31,7 @@ export class DashboardService {
   private readonly _destroyRef = inject(DestroyRef);
   public dashboards = signal<Dashboard[]>([], { equal: isEqual });
   public readonly activeDashboard = signal<number | null>(null);
-  private _widgetAction = new BehaviorSubject<widgetOperation>(null);
+  private _widgetAction = new BehaviorSubject<widgetOperation | null>(null);
   public widgetAction$ = this._widgetAction.asObservable();
   public isDashboardStatic = signal<boolean>(true);
   public widgetClipboard = signal<NgGridStackWidget | null>(null);
@@ -200,7 +200,7 @@ export class DashboardService {
     if (this.dashboards().length === 0) {
       this.add('Dashboard ' + (this.dashboards().length + 1), []);
       this.activeDashboard.set(0);
-    } else if (this.activeDashboard() > this.dashboards().length - 1) {
+    } else if ((this.activeDashboard() ?? -1) > this.dashboards().length - 1) {
       this.activeDashboard.set(this.dashboards().length - 1);
     }
   }
@@ -296,10 +296,15 @@ export class DashboardService {
    * This only updates the internal state and does NOT trigger navigation or URL changes.
    */
   public previousDashboard(): void {
-    if ((this.activeDashboard() + 1) > (this.dashboards().length) - 1) {
+    const current = this.activeDashboard();
+    if (current === null) {
+      this.activeDashboard.set(0);
+      return;
+    }
+    if ((current + 1) > (this.dashboards().length) - 1) {
       this.activeDashboard.set(0);
     } else {
-      this.activeDashboard.set(this.activeDashboard() + 1);
+      this.activeDashboard.set(current + 1);
     }
   }
 
@@ -309,10 +314,15 @@ export class DashboardService {
    * This only updates the internal state and does NOT trigger navigation or URL changes.
    */
   public nextDashboard(): void {
-    if ((this.activeDashboard() - 1) < 0) {
+    const current = this.activeDashboard();
+    if (current === null) {
+      this.activeDashboard.set(0);
+      return;
+    }
+    if ((current - 1) < 0) {
       this.activeDashboard.set(this.dashboards().length - 1);
     } else {
-      this.activeDashboard.set(this.activeDashboard() - 1);
+      this.activeDashboard.set(current - 1);
     }
   }
 
@@ -343,11 +353,12 @@ export class DashboardService {
    * This updates the browser URL and triggers Angular routing.
    */
   public navigateToNextDashboard(): void {
-    let nextDashboard: number = null;
-    if ((this.activeDashboard() - 1) < 0) {
+    const current = this.activeDashboard() ?? 0;
+    let nextDashboard = 0;
+    if ((current - 1) < 0) {
       nextDashboard = this.dashboards().length - 1;
     } else {
-      nextDashboard = this.activeDashboard() - 1;
+      nextDashboard = current - 1;
     }
     this._router.navigate(['/dashboard', nextDashboard]);
   }
@@ -358,11 +369,12 @@ export class DashboardService {
    * This updates the browser URL and triggers Angular routing.
    */
   public navigateToPreviousDashboard(): void {
-    let nextDashboard: number = null;
-    if ((this.activeDashboard() + 1) >= this.dashboards().length) {
+    const current = this.activeDashboard() ?? 0;
+    let nextDashboard = 0;
+    if ((current + 1) >= this.dashboards().length) {
       nextDashboard = 0;
     } else {
-      nextDashboard = this.activeDashboard() + 1;
+      nextDashboard = current + 1;
     }
     this._router.navigate(['/dashboard', nextDashboard]);
   }

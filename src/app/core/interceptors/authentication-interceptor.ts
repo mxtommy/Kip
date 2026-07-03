@@ -8,12 +8,12 @@ import { Subscription } from 'rxjs';
 export class AuthenticationInterceptor implements HttpInterceptor, OnDestroy {
   private auth = inject(AuthenticationService);
 
-  private authToken: IAuthorizationToken = null;
-  private authTokenSubscription: Subscription = null;
+  private authToken: IAuthorizationToken | null = null;
+  private authTokenSubscription: Subscription | null = null;
 
   constructor() {
     // Observe the auth token from the Auth service.
-    this.authTokenSubscription = this.auth.authToken$.subscribe((token: IAuthorizationToken) => {
+    this.authTokenSubscription = this.auth.authToken$.subscribe((token: IAuthorizationToken | null) => {
       this.authToken = token;
     });
   }

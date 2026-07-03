@@ -84,8 +84,8 @@ export class RemoteDashboardsService {
 
       untracked(() => {
         if (!isRemoteControl && !this.previousIsRemoteControl) return;
-        this.previousIsRemoteControl = isRemoteControl;
-        let screensPayload: IScreensPayload = undefined;
+        this.previousIsRemoteControl = !!isRemoteControl;
+        let screensPayload: IScreensPayload | null = null;
         if (!isRemoteControl) {
           // Clear displayName and screens on the server
           screensPayload = null;
@@ -132,6 +132,7 @@ export class RemoteDashboardsService {
 
       untracked(() => {
         if (!this.isRemoteControl()) return;
+        if (!changeTo) return;
         if (changeTo.data.value == null) return;
         const idx = Number(changeTo.data.value);
         if (!isNaN(idx) && idx >= 0 && idx < this.dashboard.dashboards().length) {
@@ -150,13 +151,13 @@ export class RemoteDashboardsService {
   }
 
   private getScreensPayload(dashboards: Dashboard[]): IScreensPayload {
-    const displayName = this.displayName();
+    const displayName = this.displayName() ?? 'Unknown Display Name';
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const dashboardListItems: DashboardListItem[] = dashboards.map(({ configuration, ...rest }) => rest);
     return { displayName: displayName, screens: dashboardListItems };
   }
 
-  private shareScreens(screens: IScreensPayload): void {
+  private shareScreens(screens: IScreensPayload | null): void {
     this.setScreensOnRemote(this.KIP_UUID, screens)
     console.log('[Remote Dashboards] Sending dashboard configurations to server.');
   }
@@ -196,7 +197,7 @@ export class RemoteDashboardsService {
    * });
    * ```
    */
-  public setScreensOnRemote(kipId: string, screensPayload: IScreensPayload): void {
+  public setScreensOnRemote(kipId: string, screensPayload: IScreensPayload | null): void {
     const payload: IRemoteDisplayCommand = {
       displayId: kipId,
       display: screensPayload === null ? null : { ...screensPayload }
