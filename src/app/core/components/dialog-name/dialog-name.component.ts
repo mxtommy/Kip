@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,7 +12,6 @@ import { MatInputModule } from '@angular/material/input';
   standalone: true,
   imports: [ MatDialogModule, MatIconModule, MatFormFieldModule, MatInputModule, MatButtonModule, FormsModule ],
   templateUrl: './dialog-name.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dialog-name.component.scss'
 })
 export class DialogNameComponent {

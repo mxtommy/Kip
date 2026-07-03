@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, input, output, inject } from '@angular/core';
 import { UntypedFormArray, UntypedFormBuilder, Validators, FormsModule, ReactiveFormsModule, FormGroup, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { debounceTime } from 'rxjs/internal/operators/debounceTime';
 
@@ -18,7 +18,6 @@ export interface IAddNewPathObject {
     selector: 'boolean-multicontrol-options',
     templateUrl: './boolean-multicontrol-options.component.html',
     styleUrls: ['./boolean-multicontrol-options.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         FormsModule,
         ReactiveFormsModule,

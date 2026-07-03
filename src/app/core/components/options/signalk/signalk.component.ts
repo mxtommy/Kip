@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed, ChangeDetectionStrategy } from '@angular/core';
+import { ElementRef, Component, OnInit, OnDestroy, AfterViewInit, viewChild, inject, DestroyRef, computed, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppService } from '../../../services/app-service';
 import { ToastService } from '../../../services/toast.service';
@@ -35,7 +35,6 @@ import { InternetReachabilityService } from '../../../services/internet-reachabi
   selector: 'settings-signalk',
   templateUrl: './signalk.component.html',
   styleUrls: ['./signalk.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
     MatFormField,
@@ -61,6 +60,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
   private readonly internetReachability = inject(InternetReachabilityService);
   protected readonly auth = inject(AuthenticationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly canvasService = inject(CanvasService);
 
 
@@ -107,6 +107,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       } else {
         this.authToken = null;
       }
+      this.cdr.markForCheck();
     });
 
     // get Signal K connection status
@@ -114,6 +115,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((status: IEndpointStatus) => {
       this.endpointServiceStatus = status;
+      this.cdr.markForCheck();
     });
 
     // get Delta Service WebSocket stream status
@@ -121,6 +123,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((status: IStreamStatus): void => {
       this.streamStatus = status;
+      this.cdr.markForCheck();
     });
   }
 
@@ -168,6 +171,7 @@ export class SettingsSignalkComponent implements OnInit, AfterViewInit, OnDestro
       if (!data) { return } // User clicked cancel
       this.connectionConfig.loginName = data.user;
       this.connectionConfig.loginPassword = data.password;
+      this.cdr.markForCheck();
       this.connectToServer();
     });
   }

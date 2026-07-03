@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, input, output, inject } from '@angular/core';
 import { AppService } from './../../core/services/app-service';
 import { UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -17,8 +17,7 @@ export interface IDeleteEventObj {
 @Component({
     selector: 'boolean-control-config',
     templateUrl: './boolean-control-config.component.html',
-    styleUrls: ['./boolean-control-config.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./boolean-control-config.component.scss'],
     imports: [FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSelect, MatOption, MatIconButton, MatCheckboxModule, MatIconModule]
 })
 export class BooleanControlConfigComponent implements OnInit {
@@ -29,7 +28,7 @@ export class BooleanControlConfigComponent implements OnInit {
   public readonly deleteCtrl = output<IDeleteEventObj>();
   public readonly moveUp = output<number>();
   public readonly moveDown = output<number>();
-  protected colors: ReadonlyArray<{ label: string; value: string }> = [];
+  protected colors: readonly { label: string; value: string }[] = [];
 
   ngOnInit(): void {
     this.colors = this.app.configurableThemeColors;

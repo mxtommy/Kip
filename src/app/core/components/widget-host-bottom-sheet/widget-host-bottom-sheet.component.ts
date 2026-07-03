@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,7 +8,6 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [ MatListModule, MatIconModule],
   templateUrl: './widget-host-bottom-sheet.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './widget-host-bottom-sheet.component.scss'
 })
 export class WidgetHostBottomSheetComponent {

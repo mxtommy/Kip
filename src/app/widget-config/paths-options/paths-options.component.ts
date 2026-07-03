@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, input, inject } from '@angular/core';
 import { AbstractControl, FormGroupDirective, UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import type { IDynamicControl, IWidgetPath } from '../../core/interfaces/widgets-interface';
 import { PathControlConfigComponent } from '../path-control-config/path-control-config.component';
@@ -17,7 +17,6 @@ export interface IAddNewPath {
     selector: 'paths-options',
     templateUrl: './paths-options.component.html',
     styleUrls: ['./paths-options.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [MatCheckbox, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatSuffix, PathControlConfigComponent]
 })
 export class PathsOptionsComponent implements OnInit, OnChanges {

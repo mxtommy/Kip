@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
@@ -10,7 +10,6 @@ import { NgComponentOutlet } from '@angular/common';
   standalone: true,
   imports: [MatIcon, MatDialogModule, MatButtonModule, NgComponentOutlet ],
   templateUrl: './dialog-frame.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dialog-frame.component.scss'
 })
 export class DialogFrameComponent {

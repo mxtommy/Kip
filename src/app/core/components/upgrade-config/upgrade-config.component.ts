@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { ConfigurationUpgradeService } from '../../services/configuration-upgrade.service';
@@ -7,7 +7,6 @@ import { ConfigurationUpgradeService } from '../../services/configuration-upgrad
   selector: 'upgrade-config',
   imports: [MatDialogModule, MatButtonModule],
   templateUrl: './upgrade-config.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './upgrade-config.component.scss'
 })
 export class UpgradeConfigComponent {

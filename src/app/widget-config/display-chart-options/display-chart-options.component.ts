@@ -1,4 +1,4 @@
-import { Component, OnInit, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, input, inject } from '@angular/core';
 import { AppService } from '../../core/services/app-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
@@ -14,7 +14,6 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
   standalone: true,
   templateUrl: './display-chart-options.component.html',
   styleUrl: './display-chart-options.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [MatCardModule, MatFormFieldModule, MatCheckboxModule, MatSelectModule, MatOptionModule, MatLabel, MatInputModule, MatRadioModule, ReactiveFormsModule]
 })
 export class DisplayChartOptionsComponent implements OnInit {

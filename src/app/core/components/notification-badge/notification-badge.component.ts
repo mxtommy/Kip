@@ -1,5 +1,5 @@
 import { MatIconModule } from '@angular/material/icon';
-import { Component, inject, ElementRef, viewChild, ChangeDetectionStrategy, Signal } from '@angular/core';
+import { Component, inject, ElementRef, viewChild, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -9,7 +9,6 @@ import { INotificationInfo, NotificationsService } from '../../services/notifica
   selector: 'notification-badge',
   imports: [MatButtonModule, MatIconModule, MatBadgeModule],
   templateUrl: './notification-badge.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./notification-badge.component.scss'],
 })
 export class NotificationBadgeComponent {

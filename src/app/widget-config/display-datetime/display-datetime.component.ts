@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input } from '@angular/core';
 import { AbstractControl, UntypedFormControl, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subscription, debounceTime, map, of, startWith } from 'rxjs';
 import { MatOption } from '@angular/material/core';
@@ -39,7 +39,6 @@ export const getDynamicTimeZones = (): ITzDefinition[] => {
 @Component({
     selector: 'display-datetime-options',
     templateUrl: './display-datetime.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [MatFormField, MatLabel, MatInput, FormsModule, ReactiveFormsModule, MatAutocompleteTrigger, MatIconButton, MatSuffix, MatAutocomplete, MatOption, AsyncPipe]
 })
 export class DisplayDatetimeComponent implements OnInit {

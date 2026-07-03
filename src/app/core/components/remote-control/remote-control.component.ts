@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, signal, DestroyRef } from '@angular/core';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -17,7 +17,6 @@ import { SignalkRequestsService } from '../../services/signalk-requests.service'
   selector: 'remote-control',
   imports: [ PageHeaderComponent, MatSidenavModule, MatListModule, MatButtonModule, MatProgressSpinnerModule, TileLargeIconComponent, MatIconModule ],
   templateUrl: './remote-control.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './remote-control.component.scss'
 })
 export class RemoteControlComponent {

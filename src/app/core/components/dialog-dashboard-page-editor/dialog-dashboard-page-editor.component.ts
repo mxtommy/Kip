@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +15,6 @@ import { SettingsService } from '../../services/settings.service';
   standalone: true,
   imports: [ MatDialogModule, MatIconModule, MatFormFieldModule, MatInputModule, MatButtonModule, FormsModule, SelectIconComponent, MatCheckboxModule ],
   templateUrl: './dialog-dashboard-page-editor.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dialog-dashboard-page-editor.component.scss'
 })
 export class DialogDashboardPageEditorComponent {

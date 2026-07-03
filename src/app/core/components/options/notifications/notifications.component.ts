@@ -1,4 +1,4 @@
-import { Component, viewChild, inject, Signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, viewChild, inject, Signal } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { INotificationConfig } from '../../../interfaces/app-settings.interfaces';
 import { ToastService } from '../../../services/toast.service';
@@ -17,8 +17,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
     selector: 'settings-notifications',
     templateUrl: './notifications.component.html',
     styleUrls: ['./notifications.component.scss'],
-
-    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         FormsModule,
         MatCheckbox,

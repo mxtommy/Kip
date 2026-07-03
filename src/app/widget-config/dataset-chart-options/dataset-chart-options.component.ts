@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UnitsService } from './../../core/services/units.service';
-import { Component, OnInit, input, inject, signal, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, input, inject, signal, computed, DestroyRef } from '@angular/core';
 import { AbstractControl, ReactiveFormsModule, UntypedFormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -43,7 +43,6 @@ function pathRequiredOrValidMatch(getPaths: () => IPathMetaData[]): ValidatorFn 
   selector: 'config-dataset-chart-options',
   imports: [MatIconModule, MatAutocompleteModule, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './dataset-chart-options.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dataset-chart-options.component.scss'
 })
 export class DatasetChartOptionsComponent implements OnInit {
