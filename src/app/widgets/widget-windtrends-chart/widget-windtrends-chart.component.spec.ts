@@ -62,6 +62,25 @@ describe('WidgetWindTrendsChartComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should initialize empty annotation options for chart plugin safety', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const testComponent = component as any;
+
+    fixture.componentRef.setInput('theme', {
+      background: '#000',
+      contrast: '#fff',
+      contrastDim: '#ccc',
+      contrastDimmer: '#999'
+    });
+
+    testComponent.datasetConfig = { timeScaleFormat: 'Last 30 Minutes' };
+    testComponent.dataSourceInfo = { maxDataPoints: 30, sampleTime: 1000 };
+
+    testComponent.setChartOptions();
+
+    expect(testComponent.lineChartOptions.plugins?.annotation).toEqual({ annotations: {} });
+  });
+
   describe('dataset guards - prevents annotation plugin errors', () => {
     it('should validate that all datasets are properly initialized', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
