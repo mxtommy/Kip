@@ -59,7 +59,7 @@
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-around; /* centered instead of space-around to avoid implicit extra space */
+  justify-content: space-evenly;
   padding: 1.5rem; /* balanced padding, overlay does not affect container size */
   text-align: center;
   box-sizing: border-box;
