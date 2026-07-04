@@ -3,7 +3,7 @@
  *   node report.mjs --a master --b perf-preview [--out results/report.md]
  * Reads results/<label>.json written by run.mjs.
  */
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -58,6 +58,7 @@ for (const s of scenarios) {
 }
 
 const md = lines.join('\n');
+await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, md);
 console.log(md);
 console.log(`\n[report] wrote ${OUT}`);
