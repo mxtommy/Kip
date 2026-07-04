@@ -67,6 +67,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   });
   private nbCtrl: number | null = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0 };
+  private hostSize: IDimensions = { width: 0, height: 0 };
   private skRequestSub = new Subscription();
   private readonly measureCtx = typeof document !== 'undefined'
     ? document.createElement('canvas').getContext('2d')
@@ -91,6 +92,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
       this.nbCtrl = controls.length;
       untracked(() => {
         this.switchControls.set(controls);
+        this.updateCtrlDimensions();
         // Register path observers for each control (idempotent via directive)
         const streams = this.streams;
         if (!streams) return;
@@ -123,11 +125,19 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   }
 
   onResized(event: ResizeObserverEntry): void {
-    const width = event.contentRect.width;
-    const height = event.contentRect.height;
+    this.hostSize = {
+      width: event.contentRect.width,
+      height: event.contentRect.height,
+    };
+    this.updateCtrlDimensions();
+  }
+
+  private updateCtrlDimensions(): void {
+    const width = this.hostSize.width;
+    const height = this.hostSize.height;
     const controls = this.switchControls();
 
-    if (!controls.length) {
+    if (!width || !height || !controls.length) {
       this.ctrlDimensions = { width, height: 0 };
       return;
     }
@@ -137,7 +147,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
         this.measureCtx!.font = `700 ${fontSize}px ${this.canvas.DEFAULT_FONT}`;
         return this.measureCtx!.measureText(text).width;
       })
-      : Math.max(1, Math.floor(height / (this.nbCtrl || 1)));
+      : Math.max(1, Math.floor(height / controls.length));
 
     this.ctrlDimensions = { width, height: measuredHeight };
   }

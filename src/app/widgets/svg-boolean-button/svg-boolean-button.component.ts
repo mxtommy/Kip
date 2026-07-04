@@ -95,22 +95,18 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
 
   public handleClickUp(): void {
     if (this.isSwiping) {
-      // Ignore pointerup if it was a swipe
+      // Ignore swipe as an activation, but still reset transient state.
       this.isSwiping = false;
-      return;
     }
 
     this.pressed = false;
+    this.clearTimers();
+  }
 
-    // Clear the interval if it was set
-    if (this.emitIntervalId) {
-      clearInterval(this.emitIntervalId);
-      this.emitIntervalId = null;
-    }
-    if (this.holdTimeoutId) {
-      clearTimeout(this.holdTimeoutId);
-      this.holdTimeoutId = null;
-    }
+  public handlePointerCancel(): void {
+    this.isSwiping = false;
+    this.pressed = false;
+    this.clearTimers();
   }
 
   public get layout(): BooleanControlLayout {

@@ -2,6 +2,11 @@
    [attr.height]="dimensions().height"
    [attr.width]="dimensions().width"
    [attr.viewBox]="'0 0 ' + dimensions().width + ' ' + dimensions().height"
+  (pointerup)="handleClickUp()"
+  (pointerleave)="handleClickUp()"
+  (pointerdown)="handleClickDown($event)"
+  (pointermove)="handlePointerMove($event)"
+  (pointercancel)="handlePointerCancel()"
    version="1.1"
    id="svg9"
    xmlns="http://www.w3.org/2000/svg"
@@ -12,11 +17,7 @@
     x="0"
     y="0"
     pointer-events="all"
-    style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0"
-    (pointerup)="handleClickUp()"
-    (pointerleave)="handleClickUp()"
-    (pointerdown)="handleClickDown($event)"
-    (pointermove)="handlePointerMove($event)" />
+    style="display:inline;opacity:1;fill:transparent;fill-opacity:1;stroke:none;stroke-width:0" />
 
   <rect
     [attr.x]="layout.buttonX"
@@ -31,7 +32,8 @@
     [attr.x]="layout.labelX"
     y="0"
     [attr.width]="layout.labelWidth"
-    [attr.height]="dimensions().height">
+    [attr.height]="dimensions().height"
+    style="pointer-events:none;">
     <div
       xmlns="http://www.w3.org/1999/xhtml"
       [style.color]="isPressed ? labelColorEnabled : labelColorDisabled"
