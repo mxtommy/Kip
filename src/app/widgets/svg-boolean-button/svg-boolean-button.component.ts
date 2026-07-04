@@ -19,7 +19,6 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
 
   private oldTheme: ITheme | null = null;
 
-  private holdTimeoutId: ReturnType<typeof setTimeout> | null = null; // delay before starting momentary emit
   private emitIntervalId: ReturnType<typeof setInterval> | null = null; // repeating emit while pressed
   private pressed = false;
   private isSwiping = false;
@@ -58,23 +57,17 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
     this.pointerStartX = event.clientX;
     this.pointerStartY = event.clientY;
 
-    // Wait 250ms before emitting the state
+    // Emit immediately on press, then continue emitting while held.
     this.clearTimers();
-    this.holdTimeoutId = setTimeout(() => {
-      if (!this.isSwiping) {
-        // Momentary mode
-        this.pressed = true;
+    this.pressed = true;
 
-        const state: IDynamicControl = cloneDeep(currentData);
-        state.value = this.pressed;
+    const state: IDynamicControl = cloneDeep(currentData);
+    state.value = this.pressed;
 
-        // Start emitting the state every 100ms
-        this.toggleClick.emit(state);
-        this.emitIntervalId = setInterval(() => {
-          this.toggleClick.emit(state);
-        }, 100);
-      }
-    }, 200);
+    this.toggleClick.emit(state);
+    this.emitIntervalId = setInterval(() => {
+      this.toggleClick.emit(state);
+    }, 100);
   }
 
   public handlePointerMove(event: PointerEvent): void {
@@ -84,12 +77,8 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
     // Mark as swiping if movement exceeds a threshold
     if (deltaX > 30 || deltaY > 30) {
       this.isSwiping = true;
-
-      // Cancel the timeout if swiping is detected
-      if (this.holdTimeoutId) {
-        clearTimeout(this.holdTimeoutId);
-        this.holdTimeoutId = null;
-      }
+      this.pressed = false;
+      this.clearTimers();
     }
   }
 
@@ -174,10 +163,6 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   }
 
   private clearTimers(): void {
-    if (this.holdTimeoutId) {
-      clearTimeout(this.holdTimeoutId);
-      this.holdTimeoutId = null;
-    }
     if (this.emitIntervalId) {
       clearInterval(this.emitIntervalId);
       this.emitIntervalId = null;

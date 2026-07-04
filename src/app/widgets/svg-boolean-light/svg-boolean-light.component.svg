@@ -40,7 +40,7 @@
     [attr.cx]="layout.lightCenterX"
     [attr.cy]="layout.lightCenterY"
     [attr.r]="layout.lightRadius"
-    [attr.fill]="isEnabled ? valueColor : labelColor"
-    style="stroke:url(#linearGradient33);stroke-opacity:0.2;stroke-dasharray:none"
+    [attr.fill]="isEnabled ? valueColor : offColor"
+    style="stroke:url(#linearGradient33);stroke-opacity:0.4;stroke-dasharray:none"
     [attr.stroke-width]="layout.lightStrokeWidth" />
 </svg>

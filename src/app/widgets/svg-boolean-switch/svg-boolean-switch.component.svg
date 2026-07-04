@@ -39,13 +39,13 @@
     [attr.width]="layout.switchTrackWidth"
     [attr.height]="layout.switchTrackHeight"
     [attr.rx]="layout.switchTrackRadius"
-    [attr.fill]="isEnabled ? labelColor : 'var(--mat-sys-outline)'"
+    [attr.fill]="isEnabled ? labelColor : offColor"
     style="stroke-width:1.5;stroke:black;stroke-opacity:0.12" />
 
   <circle
     [attr.cx]="isEnabled ? layout.switchKnobOnX : layout.switchKnobOffX"
     [attr.cy]="layout.switchKnobY"
     [attr.r]="layout.switchKnobRadius"
-    [attr.fill]="isEnabled ? valueColor : labelColor"
-    style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
+    [attr.fill]="isEnabled ? valueColor : offColor"
+    style="stroke-width:1.5;stroke:white;stroke-opacity:0.2;stroke-dasharray:none" />
 </svg>
