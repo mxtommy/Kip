@@ -3,3 +3,4 @@ worktrees/
 results/*.raw.json
 results-*.log
 results/shots/
+results/report-*.md
