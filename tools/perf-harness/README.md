@@ -61,6 +61,10 @@ This writes metric files to:
 
 Use labels to control output names. `--label xyz` writes `results/xyz.json`.
 
+For repeatable comparisons, always pass an explicit `--label`.
+If omitted, `run.mjs` generates a unique default label (`<branch>-<UTC timestamp>`),
+which avoids accidental reuse of `master` worktree folders.
+
 #### 2) Select what code/build is measured
 
 `run.mjs` supports two ways to choose the code under test:
@@ -131,7 +135,7 @@ This writes:
 |---|---|---|---|
 | `--branch <ref>` | no | `master` | Git ref/branch to build and measure (ignored when `--public` is used). |
 | `--public <path>` | no | none | Use an existing built app directory instead of building a branch. |
-| `--label <name>` | no | sanitized branch name | Output label for `results/<label>.json` and shot filenames. |
+| `--label <name>` | no | `<sanitized-branch>-<UTC timestamp>` | Output label for `results/<label>.json` and shot filenames. |
 | `--scenarios <a,b,...>` | no | all scenarios | Comma-separated scenario labels to run. |
 | `--repeats <n>` | no | `4` | Repetitions per scenario. |
 | `--throttle <n>` | no | `10` | CPU throttling rate applied through CDP. |

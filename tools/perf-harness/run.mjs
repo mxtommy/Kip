@@ -26,8 +26,17 @@ const BASE = '/@mxtommy/kip/';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1] : d; };
 const flag = (n) => process.argv.includes(`--${n}`);
 
+function safeLabelPart(value) {
+  return value.replace(/[^\w.-]/g, '_');
+}
+
+function defaultLabelFor(branch) {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  return `${safeLabelPart(branch)}-${stamp}`;
+}
+
 const BRANCH = arg('branch', 'master');
-const LABEL = arg('label', BRANCH.replace(/[^\w.-]/g, '_'));
+const LABEL = arg('label', defaultLabelFor(BRANCH));
 const REPEATS = Number(arg('repeats', '4'));
 const THROTTLE = Number(arg('throttle', '10'));
 const PORT = Number(arg('port', '4399'));
