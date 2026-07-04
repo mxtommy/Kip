@@ -626,6 +626,10 @@ export class HistorySeriesService {
     };
 
     if (expansionMode) {
+      if (!normalizedTemplateSelector) {
+        throw new Error(`Template series mode \"${expansionMode}\" must resolve a non-null ownerWidgetSelector`);
+      }
+
       const templateSeries: ISeriesDefinition = {
         ...normalizedBase,
         ownerWidgetSelector: normalizedTemplateSelector,
