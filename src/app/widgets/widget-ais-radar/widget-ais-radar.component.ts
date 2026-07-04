@@ -93,7 +93,7 @@ interface RenderSignature {
   filtersKey: string;
   selectedId: string | null;
   targetsRef: AisTrack[];
-  ownShipRef: RenderState['ownShip'];
+  ownPosKey: string;
   themeRef: ITheme;
   color: string | undefined;
 }
@@ -187,12 +187,15 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   private svg?: Selection<SVGSVGElement, unknown, null, undefined>;
   private root?: Selection<SVGGElement, unknown, null, undefined>;
   private ringsLayer?: Selection<SVGGElement, unknown, null, undefined>;
+  private rotationGroup?: Selection<SVGGElement, unknown, null, undefined>;
   private vectorsLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private targetsLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private selectedLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private ownShipLayer?: Selection<SVGGElement, unknown, null, undefined>;
   private viewRotationSmoothed: number | null = null;
   private lastRotationAt: number | null = null;
+  private lastViewRotation = 0;
+  private hasRenderedOnce = false;
 
   private renderFrame: number | null = null;
   private iconRenderTimer: number | null = null;
@@ -289,9 +292,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
 
     this.root = this.svg.append('g').attr('class', 'radar-root');
     this.ringsLayer = this.root.append('g').attr('class', 'radar-rings');
-    this.vectorsLayer = this.root.append('g').attr('class', 'radar-vectors');
-    this.targetsLayer = this.root.append('g').attr('class', 'radar-targets');
-    this.selectedLayer = this.root.append('g').attr('class', 'radar-selected');
+    // Targets/vectors/selection live in a rotation group, so course-up view
+    // rotation is a single O(1) transform update instead of an O(targets)
+    // reposition + full DOM rewrite on every animation frame during a turn.
+    this.rotationGroup = this.root.append('g').attr('class', 'radar-rotation');
+    this.vectorsLayer = this.rotationGroup.append('g').attr('class', 'radar-vectors');
+    this.targetsLayer = this.rotationGroup.append('g').attr('class', 'radar-targets');
+    this.selectedLayer = this.rotationGroup.append('g').attr('class', 'radar-selected');
     this.ownShipLayer = this.root.append('g').attr('class', 'radar-ownship-layer');
 
     this.svg.on('click', () => {
@@ -321,7 +328,7 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
   }
 
   private render(): void {
-    if (!this.renderState || !this.svg || !this.root) return;
+    if (!this.renderState || !this.svg || !this.root || !this.rotationGroup) return;
     const { size, cfg, theme, targets, ownShip } = this.renderState;
     const width = Math.max(1, size.width);
     const height = Math.max(1, size.height);
@@ -341,9 +348,15 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const targetRotation = viewMode === 'course-up'
       ? (ownCog ?? ownHeading ?? 0)
       : 0;
-    const rotationPending = this.viewRotationSmoothed !== null
-      && Math.abs(this.shortestAngleDelta(this.viewRotationSmoothed, targetRotation)) > 0.5;
+    const rotationSettled = this.viewRotationSmoothed !== null
+      && Math.abs(this.shortestAngleDelta(this.viewRotationSmoothed, targetRotation)) <= 0.5;
+
     const filtersKey = this.buildFilterStateSignature(this.filterState());
+    // Own-ship POSITION affects target bearings and so belongs in the data
+    // signature; own-ship HEADING only rotates the view (handled by the rotation
+    // group transform below) and is deliberately excluded, so a streaming compass
+    // no longer forces a full O(targets) rebuild.
+    const ownPosKey = ownShip.position ? `${ownShip.position.latitude},${ownShip.position.longitude}` : 'none';
     const signature: RenderSignature = {
       sizeKey: `${width}x${height}`,
       viewMode,
@@ -356,60 +369,74 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       filtersKey,
       selectedId: this.selectedId(),
       targetsRef: targets,
-      ownShipRef: ownShip,
+      ownPosKey,
       themeRef: theme,
       color: cfg.color
     };
-    const last = this.lastRenderSignature;
-    if (!rotationPending && last
-      && last.sizeKey === signature.sizeKey
-      && last.viewMode === signature.viewMode
-      && last.rangeIndex === signature.rangeIndex
-      && last.rangesKey === signature.rangesKey
-      && last.showSelf === signature.showSelf
-      && last.showCogVectors === signature.showCogVectors
-      && last.showLostTargets === signature.showLostTargets
-      && last.showUnconfirmedTargets === signature.showUnconfirmedTargets
-      && last.filtersKey === signature.filtersKey
-      && last.selectedId === signature.selectedId
-      && last.targetsRef === signature.targetsRef
-      && last.ownShipRef === signature.ownShipRef
-      && last.themeRef === signature.themeRef
-      && last.color === signature.color) {
-      return;
-    }
+    const dataChanged = !this.lastRenderSignature || !this.signaturesEqual(this.lastRenderSignature, signature);
+
+    // Nothing to do: target data unchanged and the view rotation has settled.
+    if (!dataChanged && rotationSettled && this.hasRenderedOnce) return;
     this.lastRenderSignature = signature;
+
     const viewRotation = viewMode === 'course-up'
       ? (hasOrientation ? this.smoothRotation(targetRotation) : 0)
       : 0;
     const remainingRotation = viewMode === 'course-up'
       ? Math.abs(this.shortestAngleDelta(viewRotation, targetRotation))
       : 0;
+    this.lastViewRotation = viewRotation;
 
-    this.svg
-      .attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`);
-
+    // Cheap per-frame updates (O(1) transform + O(rings)):
+    this.svg.attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`);
     this.root.attr('transform', `scale(${scale})`);
-
+    this.rotationGroup.attr('transform', `rotate(${this.wrapDegrees(-viewRotation)})`);
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
     const ringColor = getColors(cfg.color ?? 'contrast', theme).dim;
     this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
 
-    if (!ownShip.position || !this.hasValidPosition(ownShip.position)) return;
+    if (ownShip.position && this.hasValidPosition(ownShip.position)) {
+      // Own-ship motion vector is O(1) and lives in the non-rotated own-ship
+      // layer, so it is recomputed every frame with the current rotation.
+      this.renderOwnShipVector(ownShip, rangeNm, radius, viewRotation, radarCfg);
 
-    const maxRangeNm = (maxRingRadius / radius) * rangeNm;
-    const renderTargets = this.buildTargets(targets, ownShip.position, rangeNm, maxRangeNm, radius, viewRotation, radarCfg);
-    this.lastRenderTargets = renderTargets;
-    this.lastRenderScale = scale;
-    this.lastRenderSize = size;
-    this.renderVectors(renderTargets, rangeNm, radius, viewRotation, radarCfg, ownShip);
-    this.renderTargets(renderTargets, scale);
-    this.renderSelected(renderTargets, scale);
+      if (dataChanged) {
+        const maxRangeNm = (maxRingRadius / radius) * rangeNm;
+        // Targets are built NORTH-UP (viewRotation = 0); the rotation group
+        // applies the course-up rotation as a single transform.
+        const renderTargets = this.buildTargets(targets, ownShip.position, rangeNm, maxRangeNm, radius, 0, radarCfg);
+        this.lastRenderTargets = renderTargets;
+        this.lastRenderScale = scale;
+        this.lastRenderSize = size;
+        this.renderTargetVectors(renderTargets, rangeNm, radius, 0, radarCfg);
+        this.renderTargets(renderTargets, scale);
+        this.renderSelected(renderTargets, scale);
+      }
+    }
+
     this.raiseOwnshipAndVector();
+    this.hasRenderedOnce = true;
 
     if (remainingRotation > 0.5) {
       this.scheduleRender();
     }
+  }
+
+  private signaturesEqual(a: RenderSignature, b: RenderSignature): boolean {
+    return a.sizeKey === b.sizeKey
+      && a.viewMode === b.viewMode
+      && a.rangeIndex === b.rangeIndex
+      && a.rangesKey === b.rangesKey
+      && a.showSelf === b.showSelf
+      && a.showCogVectors === b.showCogVectors
+      && a.showLostTargets === b.showLostTargets
+      && a.showUnconfirmedTargets === b.showUnconfirmedTargets
+      && a.filtersKey === b.filtersKey
+      && a.selectedId === b.selectedId
+      && a.targetsRef === b.targetsRef
+      && a.ownPosKey === b.ownPosKey
+      && a.themeRef === b.themeRef
+      && a.color === b.color;
   }
 
   private renderRings(
@@ -743,22 +770,19 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     return results;
   }
 
-  private renderVectors(
+  private renderTargetVectors(
     targets: RenderTarget[],
     rangeNm: number,
     radius: number,
     viewRotation: number,
-    cfg: NonNullable<IWidgetSvcConfig['ais']>,
-    ownShip: RenderState['ownShip']
+    cfg: NonNullable<IWidgetSvcConfig['ais']>
   ): void {
-    if (!this.vectorsLayer || !this.ownShipLayer) return;
+    if (!this.vectorsLayer) return;
     const motionEnabled = cfg.showCogVectors ?? true;
     const baseSize = Math.max(6, radius * 0.04);
     const durationSeconds = (cfg.cogVectorsMinutes ?? 5) * 60;
     const tipOffset = baseSize * 0.8;
-
     const motionData: VectorLine[] = [];
-    const ownShipMotionData: VectorLine[] = [];
 
     for (const target of targets) {
       if (!this.isVesselLike(target.raw)) continue;
@@ -771,18 +795,25 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         if (vectorLength <= 0) continue;
         const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
         const stroke = this.resolveTargetVectorStroke(target.raw);
-        motionData.push({
-          id: target.id,
-          x1: tip.x,
-          y1: tip.y,
-          x2: end.x,
-          y2: end.y,
-          className: target.className,
-          stroke
-        });
+        motionData.push({ id: target.id, x1: tip.x, y1: tip.y, x2: end.x, y2: end.y, className: target.className, stroke });
       }
-
     }
+
+    this.renderVectorLines(this.vectorsLayer, 'motion-vector', motionData);
+  }
+
+  private renderOwnShipVector(
+    ownShip: RenderState['ownShip'],
+    rangeNm: number,
+    radius: number,
+    viewRotation: number,
+    cfg: NonNullable<IWidgetSvcConfig['ais']>
+  ): void {
+    if (!this.ownShipLayer) return;
+    const baseSize = Math.max(6, radius * 0.04);
+    const durationSeconds = (cfg.cogVectorsMinutes ?? 5) * 60;
+    const tipOffset = baseSize * 0.8;
+    const ownShipMotionData: VectorLine[] = [];
 
     if (cfg.showSelf ?? true) {
       const ownCog = this.toDegreesIfRadians(ownShip.courseOverGroundTrue);
@@ -792,21 +823,13 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
         const tip = this.offsetPoint(0, 0, motionAngle, tipOffset);
         const distanceNm = (ownSog * durationSeconds) / 1852;
         const vectorLength = Math.max(0, (distanceNm / rangeNm) * radius - tipOffset);
-        if (vectorLength <= 0) return;
-        const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
-        ownShipMotionData.push({
-          id: 'ownship',
-          x1: tip.x,
-          y1: tip.y,
-          x2: end.x,
-          y2: end.y,
-          className: 'ownship-vector',
-          stroke: 'var(--kip-orange-color)'
-        });
+        if (vectorLength > 0) {
+          const end = this.offsetPoint(tip.x, tip.y, motionAngle, vectorLength);
+          ownShipMotionData.push({ id: 'ownship', x1: tip.x, y1: tip.y, x2: end.x, y2: end.y, className: 'ownship-vector', stroke: 'var(--kip-orange-color)' });
+        }
       }
     }
 
-    this.renderVectorLines(this.vectorsLayer, 'motion-vector', motionData);
     this.renderVectorLines(this.ownShipLayer, 'ownship-vector', ownShipMotionData);
   }
 
@@ -1006,7 +1029,12 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
     const offsetY = event.clientY - rect.top;
     const x = (offsetX - rect.width / 2) / this.lastRenderScale;
     const y = (offsetY - rect.height / 2) / this.lastRenderScale;
-    return { x, y };
+    // Targets are stored north-up; the rotation group renders them rotated by
+    // -viewRotation, so map the screen click back into the north-up frame.
+    const a = this.lastViewRotation * Math.PI / 180;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    return { x: x * cos - y * sin, y: x * sin + y * cos };
   }
 
   private resolveMenuPoint(event: MouseEvent): { x: number; y: number } | null {
