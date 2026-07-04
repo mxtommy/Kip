@@ -23,6 +23,11 @@ export function sh(cmd, args, opts = {}) {
 
 async function exists(p) { try { await access(p); return true; } catch { return false; } }
 
+function describeError(err) {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
 /** Create/refresh a worktree for `ref`, install deps, build prod. Returns the public/ dir. */
 export async function buildBranch(ref, label, { rebuild = true } = {}) {
   await mkdir(WORKTREES, { recursive: true });
@@ -30,9 +35,20 @@ export async function buildBranch(ref, label, { rebuild = true } = {}) {
   const publicDir = join(wt, 'public');
 
   if (rebuild && await exists(wt)) {
-    await sh('git', ['worktree', 'remove', '--force', wt], { cwd: REPO_DIR }).catch(() => {});
+    try {
+      await sh('git', ['worktree', 'remove', '--force', wt], { cwd: REPO_DIR });
+    } catch (err) {
+      throw new Error(
+        `[build] failed to remove worktree ${wt}: ${describeError(err)}\n` +
+        '[build] Run "git worktree prune -v" in the repo root and retry.',
+      );
+    }
     await rm(wt, { recursive: true, force: true });
   }
+
+  // Clear stale metadata before adding a new worktree to prevent branch lock conflicts.
+  await sh('git', ['worktree', 'prune', '--expire', 'now'], { cwd: REPO_DIR });
+
   if (!(await exists(wt))) {
     console.log(`[build] worktree ${label} <- ${ref}`);
     await sh('git', ['worktree', 'add', '--force', wt, ref], { cwd: REPO_DIR });
