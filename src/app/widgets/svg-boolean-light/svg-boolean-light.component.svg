@@ -7,17 +7,20 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs id="defs1">
-    <linearGradient id="linearGradient32">
-      <stop style="stop-color:#000000;stop-opacity:0.88486844;" offset="0" />
-      <stop style="stop-color:#f7f7f7;stop-opacity:0.17763157;" offset="1" />
-    </linearGradient>
-    <linearGradient
-      xlink:href="#linearGradient32"
-      id="linearGradient33"
-      x1="0"
-      y1="0"
-      x2="1"
-      y2="1">
+    <radialGradient id="lightSpecular" cx="36%" cy="32%" r="68%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.5" />
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.16" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="lightDepth" cx="68%" cy="70%" r="68%">
+      <stop offset="0" stop-color="#000000" stop-opacity="0" />
+      <stop offset="0.62" stop-color="#000000" stop-opacity="0.05" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0.22" />
+    </radialGradient>
+    <linearGradient id="lightRim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.36" />
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.09" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0.3" />
     </linearGradient>
   </defs>
 
@@ -29,8 +32,9 @@
     <div
       xmlns="http://www.w3.org/1999/xhtml"
       [style.color]="isEnabled ? valueColor : labelColor"
+      [style.opacity]="isEnabled ? 1 : 0.6"
       [style.fontSize.px]="layout.labelFontSize"
-      [style.textShadow]="isEnabled ? '0 0 6px currentColor, 0 0 6px currentColor' : 'none'"
+      [style.textShadow]="isEnabled ? '0 0 4px currentColor, 0 0 4px currentColor' : 'none'"
       style="width:100%;height:100%;display:flex;align-items:center;justify-content:flex-start;font-family:Roboto,sans-serif;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:clip;">
       {{ data()?.ctrlLabel }}
     </div>
@@ -40,7 +44,29 @@
     [attr.cx]="layout.lightCenterX"
     [attr.cy]="layout.lightCenterY"
     [attr.r]="layout.lightRadius"
-    [attr.fill]="isEnabled ? valueColor : labelColor"
-    style="stroke:url(#linearGradient33);stroke-opacity:0.2;stroke-dasharray:none"
+    [attr.fill]="isEnabled ? valueColor : offColor"
+    style="stroke:url(#lightRim);stroke-opacity:0.4;stroke-dasharray:none"
     [attr.stroke-width]="layout.lightStrokeWidth" />
+
+  <circle
+    [attr.cx]="layout.lightCenterX"
+    [attr.cy]="layout.lightCenterY"
+    [attr.r]="layout.lightRadius"
+    fill="url(#lightSpecular)"
+    [attr.opacity]="isEnabled ? 0.62 : 0.42" />
+
+  <circle
+    [attr.cx]="layout.lightCenterX"
+    [attr.cy]="layout.lightCenterY"
+    [attr.r]="layout.lightRadius"
+    fill="url(#lightDepth)"
+    [attr.opacity]="isEnabled ? 0.62 : 0.48" />
+
+  <ellipse
+    [attr.cx]="layout.lightCenterX - (layout.lightRadius * 0.32)"
+    [attr.cy]="layout.lightCenterY - (layout.lightRadius * 0.34)"
+    [attr.rx]="layout.lightRadius * 0.34"
+    [attr.ry]="layout.lightRadius * 0.2"
+    fill="#ffffff"
+    [attr.opacity]="isEnabled ? 0.2 : 0.12" />
 </svg>

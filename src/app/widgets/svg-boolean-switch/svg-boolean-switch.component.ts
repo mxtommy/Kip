@@ -20,6 +20,7 @@ export class SvgBooleanSwitchComponent implements DoCheck {
   private oldTheme: ITheme | null = null;
   private readonly swipeGuard = createSwipeGuard();
 
+  public offColor: string | null = null;
   public labelColor: string | null = null;
   public valueColor: string | null = null;
   private ctrlColor = '';
@@ -94,38 +95,47 @@ export class SvgBooleanSwitchComponent implements DoCheck {
 
     switch (color) {
       case "contrast":
+        this.offColor = theme.contrastDimmer;
         this.labelColor = theme.contrastDim;
         this.valueColor = theme.contrast;
         break;
       case "blue":
+        this.offColor = theme.blueDimmer;
         this.labelColor = theme.blueDim;
         this.valueColor = theme.blue;
         break;
       case "green":
+        this.offColor = theme.greenDimmer;
         this.labelColor = theme.greenDim;
         this.valueColor = theme.green;
         break;
       case "pink":
+        this.offColor = theme.pinkDimmer;
         this.labelColor = theme.pinkDim;
         this.valueColor = theme.pink;
         break;
       case "orange":
+        this.offColor = theme.orangeDimmer;
         this.labelColor = theme.orangeDim;
         this.valueColor = theme.orange;
         break;
       case "purple":
+        this.offColor = theme.purpleDimmer;
         this.labelColor = theme.purpleDim;
         this.valueColor = theme.purple;
         break;
       case "grey":
+        this.offColor = theme.greyDimmer;
         this.labelColor = theme.greyDim;
         this.valueColor = theme.grey;
         break;
       case "yellow":
+        this.offColor = theme.yellowDimmer;
         this.labelColor = theme.yellowDim;
         this.valueColor = theme.yellow;
         break;
       default:
+        this.offColor = theme.contrastDimmer;
         this.labelColor = theme.contrastDim;
         this.valueColor = theme.contrast;
         break;
