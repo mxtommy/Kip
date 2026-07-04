@@ -6,7 +6,7 @@ import { CanvasService } from '../../core/services/canvas.service';
 import { ITheme } from '../../core/services/app-service';
 import { UnitsService } from '../../core/services/units.service';
 
-import { Chart, ChartConfiguration, ChartData, TimeUnit, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, CategoryScale } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, TimeUnit } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
 interface IChartColors {
@@ -285,6 +285,9 @@ export class MinichartComponent implements OnDestroy {
     this.lineChartOptions.plugins = {
       legend: {
         display: false
+      },
+      annotation: {
+        annotations: {}
       },
        streaming: {
         duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,

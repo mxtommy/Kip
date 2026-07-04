@@ -3,6 +3,7 @@ import { Component, DoCheck, OnDestroy, input, output } from '@angular/core';
 import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
+import { BooleanControlLayout, getBooleanControlLayout } from '../widget-boolean-switch/boolean-control-layout.util';
 
 @Component({
   selector: 'app-svg-boolean-button',
@@ -16,8 +17,6 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff = "0 35 180 35";
-  private toggleOn = "0 0 180 35";
   private oldTheme: ITheme | null = null;
 
   private holdTimeoutId: ReturnType<typeof setTimeout> | null = null; // delay before starting momentary emit
@@ -27,14 +26,12 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
   private pointerStartX = 0;
   private pointerStartY = 0;
 
-  public viewBox: string = this.toggleOff;
   public labelColorEnabled: string | null = null;
   public labelColorDisabled: string | null = null;
   public valueColor: string | null = null;
   private ctrlColor = '';
 
   ngDoCheck(): void {
-    this.viewBox = this.pressed ? this.toggleOn : this.toggleOff;
     const data = this.data();
     if (!data) {
       return;
@@ -98,22 +95,27 @@ export class SvgBooleanButtonComponent implements DoCheck, OnDestroy {
 
   public handleClickUp(): void {
     if (this.isSwiping) {
-      // Ignore pointerup if it was a swipe
+      // Ignore swipe as an activation, but still reset transient state.
       this.isSwiping = false;
-      return;
     }
 
     this.pressed = false;
+    this.clearTimers();
+  }
 
-    // Clear the interval if it was set
-    if (this.emitIntervalId) {
-      clearInterval(this.emitIntervalId);
-      this.emitIntervalId = null;
-    }
-    if (this.holdTimeoutId) {
-      clearTimeout(this.holdTimeoutId);
-      this.holdTimeoutId = null;
-    }
+  public handlePointerCancel(): void {
+    this.isSwiping = false;
+    this.pressed = false;
+    this.clearTimers();
+  }
+
+  public get layout(): BooleanControlLayout {
+    const dimensions = this.dimensions();
+    return getBooleanControlLayout('2', dimensions.width, dimensions.height);
+  }
+
+  public get isPressed(): boolean {
+    return this.pressed;
   }
 
   private getColors(color: string): void {

@@ -13,6 +13,8 @@ import { getColors } from '../../core/utils/themeColors.utils';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
 import { WidgetStreamsDirective } from '../../core/directives/widget-streams.directive';
 import { KipResizeObserverDirective } from '../../core/directives/kip-resize-observer.directive';
+import { CanvasService } from '../../core/services/canvas.service';
+import { measureBooleanControlsHeight } from './boolean-control-layout.util';
 
 export interface IDimensions {
   height: number,
@@ -54,6 +56,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   protected dashboard = inject(DashboardService);
   private readonly signalkRequestsService = inject(SignalkRequestsService);
   private readonly toast = inject(ToastService);
+  private readonly canvas = inject(CanvasService);
 
   // Reactive state
   public switchControls = signal<IDynamicControl[]>([]);
@@ -64,7 +67,11 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   });
   private nbCtrl: number | null = null;
   public ctrlDimensions: IDimensions = { width: 0, height: 0 };
+  private hostSize: IDimensions = { width: 0, height: 0 };
   private skRequestSub = new Subscription();
+  private readonly measureCtx = typeof document !== 'undefined'
+    ? document.createElement('canvas').getContext('2d')
+    : null;
 
   constructor() {
     // Effect: theme / label color
@@ -85,6 +92,7 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
       this.nbCtrl = controls.length;
       untracked(() => {
         this.switchControls.set(controls);
+        this.updateCtrlDimensions();
         // Register path observers for each control (idempotent via directive)
         const streams = this.streams;
         if (!streams) return;
@@ -117,11 +125,31 @@ export class WidgetBooleanSwitchComponent implements OnDestroy {
   }
 
   onResized(event: ResizeObserverEntry): void {
-    const nb = this.nbCtrl || 1;
-    const calcH: number = event.contentRect.height / nb;
-    const ctrlHeightProportion = (35 * event.contentRect.width / 180);
-    const h: number = (ctrlHeightProportion < calcH) ? ctrlHeightProportion : calcH;
-    this.ctrlDimensions = { width: event.contentRect.width, height: h };
+    this.hostSize = {
+      width: event.contentRect.width,
+      height: event.contentRect.height,
+    };
+    this.updateCtrlDimensions();
+  }
+
+  private updateCtrlDimensions(): void {
+    const width = this.hostSize.width;
+    const height = this.hostSize.height;
+    const controls = this.switchControls();
+
+    if (!width || !height || !controls.length) {
+      this.ctrlDimensions = { width, height: 0 };
+      return;
+    }
+
+    const measuredHeight = this.measureCtx
+      ? measureBooleanControlsHeight(width, height, controls, (text, fontSize) => {
+        this.measureCtx!.font = `700 ${fontSize}px ${this.canvas.DEFAULT_FONT}`;
+        return this.measureCtx!.measureText(text).width;
+      })
+      : Math.max(1, Math.floor(height / controls.length));
+
+    this.ctrlDimensions = { width, height: measuredHeight };
   }
 
   public toggle(ctrl: IDynamicControl): void {

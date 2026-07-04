@@ -2,7 +2,7 @@ import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, co
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Chart, ChartConfiguration, ChartDataset, Color, LegendItem, LineController, LineElement, LinearScale, PointElement, TimeScale, Tooltip, Legend } from 'chart.js';
+import { Chart, ChartConfiguration, ChartDataset, Color, LegendItem } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { IPathArray, IWidget, IWidgetPath } from '../../interfaces/widgets-interface';
 import { IKipSeriesDefinition } from '../../services/kip-series-api-client.service';

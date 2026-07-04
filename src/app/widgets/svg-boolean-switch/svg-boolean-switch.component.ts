@@ -3,6 +3,7 @@ import type { IDynamicControl } from '../../core/interfaces/widgets-interface';
 import type { ITheme } from '../../core/services/app-service';
 import { IDimensions } from '../widget-boolean-switch/widget-boolean-switch.component';
 import { createSwipeGuard } from '../../core/utils/pointer-swipe-guard.util';
+import { BooleanControlLayout, getBooleanControlLayout } from '../widget-boolean-switch/boolean-control-layout.util';
 
 @Component({
     selector: 'app-svg-boolean-switch',
@@ -15,13 +16,10 @@ export class SvgBooleanSwitchComponent implements DoCheck {
   readonly dimensions = input.required<IDimensions>();
   readonly toggleClick = output<IDynamicControl>();
 
-  private toggleOff = "0 35 180 35";
-  private toggleOn = "0 0 180 35";
   private ctrlState: boolean | null = null;
   private oldTheme: ITheme | null = null;
   private readonly swipeGuard = createSwipeGuard();
 
-  public viewBox: string = this.toggleOff;
   public labelColor: string | null = null;
   public valueColor: string | null = null;
   private ctrlColor = '';
@@ -35,7 +33,6 @@ export class SvgBooleanSwitchComponent implements DoCheck {
     }
     if (data.value != this.ctrlState) {
       this.ctrlState = data.value;
-      this.viewBox = data.value ? this.toggleOn : this.toggleOff;
     }
     if(data.color != this.ctrlColor) {
       this.ctrlColor = data.color;
@@ -64,6 +61,19 @@ export class SvgBooleanSwitchComponent implements DoCheck {
 
   public onPointerCancel(event: PointerEvent): void {
     this.swipeGuard.onPointerCancel(event);
+  }
+
+  public get layout(): BooleanControlLayout {
+    const dimensions = this.dimensions();
+    return getBooleanControlLayout('1', dimensions.width, dimensions.height);
+  }
+
+  public get isEnabled(): boolean {
+    return Boolean(this.ctrlState);
+  }
+
+  public get nextState(): boolean {
+    return !this.isEnabled;
   }
 
   public toggle(state: boolean): void {

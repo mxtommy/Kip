@@ -2,8 +2,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "../plugin",
-    "types": [],
+    "types": ["node", "express"],
     "resolveJsonModule": true,
     "sourceMap": false,
     "lib": ["es2020", "es2021.intl", "DOM", "DOM.Iterable"],

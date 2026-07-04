@@ -11,7 +11,7 @@ import { ITheme } from '../../core/services/app-service';
 import { IDatasetServiceDatasetConfig, TimeScaleFormat } from '../../core/services/dataset-stream.service';
 import { WidgetDatasetOrchestratorService } from '../../core/services/widget-dataset-orchestrator.service';
 
-import { Chart, ChartConfiguration, ChartData, TimeScale, LinearScale, LineController, PointElement, LineElement, Filler, Title, SubTitle, ChartArea, Scale } from 'chart.js';
+import { Chart, ChartConfiguration, ChartData, ChartArea, Scale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
 interface IChartColors {
@@ -556,6 +556,9 @@ export class WidgetWindTrendsChartComponent implements OnDestroy {
         font: this.isPortrait() ? { size: 16 } : { size: 35 }
       },
       legend: { display: false
+      },
+      annotation: {
+        annotations: {}
       },
       streaming: {
         duration: dataSourceInfo.maxDataPoints * dataSourceInfo.sampleTime,

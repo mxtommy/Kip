@@ -824,7 +824,8 @@ export class SqliteHistoryStorageService {
           this.logger.debug(`[SERIES STORAGE] Pruned ${expired} expired and ${orphaned} orphaned samples`);
         });
       } catch (err) {
-        this.logger.error(`[SERIES STORAGE] Prune failed: ${err?.message ?? err}`);
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`[SERIES STORAGE] Prune failed: ${message}`);
       }
     }, SqliteHistoryStorageService.FOUR_HOURS_INTERVAL);
     this.pruneJob.unref?.();
@@ -854,7 +855,8 @@ export class SqliteHistoryStorageService {
           }
         });
       } catch (err) {
-        this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${err?.message ?? err}`);
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`[SERIES STORAGE] Stale series cleanup failed: ${message}`);
       }
     }, SqliteHistoryStorageService.EIGHT_HOURS_INTERVAL);
     this.staleSeriesCleanupJob.unref?.();
