@@ -387,13 +387,19 @@ export class WidgetAisRadarComponent implements AfterViewInit, OnDestroy {
       : 0;
     this.lastViewRotation = viewRotation;
 
-    // Cheap per-frame updates (O(1) transform + O(rings)):
+    // Cheap per-frame updates: rotate the target group + keep own-ship oriented.
     this.svg.attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`);
     this.root.attr('transform', `scale(${scale})`);
     this.rotationGroup.attr('transform', `rotate(${this.wrapDegrees(-viewRotation)})`);
     const ownShipRotation = this.wrapDegrees((ownCog ?? ownHeading ?? 0) - viewRotation);
-    const ringColor = getColors(cfg.color ?? 'contrast', theme).dim;
-    this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
+    // Rings/labels/own-ship icon only change with data (size/range/theme/showSelf),
+    // never with rotation — so rebuild them only on a data change and just
+    // re-orient the own-ship icon (O(1)) on pure-rotation frames.
+    if (dataChanged) {
+      const ringColor = getColors(cfg.color ?? 'contrast', theme).dim;
+      this.renderRings(ringCount, rangeNm, radius, maxRingRadius, viewRotation, scale, radarCfg.showSelf ?? true, ownShipRotation, ringColor);
+    }
+    this.ownShipLayer?.select<SVGGElement>('g.radar-ownship').attr('transform', `rotate(${ownShipRotation})`);
 
     if (ownShip.position && this.hasValidPosition(ownShip.position)) {
       // Own-ship motion vector is O(1) and lives in the non-rotated own-ship
