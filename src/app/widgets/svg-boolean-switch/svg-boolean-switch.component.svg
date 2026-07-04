@@ -10,6 +10,20 @@
    id="svg9"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+   <defs id="defs1">
+    <linearGradient id="linearGradient32">
+      <stop style="stop-color:#000000;stop-opacity:0.88486844;" offset="0" />
+      <stop style="stop-color:#f7f7f7;stop-opacity:0.17763157;" offset="1" />
+    </linearGradient>
+    <linearGradient
+      xlink:href="#linearGradient32"
+      id="linearGradient33"
+      x1="0"
+      y1="0"
+      x2="1"
+      y2="1">
+    </linearGradient>
+  </defs>
   <rect
     [attr.width]="dimensions().width"
     [attr.height]="dimensions().height"
@@ -47,5 +61,6 @@
     [attr.cy]="layout.switchKnobY"
     [attr.r]="layout.switchKnobRadius"
     [attr.fill]="isEnabled ? valueColor : offColor"
-    style="stroke-width:1.5;stroke:white;stroke-opacity:0.2;stroke-dasharray:none" />
+    style="stroke:url(#linearGradient33);stroke-opacity:0.4;stroke-dasharray:none"
+    [attr.stroke-width]="layout.switchStrokeWidth" />
 </svg>

@@ -17,6 +17,7 @@ export interface BooleanControlLayout {
   switchKnobOnX: number;
   switchKnobY: number;
   switchKnobRadius: number;
+  switchStrokeWidth: number;
   lightCenterX: number;
   lightCenterY: number;
   lightRadius: number;
@@ -54,10 +55,11 @@ export function getBooleanControlLayout(type: string, width: number, height: num
     switchKnobOnX: 32.5 * scale,
     switchKnobY: 17 * scale,
     switchKnobRadius: 10 * scale,
+    switchStrokeWidth: 1.5 * scale,
     lightCenterX: 24.5 * scale,
     lightCenterY: 17.5 * scale,
     lightRadius: 13.5 * scale,
-    lightStrokeWidth: 5 * scale,
+    lightStrokeWidth: 3 * scale,
     buttonX: 6 * scale,
     buttonY: 5 * scale,
     buttonWidth: Math.max(0, safeWidth - (12 * scale)),
