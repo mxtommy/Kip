@@ -61,6 +61,7 @@ export const scenarios = [
     note: '150 AIS targets @ 4Hz + streaming own-ship (ranks 4/5, radar render loops)',
     subscribeAll: true, durationMs: 12000, warmupMs: 3000,
     dashboards: () => buildDashboards([aisRadarWidget()]),
+    generateScreenshot: true,
     control: { rateHz: 4, selfPaths: ['navigation.position', 'navigation.headingTrue', 'navigation.courseOverGroundTrue', 'navigation.speedOverGround'], ais: { count: 150, churnPerSec: 0 } },
   },
   {
@@ -75,6 +76,7 @@ export const scenarios = [
     note: 'AIS radar with 40 targets + 40 new MMSIs/sec churn for 30s (ranks 8/9, heap growth)',
     subscribeAll: true, durationMs: 30000, warmupMs: 3000,
     dashboards: () => buildDashboards([aisRadarWidget()]),
+    generateScreenshot: true,
     control: { rateHz: 5, selfPaths: ['navigation.position', 'navigation.headingTrue'], ais: { count: 40, churnPerSec: 40 } },
   },
 ];
