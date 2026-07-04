@@ -1,94 +1,49 @@
 <svg
    [attr.height]="dimensions().height"
    [attr.width]="dimensions().width"
-   [attr.viewBox]="viewBox"
+   [attr.viewBox]="'0 0 ' + dimensions().width + ' ' + dimensions().height"
    version="1.1"
    id="svg9"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <defs id="defs9" />
-  <g id="disabled" transform="translate(0,35)" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event, true)" (pointercancel)="onPointerCancel($event)">
-    <rect
-      width="180"
-      height="35"
-      id="rect1-5"
-      x="0"
-      y="0"
-      pointer-events="all"
-      style="display:inline;opacity:0.001;fill:black;fill-opacity:0.001;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0" />
-    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
-      <text
-        id="text1-5"
-        [attr.fill]="labelColor"
-        style="text-align:center;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
-        x="47.083984"
-        y="22.636719">
-        {{ data()?.ctrlLabel }}
-      </text>
-    </svg>
-    <g transform="translate(6,2)" id="disabledToogleControl">
-      <rect
-         width="37.714306"
-         height="22"
-         rx="10.999999"
-         id="rect3-4"
-         x="0"
-         y="5"
-         style="stroke-width:1.57144;fill:var(--mat-sys-outline);fill-opacity:1" />
-      <circle
-        cx="11.5"
-        cy="16"
-        [attr.fill]="labelColor"
-        id="circle3-7"
-        r="10"
-        style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
-    </g>
-  </g>
-  <g id="enabled" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event, false)" (pointercancel)="onPointerCancel($event)">
-    <rect
-      width="180"
-      height="35"
-      id="rect1"
-      x="0"
-      y="0"
-      pointer-events="all"
-      style="display:inline;opacity:0.001;fill:black;fill-opacity:0.001;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:0"
-    />
-    <svg x="0" y="0" width="175" height="35" viewBox="0 0 175 35">
-      <defs>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      <text filter="url(#glow)"
-        id="text1"
-        [attr.fill]="valueColor"
-        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14px;font-family:arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
-        x="47.083984"
-        y="22.636719">{{ data()?.ctrlLabel }}
-      </text>
-    </svg>
-    <g transform="translate(6,2)" id="enabledToogleControl">
-      <rect filter="url(#glow)"
-         width="37.714306"
-         height="22"
-         rx="10.999999"
-         [attr.fill]="labelColor"
-         id="rect3"
-         x="0"
-         y="5"
-         style="stroke-width:1.57144" />
-      <circle
-         cx="26.5"
-         cy="16"
-         [attr.fill]="valueColor"
-         id="circle3"
-         r="10"
-         style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
-    </g>
-  </g>
+  <rect
+    [attr.width]="dimensions().width"
+    [attr.height]="dimensions().height"
+    x="0"
+    y="0"
+    pointer-events="all"
+    style="display:inline;opacity:0.001;fill:black;fill-opacity:0.001;stroke:none;stroke-width:0"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event, nextState)"
+    (pointercancel)="onPointerCancel($event)" />
+
+  <foreignObject
+    [attr.x]="layout.labelX"
+    y="0"
+    [attr.width]="layout.labelWidth"
+    [attr.height]="dimensions().height">
+    <div
+      [style.color]="isEnabled ? valueColor : labelColor"
+      [style.fontSize.px]="layout.labelFontSize"
+      style="width:100%;height:100%;display:flex;align-items:center;justify-content: flex-start;font-family:Roboto,sans-serif;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:clip;">
+      {{ data()?.ctrlLabel }}
+    </div>
+  </foreignObject>
+
+  <rect
+    [attr.x]="layout.switchTrackX"
+    [attr.y]="layout.switchTrackY"
+    [attr.width]="layout.switchTrackWidth"
+    [attr.height]="layout.switchTrackHeight"
+    [attr.rx]="layout.switchTrackRadius"
+    [attr.fill]="isEnabled ? labelColor : 'var(--mat-sys-outline)'"
+    style="stroke-width:1.5;stroke:black;stroke-opacity:0.12" />
+
+  <circle
+    [attr.cx]="isEnabled ? layout.switchKnobOnX : layout.switchKnobOffX"
+    [attr.cy]="layout.switchKnobY"
+    [attr.r]="layout.switchKnobRadius"
+    [attr.fill]="isEnabled ? valueColor : labelColor"
+    style="stroke-width:1.5;stroke:black;stroke-opacity:0.2;stroke-dasharray:none" />
 </svg>
