@@ -2,7 +2,7 @@
  * Freeze-audit measurement runner.
  *
  *   node run.mjs --branch <ref> --label <name> [--scenarios a,b] [--repeats 5]
- *                [--throttle 4] [--port 4399] [--no-rebuild] [--headed]
+ *                [--throttle 4] [--port 4399] [--no-rebuild] [--headed] [--shots]
  *
  * Builds the branch's production bundle in an isolated worktree, serves it +
  * a mock Signal K server on one origin, injects the identical probe + a
@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { buildBranch, WORKTREES } from './lib/build-serve.mjs';
 import { startServer } from './lib/server.mjs';
 import { localStorageBundle } from './lib/kip-config.mjs';
+import { captureRadarScreenshot } from './lib/radar-shot.mjs';
 import { scenarios as ALL } from './scenarios.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -25,11 +26,21 @@ const BASE = '/@mxtommy/kip/';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1] : d; };
 const flag = (n) => process.argv.includes(`--${n}`);
 
+function safeLabelPart(value) {
+  return value.replace(/[^\w.-]/g, '_');
+}
+
+function defaultLabelFor(branch) {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  return `${safeLabelPart(branch)}-${stamp}`;
+}
+
 const BRANCH = arg('branch', 'master');
-const LABEL = arg('label', BRANCH.replace(/[^\w.-]/g, '_'));
+const LABEL = arg('label', defaultLabelFor(BRANCH));
 const REPEATS = Number(arg('repeats', '4'));
 const THROTTLE = Number(arg('throttle', '10'));
 const PORT = Number(arg('port', '4399'));
+const SHOTS = flag('shots');
 const ONLY = (arg('scenarios', '') || '').split(',').filter(Boolean);
 const scenarios = ONLY.length ? ALL.filter((s) => ONLY.includes(s.label)) : ALL;
 
@@ -75,6 +86,23 @@ async function waitForBoot(page, expectedWidgets) {
   // settle a couple of frames
   await page.waitForTimeout(800);
   return page.$$eval('widget-host2', (els) => els.length).catch(() => 0);
+}
+
+async function maybeCaptureScreenshot({ browser, server, scenario }) {
+  if (!SHOTS || !scenario.generateScreenshot) return null;
+  const outDir = join(HERE, 'results', 'shots');
+  const fileName = `${LABEL}-${scenario.label}.png`;
+  const out = await captureRadarScreenshot({
+    browser,
+    server,
+    outDir,
+    fileName,
+    dashboards: scenario.dashboards(),
+    subscribeAll: scenario.subscribeAll,
+    control: scenario.control,
+  });
+  console.log(`  [shot] ${out}`);
+  return out;
 }
 
 async function main() {
@@ -126,6 +154,7 @@ async function main() {
       await ctx.close();
     }
     results.scenarios[s.label] = { note: s.note, agg: aggregate(reps), raw: reps.map((r) => ({ ...r, heap: { ...r.heap } })) };
+    await maybeCaptureScreenshot({ browser, server, scenario: s });
   }
 
   await server.stop();
