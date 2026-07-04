@@ -15,10 +15,10 @@
 * Fixed the autopilot static standby button label for clearer control feedback. Fixes #1072.
 * Corrected the autopilot key map. Fixes #1073.
 * Fixed Help image 404 errors when KIP is served under a base href. Fixes #1056.
-* Resolved a test suite issue. Fixes #1074.
+* Resolved test suite issues. Fixes #1074.
 * Fixed remote storage request handling. Fixes #1075.
 * Corrected Windsteer simple mode's True Wind Angle offset and simplified the interface to better match familiar, classic wind gauge features. Fixes #1066, #1063.
-* Added circular directional angle support in the Data Charts widget using the Advancedwind wind shift path. Fixes #1070.
+* Added circular directional angle support in the Data Charts widget when using the Advancedwind wind shift path. Fixes #1070.
 # v4.8.0
 ## New Features
 * Solar Charger Widget: Get instant clarity on your solar system with a compact, purpose-built Solar Charger Widget. Track individual panels or full arrays in real time, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Device discovery is automatic, and Zones support keeps warnings and alarms state highly visible.
