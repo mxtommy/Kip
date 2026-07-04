@@ -1,0 +1,401 @@
+{
+  "label": "freeze-transform2",
+  "branch": "master",
+  "throttle": 10,
+  "repeats": 3,
+  "chrome": "149.0.7827.201",
+  "scenarios": {
+    "ais-radar-150": {
+      "note": "150 AIS targets @ 4Hz + streaming own-ship (ranks 4/5, radar render loops)",
+      "agg": {
+        "longTaskCount": {
+          "median": 16,
+          "p95": 26,
+          "all": [
+            26,
+            16,
+            11
+          ]
+        },
+        "longTaskMaxMs": {
+          "median": 1524,
+          "p95": 1737,
+          "all": [
+            474,
+            1524,
+            1737
+          ]
+        },
+        "blockingTimeMs": {
+          "median": 8586,
+          "p95": 9225,
+          "all": [
+            4419,
+            9225,
+            8586
+          ]
+        },
+        "taskLatencyMaxMs": {
+          "median": 1585,
+          "p95": 1874,
+          "all": [
+            598,
+            1585,
+            1874
+          ]
+        },
+        "taskLatencyP95Ms": {
+          "median": 1234,
+          "p95": 1675,
+          "all": [
+            464,
+            1234,
+            1675
+          ]
+        },
+        "frameMaxGapMs": {
+          "median": 1609,
+          "p95": 1834,
+          "all": [
+            575,
+            1609,
+            1834
+          ]
+        },
+        "framesDropped": {
+          "median": 31,
+          "p95": 70,
+          "all": [
+            70,
+            31,
+            28
+          ]
+        },
+        "heapSlopeKBps": {
+          "median": 961,
+          "p95": 1243,
+          "all": [
+            961,
+            1243,
+            813
+          ]
+        },
+        "heapGrowthMB": {
+          "median": 15,
+          "p95": 19,
+          "all": [
+            15,
+            19,
+            12
+          ]
+        },
+        "deltasSent": {
+          "median": 7399,
+          "p95": 18271,
+          "all": [
+            18271,
+            7248,
+            7399
+          ]
+        },
+        "widgetCount": {
+          "median": 1,
+          "p95": 1,
+          "all": [
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      "raw": [
+        {
+          "windowMs": 12224,
+          "longTasks": {
+            "count": 26,
+            "totalMs": 5719,
+            "maxMs": 474,
+            "blockingTimeMs": 4419
+          },
+          "taskLatencyMs": {
+            "samples": 58,
+            "maxMs": 598,
+            "p95Ms": 464
+          },
+          "frames": {
+            "samples": 78,
+            "maxGapMs": 575,
+            "p95GapMs": 400,
+            "droppedOver50ms": 70
+          },
+          "heap": {
+            "samples": 32,
+            "firstBytes": 10676720,
+            "lastBytes": 26515604,
+            "slopeBytesPerSec": 984118
+          },
+          "marks": {},
+          "deltasSent": 18271,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 4832
+        },
+        {
+          "windowMs": 12125,
+          "longTasks": {
+            "count": 16,
+            "totalMs": 10025,
+            "maxMs": 1524,
+            "blockingTimeMs": 9225
+          },
+          "taskLatencyMs": {
+            "samples": 31,
+            "maxMs": 1585,
+            "p95Ms": 1234
+          },
+          "frames": {
+            "samples": 47,
+            "maxGapMs": 1609,
+            "p95GapMs": 1191,
+            "droppedOver50ms": 31
+          },
+          "heap": {
+            "samples": 26,
+            "firstBytes": 10714448,
+            "lastBytes": 30274163,
+            "slopeBytesPerSec": 1272947
+          },
+          "marks": {},
+          "deltasSent": 7248,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 1963
+        },
+        {
+          "windowMs": 12257,
+          "longTasks": {
+            "count": 11,
+            "totalMs": 9136,
+            "maxMs": 1737,
+            "blockingTimeMs": 8586
+          },
+          "taskLatencyMs": {
+            "samples": 23,
+            "maxMs": 1874,
+            "p95Ms": 1675
+          },
+          "frames": {
+            "samples": 35,
+            "maxGapMs": 1834,
+            "p95GapMs": 1625,
+            "droppedOver50ms": 28
+          },
+          "heap": {
+            "samples": 20,
+            "firstBytes": 10931624,
+            "lastBytes": 23802906,
+            "slopeBytesPerSec": 832554
+          },
+          "marks": {},
+          "deltasSent": 7399,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 1812
+        }
+      ]
+    },
+    "ais-growth-churn": {
+      "note": "AIS radar with 40 targets + 40 new MMSIs/sec churn for 30s (ranks 8/9, heap growth)",
+      "agg": {
+        "longTaskCount": {
+          "median": 30,
+          "p95": 38,
+          "all": [
+            38,
+            18,
+            30
+          ]
+        },
+        "longTaskMaxMs": {
+          "median": 5160,
+          "p95": 7912,
+          "all": [
+            5160,
+            7912,
+            4155
+          ]
+        },
+        "blockingTimeMs": {
+          "median": 25265,
+          "p95": 27259,
+          "all": [
+            23378,
+            27259,
+            25265
+          ]
+        },
+        "taskLatencyMaxMs": {
+          "median": 6337,
+          "p95": 8018,
+          "all": [
+            6337,
+            8018,
+            4250
+          ]
+        },
+        "taskLatencyP95Ms": {
+          "median": 3812,
+          "p95": 7162,
+          "all": [
+            3812,
+            7162,
+            2960
+          ]
+        },
+        "frameMaxGapMs": {
+          "median": 6250,
+          "p95": 8017,
+          "all": [
+            6250,
+            8017,
+            4250
+          ]
+        },
+        "framesDropped": {
+          "median": 46,
+          "p95": 48,
+          "all": [
+            46,
+            29,
+            48
+          ]
+        },
+        "heapSlopeKBps": {
+          "median": 240,
+          "p95": 490,
+          "all": [
+            490,
+            240,
+            235
+          ]
+        },
+        "heapGrowthMB": {
+          "median": 8,
+          "p95": 15,
+          "all": [
+            15,
+            8,
+            8
+          ]
+        },
+        "deltasSent": {
+          "median": 7497,
+          "p95": 7497,
+          "all": [
+            6664,
+            7497,
+            7497
+          ]
+        },
+        "widgetCount": {
+          "median": 1,
+          "p95": 1,
+          "all": [
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      "raw": [
+        {
+          "windowMs": 34136,
+          "longTasks": {
+            "count": 38,
+            "totalMs": 25278,
+            "maxMs": 5160,
+            "blockingTimeMs": 23378
+          },
+          "taskLatencyMs": {
+            "samples": 68,
+            "maxMs": 6337,
+            "p95Ms": 3812
+          },
+          "frames": {
+            "samples": 125,
+            "maxGapMs": 6250,
+            "p95GapMs": 900,
+            "droppedOver50ms": 46
+          },
+          "heap": {
+            "samples": 30,
+            "firstBytes": 10936464,
+            "lastBytes": 27007075,
+            "slopeBytesPerSec": 501494
+          },
+          "marks": {},
+          "deltasSent": 6664,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 588
+        },
+        {
+          "windowMs": 30612,
+          "longTasks": {
+            "count": 18,
+            "totalMs": 28159,
+            "maxMs": 7912,
+            "blockingTimeMs": 27259
+          },
+          "taskLatencyMs": {
+            "samples": 32,
+            "maxMs": 8018,
+            "p95Ms": 7162
+          },
+          "frames": {
+            "samples": 51,
+            "maxGapMs": 8017,
+            "p95GapMs": 4691,
+            "droppedOver50ms": 29
+          },
+          "heap": {
+            "samples": 23,
+            "firstBytes": 10942044,
+            "lastBytes": 19347506,
+            "slopeBytesPerSec": 245282
+          },
+          "marks": {},
+          "deltasSent": 7497,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 735
+        },
+        {
+          "windowMs": 30655,
+          "longTasks": {
+            "count": 30,
+            "totalMs": 26765,
+            "maxMs": 4155,
+            "blockingTimeMs": 25265
+          },
+          "taskLatencyMs": {
+            "samples": 50,
+            "maxMs": 4250,
+            "p95Ms": 2960
+          },
+          "frames": {
+            "samples": 83,
+            "maxGapMs": 4250,
+            "p95GapMs": 2325,
+            "droppedOver50ms": 48
+          },
+          "heap": {
+            "samples": 35,
+            "firstBytes": 10719704,
+            "lastBytes": 18943592,
+            "slopeBytesPerSec": 240264
+          },
+          "marks": {},
+          "deltasSent": 7497,
+          "widgetCount": 1,
+          "streamedDuringWarmup": 735
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+worktrees/
+results/*.raw.json
+results-*.log
+results/shots/
