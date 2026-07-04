@@ -1,3 +1,24 @@
+# v4.9.0
+## New Contributors
+* Special thanks to @dillan for their first of many contributions.
+* Special thanks to @macjl for their first of many contributions.
+## Improvements
+* Enhanced switch panel control states and sizing for clearer status visibility and easier interaction.
+* Simplified and clarified Time-Series documentation for faster onboarding and fewer setup mistakes.
+* Made the V2 autopilot mode menu provider-agnostic for broader compatibility.
+* Hid the Action Sidebar Fullscreen button when hosted in AppDock for a cleaner, context-aware UI and to prevent browsers from being stuck in fullscreen. Fixes #1062.
+* Multiple performance improvements increasing responsiveness and providing a smoother experience on low powered devices.
+* Reduced startup bundle size to deliver faster app startup.
+## Fixes
+* Restored TTL reset to "--" after data timeouts to keep stale-state feedback accurate. Fixes #1069.
+* Corrected layering so the autopilot SVG menu now appears above widget overlays. Fixes #1071.
+* Fixed the autopilot static standby button label for clearer control feedback. Fixes #1072.
+* Corrected the autopilot key map. Fixes #1073.
+* Fixed Help image 404 errors when KIP is served under a base href. Fixes #1056.
+* Resolved a test suite issue. Fixes #1074.
+* Fixed remote storage request handling. Fixes #1075.
+* Corrected Windsteer simple mode's True Wind Angle offset and simplified the interface to better match familiar, classic wind gauge features. Fixes #1066, #1063.
+* Added circular directional angle support in the Data Charts widget using the Advancedwind wind shift path. Fixes #1070.
 # v4.8.0
 ## New Features
 * Solar Charger Widget: Get instant clarity on your solar system with a compact, purpose-built Solar Charger Widget. Track individual panels or full arrays in real time, including State of Charge, remaining capacity, remaining time, voltage, current, power flow, and temperature. Device discovery is automatic, and Zones support keeps warnings and alarms state highly visible.
@@ -5,6 +26,7 @@
 ## Improvements
 * Battery Monitor Widget visual cleanup for better readability and tighter consistency with the electrical widget family.
 * Framework upgrades and core refactoring to improve long-term maintainability and runtime performance.
+* New Display Testing option allowing widgets with invalid paths to be saved.
 ## Fixes
 * Improved Battery Monitor text contrast when color state is Alert (yellow), making critical values easier to read. Fixes #1027
 * Restored Countdown Timer visibility in Add Widgets.
