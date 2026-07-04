@@ -18,7 +18,7 @@ KIP is designed for sailors and boaters who want:
 
 With KIP, you get the **familiar feel of professional Multi-Function Displays** combined with the flexibility of Signal K. It’s simple, reliable, and highly usable — the ultimate ready-to-go, modern, touch-first, Multi-Function Display for [Signal K](https://signalk.org) vessels.
 
-![KIP](./images/KIPDemo.png)
+![KIP](https://github.com/mxtommy/Kip/blob/master/images/KIPDemo.png)
 
 ## Table of Content
 - [Installations Showcase](#installations-showcase)
@@ -35,7 +35,7 @@ With KIP, you get the **familiar feel of professional Multi-Function Displays** 
 - [Connect, Share, and Support](#connect-share-and-support) & [Features, Ideas, Bugs](#features-ideas-bugs)
 
 ## Installations Showcase
-![Form factor support](./images/exterior_user_installs.png)
+![Form factor support](https://github.com/mxtommy/Kip/blob/master/images/exterior_user_installs.png)
 In addition to the obvious navstation, wall mounted instrument panel and autopilot remote control usecases using PCs, tablets and phones, users have taken KIP into the elements using Raspberry Pi, Pi Zero, rugged tablets and all kinds of low cost AliExpress screens and industry leading, high quality, sunlight readable marine touch screens. KIP's native remote control feature opens up all kinds of possibilities.
 
 ## Read the Help Introduction How-To
@@ -50,7 +50,7 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - **Cross-Device Compatibility**: Guarantee a consistent and responsive experience across phones, tablets, computers, and other devices.
 - **Modern Browser Support**: Include support for the latest versions of Chromium and other modern web browsers to ensure optimal performance and compatibility.
 
-![Form factor support](./images/formfactor.png)
+![Form factor support](https://github.com/mxtommy/Kip/blob/master/images/formfactor.png)
 
 ## User Experience
 
@@ -67,10 +67,10 @@ The goal is to replicate and enhance the functionality of modern marine instrume
 - Easily switch between multiple user and device configurations profiles for different roles, formfactors or use cases.
 
 Sidenav for quick access to all important features.
-![Sidenav Dashboard Access](./images/ActionSidenav.png)
+![Sidenav Dashboard Access](https://github.com/mxtommy/Kip/blob/master/images/ActionSidenav.png)
 
 Chartplotter Mode with dashboards
-![Chartplotter Mode](./images/ChartplotterMode.png)
+![Chartplotter Mode](https://github.com/mxtommy/Kip/blob/master/images/ChartplotterMode.png)
 
 ## Dashboards and Configuration
 
@@ -80,19 +80,19 @@ Meant to build purposeful dashboards with however many widgets you want, whereve
 Add, resize, and position the widgets of your choosing. Need more? Add as many additional dashboards as you wish to keep your display purposeful. Simply swipe up and down to quickly cycle through dashboards or effortlessly jump between dashboards with a single tap in the action sidenav, always knowing exactly where you are thanks to clear highlighting of your current dashboard.
 
 Widget lists are sorted by category.
-![Layouts Configuration Image](./images/KipWidgetConfig-layout-1024.png)
+![Layouts Configuration Image](https://github.com/mxtommy/Kip/blob/master/images/KipWidgetConfig-layout-1024.png)
 
 Intuitive widget configuration.
-![Gauges Configuration Image](./images/KipConfig-display-1024x488.png)
+![Gauges Configuration Image](https://github.com/mxtommy/Kip/blob/master/images/KipConfig-display-1024x488.png)
 
 See what Signal K has to offer that you can leverage with widgets. Select it and tweak the display options to suit your purpose.
-![Paths Configuration Image](./images/KipWidgetConfig-paths-1024x488.png)
+![Paths Configuration Image](https://github.com/mxtommy/Kip/blob/master/images/KipWidgetConfig-paths-1024x488.png)
 
 Many units are supported. Choose your preferred app defaults, then tweak them widget-by-widget as necessary. KIP will automatically convert the units for you.
-![Units Configuration Image](./images/KipConfig-Units-1024.png)
+![Units Configuration Image](https://github.com/mxtommy/Kip/blob/master/images/KipConfig-Units-1024.png)
 
 Organize your dashboards and access tools.
-![Options and Dashboards](./images/Options.png)
+![Options and Dashboards](https://github.com/mxtommy/Kip/blob/master/images/Options.png)
 
 ## Widget Library
 All KIP widgets are visual presentation controls that are very versatile, with multiple advanced configuration options available to suit your needs:
@@ -122,16 +122,16 @@ Get the latest version of KIP to see what's new!
 
 ### Widget Samples
 Gauges sample
-![Sample Gauges Image](./images/KipGaugeSample1-1024x545.png)
+![Sample Gauges Image](https://github.com/mxtommy/Kip/blob/master/images/KipGaugeSample1-1024x545.png)
 
 Various other types of widgets
-![Electrical Concept Image](./images/KipGaugeSample2-1024x488.png)
+![Electrical Concept Image](https://github.com/mxtommy/Kip/blob/master/images/KipGaugeSample2-1024x488.png)
 
 Freeboard-SK Chartplotter integration with Autopilot widget
-![Freeboard-SK Image](./images/KipFreeboard-SK-1024.png)
+![Freeboard-SK Image](https://github.com/mxtommy/Kip/blob/master/images/KipFreeboard-SK-1024.png)
 
 Grafana integration with other widgets
-![Embedded Webpage Concept Image](./images/KipGaugeSample3-1024x508.png)
+![Embedded Webpage Concept Image](https://github.com/mxtommy/Kip/blob/master/images/KipGaugeSample3-1024x508.png)
 
 ## Historical Data
 Experience effortless insight into your vessel’s past with KIP’s Widget Historical Charts—automatically track, store, and visualize key data, unlocking instant access charts showing up to the last full day of performance. Whether you’re sailing or docked, simply two-finger tap or right-click widgets to reveal a seamless history dialog—no setup, no clutter, just the trends you need. When combining data visualisation using Data Driven widgets, live-to-history transitions, KIP puts your boat’s story at your fingertips—so you can make smarter decisions, spot patterns, and sail with confidence.
@@ -139,9 +139,9 @@ Experience effortless insight into your vessel’s past with KIP’s Widget Hist
 ## Night Modes
 Keep your night vision with automatic or manual day and night switching to a color preserving dim mode or an all Red theme. The images below look very dark, but at night... they are perfect!
 
-![Night mode - All Red](./images/KipNightMode-1024.png)
+![Night mode - All Red](https://github.com/mxtommy/Kip/blob/master/images/KipNightMode-1024.png)
 
-![Night mode - Brightness](./images/KipBrightness-1024.png)
+![Night mode - Brightness](https://github.com/mxtommy/Kip/blob/master/images/KipBrightness-1024.png)
 
 ## Chartplotter Mode
 Keep a live Freeboard‑SK chart visible while switching dashboards for an MFD‑style workflow. The chart persists (no reload or flicker), you can choose its side, collapse it per‑dashboard for full data pages, and drag resize the split. Layout auto‑stacks in portrait / narrow screens. See the dedicated Chartplotter Mode help page for setup, performance tips, and troubleshooting.
