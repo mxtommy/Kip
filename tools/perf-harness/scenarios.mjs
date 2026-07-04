@@ -23,6 +23,7 @@ export const scenarios = [
     note: 'baseline render/CD load: 24 numeric widgets, low data rate (WS4 baseline)',
     subscribeAll: false, durationMs: 8000, warmupMs: 2000,
     dashboards: () => numericGrid(24),
+    generateScreenshot: true,
     control: { rateHz: 2, selfPaths: POOL, ais: { count: 0, churnPerSec: 0 } },
   },
   {
@@ -30,6 +31,7 @@ export const scenarios = [
     note: 'sustained ingestion: 30 paths @ 10Hz over a numeric+gauge dashboard (rank 2, delta coalescing)',
     subscribeAll: false, durationMs: 12000, warmupMs: 2000,
     dashboards: () => numericGrid(20),
+    generateScreenshot: true,
     control: { rateHz: 10, selfPaths: manyPaths(30), ais: { count: 0, churnPerSec: 0 } },
   },
   {
@@ -69,6 +71,7 @@ export const scenarios = [
     note: '16 radial ng-canvas-gauges @ 4Hz (rank 7, animation duty cycle)',
     subscribeAll: false, durationMs: 10000, warmupMs: 2000,
     dashboards: () => gaugeGrid(16),
+    generateScreenshot: true,
     control: { rateHz: 4, selfPaths: POOL, ais: { count: 0, churnPerSec: 0 } },
   },
   {
