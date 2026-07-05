@@ -51,12 +51,15 @@ export async function captureRadarScreenshot({ browser, server, outDir, fileName
   if (staticScene) server.setControl({ streaming: true, staticScene });
   else if (control) server.setControl({ streaming: true, ...control });
   await page.goto(server.appUrl + '#/dashboard/0', { waitUntil: 'load', timeout: 30000 });
-  await page.waitForSelector('widget-ais-radar', { timeout: 20000 });
+  await page.waitForSelector('widget-host2', { timeout: 20000 });
   await page.waitForTimeout(SETTLE_MS);
 
   await mkdir(outDir, { recursive: true });
   const out = join(outDir, fileName);
-  await page.locator('widget-ais-radar').screenshot({ path: out });
+
+  const radar = page.locator('widget-ais-radar');
+  if (await radar.count()) await radar.first().screenshot({ path: out });
+  else await page.locator('widget-host2').first().screenshot({ path: out });
 
   await ctx.close();
   return out;
