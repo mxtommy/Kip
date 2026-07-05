@@ -1,4 +1,13 @@
-# v4.9.0
+# v4.8.2
+## New Contributors
+* Special thanks to @tomaioo for their first contributions.
+## Improvements
+* AIS UI freezes with very high number of targets
+* Improve browser resize (fullscreen, landscape, portrait) handling for better responsiveness and layout stability.
+## Fixes
+* Fix Classic Steel widget not resizing in parent container.
+* Security fix: Potential DOM-based XSS via Dialog Data
+# v4.8.1
 ## New Contributors
 * Special thanks to @dillan for their first of many contributions.
 * Special thanks to @macjl for their first of many contributions.
