@@ -77,7 +77,7 @@ export function radialGaugeWidget({ path = 'self.navigation.speedOverGround', un
 
 export function aisRadarWidget() {
   const uuid = uid('ais');
-  return (x, y) => node(12, 12, x, y, {
+  return (x, y) => node(24, 24, x, y, {
     type: 'widget-ais-radar', uuid,
     config: {
       filterSelfPaths: false, enableTimeout: false, dataTimeout: 5, color: 'grey',
@@ -91,7 +91,7 @@ export function aisRadarWidget() {
 }
 
 /** Lay out widget factories in a grid and wrap them in one dashboard. */
-export function buildDashboards(factories, cols = 12) {
+export function buildDashboards(factories, cols = 24) {
   let x = 0, y = 0, rowH = 0;
   const configuration = factories.map((make) => {
     const probe = make(0, 0);

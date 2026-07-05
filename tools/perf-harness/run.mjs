@@ -10,8 +10,8 @@
  * and writes results/<label>.json (raw + median/p95 aggregate).
  */
 import { chromium } from 'playwright-core';
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { readFile, writeFile, mkdir, access, stat } from 'node:fs/promises';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildBranch, WORKTREES } from './lib/build-serve.mjs';
 import { startServer } from './lib/server.mjs';
@@ -72,7 +72,29 @@ function aggregate(reps) {
 
 async function prepareBuild() {
   const forced = arg('public', '');
-  if (forced) { console.log(`[build] using provided public dir: ${forced}`); return forced; }
+  if (forced) {
+    const resolvedPublic = resolve(process.cwd(), forced);
+    let info;
+    try {
+      info = await stat(resolvedPublic);
+    } catch {
+      throw new Error(
+        `[build] --public path not found: ${forced} (resolved: ${resolvedPublic}). ` +
+        'From tools/perf-harness use ../../public, or from repo root use ./public.'
+      );
+    }
+    if (!info.isDirectory()) {
+      throw new Error(`[build] --public must be a directory: ${forced} (resolved: ${resolvedPublic})`);
+    }
+    if (!await exists(join(resolvedPublic, 'index.html'))) {
+      throw new Error(
+        `[build] --public directory is missing index.html: ${forced} (resolved: ${resolvedPublic}). ` +
+        'Point --public at a built app output directory.'
+      );
+    }
+    console.log(`[build] using provided public dir: ${forced} (resolved: ${resolvedPublic})`);
+    return resolvedPublic;
+  }
   const wtPublic = join(WORKTREES, LABEL, 'public');
   if (flag('no-rebuild') && await exists(join(wtPublic, 'index.html'))) {
     console.log(`[build] reusing existing build for ${LABEL}`);

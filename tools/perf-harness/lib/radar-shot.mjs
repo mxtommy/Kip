@@ -28,8 +28,8 @@ export function buildRadarScene() {
 }
 
 /**
- * Capture a radar screenshot for either the current scenario state or a
- * deterministic standalone scene.
+ * Capture a full dashboard screenshot for either the current scenario state
+ * or a deterministic standalone scene.
  * @param {object} options
  * @param {import('playwright-core').Browser} options.browser Playwright browser instance.
  * @param {object} options.server Harness server returned by startServer().
@@ -51,12 +51,13 @@ export async function captureRadarScreenshot({ browser, server, outDir, fileName
   if (staticScene) server.setControl({ streaming: true, staticScene });
   else if (control) server.setControl({ streaming: true, ...control });
   await page.goto(server.appUrl + '#/dashboard/0', { waitUntil: 'load', timeout: 30000 });
-  await page.waitForSelector('widget-ais-radar', { timeout: 20000 });
+  await page.waitForSelector('widget-host2', { timeout: 20000 });
   await page.waitForTimeout(SETTLE_MS);
 
   await mkdir(outDir, { recursive: true });
   const out = join(outDir, fileName);
-  await page.locator('widget-ais-radar').screenshot({ path: out });
+
+  await page.screenshot({ path: out, fullPage: true });
 
   await ctx.close();
   return out;

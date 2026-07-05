@@ -67,10 +67,10 @@ export const scenarios = [
     control: { rateHz: 4, selfPaths: ['navigation.position', 'navigation.headingTrue', 'navigation.courseOverGroundTrue', 'navigation.speedOverGround'], ais: { count: 150, churnPerSec: 0 } },
   },
   {
-    label: 'gauges-16',
-    note: '16 radial ng-canvas-gauges @ 4Hz (rank 7, animation duty cycle)',
+    label: 'gauges-24',
+    note: '24 radial ng-canvas-gauges @ 4Hz (rank 7, animation duty cycle)',
     subscribeAll: false, durationMs: 10000, warmupMs: 2000,
-    dashboards: () => gaugeGrid(16),
+    dashboards: () => gaugeGrid(24),
     generateScreenshot: true,
     control: { rateHz: 4, selfPaths: POOL, ais: { count: 0, churnPerSec: 0 } },
   },

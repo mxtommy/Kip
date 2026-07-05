@@ -43,7 +43,7 @@ This section is the end-to-end workflow for the harness tools. The flow is gener
 Install harness dependencies once:
 
 ```bash
-cd perf-harness
+cd tools/perf-harness
 npm install
 ```
 
@@ -72,19 +72,25 @@ which avoids accidental reuse of `master` worktree folders.
 - `--branch <git-ref>`: builds that branch/ref in an isolated worktree.
 - `--public <path>`: uses an already-built app directory instead of building a branch.
 
-Examples:
+Examples (when run from `tools/perf-harness`):
 
 ```bash
 # Measure a branch by git ref
 node run.mjs --branch integration/perf-preview --label perf-preview
 
 # Measure an existing local build (fast iteration)
-node run.mjs --public ../public --label dev
+node run.mjs --public ../../public --label dev
 ```
 
 ```bash
-# Measure only scenarion ais-radar-150. Repeat it twice. Use existing local build (fast iteration)
-node run.mjs --public ../public --label dev --scenarios ais-radar-150 --repeats 2
+# Measure only scenario ais-radar-150. Repeat it twice. Use existing local build (fast iteration)
+node run.mjs --public ../../public --label dev --scenarios ais-radar-150 --repeats 2
+```
+
+If you run from the repository root instead, use:
+
+```bash
+node tools/perf-harness/run.mjs --public ./public --label dev
 ```
 
 ### report.mjs
@@ -120,7 +126,7 @@ This writes screenshots to:
 Option B: capture a standalone deterministic radar screenshot:
 
 ```bash
-node screenshot.mjs --public ../public --label before
+node screenshot.mjs --public ../../public --label before
 ```
 
 This writes:
@@ -156,7 +162,7 @@ This writes:
 
 | Parameter | Required | Default | Description |
 |---|---|---|---|
-| `--public <path>` | no | `../public` | Built app directory to serve for capture. |
+| `--public <path>` | no | `../public` | Built app directory to serve for capture (from `tools/perf-harness`, use `../../public`; from repo root, use `./public`). |
 | `--label <name>` | no | `radar` | Output name for `results/shots/<label>.png`. |
 | `--port <n>` | no | `4420` | Local port for the screenshot server instance. |
 

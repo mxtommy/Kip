@@ -1,10 +1,17 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { Subject, merge, throttleTime } from 'rxjs';
+import { Subject, interval, merge, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataService, IPathUpdateWithPath } from './data.service';
 
 const AIS_DEBUG = false;
 const THROTTLE_MS = 250;
+// Target eviction bounds unbounded growth. Many Signal K setups never send an
+// explicit `status: 'remove'`, so without this every distinct MMSI ever heard
+// would accumulate for the app lifetime, making every flush + radar render
+// O(targets) and heavier over uptime (the "unresponsive after a while" freeze).
+const TARGET_TTL_MS = 10 * 60 * 1000; // drop targets not heard from in 10 minutes
+const MAX_TARGETS = 500;              // hard cap on retained targets
+const EVICTION_SWEEP_MS = 15000;      // periodic stale-target sweep cadence
 
 type AisClass = 'A' | 'B' | undefined;
 type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
@@ -136,7 +143,11 @@ export class AisProcessingService {
   private readonly tracks = new Map<string, AisTrack>();
   private readonly contextIndex = new Map<string, string>();
   private readonly mmsiIndex = new Map<string, Set<string>>();
+  private maxTargets = MAX_TARGETS;
+  private targetTtlMs = TARGET_TTL_MS;
   private readonly targetsDirty$ = new Subject<void>();
+  private readonly ownShipDirty$ = new Subject<void>();
+  private pendingOwnShip: OwnShipState = {};
 
   private readonly _targets = signal<AisTrack[]>([]);
   private readonly _ownShip = signal<OwnShipState>({});
@@ -177,6 +188,18 @@ export class AisProcessingService {
       .pipe(throttleTime(THROTTLE_MS, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.flushTargetsSignal());
 
+    // Periodically evict stale targets so the retained set (and thus flush +
+    // radar render cost) stays bounded over long uptime.
+    interval(EVICTION_SWEEP_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.evictStaleTracks(Date.now()));
+
+    // Coalesce own-ship updates to the target cadence and only push the signal
+    // when a value actually changed, so the radar doesn't do a full re-render on
+    // every raw GPS/compass fix.
+    this.ownShipDirty$
+      .pipe(throttleTime(THROTTLE_MS, undefined, { leading: true, trailing: true }), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.flushOwnShip());
   }
 
   private handleAisTreeUpdate(event: IPathUpdateWithPath): void {
@@ -226,7 +249,7 @@ export class AisProcessingService {
   }
 
   private applyOwnShipUpdate(path: string, value: unknown): void {
-    const next = { ...this._ownShip() } as OwnShipState;
+    const next = { ...this.pendingOwnShip } as OwnShipState;
     const position = this.readPositionValue(value);
 
     switch (path) {
@@ -262,7 +285,21 @@ export class AisProcessingService {
         return;
     }
 
-    this._ownShip.set(next);
+    this.pendingOwnShip = next;
+    this.ownShipDirty$.next();
+  }
+
+  private flushOwnShip(): void {
+    if (!this.ownShipChanged(this._ownShip(), this.pendingOwnShip)) return;
+    this._ownShip.set(this.pendingOwnShip);
+  }
+
+  private ownShipChanged(a: OwnShipState, b: OwnShipState): boolean {
+    return a.headingTrue !== b.headingTrue
+      || a.courseOverGroundTrue !== b.courseOverGroundTrue
+      || a.speedOverGround !== b.speedOverGround
+      || a.position?.latitude !== b.position?.latitude
+      || a.position?.longitude !== b.position?.longitude;
   }
 
   private applyAisUpdate(update: AisUpdate): void {
@@ -550,6 +587,7 @@ export class AisProcessingService {
 
     this.tracks.set(track.id, track);
     if (mmsi) this.addMmsiIndex(mmsi, track.id);
+    this.enforceTargetCap();
     this.updateTargetsSignal();
     return track;
   }
@@ -600,6 +638,33 @@ export class AisProcessingService {
 
   private updateTargetsSignal(): void {
     this.targetsDirty$.next();
+  }
+
+  /**
+   * Keep the retained target set within the hard cap by removing the oldest.
+   * Single O(n) pass per removed target (no full sort/allocation) so it stays
+   * cheap even under a high rate of new contexts.
+   */
+  private enforceTargetCap(): void {
+    while (this.tracks.size > this.maxTargets) {
+      let oldest: AisTrack | null = null;
+      for (const track of this.tracks.values()) {
+        if (!oldest || track.lastUpdateAt < oldest.lastUpdateAt) oldest = track;
+      }
+      if (!oldest) break;
+      this.removeTrack(oldest);
+    }
+  }
+
+  /** Remove targets not heard from within the TTL, then enforce the hard cap. */
+  private evictStaleTracks(nowMs: number): void {
+    const cutoff = nowMs - this.targetTtlMs;
+    const stale: AisTrack[] = [];
+    for (const track of this.tracks.values()) {
+      if (track.lastUpdateAt < cutoff) stale.push(track);
+    }
+    for (const track of stale) this.removeTrack(track);
+    this.enforceTargetCap();
   }
 
   private flushTargetsSignal(): void {
