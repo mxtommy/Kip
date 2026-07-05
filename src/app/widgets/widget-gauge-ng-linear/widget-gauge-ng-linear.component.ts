@@ -7,7 +7,6 @@
  */
 import { Component, AfterViewInit, ElementRef, effect, viewChild, input, inject, untracked, computed, signal } from '@angular/core';
 import { LinearGaugeOptions, LinearGauge, GaugesModule } from '@godind/ng-canvas-gauges';
-import { gaugeAnimationDurationMs } from '../../core/utils/gauge-animation.util';
 import type { IWidgetPath, IWidgetSvcConfig, IDataHighlight } from '../../core/interfaces/widgets-interface';
 import { adjustLinearScaleAndMajorTicks, IScale } from '../../core/utils/dataScales.util';
 import { getHighlights } from '../../core/utils/zones-highlight.utils';
@@ -316,7 +315,7 @@ export class WidgetGaugeNgLinearComponent implements AfterViewInit {
     opt.ticksWidth = ticks ? (enableNeedle ? (isVertical ? 15 : 10) : 10) : 0;
     opt.ticksPadding = ticks ? (isVertical ? (enableNeedle ? 0 : 5) : (enableNeedle ? 9 : 8)) : 0;
     opt.tickSide = 'left';
-    opt.animation = this.animationEnabled(); opt.animationRule = 'linear'; opt.animatedValue = this.animationEnabled(); opt.animateOnInit = false; opt.animationDuration = gaugeAnimationDurationMs(gaugePathCfg?.sampleTime ?? 500);
+    opt.animation = this.animationEnabled(); opt.animationRule = 'linear'; opt.animatedValue = this.animationEnabled(); opt.animateOnInit = false; opt.animationDuration = (gaugePathCfg?.sampleTime ?? 500) - 25;
     opt.highlights = []; opt.highlightsWidth = cfg.gauge?.highlightsWidth;
     // pre-populate highlights if already available
     const h = this.highlights();
