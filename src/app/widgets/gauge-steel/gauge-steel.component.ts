@@ -101,6 +101,7 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   private gaugeStarted = false;
   private gauge: SteelGaugeHandle | null = null;
   private gaugeOptions: Record<string, unknown> = {};
+  private latestSizeOptions: Record<string, number> = {};
   protected paddingTop = 0;
   private lastSizeSignature = '';
   private resizeTimer: number | null = null;
@@ -232,6 +233,9 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     this.gaugeOptions['thresholdVisible'] = false;
     this.gaugeOptions['threshold'] = this.maxValue();
     this.gaugeOptions['ledVisible'] = false;
+
+    // Keep the latest measured size across rebuilds.
+    Object.assign(this.gaugeOptions, this.latestSizeOptions);
   }
 
   private setGaugeType(radialSize: string | undefined): unknown {
@@ -286,11 +290,13 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
     let signature: string;
     if (this.subType() === 'radial') {
       const size =  Math.floor(Math.min(event.contentRect.height, event.contentRect.width));
+      this.latestSizeOptions = { size };
       this.gaugeOptions['size'] = size;
       signature = 'radial:' + size;
     } else {
       const w = Math.floor(event.contentRect.width);
       const h = Math.floor(event.contentRect.height);
+      this.latestSizeOptions = { width: w, height: h };
       this.gaugeOptions['width'] = w;
       this.gaugeOptions['height'] = h;
       signature = `linear:${w}x${h}`;
