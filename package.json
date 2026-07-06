@@ -37,7 +37,30 @@
   ],
   "signalk": {
     "appIcon": "assets/icon-72x72.png",
-    "displayName": "KIP Instrument MFD"
+    "displayName": "KIP Instrument MFD",
+    "screenshots": [
+      "./images/KIPDemo.png",
+      "./images/KipFreeboard-SK-1024.png",
+      "./images/exterior_user_installs.png"
+    ],
+    "requires": [
+      "@signalk/freeboard-sk",
+      "sk-ais-status-plugin",
+      "@signalk/server-api"
+    ],
+    "recommends": [
+      "@meri-imperiumi/signalk-mob-notifier",
+      "@signalk/signalk-autopilot",
+      "pypilot-autopilot-provider",
+      "signalk-to-influxdb2",
+      "signalk-polar-performance-plugin",
+      "signalk-racer",
+      "signalk-anchoralarm-plugin",
+      "signalk-tides",
+      "@meri-imperiumi/signalk-autostate",
+      "signalk-venus-plugin",
+      "signalk-victron-battery-monitor"
+    ]
   },
   "main": "plugin/index.js",
   "files": [
