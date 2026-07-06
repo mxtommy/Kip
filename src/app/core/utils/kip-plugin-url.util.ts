@@ -1,6 +1,24 @@
 /**
- * Resolves the base URL of a Signal K plugin (`<server>/plugins/<id>/`) from the connection
- * endpoint, mirroring the logic in kip-series-api-client.service so both clients agree.
+ * Strips a trailing slash and any `/signalk[/vN[/api]]` suffix from a URL, leaving the server root
+ * (e.g. `http://host:3000/signalk/v1/api/` and `http://host:3000/signalk/` both -> `http://host:3000`).
+ */
+export function stripToServerRoot(url: string): string {
+  const noSlash = url.endsWith('/') ? url.slice(0, -1) : url;
+  return noSlash
+    .replace(/\/signalk\/v2\/api$/, '')
+    .replace(/\/signalk\/v1\/api$/, '')
+    .replace(/\/signalk\/v2$/, '')
+    .replace(/\/signalk\/v1$/, '')
+    .replace(/\/signalk$/, '');
+}
+
+/**
+ * Resolves the base URL of a Signal K plugin's REST API from the connection endpoint.
+ *
+ * Targets the plugin's crew-reachable `<server>/signalk/v1/api/<id>/` mount, NOT the `/plugins/<id>`
+ * alias: signalk-server admin-gates every `/plugins/*` route on a secured server, so the alias would
+ * 401/403 ordinary crew (and a native `<img>`, which carries no auth header) even for reads. The
+ * `/signalk/v1/api` mount is public for reads and only gates writes on a read-write/admin principal.
  *
  * @param httpServiceUrl the server's v1 API URL (e.g. `http://host:3000/signalk/v1/api/`)
  * @param configuredUrl  the user-configured Signal K URL, if any (takes precedence)
@@ -13,20 +31,12 @@ export function resolvePluginBaseUrl(
 ): string | null {
   const configured = configuredUrl?.trim();
   if (configured) {
-    const base = configured.endsWith('/') ? configured.slice(0, -1) : configured;
-    return `${base}/plugins/${pluginId}/`;
+    return `${stripToServerRoot(configured)}/signalk/v1/api/${pluginId}/`;
   }
   if (!httpServiceUrl) {
     return null;
   }
-  const normalized = httpServiceUrl.endsWith('/') ? httpServiceUrl.slice(0, -1) : httpServiceUrl;
-  const root = normalized
-    .replace(/\/signalk\/v2\/api$/, '')
-    .replace(/\/signalk\/v1\/api$/, '')
-    .replace(/\/signalk\/v2$/, '')
-    .replace(/\/signalk\/v1$/, '')
-    .replace(/\/signalk$/, '');
-  return `${root}/plugins/${pluginId}/`;
+  return `${stripToServerRoot(httpServiceUrl)}/signalk/v1/api/${pluginId}/`;
 }
 
 /**
