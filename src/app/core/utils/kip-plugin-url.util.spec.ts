@@ -6,22 +6,42 @@ import {
 } from './kip-plugin-url.util';
 
 describe('resolvePluginBaseUrl', () => {
-  it('prefers the configured URL', () => {
+  // The base must target the plugin's crew-reachable /signalk/v1/api mount, NOT the /plugins/<id>
+  // alias — signalk-server admin-gates every /plugins/* route on a secured server, which would 401/403
+  // ordinary crew (and the native <img> element, which carries no auth header) even for reads.
+  it('prefers the configured URL and targets the v1 API mount', () => {
     expect(resolvePluginBaseUrl('http://x/signalk/v1/api/', 'https://boat.local:3443')).toBe(
-      'https://boat.local:3443/plugins/sk-image/'
+      'https://boat.local:3443/signalk/v1/api/sk-image/'
     );
-    expect(resolvePluginBaseUrl(null, 'https://boat.local/')).toBe('https://boat.local/plugins/sk-image/');
+    expect(resolvePluginBaseUrl(null, 'https://boat.local/')).toBe(
+      'https://boat.local/signalk/v1/api/sk-image/'
+    );
   });
 
-  it('derives the plugin base from the v1/v2 API URL by stripping the signalk suffix', () => {
-    expect(resolvePluginBaseUrl('http://host:3000/signalk/v1/api/')).toBe('http://host:3000/plugins/sk-image/');
-    expect(resolvePluginBaseUrl('http://host:3000/signalk/v2/api')).toBe('http://host:3000/plugins/sk-image/');
-    expect(resolvePluginBaseUrl('http://host:3000/signalk')).toBe('http://host:3000/plugins/sk-image/');
+  it('does not double up when the configured URL already carries a /signalk suffix', () => {
+    expect(resolvePluginBaseUrl(null, 'https://boat.local/signalk/')).toBe(
+      'https://boat.local/signalk/v1/api/sk-image/'
+    );
+    expect(resolvePluginBaseUrl(null, 'https://boat.local/signalk/v1/api')).toBe(
+      'https://boat.local/signalk/v1/api/sk-image/'
+    );
   });
 
-  it('honours a custom plugin id', () => {
-    expect(resolvePluginBaseUrl('http://host:3000/signalk/v1/api/', null, 'kip')).toBe(
-      'http://host:3000/plugins/kip/'
+  it('derives the base from the v1/v2 API URL by stripping the signalk suffix', () => {
+    expect(resolvePluginBaseUrl('http://host:3000/signalk/v1/api/')).toBe(
+      'http://host:3000/signalk/v1/api/sk-image/'
+    );
+    expect(resolvePluginBaseUrl('http://host:3000/signalk/v2/api')).toBe(
+      'http://host:3000/signalk/v1/api/sk-image/'
+    );
+    expect(resolvePluginBaseUrl('http://host:3000/signalk')).toBe(
+      'http://host:3000/signalk/v1/api/sk-image/'
+    );
+  });
+
+  it('honours a custom plugin id on the v1 API mount', () => {
+    expect(resolvePluginBaseUrl('http://host:3000/signalk/v1/api/', null, 'some-plugin')).toBe(
+      'http://host:3000/signalk/v1/api/some-plugin/'
     );
   });
 

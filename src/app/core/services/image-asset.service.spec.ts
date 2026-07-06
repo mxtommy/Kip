@@ -27,8 +27,8 @@ describe('ImageAssetService', () => {
   it('becomes ready and builds variant URLs snapped to a container width', () => {
     const { service } = setup('http://host:3000/signalk/v1/api/');
     expect(service.ready).toBe(true);
-    expect(service.urlFor('abc', 300, 1)).toBe('http://host:3000/plugins/sk-image/images/abc?w=320');
-    expect(service.urlFor('abc', 320, 2)).toBe('http://host:3000/plugins/sk-image/images/abc?w=640');
+    expect(service.urlFor('abc', 300, 1)).toBe('http://host:3000/signalk/v1/api/sk-image/images/abc?w=320');
+    expect(service.urlFor('abc', 320, 2)).toBe('http://host:3000/signalk/v1/api/sk-image/images/abc?w=640');
     expect(service.urlFor(null, 300)).toBeNull();
   });
 
@@ -44,7 +44,7 @@ describe('ImageAssetService', () => {
     service.upload(file).subscribe();
     expect(http.post).toHaveBeenCalledTimes(1);
     const [url, body, opts] = http.post.mock.calls[0] as unknown[];
-    expect(url).toBe('http://host:3000/plugins/sk-image/images');
+    expect(url).toBe('http://host:3000/signalk/v1/api/sk-image/images');
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get('file')).toBe(file);
     expect(opts).toMatchObject({ reportProgress: true, observe: 'events' });
@@ -53,13 +53,13 @@ describe('ImageAssetService', () => {
   it('targets the right endpoints for list/delete/cache/purge', () => {
     const { service, http } = setup('http://host:3000/signalk/v1/api/');
     service.list().subscribe();
-    expect(http.get).toHaveBeenCalledWith('http://host:3000/plugins/sk-image/images');
+    expect(http.get).toHaveBeenCalledWith('http://host:3000/signalk/v1/api/sk-image/images');
     service.delete('id-1').subscribe();
-    expect(http.delete).toHaveBeenCalledWith('http://host:3000/plugins/sk-image/images/id-1');
+    expect(http.delete).toHaveBeenCalledWith('http://host:3000/signalk/v1/api/sk-image/images/id-1');
     service.cacheStats().subscribe();
-    expect(http.get).toHaveBeenCalledWith('http://host:3000/plugins/sk-image/images/cache');
+    expect(http.get).toHaveBeenCalledWith('http://host:3000/signalk/v1/api/sk-image/images/cache');
     service.purgeCache().subscribe();
-    expect(http.delete).toHaveBeenCalledWith('http://host:3000/plugins/sk-image/images/cache');
+    expect(http.delete).toHaveBeenCalledWith('http://host:3000/signalk/v1/api/sk-image/images/cache');
   });
 
   it('discovers the width allow-list from GET config and snaps against it', () => {
@@ -84,9 +84,9 @@ describe('ImageAssetService', () => {
       ]
     });
     const service = TestBed.inject(ImageAssetService);
-    expect(http.get).toHaveBeenCalledWith('http://host:3000/plugins/sk-image/config');
+    expect(http.get).toHaveBeenCalledWith('http://host:3000/signalk/v1/api/sk-image/config');
     // Snaps against the discovered list, not the built-in default.
-    expect(service.urlFor('abc', 150, 1)).toBe('http://host:3000/plugins/sk-image/images/abc?w=200');
-    expect(service.urlFor('abc', 500, 1)).toBe('http://host:3000/plugins/sk-image/images/abc?w=400');
+    expect(service.urlFor('abc', 150, 1)).toBe('http://host:3000/signalk/v1/api/sk-image/images/abc?w=200');
+    expect(service.urlFor('abc', 500, 1)).toBe('http://host:3000/signalk/v1/api/sk-image/images/abc?w=400');
   });
 });
