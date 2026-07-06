@@ -156,7 +156,7 @@ export class ImageSourceSetupComponent implements OnInit {
     switch (err?.status) {
       case 401: return 'Sign in to the Signal K server to load the image library.';
       case 403: return "Your Signal K account doesn't have access to the image library.";
-      case 404: return "The SK Image plugin isn't installed or enabled. Install it from the Signal K App Store.";
+      case 404: return "The SK Image plugin isn't installed or enabled. Install it from the Signal K App Store, or enable it in the server's plugin settings.";
       default: return "Couldn't reach the Signal K server.";
     }
   }

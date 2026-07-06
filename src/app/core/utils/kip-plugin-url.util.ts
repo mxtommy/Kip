@@ -3,13 +3,20 @@
  * (e.g. `http://host:3000/signalk/v1/api/` and `http://host:3000/signalk/` both -> `http://host:3000`).
  */
 export function stripToServerRoot(url: string): string {
-  const noSlash = url.endsWith('/') ? url.slice(0, -1) : url;
-  return noSlash
-    .replace(/\/signalk\/v2\/api$/, '')
-    .replace(/\/signalk\/v1\/api$/, '')
-    .replace(/\/signalk\/v2$/, '')
-    .replace(/\/signalk\/v1$/, '')
-    .replace(/\/signalk$/, '');
+  const trimmed = url.trim();
+  // Split off the authority (scheme + host[:port]) and only strip the /signalk mount from the PATH,
+  // so a host literally named "signalk" (e.g. http://signalk behind a reverse proxy) is never
+  // mistaken for the /signalk API segment and eaten.
+  const match = /^(https?:\/\/[^/]+)(\/.*)?$/i.exec(trimmed);
+  if (!match) {
+    // Relative or non-http input: strip a single trailing /signalk[/vN[/api]] segment defensively.
+    return trimmed.replace(/\/$/, '').replace(/\/signalk(\/v[12](\/api)?)?$/, '');
+  }
+  const origin = match[1];
+  const path = (match[2] ?? '')
+    .replace(/\/signalk(\/v[12](\/api)?)?\/?$/, '')
+    .replace(/\/$/, '');
+  return `${origin}${path}`;
 }
 
 /**

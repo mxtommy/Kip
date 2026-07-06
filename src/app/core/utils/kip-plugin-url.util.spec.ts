@@ -2,8 +2,29 @@ import { describe, it, expect } from 'vitest';
 import {
   resolvePluginBaseUrl,
   snapImageWidth,
+  stripToServerRoot,
   DEFAULT_IMAGE_WIDTH_ALLOWLIST
 } from './kip-plugin-url.util';
+
+describe('stripToServerRoot', () => {
+  it('strips a /signalk[/vN[/api]] suffix from the path, leaving the origin', () => {
+    expect(stripToServerRoot('http://host:3000/signalk/v1/api/')).toBe('http://host:3000');
+    expect(stripToServerRoot('http://host:3000/signalk/v2/api')).toBe('http://host:3000');
+    expect(stripToServerRoot('http://host:3000/signalk')).toBe('http://host:3000');
+    expect(stripToServerRoot('http://host:3000')).toBe('http://host:3000');
+    expect(stripToServerRoot('http://host:3000/')).toBe('http://host:3000');
+  });
+
+  it('does NOT eat a host that is literally named "signalk"', () => {
+    expect(stripToServerRoot('http://signalk')).toBe('http://signalk');
+    expect(stripToServerRoot('http://signalk/')).toBe('http://signalk');
+    expect(stripToServerRoot('http://signalk/signalk/v1/api')).toBe('http://signalk');
+  });
+
+  it('preserves a reverse-proxy subpath', () => {
+    expect(stripToServerRoot('https://boat.local/proxy/signalk/v1/api')).toBe('https://boat.local/proxy');
+  });
+});
 
 describe('resolvePluginBaseUrl', () => {
   // The base must target the plugin's crew-reachable /signalk/v1/api mount, NOT the /plugins/<id>
