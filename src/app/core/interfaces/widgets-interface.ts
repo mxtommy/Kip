@@ -386,6 +386,15 @@ export interface IWidgetSvcConfig {
   /** Used by IFrame widget: allow input on iframe or not */
   allowInput?: boolean;
 
+  /** Used by the Image widget: selected shared image asset + display options. */
+  image?: {
+    imageId?: string | null;
+    imageFit?: 'contain' | 'cover';
+    altText?: string;
+    /** Letterbox/background fill; null = transparent (dashboard shows through). */
+    backgroundColor?: string | null;
+  };
+
   /** Use by racetimer widget */
   timerLength?: number;
   /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/

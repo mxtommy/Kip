@@ -1,0 +1,10 @@
+name: kip-image-shots
+services:
+  kip:
+    build: .
+    container_name: kip-image-shots
+    # The base image's startup forces --securityenabled; run signalk-server directly for an OPEN
+    # local server (do not expose this). With no `security` in settings.json, the server is open.
+    entrypoint: ['node', '/home/node/signalk/node_modules/signalk-server/bin/signalk-server']
+    ports:
+      - '3015:3000'
