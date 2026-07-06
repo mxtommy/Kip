@@ -4,9 +4,9 @@
 # the image library, thumbnails and on-disk cache all work without a login. No VOLUME on the config
 # dir, so the bake survives at runtime.
 #
-# sk-image requires Node.js 24+. The base image below must therefore provide Node 24 — pin a
-# signalk-server tag built on Node 24 (or a node:24 base with signalk-server installed) if the
-# `latest` tag lags behind.
+# sk-image requires Node.js 22.13+. Recent signalk-server images run Node 22+, so `latest` normally
+# satisfies this; if a pinned/older base image lags below 22.13, install onto a node:22 (or newer)
+# base with signalk-server instead.
 FROM signalk/signalk-server:latest
 USER node
 COPY --chown=node:node signalk-config/ /home/node/.signalk/

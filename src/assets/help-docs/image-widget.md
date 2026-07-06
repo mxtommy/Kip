@@ -4,9 +4,9 @@ The Image widget displays a picture you upload to your Signal K server — for e
 
 ## Requirements
 
-The images are stored and served by the **SK Image** Signal K plugin (version 1.4.0 or later), a separate server-side plugin — not part of KIP itself. KIP lists it as a recommended plugin, so the Signal K App Store offers to install it when you install or update KIP. You can also install it at any time from your server's **App Store** by searching for "SK Image".
+The images are stored and served by the **SK Image** Signal K plugin (version 1.5.0 or later), a separate server-side plugin — not part of KIP itself. KIP lists it as a recommended plugin, so the Signal K App Store offers to install it when you install or update KIP. You can also install it at any time from your server's **App Store** by searching for "SK Image".
 
-The plugin needs **Node.js 24 or newer** on the Signal K server. On an older Node version the plugin will not load and the widget will report that the image library is unavailable — update the server's Node.js, or run the plugin on a server that meets the requirement.
+The plugin needs **Node.js 22.13 or newer** on the Signal K server. On an older Node version the plugin will not load and the widget will report that the image library is unavailable — update the server's Node.js, or run the plugin on a server that meets the requirement.
 
 Viewing images only needs the normal KIP connection. Uploading, deleting, or purging images requires a Signal K account with write access.
 

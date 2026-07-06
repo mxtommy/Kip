@@ -10,7 +10,7 @@ plugin (published on npm, in the App Store). KIP ships only the display widget +
 to the plugin's crew-reachable REST API at **`/signalk/v1/api/sk-image`**. So this harness installs two
 separate packages into a Signal K server:
 
-- **`sk-image`** — the image plugin. **Requires Node.js 24+** on the server.
+- **`sk-image`** — the image plugin. **Requires Node.js 22.13+** on the server.
 - **`@mxtommy/kip`** — the webapp (this repo), served at `/@mxtommy/kip`.
 
 ## Build the KIP webapp package (kip.tgz)
