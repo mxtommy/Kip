@@ -1,10 +1,18 @@
 # Reproducible Signal K harness for capturing KIP image-widget screenshots.
-# Bakes the (integrated) KIP plugin + webapp and a security-OFF config into the image so the
-# image library, thumbnails and on-disk cache all work without a login. No VOLUME on the official
-# image's config dir, so the bake survives at runtime.
+#
+# Installs the STANDALONE sk-image plugin plus the KIP webapp into a security-OFF Signal K server, so
+# the image library, thumbnails and on-disk cache all work without a login. No VOLUME on the config
+# dir, so the bake survives at runtime.
+#
+# sk-image requires Node.js 24+. The base image below must therefore provide Node 24 — pin a
+# signalk-server tag built on Node 24 (or a node:24 base with signalk-server installed) if the
+# `latest` tag lags behind.
 FROM signalk/signalk-server:latest
 USER node
 COPY --chown=node:node signalk-config/ /home/node/.signalk/
 COPY --chown=node:node kip.tgz /tmp/kip.tgz
-# Installs @mxtommy/kip (webapp + plugin) and its native deps (sharp) for THIS platform/arch.
-RUN cd /home/node/.signalk && npm install --no-audit --no-fund --omit=dev /tmp/kip.tgz && rm /tmp/kip.tgz
+# Install the standalone image plugin (sk-image) and the KIP webapp (this repo, packed to kip.tgz).
+# sk-image ships a prebuilt sharp; --omit=dev keeps the image lean.
+RUN cd /home/node/.signalk \
+ && npm install --no-audit --no-fund --omit=dev sk-image /tmp/kip.tgz \
+ && rm /tmp/kip.tgz
