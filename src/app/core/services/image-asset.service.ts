@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
@@ -35,18 +35,22 @@ export class ImageAssetService {
   private readonly http = inject(HttpClient);
   private readonly connection = inject(SignalKConnectionService);
   private readonly destroyRef = inject(DestroyRef);
-  private pluginBaseUrl: string | null = null;
-  private widthAllowlist: readonly number[] = DEFAULT_IMAGE_WIDTH_ALLOWLIST;
+  // Signals so consumers that build URLs inside a reactive computed (e.g. the Image widget) recompute
+  // when the base URL resolves or the server-discovered width list arrives — otherwise the first URL
+  // would lock to the built-in fallback list.
+  private readonly pluginBaseUrl = signal<string | null>(null);
+  private readonly widthAllowlist = signal<readonly number[]>(DEFAULT_IMAGE_WIDTH_ALLOWLIST);
   private configFetchedFor: string | null = null;
 
   constructor() {
     this.connection.serverServiceEndpoint$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(endpoint => {
-        this.pluginBaseUrl = resolvePluginBaseUrl(endpoint?.httpServiceUrl ?? null, this.connection.signalKURL?.url);
-        if (this.pluginBaseUrl && this.pluginBaseUrl !== this.configFetchedFor) {
-          this.configFetchedFor = this.pluginBaseUrl;
-          this.fetchConfig(this.pluginBaseUrl);
+        const base = resolvePluginBaseUrl(endpoint?.httpServiceUrl ?? null, this.connection.signalKURL?.url);
+        this.pluginBaseUrl.set(base);
+        if (base && base !== this.configFetchedFor) {
+          this.configFetchedFor = base;
+          this.fetchConfig(base);
         }
       });
   }
@@ -58,24 +62,25 @@ export class ImageAssetService {
         const widths = (cfg?.widthAllowlist ?? [])
           .filter(w => typeof w === 'number' && w > 0)
           .sort((a, b) => a - b);
-        this.widthAllowlist = widths.length ? widths : DEFAULT_IMAGE_WIDTH_ALLOWLIST;
+        this.widthAllowlist.set(widths.length ? widths : DEFAULT_IMAGE_WIDTH_ALLOWLIST);
       },
       error: () => {
         // Older plugin or unreachable — keep the built-in default.
-        this.widthAllowlist = DEFAULT_IMAGE_WIDTH_ALLOWLIST;
+        this.widthAllowlist.set(DEFAULT_IMAGE_WIDTH_ALLOWLIST);
       }
     });
   }
 
   get ready(): boolean {
-    return this.pluginBaseUrl !== null;
+    return this.pluginBaseUrl() !== null;
   }
 
   private imagesUrl(): string {
-    if (!this.pluginBaseUrl) {
+    const base = this.pluginBaseUrl();
+    if (!base) {
       throw new Error('Signal K connection is not ready');
     }
-    return `${this.pluginBaseUrl}images`;
+    return `${base}images`;
   }
 
   /** Upload a file; emits HttpEvents so callers can show progress. */
@@ -103,11 +108,12 @@ export class ImageAssetService {
 
   /** Build a cache-friendly variant URL matched to a container width (null if unset/not ready). */
   urlFor(id: string | null | undefined, cssWidth?: number | null, devicePixelRatio?: number): string | null {
-    if (!id || !this.pluginBaseUrl) {
+    const base = this.pluginBaseUrl();
+    if (!id || !base) {
       return null;
     }
     const dpr = devicePixelRatio ?? (typeof window !== 'undefined' ? window.devicePixelRatio : 1);
-    const w = snapImageWidth(cssWidth, dpr, this.widthAllowlist);
-    return `${this.pluginBaseUrl}images/${encodeURIComponent(id)}?w=${w}`;
+    const w = snapImageWidth(cssWidth, dpr, this.widthAllowlist());
+    return `${base}images/${encodeURIComponent(id)}?w=${w}`;
   }
 }

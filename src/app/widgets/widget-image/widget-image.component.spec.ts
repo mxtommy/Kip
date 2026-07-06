@@ -59,6 +59,17 @@ describe('WidgetImageComponent', () => {
     expect(img!.style.objectFit).toBe('cover');
   });
 
+  it('requests a small variant before the first measurement, then the measured width', () => {
+    options.set({ image: { imageId: 'img-1', imageFit: 'contain', altText: '', backgroundColor: null } });
+    fixture.detectChanges();
+    // Unmeasured (container width 0): must not fetch the largest (2560) variant on first paint.
+    expect(api().imageUrl()).not.toContain('w=2560');
+
+    (component as unknown as { onResize: (e: { width: number; height: number }) => void })
+      .onResize({ width: 640, height: 480 });
+    expect(api().imageUrl()).toContain('w=640');
+  });
+
   it('defaults to a transparent background and contain fit, and reflects a configured color', () => {
     fixture.detectChanges();
     expect(api().background()).toBe('transparent');

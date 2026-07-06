@@ -43,7 +43,11 @@ export class WidgetImageComponent {
   protected readonly imageUrl = computed<string | null>(() => {
     const id = this.imageConfig()?.imageId;
     if (!id) return null;
-    return this.images.urlFor(id, this.containerWidth());
+    // Before the first ResizeObserver measurement the width is 0. Request the SMALLEST variant then
+    // (width 1 snaps up to the smallest allow-listed width) rather than letting an unknown width
+    // default to the largest — a full-res fetch on first paint would be immediately superseded once
+    // the real container width is known. The tiny first request is cheap and upgrades on resize.
+    return this.images.urlFor(id, this.containerWidth() || 1);
   });
 
   protected onResize(event: IKipResizeEvent): void {
