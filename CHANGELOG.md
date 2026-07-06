@@ -1,3 +1,6 @@
+# v4.8.3
+## Fixes
+* Radar widget would not confirm targets. Add missing sk-ais-status-plugin dependency.
 # v4.8.2
 ## New Contributors
 * Special thanks to @tomaioo for their first contributions.
