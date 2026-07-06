@@ -142,6 +142,7 @@ export class ImageSourceSetupComponent implements OnInit {
     const serverMessage = (err?.error as { error?: string })?.error;
     switch (err?.status) {
       case 401: return `Sign in to the Signal K server to ${verb} images.`;
+      case 403: return `Your Signal K account is read-only. Ask an administrator for read-write access to ${verb} images.`;
       case 413: return 'This image is larger than the 10 MB limit. Choose a smaller file.';
       case 415: return serverMessage ?? "That image type isn't supported, or the file couldn't be read.";
       default: return serverMessage ?? (verb === 'upload'
@@ -154,7 +155,8 @@ export class ImageSourceSetupComponent implements OnInit {
   private describeListError(err: HttpErrorResponse): string {
     switch (err?.status) {
       case 401: return 'Sign in to the Signal K server to load the image library.';
-      case 404: return "The image library plugin isn't installed or is disabled.";
+      case 403: return "Your Signal K account doesn't have access to the image library.";
+      case 404: return "The SK Image plugin isn't installed or enabled. Install it from the Signal K App Store.";
       default: return "Couldn't reach the Signal K server.";
     }
   }

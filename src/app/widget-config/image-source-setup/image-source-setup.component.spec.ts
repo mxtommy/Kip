@@ -161,6 +161,17 @@ describe('ImageSourceSetupComponent', () => {
     expect(api().error()).toContain('Sign in');
   });
 
+  it('surfaces a read-only permissions message when the server returns 403', async () => {
+    imagesMock.upload.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
+    await buildWith(new UntypedFormGroup({}));
+    const input = document.createElement('input');
+    input.type = 'file';
+    const file = fileOf('new.png', 'image/png', 1024);
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    api().onFileSelected({ target: input } as unknown as Event);
+    expect(api().error()).toContain('read-only');
+  });
+
   it('confirms before deleting, then clears the selection on success', async () => {
     dialogMock.openConfirmationDialog.mockReturnValueOnce(of(true));
     await buildWith(new UntypedFormGroup({ imageId: new UntypedFormControl('img-1') }));
