@@ -1,0 +1,30 @@
+name: SignalK Plugin CI
+
+# Calls the official Signal K reusable plugin-ci workflow so a completed run lands on the exact commit
+# npm records as the package's `gitHead` when a version is published. The App Store plugin registry
+# looks for a plugin-ci run on that commit; without one it reports `no-plugin-ci` and docks the score.
+#
+# KIP's version bumps are ordinary commits on the release branch (no `[skip ci]`), so the push trigger
+# runs plugin-ci on the release commit = gitHead. `workflow_dispatch` allows re-running it on demand.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  plugin-ci:
+    uses: SignalK/signalk-server/.github/workflows/plugin-ci.yml@master
+    with:
+      # Match the Node range KIP supports (and the rest of CI).
+      node-versions: '["22", "24"]'
+      # Build both the server plugin and the web app so the packed tarball is what actually ships.
+      build-command: 'npm run build:all'
+      # Run the server-plugin tests here; the Angular unit suite already runs in ci.yml.
+      test-command: 'npm run test:plugin'
+      # Pack KIP and install + load it into a real Signal K server (the point of plugin-ci).
+      enable-signalk-integration: true
+      # KIP is a browser web app; skip the slow armv7/QEMU leg. It doesn't affect the store score and
+      # the Angular build is heavy under emulation. Enable it if you want Cerbo GX coverage.
+      enable-armv7: false
