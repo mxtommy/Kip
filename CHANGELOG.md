@@ -1,3 +1,8 @@
+# v4.8.5
+## Improvements
+* New Widgets help documentation section and AIS Radar Widget help documentation.
+## Fixes
+* Package missing KIP plugin build.
 # v4.8.4
 ## Fixes
 * Radar widget would not confirm targets. Add missing sk-ais-status-plugin dependency.
