@@ -96,12 +96,14 @@ exec "$BROWSER" \
   --enable-features=OverlayScrollbar \
   --autoplay-policy=no-user-gesture-required \
   --check-for-update-interval=31536000 \
+  --overscroll-history-navigation=0 \
   --app="$URL"
 ```
+> PRO TIP : Browsers have a native edge swipe feature (when you start swiping from the very edges of the browser window). It triggers back and forth history page navigation. KIP posseses defensive code blocking replacing the the action with a KIP sidebar open/close operation but it is not 100% perfect. The --overscroll-history-navigation=0 launch parameter disables the browser native gestures completly.
 
 Optionally, you can also add the following `exec "BROWSER" \` flags:
 
-Force Chromium to keep all threads active and not optimyze resource usage
+Tell Chromium to keep all threads actives.
 ```bash
 --disable-background-timer-throttling \
 --disable-renderer-backgrounding \
@@ -121,7 +123,7 @@ Save, then:
 sudo chmod +x /home/pi/kiosk.sh
 ```
 
-Tip: You can override the URL without editing the script using:
+> Tip: You can override the URL without editing the script using:
 ```
 URL="http://signalk.local:3000/@mxtommy/kip/#/page/0" /home/pi/kiosk.sh
 ```
