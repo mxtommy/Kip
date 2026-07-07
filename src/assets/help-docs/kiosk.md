@@ -99,7 +99,7 @@ exec "$BROWSER" \
   --overscroll-history-navigation=0 \
   --app="$URL"
 ```
-> PRO TIP : Browsers have a native edge swipe feature (when you start swiping from the very edges of the browser window). It triggers back and forth history page navigation. KIP posseses defensive code blocking replacing the the action with a KIP sidebar open/close operation but it is not 100% perfect. The --overscroll-history-navigation=0 launch parameter disables the browser native gestures completly.
+> PRO TIP : Browsers have native edge swipe gestures (swipes that starts from the very edges of the browser window). It triggers back and forth browser history page navigation. KIP posseses defensive code replacing the history page navigation with a KIP sidebar open/close operation. It's not 100% perfect all the time. The --overscroll-history-navigation=0 launch parameter disables the browser native gestures completly.
 
 Optionally, you can also add the following `exec "BROWSER" \` flags:
 
