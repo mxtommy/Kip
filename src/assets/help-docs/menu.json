@@ -2,11 +2,26 @@
   { "title": "The basics", "file": "welcome.md" },
   { "title": "Login & Configurations", "file": "configuration.md" },
   { "title": "Dashboards and Layout", "file": "dashboards.md" },
-  { "title": "Data Inspector", "file": "datainspector.md" },
-  { "title": "Chartplotter Mode", "file": "chartplotter.md" },
+  {
+    "title": "Widgets",
+    "items": [
+      {
+        "title": "AIS Radar",
+        "file": "ais-radar.md"
+      }
+    ]
+  },
+  {
+    "title": "Chartplotter Mode",
+    "file": "chartplotter.md"
+  },
   { "title": "Zones, Notifications and Highlights", "file": "zones.md" },
   { "title": "Digital Switching and PUT", "file": "putcontrols.md" },
   { "title": "Historical Widget Data", "file": "time-series.md" },
+  {
+    "title": "Data Inspector",
+    "file": "datainspector.md"
+  },
   {
     "title": "Integrations",
     "items": [
