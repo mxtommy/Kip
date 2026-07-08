@@ -35,6 +35,11 @@ export class RemoteControlComponent {
   private readonly displaysMap = signal<Record<string, IKipDisplayInfo>>({});
   private selectedDisplaySub: Subscription | null = null;
   private selectedScreenIndexSub: Subscription | null = null;
+  // The displayId the two subscriptions above are currently bound to, so their
+  // DataService registrations can be released on rebind/destroy - otherwise every
+  // display switch, and every navigation to/away from this page, leaks one
+  // registration per path for the life of the app.
+  private boundDisplayId: string | null = null;
 
   protected readonly displays = computed<IKipDisplayInfo[]>(() => {
     const items = Object.values(this.displaysMap());
@@ -77,6 +82,8 @@ export class RemoteControlComponent {
     effect(() => {
       this.rebindSelectedDisplaySubscriptions(this.displayId());
     });
+
+    this._destroyRef.onDestroy(() => this.releaseBoundDisplaySubscriptions());
   }
 
   private updateDisplayCatalog(path: string, value: unknown): void {
@@ -112,11 +119,21 @@ export class RemoteControlComponent {
     });
   }
 
+  /** Release the DataService registrations for whichever displayId is currently bound, if any. */
+  private releaseBoundDisplaySubscriptions(): void {
+    const displayId = this.boundDisplayId;
+    if (!displayId) return;
+    this._data.unsubscribePath(`self.displays.${displayId}`, 'default');
+    this._data.unsubscribePath(`self.displays.${displayId}.screenIndex`, 'default');
+    this.boundDisplayId = null;
+  }
+
   private rebindSelectedDisplaySubscriptions(displayId: string | null): void {
     this.selectedDisplaySub?.unsubscribe();
     this.selectedDisplaySub = null;
     this.selectedScreenIndexSub?.unsubscribe();
     this.selectedScreenIndexSub = null;
+    this.releaseBoundDisplaySubscriptions();
 
     if (!displayId) {
       this.screensLoading.set(false);
@@ -125,6 +142,7 @@ export class RemoteControlComponent {
       return;
     }
 
+    this.boundDisplayId = displayId;
     this.screensLoading.set(true);
 
     this.selectedDisplaySub = this._data.subscribePath(`self.displays.${displayId}`, 'default')
