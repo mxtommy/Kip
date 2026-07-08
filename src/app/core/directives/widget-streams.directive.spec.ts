@@ -3,11 +3,17 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
 import { WidgetStreamsDirective } from './widget-streams.directive';
 import { DataService, IPathUpdate } from '../services/data.service';
+import { SignalKDeltaService } from '../services/signalk-delta.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetSvcConfig, IWidgetPath } from '../interfaces/widgets-interface';
+import { IPathValueData } from '../interfaces/app-interfaces';
 
 class FakeDataService {
     calls: {
+        path: string;
+        source: string;
+    }[] = [];
+    unsubCalls: {
         path: string;
         source: string;
     }[] = [];
@@ -25,6 +31,10 @@ class FakeDataService {
             this.subjects.set(key, new Subject<IPathUpdate>());
         }
         return this.subjects.get(key)!.asObservable();
+    }
+
+    unsubscribePath(path: string, source: string): void {
+        this.unsubCalls.push({ path, source });
     }
 
     timeoutPathObservable(path: string, pathType: string): void {
@@ -502,6 +512,10 @@ class TtlFakeDataService {
         return this.subjects.get(key)!.asObservable();
     }
 
+    unsubscribePath(): void {
+        // Not exercised by these TTL tests; no-op is sufficient here.
+    }
+
     timeoutPathObservable(path: string, pathType: string): void {
         this.timeoutCalls.push({ path, pathType });
         // Mirror the real DataService: a TTL timeout resets the path value to null.
@@ -556,5 +570,150 @@ describe('WidgetStreamsDirective TTL value reset (#1069)', () => {
         expect(dataSvc.timeoutCalls.length).toBeGreaterThanOrEqual(1);
         // The widget must be reset to null ("--"), not left showing the stale 500.
         expect(hits[hits.length - 1]).toBeNull();
+    });
+});
+
+describe('WidgetStreamsDirective releasing DataService registrations', () => {
+    let directive: WidgetStreamsDirective;
+    let dataSvc: FakeDataService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                WidgetStreamsDirective,
+                { provide: DataService, useClass: FakeDataService },
+                { provide: UnitsService, useClass: FakeUnitsService }
+            ]
+        });
+        directive = TestBed.inject(WidgetStreamsDirective);
+        dataSvc = TestBed.inject(DataService) as unknown as FakeDataService;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('releases every subscribed path when the directive is destroyed', () => {
+        const cfg = makeCfg({ key: 'p1', path: 'navigation.speedOverGround', source: 'gps-1' });
+        cfg.paths = {
+            ...cfg.paths,
+            p2: { ...(cfg.paths as Record<string, IWidgetPath>)['p1'], path: 'navigation.headingTrue', source: 'compass-1' }
+        };
+        directive.setStreamsConfig(cfg);
+        directive.observe('p1', () => { });
+        directive.observe('p2', () => { });
+
+        expect(dataSvc.unsubCalls).toEqual([]);
+        TestBed.resetTestingModule();
+
+        expect(dataSvc.unsubCalls).toContainEqual({ path: 'navigation.speedOverGround', source: 'gps-1' });
+        expect(dataSvc.unsubCalls).toContainEqual({ path: 'navigation.headingTrue', source: 'compass-1' });
+        expect(dataSvc.unsubCalls.length).toBe(2);
+    });
+
+    it('releases the old path when a widget is reconfigured to point at a different path, and does not release the new one', () => {
+        const cfgA = makeCfg({ path: 'navigation.speedOverGround', source: 'gps-1' });
+        directive.setStreamsConfig(cfgA);
+        directive.observe('p', () => { });
+        expect(dataSvc.unsubCalls).toEqual([]);
+
+        const cfgB = makeCfg({ path: 'navigation.headingTrue', source: 'compass-1' });
+        directive.applyStreamsConfigDiff(cfgB);
+
+        expect(dataSvc.unsubCalls).toEqual([{ path: 'navigation.speedOverGround', source: 'gps-1' }]);
+    });
+
+    it('does not release the registration when only the callback changes and the path stays the same', () => {
+        const cfg = makeCfg({ path: 'navigation.speedOverGround', source: 'gps-1' });
+        directive.setStreamsConfig(cfg);
+        directive.observe('p', () => { });
+        directive.observe('p', () => { }); // different callback, same path/source
+
+        expect(dataSvc.calls.length).toBe(1); // only ever subscribed once
+        expect(dataSvc.unsubCalls).toEqual([]);
+    });
+
+    it('releases a path removed from the widget config via applyStreamsConfigDiff', () => {
+        const cfgA = makeCfg({ key: 'p1', path: 'navigation.speedOverGround', source: 'gps-1' });
+        directive.setStreamsConfig(cfgA);
+        directive.observe('p1', () => { });
+
+        directive.applyStreamsConfigDiff(makeCfg({ key: 'p2', path: 'navigation.headingTrue', source: 'compass-1' }));
+
+        expect(dataSvc.unsubCalls).toEqual([{ path: 'navigation.speedOverGround', source: 'gps-1' }]);
+    });
+});
+
+describe('WidgetStreamsDirective shared DataService registrations (real DataService, two widgets)', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('destroying one widget does not break another widget still sharing the same (path, source)', async () => {
+        vi.useFakeTimers();
+        const dataPathUpdates$ = new Subject<IPathValueData>();
+        TestBed.configureTestingModule({
+            providers: [
+                WidgetStreamsDirective,
+                DataService,
+                {
+                    provide: SignalKDeltaService,
+                    useValue: {
+                        subscribeDataPathsUpdates: () => dataPathUpdates$.asObservable(),
+                        subscribeMetadataUpdates: () => new Subject().asObservable(),
+                        subscribeNotificationsUpdates: () => new Subject().asObservable(),
+                        subscribeSelfUpdates: () => new Subject().asObservable(),
+                    },
+                },
+                { provide: UnitsService, useClass: FakeUnitsService }
+            ]
+        });
+
+        // directiveA: the module's own singleton instance (a first widget).
+        const directiveA = TestBed.inject(WidgetStreamsDirective);
+        // directiveB: a genuinely independent second instance (a second widget), created
+        // inside the same injection context so its inject(DataService) resolves to the
+        // SAME real DataService instance as directiveA - exactly like two separate
+        // widget-host2 instances on a dashboard both pointing at the same sensor path.
+        const directiveB = TestBed.runInInjectionContext(() => new WidgetStreamsDirective());
+
+        // Widget configs store the fully-resolved path (as DataService itself keys on),
+        // while the mock delta below uses the raw Signal K wire format (context + bare
+        // path) - matching data.service.spec.ts's own convention.
+        const cfg = makeCfg({ path: 'self.navigation.speedOverGround', source: 'gps-1' });
+
+        // Seed the real value BEFORE either widget subscribes, so subscribePath()'s
+        // initial snapshot (read from DataService's already-updated cache) already has
+        // it - matching how a widget added to a dashboard after data has been flowing
+        // for a while immediately shows the current value via the take(1) fast path,
+        // rather than needing to wait a full sampleTime interval for the next sample.
+        dataPathUpdates$.next({
+            context: 'self', path: 'navigation.speedOverGround', source: 'gps-1',
+            timestamp: '2026-01-01T00:00:01.000Z', value: 5.1,
+        });
+
+        directiveA.setStreamsConfig(cfg);
+        const hitsA: IPathUpdate[] = [];
+        directiveA.observe('p', u => hitsA.push(u));
+
+        directiveB.setStreamsConfig(cfg);
+        const hitsB: IPathUpdate[] = [];
+        directiveB.observe('p', u => hitsB.push(u));
+
+        await vi.advanceTimersByTimeAsync(0); // flush the take(1) fast-path
+        expect(hitsA[hitsA.length - 1].data.value).toBe(5.1);
+        expect(hitsB[hitsB.length - 1].data.value).toBe(5.1);
+
+        // Widget A is destroyed (dashboard switch, widget removed, etc.). Widget B is
+        // still using the exact same (path, source) and must keep receiving live data,
+        // not have its shared Subject silently completed out from under it.
+        directiveA.ngOnDestroy();
+
+        dataPathUpdates$.next({
+            context: 'self', path: 'navigation.speedOverGround', source: 'gps-1',
+            timestamp: '2026-01-01T00:00:02.000Z', value: 7.7,
+        });
+        await vi.advanceTimersByTimeAsync(1100); // past the default 1000ms sampleTime
+        expect(hitsB[hitsB.length - 1].data.value).toBe(7.7);
     });
 });

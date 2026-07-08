@@ -1,4 +1,4 @@
-import { Directive, DestroyRef, inject, signal } from '@angular/core';
+import { Directive, DestroyRef, inject, OnDestroy, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
@@ -31,7 +31,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
  * - Config changes automatically trigger diff-based subscription updates
  * - All subscriptions auto-cleanup on directive destroy
  */
-export class WidgetStreamsDirective {
+export class WidgetStreamsDirective implements OnDestroy {
   private _streamsConfig = signal<IWidgetSvcConfig | undefined>(undefined);
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
@@ -46,6 +46,9 @@ export class WidgetStreamsDirective {
   // Root-level signature (timeout settings) to detect when all paths need pipeline rebuild
   private reset$ = new Subject<void>();
   private rootSignature: string | undefined;
+
+  // TODO: release DataService.subscribePath() registrations on destroy/replace.
+  ngOnDestroy(): void { /* not yet implemented */ }
 
   /** Build a simple Observer wrapper for a given path key. */
   private buildObserver(pathKey: string, next: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
