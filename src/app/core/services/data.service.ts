@@ -249,9 +249,9 @@ export class DataService implements OnDestroy {
     }
 
     if (this._skDataArrayCache.some(item => item.path.startsWith(prefix))) {
-      this._skDataArrayCache = this._skDataArrayCache.filter(item => !item.path.startsWith(prefix));
-      this._skDataIndexByPath.clear();
-      this._skDataArrayCache.forEach((item, index) => this._skDataIndexByPath.set(item.path, index));
+      // _skData already had the matching entries removed above, so rebuilding
+      // from it here also drops them from the array cache and its index.
+      this.refreshSkDataCache();
       if (this._isSkDataFullTreeActive) {
         this.scheduleSkDataFullTreeEmit();
       }

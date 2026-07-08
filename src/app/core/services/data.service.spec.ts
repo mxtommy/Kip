@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { IMeta, IPathValueData } from '../interfaces/app-interfaces';
+import { IMeta, IPathMetaData, IPathValueData, ISkPathData } from '../interfaces/app-interfaces';
 import { ISignalKDataValueUpdate, States } from '../interfaces/signalk-interfaces';
 import { DataService, IPathUpdate, IPathUpdateWithPath } from './data.service';
 import { SignalKDeltaService } from './signalk-delta.service';
@@ -304,5 +304,45 @@ describe('DataService', () => {
     ].sort());
     expect(service.getPathObject('self.navigation.speedOverGround')).toBeTruthy();
     expect(service.getPathObject('vessels.urn:mrn:imo:mmsi:987654321.navigation.position')).toBeTruthy();
+  });
+
+  it('removePathsForContext also prunes the full-tree data and meta caches when the debug views are active', () => {
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedOverGround',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: 5.1,
+    });
+    dataPathUpdates$.next({
+      context: 'vessels.urn:mrn:imo:mmsi:123456789',
+      path: 'navigation.position',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: { latitude: 1, longitude: 2 },
+    });
+
+    let latestTree: ISkPathData[] | undefined;
+    service.startSkDataFullTree().subscribe(tree => (latestTree = tree));
+
+    let latestMeta: IPathMetaData[] | undefined;
+    service.startSkMetaFullTree().subscribe(meta => (latestMeta = meta));
+    metadataUpdates$.next({
+      context: 'vessels.urn:mrn:imo:mmsi:123456789',
+      path: 'navigation.position',
+      meta: { description: 'Vessel position', units: 'rad', properties: {} },
+    });
+
+    expect(latestTree!.map(item => item.path)).toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
+    expect(latestMeta!.map(item => item.path)).toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
+
+    service.removePathsForContext('vessels.urn:mrn:imo:mmsi:123456789');
+    // startSkDataFullTree() re-synced the cache and emitted immediately above;
+    // the eviction's own emit is debounced, so re-open to check synchronously.
+    service.startSkDataFullTree().subscribe(tree => (latestTree = tree));
+
+    expect(latestTree!.map(item => item.path)).not.toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
+    expect(latestTree!.map(item => item.path)).toContain('self.navigation.speedOverGround');
+    expect(latestMeta!.map(item => item.path)).not.toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
   });
 });
