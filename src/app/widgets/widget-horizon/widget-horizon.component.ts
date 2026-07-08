@@ -251,7 +251,7 @@ export class WidgetHorizonComponent implements AfterViewInit, OnDestroy {
     const faceColor = (cfg.gauge?.faceColor ?? 'anthracite') as keyof ReturnType<typeof getSteelFrameDesign>;
     this.gaugeOptions = {
       pointerColor: pointerMap.Red,
-      frameVisible: !(cfg.gauge?.noFrameVisible ?? false),
+      frameVisible: (cfg.gauge?.noFrameVisible ?? false),
       frameDesign: frameMap[faceColor],
       foregroundVisible: false,
       size
