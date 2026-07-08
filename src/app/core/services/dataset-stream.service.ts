@@ -296,6 +296,13 @@ export class DatasetStreamService implements OnDestroy {
       await this.seedHistoryData(dataSource, configuration, historyResolutionSeconds, angleDomain);
     }
 
+    // A concurrent stop() may have removed this dataSource while history was loading -
+    // don't resurrect a DataService registration for a dataset that's already stopped;
+    // nothing would ever release it.
+    if (!this._svcDataSource.includes(dataSource)) {
+      return;
+    }
+
     // Share the latest non-null value so we can:
     // 1) emit immediately on first value (chart isn't blank)
     // 2) then emit periodically using the latest known value
@@ -428,8 +435,13 @@ export class DatasetStreamService implements OnDestroy {
     }
     console.log(`[DatasetStreamService] Stopping Dataset ${uuid} data capture`);
     const dataSource = this._svcDataSource[dsIndex];
-    dataSource.pathObserverSubscription?.unsubscribe();
-    this.data.unsubscribePath(dataSource.path, dataSource.pathSource);
+    // pathObserverSubscription is only set once start() has actually reached its
+    // subscribePath() call (it may still be awaiting a history seed) - only release
+    // a registration this dataSource actually acquired.
+    if (dataSource.pathObserverSubscription) {
+      dataSource.pathObserverSubscription.unsubscribe();
+      this.data.unsubscribePath(dataSource.path, dataSource.pathSource);
+    }
     this._svcDataSource.splice(dsIndex, 1);
   }
 
