@@ -44,6 +44,8 @@ export interface IDatasetServiceDataSourceInfo {
 
 interface IDatasetServiceDataSource extends IDatasetServiceDataSourceInfo {
   uuid: string;
+  path: string;
+  pathSource: string;
   pathObserverSubscription: Subscription | null;
   historicalData: number[];
 };
@@ -184,6 +186,8 @@ export class DatasetStreamService implements OnDestroy {
 
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
+      path: dsConf.path,
+      pathSource: dsConf.pathSource,
       pathObserverSubscription: null,
       sampleTime: derivedSampleTimeMs,
       maxDataPoints,
@@ -423,7 +427,9 @@ export class DatasetStreamService implements OnDestroy {
       return;
     }
     console.log(`[DatasetStreamService] Stopping Dataset ${uuid} data capture`);
-    this._svcDataSource[dsIndex].pathObserverSubscription?.unsubscribe();
+    const dataSource = this._svcDataSource[dsIndex];
+    dataSource.pathObserverSubscription?.unsubscribe();
+    this.data.unsubscribePath(dataSource.path, dataSource.pathSource);
     this._svcDataSource.splice(dsIndex, 1);
   }
 
