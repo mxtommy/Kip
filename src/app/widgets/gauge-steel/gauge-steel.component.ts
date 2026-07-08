@@ -341,6 +341,12 @@ export class GaugeSteelComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Clear pending resize debounce callback so it cannot fire after destroy
+    if (this.resizeTimer !== null) {
+      window.clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+
     // Stop any running animations before cleanup
     if (this.gauge && this.gauge.setValue) {
       // Call setValue to stop any running setValueAnimated animations
