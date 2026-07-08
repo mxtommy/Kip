@@ -268,33 +268,9 @@ export class DataService implements OnDestroy {
     }
   }
 
-  public unsubscribePath(path: string): void {
-    const index = this._pathRegister.findIndex(registration => registration.path === path);
-
-    if (index !== -1) {
-      const registration = this._pathRegister[index];
-
-      // Ensure all observables are completed to avoid memory leaks
-      registration.combinedSub?.unsubscribe();
-      registration._pathData$?.complete();
-      registration._pathState$?.complete();
-      registration.pathDataUpdate$?.complete();
-      registration.pathMeta$?.complete();
-
-      // Use splice to remove the item without changing the entire
-      // array reference.
-      this._pathRegister.splice(index, 1);
-
-      const registrations = this._pathRegisterByPath.get(path);
-      if (registrations) {
-        const updated = registrations.filter(item => item !== registration);
-        if (updated.length) {
-          this._pathRegisterByPath.set(path, updated);
-        } else {
-          this._pathRegisterByPath.delete(path);
-        }
-      }
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public unsubscribePath(path: string, source: string): void {
+    // TODO: not yet implemented - refCount-aware teardown
   }
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {

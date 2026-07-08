@@ -42,6 +42,53 @@ describe('DataService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('unsubscribePath only tears down a shared registration once every subscriber has released it', () => {
+    // Two independent consumers of the exact same (path, source) - subscribePath()
+    // dedupes and shares the same underlying registration between them.
+    let completedA = false;
+    let completedB = false;
+    service
+      .subscribePath('self.navigation.speedOverGround', 'default')
+      .subscribe({ next: () => { }, complete: () => (completedA = true) });
+    service
+      .subscribePath('self.navigation.speedOverGround', 'default')
+      .subscribe({ next: () => { }, complete: () => (completedB = true) });
+
+    service.unsubscribePath('self.navigation.speedOverGround', 'default');
+    expect(completedA).toBe(false);
+    expect(completedB).toBe(false);
+
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedOverGround',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: 6.2,
+    });
+    // Still live after only one of two consumers released it.
+    expect(service.getPathObject('self.navigation.speedOverGround')).toBeTruthy();
+
+    service.unsubscribePath('self.navigation.speedOverGround', 'default');
+    expect(completedA).toBe(true);
+    expect(completedB).toBe(true);
+  });
+
+  it('unsubscribePath matches by path AND source, leaving other sources on the same path untouched', () => {
+    let completedDefault = false;
+    let completedOther = false;
+    service
+      .subscribePath('self.navigation.speedOverGround', 'default')
+      .subscribe({ next: () => { }, complete: () => (completedDefault = true) });
+    service
+      .subscribePath('self.navigation.speedOverGround', 'gps-2')
+      .subscribe({ next: () => { }, complete: () => (completedOther = true) });
+
+    service.unsubscribePath('self.navigation.speedOverGround', 'default');
+
+    expect(completedDefault).toBe(true);
+    expect(completedOther).toBe(false);
+  });
+
   it('applies notification state to path value updates', () => {
     let latest: IPathUpdate | undefined;
 
