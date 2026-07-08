@@ -4,7 +4,7 @@
   "description": "An advanced and versatile marine instrumentation package to display Signal K data.",
   "license": "MIT",
   "author": {
-    "name": "Thomas St.Pierre, David Godin"
+    "name": "David Godin, Thomas St.Pierre"
   },
   "contributors": [
     {

@@ -138,6 +138,7 @@ export class WidgetService {
     WidgetGaugeNgLinearComponent: () => import('../../widgets/widget-gauge-ng-linear/widget-gauge-ng-linear.component').then(m => m.WidgetGaugeNgLinearComponent),
     WidgetGaugeNgCompassComponent: () => import('../../widgets/widget-gauge-ng-compass/widget-gauge-ng-compass.component').then(m => m.WidgetGaugeNgCompassComponent),
     WidgetFreeboardskComponent: () => import('../../widgets/widget-freeboardsk/widget-freeboardsk.component').then(m => m.WidgetFreeboardskComponent),
+    WidgetHoekensAnchorAlarmComponent: () => import('../../widgets/widget-hoekens-anchor-alarm/widget-hoekens-anchor-alarm.component').then(m => m.WidgetHoekensAnchorAlarmComponent),
     WidgetAnchorAlarmComponent: () => import('../../widgets/widget-anchor-alarm/widget-anchor-alarm.component').then(m => m.WidgetAnchorAlarmComponent),
     WidgetDatetimeComponent: () => import('../../widgets/widget-datetime/widget-datetime.component').then(m => m.WidgetDatetimeComponent),
     WidgetDataChartComponent: () => import('../../widgets/widget-data-chart/widget-data-chart.component').then(m => m.WidgetDataChartComponent),
@@ -493,8 +494,21 @@ export class WidgetService {
       componentClassName: 'WidgetDataChartComponent'
     },
     {
-      name: 'Anchor Watch',
-      description: 'Monitors your anchor position and triggers an alarm if you drift outside a configured radius (anchor drag). Set the anchor point, watch radius, and alarm behavior (sound/notification) in the widget config. Requires internet connectivity to view map.',
+      name: "Hoeken's Anchor Alarm",
+      description: "Map-first anchor alarm experience for Signal K with advanced watch-zone tools (circle, sector, polygon), interactive setup, tracks/fleet overlays, scope calculator, and optional engine-start auto-silence for practical onboard use.",
+      icon: 'anchorWatch',
+      minWidth: 6,
+      minHeight: 8,
+      defaultWidth: 6,
+      defaultHeight: 14,
+      category: 'Component',
+      requiredPlugins: ['hoekens-anchor-alarm'],
+      selector: 'widget-hoekens-anchor-alarm',
+      componentClassName: 'WidgetHoekensAnchorAlarmComponent'
+    },
+    {
+      name: "Anchor Watch",
+      description: "Classic anchor monitoring focused on reliable server-side drift detection: configurable alarm radius, automatic radius calculation from rode/depth, intelligent anchor-position detection, position history, multiple warning/alarm types, GPS bow-offset compensation, plus REST API and Signal K PUT integration.",
       icon: 'anchorWatch',
       minWidth: 6,
       minHeight: 8,
