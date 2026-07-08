@@ -90,6 +90,8 @@ const buildPathData = (value: unknown, rawTimestamp: string | number | Date | nu
 interface IPathRegistration {
   path: string;
   source: string;
+  /** Number of live callers sharing this registration; only torn down at 0 (see unsubscribePath). */
+  refCount: number;
   _pathData$: BehaviorSubject<IPathData>;
   _pathState$: BehaviorSubject<TState>;
   pathDataUpdate$: BehaviorSubject<IPathUpdate>;
@@ -268,15 +270,50 @@ export class DataService implements OnDestroy {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /**
+   * Releases one caller's hold on a subscribePath(path, source) registration.
+   * subscribePath() shares a single registration between every caller that
+   * asks for the same (path, source) pair, so this only actually completes
+   * the underlying Subjects and removes the registration once every caller
+   * that obtained it has released it (refCount reaches 0) - releasing it
+   * while another caller is still using it would silently kill their live
+   * data with no warning.
+   */
   public unsubscribePath(path: string, source: string): void {
-    // TODO: not yet implemented - refCount-aware teardown
+    const index = this._pathRegister.findIndex(registration => registration.path === path && registration.source === source);
+    if (index === -1) return;
+
+    const registration = this._pathRegister[index];
+    registration.refCount--;
+    if (registration.refCount > 0) return;
+
+    // Ensure all observables are completed to avoid memory leaks
+    registration.combinedSub?.unsubscribe();
+    registration._pathData$?.complete();
+    registration._pathState$?.complete();
+    registration.pathDataUpdate$?.complete();
+    registration.pathMeta$?.complete();
+
+    // Use splice to remove the item without changing the entire
+    // array reference.
+    this._pathRegister.splice(index, 1);
+
+    const registrations = this._pathRegisterByPath.get(path);
+    if (registrations) {
+      const updated = registrations.filter(item => item !== registration);
+      if (updated.length) {
+        this._pathRegisterByPath.set(path, updated);
+      } else {
+        this._pathRegisterByPath.delete(path);
+      }
+    }
   }
 
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const registrations = this._pathRegisterByPath.get(path);
     const matchingPaths = registrations?.find(item => item.path === path && item.source === source);
     if (matchingPaths) {
+      matchingPaths.refCount++;
       return matchingPaths.pathDataUpdate$;
     }
 
@@ -315,6 +352,7 @@ export class DataService implements OnDestroy {
     const newPathSubject: IPathRegistration = {
       path: path,
       source: source,
+      refCount: 1,
       _pathData$: new BehaviorSubject<IPathData>(pathUpdate.data),
       _pathState$: new BehaviorSubject<TState>(pathUpdate.state),
       pathDataUpdate$: new BehaviorSubject<IPathUpdate>(pathUpdate),
