@@ -392,4 +392,19 @@ describe('DataService', () => {
     expect(latestTree!.map(item => item.path)).toContain('self.navigation.speedOverGround');
     expect(latestMeta!.map(item => item.path)).not.toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
   });
+
+  it('removePathsForContext is a no-op for the self context, so a future caller can never wipe the boat\'s own instrument data', () => {
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedOverGround',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: 5.1,
+    });
+
+    service.removePathsForContext('self');
+
+    expect(service.getPathObject('self.navigation.speedOverGround')).toBeTruthy();
+    expect(service.getCachedPaths()).toContain('self.navigation.speedOverGround');
+  });
 });
