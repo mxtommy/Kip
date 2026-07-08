@@ -210,11 +210,17 @@ describe('AisProcessingService target eviction (bounds unbounded growth)', () =>
     evictStaleTracks: (nowMs: number) => void;
   };
 
+  let removePathsForContext: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     vi.useFakeTimers();
     stream$ = new Subject<IPathUpdateWithPath>();
+    removePathsForContext = vi.fn();
     TestBed.configureTestingModule({
-      providers: [AisProcessingService, { provide: DataService, useValue: { subscribePathTree: () => stream$.asObservable() } as Partial<DataService> }]
+      providers: [AisProcessingService, {
+        provide: DataService,
+        useValue: { subscribePathTree: () => stream$.asObservable(), removePathsForContext } as Partial<DataService>
+      }]
     });
     service = TestBed.inject(AisProcessingService);
   });
@@ -242,6 +248,23 @@ describe('AisProcessingService target eviction (bounds unbounded growth)', () =>
     push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
     internals().evictStaleTracks(EVENT_TS + 60 * 1000); // 1 min later, within TTL
     expect(internals().tracks.size).toBe(1);
+  });
+
+  it('cleans up DataService path data when a track is evicted by the TTL sweep', () => {
+    push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
+    internals().evictStaleTracks(EVENT_TS + 11 * 60 * 1000);
+    expect(removePathsForContext).toHaveBeenCalledWith('vessels.urn:mrn:imo:mmsi:123456789');
+  });
+
+  it('cleans up DataService path data when a track is evicted by the max-targets cap', () => {
+    internals().maxTargets = 5;
+    for (let i = 0; i < 12; i++) {
+      push(`vessels.urn:mrn:imo:mmsi:${100000000 + i}.navigation.position.latitude`, 10 + i * 0.001);
+    }
+    // The first 7 pushed tracks (100000000..100000006) were evicted to make room for the cap.
+    expect(removePathsForContext).toHaveBeenCalledWith('vessels.urn:mrn:imo:mmsi:100000000');
+    expect(removePathsForContext).toHaveBeenCalledWith('vessels.urn:mrn:imo:mmsi:100000006');
+    expect(removePathsForContext).not.toHaveBeenCalledWith('vessels.urn:mrn:imo:mmsi:100000007');
   });
 });
 

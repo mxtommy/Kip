@@ -265,4 +265,44 @@ describe('DataService', () => {
     subA.unsubscribe();
     subB.unsubscribe();
   });
+
+  it('removePathsForContext removes cached path data for a context, leaving other contexts untouched', () => {
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedOverGround',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: 5.1,
+    });
+    dataPathUpdates$.next({
+      context: 'vessels.urn:mrn:imo:mmsi:123456789',
+      path: 'navigation.position',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: { latitude: 1, longitude: 2 },
+    });
+    dataPathUpdates$.next({
+      context: 'vessels.urn:mrn:imo:mmsi:987654321',
+      path: 'navigation.position',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: { latitude: 3, longitude: 4 },
+    });
+
+    expect(service.getCachedPaths().sort()).toEqual([
+      'self.navigation.speedOverGround',
+      'vessels.urn:mrn:imo:mmsi:123456789.navigation.position',
+      'vessels.urn:mrn:imo:mmsi:987654321.navigation.position',
+    ].sort());
+
+    service.removePathsForContext('vessels.urn:mrn:imo:mmsi:123456789');
+
+    expect(service.getPathObject('vessels.urn:mrn:imo:mmsi:123456789.navigation.position')).toBeNull();
+    expect(service.getCachedPaths().sort()).toEqual([
+      'self.navigation.speedOverGround',
+      'vessels.urn:mrn:imo:mmsi:987654321.navigation.position',
+    ].sort());
+    expect(service.getPathObject('self.navigation.speedOverGround')).toBeTruthy();
+    expect(service.getPathObject('vessels.urn:mrn:imo:mmsi:987654321.navigation.position')).toBeTruthy();
+  });
 });

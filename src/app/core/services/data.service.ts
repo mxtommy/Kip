@@ -228,6 +228,19 @@ export class DataService implements OnDestroy {
     this._isReset.next(true);
   }
 
+  /**
+   * Removes cached data, metadata, and pending notification state for every
+   * path under a given context (e.g. an AIS target evicted elsewhere).
+   * Active widget subscriptions to the context's paths are left alone - see
+   * unsubscribePath - they simply stop receiving updates once no more deltas
+   * arrive for the removed context.
+   *
+   * @param context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789"
+   */
+  public removePathsForContext(context: string): void {
+    // TODO: not yet implemented
+  }
+
   public unsubscribePath(path: string): void {
     const index = this._pathRegister.findIndex(registration => registration.path === path);
 
