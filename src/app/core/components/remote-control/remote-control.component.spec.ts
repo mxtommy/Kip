@@ -84,8 +84,12 @@ describe('RemoteControlComponent releasing DataService registrations', () => {
     await appRef.whenStable();
     fixture.detectChanges();
 
-    expect(dataSvc.unsubCalls).toContainEqual({ path: 'self.displays.display-1', source: 'default' });
-    expect(dataSvc.unsubCalls).toContainEqual({ path: 'self.displays.display-1.screenIndex', source: 'default' });
+    // Exact equality (not just toContainEqual) so a regression that releases twice,
+    // or also releases display-2's brand-new registration, would be caught.
+    expect(dataSvc.unsubCalls).toEqual([
+      { path: 'self.displays.display-1', source: 'default' },
+      { path: 'self.displays.display-1.screenIndex', source: 'default' }
+    ]);
   });
 
   it('releases the selected display\'s subscriptions when the component is destroyed', async () => {
@@ -97,7 +101,9 @@ describe('RemoteControlComponent releasing DataService registrations', () => {
 
     fixture.destroy();
 
-    expect(dataSvc.unsubCalls).toContainEqual({ path: 'self.displays.display-1', source: 'default' });
-    expect(dataSvc.unsubCalls).toContainEqual({ path: 'self.displays.display-1.screenIndex', source: 'default' });
+    expect(dataSvc.unsubCalls).toEqual([
+      { path: 'self.displays.display-1', source: 'default' },
+      { path: 'self.displays.display-1.screenIndex', source: 'default' }
+    ]);
   });
 });
