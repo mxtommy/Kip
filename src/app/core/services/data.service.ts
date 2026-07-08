@@ -237,9 +237,15 @@ export class DataService implements OnDestroy {
    * unsubscribePath - they simply stop receiving updates once no more deltas
    * arrive for the removed context.
    *
+   * A no-op for the self context - self path data is never "evicted" the way an
+   * AIS-like context is, so this guards against a future caller wiping the
+   * boat's own live instrument data by mistake.
+   *
    * @param context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789"
    */
   public removePathsForContext(context: string): void {
+    if (context === SELFROOTDEF) return;
+
     const prefix = `${context}.`;
 
     for (const path of this._skData.keys()) {
