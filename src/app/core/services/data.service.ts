@@ -238,7 +238,34 @@ export class DataService implements OnDestroy {
    * @param context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789"
    */
   public removePathsForContext(context: string): void {
-    // TODO: not yet implemented
+    const prefix = `${context}.`;
+
+    for (const path of this._skData.keys()) {
+      if (path.startsWith(prefix)) this._skData.delete(path);
+    }
+
+    for (const path of this._pendingPathStates.keys()) {
+      if (path.startsWith(prefix)) this._pendingPathStates.delete(path);
+    }
+
+    if (this._skDataArrayCache.some(item => item.path.startsWith(prefix))) {
+      this._skDataArrayCache = this._skDataArrayCache.filter(item => !item.path.startsWith(prefix));
+      this._skDataIndexByPath.clear();
+      this._skDataArrayCache.forEach((item, index) => this._skDataIndexByPath.set(item.path, index));
+      if (this._isSkDataFullTreeActive) {
+        this.scheduleSkDataFullTreeEmit();
+      }
+    }
+
+    if ([...this._dataServiceMetaByPath.keys()].some(path => path.startsWith(prefix))) {
+      for (const path of this._dataServiceMetaByPath.keys()) {
+        if (path.startsWith(prefix)) this._dataServiceMetaByPath.delete(path);
+      }
+      this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
+      if (this._isSkMetaFullTreeActive) {
+        this._dataServiceMetaSubject$.next(this._dataServiceMeta);
+      }
+    }
   }
 
   public unsubscribePath(path: string): void {

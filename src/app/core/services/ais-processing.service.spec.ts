@@ -72,7 +72,8 @@ describe('AisProcessingService applyAisUpdate dispatch', () => {
       // Every prefix subscription shares the same stream; the merged pipeline
       // forwards anything we push. The self-nav stream also reads this but our
       // test paths only match AIS contexts, so they're routed correctly.
-      subscribePathTree: () => stream$.asObservable()
+      subscribePathTree: () => stream$.asObservable(),
+      removePathsForContext: vi.fn()
     };
 
     TestBed.configureTestingModule({
@@ -287,7 +288,10 @@ describe('AisProcessingService own-ship throttling', () => {
     vi.useFakeTimers();
     stream$ = new Subject<IPathUpdateWithPath>();
     TestBed.configureTestingModule({
-      providers: [AisProcessingService, { provide: DataService, useValue: { subscribePathTree: () => stream$.asObservable() } as Partial<DataService> }]
+      providers: [AisProcessingService, {
+        provide: DataService,
+        useValue: { subscribePathTree: () => stream$.asObservable(), removePathsForContext: vi.fn() } as Partial<DataService>
+      }]
     });
     service = TestBed.inject(AisProcessingService);
   });

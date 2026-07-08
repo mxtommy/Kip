@@ -630,6 +630,10 @@ export class AisProcessingService {
     for (const [context, id] of this.contextIndex.entries()) {
       if (id === track.id) this.contextIndex.delete(context);
     }
+    // Bounding this service's own track map doesn't help unless DataService's
+    // path-keyed caches are pruned too - otherwise every distinct context ever
+    // seen (e.g. a never-repeating AIS MMSI) is retained there forever.
+    this.data.removePathsForContext(track.context);
     if (AIS_DEBUG) {
       console.debug('[AIS] removed', { id: track.id, mmsi: track.mmsi, status: track.ais.status });
     }
