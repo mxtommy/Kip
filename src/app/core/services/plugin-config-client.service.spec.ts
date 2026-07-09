@@ -63,6 +63,19 @@ describe('PluginConfigClientService', () => {
         expect(result.capabilities.listSupported).toBe(true);
     });
 
+    it('resolves admin routes against the server root when the configured URL carries a /signalk suffix', () => {
+        const connection = TestBed.inject(SignalKConnectionService) as unknown as { signalKURL: { url: string } };
+        connection.signalKURL.url = 'http://localhost:3000/signalk/';
+
+        service.listPlugins();
+
+        // Must strip the /signalk suffix so /plugins resolves at the server root, not
+        // http://localhost:3000/signalk/plugins (which would 404).
+        const req = httpMock.expectOne('http://localhost:3000/plugins');
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
     it('should fallback to /plugins list when /plugins/{id} returns 404', async () => {
         const promise = service.getPlugin('autopilot');
 

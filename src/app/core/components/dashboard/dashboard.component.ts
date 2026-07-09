@@ -396,15 +396,22 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const statusList = await Promise.all(
       uniqueRequiredPlugins.map(async pluginId => {
         const result = await this._pluginConfig.getPlugin(pluginId);
-        return {
-          pluginId,
-          enabled: result.ok && result.data.state.enabled
-        };
+        if (result.ok) {
+          return { pluginId, block: !result.data.state.enabled };
+        }
+        // The plugin-state API (/plugins/{id}) is admin-only on a secured server. When the caller
+        // lacks the rights to read it (auth-required/forbidden) we cannot tell whether the plugin is
+        // installed or enabled, so we must not block the add — the widget's own endpoints are
+        // crew-reachable and will render (or surface an install hint) on their own. Blocking here
+        // would dead-end ordinary crew with an "enable" prompt they have no permission to satisfy.
+        const cannotVerify =
+          result.error.reason === 'auth-required' || result.error.reason === 'forbidden';
+        return { pluginId, block: !cannotVerify };
       })
     );
 
     return statusList
-      .filter(pluginStatus => !pluginStatus.enabled)
+      .filter(pluginStatus => pluginStatus.block)
       .map(pluginStatus => pluginStatus.pluginId);
   }
 
