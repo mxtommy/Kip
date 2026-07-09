@@ -208,6 +208,7 @@ describe('AisProcessingService target eviction (bounds unbounded growth)', () =>
     contextIndex: Map<string, string>;
     mmsiIndex: Map<string, Set<string>>;
     maxTargets: number;
+    targetTtlMs: number;
     evictStaleTracks: (nowMs: number) => void;
   };
 
@@ -240,20 +241,20 @@ describe('AisProcessingService target eviction (bounds unbounded growth)', () =>
   it('evicts tracks not updated within the TTL when the sweep runs', () => {
     push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
     expect(internals().tracks.size).toBe(1);
-    // 11 minutes after the last update (default TTL is 10 min) -> evicted
-    internals().evictStaleTracks(EVENT_TS + 11 * 60 * 1000);
+    // Move just beyond the configured TTL so this stays valid if TTL changes.
+    internals().evictStaleTracks(EVENT_TS + internals().targetTtlMs + 1);
     expect(internals().tracks.size).toBe(0);
   });
 
   it('keeps tracks that were updated within the TTL', () => {
     push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
-    internals().evictStaleTracks(EVENT_TS + 60 * 1000); // 1 min later, within TTL
+    internals().evictStaleTracks(EVENT_TS + Math.max(1, internals().targetTtlMs - 1));
     expect(internals().tracks.size).toBe(1);
   });
 
   it('cleans up DataService path data when a track is evicted by the TTL sweep', () => {
     push(`vessels.urn:mrn:imo:mmsi:123456789.navigation.position.latitude`, 10);
-    internals().evictStaleTracks(EVENT_TS + 11 * 60 * 1000);
+    internals().evictStaleTracks(EVENT_TS + internals().targetTtlMs + 1);
     expect(removePathsForContext).toHaveBeenCalledWith('vessels.urn:mrn:imo:mmsi:123456789');
   });
 
