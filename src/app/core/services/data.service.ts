@@ -151,7 +151,7 @@ export class DataService implements OnDestroy {
   private _pendingPathStates = new Map<string, TState>();
   /** Full-tree cache (mutated in place); subscribers must not rely on array identity changes. */
   private _skDataArrayCache: ISkPathData[] = [];
-  /** Path -> index lookup for `_skDataArrayCache` to enable O(1) upserts. */
+  /** Path -> index lookup for `_skDataArrayCache` to enable O(1) upsert. */
   private _skDataIndexByPath = new Map<string, number>();
   private _pathRegister: IPathRegistration[] = []; // List of paths used by Kip (Widgets or App (Notifications and such))
   /** Path -> registrations index for fast lookups during updates. */
@@ -244,31 +244,38 @@ export class DataService implements OnDestroy {
    * @param context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789"
    */
   public removePathsForContext(context: string): void {
-    if (context === SELFROOTDEF) return;
+    if (context === SELFROOTDEF || context === this._selfUrn) return;
 
     const prefix = `${context}.`;
+    let removedSkData = false;
 
     for (const path of this._skData.keys()) {
-      if (path.startsWith(prefix)) this._skData.delete(path);
+      if (path.startsWith(prefix)) {
+        this._skData.delete(path);
+        removedSkData = true;
+      }
     }
 
     for (const path of this._pendingPathStates.keys()) {
       if (path.startsWith(prefix)) this._pendingPathStates.delete(path);
     }
 
-    if (this._skDataArrayCache.some(item => item.path.startsWith(prefix))) {
+    if (removedSkData && this._isSkDataFullTreeActive) {
       // _skData already had the matching entries removed above, so rebuilding
       // from it here also drops them from the array cache and its index.
       this.refreshSkDataCache();
-      if (this._isSkDataFullTreeActive) {
-        this.scheduleSkDataFullTreeEmit();
+      this.scheduleSkDataFullTreeEmit();
+    }
+
+    let removedMeta = false;
+    for (const path of this._dataServiceMetaByPath.keys()) {
+      if (path.startsWith(prefix)) {
+        this._dataServiceMetaByPath.delete(path);
+        removedMeta = true;
       }
     }
 
-    if ([...this._dataServiceMetaByPath.keys()].some(path => path.startsWith(prefix))) {
-      for (const path of this._dataServiceMetaByPath.keys()) {
-        if (path.startsWith(prefix)) this._dataServiceMetaByPath.delete(path);
-      }
+    if (removedMeta) {
       this._dataServiceMeta = Array.from(this._dataServiceMetaByPath.values());
       if (this._isSkMetaFullTreeActive) {
         this._dataServiceMetaSubject$.next(this._dataServiceMeta);

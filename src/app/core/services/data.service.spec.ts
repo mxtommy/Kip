@@ -393,6 +393,32 @@ describe('DataService', () => {
     expect(latestMeta!.map(item => item.path)).not.toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
   });
 
+  it('removePathsForContext while full-tree is inactive is reflected after startSkDataFullTree rebuild', () => {
+    dataPathUpdates$.next({
+      context: 'self',
+      path: 'navigation.speedOverGround',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: 5.1,
+    });
+    dataPathUpdates$.next({
+      context: 'vessels.urn:mrn:imo:mmsi:123456789',
+      path: 'navigation.position',
+      source: 'test-source',
+      timestamp: '2026-01-01T00:00:01.000Z',
+      value: { latitude: 1, longitude: 2 },
+    });
+
+    // startSkDataFullTree() has not been called yet, so the full-tree cache is inactive.
+    service.removePathsForContext('vessels.urn:mrn:imo:mmsi:123456789');
+
+    let latestTree: ISkPathData[] | undefined;
+    service.startSkDataFullTree().subscribe(tree => (latestTree = tree));
+
+    expect(latestTree!.map(item => item.path)).toContain('self.navigation.speedOverGround');
+    expect(latestTree!.map(item => item.path)).not.toContain('vessels.urn:mrn:imo:mmsi:123456789.navigation.position');
+  });
+
   it('removePathsForContext is a no-op for the self context, so a future caller can never wipe the boat\'s own instrument data', () => {
     dataPathUpdates$.next({
       context: 'self',
