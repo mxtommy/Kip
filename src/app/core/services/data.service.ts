@@ -241,7 +241,12 @@ export class DataService implements OnDestroy {
    * AIS-like context is, so this guards against a future caller wiping the
    * boat's own live instrument data by mistake.
    *
-   * @param context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789"
+  * @param {string} context Signal K context, e.g. "vessels.urn:mrn:imo:mmsi:123456789".
+  * @returns {void}
+  *
+  * @example
+  * // Remove all cached path/meta entries for one AIS context after track eviction.
+  * dataService.removePathsForContext('vessels.urn:mrn:imo:mmsi:123456789');
    */
   public removePathsForContext(context: string): void {
     if (context === SELFROOTDEF || context === this._selfUrn) return;
@@ -284,19 +289,30 @@ export class DataService implements OnDestroy {
   }
 
   /**
-   * Releases one caller's hold on a subscribePath(path, source) registration.
-   * subscribePath() shares a single registration between every caller that
-   * asks for the same (path, source) pair, so this only actually completes
-   * the underlying Subjects and removes the registration once every caller
-   * that obtained it has released it (refCount reaches 0) - releasing it
-   * while another caller is still using it would silently kill their live
-   * data with no warning.
-   */
+  * Releases one caller's hold on a subscribePath(path, source) registration.
+  * subscribePath() shares a single registration between every caller that
+  * asks for the same (path, source) pair, so this only actually completes
+  * the underlying Subjects and removes the registration once every caller
+  * that obtained it has released it (refCount reaches 0) - releasing it
+  * while another caller is still using it would silently kill their live
+  * data with no warning.
+  *
+  * @param {string} path Full Signal K path, e.g. "self.navigation.speedOverGround".
+  * @param {string} source Specify path source key or use.
+  * @returns {void}
+  *
+  * @example
+  * // Release one consumer of a shared (path, source) registration.
+  * dataService.unsubscribePath('self.navigation.speedOverGround', 'default');
+  */
   public unsubscribePath(path: string, source: string): void {
-    const index = this._pathRegister.findIndex(registration => registration.path === path && registration.source === source);
-    if (index === -1) return;
+    const registrations = this._pathRegisterByPath.get(path);
+    if (!registrations?.length) return;
 
-    const registration = this._pathRegister[index];
+    const pathIndex = registrations.findIndex(registration => registration.source === source);
+    if (pathIndex === -1) return;
+
+    const registration = registrations[pathIndex];
     registration.refCount--;
     if (registration.refCount > 0) return;
 
@@ -307,64 +323,76 @@ export class DataService implements OnDestroy {
     registration.pathDataUpdate$?.complete();
     registration.pathMeta$?.complete();
 
-    // Use splice to remove the item without changing the entire
-    // array reference.
-    this._pathRegister.splice(index, 1);
+    // Remove from the per-path bucket first, then from the global register.
+    registrations.splice(pathIndex, 1);
+    if (!registrations.length) {
+      this._pathRegisterByPath.delete(path);
+    }
 
-    const registrations = this._pathRegisterByPath.get(path);
-    if (registrations) {
-      const updated = registrations.filter(item => item !== registration);
-      if (updated.length) {
-        this._pathRegisterByPath.set(path, updated);
-      } else {
-        this._pathRegisterByPath.delete(path);
-      }
+    const registerIndex = this._pathRegister.indexOf(registration);
+    if (registerIndex !== -1) {
+      // Use splice to remove the item without changing the entire
+      // array reference.
+      this._pathRegister.splice(registerIndex, 1);
     }
   }
 
+  /**
+   * Returns a shared observable for a (path, source) registration.
+   *
+   * If a registration already exists for the same pair, this increments its
+   * refCount and reuses the existing stream. Otherwise, a new registration is
+   * created and seeded with the current cached value/state/meta snapshot.
+   *
+   * @param {string} path Full Signal K path, e.g. "self.navigation.speedOverGround".
+   * @param {string} source Specify path source key.
+   * @returns {Observable<IPathUpdate>} Shared stream of value/state updates for
+   * the requested (path, source) pair.
+   *
+   * @example
+   * // Subscribe to server-priority (pathValue) updates.
+   * const sub = dataService
+   *   .subscribePath('self.navigation.speedOverGround', 'default')
+   *   .subscribe(update => console.log(update.data.value, update.state));
+   */
   public subscribePath(path: string, source: string): Observable<IPathUpdate> {
     const registrations = this._pathRegisterByPath.get(path);
-    const matchingPaths = registrations?.find(item => item.path === path && item.source === source);
+    const matchingPaths = registrations?.find(item => item.source === source);
     if (matchingPaths) {
       matchingPaths.refCount++;
       return matchingPaths.pathDataUpdate$;
     }
 
-    let currentValue: unknown = null;
-    let currentTimestamp: string | null | undefined = null;
-    let currentDateTimestamp: Date | null = null;
-    let state: TState = States.Normal;
     let pathUpdate: IPathUpdate = {
       data: {
         value: null,
         timestamp: null
       },
-      state: state
+      state: States.Normal
     };
     let metaUpdate: ISkMetadata | null = null;
 
     const dataPath = this._skData.get(path);
 
     if (dataPath) {
-      currentValue = source === 'default' ? dataPath.pathValue : dataPath.sources?.[source]?.sourceValue ?? null;
-      currentTimestamp = source === 'default' ? dataPath.pathTimestamp : dataPath.sources?.[source]?.sourceTimestamp ?? null;
-      currentDateTimestamp = currentTimestamp ? new Date(currentTimestamp) : null;
+      const useDefault = source === 'default';
+      const currentValue = useDefault ? dataPath.pathValue : dataPath.sources?.[source]?.sourceValue ?? null;
+      const currentTimestamp = useDefault ? dataPath.pathTimestamp : dataPath.sources?.[source]?.sourceTimestamp ?? null;
 
       pathUpdate = {
         data: {
           value: currentValue,
-          timestamp: currentDateTimestamp
+          timestamp: currentTimestamp ? new Date(currentTimestamp) : null
         },
-        state: dataPath.state || state
+        state: dataPath.state || States.Normal
       };
 
-      state = dataPath.state || state;
       metaUpdate = dataPath.meta || null;
     }
 
     const newPathSubject: IPathRegistration = {
-      path: path,
-      source: source,
+      path,
+      source,
       refCount: 1,
       _pathData$: new BehaviorSubject<IPathData>(pathUpdate.data),
       _pathState$: new BehaviorSubject<TState>(pathUpdate.state),
