@@ -44,6 +44,8 @@ export interface IDatasetServiceDataSourceInfo {
 
 interface IDatasetServiceDataSource extends IDatasetServiceDataSourceInfo {
   uuid: string;
+  path: string;
+  pathSource: string;
   pathObserverSubscription: Subscription | null;
   historicalData: number[];
 };
@@ -184,6 +186,8 @@ export class DatasetStreamService implements OnDestroy {
 
     const newDataSourceConfiguration: IDatasetServiceDataSource = {
       uuid: dsConf.uuid,
+      path: dsConf.path,
+      pathSource: dsConf.pathSource,
       pathObserverSubscription: null,
       sampleTime: derivedSampleTimeMs,
       maxDataPoints,
@@ -290,6 +294,13 @@ export class DatasetStreamService implements OnDestroy {
     const historyResolutionSeconds = Math.max(1, Math.round(newDataSourceConfig.sampleTime / 1000));
     if (this.shouldSeedHistory(newDataSourceConfig.sampleTime)) {
       await this.seedHistoryData(dataSource, configuration, historyResolutionSeconds, angleDomain);
+    }
+
+    // A concurrent stop() may have removed this dataSource while history was loading -
+    // don't resurrect a DataService registration for a dataset that's already stopped;
+    // nothing would ever release it.
+    if (!this._svcDataSource.includes(dataSource)) {
+      return;
     }
 
     // Share the latest non-null value so we can:
@@ -423,7 +434,14 @@ export class DatasetStreamService implements OnDestroy {
       return;
     }
     console.log(`[DatasetStreamService] Stopping Dataset ${uuid} data capture`);
-    this._svcDataSource[dsIndex].pathObserverSubscription?.unsubscribe();
+    const dataSource = this._svcDataSource[dsIndex];
+    // pathObserverSubscription is only set once start() has actually reached its
+    // subscribePath() call (it may still be awaiting a history seed) - only release
+    // a registration this dataSource actually acquired.
+    if (dataSource.pathObserverSubscription) {
+      dataSource.pathObserverSubscription.unsubscribe();
+      this.data.unsubscribePath(dataSource.path, dataSource.pathSource);
+    }
     this._svcDataSource.splice(dsIndex, 1);
   }
 

@@ -11,6 +11,7 @@ import { firstValueFrom, of } from 'rxjs';
 
 describe('DatasetStreamService', () => {
     let historyServiceMock: { getValues: ReturnType<typeof vi.fn> };
+    let dataServiceMock: Partial<DataService> & { subscribePath: ReturnType<typeof vi.fn>; unsubscribePath: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         historyServiceMock = {
@@ -27,9 +28,10 @@ describe('DatasetStreamService', () => {
             saveDataSets: () => undefined
         };
 
-        const dataServiceMock: Partial<DataService> = {
+        dataServiceMock = {
             getPathUnitType: () => 'number',
-            subscribePath: () => of({ data: { value: 1, timestamp: null }, state: 'normal' })
+            subscribePath: vi.fn(() => of({ data: { value: 1, timestamp: null }, state: 'normal' as const })).mockName("DataService.subscribePath"),
+            unsubscribePath: vi.fn().mockName("DataService.unsubscribePath")
         };
 
         TestBed.configureTestingModule({
@@ -290,6 +292,66 @@ describe('DatasetStreamService', () => {
         expect(dataSource.pathObserverSubscription.closed).toBe(false);
 
         service.ngOnDestroy();
+    }));
+
+    it('releases the DataService registration when a dataset is stopped', inject([DatasetStreamService], async (service: DatasetStreamService) => {
+        const config = {
+            uuid: 'ds-stop-release',
+            path: 'navigation.speedThroughWater',
+            pathSource: 'test-source',
+            baseUnit: 'number',
+            timeScaleFormat: 'Last 5 Minutes' as const,
+            period: 1,
+            label: 'test-stop-release'
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (service as any)._svcDatasetConfigs = [config];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (service as any).start(config.uuid);
+
+        expect(dataServiceMock.unsubscribePath).not.toHaveBeenCalled();
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (service as any).stop(config.uuid);
+
+        expect(dataServiceMock.unsubscribePath).toHaveBeenCalledWith('navigation.speedThroughWater', 'test-source');
+    }));
+
+    it('does not release someone else\'s registration or leak one when stop() races a pending history seed', inject([DatasetStreamService], async (service: DatasetStreamService) => {
+        let resolveHistory: (value: unknown) => void;
+        historyServiceMock.getValues.mockImplementation(() => new Promise(resolve => { resolveHistory = resolve; }));
+
+        const config = {
+            uuid: 'ds-race',
+            path: 'navigation.speedThroughWater',
+            pathSource: 'race-source',
+            baseUnit: 'number',
+            timeScaleFormat: 'Last 5 Minutes' as const,
+            period: 1,
+            label: 'test-race'
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (service as any)._svcDatasetConfigs = [config];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const startPromise = (service as any).start(config.uuid);
+
+        // stop() runs while start() is still awaiting the history response: the
+        // dataSource entry exists (path/pathSource are already set) but
+        // DataService.subscribePath() has not been called yet.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (service as any).stop(config.uuid);
+
+        expect(dataServiceMock.unsubscribePath).not.toHaveBeenCalled();
+
+        resolveHistory!({ context: 'vessels.self', range: { from: '2026-01-01T00:00:00.000Z', to: '2026-01-01T00:00:00.000Z' }, values: [], data: [] });
+        await startPromise;
+
+        // start()'s continuation must not resurrect a registration for an already-stopped
+        // dataset - that registration would never get released, reintroducing the leak.
+        expect(dataServiceMock.subscribePath).not.toHaveBeenCalled();
+        expect(dataServiceMock.unsubscribePath).not.toHaveBeenCalled();
     }));
 
     it('sets dataset stats only on final history datapoint using datapoint values', inject([DatasetStreamService], (service: DatasetStreamService) => {

@@ -1,4 +1,4 @@
-import { Directive, DestroyRef, inject, signal } from '@angular/core';
+import { Directive, DestroyRef, inject, OnDestroy, signal } from '@angular/core';
 import { DataService, IPathUpdate } from '../services/data.service';
 import { UnitsService } from '../services/units.service';
 import { IWidgetPath, IWidgetSvcConfig } from '../interfaces/widgets-interface';
@@ -31,7 +31,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
  * - Config changes automatically trigger diff-based subscription updates
  * - All subscriptions auto-cleanup on directive destroy
  */
-export class WidgetStreamsDirective {
+export class WidgetStreamsDirective implements OnDestroy {
   private _streamsConfig = signal<IWidgetSvcConfig | undefined>(undefined);
   private readonly dataService = inject(DataService);
   private readonly unitsService = inject(UnitsService);
@@ -43,9 +43,29 @@ export class WidgetStreamsDirective {
   private subscriptions = new Map<string, { sub: Subscription; signature: string }>();
   // Track identity of the cached base observable (path + normalized source) per path key
   private baseSignatures = new Map<string, string>();
+  // The (path, source) actually passed to dataService.subscribePath() per path key, so
+  // it can be released via dataService.unsubscribePath() when replaced or removed -
+  // otherwise DataService's shared registration for it is retained for the app's lifetime
+  // regardless of how many times widgets pointed at it come and go.
+  private baseIdentities = new Map<string, { path: string; source: string }>();
   // Root-level signature (timeout settings) to detect when all paths need pipeline rebuild
   private reset$ = new Subject<void>();
   private rootSignature: string | undefined;
+
+  /** Release this path key's DataService base registration, if it currently holds one. */
+  private releaseBase(pathName: string): void {
+    const identity = this.baseIdentities.get(pathName);
+    if (identity) {
+      this.dataService.unsubscribePath(identity.path, identity.source);
+      this.baseIdentities.delete(pathName);
+    }
+  }
+
+  ngOnDestroy(): void {
+    for (const pathName of [...this.baseIdentities.keys()]) {
+      this.releaseBase(pathName);
+    }
+  }
 
   /** Build a simple Observer wrapper for a given path key. */
   private buildObserver(pathKey: string, next: ((value: IPathUpdate) => void)): Observer<IPathUpdate> {
@@ -119,16 +139,20 @@ export class WidgetStreamsDirective {
       this.subscriptions.delete(pathName);
       this.streams?.delete(pathName);
       this.baseSignatures.delete(pathName);
+      this.releaseBase(pathName);
       return;
     }
 
     // Build base observable if missing, or refresh when path/source changed
     this.ensureStreamsMap();
+    const source = pathCfg.source?.trim() || 'default';
     const baseKey = this.computeBaseKey(normalizedPath, pathCfg.source);
     const currentBaseKey = this.baseSignatures.get(pathName);
     if (!this.streams!.has(pathName) || currentBaseKey !== baseKey) {
-      this.streams!.set(pathName, this.dataService.subscribePath(normalizedPath, pathCfg.source?.trim() || 'default'));
+      this.releaseBase(pathName);
+      this.streams!.set(pathName, this.dataService.subscribePath(normalizedPath, source));
       this.baseSignatures.set(pathName, baseKey);
+      this.baseIdentities.set(pathName, { path: normalizedPath, source });
     }
     const base$ = this.streams!.get(pathName)!;
 
@@ -276,6 +300,9 @@ export class WidgetStreamsDirective {
       this.subscriptions.clear();
       this.streams = undefined;
       this.baseSignatures.clear();
+      for (const pathName of [...this.baseIdentities.keys()]) {
+        this.releaseBase(pathName);
+      }
       this.registrations = [];
       return;
     }
@@ -288,6 +315,7 @@ export class WidgetStreamsDirective {
       this.subscriptions.delete(r);
       this.streams?.delete(r);
       this.baseSignatures.delete(r);
+      this.releaseBase(r);
       this.registrations = this.registrations.filter(x => x.pathName !== r);
     }
     const rootChanged = prevRootSig !== newRootSig;
@@ -300,6 +328,7 @@ export class WidgetStreamsDirective {
         this.subscriptions.delete(p);
         this.streams?.delete(p);
         this.baseSignatures.delete(p);
+        this.releaseBase(p);
         continue;
       }
       const normalizedCfg = { ...pathCfg, path: normalizedPath };
@@ -382,6 +411,7 @@ export class WidgetStreamsDirective {
         this.subscriptions.delete(pathName);
         this.streams?.delete(pathName);
         this.baseSignatures.delete(pathName);
+        this.releaseBase(pathName);
       }
       return;
     }
@@ -395,6 +425,7 @@ export class WidgetStreamsDirective {
         this.subscriptions.delete(pathName);
         this.streams?.delete(pathName);
         this.baseSignatures.delete(pathName);
+        this.releaseBase(pathName);
       }
       this.registrations = this.registrations.filter(r => r.pathName !== pathName);
       return;
