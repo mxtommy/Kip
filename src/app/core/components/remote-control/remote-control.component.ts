@@ -35,10 +35,6 @@ export class RemoteControlComponent {
   private readonly displaysMap = signal<Record<string, IKipDisplayInfo>>({});
   private selectedDisplaySub: Subscription | null = null;
   private selectedScreenIndexSub: Subscription | null = null;
-  // The displayId the two subscriptions above are currently bound to, so their
-  // DataService registrations can be released on rebind/destroy - otherwise every
-  // display switch, and every navigation to/away from this page, leaks one
-  // registration per path for the life of the app.
   private boundDisplayId: string | null = null;
 
   protected readonly displays = computed<IKipDisplayInfo[]>(() => {
