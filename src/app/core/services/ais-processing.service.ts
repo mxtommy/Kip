@@ -9,9 +9,9 @@ const THROTTLE_MS = 250;
 // explicit `status: 'remove'`, so without this every distinct MMSI ever heard
 // would accumulate for the app lifetime, making every flush + radar render
 // O(targets) and heavier over uptime (the "unresponsive after a while" freeze).
-const TARGET_TTL_MS = 10 * 60 * 1000; // drop targets not heard from in 10 minutes
+const TARGET_TTL_MS = 60 * 60 * 1000; // drop targets not heard from in 60 minutes. Safe measure only as normally the AIS status field, handled by sk-ais-status-plugin, is used to remove targets.
 const MAX_TARGETS = 500;              // hard cap on retained targets
-const EVICTION_SWEEP_MS = 15000;      // periodic stale-target sweep cadence
+const EVICTION_SWEEP_MS = 5 * 60 * 1000;      // periodic stale-target sweep cadence
 
 type AisClass = 'A' | 'B' | undefined;
 type AisTargetType = 'vessel' | 'aton' | 'basestation' | 'sar';
