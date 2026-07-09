@@ -73,6 +73,9 @@
     "package.json"
   ],
   "signalk-plugin-enabled-by-default": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "test": "ng test --watch=false",
     "test:plugin": "npm run build:plugin && node --test --test-concurrency=1 kip-plugin/tests/index.test.cjs",
