@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject } from 'rxjs';
+import { cloneDeep, merge } from 'lodash-es';
 import { WidgetSolarChargerComponent } from './widget-solar-charger.component';
 import { DataService, IPathUpdateWithPath } from '../../core/services/data.service';
 import { WidgetRuntimeDirective } from '../../core/directives/widget-runtime.directive';
@@ -444,5 +445,151 @@ describe('WidgetSolarChargerComponent', () => {
     expect(model.panelPowerText).toBe('512');
     expect(model.panelPowerUnitText).toBe('W');
     expect(model.panelPowerColor).toBe(themeMock.zoneWarn);
+  });
+
+  // Synthetic reproduction of #1061: configure a max power, "reboot" with no solar data,
+  // then let data arrive. gaugeProgress is derived from the saved arrayRatedPowerW, so it is a
+  // direct probe of whether the persisted per-device option survives a no-data startup.
+  const bootThenData = (
+    solarCharger: typeof runtimeOptions.solarCharger,
+    panelPowerPath: string
+  ) => {
+    const freshLive = new Subject<IPathUpdateWithPath>();
+    runtimeOptions = { color: 'green', solarCharger };
+    // Reboot: NO solar data available at startup.
+    dataServiceMock.subscribePathTreeWithInitial.mockReturnValue({ initial: [], live$: freshLive.asObservable() });
+
+    fixture = TestBed.createComponent(WidgetSolarChargerComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('id', 'w-solar-reboot');
+    fixture.componentRef.setInput('type', 'widget-solar-charger');
+    fixture.componentRef.setInput('theme', themeMock);
+    fixture.detectChanges();
+
+    // No charger detected yet.
+    expect((component as unknown as { visibleSolarUnits: () => unknown[] }).visibleSolarUnits()).toEqual([]);
+
+    // Solar data starts flowing (panel power 150W for sc1).
+    freshLive.next(makeUpdate(panelPowerPath, 150));
+    fixture.detectChanges();
+
+    return (component as unknown as {
+      displayModels: () => Record<string, { gaugeProgress: number }>;
+    }).displayModels();
+  };
+
+  it('applies the saved max power when data arrives after a no-data startup, untracked (#1061)', () => {
+    const models = bootThenData(
+      { trackedDevices: [], optionsById: { sc1: { arrayRatedPowerW: 300 } } },
+      'self.electrical.solar.sc1.panelPower'
+    );
+    expect(models['sc1']).toBeDefined();
+    // 150W / 300W rated = 0.5. If the saved option were lost, ratedPower would be null and this would be 0.
+    expect(models['sc1'].gaugeProgress).toBeCloseTo(0.5, 5);
+  });
+
+  it('applies the saved max power when data arrives after a no-data startup, tracked device (#1061)', () => {
+    const models = bootThenData(
+      {
+        trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+        optionsById: { sc1: { arrayRatedPowerW: 300 } }
+      },
+      'self.electrical.solar.sc1.panelPower'
+    );
+    expect(models['sc1||default']).toBeDefined();
+    expect(models['sc1||default'].gaugeProgress).toBeCloseTo(0.5, 5);
+  });
+
+  // Replicates the per-load config resolution in WidgetRuntimeDirective.options():
+  //   merge(cloneDeep(DEFAULT_CONFIG), cloneDeep(savedConfig))
+  // This runs on every reboot, so a lodash merge gotcha here would wipe the saved solar options.
+  it('config merge preserves saved solar optionsById and trackedDevices on load (#1061)', () => {
+    const base = WidgetSolarChargerComponent.DEFAULT_CONFIG; // { solarCharger: { trackedDevices: [], optionsById: {} }, ... }
+    const saved = {
+      color: 'green',
+      solarCharger: {
+        trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+        optionsById: { sc1: { arrayRatedPowerW: 300 } }
+      }
+    };
+
+    const merged = merge(cloneDeep(base), cloneDeep(saved)) as typeof saved;
+
+    expect(merged.solarCharger.optionsById).toEqual({ sc1: { arrayRatedPowerW: 300 } });
+    expect(merged.solarCharger.trackedDevices).toEqual([{ id: 'sc1', source: 'default', key: 'sc1||default' }]);
+    expect(merged.color).toBe('green');
+  });
+
+  // End-to-end persistence round-trip for #1061, mirroring the exact KIP operations:
+  //   dashboard.component.saveDashboard(): cloneDeep(grid.save(false,false))
+  //   settings.saveLDashboardsConfigToLocalStorage(): localStorage.setItem(JSON.stringify(dashboards))   [local config]
+  //   storage.patchConfig('Dashboards', dashboards): [{ op:'replace', path:'/<name>/dashboards', value }] [shared config]
+  //   settings.loadConfigFromLocalStorage(): JSON.parse(...)
+  //   widget-runtime.directive.options(): merge(cloneDeep(DEFAULT_CONFIG), cloneDeep(saved))
+  // NOTE: the live-grid capture itself - gridstack grid.save(false,false) - cannot be exercised here
+  // because gridstack is shimmed in the unit-test environment; that step needs real gridstack (e2e/manual).
+  describe('config persistence round-trip (#1061)', () => {
+    const solarDashboard = () => [{
+      id: 'dash-1',
+      name: 'Power',
+      configuration: [{
+        id: 'w1',
+        w: 4, h: 4, x: 0, y: 0,
+        selector: 'widget-solar-charger',
+        input: {
+          widgetProperties: {
+            type: 'widget-solar-charger',
+            uuid: 'w1',
+            config: {
+              color: 'green',
+              ignoreZones: false,
+              solarCharger: {
+                trackedDevices: [{ id: 'sc1', source: 'default', key: 'sc1||default' }],
+                optionsById: { sc1: { arrayRatedPowerW: 300 } }
+              }
+            }
+          }
+        }
+      }]
+    }];
+
+    const solarConfigOf = (dashboards: ReturnType<typeof solarDashboard>) =>
+      dashboards[0].configuration[0].input.widgetProperties.config;
+
+    it('preserves solar optionsById/color through the local (JSON) storage round-trip', () => {
+      const saved = cloneDeep(solarDashboard());                 // saveDashboard(): cloneDeep
+      const persisted = JSON.stringify(saved);                   // saveLDashboardsConfigToLocalStorage()
+      const reloaded = JSON.parse(persisted) as typeof saved;    // loadConfigFromLocalStorage()
+
+      const cfg = solarConfigOf(reloaded);
+      expect(cfg.solarCharger.optionsById).toEqual({ sc1: { arrayRatedPowerW: 300 } });
+      expect(cfg.color).toBe('green');
+    });
+
+    it('preserves solar config through the shared-config JSON-Patch replace round-trip', () => {
+      const dashboards = cloneDeep(solarDashboard());
+      // storage.patchConfig('Dashboards', value) sends a full replace of the dashboards array.
+      const patch = [{ op: 'replace', path: '/default/dashboards', value: dashboards }];
+      const onServer = JSON.parse(JSON.stringify(patch))[0].value as typeof dashboards;
+
+      const cfg = solarConfigOf(onServer);
+      expect(cfg.solarCharger.optionsById).toEqual({ sc1: { arrayRatedPowerW: 300 } });
+      expect(cfg.color).toBe('green');
+    });
+
+    it('still has the saved options after the full persist -> reload -> runtime merge chain', () => {
+      // Persist
+      const reloaded = JSON.parse(JSON.stringify(cloneDeep(solarDashboard()))) as ReturnType<typeof solarDashboard>;
+      const savedWidgetConfig = solarConfigOf(reloaded);
+      // Runtime merge with the widget's default config (the per-reboot resolution step)
+      const merged = merge(
+        cloneDeep(WidgetSolarChargerComponent.DEFAULT_CONFIG),
+        cloneDeep(savedWidgetConfig)
+      ) as typeof savedWidgetConfig;
+
+      expect(merged.solarCharger.optionsById).toEqual({ sc1: { arrayRatedPowerW: 300 } });
+      expect(merged.solarCharger.trackedDevices).toEqual([{ id: 'sc1', source: 'default', key: 'sc1||default' }]);
+      expect(merged.color).toBe('green');
+    });
   });
 });
