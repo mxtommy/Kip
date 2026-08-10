@@ -1,6 +1,6 @@
 # -----------------------
 # - This repository is unmaintained.
-## - A cloned version of KIP called Skip can be found at 
+## - A cloned version of KIP called Skip can be found at https://github.com/halos-org/skip 
 # -----------------------
 # KIP – Signal K Multi-Function Display (MFD) and Marine Instrument Panel
 [![Help Docs](https://img.shields.io/badge/Help-Docs-blue)](src/assets/help-docs/welcome.md)
