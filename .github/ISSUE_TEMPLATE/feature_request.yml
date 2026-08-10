@@ -6,30 +6,4 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a feature! Please provide details below.
-  
-  - type: textarea
-    id: feature-request
-    attributes:
-      label: Feature Request
-      description: |
-        Please describe the feature you'd like to see:
-        - What problem does this solve? What are you trying to accomplish?
-        - Provide a clear description of what you'd like to see added or changed.
-      placeholder: |
-        **Problem/Use Case:**
-        Describe what you're trying to accomplish...
-        
-        **Proposed Solution:**
-        Describe how you envision this feature working...
-    validations:
-      required: true
-  
-  - type: textarea
-    id: concepts-ideas-research
-    attributes:
-      label: Concepts, Ideas & Research
-      description: Add any other information, screenshots, mockups, links similar apps or existing documentation about the feature request here.
-      placeholder: Paste links, mockups, screenshots or related documentation to help us come up with a good and informed design...
-    validations:
-      required: false
+        This repository is unmaintained.
