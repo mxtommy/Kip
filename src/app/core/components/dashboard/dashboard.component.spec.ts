@@ -18,6 +18,7 @@ interface DashboardComponentPrivateApi {
     nextDashboard: () => void;
     previousDashboard: () => void;
     loadDashboard: (dashboardId: number) => void;
+    getDisabledRequiredPlugins: (requiredPlugins: string[]) => Promise<string[]>;
     _gridstack: () => {
         grid: {
             save: (saveContent: boolean, saveGridOpt: boolean) => unknown;
@@ -132,6 +133,22 @@ describe('DashboardComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('does not treat a required plugin as disabled when its state cannot be read (secured, non-admin)', async () => {
+        const pluginConfig = TestBed.inject(PluginConfigClientService) as unknown as { getPlugin: Mock };
+        pluginConfig.getPlugin.mockResolvedValue({ ok: false, error: { reason: 'forbidden' } });
+
+        // A 401/403 from the admin-only plugin-state API must not block the add — ordinary crew
+        // would be dead-ended with an "enable" prompt they have no permission to satisfy.
+        expect(await privateApi.getDisabledRequiredPlugins(['sk-image'])).toEqual([]);
+    });
+
+    it('treats an installed-but-disabled required plugin as disabled', async () => {
+        const pluginConfig = TestBed.inject(PluginConfigClientService) as unknown as { getPlugin: Mock };
+        pluginConfig.getPlugin.mockResolvedValue({ ok: true, data: { state: { enabled: false } } });
+
+        expect(await privateApi.getDisabledRequiredPlugins(['sk-image'])).toEqual(['sk-image']);
     });
 
     it('should save dashboard configuration', () => {

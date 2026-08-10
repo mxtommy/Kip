@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="620" viewBox="0 0 760 620">
+  <rect width="760" height="620" fill="#23272b"/>
+  <rect x="30" y="30" width="700" height="560" rx="10" fill="#2f343a" stroke="#586069" stroke-width="3"/>
+  <text x="380" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#e8eef2">12V DC Distribution Panel</text>
+  <line x1="60" y1="90" x2="700" y2="90" stroke="#586069" stroke-width="2"/>
+  <g font-family="Arial, sans-serif" font-size="16" fill="#cdd6dd">
+    <!-- left column -->
+    <g>
+      <rect x="70" y="120" width="44" height="22" rx="4" fill="#3a86ff"/><text x="128" y="137">Nav lights — 5A</text>
+      <rect x="70" y="160" width="44" height="22" rx="4" fill="#3a86ff"/><text x="128" y="177">Anchor light — 3A</text>
+      <rect x="70" y="200" width="44" height="22" rx="4" fill="#586069"/><text x="128" y="217">Cabin lights — 8A</text>
+      <rect x="70" y="240" width="44" height="22" rx="4" fill="#3a86ff"/><text x="128" y="257">VHF radio — 5A</text>
+      <rect x="70" y="280" width="44" height="22" rx="4" fill="#3a86ff"/><text x="128" y="297">Chartplotter — 7A</text>
+      <rect x="70" y="320" width="44" height="22" rx="4" fill="#586069"/><text x="128" y="337">Autopilot — 10A</text>
+      <rect x="70" y="360" width="44" height="22" rx="4" fill="#586069"/><text x="128" y="377">Windlass — 40A</text>
+    </g>
+    <!-- right column -->
+    <g>
+      <rect x="400" y="120" width="44" height="22" rx="4" fill="#3a86ff"/><text x="458" y="137">Bilge pump (auto) — 8A</text>
+      <rect x="400" y="160" width="44" height="22" rx="4" fill="#586069"/><text x="458" y="177">Fresh-water pump — 6A</text>
+      <rect x="400" y="200" width="44" height="22" rx="4" fill="#586069"/><text x="458" y="217">Refrigeration — 12A</text>
+      <rect x="400" y="240" width="44" height="22" rx="4" fill="#586069"/><text x="458" y="257">Inverter — 15A</text>
+      <rect x="400" y="280" width="44" height="22" rx="4" fill="#3a86ff"/><text x="458" y="297">USB / 12V outlets — 10A</text>
+      <rect x="400" y="320" width="44" height="22" rx="4" fill="#586069"/><text x="458" y="337">Instruments — 5A</text>
+      <rect x="400" y="360" width="44" height="22" rx="4" fill="#e63946"/><text x="458" y="377">Spare — 15A</text>
+    </g>
+  </g>
+  <rect x="70" y="420" width="630" height="120" rx="8" fill="#1c2024" stroke="#586069" stroke-width="2"/>
+  <text x="90" y="455" font-family="Arial" font-size="16" fill="#9fb3c0">House bank: 2 × 100Ah AGM</text>
+  <text x="90" y="485" font-family="Arial" font-size="16" fill="#9fb3c0">Start bank: 1 × 80Ah</text>
+  <text x="90" y="515" font-family="Arial" font-size="16" fill="#9fb3c0">Charging: 60A alternator · 200W solar</text>
+  <circle cx="630" cy="470" r="26" fill="#2a9d8f"/><text x="630" y="475" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#fff">12.7V</text>
+</svg>

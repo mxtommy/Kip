@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <rect width="900" height="600" fill="#f4f1e8"/>
+  <text x="450" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1b3a4b">Safety Equipment Layout — S/V Test Vessel</text>
+  <!-- Hull (top-down) -->
+  <path d="M450 70 C 600 130, 660 300, 600 470 C 560 540, 340 540, 300 470 C 240 300, 300 130, 450 70 Z"
+        fill="#dce6ec" stroke="#1b3a4b" stroke-width="4"/>
+  <line x1="450" y1="80" x2="450" y2="520" stroke="#9fb3c0" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="450" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#5a6b75">BOW</text>
+  <text x="450" y="510" text-anchor="middle" font-family="Arial" font-size="14" fill="#5a6b75">STERN</text>
+  <!-- Markers -->
+  <g font-family="Arial, sans-serif" font-size="15" fill="#1b3a4b">
+    <circle cx="450" cy="170" r="16" fill="#e63946"/><text x="475" y="175">Fire extinguisher</text>
+    <circle cx="370" cy="260" r="16" fill="#f4a300"/><text x="170" y="265" text-anchor="end">Life jackets (6)</text>
+    <circle cx="530" cy="260" r="16" fill="#2a9d8f"/><text x="555" y="265">First-aid kit</text>
+    <circle cx="450" cy="350" r="16" fill="#e63946"/><text x="475" y="355">Fire extinguisher</text>
+    <circle cx="380" cy="430" r="16" fill="#3a86ff"/><text x="170" y="435" text-anchor="end">EPIRB</text>
+    <circle cx="520" cy="430" r="16" fill="#8338ec"/><text x="545" y="435">Flares / horn</text>
+    <circle cx="450" cy="475" r="16" fill="#f4a300"/><text x="475" y="480">Throwable + horseshoe</text>
+  </g>
+  <text x="450" y="575" text-anchor="middle" font-family="Arial" font-size="13" fill="#5a6b75">Review at the start of every passage · Last checked: this season</text>
+</svg>
