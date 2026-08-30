@@ -1,0 +1,12 @@
+<div class="image-widget-host" kipResizeObserver (kipResize)="onResize($event)" [style.background]="background()">
+  @if (imageUrl(); as url) {
+    <img class="image-widget-img" [src]="url" [alt]="altText()" [style.object-fit]="objectFit()"
+         [hidden]="loadFailed()" draggable="false"
+         (error)="loadFailed.set(true)" (load)="loadFailed.set(false)">
+    @if (loadFailed()) {
+      <div class="image-widget-empty">Image unavailable. It may have been removed from the shared library, or the Signal K server can't be reached.</div>
+    }
+  } @else {
+    <div class="image-widget-empty">No image selected. Pick one in widget settings.</div>
+  }
+</div>

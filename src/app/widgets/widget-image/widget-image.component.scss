@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-widget-host {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.image-widget-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  // object-fit is set from config (contain | cover) to scale while preserving aspect ratio.
+}
+
+.image-widget-empty {
+  color: var(--kip-contrast-dim-color, rgba(255, 255, 255, 0.5));
+  font-size: 0.9em;
+  text-align: center;
+  padding: 0.5em;
+}

@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { SignalKConnectionService } from './signalk-connection.service';
+import { stripToServerRoot } from '../utils/kip-plugin-url.util';
 import {
   IPluginApiCapabilities,
   IPluginApiFailure,
@@ -608,8 +609,9 @@ export class PluginConfigClientService {
       return path;
     }
 
-    const base = configuredUrl.endsWith('/') ? configuredUrl.slice(0, -1) : configuredUrl;
-    return `${base}${path}`;
+    // Strip any /signalk[/vN[/api]] suffix so server-admin routes (/plugins, /skServer) resolve
+    // against the server root even when the user configured a /signalk-suffixed URL.
+    return `${stripToServerRoot(configuredUrl)}${path}`;
   }
 
   private resolveBooleanConfig(configuration: Record<string, unknown>, key: string, fallback: boolean): boolean {
