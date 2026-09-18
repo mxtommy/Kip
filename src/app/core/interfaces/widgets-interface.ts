@@ -388,6 +388,39 @@ export interface IWidgetSvcConfig {
 
   /** Use by racetimer widget */
   timerLength?: number;
+  /**
+   * Used by racer-line widget.
+   * Show the countdown to the start alongside the distance to the line, above the time
+   * to line it has to be read against. Off by default: the countdown has a widget of its
+   * own, and leaving it out gives the distance the whole width.
+   */
+  showTimeToStart?: boolean;
+  /**
+   * Used by racer-line and racer-start widgets.
+   * Seconds a racer widget stays in a control mode after the last button press before
+   * dropping back to its default display. The control modes exist to be used and left,
+   * and a widget silently stuck on one is a widget not showing the numbers. 0 disables
+   * the revert and the mode stays until it is changed by hand.
+   */
+  modeTimeout?: number;
+  /**
+   * Used by racer-line and racer-start widgets.
+   * Height in pixels of the racer widgets' button row. A fixed height keeps the buttons
+   * the same size, and comfortably pressable with a finger on a phone, whatever height
+   * the widget is given on the dashboard. 0 - the default - gives the row a share of the
+   * widget instead, which is how it behaved before this setting existed.
+   */
+  buttonRowHeight?: number;
+  /**
+   * Used by racer-line-view widget.
+   * How far the start-line drawing may drift out of true, as a percentage of the
+   * drawing's height, before it re-fits its view. Re-fitting on every position update
+   * makes the line slide about under a boat that appears to stand still; holding the
+   * view until it has actually gone stale keeps the line still and lets the boat close
+   * on it. 0 re-fits on every update. The view is re-fitted regardless if the boat
+   * would otherwise be clipped, or if the drawing is resized or the line is edited.
+   */
+  viewSmoothing?: number;
   /** The next dashboard to display when the racer-timer-widget counts to 0 and the boat is not OCS*/
   nextDashboard?: number;
   /** If true, play beeps when the racer-timer-widget counts to through the minutes, 10s and each of the last 10s. */

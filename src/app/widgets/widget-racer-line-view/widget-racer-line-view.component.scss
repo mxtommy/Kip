@@ -1,0 +1,13 @@
+:host {
+  overflow: clip;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+// The drawing takes the whole widget: there is no button row to leave space for.
+racer-line-view {
+  display: block;
+  height: 100%;
+  width: 100%;
+}

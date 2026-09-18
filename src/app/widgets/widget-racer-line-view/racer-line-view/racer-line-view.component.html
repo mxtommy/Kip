@@ -1,0 +1,111 @@
+<div class="line-wrapper"
+  [style.--racer-color]="palette().color"
+  [style.--racer-dim]="palette().dim">
+  <div class="filler" #vizRef>
+    <svg
+      class="line-svg"
+      [attr.viewBox]="'0 0 ' + vbWidth() + ' ' + VB_HEIGHT"
+      preserveAspectRatio="xMidYMid meet">
+
+      <text class="viz-title" x="8" y="8" dominant-baseline="hanging">{{ title() }}</text>
+
+      @if (scene(); as s) {
+        <!-- The wind, against the line's own orientation: with the line drawn flat, the
+             arrow's angle is its angle to the line. Faint, being context. -->
+        @if (s.wind; as w) {
+          <polygon class="wind-arrow" [attr.points]="w.points">
+            <title>{{ w.title }}</title>
+          </polygon>
+        }
+
+        <!-- Drawn back to front: the zone guides underneath, then the approach, then
+             the boat, and the start line itself last so it stays legible over everything
+             that closes on it. -->
+
+        <!-- The start zone: line extensions and the 45 degree wedge off each end. They
+             explain where the approach turns, so they sit under it. -->
+        @for (g of s.guides; track $index) {
+          <line class="zone-guide" [attr.x1]="g.x1" [attr.y1]="g.y1"
+            [attr.x2]="g.x2" [attr.y2]="g.y2" />
+        }
+
+        @for (p of s.projections; track $index) {
+          <line class="projection"
+            [attr.x1]="p.x1" [attr.y1]="p.y1" [attr.x2]="p.x2" [attr.y2]="p.y2"
+            [attr.stroke-width]="p.width" [attr.stroke-opacity]="p.opacity">
+            <title>{{ p.title }}</title>
+          </line>
+        }
+
+        <!-- The approach the time to line is computed over, as dimension lines: along the
+             line into the start zone, then across to the line. -->
+        @for (leg of s.legs; track $index) {
+          <g class="dimension">
+            <line [attr.x1]="leg.x1" [attr.y1]="leg.y1" [attr.x2]="leg.x2" [attr.y2]="leg.y2" />
+            <path class="dimension-ticks" [attr.d]="leg.ticks" />
+            <text [attr.x]="leg.labelX" [attr.y]="leg.labelY"
+              [attr.text-anchor]="leg.anchor">{{ leg.label }}</text>
+            <title>{{ leg.title }}</title>
+          </g>
+        }
+        @if (s.gun; as g) {
+          <g class="gun-mark">
+            <circle [attr.cx]="g.x" [attr.cy]="g.y" r="5" />
+            <title>{{ g.title }}</title>
+          </g>
+        }
+
+        <!-- The hull outline: its inner edge is the vessel at true scale, so it can be
+             measured against the line, while the band keeps it visible when small. -->
+        @if (s.boat; as b) {
+          <path class="boat" [class.ocs]="b.ocs" [attr.d]="b.path">
+            <title>{{ b.title }}</title>
+          </path>
+        }
+
+        <!-- The line, its label and its ends. Left out entirely when the VMGs have the
+             frame: there is no boat drawn against it there, so it would be decoration
+             taking room the values can use. -->
+        @if (!s.vmgs) {
+          <!-- Drawn "line up": port (pin) end left, starboard (committee boat) end
+               right, so the course side is always the upper half. Last, so a boat
+               sitting on it does not break it up. -->
+          <line class="start-line" [attr.x1]="s.portX" [attr.y1]="s.lineY"
+            [attr.x2]="s.stbX" [attr.y2]="s.lineY" />
+
+          <!-- Length and the heading to sail to cross the line, on the course side. The
+               trailing arrow is the way to sail to start, always straight up here. -->
+          <text class="line-label" [attr.font-size]="s.labelFont"
+            [attr.x]="s.labelX" [attr.y]="s.labelY">{{ s.label }}</text>
+
+          <!-- Both ends stand for a 10m object, drawn exaggerated so they stay legible. -->
+          <circle class="port-mark" [attr.cx]="s.portX" [attr.cy]="s.lineY"
+            [attr.r]="s.ends.pinRadius" />
+          <!-- A rough committee boat: hull with a raked bow, plus a cabin. -->
+          <polygon class="stb-mark" [attr.points]="s.ends.hull" />
+          <rect class="stb-mark" [attr.x]="s.ends.cabin.x" [attr.y]="s.ends.cabin.y"
+            [attr.width]="s.ends.cabin.width" [attr.height]="s.ends.cabin.height" />
+        }
+
+        <!-- VMG edit mode replaces the boat with the four best VMGs, laid out to match
+             the drawing: the port end in the left third, the across-line pair stacked in
+             the middle with the course side above, and the starboard end in the right. -->
+        @if (s.vmgs; as vmgs) {
+          @for (v of vmgs; track v.name) {
+            @if (v.selected) {
+              <rect class="vmg-selection"
+                [attr.x]="v.box.x" [attr.y]="v.box.y"
+                [attr.width]="v.box.width" [attr.height]="v.box.height"
+                [attr.rx]="s.vmgFont * 0.16" />
+            }
+            <text class="vmg-value" [class.overridden]="v.overridden"
+              [attr.font-size]="s.vmgFont" [attr.x]="v.x" [attr.y]="v.y">{{ v.text
+              }}<title>{{ v.title }}</title></text>
+          }
+        }
+      } @else {
+        <text class="no-line" [attr.x]="vbWidth() / 2" [attr.y]="VB_HEIGHT / 2">No start line set</text>
+      }
+    </svg>
+  </div>
+</div>

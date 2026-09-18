@@ -28,8 +28,20 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatInput} from '@angular/material/input';
 
+/** The share of the widget the button row takes when no fixed height is set. */
+const BUTTON_ROW_SHARE = '24%';
+
 @Component({
   selector: 'widget-racer-timer',
+  // Sized on the host so the row is the same height in every racer widget, whatever
+  // the template around it looks like.
+  host: {
+    '[style.--racer-button-row]': 'buttonRowCss()',
+    // Any interaction anywhere in the widget restarts the idle countdown back to mode 0.
+    // Bound on the host so no press can be missed as modes are added, and so no plain
+    // container has to be made an interaction target.
+    '(click)': 'touchMode()'
+  },
   templateUrl: './widget-racer-timer.component.html',
   styleUrls: ['./widget-racer-timer.component.scss'],
   imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, MatInput]
@@ -43,6 +55,8 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   // Static config
   public static readonly DEFAULT_CONFIG: IWidgetSvcConfig = {
     supportAutomaticHistoricalSeries: false,
+    buttonRowHeight: 0,
+    modeTimeout: 10,
     displayName: 'TTS',
     nextDashboard: 0,
     playBeeps: true,
@@ -86,6 +100,21 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   protected startAtTime = signal<string>('00:00:00');
   protected startAtTimeEdit = model<string>('');
   private readonly normalizedConfig = computed<IWidgetSvcConfig>(() => this.runtime.options() ?? WidgetRacerTimerComponent.DEFAULT_CONFIG);
+
+  /** Fixed height of the button row, so touch targets do not shrink with the widget. */
+  /**
+   * Height of the button row. 0 - the default - gives it a share of the widget instead
+   * of a fixed size, which is how it behaved before the setting existed; anything else
+   * is a pixel height, so the touch targets stay put however tall the widget is.
+   */
+  protected readonly buttonRowHeight = computed<number>(() =>
+    (this.runtime.options() ?? WidgetRacerTimerComponent.DEFAULT_CONFIG).buttonRowHeight ?? 0);
+
+  /** That height as a CSS length: a percentage when it is left to share the widget. */
+  protected readonly buttonRowCss = computed<string>(() => {
+    const pixels = this.buttonRowHeight();
+    return pixels > 0 ? `${pixels}px` : BUTTON_ROW_SHARE;
+  });
 
   constructor() {
     // Theme / palette effect
@@ -178,7 +207,37 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.modeTimer) {
+      clearTimeout(this.modeTimer);
+      this.modeTimer = null;
+    }
     try { if (this.canvasElement) this.canvas.unregisterCanvas(this.canvasElement); } catch { /* ignore */ }
+  }
+
+  protected readonly modeTimeout = computed<number>(() => this.normalizedConfig().modeTimeout ?? 10);
+
+  /** Pending revert to the default display, if a control mode is showing. */
+  private modeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Restart the idle countdown after a button press.
+   *
+   * The control modes are meant to be used and left, and a widget parked on one is a
+   * widget not showing its countdown - easily done on a boat, where the last press
+   * before a start is rarely followed by a deliberate press back.
+   */
+  protected touchMode(): void {
+    if (this.modeTimer) {
+      clearTimeout(this.modeTimer);
+      this.modeTimer = null;
+    }
+    const seconds = this.modeTimeout();
+    if (this.mode() === 0 || !(seconds > 0)) return;
+    this.modeTimer = setTimeout(() => {
+      this.modeTimer = null;
+      this.mode.set(0);
+      this.draw();
+    }, seconds * 1000);
   }
 
   // Interaction methods (mapped from legacy)
@@ -187,6 +246,7 @@ export class WidgetRacerTimerComponent implements AfterViewInit, OnDestroy {
     const tts = this.ttsValue;
     if (this.mode() === 1 && this.isStartTimerRunning()) this.mode.set(2);
     if (this.mode() === 2 && tts !== 0 && !this.isStartTimerRunning()) this.mode.set(3);
+    this.touchMode();
     this.draw();
   }
 

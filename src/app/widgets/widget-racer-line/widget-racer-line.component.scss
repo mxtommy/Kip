@@ -10,20 +10,25 @@
   width: 100%;
   height: 100%;
   min-height: 1px;
+  // The canvas, the drawing that overlays it, and the edit overlay are all absolute:
+  // anchor them to the widget rather than to whatever ancestor happens to be positioned.
+  position: relative;
 }
 
 .line-canvas {
   position: absolute;
   width: 100% !important;
-  height: 76% !important;
+  height: calc(100% - var(--racer-button-row, 24%)) !important;
   display: block;
   top: 0;
   left: 0;
 }
 
+// The button row can take a fixed height so its touch targets never shrink with the
+// widget; the drawing takes whatever is left.
 .filler {
   width: 100%;
-  height: 76%;
+  height: calc(100% - var(--racer-button-row, 24%));
 }
 
 .buttons-container {
@@ -32,7 +37,7 @@
   justify-content: space-between;
   column-gap: 2%;
   position: relative;
-  height: 24%;
+  height: var(--racer-button-row, 24%);
   width: 100%;
   padding: 0px 10px 14px 10px;
   z-index: 20;
@@ -89,6 +94,15 @@
   ));
 }
 
+.swap-button {
+  flex: none;
+  width: 18%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-grey-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
 .starboard-button {
   flex: 1 1 auto;
   @include mat.button-overrides((
@@ -109,6 +123,68 @@
   flex: 1 1 auto;
   @include mat.button-overrides((
     filled-container-color: var(--kip-starboard-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+// Kept in the DOM while the drawing has the display, so the canvas keeps its size and
+// its registration with the canvas service across a mode change.
+.line-canvas.hidden {
+  visibility: hidden;
+}
+
+// The VMG editor sits in the same box the canvas occupies, above the button row.
+.vmg-cross {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - var(--racer-button-row, 24%));
+
+  .vmg-value {
+    fill: var(--kip-contrast-color);
+    font-weight: bold;
+    text-anchor: middle;
+    stroke: var(--kip-widget-card-background-color, var(--kip-background));
+    stroke-width: 5;
+    paint-order: stroke;
+
+    // A manually adjusted VMG stands in for the collected samples, so it is called out.
+    &.overridden {
+      fill: var(--kip-orange-color);
+    }
+  }
+
+  .vmg-selection {
+    fill: none;
+    stroke: var(--kip-blue-color);
+    stroke-width: 2;
+  }
+}
+
+// Mode 5 packs four buttons beside the mode button, so only the middle one is fixed.
+.vmg-select-button {
+  flex: 1 1 auto;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-grey-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+.vmg-reset-button,
+.vmg-clear-button {
+  flex: none;
+  width: 16%;
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-grey-dim-color),
+    filled-label-text-color: var(--kip-contrast-color)
+  ));
+}
+
+// Throwing the samples away is not something to hit by accident.
+.vmg-clear-button {
+  @include mat.button-overrides((
+    filled-container-color: var(--kip-orange-dim-color),
     filled-label-text-color: var(--kip-contrast-color)
   ));
 }

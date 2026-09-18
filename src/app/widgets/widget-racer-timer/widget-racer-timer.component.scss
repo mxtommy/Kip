@@ -18,9 +18,11 @@
   display: block;
 }
 
+// The button row takes a fixed height so its touch targets never shrink with the
+// widget; the drawing takes whatever is left.
 .filler {
   width: 100%;
-  height: 76%;
+  height: calc(100% - var(--racer-button-row, 24%));
 }
 
 .buttons-container {
@@ -29,7 +31,7 @@
   justify-content: space-between;
   column-gap: 2%;
   position: relative;
-  height: 24%;
+  height: var(--racer-button-row, 24%);
   width: 100%;
   padding: 0px 10px 14px 10px;
   z-index: 20;

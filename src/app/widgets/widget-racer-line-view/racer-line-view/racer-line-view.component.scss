@@ -1,0 +1,155 @@
+:host {
+  overflow: clip;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.line-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 1px;
+  // Halo behind the labels so the dashed line does not show through them.
+  --racer-halo: var(--kip-widget-card-background-color, var(--kip-background));
+}
+
+// The button row takes a fixed height so its touch targets never shrink with the
+// widget; the drawing takes whatever is left.
+.filler {
+  width: 100%;
+  height: 100%;
+}
+
+.line-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  font-family: Roboto, sans-serif;
+}
+
+.viz-title {
+  fill: var(--racer-dim);
+  font-size: 16px;
+}
+
+.start-line {
+  stroke: var(--racer-dim);
+  stroke-width: 4;
+  stroke-dasharray: 10 8;
+}
+
+.line-label {
+  fill: var(--racer-color);
+  stroke: var(--racer-halo);
+  stroke-width: 8;
+  paint-order: stroke;
+}
+
+.line-label {
+  // Sized by the scene, which shrinks it to fit a narrow widget.
+  text-anchor: middle;
+}
+
+
+.port-mark {
+  fill: var(--kip-port-color);
+  stroke: var(--racer-halo);
+  stroke-width: 1;
+}
+
+.stb-mark {
+  fill: var(--kip-starboard-color);
+  stroke: var(--racer-halo);
+  stroke-width: 1;
+}
+
+.projection {
+  stroke: var(--kip-blue-color);
+  stroke-linecap: round;
+}
+
+// The start zone boundary: the line's extensions and the 45 degree wedges. Kept well
+// back so the start line itself stays the dominant object.
+.wind-arrow {
+  fill: var(--racer-color);
+  // Half as transparent as it was: 0.7 transparent becomes 0.35.
+  fill-opacity: 0.65;
+}
+
+.zone-guide {
+  stroke: var(--racer-dim);
+  stroke-width: 1.2;
+  stroke-opacity: 0.6;
+  stroke-dasharray: 4 5;
+}
+
+// The approach legs, drawn the way a drawing dimensions a distance - a thin rule with a
+// tick at each end and its value set into a break in it - so they read as a measurement
+// rather than as a course to steer.
+.dimension {
+  line {
+    stroke: var(--kip-pink-color);
+    stroke-width: 1.5;
+    stroke-opacity: 0.9;
+  }
+
+  text {
+    fill: var(--kip-pink-color);
+    font-size: 15px;
+    font-weight: bold;
+    stroke: var(--racer-halo);
+    stroke-width: 4;
+    paint-order: stroke;
+  }
+}
+
+.dimension-ticks {
+  stroke: var(--kip-pink-color);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+// Where the boat reaches at the gun along those legs.
+.gun-mark circle {
+  fill: var(--racer-halo);
+  stroke: var(--kip-pink-color);
+  stroke-width: 2.5;
+}
+
+.boat {
+  // Two nested hull outlines: even-odd leaves the band between them, whose inner edge is
+  // the vessel at true scale.
+  fill: var(--kip-blue-color);
+  fill-rule: evenodd;
+
+  &.ocs {
+    fill: var(--kip-orange-color);
+  }
+}
+
+.vmg-selection {
+  fill: none;
+  stroke: var(--kip-blue-color);
+  stroke-width: 2;
+}
+
+.vmg-value {
+  // Sized by the scene, which grows it to fill the room the cross has.
+  fill: var(--racer-color);
+  font-weight: bold;
+  text-anchor: middle;
+  stroke: var(--racer-halo);
+  stroke-width: 5;
+  paint-order: stroke;
+
+  // A manually adjusted VMG stands in for the collected samples, so it is called out.
+  &.overridden {
+    fill: var(--kip-orange-color);
+  }
+}
+
+.no-line {
+  fill: var(--racer-dim);
+  font-size: 16px;
+  text-anchor: middle;
+}

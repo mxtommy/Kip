@@ -118,7 +118,8 @@ All KIP widgets are visual presentation controls that are very versatile, with m
 - **AIS Radar**: Display AIS targets with range rings, interactive target details, and quick zoom and filtering controls.
 - **Embed Webpage Viewer** – Embeds external web apps (Grafana, Node-RED, etc.) into your dashboard.
 - **Racesteer** – Race steering display fusing polar performance data with live conditions for optimal tactics.
-- **Racer - Start Line Insight** – Set and adjust start line ends, see distance, favored end, and line bias; integrates with Freeboard SK.
+- **Racer - Start Line Setup** – Set and adjust the start line ends, see distance, favored end and line bias, choose a named line, and edit the four best VMGs behind the time to line. Integrates with Freeboard SK.
+- **Racer - Start Line Visualization** – A full-frame drawing of the start line with your boat against it at true scale, the start zone it sits in, and the approach the time to line is computed over. Display only. Needs signalk-racer 1.2.0 or later.
 - **Racer - Start Timer** – Advanced racing countdown timer with OCS status and auto dashboard switching.
 - **Countdown Timer** – Simple race start countdown timer with start, pause, sync, and reset options.
 

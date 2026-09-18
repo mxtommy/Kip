@@ -151,6 +151,56 @@
                   />
                 </mat-form-field>
               }
+              @if (($safeNavigationMigration(widgetConfig?.showTimeToStart) !== undefined)) {
+                <mat-checkbox name="showTimeToStart" formControlName="showTimeToStart">
+                  Show Time To Start
+                </mat-checkbox>
+              }
+              @if (($safeNavigationMigration(widgetConfig?.modeTimeout) !== undefined)) {
+                <mat-form-field>
+                  <mat-label>Mode Timeout</mat-label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="300"
+                    matInput
+                    placeholder="Enter seconds..."
+                    name="modeTimeout"
+                    formControlName="modeTimeout"
+                  />
+                  <mat-hint>Seconds before a control mode reverts; 0 to stay put</mat-hint>
+                </mat-form-field>
+              }
+              @if (($safeNavigationMigration(widgetConfig?.buttonRowHeight) !== undefined)) {
+                <mat-form-field>
+                  <mat-label>Button Row Height</mat-label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="160"
+                    matInput
+                    placeholder="Enter pixels..."
+                    name="buttonRowHeight"
+                    formControlName="buttonRowHeight"
+                  />
+                  <mat-hint>Pixels, or 0 to scale with the widget</mat-hint>
+                </mat-form-field>
+              }
+              @if (($safeNavigationMigration(widgetConfig?.viewSmoothing) !== undefined)) {
+                <mat-form-field>
+                  <mat-label>View Smoothing</mat-label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    matInput
+                    placeholder="Enter percentage..."
+                    name="viewSmoothing"
+                    formControlName="viewSmoothing"
+                  />
+                  <mat-hint>% the view may drift before re-scaling</mat-hint>
+                </mat-form-field>
+              }
               @if (($safeNavigationMigration(widgetConfig?.showMin) !== undefined)) {
                 <mat-checkbox name="showMin" formControlName="showMin">
                   Show Min recorded value

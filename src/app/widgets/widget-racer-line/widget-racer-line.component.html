@@ -1,7 +1,23 @@
 <div class="line-wrapper">
   <div class="filler">
-    <canvas #canvasMainRef class="line-canvas"></canvas>
+    <canvas #canvasMainRef class="line-canvas" [class.hidden]="isViewMode()"></canvas>
   </div>
+  <!-- The VMG editor replaces the numbers. Drawn here rather than by the line
+       visualisation: it needs the four values and nothing geometric. -->
+  @if (isViewMode()) {
+    <svg class="vmg-cross" [attr.viewBox]="'0 0 ' + canvasSize().width + ' ' + canvasSize().height"
+      preserveAspectRatio="none">
+      @for (v of vmgCross(); track v.name) {
+        @if (v.selected) {
+          <rect class="vmg-selection" [attr.x]="v.box.x" [attr.y]="v.box.y"
+            [attr.width]="v.box.width" [attr.height]="v.box.height" [attr.rx]="v.box.radius" />
+        }
+        <text class="vmg-value" [class.overridden]="v.overridden" [attr.font-size]="v.font"
+          [attr.x]="v.x" [attr.y]="v.y">{{ v.text }}<title>{{ v.title }}</title></text>
+      }
+    </svg>
+  }
+
   <div class="buttons-container">
     <button mat-flat-button class="button select-button" matTooltip="Select the control mode" (click)="toggleMode()">
       <mat-icon class="buttons-svg-icon">
@@ -16,40 +32,8 @@
       </mat-icon>
     </button>
     @switch(mode()) { @case (0) {
-    <div class="pin-container">
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 70 18"
-        preserveAspectRatio="xMidYMid meet"
-        class="svg-content pin">
-        <text x="33" y="14">{{ portBiasValue() }}</text>
-      </svg>
-    </div>
-    <div class="len-bias-container">
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 90 12"
-        preserveAspectRatio="xMidYMid meet"
-        class="svg-content len-bias">
-        <text x="45" y="9">
-          <tspan class="pin">⚑</tspan>
-          {{ lineLengthValue() }}
-          <tspan class="boat">⚑</tspan>
-        </text>
-      </svg>
-    </div>
-    <div class="boat-container">
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 70 18"
-        preserveAspectRatio="xMidYMid meet"
-        class="svg-content boat">
-        <text x="33" y="14">{{ stbBiasValue() }}</text>
-      </svg>
-    </div>
+    <!-- Nothing here: the values are on the canvas above, and the line itself is a mode
+         of its own now. -->
     } @case (1) {
     <button
       mat-flat-button
@@ -64,6 +48,22 @@
           preserveAspectRatio="xMidYMid meet"
           class="svg-content">
           <text x="50" y="11">Port End</text>
+        </svg>
+      </mat-icon>
+    </button>
+    <button
+      mat-flat-button
+      class="button swap-button"
+      matTooltip="Swap the port(pin) and starboard(boat) ends of the line"
+      (click)="swapLineEnds()">
+      <mat-icon class="buttons-svg-icon">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 40 14"
+          preserveAspectRatio="xMidYMid meet"
+          class="svg-content">
+          <text x="20" y="11">&#8646;</text>
         </svg>
       </mat-icon>
     </button>
@@ -246,6 +246,61 @@
           </svg>
         </mat-icon>
       </button>
+    } @case (5) {
+    <!-- Widths here are flexible rather than the fixed percentages the other modes use:
+         four buttons beside the mode button do not fit on fixed shares. -->
+    <button mat-flat-button class="button vmg-select-button" [matTooltip]="vmgButtonTooltip()"
+      (click)="cycleVmg()">
+      <mat-icon class="buttons-svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 80 14" preserveAspectRatio="xMidYMid meet"
+          class="svg-content">
+          <text x="40" y="11">{{ vmgButtonLabel() }}</text>
+        </svg>
+      </mat-icon>
+    </button>
+    <button mat-flat-button class="button port-small-button" [disabled]="!selectedVmg()"
+      matTooltip="Decrease the selected best VMG" (click)="adjustVmg(-1)">
+      <mat-icon class="buttons-svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 60 14" preserveAspectRatio="xMidYMid meet"
+          class="svg-content">
+          <text x="30" y="11">&minus;{{ vmgStepLabel() }}</text>
+        </svg>
+      </mat-icon>
+    </button>
+    <!-- With a VMG selected the middle button reverts that one adjustment; with none
+         selected there is no adjustment to revert, so it throws away the collected
+         samples instead and the estimate starts again from what the boat does next. -->
+    @if (selectedVmg()) {
+      <button mat-flat-button class="button vmg-reset-button" [matTooltip]="vmgResetTooltip()"
+        (click)="resetVmg()">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 30 14" preserveAspectRatio="xMidYMid meet"
+            class="svg-content">
+            <text x="15" y="11">=</text>
+          </svg>
+        </mat-icon>
+      </button>
+    } @else {
+      <button mat-flat-button class="button vmg-clear-button"
+        matTooltip="Clear all collected VMG samples and start again"
+        (click)="clearVmgSamples()">
+        <mat-icon class="buttons-svg-icon">
+          <svg width="100%" height="100%" viewBox="0 0 40 14" preserveAspectRatio="xMidYMid meet"
+            class="svg-content">
+            <text x="20" y="11">CLR</text>
+          </svg>
+        </mat-icon>
+      </button>
+    }
+    <button mat-flat-button class="button starboard-small-button" [disabled]="!selectedVmg()"
+      matTooltip="Increase the selected best VMG" (click)="adjustVmg(1)">
+      <mat-icon class="buttons-svg-icon">
+        <svg width="100%" height="100%" viewBox="0 0 60 14" preserveAspectRatio="xMidYMid meet"
+          class="svg-content">
+          <text x="30" y="11">+{{ vmgStepLabel() }}</text>
+        </svg>
+      </mat-icon>
+    </button>
     } }
   </div>
   @if (!dashboard.isDashboardStatic()) {

@@ -9,6 +9,7 @@
 
 # dependencies
 /node_modules
+/signalk-racer
 
 # IDEs and editors
 /.idea
